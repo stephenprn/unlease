@@ -1,0 +1,131 @@
+{
+  "title": "Choose Stif's visual world",
+  "question": "The roll assigned the line network. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Line network",
+      "kicker": "THE ROLL",
+      "lineage": "Paris métro wayfinding: enamel station plaques, line roundels, glazed white tile",
+      "thesis": "Every list is a line with its own color and roundel, and every shared link transfers to its line by itself.",
+      "palette": ["#F5F6F2", "#13213F", "#F2C12E", "#2F6FD6", "#C04C8C", "#E07B39", "#3E9E6A"],
+      "materials": ["glazed white tile", "vitreous enamel plaques", "line roundels", "a wayfinding sans (Signika, with its light-on-dark grade for night)"],
+      "viewport": "A tile-registered two-column board under a station-sign search bar; a row of line roundels filters it; each card wears its line's badge and a thin line-color edge.",
+      "risk": "Can tip into transit pastiche: roundels must always do a job (filter, file, locate) and no transit logo or operator name ever appears.",
+      "raised": [
+        { "from": "Split-flap concourse board", "raise": "A link resolves in place: title and price drop into fixed cells while the card keeps its size, so the board never reflows." },
+        { "from": "Botanical folio", "raise": "Product images are registered: one ratio, one ground, one scale across a list, so items compare at a glance." },
+        { "from": "Airline timetable rack", "raise": "Cards use one text size; a title is the body set heavier, so a hundred cards stay calm." },
+        { "from": "Jet-age ticket wallet", "raise": "Done is a stamp, not a disappearance: bought, watched or visited links are punched and kept at the foot of their line." },
+        { "from": "Streaming title wall", "raise": "Only content carries full color (images and roundels); chrome never floods a card." }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Sorting rack",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Post-office sorting cabinets: pigeonholes, destination labels, the dead-letter tray",
+      "thesis": "Every link drops through one slot and lands in its pigeonhole; the board is a rack of labeled compartments.",
+      "palette": ["#C9CDD1", "#FBFBF8", "#1B1B1B", "#F6C200", "#C8312B"],
+      "materials": ["zinc cabinet", "brass label holders", "rubber stamps"],
+      "viewport": "A grid of compartments, one per list, each showing its newest items; a slot bar on top takes a link.",
+      "risk": "Filing metaphors are where note apps usually land; it can read as folders in a costume."
+    },
+    {
+      "id": "challenger-console",
+      "label": "Developer console",
+      "verdict": "competitive",
+      "lineage": "dark-first developer tools: graphite panels, hairline seams, syntax accents",
+      "thesis": "Notes as persistent panels on graphite, labels in syntax colors, destructive actions isolated by empty space.",
+      "palette": ["#0D1117", "#151A22", "#E6EDF3", "#79C0FF", "#56D364", "#C678DD", "#E3B341"],
+      "materials": ["graphite ground", "1px seams", "monospaced figures"],
+      "viewport": "A dense panel list of notes with tabular metadata and a command-style capture bar.",
+      "case": "Fuses cleanly and speaks your daily screen language, but a shopping list or a restaurant shortlist reads like a log file.",
+      "risk": "The predictable choice for a developer's own tool; loses warmth for life admin.",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-dark-first-developer-console-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-dark-first-developer-console.webp"
+    },
+    {
+      "id": "challenger-splitflap",
+      "label": "Split-flap concourse board",
+      "verdict": "declined",
+      "lineage": "rail concourse split-flap boards",
+      "thesis": "Links as departure rows whose flaps cascade from 'reading…' to title, price and destination list.",
+      "palette": ["#0B0B0B", "#2A2D31", "#F2F2F2", "#FFB000", "#B00020"],
+      "materials": ["matte flaps", "brushed steel"],
+      "viewport": "A departures table of links with a destination column per list.",
+      "case": "Fixed character cells fit link rows but not free-form notes; the métro world covers more of the product.",
+      "kept": "In-place change: a resolving link updates its own cells without reflowing anything.",
+      "risk": "A table for everything; text notes do not fit.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse-hero.webp"
+    },
+    {
+      "id": "challenger-folio",
+      "label": "Botanical folio",
+      "verdict": "declined",
+      "lineage": "botanical plate folios",
+      "thesis": "Each note a fixed-scale plate on one shared baseline.",
+      "palette": ["#F3EBDD", "#6B5B45", "#3F6B3A", "#B3261E", "#8C8C8C"],
+      "materials": ["cream plate stock", "sepia hairlines"],
+      "viewport": "Banded plates with engraved italic titles.",
+      "case": "Cream and italic serif is the default look for this kind of app, and it is not your world.",
+      "kept": "Registration: every product image in a list shares one ratio, ground and scale.",
+      "risk": "Generic-tasteful, the opposite of what you asked for.",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp"
+    },
+    {
+      "id": "challenger-wall",
+      "label": "Streaming title wall",
+      "verdict": "declined",
+      "lineage": "streaming catalog rows",
+      "thesis": "Each URL list as a row of artwork tiles; the focused tile expands to show price and summary.",
+      "palette": ["#141414", "#E5E5E5", "#E50914"],
+      "materials": ["poster artwork", "dimmed rows"],
+      "viewport": "Rows of link images per list, text notes as plain tiles.",
+      "case": "Strong for the link lists, weak for text notes and checklists, which make poor posters.",
+      "kept": "Only content carries full color; chrome stays neutral.",
+      "risk": "Turns a notebook into a media browser.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-streaming-title-card-wall-hero.webp"
+    },
+    {
+      "id": "challenger-timetable",
+      "label": "Airline timetable rack",
+      "verdict": "declined",
+      "lineage": "1970s pocket timetables on a light table",
+      "thesis": "One type size everywhere; rank carried by weight, case and rule.",
+      "palette": ["#D9A52B", "#2B2B2B", "#F4EFE1", "#D64527", "#2F6B4F"],
+      "materials": ["tinted glass slides", "goldenrod bed"],
+      "viewport": "Raked slides of notes on a lit bed.",
+      "case": "The raked layout fights reading and writing notes every day.",
+      "kept": "One text size on cards; weight, not scale, makes the title.",
+      "risk": "Striking once, tiring daily.",
+      "hero": "https://impeccable.style/worlds/cards/rw-timetable-slide-rack-hero.webp"
+    },
+    {
+      "id": "challenger-wallet",
+      "label": "Jet-age ticket wallet",
+      "verdict": "declined",
+      "lineage": "airline coupon books and baggage tags",
+      "thesis": "Lists as coupon books; items stamp themselves used or void instead of disappearing.",
+      "palette": ["#FFFFFF", "#1C2A5A", "#C8102E", "#5B3A8C"],
+      "materials": ["carbon-copy coupons", "rubber stamps"],
+      "viewport": "A wallet of tabbed coupons, one per list.",
+      "case": "A rich state vocabulary, but the coupon shape suits checklists and links, not free text.",
+      "kept": "Done is a stamp: completed items stay readable, marked, at the foot of their list.",
+      "risk": "Vintage costume over a daily tool.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-jet-age-ticket-wallet-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "Keep's board done right: Material You colors, masonry cards, a take-a-note bar and a FAB.",
+    "palette": ["#FEF7FF", "#1D1B20", "#6750A4", "#E8DEF8", "#FFD8E4"],
+    "materials": ["masonry cards", "tonal surfaces", "Roboto"],
+    "viewport": "Search bar on top, masonry of pastel note cards, bottom bar with quick actions and a FAB.",
+    "risk": "Looks like Keep, which is the app being replaced."
+  },
+  "steer": true
+}

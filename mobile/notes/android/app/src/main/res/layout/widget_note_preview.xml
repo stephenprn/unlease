@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The picker's preview of a note widget: sample content. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_panel_paper" android:foreground="@drawable/wgen_panel_edge">
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_grain_panel" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="54dp" android:orientation="horizontal" android:paddingStart="16dp" android:paddingTop="6dp" android:paddingEnd="12dp">
+            <TextView style="@style/WidgetText.Title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Valise" />
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/wgen_g_edit_ink_muted" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="Passeport" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="Chargeur du téléphone" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="Maillot de bain" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box_checked_ink_muted" />
+            <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="Billets de train" android:textColor="@color/wgen_ink_muted" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

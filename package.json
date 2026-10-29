@@ -1,0 +1,35 @@
+{
+  "name": "unlease",
+  "version": "0.1.0",
+  "description": "Stop leasing your data to Google: a self-hosted suite of apps, one server, apps you install one by one, their data linked.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stephenprn/unlease.git"
+  },
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "web/*",
+    "server"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint packages --max-warnings 0",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run lint && npm run test",
+    "i18n": "node tools/i18n/check.mjs",
+    "bump": "node tools/release/version.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

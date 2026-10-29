@@ -1,0 +1,20 @@
+# The image needs the root workspace's manifests, the shared packages, the server and the web apps; nothing else goes into the build context.
+*
+!package.json
+!package-lock.json
+!tsconfig.json
+!packages
+!server
+!web
+**/node_modules
+server/dist
+server/data
+server/.env
+web/*/dist
+web/*/dist-demo
+web/*/test-results
+web/*/test-output
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/.DS_Store

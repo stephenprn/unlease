@@ -1,0 +1,723 @@
+/*
+ * The app shell, pinned to the wall: the header (the search strip, the
+ * collection chips), the navigation docked on wide screens, the page beside it,
+ * and on a phone-sized window the phone's chrome: its top bar away from the
+ * board, and on the board the bar at the foot with the matcha pebble.
+ */
+
+.shell {
+  min-height: 100vh;
+}
+
+/* The header is the ground itself: its gradient and grain are fixed to the window like the page's, so no seam shows. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ground-paint);
+  color: var(--ink);
+}
+
+/* Cards slide under the ground rather than being cut by a line: the ground, grain and all, fading out below the header. */
+.header::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  pointer-events: none;
+  background: var(--ground-paint);
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  mask-image: linear-gradient(#000, transparent);
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+  align-items: center;
+  min-height: var(--header-row);
+}
+
+.brand {
+  grid-column: 1;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  justify-self: start;
+  margin-left: 14px;
+  padding: 6px 14px 6px 8px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.3px;
+}
+
+.brandMark {
+  display: flex;
+}
+
+@media (min-width: 1100px) {
+  .brand {
+    display: flex;
+  }
+  .menuButton {
+    display: none;
+  }
+}
+
+.bar {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 16px 6px 12px;
+}
+
+@media (min-width: 1100px) {
+  .bar {
+    padding-left: 24px;
+  }
+}
+
+/* Where the search strip lies, and the selection bar over it while notes are picked. */
+.strip {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  max-width: 760px;
+}
+
+/* The search strip: a field across the page (field colour, the search cut, an outline edge), lifted off the wall. */
+.search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 50px;
+  padding: 0 6px 0 4px;
+  border-radius: var(--cut-search);
+  /* Frosted: the ground shows through a little. */
+  background: color-mix(in srgb, var(--field) 74%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow:
+    inset 0 0 0 1px var(--outline),
+    var(--lift-card);
+  color: var(--ink);
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .search:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--outline),
+      var(--lift-raised);
+  }
+}
+
+.search:has(.searchInput:focus) {
+  box-shadow:
+    var(--lift-raised),
+    inset 0 0 0 2px var(--focus);
+}
+
+.searchField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.searchGlyph {
+  flex: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--ink-muted);
+}
+
+@media (min-width: 1100px) {
+  .searchGlyph {
+    display: flex;
+  }
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.searchInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.searchInput:focus-visible {
+  outline: none;
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchKey {
+  flex: none;
+  margin-right: 8px;
+  padding: 0 7px;
+  border-radius: var(--cut-detail);
+  box-shadow: inset 0 0 0 1px var(--outline);
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+/* "Classer un lien" (notes) or "Nouvelle page" (pages): a second scrap pinned beside the strip, edged as a card is. */
+.classify {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px 0 12px;
+  margin-right: 6px;
+  border: 0;
+  border-radius: var(--cut-button);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  transition:
+    box-shadow var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .classify:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--hairline),
+      var(--lift-raised);
+  }
+}
+
+.classify:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 899px) {
+  .classifyLabel {
+    display: none;
+  }
+  .classify {
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+    margin-right: 2px;
+  }
+}
+
+/* Its target: a capsule, round while it holds the dot alone, long when the dot says it in words. */
+.dotButton {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+/* Not fine: the dot says it in words, so the state never rests on a colour alone. */
+.dotButton[data-words] {
+  padding: 0 12px 0 14px;
+}
+
+.dotButton[data-words='unauthorized'] {
+  color: var(--danger);
+}
+
+.dotWords {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* A phone-sized window: the words under the strip, one quiet line that leads to the settings. */
+.syncNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  margin: 0 0 4px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  text-align: left;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.syncNotice[data-phase='unauthorized'] {
+  color: var(--danger);
+}
+
+.syncNoticeAction {
+  margin-left: auto;
+  color: var(--link);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .dotButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.dotButton:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* A dot of colour, the phone's 11. */
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dot);
+}
+
+.dot[data-phase='syncing'] {
+  animation: breathe 1.4s var(--ease-standard) infinite alternate;
+}
+
+/* It breathes, never fades out: at its faintest the dot still reads. */
+@keyframes breathe {
+  to {
+    opacity: 0.6;
+  }
+}
+
+/*
+ * While notes are picked the strip turns matcha in place (the phone's SelectionBar): laid over it at
+ * its size and cut, the matcha wash with the matcha edge every chosen state wears. It fades in and
+ * back off; nothing travels.
+ */
+.selectionBar {
+  --icon-ink: var(--on-action-container);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 4px;
+  border-radius: var(--cut-search);
+  background: var(--action-container);
+  box-shadow:
+    inset 0 0 0 1px var(--focus),
+    var(--lift-card);
+  color: var(--on-action-container);
+  animation: fade-in var(--duration-short) var(--ease-standard);
+}
+
+.selectionBar[data-closing] {
+  animation: fade-out var(--duration-short) var(--ease-standard) forwards;
+}
+
+/* The picked notes' labels: a short list of tag checkboxes on the menu's paper. */
+.bulkLabels {
+  min-width: 240px;
+  max-height: min(420px, 70vh);
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.bulkList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bulkRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 15px;
+  line-height: 21px;
+}
+
+@media (pointer: coarse) {
+  .bulkRow {
+    min-height: 48px;
+  }
+}
+
+@media (hover: hover) {
+  .bulkRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.bulkRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.bulkName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulkSome {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.bulkEmpty {
+  max-width: 240px;
+  padding: 10px 12px;
+  color: var(--ink-muted);
+}
+
+.selectionCount {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot[data-phase='syncing'] {
+    animation: none;
+  }
+}
+
+@media (max-width: 719px) {
+  .bar {
+    padding-right: 12px;
+  }
+  .strip {
+    max-width: none;
+  }
+  .search {
+    height: 54px;
+  }
+}
+
+.body {
+  display: grid;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+  align-items: start;
+}
+
+.main {
+  grid-column: 2;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px));
+}
+
+/* ── a phone-sized window, away from the board: the phone's top bar ─────────── */
+
+/* The ground itself, its grain fixed to the window like the header's, so no seam shows; it stays while the page scrolls under it. */
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: var(--header-row);
+  padding: 0 4px;
+  background: var(--ground-paint);
+  color: var(--ink);
+}
+
+.topBar::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  pointer-events: none;
+  background: var(--ground-paint);
+  -webkit-mask-image: linear-gradient(#000, transparent);
+  mask-image: linear-gradient(#000, transparent);
+}
+
+/* The page's head moves in here (`PageHead`): its title centred on the back pebble, its action at the far end. */
+.topBarSlot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.topBarTitle {
+  flex: 1;
+  min-width: 0;
+  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A collection's page: the back pebble alone over its head's top row (whose actions keep the far end), scrolling with it. */
+.topBarOver {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  height: 56px;
+  margin-bottom: -56px;
+  padding: 4px 4px 0;
+  pointer-events: none;
+}
+
+.topBarOver > * {
+  pointer-events: auto;
+}
+
+/* ── a page's head over the page (wide) ──────────────────────────────────── */
+
+/* The board's view head's (`.viewHead`), number for number: a title lands in the same place on every screen. */
+.pageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  min-height: 56px;
+  padding: 12px 4px 4px;
+}
+
+.pageTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Going to another page on a phone-sized window: Android's own transition, a short shift and a
+ * quick fade, front-loaded; from the other side when going back. The page comes whole, as the
+ * phone's screen does: its top bar and title (or the board's header) and its bottom bar with it.
+ * The board's views change in place.
+ */
+@media (max-width: 719px) {
+  .shell {
+    overflow-x: clip;
+  }
+  .header[data-enter='forward'],
+  .page[data-enter='forward'],
+  .bottomBar[data-enter='forward'] {
+    animation: page-forward var(--duration-medium) var(--ease-decelerate);
+  }
+  .header[data-enter='back'],
+  .page[data-enter='back'],
+  .bottomBar[data-enter='back'] {
+    animation: page-back var(--duration-medium) var(--ease-decelerate);
+  }
+}
+
+@keyframes page-forward {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes page-back {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header[data-enter],
+  .page[data-enter],
+  .bottomBar[data-enter] {
+    animation-name: fade-in;
+  }
+}
+
+/* The docked navigation: sticky under the header, its rows scrolling on their own above a foot that stays. */
+.dock {
+  grid-column: 1;
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .dock {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: var(--header-height, 64px);
+    height: calc(100vh - var(--header-height, 64px));
+    padding: 8px 12px 12px;
+  }
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 20;
+  padding: 8px 14px;
+  border-radius: var(--cut-button);
+  background: var(--action);
+  color: var(--on-action);
+  text-decoration: none;
+}
+
+.skip:focus-visible {
+  top: 12px;
+}
+
+/*
+ * A phone-sized window: the phone's bottom bar (habits-garden's tab bar), the ground's own paper under
+ * a hairline, with the matcha pebble at its end; the bar lift cast upwards, as it sits on the bottom
+ * edge. It rises in its own height and steps back down, never just vanishing.
+ */
+.bottomBar {
+  /* The ground itself, fixed to the window like the page's: the gradient and its grain run on under the bar (no sheet grain over it). */
+  --grain: 0;
+  background: var(--ground-paint);
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9;
+  display: none;
+  align-items: center;
+  height: calc(80px + env(safe-area-inset-bottom));
+  padding: 0 16px env(safe-area-inset-bottom) 8px;
+  border-top: 1px solid var(--hairline);
+  box-shadow:
+    0 -1px 3px color-mix(in srgb, var(--shadow) 70%, transparent),
+    0 -6px 16px color-mix(in srgb, var(--shadow) 60%, transparent);
+  animation: bar-in var(--duration-medium) var(--ease-decelerate);
+}
+
+.bottomBar[data-closing] {
+  animation: bar-out var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+/* Its own height and its lift's, so the whole motion is seen and nothing is left showing. */
+@keyframes bar-in {
+  from {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+
+@keyframes bar-out {
+  to {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottomBar {
+    animation-name: fade-in;
+  }
+  .bottomBar[data-closing] {
+    animation-name: fade-out;
+  }
+}
+
+@media (max-width: 719px) {
+  .bottomBar {
+    display: flex;
+  }
+}
+
+.bottomActions {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* The capture button: the brand's pebble in leaf matcha, flat on the ground, no lift. Under the finger it gives toward round and springs back. */
+.fab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on-leaf);
+  --pebble-fill: var(--leaf);
+}
+
+@media (hover: hover) {
+  .fab:hover {
+    --pebble-fill: color-mix(in srgb, var(--on-leaf) 8%, var(--leaf));
+  }
+}
+
+.fab:active {
+  --pebble-fill: color-mix(in srgb, var(--on-leaf) 8%, var(--leaf));
+}

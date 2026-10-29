@@ -1,0 +1,62 @@
+{
+  "title": "Original shapes, one ink",
+  "question": "No colour, no faces: four sets in one ink with original, gently wavy but clean shapes, on the same two-tone grainy background. Each card shows the board by day, the drawer at night, and the set. Pick one, or steer (for example: Onde with Galets' frames).",
+  "options": [
+    {
+      "id": "onde",
+      "label": "Onde",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Water at rest: every straight line takes one soft wave",
+      "thesis": "Every straight line becomes a gentle wave and every frame swells a little, like a cushion; one even line everywhere, round ends, nothing else.",
+      "palette": ["#201E1D", "#F2EDDA", "#D2C8A9", "#2F2D2B"],
+      "materials": ["one even 1.9px line", "one soft wave per straight line", "frames that swell a little", "dots that follow the wave"],
+      "viewport": "Board by day: wavy menu, cushion checkboxes, wavy list lines in the bottom bar. Drawer at night: the same waves in light ink.",
+      "risk": "The waves have to stay this small; any bigger and it turns wobbly, which you turned down for the cards.",
+      "case": "The most direct answer: original at a glance, still clean and calm at 16px.",
+      "comp": ".impeccable/mocks/twists/ink-onde.webp"
+    },
+    {
+      "id": "pinceau",
+      "label": "Pinceau",
+      "kicker": "THE MOST CRAFTED",
+      "lineage": "Calligraphy with a broad nib: thick and thin strokes",
+      "thesis": "The same soft curves drawn with a broad nib held at an angle: thick downstrokes, thin hairlines, softened ends, like ink in a carnet.",
+      "palette": ["#201E1D", "#F2EDDA", "#D2C8A9", "#2F2D2B"],
+      "materials": ["thick and thin from a pen angle", "softly tapered ends", "solid dots"],
+      "viewport": "Board by day with calligraphic icons and checkboxes; the drawer at night in light ink.",
+      "risk": "At 24px the thick strokes get inky and small inner details merge.",
+      "case": "The most distinctive and the most hand-made, without leaving one ink.",
+      "comp": ".impeccable/mocks/twists/ink-pinceau.webp"
+    },
+    {
+      "id": "molle",
+      "label": "Molle",
+      "kicker": "THE SOFTEST",
+      "lineage": "Soft modelling clay, in one colour",
+      "thesis": "Solid, soft shapes with gently swelling edges and rounded ends, the details cut out; friendly and calm.",
+      "palette": ["#201E1D", "#F2EDDA", "#D2C8A9", "#2F2D2B"],
+      "materials": ["solid ink shapes", "edges that swell a little", "rounded ends", "cut-out details"],
+      "viewport": "Board by day with solid soft icons; the drawer at night in light ink.",
+      "risk": "The closest to ordinary filled icons; the softness mostly shows at large sizes.",
+      "case": "Very legible, the most solid presence in the bars.",
+      "comp": ".impeccable/mocks/twists/ink-molle.webp"
+    },
+    {
+      "id": "galets",
+      "label": "Galets",
+      "kicker": "THE MOST CARNET",
+      "lineage": "The brand's pebble as the shape of everything",
+      "thesis": "Every frame is the mark's smooth pebble: the photo, the magnifier, the archive box, the bin, the checkbox; lines stay even and clean.",
+      "palette": ["#201E1D", "#F2EDDA", "#D2C8A9", "#2F2D2B"],
+      "materials": ["the mark's pebble as every frame", "one even 1.9px line", "solid pebbles for the small things"],
+      "viewport": "Board by day with pebble checkboxes and a pebble photo; the drawer at night in light ink.",
+      "risk": "Round frames lose some recognition (the bin reads a little like a jar), and marks inside a round frame can look like a face; I reshaped Photo and Notes for that.",
+      "case": "Ties the icons to the logo: the same stone everywhere.",
+      "comp": ".impeccable/mocks/twists/ink-galets.webp"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "canon": false,
+  "buildPath": { "value": "comp", "toggle": false }
+}

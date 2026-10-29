@@ -1,0 +1,3069 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T15:11:19+00:00",
+  "title": "Design System: Carnet",
+  "extensions": {
+    "colorMeta": {
+      "wall": {
+        "role": "neutral",
+        "displayName": "Paper Ground",
+        "canonical": "oklch(92.9% 0.032 97.3)",
+        "tonalRamp": [
+          "#0F0B00",
+          "#2B2714",
+          "#4A4531",
+          "#6B6651",
+          "#8E8A74",
+          "#B3AE98",
+          "#D6D2BA",
+          "#F4EFD7"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cream Card",
+        "canonical": "oklch(96.8% 0.020 97.5)",
+        "tonalRamp": [
+          "#0D0B03",
+          "#29271B",
+          "#484539",
+          "#696659",
+          "#8C897C",
+          "#B1AEA0",
+          "#D4D1C3",
+          "#F2EFE0"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field Cream",
+        "canonical": "oklch(98.1% 0.015 98.3)",
+        "tonalRamp": [
+          "#0D0B05",
+          "#28271E",
+          "#47453C",
+          "#68665D",
+          "#8B8980",
+          "#B0AEA4",
+          "#D3D1C7",
+          "#F1EFE4"
+        ]
+      },
+      "paper-high": {
+        "role": "neutral",
+        "displayName": "Well",
+        "canonical": "oklch(88.0% 0.031 90.3)",
+        "tonalRamp": [
+          "#100A00",
+          "#2B2413",
+          "#48422F",
+          "#68614D",
+          "#89826E",
+          "#ACA590",
+          "#D1C9B3",
+          "#F6EED8"
+        ]
+      },
+      "slip": {
+        "role": "neutral",
+        "displayName": "Charcoal Slip",
+        "canonical": "oklch(29.0% 0.011 84.6)",
+        "tonalRamp": [
+          "#0D0B06",
+          "#292620",
+          "#48453E",
+          "#69665F",
+          "#8C8981",
+          "#B1ADA6",
+          "#D4D0C9",
+          "#F2EEE6"
+        ]
+      },
+      "slip-high": {
+        "role": "neutral",
+        "displayName": "Slip Control",
+        "canonical": "oklch(38.1% 0.018 84.6)",
+        "tonalRamp": [
+          "#0F0B04",
+          "#2A261D",
+          "#49443A",
+          "#6B655B",
+          "#8E897D",
+          "#B3ADA2",
+          "#D6D0C4",
+          "#F4EEE1"
+        ]
+      },
+      "on-slip": {
+        "role": "neutral",
+        "displayName": "Cream On Slip",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "on-slip-muted": {
+        "role": "neutral",
+        "displayName": "Muted On Slip",
+        "canonical": "oklch(78.0% 0.026 81.1)",
+        "tonalRamp": [
+          "#110A01",
+          "#2D2518",
+          "#4C4435",
+          "#6E6555",
+          "#918878",
+          "#B7AD9C",
+          "#DAD0BE",
+          "#F8EDDB"
+        ]
+      },
+      "slip-action": {
+        "role": "secondary",
+        "displayName": "Slip Matcha",
+        "canonical": "oklch(86.3% 0.117 125.9)",
+        "tonalRamp": [
+          "#070E00",
+          "#1F2C02",
+          "#394D07",
+          "#567119",
+          "#789641",
+          "#9CBB67",
+          "#BEDF89",
+          "#DBFDA6"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Warm Ink",
+        "canonical": "oklch(23.7% 0.004 48.6)",
+        "tonalRamp": [
+          "#0C0B0A",
+          "#282625",
+          "#474443",
+          "#686564",
+          "#8B8887",
+          "#B0ADAC",
+          "#D3D0CF",
+          "#F1EEEC"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Second Ink",
+        "canonical": "oklch(45.7% 0.015 91.7)",
+        "tonalRamp": [
+          "#0D0B05",
+          "#28251D",
+          "#454239",
+          "#646158",
+          "#858279",
+          "#A8A59B",
+          "#CCC9BF",
+          "#F2EEE4"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "oklch(45.7% 0.015 91.7)",
+        "tonalRamp": [
+          "#0D0B05",
+          "#28251D",
+          "#454239",
+          "#646158",
+          "#858279",
+          "#A8A59B",
+          "#CCC9BF",
+          "#F2EEE4"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "rgba(32, 30, 29, 0.14)"
+      },
+      "outline": {
+        "role": "neutral",
+        "displayName": "Outline",
+        "canonical": "rgba(32, 30, 29, 0.22)"
+      },
+      "edge": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "oklch(56.5% 0.026 93.5)",
+        "tonalRamp": [
+          "#0F0B01",
+          "#292516",
+          "#474232",
+          "#666151",
+          "#878271",
+          "#AAA593",
+          "#CFC9B7",
+          "#F4EFDB"
+        ]
+      },
+      "track": {
+        "role": "neutral",
+        "displayName": "Sunken Track",
+        "canonical": "rgba(32, 30, 29, 0.07)"
+      },
+      "dashed": {
+        "role": "neutral",
+        "displayName": "Dashed Edge",
+        "canonical": "rgba(32, 30, 29, 0.3)"
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Terracotta",
+        "canonical": "oklch(55.3% 0.117 51.5)",
+        "tonalRamp": [
+          "#180600",
+          "#401A00",
+          "#6E3200",
+          "#994F1B",
+          "#C07342",
+          "#E89867",
+          "#FDC3A1",
+          "#FEEADE"
+        ]
+      },
+      "on-action": {
+        "role": "primary",
+        "displayName": "On Terracotta",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Deep Terracotta",
+        "canonical": "oklch(48.0% 0.108 51.6)",
+        "tonalRamp": [
+          "#170600",
+          "#401A00",
+          "#6D3201",
+          "#965224",
+          "#BC7549",
+          "#E49A6D",
+          "#FDC3A1",
+          "#FEEADE"
+        ]
+      },
+      "action-container": {
+        "role": "secondary",
+        "displayName": "Matcha Wash",
+        "canonical": "oklch(85.0% 0.090 126.8)",
+        "tonalRamp": [
+          "#070E00",
+          "#1B2900",
+          "#334807",
+          "#50672B",
+          "#6F874B",
+          "#90A96B",
+          "#B1CC8D",
+          "#D5F0AF"
+        ]
+      },
+      "on-action-container": {
+        "role": "secondary",
+        "displayName": "On Matcha Wash",
+        "canonical": "oklch(29.9% 0.069 129.6)",
+        "tonalRamp": [
+          "#060E00",
+          "#1B2D02",
+          "#394C22",
+          "#596E43",
+          "#7C9265",
+          "#A0B789",
+          "#C2DBAB",
+          "#E0F8C8"
+        ]
+      },
+      "veil": {
+        "role": "neutral",
+        "displayName": "Ink Veil",
+        "canonical": "rgba(32, 30, 29, 0.1)"
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Deep Matcha",
+        "canonical": "oklch(47.6% 0.108 130.5)",
+        "tonalRamp": [
+          "#060E00",
+          "#1A2D02",
+          "#324F08",
+          "#50722A",
+          "#73964E",
+          "#97BC72",
+          "#B9E094",
+          "#D6FEB1"
+        ]
+      },
+      "leaf": {
+        "role": "secondary",
+        "displayName": "Leaf Matcha",
+        "canonical": "oklch(76.2% 0.133 126.4)",
+        "tonalRamp": [
+          "#070E00",
+          "#1E2C00",
+          "#374E01",
+          "#547210",
+          "#749734",
+          "#98BD5B",
+          "#BBE17E",
+          "#D9FEA2"
+        ]
+      },
+      "on-leaf": {
+        "role": "secondary",
+        "displayName": "On Leaf",
+        "canonical": "oklch(23.7% 0.004 48.6)",
+        "tonalRamp": [
+          "#0C0B0A",
+          "#282625",
+          "#474443",
+          "#686564",
+          "#8B8887",
+          "#B0ADAC",
+          "#D3D0CF",
+          "#F1EEEC"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "canonical": "oklch(46.8% 0.152 27.7)",
+        "tonalRamp": [
+          "#1E0001",
+          "#4E0304",
+          "#840A0D",
+          "#AC3931",
+          "#D55F53",
+          "#FB887B",
+          "#FEBFB7",
+          "#FFE9E5"
+        ]
+      },
+      "on-danger": {
+        "role": "neutral",
+        "displayName": "On Danger",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "ok": {
+        "role": "secondary",
+        "displayName": "Synced",
+        "canonical": "oklch(47.6% 0.108 130.5)",
+        "tonalRamp": [
+          "#060E00",
+          "#192B01",
+          "#2F4C03",
+          "#4C6D25",
+          "#6C8F47",
+          "#8EB36A",
+          "#B1D88D",
+          "#D6FEB1"
+        ]
+      },
+      "waiting": {
+        "role": "neutral",
+        "displayName": "Waiting",
+        "canonical": "oklch(57.8% 0.121 68.1)",
+        "tonalRamp": [
+          "#140800",
+          "#361F03",
+          "#5D3907",
+          "#885408",
+          "#B17320",
+          "#D79649",
+          "#FDBA6E",
+          "#FFEBD6"
+        ]
+      },
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Scrim",
+        "canonical": "rgba(46, 43, 37, 0.5)"
+      },
+      "highlight": {
+        "role": "primary",
+        "displayName": "Peach",
+        "canonical": "oklch(86.9% 0.079 51.4)",
+        "tonalRamp": [
+          "#170600",
+          "#401B01",
+          "#663719",
+          "#8A583A",
+          "#B07B5D",
+          "#D7A080",
+          "#FCC3A2",
+          "#FEEADF"
+        ]
+      },
+      "viewer": {
+        "role": "neutral",
+        "displayName": "Viewer",
+        "canonical": "oklch(0.0% 0.000 0.0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "shadow": {
+        "role": "neutral",
+        "displayName": "Bar Lift Shadow",
+        "canonical": "rgba(46, 43, 37, 0.16)"
+      },
+      "night-wall": {
+        "role": "neutral",
+        "displayName": "Paper Ground (night)",
+        "canonical": "oklch(21.1% 0.004 48.5)",
+        "tonalRamp": [
+          "#0D0B0A",
+          "#262322",
+          "#413F3E",
+          "#5F5D5C",
+          "#7F7D7B",
+          "#A09E9C",
+          "#C3C0BF",
+          "#E7E4E2"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Cream Card (night)",
+        "canonical": "oklch(25.8% 0.005 67.6)",
+        "tonalRamp": [
+          "#0D0B09",
+          "#262422",
+          "#413F3D",
+          "#5F5D5B",
+          "#7F7D7A",
+          "#A09E9B",
+          "#C3C0BE",
+          "#E7E4E1"
+        ]
+      },
+      "night-field": {
+        "role": "neutral",
+        "displayName": "Field Cream (night)",
+        "canonical": "oklch(29.2% 0.006 56.2)",
+        "tonalRamp": [
+          "#0D0B09",
+          "#262321",
+          "#423F3D",
+          "#605D5B",
+          "#807C7A",
+          "#A19D9B",
+          "#C4C0BD",
+          "#E8E4E1"
+        ]
+      },
+      "night-paper-high": {
+        "role": "neutral",
+        "displayName": "Pressed Paper (night)",
+        "canonical": "oklch(29.2% 0.006 56.2)",
+        "tonalRamp": [
+          "#0D0B09",
+          "#262321",
+          "#423F3D",
+          "#605D5B",
+          "#807C7A",
+          "#A19D9B",
+          "#C4C0BD",
+          "#E8E4E1"
+        ]
+      },
+      "night-slip": {
+        "role": "neutral",
+        "displayName": "Charcoal Slip (night)",
+        "canonical": "oklch(33.1% 0.007 67.6)",
+        "tonalRamp": [
+          "#0D0B08",
+          "#262321",
+          "#423F3C",
+          "#605D5A",
+          "#807D79",
+          "#A19E9A",
+          "#C4C0BC",
+          "#E8E4E0"
+        ]
+      },
+      "night-slip-high": {
+        "role": "neutral",
+        "displayName": "Slip Control (night)",
+        "canonical": "oklch(40.0% 0.009 67.6)",
+        "tonalRamp": [
+          "#0E0B08",
+          "#272320",
+          "#433F3B",
+          "#615D59",
+          "#817C78",
+          "#A29D99",
+          "#C5C0BB",
+          "#E8E4DF"
+        ]
+      },
+      "night-on-slip": {
+        "role": "neutral",
+        "displayName": "Cream On Slip (night)",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "night-on-slip-muted": {
+        "role": "neutral",
+        "displayName": "Muted On Slip (night)",
+        "canonical": "oklch(74.4% 0.009 67.7)",
+        "tonalRamp": [
+          "#0E0A07",
+          "#27231F",
+          "#433F3B",
+          "#615D58",
+          "#817C78",
+          "#A29D98",
+          "#C5C0BB",
+          "#E9E3DE"
+        ]
+      },
+      "night-slip-action": {
+        "role": "secondary",
+        "displayName": "Slip Matcha (night)",
+        "canonical": "oklch(86.3% 0.117 125.9)",
+        "tonalRamp": [
+          "#070E00",
+          "#1F2C02",
+          "#394D07",
+          "#567119",
+          "#789641",
+          "#9CBB67",
+          "#BEDF89",
+          "#DBFDA6"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Warm Ink (night)",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "night-ink-muted": {
+        "role": "neutral",
+        "displayName": "Second Ink (night)",
+        "canonical": "oklch(74.0% 0.008 73.7)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#282421",
+          "#45413D",
+          "#64615C",
+          "#85827D",
+          "#A8A49F",
+          "#CCC8C3",
+          "#F2EEE8"
+        ]
+      },
+      "night-ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink (night)",
+        "canonical": "oklch(74.0% 0.008 73.7)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#282421",
+          "#45413D",
+          "#64615C",
+          "#85827D",
+          "#A8A49F",
+          "#CCC8C3",
+          "#F2EEE8"
+        ]
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Hairline (night)",
+        "canonical": "rgba(249, 244, 237, 0.1)"
+      },
+      "night-outline": {
+        "role": "neutral",
+        "displayName": "Outline (night)",
+        "canonical": "rgba(249, 244, 237, 0.15)"
+      },
+      "night-edge": {
+        "role": "neutral",
+        "displayName": "Control Edge (night)",
+        "canonical": "oklch(58.4% 0.012 81.8)",
+        "tonalRamp": [
+          "#0E0B06",
+          "#28251F",
+          "#45413B",
+          "#65615A",
+          "#86827B",
+          "#A9A49D",
+          "#CDC9C1",
+          "#F2EEE6"
+        ]
+      },
+      "night-track": {
+        "role": "neutral",
+        "displayName": "Sunken Track (night)",
+        "canonical": "rgba(249, 244, 237, 0.07)"
+      },
+      "night-dashed": {
+        "role": "neutral",
+        "displayName": "Dashed Edge (night)",
+        "canonical": "rgba(249, 244, 237, 0.2)"
+      },
+      "night-action": {
+        "role": "primary",
+        "displayName": "Terracotta (night)",
+        "canonical": "oklch(78.1% 0.124 51.7)",
+        "tonalRamp": [
+          "#170600",
+          "#401A00",
+          "#6D3202",
+          "#9C4E11",
+          "#C3713C",
+          "#EB9661",
+          "#FCC3A1",
+          "#FEEADE"
+        ]
+      },
+      "night-on-action": {
+        "role": "primary",
+        "displayName": "On Terracotta (night)",
+        "canonical": "oklch(21.1% 0.004 48.5)",
+        "tonalRamp": [
+          "#0D0B0A",
+          "#262322",
+          "#413F3E",
+          "#5F5D5C",
+          "#7F7D7B",
+          "#A09E9C",
+          "#C3C0BF",
+          "#E7E4E2"
+        ]
+      },
+      "night-link": {
+        "role": "primary",
+        "displayName": "Deep Terracotta (night)",
+        "canonical": "oklch(86.9% 0.079 51.4)",
+        "tonalRamp": [
+          "#170600",
+          "#401B01",
+          "#663719",
+          "#8A583A",
+          "#B07B5D",
+          "#D7A080",
+          "#FCC3A2",
+          "#FEEADF"
+        ]
+      },
+      "night-action-container": {
+        "role": "secondary",
+        "displayName": "Matcha Wash (night)",
+        "canonical": "oklch(35.9% 0.062 128.4)",
+        "tonalRamp": [
+          "#060E00",
+          "#1D2C06",
+          "#3B4B26",
+          "#5B6D46",
+          "#7E9168",
+          "#A2B68C",
+          "#C5D9AE",
+          "#E2F7CB"
+        ]
+      },
+      "night-on-action-container": {
+        "role": "secondary",
+        "displayName": "On Matcha Wash (night)",
+        "canonical": "oklch(91.9% 0.054 124.6)",
+        "tonalRamp": [
+          "#080E00",
+          "#212B0A",
+          "#3F4A29",
+          "#5F6C49",
+          "#828F6B",
+          "#A6B48F",
+          "#C9D8B1",
+          "#E6F5CE"
+        ]
+      },
+      "night-veil": {
+        "role": "neutral",
+        "displayName": "Ink Veil (night)",
+        "canonical": "rgba(249, 244, 237, 0.12)"
+      },
+      "night-focus": {
+        "role": "secondary",
+        "displayName": "Deep Matcha (night)",
+        "canonical": "oklch(83.1% 0.120 126.1)",
+        "tonalRamp": [
+          "#070E00",
+          "#1E2C01",
+          "#384E04",
+          "#557215",
+          "#77963F",
+          "#9BBC65",
+          "#BDDF87",
+          "#DAFEA4"
+        ]
+      },
+      "night-leaf": {
+        "role": "secondary",
+        "displayName": "Leaf Matcha (night)",
+        "canonical": "oklch(78.3% 0.127 126.5)",
+        "tonalRamp": [
+          "#070E00",
+          "#1E2C02",
+          "#384E07",
+          "#537209",
+          "#759739",
+          "#99BD60",
+          "#BBE083",
+          "#D8FF9F"
+        ]
+      },
+      "night-on-leaf": {
+        "role": "secondary",
+        "displayName": "On Leaf (night)",
+        "canonical": "oklch(21.1% 0.004 48.5)",
+        "tonalRamp": [
+          "#0D0B0A",
+          "#262322",
+          "#413F3E",
+          "#5F5D5C",
+          "#7F7D7B",
+          "#A09E9C",
+          "#C3C0BF",
+          "#E7E4E2"
+        ]
+      },
+      "night-danger": {
+        "role": "neutral",
+        "displayName": "Danger (night)",
+        "canonical": "oklch(83.6% 0.092 34.0)",
+        "tonalRamp": [
+          "#1D0200",
+          "#490E02",
+          "#6E3022",
+          "#935142",
+          "#BA7464",
+          "#E29987",
+          "#FDC0B1",
+          "#FFE9E4"
+        ]
+      },
+      "night-on-danger": {
+        "role": "neutral",
+        "displayName": "On Danger (night)",
+        "canonical": "oklch(31.0% 0.105 32.7)",
+        "tonalRamp": [
+          "#1D0200",
+          "#4B0A01",
+          "#732B1D",
+          "#994D3E",
+          "#C0705F",
+          "#E89583",
+          "#FDC0B3",
+          "#FFE9E4"
+        ]
+      },
+      "night-ok": {
+        "role": "secondary",
+        "displayName": "Synced (night)",
+        "canonical": "oklch(78.3% 0.127 126.5)",
+        "tonalRamp": [
+          "#070E00",
+          "#1D2A01",
+          "#354A03",
+          "#506D11",
+          "#6E9032",
+          "#90B357",
+          "#B4D87B",
+          "#D8FF9F"
+        ]
+      },
+      "night-waiting": {
+        "role": "neutral",
+        "displayName": "Waiting (night)",
+        "canonical": "oklch(76.5% 0.133 72.5)",
+        "tonalRamp": [
+          "#130900",
+          "#372102",
+          "#5F3D06",
+          "#8B5A06",
+          "#B97A08",
+          "#E19F42",
+          "#FCC680",
+          "#FEEBD5"
+        ]
+      },
+      "night-scrim": {
+        "role": "neutral",
+        "displayName": "Scrim (night)",
+        "canonical": "rgba(10, 9, 8, 0.62)"
+      },
+      "night-highlight": {
+        "role": "primary",
+        "displayName": "Peach (night)",
+        "canonical": "oklch(37.9% 0.083 51.1)",
+        "tonalRamp": [
+          "#180600",
+          "#3F1B02",
+          "#673616",
+          "#8C5738",
+          "#B27A5A",
+          "#D99F7D",
+          "#FEC29F",
+          "#FFEADE"
+        ]
+      },
+      "night-viewer": {
+        "role": "neutral",
+        "displayName": "Viewer (night)",
+        "canonical": "oklch(0.0% 0.000 0.0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "night-shadow": {
+        "role": "neutral",
+        "displayName": "Bar Lift Shadow (night)",
+        "canonical": "rgba(0, 0, 0, 0.4)"
+      },
+      "pigment-yellow": {
+        "role": "tertiary",
+        "displayName": "Safran",
+        "canonical": "oklch(57.8% 0.121 68.1)",
+        "tonalRamp": [
+          "#140800",
+          "#361F03",
+          "#5D3907",
+          "#885408",
+          "#B17320",
+          "#D79649",
+          "#FDBA6E",
+          "#FFEBD6"
+        ]
+      },
+      "pigment-orange": {
+        "role": "tertiary",
+        "displayName": "Orange brûlé",
+        "canonical": "oklch(55.3% 0.174 38.4)",
+        "tonalRamp": [
+          "#1C0300",
+          "#471202",
+          "#782606",
+          "#AE3907",
+          "#DD5A2D",
+          "#FD8964",
+          "#FCC1AF",
+          "#FEE9E3"
+        ]
+      },
+      "pigment-red": {
+        "role": "tertiary",
+        "displayName": "Rouge",
+        "canonical": "oklch(53.2% 0.176 27.8)",
+        "tonalRamp": [
+          "#1E0001",
+          "#4E0304",
+          "#840A0C",
+          "#B52B25",
+          "#DF5449",
+          "#FB887B",
+          "#FEBFB6",
+          "#FFE9E5"
+        ]
+      },
+      "pigment-pink": {
+        "role": "tertiary",
+        "displayName": "Framboise",
+        "canonical": "oklch(47.4% 0.154 11.1)",
+        "tonalRamp": [
+          "#1E0005",
+          "#4D0119",
+          "#830330",
+          "#AB3550",
+          "#D45B72",
+          "#FF8196",
+          "#FEBDC5",
+          "#FFE8EA"
+        ]
+      },
+      "pigment-magenta": {
+        "role": "tertiary",
+        "displayName": "Bordeaux",
+        "canonical": "oklch(39.7% 0.125 10.8)",
+        "tonalRamp": [
+          "#1E0006",
+          "#4E0019",
+          "#791E34",
+          "#A04254",
+          "#C86677",
+          "#F18B9B",
+          "#FEBDC5",
+          "#FFE8EA"
+        ]
+      },
+      "pigment-lilac": {
+        "role": "tertiary",
+        "displayName": "Lavande",
+        "canonical": "oklch(57.4% 0.116 306.4)",
+        "tonalRamp": [
+          "#130023",
+          "#350E51",
+          "#553075",
+          "#77529A",
+          "#9B76C0",
+          "#C19AE8",
+          "#DFC3FE",
+          "#F3EAFE"
+        ]
+      },
+      "pigment-violet": {
+        "role": "tertiary",
+        "displayName": "Violet",
+        "canonical": "oklch(47.4% 0.109 305.7)",
+        "tonalRamp": [
+          "#130023",
+          "#34114F",
+          "#533372",
+          "#755497",
+          "#9977BD",
+          "#BF9CE5",
+          "#DEC4FC",
+          "#F3EAFF"
+        ]
+      },
+      "pigment-blue": {
+        "role": "tertiary",
+        "displayName": "Bleu",
+        "canonical": "oklch(46.9% 0.092 250.8)",
+        "tonalRamp": [
+          "#000B1D",
+          "#032749",
+          "#184774",
+          "#3B6999",
+          "#5E8DBF",
+          "#82B2E7",
+          "#B0D5FD",
+          "#E3F0FE"
+        ]
+      },
+      "pigment-sky": {
+        "role": "tertiary",
+        "displayName": "Sarcelle",
+        "canonical": "oklch(57.2% 0.082 195.1)",
+        "tonalRamp": [
+          "#000E0E",
+          "#002D2D",
+          "#025050",
+          "#157475",
+          "#439999",
+          "#6ABEBE",
+          "#8EE2E2",
+          "#B6FEFD"
+        ]
+      },
+      "pigment-green": {
+        "role": "tertiary",
+        "displayName": "Vert",
+        "canonical": "oklch(48.0% 0.075 163.8)",
+        "tonalRamp": [
+          "#000F08",
+          "#022F1F",
+          "#11513A",
+          "#38745A",
+          "#5C987D",
+          "#81BDA1",
+          "#A3E1C4",
+          "#C4FEE2"
+        ]
+      },
+      "pigment-olive": {
+        "role": "tertiary",
+        "displayName": "Olive",
+        "canonical": "oklch(56.6% 0.110 95.6)",
+        "tonalRamp": [
+          "#0F0B00",
+          "#2E2602",
+          "#524406",
+          "#786507",
+          "#9D882F",
+          "#C3AD57",
+          "#E7D17A",
+          "#FEEFB4"
+        ]
+      },
+      "pigment-ochre": {
+        "role": "tertiary",
+        "displayName": "Ocre",
+        "canonical": "oklch(53.5% 0.109 69.5)",
+        "tonalRamp": [
+          "#140800",
+          "#382102",
+          "#603C06",
+          "#8D5906",
+          "#B37C37",
+          "#DAA15E",
+          "#FCC587",
+          "#FEEBD7"
+        ]
+      },
+      "pigment-brown": {
+        "role": "tertiary",
+        "displayName": "Brun",
+        "canonical": "oklch(48.0% 0.108 51.6)",
+        "tonalRamp": [
+          "#170600",
+          "#401A00",
+          "#6D3201",
+          "#965224",
+          "#BC7549",
+          "#E49A6D",
+          "#FDC3A1",
+          "#FEEADE"
+        ]
+      },
+      "pigment-grey": {
+        "role": "tertiary",
+        "displayName": "Sauge",
+        "canonical": "oklch(56.8% 0.067 124.7)",
+        "tonalRamp": [
+          "#080E00",
+          "#1E2A03",
+          "#3A481E",
+          "#59683D",
+          "#798A5D",
+          "#9CAD7F",
+          "#BFD1A2",
+          "#E4F7C6"
+        ]
+      },
+      "night-pigment-yellow": {
+        "role": "tertiary",
+        "displayName": "Safran (night)",
+        "canonical": "oklch(76.5% 0.133 72.5)",
+        "tonalRamp": [
+          "#130900",
+          "#372102",
+          "#5F3D06",
+          "#8B5A06",
+          "#B97A08",
+          "#E19F42",
+          "#FCC680",
+          "#FEEBD5"
+        ]
+      },
+      "night-pigment-orange": {
+        "role": "tertiary",
+        "displayName": "Orange brûlé (night)",
+        "canonical": "oklch(69.7% 0.172 41.3)",
+        "tonalRamp": [
+          "#1A0400",
+          "#461400",
+          "#772700",
+          "#A9400E",
+          "#DB5C26",
+          "#FB8B60",
+          "#FEC1AA",
+          "#FFE9E1"
+        ]
+      },
+      "night-pigment-red": {
+        "role": "tertiary",
+        "displayName": "Rouge (night)",
+        "canonical": "oklch(67.2% 0.136 24.1)",
+        "tonalRamp": [
+          "#1F0001",
+          "#4F0008",
+          "#7E191D",
+          "#A63F3E",
+          "#CE6460",
+          "#F88983",
+          "#FCC0BB",
+          "#FEE9E7"
+        ]
+      },
+      "night-pigment-pink": {
+        "role": "tertiary",
+        "displayName": "Framboise (night)",
+        "canonical": "oklch(67.2% 0.136 5.4)",
+        "tonalRamp": [
+          "#1E0008",
+          "#4B041F",
+          "#7B173B",
+          "#A33E5B",
+          "#CB627D",
+          "#F587A2",
+          "#FDBDCA",
+          "#FFE8EC"
+        ]
+      },
+      "night-pigment-magenta": {
+        "role": "tertiary",
+        "displayName": "Bordeaux (night)",
+        "canonical": "oklch(61.6% 0.162 8.6)",
+        "tonalRamp": [
+          "#1D0006",
+          "#4C021C",
+          "#810834",
+          "#AD3153",
+          "#D75775",
+          "#FC829B",
+          "#FCBEC7",
+          "#FEE8EB"
+        ]
+      },
+      "night-pigment-lilac": {
+        "role": "tertiary",
+        "displayName": "Lavande (night)",
+        "canonical": "oklch(71.6% 0.076 307.3)",
+        "tonalRamp": [
+          "#140023",
+          "#301A43",
+          "#503965",
+          "#725A88",
+          "#957DAD",
+          "#BBA2D4",
+          "#DEC4F9",
+          "#F4EAFF"
+        ]
+      },
+      "night-pigment-violet": {
+        "role": "tertiary",
+        "displayName": "Violet (night)",
+        "canonical": "oklch(62.2% 0.102 306.2)",
+        "tonalRamp": [
+          "#130023",
+          "#33134C",
+          "#53346F",
+          "#755594",
+          "#9979BA",
+          "#BE9DE1",
+          "#DEC4FC",
+          "#F3EAFF"
+        ]
+      },
+      "night-pigment-blue": {
+        "role": "tertiary",
+        "displayName": "Bleu (night)",
+        "canonical": "oklch(62.5% 0.106 249.9)",
+        "tonalRamp": [
+          "#000C1C",
+          "#022748",
+          "#06477B",
+          "#3069A0",
+          "#548DC6",
+          "#79B3EE",
+          "#B0D5FD",
+          "#E2F0FF"
+        ]
+      },
+      "night-pigment-sky": {
+        "role": "tertiary",
+        "displayName": "Sarcelle (night)",
+        "canonical": "oklch(71.5% 0.104 195.1)",
+        "tonalRamp": [
+          "#000E0F",
+          "#032D2D",
+          "#0B4F4F",
+          "#107575",
+          "#169C9D",
+          "#4EC2C2",
+          "#75E6E6",
+          "#B5FEFE"
+        ]
+      },
+      "night-pigment-green": {
+        "role": "tertiary",
+        "displayName": "Vert (night)",
+        "canonical": "oklch(62.6% 0.102 163.0)",
+        "tonalRamp": [
+          "#000F07",
+          "#012F1E",
+          "#055238",
+          "#197855",
+          "#459C77",
+          "#6CC29B",
+          "#90E6BE",
+          "#C4FEE1"
+        ]
+      },
+      "night-pigment-olive": {
+        "role": "tertiary",
+        "displayName": "Olive (night)",
+        "canonical": "oklch(71.1% 0.140 95.3)",
+        "tonalRamp": [
+          "#0F0B00",
+          "#2F2601",
+          "#524403",
+          "#796500",
+          "#A0881C",
+          "#C9AC2F",
+          "#EDD05A",
+          "#FEEFB3"
+        ]
+      },
+      "night-pigment-ochre": {
+        "role": "tertiary",
+        "displayName": "Ocre (night)",
+        "canonical": "oklch(68.4% 0.141 69.1)",
+        "tonalRamp": [
+          "#140800",
+          "#392000",
+          "#623B00",
+          "#8D590E",
+          "#BC7815",
+          "#E79C39",
+          "#FFC583",
+          "#FFEBD6"
+        ]
+      },
+      "night-pigment-brown": {
+        "role": "tertiary",
+        "displayName": "Brun (night)",
+        "canonical": "oklch(63.1% 0.146 51.1)",
+        "tonalRamp": [
+          "#180600",
+          "#3F1B03",
+          "#6C3309",
+          "#9D4C0D",
+          "#CD6B26",
+          "#F69050",
+          "#FDC2A0",
+          "#FFEADE"
+        ]
+      },
+      "night-pigment-grey": {
+        "role": "tertiary",
+        "displayName": "Sauge (night)",
+        "canonical": "oklch(75.5% 0.049 123.4)",
+        "tonalRamp": [
+          "#080D00",
+          "#222A0D",
+          "#404A2C",
+          "#606B4C",
+          "#838E6E",
+          "#A8B492",
+          "#CAD7B4",
+          "#E8F5D1"
+        ]
+      },
+      "wash-yellow": {
+        "role": "tertiary",
+        "displayName": "Safran Wash",
+        "canonical": "oklch(93.5% 0.064 91.8)",
+        "tonalRamp": [
+          "#100A00",
+          "#302503",
+          "#514417",
+          "#736539",
+          "#97885B",
+          "#BDAD7F",
+          "#E0D0A1",
+          "#FEEEBE"
+        ],
+        "note": "Washes are derived in palette.ts (noteTint): OKLCH lightness 0.936 by day; at night lightness 0.315 with chroma min(0.045, day chroma x 0.82) (Safran 0.322, chroma 0.05, hue 84), hue and chroma per pigment from WASHES."
+      },
+      "wash-orange": {
+        "role": "tertiary",
+        "displayName": "Orange brûlé Wash",
+        "canonical": "oklch(93.7% 0.035 49.2)",
+        "tonalRamp": [
+          "#170601",
+          "#352117",
+          "#554034",
+          "#776054",
+          "#9C8377",
+          "#C1A89B",
+          "#E5CBBD",
+          "#FEEADF"
+        ]
+      },
+      "wash-red": {
+        "role": "tertiary",
+        "displayName": "Rouge Wash",
+        "canonical": "oklch(93.7% 0.030 27.8)",
+        "tonalRamp": [
+          "#160605",
+          "#34211E",
+          "#543F3C",
+          "#77605C",
+          "#9B837F",
+          "#C1A7A3",
+          "#E4CAC6",
+          "#FFE9E6"
+        ]
+      },
+      "wash-pink": {
+        "role": "tertiary",
+        "displayName": "Framboise Wash",
+        "canonical": "oklch(93.5% 0.033 1.4)",
+        "tonalRamp": [
+          "#16050A",
+          "#342025",
+          "#553E44",
+          "#775E65",
+          "#9B8188",
+          "#C1A6AC",
+          "#E5C8CF",
+          "#FEE8ED"
+        ]
+      },
+      "wash-magenta": {
+        "role": "tertiary",
+        "displayName": "Bordeaux Wash",
+        "canonical": "oklch(93.7% 0.042 338.1)",
+        "tonalRamp": [
+          "#160411",
+          "#341E2D",
+          "#543C4D",
+          "#775D6E",
+          "#9B8092",
+          "#C0A4B7",
+          "#E4C7DB",
+          "#FFE6F6"
+        ]
+      },
+      "wash-lilac": {
+        "role": "tertiary",
+        "displayName": "Lavande Wash",
+        "canonical": "oklch(93.6% 0.037 306.4)",
+        "tonalRamp": [
+          "#0F0717",
+          "#2B2235",
+          "#4A4055",
+          "#6B6177",
+          "#8F849B",
+          "#B4A8C1",
+          "#D7CBE5",
+          "#F3EAFF"
+        ]
+      },
+      "wash-violet": {
+        "role": "tertiary",
+        "displayName": "Violet Wash",
+        "canonical": "oklch(93.5% 0.030 279.6)",
+        "tonalRamp": [
+          "#090917",
+          "#232535",
+          "#414455",
+          "#626577",
+          "#85889B",
+          "#AAACC1",
+          "#CCCFE5",
+          "#EBEDFF"
+        ]
+      },
+      "wash-blue": {
+        "role": "tertiary",
+        "displayName": "Bleu Wash",
+        "canonical": "oklch(93.5% 0.031 248.2)",
+        "tonalRamp": [
+          "#020C18",
+          "#1A2835",
+          "#384755",
+          "#586877",
+          "#7B8B9C",
+          "#9FB0C1",
+          "#C2D3E5",
+          "#E2F0FF"
+        ]
+      },
+      "wash-sky": {
+        "role": "tertiary",
+        "displayName": "Sarcelle Wash",
+        "canonical": "oklch(93.7% 0.040 196.5)",
+        "tonalRamp": [
+          "#000E0F",
+          "#082C2D",
+          "#294C4C",
+          "#4A6E6E",
+          "#6D9191",
+          "#91B6B6",
+          "#B3DADA",
+          "#D0F7F7"
+        ]
+      },
+      "wash-green": {
+        "role": "tertiary",
+        "displayName": "Vert Wash",
+        "canonical": "oklch(93.7% 0.040 160.1)",
+        "tonalRamp": [
+          "#000F06",
+          "#132C20",
+          "#324C3E",
+          "#526E5E",
+          "#759181",
+          "#99B6A5",
+          "#BBDAC8",
+          "#D8F7E5"
+        ]
+      },
+      "wash-olive": {
+        "role": "tertiary",
+        "displayName": "Olive Wash",
+        "canonical": "oklch(93.6% 0.050 112.2)",
+        "tonalRamp": [
+          "#0B0C00",
+          "#272908",
+          "#454828",
+          "#666948",
+          "#898D6A",
+          "#AEB28D",
+          "#D1D5B0",
+          "#EFF3CC"
+        ]
+      },
+      "wash-ochre": {
+        "role": "tertiary",
+        "displayName": "Ocre Wash",
+        "canonical": "oklch(93.5% 0.047 71.3)",
+        "tonalRamp": [
+          "#140800",
+          "#352209",
+          "#554128",
+          "#776248",
+          "#9C856A",
+          "#C1AA8E",
+          "#E5CDB0",
+          "#FEEBD6"
+        ]
+      },
+      "wash-brown": {
+        "role": "tertiary",
+        "displayName": "Brun Wash",
+        "canonical": "oklch(93.5% 0.030 56.0)",
+        "tonalRamp": [
+          "#140802",
+          "#322318",
+          "#524136",
+          "#746256",
+          "#988578",
+          "#BDAA9C",
+          "#E1CCBF",
+          "#FEEADD"
+        ]
+      },
+      "wash-grey": {
+        "role": "tertiary",
+        "displayName": "Sauge Wash",
+        "canonical": "oklch(93.6% 0.023 128.7)",
+        "tonalRamp": [
+          "#080D04",
+          "#23291D",
+          "#41483B",
+          "#62695B",
+          "#858C7E",
+          "#A9B1A2",
+          "#CCD4C4",
+          "#EAF2E2"
+        ]
+      },
+      "night-wash-yellow": {
+        "role": "tertiary",
+        "displayName": "Safran Wash (night)",
+        "canonical": "oklch(32.1% 0.050 84.8)",
+        "tonalRamp": [
+          "#110A00",
+          "#2F2202",
+          "#4C3E1F",
+          "#6B5C3C",
+          "#8B7B5B",
+          "#AD9C7B",
+          "#D0BF9C",
+          "#F4E3BF"
+        ]
+      },
+      "night-wash-orange": {
+        "role": "tertiary",
+        "displayName": "Orange brûlé Wash (night)",
+        "canonical": "oklch(31.4% 0.045 47.2)",
+        "tonalRamp": [
+          "#190500",
+          "#361D10",
+          "#54382B",
+          "#735648",
+          "#947667",
+          "#B79787",
+          "#DAB9A9",
+          "#FDDDCD"
+        ]
+      },
+      "night-wash-red": {
+        "role": "tertiary",
+        "displayName": "Rouge Wash (night)",
+        "canonical": "oklch(31.4% 0.046 26.1)",
+        "tonalRamp": [
+          "#1B0303",
+          "#371B18",
+          "#563633",
+          "#765450",
+          "#97736F",
+          "#B99490",
+          "#DDB6B2",
+          "#FEDBD7"
+        ]
+      },
+      "night-wash-pink": {
+        "role": "tertiary",
+        "displayName": "Framboise Wash (night)",
+        "canonical": "oklch(31.6% 0.040 2.1)",
+        "tonalRamp": [
+          "#18040A",
+          "#341B22",
+          "#52373E",
+          "#72545C",
+          "#93747B",
+          "#B5949C",
+          "#D8B7BF",
+          "#FDDAE2"
+        ]
+      },
+      "night-wash-magenta": {
+        "role": "tertiary",
+        "displayName": "Bordeaux Wash (night)",
+        "canonical": "oklch(31.4% 0.037 338.0)",
+        "tonalRamp": [
+          "#150511",
+          "#301D2A",
+          "#4D3847",
+          "#6C5665",
+          "#8D7585",
+          "#AF96A7",
+          "#D2B8C9",
+          "#F6DCED"
+        ]
+      },
+      "night-wash-lilac": {
+        "role": "tertiary",
+        "displayName": "Lavande Wash (night)",
+        "canonical": "oklch(31.6% 0.037 304.9)",
+        "tonalRamp": [
+          "#0F0717",
+          "#281F32",
+          "#443B50",
+          "#62596F",
+          "#82788F",
+          "#A499B1",
+          "#C6BBD5",
+          "#EADFF9"
+        ]
+      },
+      "night-wash-violet": {
+        "role": "tertiary",
+        "displayName": "Violet Wash (night)",
+        "canonical": "oklch(31.6% 0.040 277.9)",
+        "tonalRamp": [
+          "#08091B",
+          "#1F2237",
+          "#3B3E55",
+          "#585C74",
+          "#777B95",
+          "#989DB7",
+          "#BABFDB",
+          "#DEE3FE"
+        ]
+      },
+      "night-wash-blue": {
+        "role": "tertiary",
+        "displayName": "Bleu Wash (night)",
+        "canonical": "oklch(31.4% 0.034 247.4)",
+        "tonalRamp": [
+          "#010C19",
+          "#162634",
+          "#314251",
+          "#4E6070",
+          "#6D8091",
+          "#8EA1B3",
+          "#B0C4D6",
+          "#D3E7FB"
+        ]
+      },
+      "night-wash-sky": {
+        "role": "tertiary",
+        "displayName": "Sarcelle Wash (night)",
+        "canonical": "oklch(31.6% 0.033 198.7)",
+        "tonalRamp": [
+          "#000E0F",
+          "#0E292A",
+          "#2A4546",
+          "#486465",
+          "#678485",
+          "#87A5A6",
+          "#A9C8C9",
+          "#CCECED"
+        ]
+      },
+      "night-wash-green": {
+        "role": "tertiary",
+        "displayName": "Vert Wash (night)",
+        "canonical": "oklch(31.6% 0.033 159.7)",
+        "tonalRamp": [
+          "#000F07",
+          "#15291E",
+          "#31453A",
+          "#4E6457",
+          "#6D8477",
+          "#8EA597",
+          "#B0C8BA",
+          "#D3ECDD"
+        ]
+      },
+      "night-wash-olive": {
+        "role": "tertiary",
+        "displayName": "Olive Wash (night)",
+        "canonical": "oklch(31.6% 0.041 112.5)",
+        "tonalRamp": [
+          "#0B0C00",
+          "#24260D",
+          "#404229",
+          "#5E6046",
+          "#7D8064",
+          "#9EA185",
+          "#C1C4A6",
+          "#E4E8C9"
+        ]
+      },
+      "night-wash-ochre": {
+        "role": "tertiary",
+        "displayName": "Ocre Wash (night)",
+        "canonical": "oklch(31.6% 0.046 72.8)",
+        "tonalRamp": [
+          "#130900",
+          "#312008",
+          "#4F3C24",
+          "#6E5A41",
+          "#8E795F",
+          "#B09A80",
+          "#D4BDA1",
+          "#F8E1C4"
+        ]
+      },
+      "night-wash-brown": {
+        "role": "tertiary",
+        "displayName": "Brun Wash (night)",
+        "canonical": "oklch(31.5% 0.025 61.6)",
+        "tonalRamp": [
+          "#130903",
+          "#2D2118",
+          "#4A3D33",
+          "#685B50",
+          "#887A6F",
+          "#AA9B8F",
+          "#CDBEB1",
+          "#F1E1D5"
+        ]
+      },
+      "night-wash-grey": {
+        "role": "tertiary",
+        "displayName": "Sauge Wash (night)",
+        "canonical": "oklch(31.4% 0.017 126.9)",
+        "tonalRamp": [
+          "#090C06",
+          "#22261D",
+          "#3D4138",
+          "#5B5F56",
+          "#7A7F75",
+          "#9CA096",
+          "#BEC3B8",
+          "#E1E7DB"
+        ]
+      },
+      "text-yellow": {
+        "role": "tertiary",
+        "displayName": "Text Safran",
+        "note": "A pigment as words on a page (`--line-yellow-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(48.3% 0.105 67.6)",
+        "tonalRamp": [
+          "#140800",
+          "#371E00",
+          "#5F3800",
+          "#885408",
+          "#AC7535",
+          "#D19859",
+          "#F7BC7D",
+          "#FFEBD6"
+        ]
+      },
+      "text-orange": {
+        "role": "tertiary",
+        "displayName": "Text Orange brûlé",
+        "note": "A pigment as words on a page (`--line-orange-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(49.3% 0.150 38.6)",
+        "tonalRamp": [
+          "#1C0300",
+          "#461000",
+          "#752100",
+          "#A43910",
+          "#CB5D38",
+          "#F2805B",
+          "#FFB49C",
+          "#FFE9E2"
+        ]
+      },
+      "text-red": {
+        "role": "tertiary",
+        "displayName": "Text Rouge",
+        "note": "A pigment as words on a page (`--line-red-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(49.8% 0.176 27.9)",
+        "tonalRamp": [
+          "#1F0000",
+          "#4D0002",
+          "#810005",
+          "#AF241F",
+          "#D74D42",
+          "#FF7365",
+          "#FFB3A8",
+          "#FFE9E5"
+        ]
+      },
+      "text-pink": {
+        "role": "tertiary",
+        "displayName": "Text Framboise",
+        "note": "A pigment as words on a page (`--line-pink-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(47.4% 0.154 11.1)",
+        "tonalRamp": [
+          "#1E0005",
+          "#4B0018",
+          "#7E002D",
+          "#A52F4B",
+          "#CD546B",
+          "#F5788D",
+          "#FFB0BA",
+          "#FFE8EA"
+        ]
+      },
+      "text-magenta": {
+        "role": "tertiary",
+        "displayName": "Text Bordeaux",
+        "note": "A pigment as words on a page (`--line-magenta-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(39.7% 0.125 10.8)",
+        "tonalRamp": [
+          "#1E0005",
+          "#4B0018",
+          "#751A31",
+          "#9A3D50",
+          "#C05F70",
+          "#E78292",
+          "#FFB0BA",
+          "#FFE8EA"
+        ]
+      },
+      "text-lilac": {
+        "role": "tertiary",
+        "displayName": "Text Lavande",
+        "note": "A pigment as words on a page (`--line-lilac-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(48.8% 0.116 306.6)",
+        "tonalRamp": [
+          "#140024",
+          "#340B50",
+          "#522D71",
+          "#724D94",
+          "#946FB9",
+          "#B891DE",
+          "#DBB7FF",
+          "#F4EAFF"
+        ]
+      },
+      "text-violet": {
+        "role": "tertiary",
+        "displayName": "Text Violet",
+        "note": "A pigment as words on a page (`--line-violet-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(47.4% 0.109 305.7)",
+        "tonalRamp": [
+          "#140025",
+          "#320F4E",
+          "#502F6F",
+          "#704F92",
+          "#9270B6",
+          "#B693DB",
+          "#D9B8FF",
+          "#F3EAFF"
+        ]
+      },
+      "text-blue": {
+        "role": "tertiary",
+        "displayName": "Text Bleu",
+        "note": "A pigment as words on a page (`--line-blue-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(46.9% 0.092 250.8)",
+        "tonalRamp": [
+          "#000B1D",
+          "#002649",
+          "#144471",
+          "#366494",
+          "#5786B8",
+          "#79A9DD",
+          "#A0CEFF",
+          "#E3F0FF"
+        ]
+      },
+      "text-sky": {
+        "role": "tertiary",
+        "displayName": "Text Sarcelle",
+        "note": "A pigment as words on a page (`--line-sky-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(46.7% 0.076 194.9)",
+        "tonalRamp": [
+          "#000E0F",
+          "#002C2C",
+          "#004C4C",
+          "#1A6F6E",
+          "#439190",
+          "#67B4B4",
+          "#8CD9D8",
+          "#B2FFFE"
+        ]
+      },
+      "text-green": {
+        "role": "tertiary",
+        "displayName": "Text Vert",
+        "note": "A pigment as words on a page (`--line-green-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(46.6% 0.076 163.8)",
+        "tonalRamp": [
+          "#000F07",
+          "#002D1D",
+          "#0B4E37",
+          "#326F55",
+          "#559176",
+          "#77B498",
+          "#9BD9BC",
+          "#C1FFE1"
+        ]
+      },
+      "text-olive": {
+        "role": "tertiary",
+        "displayName": "Text Olive",
+        "note": "A pigment as words on a page (`--line-olive-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(47.5% 0.095 95.1)",
+        "tonalRamp": [
+          "#0F0B00",
+          "#2D2400",
+          "#4F4100",
+          "#726011",
+          "#948239",
+          "#B7A55D",
+          "#DCC980",
+          "#FFEFB1"
+        ]
+      },
+      "text-ochre": {
+        "role": "tertiary",
+        "displayName": "Text Ocre",
+        "note": "A pigment as words on a page (`--line-ochre-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(47.8% 0.101 69.3)",
+        "tonalRamp": [
+          "#140800",
+          "#371F00",
+          "#5E3800",
+          "#855510",
+          "#A97739",
+          "#CE995C",
+          "#F4BE80",
+          "#FFEBD5"
+        ]
+      },
+      "text-brown": {
+        "role": "tertiary",
+        "displayName": "Text Brun",
+        "note": "A pigment as words on a page (`--line-brown-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(48.0% 0.108 51.6)",
+        "tonalRamp": [
+          "#180600",
+          "#3E1900",
+          "#692F00",
+          "#904D1E",
+          "#B56E42",
+          "#DB9164",
+          "#FFB68B",
+          "#FFEADE"
+        ]
+      },
+      "text-grey": {
+        "role": "tertiary",
+        "displayName": "Text Sauge",
+        "note": "A pigment as words on a page (`--line-grey-text`): its hue darkened by day until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(47.2% 0.066 124.9)",
+        "tonalRamp": [
+          "#080E00",
+          "#1E2A00",
+          "#3A481F",
+          "#59683E",
+          "#798A5E",
+          "#9CAD7F",
+          "#BFD1A3",
+          "#E4F7C7"
+        ]
+      },
+      "night-text-yellow": {
+        "role": "tertiary",
+        "displayName": "Text Safran (night)",
+        "note": "A pigment as words on a page (`--line-yellow-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(76.5% 0.133 72.5)",
+        "tonalRamp": [
+          "#140800",
+          "#362000",
+          "#5C3A00",
+          "#855600",
+          "#B17400",
+          "#D79637",
+          "#FEBB5F",
+          "#FFEBD3"
+        ]
+      },
+      "night-text-orange": {
+        "role": "tertiary",
+        "displayName": "Text Orange brûlé (night)",
+        "note": "A pigment as words on a page (`--line-orange-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.2% 0.172 41.4)",
+        "tonalRamp": [
+          "#1B0400",
+          "#441300",
+          "#722600",
+          "#A43A00",
+          "#D3551C",
+          "#FB7A46",
+          "#FFB599",
+          "#FFE9E1"
+        ]
+      },
+      "night-text-red": {
+        "role": "tertiary",
+        "displayName": "Text Rouge (night)",
+        "note": "A pigment as words on a page (`--line-red-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.2% 0.136 23.8)",
+        "tonalRamp": [
+          "#1F0001",
+          "#4D0008",
+          "#7B141B",
+          "#A03A39",
+          "#C75D59",
+          "#EE807B",
+          "#FFB2AD",
+          "#FFE8E6"
+        ]
+      },
+      "night-text-pink": {
+        "role": "tertiary",
+        "displayName": "Text Framboise (night)",
+        "note": "A pigment as words on a page (`--line-pink-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.2% 0.137 5.4)",
+        "tonalRamp": [
+          "#1E0008",
+          "#4B001E",
+          "#781238",
+          "#9D3856",
+          "#C45B77",
+          "#EB7E99",
+          "#FFAFC0",
+          "#FFE8EC"
+        ]
+      },
+      "night-text-magenta": {
+        "role": "tertiary",
+        "displayName": "Text Bordeaux (night)",
+        "note": "A pigment as words on a page (`--line-magenta-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.6% 0.161 8.6)",
+        "tonalRamp": [
+          "#1E0006",
+          "#4B001A",
+          "#7E0031",
+          "#A72B4F",
+          "#CF516F",
+          "#F77591",
+          "#FFB0BD",
+          "#FFE8EB"
+        ]
+      },
+      "night-text-lilac": {
+        "role": "tertiary",
+        "displayName": "Text Lavande (night)",
+        "note": "A pigment as words on a page (`--line-lilac-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.6% 0.076 307.3)",
+        "tonalRamp": [
+          "#140023",
+          "#2F1941",
+          "#4D3661",
+          "#6D5583",
+          "#8E76A6",
+          "#B299CB",
+          "#D6BDF0",
+          "#F4EAFF"
+        ]
+      },
+      "night-text-violet": {
+        "role": "tertiary",
+        "displayName": "Text Violet (night)",
+        "note": "A pigment as words on a page (`--line-violet-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(70.7% 0.101 305.8)",
+        "tonalRamp": [
+          "#140025",
+          "#31124B",
+          "#4F316C",
+          "#6F518F",
+          "#9172B3",
+          "#B594D8",
+          "#D9B8FE",
+          "#F3EAFF"
+        ]
+      },
+      "night-text-blue": {
+        "role": "tertiary",
+        "displayName": "Text Bleu (night)",
+        "note": "A pigment as words on a page (`--line-blue-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(69.6% 0.105 249.6)",
+        "tonalRamp": [
+          "#000C1C",
+          "#002647",
+          "#014477",
+          "#2B649A",
+          "#4D87BF",
+          "#70AAE4",
+          "#9FCEFF",
+          "#E2F0FF"
+        ]
+      },
+      "night-text-sky": {
+        "role": "tertiary",
+        "displayName": "Text Sarcelle (night)",
+        "note": "A pigment as words on a page (`--line-sky-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.5% 0.104 195.1)",
+        "tonalRamp": [
+          "#000E0F",
+          "#002C2C",
+          "#004C4D",
+          "#007070",
+          "#009596",
+          "#43B9B9",
+          "#6CDEDE",
+          "#B2FFFE"
+        ]
+      },
+      "night-text-green": {
+        "role": "tertiary",
+        "displayName": "Text Vert (night)",
+        "note": "A pigment as words on a page (`--line-green-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(68.0% 0.102 162.9)",
+        "tonalRamp": [
+          "#000F07",
+          "#002D1D",
+          "#004F35",
+          "#107350",
+          "#3E9570",
+          "#63B993",
+          "#88DEB6",
+          "#C1FFE0"
+        ]
+      },
+      "night-text-olive": {
+        "role": "tertiary",
+        "displayName": "Text Olive (night)",
+        "note": "A pigment as words on a page (`--line-olive-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(71.1% 0.140 95.3)",
+        "tonalRamp": [
+          "#0F0B00",
+          "#2D2400",
+          "#4F4100",
+          "#736000",
+          "#9A8100",
+          "#C0A321",
+          "#E5C851",
+          "#FFEFB1"
+        ]
+      },
+      "night-text-ochre": {
+        "role": "tertiary",
+        "displayName": "Text Ocre (night)",
+        "note": "A pigment as words on a page (`--line-ochre-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(70.0% 0.141 69.2)",
+        "tonalRamp": [
+          "#140800",
+          "#371F00",
+          "#5E3800",
+          "#885400",
+          "#B47100",
+          "#DD932E",
+          "#FFB966",
+          "#FFEBD5"
+        ]
+      },
+      "night-text-brown": {
+        "role": "tertiary",
+        "displayName": "Text Brun (night)",
+        "note": "A pigment as words on a page (`--line-brown-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(70.6% 0.147 50.9)",
+        "tonalRamp": [
+          "#180500",
+          "#3E1900",
+          "#6A2F00",
+          "#984700",
+          "#C5631C",
+          "#EC8746",
+          "#FFB68C",
+          "#FFEADE"
+        ]
+      },
+      "night-text-grey": {
+        "role": "tertiary",
+        "displayName": "Text Sauge (night)",
+        "note": "A pigment as words on a page (`--line-grey-text`): its hue lightened at night until it holds 4.5:1 on every paper, the well and every wash.",
+        "canonical": "oklch(75.5% 0.049 123.4)",
+        "tonalRamp": [
+          "#080E00",
+          "#20290C",
+          "#3D4629",
+          "#5C6647",
+          "#7C8867",
+          "#9FAB89",
+          "#C3CFAC",
+          "#E8F5D1"
+        ]
+      },
+      "on-pigment-dark": {
+        "role": "tertiary",
+        "displayName": "Ink On Pigment",
+        "canonical": "oklch(23.7% 0.004 48.6)",
+        "tonalRamp": [
+          "#0C0B0A",
+          "#282625",
+          "#474443",
+          "#686564",
+          "#8B8887",
+          "#B0ADAC",
+          "#D3D0CF",
+          "#F1EEEC"
+        ]
+      },
+      "on-pigment-light": {
+        "role": "tertiary",
+        "displayName": "Cream On Pigment",
+        "canonical": "oklch(96.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0E0B07",
+          "#292621",
+          "#48443F",
+          "#6A655F",
+          "#8D8882",
+          "#B2ADA7",
+          "#D5D0C9",
+          "#F3EEE7"
+        ]
+      },
+      "night-on-pigment": {
+        "role": "tertiary",
+        "displayName": "Ink On Pigment (night)",
+        "canonical": "oklch(21.1% 0.004 48.5)",
+        "tonalRamp": [
+          "#0D0B0A",
+          "#262322",
+          "#413F3E",
+          "#5F5D5C",
+          "#7F7D7B",
+          "#A09E9C",
+          "#C3C0BF",
+          "#E7E4E2"
+        ]
+      },
+      "mark-tile": {
+        "role": "secondary",
+        "displayName": "Mark Matcha",
+        "canonical": "oklch(58.0% 0.129 132.9)",
+        "tonalRamp": [
+          "#050F00",
+          "#162C01",
+          "#2B4D03",
+          "#427012",
+          "#63923B",
+          "#85B65E",
+          "#A8DB82",
+          "#D4FEB6"
+        ]
+      },
+      "mark-card": {
+        "role": "neutral",
+        "displayName": "Mark Beige",
+        "canonical": "oklch(93.8% 0.029 89.6)",
+        "tonalRamp": [
+          "#100A00",
+          "#2B2414",
+          "#484130",
+          "#68614F",
+          "#89826F",
+          "#ACA591",
+          "#D0C9B4",
+          "#F6EED9"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "A collection's name on its own page, the welcome."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Screen and sheet titles."
+      },
+      "editor-title": {
+        "displayName": "Editor title",
+        "purpose": "The editor's note title."
+      },
+      "editor-body": {
+        "displayName": "Editor body",
+        "purpose": "The note editor."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Sentence-case group heads in ink-muted."
+      },
+      "card-title": {
+        "displayName": "Card title",
+        "purpose": "A card title; same size as card body, weight carries rank."
+      },
+      "card-body": {
+        "displayName": "Card body",
+        "purpose": "Text inside a card."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Lists, settings, the slip's message."
+      },
+      "body-strong": {
+        "displayName": "Body strong",
+        "purpose": "Emphasis in lists and settings."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Counts, dates, label names, in ink-muted."
+      },
+      "meta-strong": {
+        "displayName": "Meta strong",
+        "purpose": "Field labels above fields."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons and chips."
+      },
+      "label-small": {
+        "displayName": "Label small",
+        "purpose": "Counts and the stamp."
+      },
+      "price": {
+        "displayName": "Price",
+        "purpose": "Prices, tabular figures."
+      },
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "A page's title (web); 30/37 under 720px."
+      },
+      "page-h1": {
+        "displayName": "Titre 1",
+        "purpose": "The first heading level in a page (web)."
+      },
+      "page-h2": {
+        "displayName": "Titre 2",
+        "purpose": "The second heading level in a page (web)."
+      },
+      "page-h3": {
+        "displayName": "Titre 3",
+        "purpose": "The third heading level in a page (web)."
+      },
+      "page-h4": {
+        "displayName": "Titre 4",
+        "purpose": "The fourth heading level in a page (web)."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Code blocks in pages (the system's monospace); inline code at 0.86em on the well."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 1px rgba(46, 43, 37, 0.05), 0 2px 6px rgba(46, 43, 37, 0.05)",
+        "night": "0 1px 2px rgba(0, 0, 0, 0.35)",
+        "purpose": "Cards, chips, the search strip, the composer at rest, the chosen segment."
+      },
+      {
+        "name": "raised",
+        "value": "0 2px 3px rgba(46, 43, 37, 0.08), 0 6px 14px rgba(46, 43, 37, 0.09)",
+        "night": "0 2px 6px rgba(0, 0, 0, 0.45)",
+        "purpose": "A card or the composer under the pointer."
+      },
+      {
+        "name": "float",
+        "value": "0 4px 10px rgba(46, 43, 37, 0.12), 0 14px 30px rgba(46, 43, 37, 0.14)",
+        "night": "0 6px 20px rgba(0, 0, 0, 0.6)",
+        "purpose": "Sheets, dialogs, menus, the drawer, the slip."
+      },
+      {
+        "name": "bar-lift",
+        "value": "0 -1px 3px color-mix(in srgb, var(--shadow) 70%, transparent), 0 -6px 16px color-mix(in srgb, var(--shadow) 60%, transparent)",
+        "purpose": "The web bottom bar alone, cast upwards from the screen edge."
+      },
+      {
+        "name": "drop",
+        "value": "filter: drop-shadow(...) per lift layer, blur halved (--drop-card, --drop-raised, --drop-float)",
+        "purpose": "The same lifts cast from an unclipped wrapper around a container clipped to its outline."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "State changes (M3 standard)."
+      },
+      {
+        "name": "ease-decelerate",
+        "value": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+        "purpose": "Things arriving: the slip, the bottom bar."
+      },
+      {
+        "name": "ease-accelerate",
+        "value": "cubic-bezier(0.3, 0, 0.8, 0.15)",
+        "purpose": "Things leaving."
+      },
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Web press scales and entrances."
+      },
+      {
+        "name": "ease-land",
+        "value": "cubic-bezier(0.34, 1.45, 0.52, 1)",
+        "purpose": "The snip alone: a collection emblem landing (phone: spring damping 12, stiffness 240, mass 0.6)."
+      },
+      {
+        "name": "duration-short",
+        "value": "150ms",
+        "purpose": "Press, hover, fades."
+      },
+      {
+        "name": "duration-medium",
+        "value": "250ms",
+        "purpose": "Entrances, list reflow, the chosen segment sliding."
+      },
+      {
+        "name": "duration-long",
+        "value": "300ms",
+        "purpose": "A sheet or the drawer arriving, the slip of the snip arriving."
+      },
+      {
+        "name": "duration-exit",
+        "value": "200ms",
+        "purpose": "A sheet, the drawer or the slip leaving (M3's exit); smaller things leave in duration-short."
+      },
+      {
+        "name": "duration-transfer",
+        "value": "900ms",
+        "purpose": "One stroke of the scissors along the cut line."
+      },
+      {
+        "name": "spring-spatial",
+        "value": "stiffness 700, damping 47.6, mass 1 (damping ratio 0.9)",
+        "purpose": "Phone: something a gesture let go of settling back to rest, with the hand's velocity (M3 spatial)."
+      },
+      {
+        "name": "spring-spatial-slow",
+        "value": "stiffness 300, damping 31.2, mass 1 (damping ratio 0.9)",
+        "purpose": "Phone: a sheet or the drawer going back under the hand."
+      },
+      {
+        "name": "throw",
+        "value": "ease-out quad over 2 x distance / speed (120 to 280ms); slow releases: ease-accelerate over duration-exit",
+        "purpose": "Phone: something let go past its threshold leaves keeping the hand's speed (throwTo in src/ui/theme/motion.ts)."
+      },
+      {
+        "name": "press-tint",
+        "value": "rgba(32, 30, 29, 0.08) day / rgba(249, 244, 237, 0.08) night",
+        "purpose": "Tappable's in-shape press on the phone; onFill rgba(32, 30, 29, 0.16) day / rgba(26, 24, 23, 0.16) night; onDark rgba(249, 244, 237, 0.18). On the web: 6% of the control's ink under a hovering pointer, 10% under the press (a link-coloured control 8% and 12%), inside the control's own shape."
+      },
+      {
+        "name": "ease-spring",
+        "value": "cubic-bezier(0.42, 1.67, 0.21, 0.9)",
+        "purpose": "A pressed pebble's spring back to rest (380ms); the phone's PathInterpolator takes the same numbers."
+      },
+      {
+        "name": "pebble-give",
+        "value": "90ms ease-out (phone: decelerate) in, 380ms ease-spring back",
+        "purpose": "The pebble gives 0.62 of the way toward round under the press and springs back; sheets never change shape."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "max-width: 719px"
+      },
+      {
+        "name": "fold-link",
+        "value": "max-width: 899px"
+      },
+      {
+        "name": "docked-nav",
+        "value": "min-width: 1100px"
+      },
+      {
+        "name": "coarse-pointer",
+        "value": "pointer: coarse"
+      }
+    ],
+    "grain": {
+      "day": 0.16,
+      "night": 0.08,
+      "tile": "200px from a 256px procedural source",
+      "source": "web/build/tokens.ts GRAIN and src/ui/theme/theme.ts",
+      "note": "One layer per surface, never stacked. The phone theme (src/ui/theme/theme.ts `grain`) carries the same values."
+    },
+    "gradients": {
+      "aube": {
+        "displayName": "Aube",
+        "light": {
+          "base": "#F7E8DF",
+          "glows": [
+            {
+              "color": "#FFE3CC",
+              "x": 8,
+              "y": 6,
+              "reach": 62
+            },
+            {
+              "color": "#FFE0F0",
+              "x": 96,
+              "y": 24,
+              "reach": 58
+            },
+            {
+              "color": "#EDE5FF",
+              "x": 62,
+              "y": 104,
+              "reach": 66
+            }
+          ]
+        },
+        "dark": {
+          "base": "#2C2329",
+          "glows": [
+            {
+              "color": "#4F2B1A",
+              "x": 8,
+              "y": 6,
+              "reach": 62
+            },
+            {
+              "color": "#4C2942",
+              "x": 96,
+              "y": 24,
+              "reach": 58
+            },
+            {
+              "color": "#342F5C",
+              "x": 62,
+              "y": 104,
+              "reach": 66
+            }
+          ]
+        }
+      },
+      "lagon": {
+        "displayName": "Lagon",
+        "light": {
+          "base": "#E3F1ED",
+          "glows": [
+            {
+              "color": "#CCF1E0",
+              "x": 4,
+              "y": 92,
+              "reach": 64
+            },
+            {
+              "color": "#D2ECFB",
+              "x": 92,
+              "y": 10,
+              "reach": 60
+            },
+            {
+              "color": "#E2E7FF",
+              "x": 100,
+              "y": 100,
+              "reach": 54
+            }
+          ]
+        },
+        "dark": {
+          "base": "#172A2B",
+          "glows": [
+            {
+              "color": "#063C30",
+              "x": 4,
+              "y": 92,
+              "reach": 64
+            },
+            {
+              "color": "#10384D",
+              "x": 92,
+              "y": 10,
+              "reach": 60
+            },
+            {
+              "color": "#262F55",
+              "x": 100,
+              "y": 100,
+              "reach": 54
+            }
+          ]
+        }
+      },
+      "matcha": {
+        "displayName": "Matcha latte",
+        "light": {
+          "base": "#F4F0DE",
+          "glows": [
+            {
+              "color": "#DBEFBB",
+              "x": 14,
+              "y": 10,
+              "reach": 70
+            },
+            {
+              "color": "#F6E8D0",
+              "x": 92,
+              "y": 96,
+              "reach": 60
+            }
+          ]
+        },
+        "dark": {
+          "base": "#24291B",
+          "glows": [
+            {
+              "color": "#273A0D",
+              "x": 14,
+              "y": 10,
+              "reach": 70
+            },
+            {
+              "color": "#3C3423",
+              "x": 92,
+              "y": 96,
+              "reach": 60
+            }
+          ]
+        }
+      },
+      "abricot": {
+        "displayName": "Abricot",
+        "light": {
+          "base": "#FCECD8",
+          "glows": [
+            {
+              "color": "#FFE5BF",
+              "x": 0,
+              "y": 0,
+              "reach": 72
+            },
+            {
+              "color": "#FAEEBF",
+              "x": 100,
+              "y": 100,
+              "reach": 66
+            }
+          ]
+        },
+        "dark": {
+          "base": "#30251A",
+          "glows": [
+            {
+              "color": "#502C0D",
+              "x": 0,
+              "y": 0,
+              "reach": 72
+            },
+            {
+              "color": "#40340B",
+              "x": 100,
+              "y": 100,
+              "reach": 66
+            }
+          ]
+        }
+      },
+      "lavande": {
+        "displayName": "Brume lavande",
+        "light": {
+          "base": "#EFE9F7",
+          "glows": [
+            {
+              "color": "#EFE3FF",
+              "x": 12,
+              "y": 16,
+              "reach": 66
+            },
+            {
+              "color": "#DBE9FF",
+              "x": 92,
+              "y": 88,
+              "reach": 62
+            }
+          ]
+        },
+        "dark": {
+          "base": "#262435",
+          "glows": [
+            {
+              "color": "#3A2C58",
+              "x": 12,
+              "y": 16,
+              "reach": 66
+            },
+            {
+              "color": "#213555",
+              "x": 92,
+              "y": 88,
+              "reach": 62
+            }
+          ]
+        }
+      },
+      "nacre": {
+        "displayName": "Nacre",
+        "light": {
+          "base": "#F7F3EB",
+          "glows": [
+            {
+              "color": "#FFE0EC",
+              "x": 6,
+              "y": 8,
+              "reach": 52
+            },
+            {
+              "color": "#D6EEF0",
+              "x": 98,
+              "y": 20,
+              "reach": 50
+            },
+            {
+              "color": "#EBE5FF",
+              "x": 24,
+              "y": 98,
+              "reach": 52
+            },
+            {
+              "color": "#F7EBC9",
+              "x": 96,
+              "y": 98,
+              "reach": 48
+            }
+          ]
+        },
+        "dark": {
+          "base": "#28282A",
+          "glows": [
+            {
+              "color": "#482C3C",
+              "x": 6,
+              "y": 8,
+              "reach": 52
+            },
+            {
+              "color": "#143A3D",
+              "x": 98,
+              "y": 20,
+              "reach": 50
+            },
+            {
+              "color": "#342E5D",
+              "x": 24,
+              "y": 98,
+              "reach": 52
+            },
+            {
+              "color": "#3E3416",
+              "x": 96,
+              "y": 98,
+              "reach": 48
+            }
+          ]
+        }
+      },
+      "sousbois": {
+        "displayName": "Sous-bois",
+        "light": {
+          "base": "#ECEEDF",
+          "glows": [
+            {
+              "color": "#DEEECE",
+              "x": 0,
+              "y": 100,
+              "reach": 70
+            },
+            {
+              "color": "#EFEACE",
+              "x": 100,
+              "y": 0,
+              "reach": 58
+            },
+            {
+              "color": "#D8EDE0",
+              "x": 86,
+              "y": 92,
+              "reach": 46
+            }
+          ]
+        },
+        "dark": {
+          "base": "#1F261B",
+          "glows": [
+            {
+              "color": "#233A1A",
+              "x": 0,
+              "y": 100,
+              "reach": 70
+            },
+            {
+              "color": "#363620",
+              "x": 100,
+              "y": 0,
+              "reach": 58
+            },
+            {
+              "color": "#1B3A30",
+              "x": 86,
+              "y": 92,
+              "reach": 46
+            }
+          ]
+        }
+      },
+      "terre": {
+        "displayName": "Terre cuite",
+        "light": {
+          "base": "#F7E9DE",
+          "glows": [
+            {
+              "color": "#FFE3CA",
+              "x": 12,
+              "y": 6,
+              "reach": 66
+            },
+            {
+              "color": "#F5E7C7",
+              "x": 92,
+              "y": 96,
+              "reach": 64
+            }
+          ]
+        },
+        "dark": {
+          "base": "#2C201A",
+          "glows": [
+            {
+              "color": "#542819",
+              "x": 12,
+              "y": 6,
+              "reach": 66
+            },
+            {
+              "color": "#423219",
+              "x": 92,
+              "y": 96,
+              "reach": 64
+            }
+          ]
+        }
+      }
+    },
+    "papers": {
+      "dots": "18px step",
+      "grid": "20px step",
+      "lines": "pitch aligned on the text (21px default)",
+      "ink": {
+        "light": {
+          "line": "rgba(32, 30, 29, 0.11)",
+          "dot": "rgba(32, 30, 29, 0.24)"
+        },
+        "dark": {
+          "line": "rgba(249, 244, 237, 0.09)",
+          "dot": "rgba(249, 244, 237, 0.2)"
+        }
+      }
+    },
+    "shapes": {
+      "smoothing": 0.6,
+      "cornerCap": 0.3,
+      "cornerScale": {
+        "squircle": 1.84,
+        "fallback": 1,
+        "note": "Radii grow by --corner-scale where corner-shape: squircle applies, so a round fallback (Firefox) has the same depth."
+      },
+      "pebble": {
+        "source": "MARK_PEBBLE stretched to its box",
+        "turns": 4,
+        "give": 0.62,
+        "css": "--pebble-0..3 and --pebble-N-pressed (clip-path: shape())",
+        "native": "pebbleNumbers on Organic/Tappable pebble"
+      },
+      "stones": {
+        "chip": "36x32, emblem 21",
+        "collection-card": "44x40, emblem 26",
+        "tile": "64x58, emblem 40",
+        "head-web": "88x80, emblem 56",
+        "head-phone": "68x62, emblem 44"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Filled Button",
+      "kind": "button",
+      "refersTo": "button-filled",
+      "description": "The one primary action on a surface: terracotta soft sheet, radius 13 at 48 high.",
+      "html": "<button class=\"ds-btn-filled\">Enregistrer</button>",
+      "css": ".ds-btn-filled { min-height: 48px; padding: 0 20px; border: 0; border-radius: 13px; corner-shape: squircle; background: var(--action, #A75C2A); color: var(--on-action, #F9F4ED); font: 500 14px/18px Signika, ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.1px; transition: background-color 150ms cubic-bezier(0.2,0,0,1), transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-filled:hover { background: color-mix(in srgb, #A75C2A 90%, #201E1D); box-shadow: 0 1px 1px rgba(46,43,37,0.05), 0 2px 6px rgba(46,43,37,0.05); } .ds-btn-filled:active { transform: scale(0.97); } .ds-btn-filled:focus-visible { outline: 2px solid #47681F; outline-offset: 2px; }"
+    },
+    {
+      "name": "Tonal Button",
+      "kind": "button",
+      "refersTo": "button-tonal",
+      "description": "Secondary action in matcha wash (a neutral one read as disabled).",
+      "html": "<button class=\"ds-btn-tonal\">Remettre à faire</button>",
+      "css": ".ds-btn-tonal { min-height: 48px; padding: 0 20px; border: 0; border-radius: 13px; corner-shape: squircle; background: #BED999; color: #223409; font: 500 14px/18px Signika, ui-sans-serif, system-ui, sans-serif; transition: background-color 150ms cubic-bezier(0.2,0,0,1); } .ds-btn-tonal:hover, .ds-btn-tonal:active { background: color-mix(in srgb, #BED999 88%, #223409); } .ds-btn-tonal:focus-visible { outline: 2px solid #47681F; outline-offset: 2px; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "A bare 24 glyph whose hover, press and chosen state lie on the brand pebble behind it; the pebble gives under the press.",
+      "html": "<button class=\"ds-icon-btn\" aria-pressed=\"true\" aria-label=\"Épingler\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 17v5M9 3h6l-1 6 4 4H6l4-4z\"/></svg></button>",
+      "css": ".ds-icon-btn { position: relative; isolation: isolate; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: #201E1D; display: inline-flex; align-items: center; justify-content: center; } .ds-icon-btn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--fill, transparent); clip-path: path('M50,2 C78,0 99,22 98,52 C97,80 76,99 48,98 C20,97 1,78 2,48 C3,20 24,4 50,2 Z'); transition: background-color 150ms, transform 380ms cubic-bezier(0.42,1.67,0.21,0.9); } .ds-icon-btn:hover { --fill: rgba(32,30,29,0.06); } .ds-icon-btn:active::before { transform: scale(0.96); transition-duration: 90ms; } .ds-icon-btn[aria-pressed='true'] { --fill: #BED999; color: #223409; } .ds-icon-btn:focus-visible { outline: 2px solid #47681F; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "text-field",
+      "description": "Field cream drawn by its edge, label fixed above; focus thickens the edge to 2px matcha without moving the text.",
+      "html": "<label class=\"ds-field\"><span>Adresse du serveur</span><input class=\"ds-input\" placeholder=\"https://\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font: 600 13px/18px Signika, sans-serif; color: #5A574E; } .ds-input { min-height: 52px; padding: 13.5px 19.5px; border: 0; border-radius: 13px; corner-shape: squircle; background: #FBF9EE; box-shadow: inset 0 0 0 1.5px #7B7665; color: #201E1D; font: 400 16px/23px Signika, sans-serif; transition: box-shadow 150ms cubic-bezier(0.2,0,0,1); } .ds-input:hover { box-shadow: inset 0 0 0 1.5px #5A574E; } .ds-input:focus { outline: none; box-shadow: inset 0 0 0 2px #47681F; }"
+    },
+    {
+      "name": "Navigation Row (chosen)",
+      "kind": "nav",
+      "refersTo": "nav-row",
+      "description": "The chosen place: the row stays on the paper, its mark on a matcha pebble, the name at 600.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\"><span class=\"ds-slot\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3\"/></svg></span>Notes</a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-slot\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\"/></svg></span>Rappels</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 240px; } .ds-nav-item { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border-radius: 12px; corner-shape: squircle; color: #201E1D; text-decoration: none; font: 500 14px/18px Signika, sans-serif; transition: background-color 150ms; } .ds-nav-item:hover { background: rgba(32,30,29,0.06); } .ds-nav-item:active { background: rgba(32,30,29,0.10); } .ds-slot { position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; } .ds-slot svg { position: relative; } .ds-nav-item[aria-current='page'] { font-weight: 600; } .ds-nav-item[aria-current='page'] .ds-slot { color: #223409; } .ds-nav-item[aria-current='page'] .ds-slot::before { content: ''; position: absolute; inset: -8px -12px; background: #BED999; clip-path: path('M50,2 C78,0 99,22 98,52 C97,80 76,99 48,98 C20,97 1,78 2,48 C3,20 24,4 50,2 Z'); }"
+    },
+    {
+      "name": "Collection Chip",
+      "kind": "chip",
+      "refersTo": "collection-chip",
+      "description": "A cream sheet (radius 12) with the collection emblem on its wash stone at the left end, then name and count. No tilt.",
+      "html": "<a class=\"ds-chip\" href=\"#\"><span class=\"ds-stone\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 100 100\"><path d=\"M50 8 C70 20 88 40 80 70 C70 92 30 92 20 70 C12 40 30 20 50 8Z\" fill=\"#2F6B52\"/></svg></span>Recettes<span class=\"ds-count\">12</span></a>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 8px; height: 44px; max-width: 230px; padding: 0 16px 0 5px; border-radius: 12px; corner-shape: squircle; background: #F8F5E6; box-shadow: inset 0 0 0 1px rgba(32,30,29,0.14), 0 1px 1px rgba(46,43,37,0.05), 0 2px 6px rgba(46,43,37,0.05); color: #201E1D; text-decoration: none; font: 500 14px/18px Signika, sans-serif; } .ds-chip:hover { background: color-mix(in srgb, #F8F5E6 94%, #201E1D); } .ds-stone { width: 36px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: #D4F3E1; clip-path: path('M50,2 C78,0 99,22 98,52 C97,80 76,99 48,98 C20,97 1,78 2,48 C3,20 24,4 50,2 Z'); } .ds-count { font: 600 12px/16px Signika, sans-serif; color: #5A574E; } .ds-chip:focus-visible { outline: 2px solid #47681F; outline-offset: 2px; }"
+    },
+    {
+      "name": "Note Card",
+      "kind": "card",
+      "refersTo": "note-card",
+      "description": "A note on the wall: cream sheet, radius 20 for every note, hairline edge, Card lift, Raised on hover; selected, a 2.5px matcha ring.",
+      "html": "<article class=\"ds-card\" tabindex=\"0\"><h3>Courses</h3><p>Lait d'avoine, citrons, farine T65, basilic.</p></article>",
+      "css": ".ds-card { width: 232px; padding: 14px; border-radius: 20px; corner-shape: squircle; background: #F8F5E6; box-shadow: inset 0 0 0 1px rgba(32,30,29,0.14), 0 1px 1px rgba(46,43,37,0.05), 0 2px 6px rgba(46,43,37,0.05); color: #201E1D; font: 400 15px/21px Signika, sans-serif; transition: box-shadow 150ms cubic-bezier(0.2,0,0,1); } .ds-card h3 { margin: 0 0 4px; font: 700 15px/21px Signika, sans-serif; } .ds-card p { margin: 0; } .ds-card:hover { box-shadow: inset 0 0 0 1px rgba(32,30,29,0.14), 0 2px 3px rgba(46,43,37,0.08), 0 6px 14px rgba(46,43,37,0.09); } .ds-card:focus-visible { outline: 2px solid #47681F; outline-offset: 4px; } .ds-card[aria-selected='true'] { box-shadow: inset 0 0 0 2.5px #47681F; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-selected",
+      "description": "A sunken track (radius 15); the chosen segment a paper sheet lifted out of it (radius 11, concentric), its tick in matcha.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"true\" class=\"ds-seg-item\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#47681F\" stroke-width=\"2.5\"><path d=\"M5 12l5 5 9-10\"/></svg>Clair</button><button role=\"radio\" aria-checked=\"false\" class=\"ds-seg-item\">Sombre</button><button role=\"radio\" aria-checked=\"false\" class=\"ds-seg-item\">Auto</button></div>",
+      "css": ".ds-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 15px; corner-shape: squircle; background: rgba(32,30,29,0.07); width: 320px; } .ds-seg-item { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 0; border-radius: 11px; corner-shape: squircle; background: transparent; color: #5A574E; font: 500 14px/18px Signika, sans-serif; transition: background-color 150ms, color 150ms; } .ds-seg-item:hover:not([aria-checked='true']) { background: rgba(32,30,29,0.06); } .ds-seg-item[aria-checked='true'] { background: #F8F5E6; color: #201E1D; font-weight: 600; box-shadow: 0 1px 1px rgba(46,43,37,0.05), 0 2px 6px rgba(46,43,37,0.05); } .ds-seg-item:focus-visible { outline: 2px solid #47681F; outline-offset: 2px; }"
+    },
+    {
+      "name": "Capture Pebble",
+      "kind": "custom",
+      "refersTo": "capture-pebble-web",
+      "description": "The brand pebble in leaf matcha, flat, one per screen; it gives toward round under the press and springs back.",
+      "html": "<button class=\"ds-fab\" aria-label=\"Nouvelle note\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></button>",
+      "css": ".ds-fab { width: 62px; height: 58px; border: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #9CC15F; color: #201E1D; clip-path: path('M50,2 C78,0 99,22 98,52 C97,80 76,99 48,98 C20,97 1,78 2,48 C3,20 24,4 50,2 Z'); transition: background-color 150ms, transform 380ms cubic-bezier(0.42,1.67,0.21,0.9); } .ds-fab:hover { background: color-mix(in srgb, #201E1D 8%, #9CC15F); } .ds-fab:active { transform: scale(0.95); transition-duration: 90ms; } .ds-fab:focus-visible { outline: 2px solid #47681F; outline-offset: 3px; }"
+    },
+    {
+      "name": "Snackbar Slip",
+      "kind": "custom",
+      "refersTo": "snackbar-slip",
+      "description": "System messages on the charcoal slip (radius 15), dark in both modes, its action in slip matcha.",
+      "html": "<div class=\"ds-slip\" role=\"status\">Note archivée<button class=\"ds-slip-action\">Annuler</button></div>",
+      "css": ".ds-slip { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 8px 0 18px; border-radius: 15px; corner-shape: squircle; background: #2E2B25; color: #F9F4ED; font: 400 16px/23px Signika, sans-serif; box-shadow: 0 4px 10px rgba(46,43,37,0.12), 0 14px 30px rgba(46,43,37,0.14); } .ds-slip-action { height: 40px; padding: 0 14px; border: 0; border-radius: 12px; corner-shape: squircle; background: transparent; box-shadow: inset 0 0 0 1px rgba(249,244,237,0.22); color: #BFE08A; font: 500 14px/18px Signika, sans-serif; } .ds-slip-action:hover { background: rgba(249,244,237,0.08); } .ds-slip-action:focus-visible { outline: 2px solid #BFE08A; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Galet et feuille: calm sheets resting on pebbles",
+    "overview": "Carnet is a notebook of calm paper sheets resting on pebbles, after its own mark (a beige card on a matcha pebble). Every container is a smooth sheet with one continuous corner, the same for every item of a role and at every size, so a hundred notes read as one quiet wall. The brand's pebble is the one organic form: it marks what is chosen, captured or kept (the capture pebble, the chosen place, the open info, a collection's emblem on its stone, a picture glimpsed), and it never holds text. The palette is habits-garden's: paper ground, cream sheets, warm near-black ink, terracotta fills, a matcha accent and fourteen earth pigments.\n\nDensity is Keep's: two columns on the phone, as many as fit on the desktop, each card exactly as tall as its content. One humanist face (Signika) at fixed sizes, weight carrying rank. Depth is paper resting on paper: a hairline edge, one soft light, quiet grain never stacked. Motion is short and settling; a pebble pressed gives rounder and springs back, sheets never change shape; the snip is the one authored moment. Both clients paint from the same data in `src/core/design/` (palette, shapes, outline, pebbles, backgrounds, emblems, glyphs, collage, mark), so the phone (Android, primary) and the web twin cannot drift. The research behind the corner, the radius scale and keeping organic forms off text is in `docs/DESIGN-RESEARCH.md`.\n\nRejected by the direction contract and the owner (2026-10-22): per-item random outlines, wobbling or bowed edges, organic shapes holding text, ornamented chrome, Keep's plain rounded rectangles, the old metro's navy signage. Kept owner pins: green only as the matcha accent; icons and checkboxes neutral on any note colour; nothing behind an icon's line but a pebble tint; no shadow behind any icon, emblem or illustration; hovers and presses stay inside the control and never tilt or jump.",
+    "keyCharacteristics": [
+      "Sheets: one continuous corner (Figma's, smoothing 0.6) from a short radius scale by role, capped at 0.3 of the shorter side, nested concentrically, a hairline edge.",
+      "One pebble: the mark's stone, stretched to its box and turned one of four ways, never under text; pressed, it gives toward round and springs back.",
+      "Controls are soft sheets: their radius stays under half their height, never a capsule.",
+      "Terracotta for filled actions and links; matcha for capture, the chosen, focus and switches.",
+      "Earth pigments only on emblems, label tags, stones' washes and note washes; a note may also wear a soft mesh gradient, and a paper (dots, grid, lines) under either.",
+      "A hover or press is a tint laid inside the control's own shape, never a ripple past it, a tilt or a jump.",
+      "Line icons: Phosphor's Bold line alone; eleven glyphs take their Fill form when their control is selected.",
+      "Cut-outs hand-cut after Matisse: emblems and the label tag, flat, no cast shadow.",
+      "Quiet grain on the ground and on every sheet, never stacked.",
+      "System messages on a charcoal slip, dark in both modes."
+    ],
+    "rules": [
+      {
+        "name": "The Pigment Belongs To Cut-Outs Rule",
+        "body": "Pigments fill emblems, label tags and the snip's cut; a note and a stone wear the pigment's wash or a gradient, never the pigment itself. Chrome stays paper, terracotta and matcha. On a page, the person's own words may take a pigment's text ink or its wash, and code takes text inks: content, never chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "The Terracotta Acts, Matcha Chooses Rule",
+        "body": "Terracotta fills and links; matcha marks capture, what is chosen, what has focus and what is switched on.",
+        "section": "colors"
+      },
+      {
+        "name": "The Green Is Only Matcha Rule",
+        "body": "Green appears only as matcha (the accent, and the sync dot's deep matcha): no neutral, night ground or veil carries a green cast, and icons and checkboxes stay neutral ink on any note colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Under Pigment Rule",
+        "body": "A pigment never sits on the matcha fill. The chosen navigation place puts a collection's cut-out or a label's tag on its own wash pebble, a glyph on matcha; a picker marks a chosen cut-out with a paper pebble ringed in matcha.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast Test Rule",
+        "body": "A new colour, wash or gradient enters `palette.ts` or `backgrounds.ts` and passes its contrast test, or it does not ship: ink 7:1 and the second ink 4.5:1 on every paper, wash and gradient; `edge` 3:1 on every ground; a well 1.15 against the wall and 1.1 against a card; a disabled label 4.5:1 in its well; the sync dots 3:1 on the strip.",
+        "section": "colors"
+      },
+      {
+        "name": "The Family Not Weight Rule",
+        "body": "On the phone set `fontFamily` (`Signika-Bold`, `SignikaNight-Medium`, the `labelStrong` variant), never `fontWeight`: each weight is its own family.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Size Per Card Rule",
+        "body": "Card title and body share 15px; a hundred cards must never read as a hundred headlines.",
+        "section": "typography"
+      },
+      {
+        "name": "The Shadow Moves, Text Never Does Rule",
+        "body": "Hover lifts a card from Card to Raised; selection is a ring laid over the sheet; content never shifts, and nothing tilts or jumps under the pointer.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat Cut-Out Rule",
+        "body": "Nothing cast or drawn on the paper has a shadow: emblems, stones, collage pieces, swatches, the tick pebble and the capture pebble lie flat. Lifts belong to sheets of paper.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Quiet Grain Rule",
+        "body": "Grain at 0.16 by day and 0.08 at night (`GRAIN`, `web/build/tokens.ts`), tiled at 200 from a 256 procedural source; one layer per surface, never stacked, never on photos.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Calm Wall Rule",
+        "body": "One continuous corner per role from `RADII`, the same for every item and every size, capped at 0.3 of the shorter side and concentric when nested. Never a seed, a random corner, a bowed side or a radius invented outside the scale.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Soft Sheet Control Rule",
+        "body": "A control's radius stays under half its height (a button 13 at 48, a field 13 at 52, the strip 15 at 54): it reads as a soft sheet, never a capsule, so Firefox without `corner-shape` draws what Chromium draws.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Pebble Holds No Text Rule",
+        "body": "The pebble marks what is chosen, captured or kept, and crops glimpsed pictures; text always sits on a sheet. A link's own picture keeps its 4:5 frame, so products compare whole.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do take every radius from `RADII` by role (`SHAPES`, `OUTLINES`; `--cut-*` on the web, `corners(SHAPES.role)` or `outline=\"kind\"` on an `Organic` or `Tappable` on the phone), concentric when nested.",
+      "Do keep a control's radius under half its height, so it reads as a soft sheet in every browser.",
+      "Do use the pebble for what is chosen, captured or kept and for glimpsed pictures (`data-pebble`, `data-pebble-under`, `pebble` on the phone), each row's neighbours on different turns and a collection's stone on `pebbleTurnOf(id)`.",
+      "Do let a pressed pebble give and spring back (90 in, 380 back); keep sheets still.",
+      "Do take every colour from `palette.ts` or `backgrounds.ts` through the theme or `var(--…)`, and pass its contrast test.",
+      "Do edge cards, chips and bars with the 1px hairline; menus, dialogs, sheet lips and field-like strips with the outline; a control drawn by its edge alone with `edge`.",
+      "Do fill actions in terracotta, write links in deep terracotta, and mark capture, the chosen, focus and switches in matcha; keep tonal buttons matcha wash.",
+      "Do hover and press inside the control's own shape: 6% of the control's ink under a hovering pointer and 10% under the press (a link-coloured control: 8% and 12%).",
+      "Do put grain on the ground and on every sheet at the theme's strength, one layer per surface.",
+      "Do lift paper with the shared lifts only: Card at rest, Raised for hover, Float for sheets, dialogs, menus, the drawer and the slip.",
+      "Do size a board card from its content with `layoutCard` (`wall.ts`), never by measuring it.",
+      "Do keep a link's own picture in its 4:5 frame.",
+      "Do settle arrivals on decelerate within 150, 250 or 300ms, and send departures off faster on accelerate.",
+      "Do keep Signika alone, set by family on the phone, with the night grade after dark."
+    ],
+    "donts": [
+      "Don't give an item its own random corners, a seeded outline or bowed sides; every item of a role takes the same radius.",
+      "Don't round a control into a capsule or a container past `CORNER_CAP`.",
+      "Don't put text on a pebble, or crop a link's own picture to one.",
+      "Don't put a stone in a navigation row other than the chosen place's.",
+      "Don't float or round the drawer; it runs the full height, square and flush.",
+      "Don't paint chrome, text or a whole note in a pigment; notes and stones wear a wash.",
+      "Don't use matcha for a filled action or terracotta for selection or focus.",
+      "Don't lay a pigment on the matcha fill: a chosen cut-out sits on its own wash or on paper.",
+      "Don't bounce anything but the snip's landing and the pebble's spring back.",
+      "Don't grow anything from nothing: arrivals start at 0.9 or more.",
+      "Don't unmount an overlay before its exit has played.",
+      "Don't set uppercase anywhere but the stamp.",
+      "Don't draw anything behind an icon's line but its control's pebble tint.",
+      "Don't fade a disabled button's pigment or opacity; it sinks to a well.",
+      "Don't cast a shadow behind an icon, emblem, stone, swatch, pebble or illustration.",
+      "Don't tilt, lift, translate or grow a control under the pointer (static turns such as the stamp, a stone's emblem and the ghost emblem are drawn, not hovers).",
+      "Don't stack grain on a nested surface.",
+      "Don't hard-code a hex, a radius or a shadow in a component; the web reads generated custom properties, the phone reads the theme."
+    ]
+  }
+}

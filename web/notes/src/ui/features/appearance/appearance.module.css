@@ -1,0 +1,710 @@
+/*
+ * The colours and the ground (Réglages, the first run, their two editors): pebble swatches in full
+ * rows as the note's finish picker lays them, a day and night preview of the app in miniature, and
+ * a picker made of a square, a hue strip and a hex field.
+ */
+
+/* ── groups of swatches ────────────────────────────────────────────────── */
+
+.groups {
+  /* Every swatch, a pair of colours or a ground: one pebble, as wide as it is high. */
+  --swatch: 44px;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 12px 12px 8px;
+}
+
+@media (pointer: coarse) {
+  .groups {
+    --swatch: 48px;
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The group's name, and at its end the chosen one's. */
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+  color: var(--ink-muted);
+}
+
+.chosenName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  row-gap: 12px;
+  column-gap: 4px;
+}
+
+/* Wide enough for eight names side by side: each group is one row. */
+@container (min-width: 520px) {
+  .grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* A swatch over its name: the whole column is its target. */
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 2px 2px;
+  border: 0;
+  border-radius: var(--cut-panel);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--duration-short) var(--ease-standard);
+}
+
+.option[aria-checked='true'] {
+  color: var(--ink);
+}
+
+/* A pebble painted with what it chooses, edged in a hairline. */
+.swatch {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--swatch);
+  height: var(--swatch);
+  --edge-color: var(--hairline);
+}
+
+/* A pair of colours is chosen with a ring of ink, a ground with the matcha edge (the finish picker's two rings). */
+.option[aria-checked='true'] .pair {
+  --edge-color: var(--ink);
+  --edge-width: 3px;
+}
+
+.option[aria-checked='true'] .ground {
+  --edge-color: var(--focus);
+  --edge-width: 2.5px;
+}
+
+/* Something to make: a pebble drawn by its edge, the plus in link ink. */
+.make {
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+  color: var(--link);
+}
+
+/* Hover stays inside the swatch's own pebble: its edge firms; nothing moves. */
+@media (hover: hover) {
+  .option:hover {
+    color: var(--ink);
+  }
+  .option:not([aria-checked='true']):hover .swatch {
+    --edge-color: var(--outline);
+  }
+  .option:hover .make {
+    --edge-color: var(--ink-muted);
+  }
+}
+
+/* Two lines at most: a name is never cut mid-word. */
+.name {
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The picker's check: a small leaf pebble on a paper one, so it reads on a colour of its own family. */
+.check {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--paper);
+  animation: check-in var(--duration-medium) var(--ease-decelerate);
+}
+
+.checkLeaf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+@keyframes check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check {
+    animation-name: check-fade;
+  }
+}
+
+@keyframes check-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── the two colour rows ───────────────────────────────────────────────── */
+
+.roles {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 4px;
+}
+
+/* On the swatches' heads' line, 16 in from the sheet's edge as the rows' words are. */
+.rolesHead {
+  margin: 0;
+  padding: 10px 16px 2px;
+  color: var(--ink-muted);
+}
+
+/* The colour itself, on a pebble beside its name. */
+.roleSwatch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  --edge-color: var(--hairline);
+}
+
+/* ── the preview ───────────────────────────────────────────────────────── */
+
+.preview {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 16px 4px;
+}
+
+.previewFigure {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 196px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.previewCaption {
+  color: var(--ink-muted);
+}
+
+.previewCaption[data-shown] {
+  color: var(--ink);
+}
+
+/*
+ * A screen in miniature: its ground and grain, then the app's pieces drawn as bars (no words), each
+ * in the colours of its own theme, set inline. Everything is placed in % so it scales with the frame.
+ */
+.mini {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--cut-frame);
+  isolation: isolate;
+}
+
+.miniEdge {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.miniGrain {
+  position: absolute;
+  inset: 0;
+  background: url('/ground-grain.png') repeat 0 0 / 128px 128px;
+}
+
+.miniStrip {
+  position: absolute;
+  top: 6%;
+  left: 7%;
+  right: 7%;
+  height: 9%;
+  border-radius: 6px;
+}
+
+.miniChips {
+  position: absolute;
+  top: 19%;
+  left: 7%;
+  right: 7%;
+  height: 7%;
+  display: flex;
+  gap: 4%;
+}
+
+.miniChip {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 5%;
+  border-radius: 4px;
+}
+
+.miniCards {
+  position: absolute;
+  top: 29%;
+  left: 7%;
+  right: 7%;
+  height: 30%;
+  display: flex;
+  gap: 5%;
+}
+
+.miniCard {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9%;
+  padding: 11% 10%;
+  border-radius: 8px;
+}
+
+/* A note across the wall's width, under the two. */
+.miniWide {
+  position: absolute;
+  top: 63%;
+  left: 7%;
+  right: 7%;
+  height: 14%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18%;
+  padding: 0 5%;
+  border-radius: 8px;
+}
+
+.miniBar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.miniTick {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+}
+
+.miniTickLeaf {
+  width: 13px;
+  height: 13px;
+}
+
+.miniFoot {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 5%;
+  height: 12%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.miniButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38%;
+  height: 72%;
+  border-radius: 5px;
+}
+
+.miniPebble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  aspect-ratio: 66 / 60;
+}
+
+/* ── the picker ────────────────────────────────────────────────────────── */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* The square: saturation left to right, brightness down; the whole of it takes the pointer. */
+.square {
+  position: relative;
+  height: 180px;
+  border-radius: var(--cut-frame);
+  touch-action: none;
+  cursor: crosshair;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+/* The hues: a slim track under a full thumb, so the spectrum stays a tool and never the loudest thing on the sheet; the whole 28 takes the pointer. */
+.strip {
+  position: relative;
+  height: 28px;
+  border-radius: var(--cut-detail);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.strip::before {
+  content: '';
+  position: absolute;
+  inset: 8px 0;
+  border-radius: var(--cut-detail);
+  background-image: var(--hues);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.square:focus-visible,
+.strip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The thumb: a cream ring edged in charcoal, so it reads on any colour under it; a dot is a circle. */
+.thumb {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--on-slip);
+  border-radius: 50%;
+  corner-shape: round;
+  box-shadow:
+    0 0 0 1px var(--slip),
+    inset 0 0 0 1px var(--slip);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.strip .thumb {
+  top: 50%;
+  width: 28px;
+  height: 28px;
+}
+
+.hexRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* The colour beside its code, centred on the 52 field under the field's label. */
+.hexSwatch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-top: 28px;
+  --edge-color: var(--hairline);
+}
+
+.hexField {
+  flex: 1;
+  min-width: 0;
+}
+
+.hexInput {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/*
+ * Under an editor's preview, what the colour does there: kept as picked, or moved to stay readable.
+ * A hidden twin holding the longest line shares the cell, so the room never changes while a drag
+ * crosses into a colour that moves (the dialog, centred, would jump with it).
+ */
+.note {
+  display: grid;
+  margin: -6px 0 0;
+  color: var(--ink-muted);
+}
+
+.noteSizer,
+.noteText {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.noteSizer {
+  visibility: hidden;
+}
+
+.noteSizer svg,
+.noteText svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.note[data-adjusted] .noteText {
+  color: var(--ink);
+}
+
+/* Carnet's own colours to start from: a row of small pebbles, each target 44 wide (48 under a finger). */
+.suggestions {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  justify-items: center;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  max-width: 100%;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .suggestion {
+    height: 48px;
+  }
+}
+
+.suggestionPaint {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  --edge-color: var(--hairline);
+}
+
+/* The colour the picker stands on: the ring of ink every chosen colour wears. */
+.suggestion[aria-checked='true'] .suggestionPaint {
+  --edge-color: var(--ink);
+  --edge-width: 2.5px;
+}
+
+@media (hover: hover) {
+  .suggestion:not([aria-checked='true']):hover .suggestionPaint {
+    --edge-color: var(--outline);
+  }
+}
+
+.suggestion:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
+/* ── the editors ───────────────────────────────────────────────────────── */
+
+.editor {
+  --frame-width: min(460px, 100vw - 32px);
+}
+
+.editorPreview {
+  padding: 0 0 4px;
+}
+
+/* In an editor the picker is the tool: the app in miniature stays smaller above it, smaller still on a phone so the sheet holds it all. */
+.editorPreview .previewFigure {
+  max-width: 150px;
+}
+
+@media (max-width: 719px) {
+  .editorPreview .previewFigure {
+    max-width: 124px;
+  }
+  .editor .square {
+    height: 156px;
+  }
+}
+
+/* A head and its tool at the far end (the dice). */
+.editorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink-muted);
+}
+
+/* The gradient's colours: a row of pebbles, the one being picked ringed in ink. */
+.stops {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.stop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  --edge-color: var(--hairline);
+}
+
+.stop[aria-pressed='true'] {
+  --edge-color: var(--ink);
+  --edge-width: 3px;
+}
+
+.stop.make {
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+}
+
+.stopPaint {
+  position: absolute;
+  inset: 0;
+}
+
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.switchText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Back to Carnet's own, under the sections of the first run. */
+.reset {
+  align-self: center;
+}
+
+/* « Habiller vos autres services… », the quiet way out at the ground's foot, inset as its rows. */
+.servicesOpen {
+  display: flex;
+  padding: 0 6px 8px;
+}
+
+/* Its dialog: each service's name and copy button, where the sheet goes, the sheet in the well. */
+.servicesDialog {
+  --frame-width: min(600px, calc(100vw - 32px));
+  --frame-gap: 22px;
+}
+
+.service {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serviceHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* The sheet as it is pasted: the code's well and face, long lines kept whole, scrolled in place. */
+.serviceCode {
+  width: 100%;
+  height: 120px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--cut-frame);
+  background: var(--paper-high);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre;
+  overflow: auto;
+  resize: none;
+}
+
+/* Seafile's pictures under its sheet, a step apart from it: where they go, then one tonal download each, wrapping on a narrow dialog. */
+.servicePictures {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.servicePictureButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Its note is chosen as it is placed, and again from the launcher (reconfigurable): the quick window's picker. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="80dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:configure="com.stephenprn.carnet.widget.QuickActivity"
+    android:widgetFeatures="reconfigurable"
+    android:initialLayout="@layout/widget_message"
+    android:previewLayout="@layout/widget_note_preview"
+    android:description="@string/widget_note_description"
+    android:widgetCategory="home_screen" />

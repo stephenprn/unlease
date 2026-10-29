@@ -1,0 +1,3187 @@
+/*
+ * The pages: a document column on the wall, its blocks typed in place in Signika (code in the
+ * system's monospace, the one other face), a gutter at each block's left under the pointer, menus
+ * that float by the caret on cream paper, and the matcha of what is selected or about to land.
+ */
+
+.page {
+  /* Room on the left for the gutter's "+" and grip. */
+  --gutter: 56px;
+  width: 100%;
+  max-width: calc(760px + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 12px var(--gutter) 0;
+}
+
+/* The caret and a block scrolled to stay clear of the sticky header and of the window's foot. */
+:global(html:has([data-page-editor])) {
+  scroll-padding-top: calc(var(--header-height, 64px) + 24px);
+  scroll-padding-bottom: 96px;
+}
+
+.binBanner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 20px;
+  padding: 12px 16px 12px 20px;
+  background: var(--paper-high);
+}
+
+.binBanner > p {
+  flex: 1;
+  min-width: 220px;
+}
+
+.binActions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── where the page sits, when it changed, its menu ──────────────────── */
+
+/* One quiet line over the head: the breadcrumb, then the last change and "Plus d’actions" at its end. */
+.pageBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 26px;
+  margin: 0 0 6px;
+}
+
+.edited {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Its glyph lines up with the column's right edge. */
+.pageMore {
+  margin: 0 -10px 0 -4px;
+}
+
+/* "Demander à Claude", beside the menu: the same quiet pebble, a little apart from it. */
+.pageAsk {
+  margin: 0 -4px 0 -4px;
+}
+
+/* One line, always: what does not fit folds into "…" (`Breadcrumb`), and a title too long is cut short. */
+.breadcrumb {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin-left: -8px;
+  /* Clipped a little outside its box, so a crumb's focus ring stays whole. */
+  overflow: clip;
+  overflow-clip-margin: 4px;
+  color: var(--ink-muted);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.crumb > svg {
+  flex: none;
+}
+
+/* Every crumb at its own width, out of sight and out of the way: what the line can hold is read from it. */
+.crumbMeasure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 2px;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.crumbMeasure > * {
+  flex: none;
+}
+
+.crumbMenuEmoji {
+  flex: none;
+  width: 22px;
+  font-size: 17px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.crumbLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 240px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--cut-small);
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .crumbLink:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.crumbLink:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.crumbTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── the head: emoji and title ───────────────────────────────────────── */
+
+.editor {
+  outline: none;
+}
+
+/* While a drag selects whole blocks, no words get selected under it. */
+.editor[data-selecting],
+.editor[data-selecting] * {
+  user-select: none;
+  caret-color: transparent;
+}
+
+.editor[data-dropping] {
+  border-radius: var(--cut-panel);
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.emoji {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-style: normal;
+  line-height: 1;
+}
+
+.emojiButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  font-size: 20px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .emojiButton:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.emojiButton:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.emojiButton:disabled {
+  cursor: default;
+}
+
+.pageIcon {
+  width: 72px;
+  height: 72px;
+  font-size: 52px;
+  margin-left: -6px;
+}
+
+/* "Ajouter une icône": in the second ink, shown with the head under the pointer. */
+.addIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  margin-left: -10px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 500;
+  font-size: 14px;
+  opacity: 0;
+  transition:
+    opacity var(--duration-short) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
+}
+
+.head:hover .addIcon,
+.addIcon:focus-visible,
+.addIcon[aria-expanded='true'] {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .addIcon:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.addIcon:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (hover: none) {
+  .addIcon {
+    opacity: 1;
+  }
+}
+
+.title {
+  width: 100%;
+  margin: 0;
+  outline: none;
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 46px;
+  letter-spacing: -0.7px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.title:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* ── blocks ───────────────────────────────────────────────────────────── */
+
+/*
+ * The rhythm: blocks in normal flow, so neighbours' margins collapse (the larger one wins). A
+ * paragraph keeps 8 on each side, so two read as two; the items of a list stay close. A box
+ * (callout, code, table, media, bookmark, embed, columns) keeps 12 on each side; a heading takes
+ * more above than below. The first block sits right under the title.
+ */
+.blocks {
+  display: flow-root;
+}
+
+.block {
+  position: relative;
+  /* The gutter lines up with the first line of the block's text. */
+  --line: 26px;
+  padding: 1px 0;
+}
+
+.block[data-kind='text'] {
+  margin: 8px 0;
+}
+
+.block[data-kind='h1'] {
+  --line: 38px;
+  margin: 32px 0 4px;
+}
+
+.block[data-kind='h2'] {
+  --line: 32px;
+  margin: 28px 0 4px;
+}
+
+.block[data-kind='h3'] {
+  --line: 28px;
+  margin: 20px 0 4px;
+}
+
+.block[data-kind='h4'] {
+  --line: 26px;
+  margin: 16px 0 4px;
+}
+
+.block:is([data-kind='callout'], [data-kind='code'], [data-kind='table'], [data-kind='bookmark'], [data-kind='embed'], [data-kind='image'], [data-kind='video'], [data-kind='pdf'], [data-kind='file'], [data-kind='drawing']) {
+  margin: 12px 0;
+}
+
+.block[data-kind='callout'] {
+  --line: 54px;
+}
+
+.callout .rich {
+  min-height: 26px;
+}
+
+.block[data-kind='code'],
+.block[data-kind='table'] {
+  --line: 36px;
+}
+
+/* A table of contents keeps a box's room around it; the gutter stands by its first entry. */
+.block[data-kind='toc'] {
+  --line: 32px;
+  margin: 12px 0;
+}
+
+.blocks > :first-child {
+  margin-top: 0;
+}
+
+/* Selected whole: a matcha wash over the block, as every chosen thing wears matcha. */
+.block[data-selected]::after {
+  content: '';
+  position: absolute;
+  inset: 0 -6px;
+  z-index: 1;
+  border-radius: var(--cut-tab);
+  background: color-mix(in srgb, var(--action-container) 55%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--focus) 60%, transparent);
+  pointer-events: none;
+}
+
+/* Inside a selected block, its own wash covers the blocks it holds. */
+.block[data-selected] .block[data-selected]::after {
+  content: none;
+}
+
+/* Reached from a search: the same wash, a moment, then it fades. */
+.block[data-flash]::before {
+  content: '';
+  position: absolute;
+  inset: 0 -6px;
+  z-index: 1;
+  border-radius: var(--cut-tab);
+  background: color-mix(in srgb, var(--action-container) 55%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--focus) 60%, transparent);
+  pointer-events: none;
+  animation: fade-in var(--duration-short) var(--ease-standard);
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+
+.block[data-flash='out']::before {
+  opacity: 0;
+}
+
+.body {
+  min-width: 0;
+}
+
+/* A caption: one quiet line under its block, written in place. */
+.caption {
+  display: block;
+  width: 100%;
+  margin: 6px 0 0;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  field-sizing: content;
+}
+
+.caption::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+/* The "+" and the grip, at the left of the block under the pointer (only the innermost one's). */
+.gutter {
+  position: absolute;
+  top: calc(1px + (var(--line) - 28px) / 2);
+  right: 100%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.block:hover:not(:has(.block:hover)) > .gutter,
+.gutter:focus-within,
+.block[data-selected] > .gutter {
+  opacity: 1;
+}
+
+.gutterButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .gutterButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.gutterButton:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.grip {
+  cursor: grab;
+  touch-action: none;
+}
+
+:global(html[data-dragging]),
+:global(html[data-dragging]) * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+/* ── text ─────────────────────────────────────────────────────────────── */
+
+.rich {
+  min-height: 26px;
+  padding: 0 2px;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+  line-height: 26px;
+  /* Signika has no italic: the browser leans it. */
+  font-synthesis: style;
+}
+
+.rich:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* A paragraph's hint shows only where the caret is. */
+.rich[data-hint-on-focus]:empty:not(:focus)::before {
+  content: none;
+}
+
+.kind_h1 {
+  min-height: 38px;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 38px;
+  letter-spacing: -0.5px;
+}
+
+.kind_h2 {
+  min-height: 32px;
+  font-weight: 650;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.3px;
+}
+
+.kind_h3 {
+  min-height: 28px;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.1px;
+}
+
+.kind_h4 {
+  font-weight: 650;
+  font-size: 17px;
+  line-height: 26px;
+}
+
+.rich [data-b] {
+  font-weight: 650;
+}
+
+.kind_h1 [data-b],
+.kind_h2 [data-b] {
+  font-weight: 700;
+}
+
+.rich [data-i] {
+  font-style: italic;
+}
+
+.rich [data-u] {
+  text-decoration-line: underline;
+  text-underline-offset: 3px;
+}
+
+.rich [data-s] {
+  text-decoration-line: line-through;
+}
+
+.rich [data-u][data-s] {
+  text-decoration-line: underline line-through;
+}
+
+.rich [data-c] {
+  padding: 1px 4px;
+  border-radius: var(--cut-detail);
+  background: var(--paper-high);
+  font-family: var(--mono);
+  font-size: 0.86em;
+}
+
+/* Keyboard keys: each run one little key on paper, its edge deeper at the foot (the empty state's <kbd>). */
+.rich [data-k] {
+  padding: 0 6px;
+  border-radius: var(--cut-detail);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--outline),
+    0 1px 0 var(--outline);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.86em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.rich [data-bg] {
+  padding: 1px 0;
+  border-radius: var(--cut-detail);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.rich a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/*
+ * A mention: the subject's mark and its name as it is now, a thin underline under it. Its tint
+ * reaches a little past it on both sides, but the text around it stays where it would be.
+ */
+.mention {
+  margin: 0 -2px;
+  padding: 1px 2px;
+  border-radius: var(--cut-detail);
+  cursor: pointer;
+  user-select: all;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .mention:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.mention:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.mentionMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 4px;
+  vertical-align: -0.18em;
+  color: var(--ink-muted);
+  font-size: 0.95em;
+}
+
+.mentionMark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mentionTitle {
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-color: var(--outline);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
+.mention[data-gone] {
+  color: var(--ink-muted);
+}
+
+.mention[data-gone] .mentionTitle {
+  text-decoration: none;
+  font-style: italic;
+}
+
+/* A date: the calendar in the mark's place and the words it reads today, in the ink, not underlined (it opens its editor, not a page). */
+.date .mentionTitle {
+  text-decoration: none;
+}
+
+/* Its editor open: the chosen wash. */
+.date[data-open],
+.date[data-open]:active {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.date[data-open] .mentionMark {
+  color: inherit;
+}
+
+/* Read only, a date is words: no hand, no tint. */
+.rich[aria-readonly] .date {
+  cursor: auto;
+  background: none;
+}
+
+/* ── lists, tasks, toggles ───────────────────────────────────────────── */
+
+.line {
+  display: flex;
+  align-items: flex-start;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.listMark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding-right: 2px;
+  color: var(--ink);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.listMark[data-kind='bullet'] {
+  font-size: 22px;
+}
+
+.todoBox {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+}
+
+.todoBox > button {
+  width: 30px;
+  height: 30px;
+}
+
+/* Under a finger a to-do takes a finger's room: rows 40 apart, the box's target 40 across, the text where it was. */
+@media (pointer: coarse) {
+  .block[data-kind='todo'] {
+    padding: 7px 0;
+  }
+  .todoBox > button {
+    width: 40px;
+    height: 40px;
+    margin: -7px -5px;
+  }
+}
+
+.line[data-checked] .rich {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--ink-muted) 60%, transparent);
+}
+
+.toggleButton {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.toggleButton svg {
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+
+.toggleButton[data-open] svg {
+  transform: rotate(90deg);
+}
+
+@media (hover: hover) {
+  .toggleButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.toggleButton:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.children {
+  padding-left: 26px;
+}
+
+/* Under its item, a paragraph follows it closely: the item and what it holds read as one. */
+.children > .block:first-child {
+  margin-top: 0;
+}
+
+.emptyToggle {
+  display: block;
+  width: calc(100% - 26px);
+  margin-left: 26px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink-faint);
+  text-align: left;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+@media (hover: hover) {
+  .emptyToggle:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.emptyToggle:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* ── callout ─────────────────────────────────────────────────────────── */
+
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px 14px 12px;
+  /* Its own outline (`data-outline`). */
+  background: var(--paper-high);
+}
+
+.callout[data-line] {
+  background: var(--tint);
+}
+
+.callout > .emojiButton {
+  flex: none;
+  width: 30px;
+  height: 26px;
+  font-size: 19px;
+}
+
+/* ── a sub-page in its parent's content ──────────────────────────────── */
+
+.pageLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  margin: 0 -6px;
+  padding: 3px 6px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 550;
+  font-size: 17px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .pageLink:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.pageLink:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.pageLinkIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  color: var(--ink-muted);
+  font-size: 19px;
+}
+
+.pageLinkTitle {
+  min-width: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--outline);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+/* ── under the last block ─────────────────────────────────────────────── */
+
+.tail {
+  min-height: max(30vh, 160px);
+  cursor: text;
+}
+
+/* ── code ─────────────────────────────────────────────────────────────── */
+
+/* Its own outline (`data-outline`). */
+.code {
+  background: var(--paper-high);
+}
+
+.codeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 0;
+}
+
+.codeLanguage,
+.codeCopy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 500;
+  font-size: 13px;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    opacity var(--duration-short) var(--ease-standard);
+}
+
+.codeLanguage:disabled {
+  cursor: default;
+}
+
+.codeCopy {
+  opacity: 0;
+}
+
+.code:hover .codeCopy,
+.codeCopy:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .codeLanguage:not(:disabled):hover,
+  .codeCopy:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.codeLanguage:not(:disabled):active,
+.codeCopy:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (hover: none) {
+  .codeCopy {
+    opacity: 1;
+  }
+}
+
+.codeArea {
+  display: grid;
+}
+
+.codeShown,
+.codeField {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 6px 18px 16px;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: 0;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.codeShown {
+  color: var(--ink);
+  pointer-events: none;
+  font-synthesis: style;
+}
+
+/* The field's own letters are transparent: the coloured copy under it shows through. */
+.codeField {
+  overflow: hidden;
+  resize: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--ink);
+}
+
+.codeField::selection {
+  background: color-mix(in srgb, var(--highlight) 75%, transparent);
+}
+
+/* highlight.js's marks in the pigments' text inks (4.5:1 on the well, by day and night). */
+.codeShown :global(.hljs-keyword),
+.codeShown :global(.hljs-selector-tag),
+.codeShown :global(.hljs-literal),
+.codeShown :global(.hljs-doctag) {
+  color: var(--line-violet-text);
+}
+
+.codeShown :global(.hljs-string),
+.codeShown :global(.hljs-regexp),
+.codeShown :global(.hljs-addition),
+.codeShown :global(.hljs-selector-attr) {
+  color: var(--line-green-text);
+}
+
+.codeShown :global(.hljs-number),
+.codeShown :global(.hljs-bullet),
+.codeShown :global(.hljs-link) {
+  color: var(--line-orange-text);
+}
+
+.codeShown :global(.hljs-comment),
+.codeShown :global(.hljs-quote) {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.codeShown :global(.hljs-title),
+.codeShown :global(.hljs-section),
+.codeShown :global(.hljs-selector-id),
+.codeShown :global(.hljs-selector-class) {
+  color: var(--line-blue-text);
+}
+
+.codeShown :global(.hljs-type),
+.codeShown :global(.hljs-built_in),
+.codeShown :global(.hljs-title.class_) {
+  color: var(--line-sky-text);
+}
+
+.codeShown :global(.hljs-attr),
+.codeShown :global(.hljs-attribute),
+.codeShown :global(.hljs-property) {
+  color: var(--line-ochre-text);
+}
+
+.codeShown :global(.hljs-variable),
+.codeShown :global(.hljs-template-variable),
+.codeShown :global(.hljs-params) {
+  color: var(--line-brown-text);
+}
+
+.codeShown :global(.hljs-meta),
+.codeShown :global(.hljs-symbol) {
+  color: var(--line-grey-text);
+}
+
+.codeShown :global(.hljs-tag),
+.codeShown :global(.hljs-name) {
+  color: var(--line-pink-text);
+}
+
+.codeShown :global(.hljs-deletion) {
+  color: var(--line-red-text);
+}
+
+.codeShown :global(.hljs-emphasis) {
+  font-style: italic;
+}
+
+.codeShown :global(.hljs-strong) {
+  font-weight: 650;
+}
+
+.languagePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 10px;
+}
+
+.languageList {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.languageChoice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 15px;
+}
+
+@media (hover: hover) {
+  .languageChoice:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.languageChoice:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.languageChoice[aria-selected='true'] {
+  font-weight: 600;
+}
+
+/* ── a field in a picker ─────────────────────────────────────────────── */
+
+.pickerField {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.pickerField::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.pickerField:focus,
+.pickerField:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.pickerEmpty {
+  padding: 12px 16px;
+}
+
+.colorPopover {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 14px;
+}
+
+/* ── tables ───────────────────────────────────────────────────────────── */
+
+.tableWrap {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+/* Columns hidden past an edge: that edge fades, so the table reads as one to scroll. */
+.tableWrap[data-more-right] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+}
+
+.tableWrap[data-more-left] {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 48px), transparent);
+}
+
+.tableWrap[data-more-left][data-more-right] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+}
+
+/*
+ * A phone-sized window: the first column stays in view while the others scroll under it (so a row
+ * keeps its name), on the wall's own paper and grain; only the right edge fades, the left one being
+ * that column.
+ */
+@media (max-width: 719px) {
+  .headCell:first-child,
+  .tableRow > .cell:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--ground-paint);
+    box-shadow: inset -1px 0 0 var(--hairline);
+  }
+  .tableRow > .cell[data-editing]:first-child {
+    background: var(--field);
+  }
+  .tableWrap[data-more-left] {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .tableWrap[data-more-left][data-more-right] {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+  }
+}
+
+.table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: 15px;
+  line-height: 21px;
+}
+
+.headCell {
+  position: relative;
+  padding: 0;
+  border-bottom: 1px solid var(--outline);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.headCell + .headCell,
+.cell + .cell {
+  border-left: 1px solid var(--hairline);
+}
+
+.headButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px 6px 0 0;
+  background: transparent;
+  color: var(--ink-muted);
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.headButton:disabled {
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .headButton:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.headButton:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.headName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headUnit {
+  flex: none;
+  font-weight: 500;
+}
+
+/* A column's right edge, dragged to widen it. */
+.resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 1;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resize::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--focus);
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.resize:hover::after {
+  opacity: 1;
+}
+
+.tableRow > td {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cell {
+  position: relative;
+  padding: 0;
+  vertical-align: top;
+}
+
+.cell[data-type='checkbox'] {
+  padding: 0 4px;
+}
+
+/* What the cell shows, in its own padding; a press goes through it to the button under it. */
+.cellShow {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: 36px;
+  padding: 7px 10px;
+  pointer-events: none;
+}
+
+/* The cell's button fills the cell however tall its row is: its hover and press tint the whole cell. */
+.cellButton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: text;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.cellButton:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .cellButton:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.cellButton:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.cellButton:disabled {
+  cursor: default;
+}
+
+/* Being edited, the whole cell is the field, its ring drawn over everything in it (matcha; danger while it refuses what was typed). */
+.cell[data-editing] {
+  background: var(--field);
+}
+
+.cell[data-editing]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.cell[data-refused]::after {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+/* The editor lies over an invisible copy of the text, so it wraps where the cell did and the row grows as lines are typed. */
+.cellEditor {
+  position: relative;
+}
+
+.cellSizer {
+  display: block;
+  min-height: 36px;
+  padding: 7px 10px;
+  visibility: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cellSizerNumber,
+.cellInputNumber {
+  text-align: right;
+}
+
+.cellInput {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 21px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  resize: none;
+  outline: none;
+}
+
+/* What the type expects, under what was typed: the cell grows to say it. */
+.cellProblem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 0 10px 8px;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.cellProblem svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.cellText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A value its column's type does not take (typed before the type changed): plain words, a danger mark beside them. */
+.cellMisfit {
+  display: block;
+}
+
+/* Right after the last word, wherever the words wrap. */
+.cellMisfitMark {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -2px;
+  color: var(--danger);
+}
+
+.cellNumber {
+  display: block;
+  text-align: right;
+}
+
+.cellLink {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.cellChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cellOpen {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  border-radius: var(--cut-small);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink-muted);
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.cell:hover .cellOpen,
+.cellOpen:focus-visible {
+  opacity: 1;
+}
+
+/* A finger cannot hover: the button stays shown, the value kept clear of it. */
+@media (hover: none) {
+  .cellOpen {
+    opacity: 1;
+  }
+
+  .cell:has(> .cellOpen) .cellShow {
+    padding-right: 36px;
+  }
+}
+
+.optionChip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 1px 9px;
+  /* A chosen option is a chip, cut as the board's are: rounded right round its ends. */
+  border-radius: var(--cut-chip);
+  background: var(--tint);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowEnd {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.rowDelete,
+.rowAction,
+.addColumn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  transition:
+    opacity var(--duration-short) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
+}
+
+.rowDelete,
+.rowAction {
+  opacity: 0;
+}
+
+.tableRow:hover .rowDelete,
+.rowDelete:focus-visible,
+.tableRow:hover .rowAction,
+.rowAction:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .rowDelete:hover,
+  .rowAction:hover,
+  .addColumn:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.rowDelete:active,
+.rowAction:active,
+.addColumn:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (hover: none) {
+  .rowDelete,
+  .rowAction {
+    opacity: 1;
+  }
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0 0 10px 12px;
+  background: transparent;
+  color: var(--ink-muted);
+  text-align: left;
+  font-size: 14px;
+}
+
+@media (hover: hover) {
+  .addRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.addRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.columnPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.typeList,
+.columnActions {
+  display: flex;
+  flex-direction: column;
+}
+
+.columnActions {
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+}
+
+.typeChoice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 15px;
+}
+
+.typeChoice > svg:last-child:not(:first-child) {
+  margin-left: auto;
+}
+
+@media (hover: hover) {
+  .typeChoice:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.typeChoice:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.typeChoice[aria-checked='true'] {
+  font-weight: 600;
+}
+
+.danger,
+.danger svg {
+  color: var(--danger);
+}
+
+.unitField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.optionsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 14px;
+}
+
+@media (hover: hover) {
+  .optionRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.optionRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.optionsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.optionEdit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optionSwatch {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: var(--fill);
+}
+
+.optionName {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.optionName:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.optionRemove,
+.optionAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+.optionRemove {
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--cut-small);
+}
+
+.optionAdd {
+  height: 34px;
+  padding: 0 8px;
+  border-radius: var(--cut-tab);
+  color: var(--link);
+  font-size: 14px;
+}
+
+@media (hover: hover) {
+  .optionRemove:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  .optionAdd:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.optionRemove:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.optionAdd:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+/* ── pictures, videos, PDFs, files ───────────────────────────────────── */
+
+.mediaEmpty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 14px 16px;
+  /* Its own outline; edged only while a file is held over it. */
+  position: relative;
+  --edge-color: transparent;
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.mediaEmpty[data-over] {
+  --edge-color: var(--focus);
+}
+
+.mediaEmptyLabel {
+  flex: 1;
+  min-width: 140px;
+}
+
+.mediaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mediaLink {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.mediaImage {
+  margin: 0;
+}
+
+.mediaImage img {
+  max-width: 100%;
+  max-height: 720px;
+}
+
+.mediaVideo,
+.mediaFrame {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: var(--viewer);
+}
+
+/* A video file keeps its frame's corners; an embedded player takes its own outline (`data-outline`). */
+.mediaVideo {
+  border-radius: var(--cut-frame);
+}
+
+.mediaFrame {
+  aspect-ratio: 16 / 9;
+}
+
+.mediaPdf {
+  display: block;
+  width: 100%;
+  height: min(78vh, 760px);
+  border: 0;
+  background: var(--paper-high);
+}
+
+.mediaWaiting {
+  padding: 28px 16px;
+  background: var(--paper-high);
+  text-align: center;
+}
+
+.fileCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 14px;
+  /* Its own outline, its hairline edge a ring along it (`data-edge`). */
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.fileCard > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.fileText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fileText > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── a collection as a table ─────────────────────────────────────────── */
+
+/* Its rows read across: each cell's words on the middle of the row its title sets. */
+.linkTable .cell {
+  vertical-align: middle;
+}
+
+/* In a narrow window the title stays in view, on the card's own paper. */
+@media (max-width: 719px) {
+  .linkTable .headCell:first-child,
+  .linkTable .tableRow > .cell:first-child {
+    background: var(--sheet, var(--paper));
+  }
+}
+
+/* The title's head: a column that neither moves nor hides. */
+.headLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.linkTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 36px 6px 8px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* Its kept picture cropped to a pebble (`data-pebble`), its kind's glyph until there is one. */
+.linkThumb {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.linkThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.linkTitleText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.linkTitleName {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.linkTitleName[data-address] {
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  .linkTitle:hover .linkTitleName {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+}
+
+/* A long summary or note shows its first three lines; the link's details hold the rest. */
+.linkCell {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  margin: 7px 10px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* A price as a number lines up on the right; one Claude wrote out (« 25 à 40 € par personne ») reads as words. */
+.cell[data-number] .linkCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell[data-column='summary'] .linkCell,
+.cell[data-column='url'] .linkCell {
+  color: var(--ink-muted);
+}
+
+/* « Déjà faits » across the table, its words kept in view as the columns scroll. */
+.doneHead {
+  padding: 16px 0 6px;
+  border-bottom: 1px solid var(--outline);
+  text-align: left;
+}
+
+.doneHeadLabel {
+  position: sticky;
+  left: 0;
+  display: inline-block;
+  padding: 0 10px;
+}
+
+/* A link done reads in the second ink, its picture faded, as in its collection. */
+.linkTable .tableRow[data-done] .linkTitleName {
+  color: var(--ink-muted);
+}
+
+.linkTable .tableRow[data-done] .linkThumb {
+  opacity: 0.55;
+}
+
+/* « Ajouter un lien » opened: the address field in the place of the button. */
+.addLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--cut-field);
+  background: var(--field);
+  box-shadow: inset 0 0 0 2px var(--focus);
+  color: var(--ink-muted);
+}
+
+.addLinkInput {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+}
+
+.addLinkInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+/* « Colonnes »: those in the table, in order, then those hidden. */
+.viewPanel {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 10px;
+}
+
+.viewHeading {
+  margin: 0;
+  padding: 8px 8px 4px;
+  color: var(--ink-muted);
+}
+
+.viewList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viewRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+}
+
+/* The row under the pointer while it is dragged to its place. */
+.viewRow[data-dragging] {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.viewGrip,
+.viewGripSpace {
+  flex: none;
+  width: 28px;
+  height: 32px;
+}
+
+.viewGrip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+@media (hover: hover) {
+  .viewGrip:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.viewGrip:active {
+  cursor: grabbing;
+}
+
+.viewName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+/* ── bookmarks and embeds ────────────────────────────────────────────── */
+
+.bookmark {
+  display: flex;
+  min-height: 104px;
+  overflow: hidden;
+  /* Its own outline, its hairline edge a ring along it; its wrapper lifts it, and more under the pointer. */
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.bookmarkPicture {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 124px;
+  overflow: hidden;
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.bookmarkPicture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.bookmarkEmoji {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.bookmarkText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 16px;
+}
+
+.bookmarkTitle,
+.bookmarkGlimpse {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.bookmarkMeta {
+  margin-top: auto;
+}
+
+.goneCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+/* Each in its own outline, its hairline edge a ring along it; its wrapper lifts it. */
+.embedNote,
+.embedCollection,
+.embedLink,
+.embedPage {
+  color: var(--ink);
+}
+
+.embedNote {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 48px 12px 16px;
+}
+
+/* « Ouvrir la note », in its top corner: where its labels, reminder and colour are changed. */
+/* Clear of its sheet's curved corner. */
+.embedOpen {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.embedNote[data-line] {
+  --sheet: var(--tint);
+}
+
+.embedTitle,
+.embedBody {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  resize: none;
+  outline: none;
+  field-sizing: content;
+}
+
+.embedCollection {
+  padding: 10px 12px 12px;
+}
+
+/* The collection's name (a way to it), its count, and how it shows: the tools go under on a narrow page. */
+.embedHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 4px 6px 8px;
+}
+
+.embedHead > :last-child {
+  margin-left: auto;
+}
+
+.embedName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.embedTools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.embedViews {
+  width: 228px;
+  min-width: 0;
+}
+
+/* A phone-sized window: the tools take their own line, the choice of look as wide as it leaves. */
+@media (max-width: 719px) {
+  .embedTools {
+    width: 100%;
+  }
+  .embedViews {
+    flex: 1;
+    width: auto;
+  }
+  /* « Colonnes » by its glyph alone, so « Tableau » keeps its word. */
+  .columnsButton {
+    flex: none;
+    padding-inline: 12px;
+  }
+  .columnsWord {
+    display: none;
+  }
+}
+
+.embedLinks {
+  display: flex;
+  flex-direction: column;
+}
+
+.embedEmpty {
+  padding: 8px 8px 4px;
+}
+
+/* « Déjà faits », over the links done (the embed's `showDone`), lined up with the rows' text. */
+.embedDoneHeading {
+  padding: 16px 16px 4px;
+}
+
+.embedLink {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+}
+
+.embedLinkFrame {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  /* Its own outline, edged in the outline ink. */
+  --edge-color: var(--outline);
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.embedLinkFrame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.embedStamp {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.embedLinkText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.embedLinkActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.embedPage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+/* ── columns ─────────────────────────────────────────────────────────── */
+
+/* No margin under them: each column's tail already leaves room there. */
+.columns {
+  display: flex;
+  align-items: stretch;
+  margin: 12px 0 0;
+}
+
+/* Each column starts level with the others; stacked under 720px, the tail above stands in for a heading's margin. */
+.column > :first-child {
+  margin-top: 0;
+}
+
+.column {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The gap between two columns, dragged to share their width again. */
+.columnGap {
+  position: relative;
+  flex: none;
+  width: 32px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.columnGap::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 15px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--focus);
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.columnGap[role='separator']:hover::after,
+.columnGap[data-dragging]::after {
+  opacity: 1;
+}
+
+.columnGap[aria-hidden='true'] {
+  cursor: default;
+}
+
+.columnTail {
+  flex: 1;
+  min-height: 18px;
+  cursor: text;
+}
+
+/* ── what floats by the caret ────────────────────────────────────────── */
+
+/* A floating panel's stage: the whole window, casting its lift (a filter makes it the panel's frame for `position: fixed`). */
+.floatingStage {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  filter: var(--drop-float);
+}
+
+/* Its own outline (`data-outline`), a firm edge along it in the outline ink. */
+.floating {
+  --edge-color: var(--outline);
+  position: fixed;
+  isolation: isolate;
+  background: var(--paper);
+  color: var(--ink);
+  pointer-events: auto;
+  animation: float-in 200ms var(--ease-decelerate);
+}
+
+.floating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating {
+    animation-name: fade-in;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.menuPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(340px, calc(100vw - 16px));
+  max-height: min(440px, 62vh);
+  padding: 6px;
+}
+
+.menuList {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.menuSection {
+  padding: 12px 10px 4px;
+}
+
+.menuSection:first-child {
+  padding-top: 6px;
+}
+
+/* One line a row: the glyph alone, the name, and what it does after it in the second ink. */
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.menuRow[data-active] {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.menuRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (pointer: coarse) {
+  .menuRow {
+    min-height: 44px;
+  }
+}
+
+.menuIcon {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-muted);
+}
+
+.menuRow[data-active] .menuIcon {
+  color: var(--ink);
+}
+
+/* An emoji in the glyph's place, as wide. */
+.menuEmoji {
+  flex: none;
+  width: 20px;
+  font-size: 18px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.menuText {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.menuLabel {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuDetail {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuEmpty {
+  padding: 12px 14px;
+}
+
+.formatBar {
+  padding: 4px;
+}
+
+.formatRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.formatButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .formatButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.formatButton:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.formatButton[aria-pressed='true'],
+.formatButton[aria-expanded='true'] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.formatDivider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--hairline);
+}
+
+.colorPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 6px 6px;
+}
+
+.swatchRow {
+  display: grid;
+  grid-template-columns: repeat(8, 28px);
+  gap: 4px;
+}
+
+/* A colour for words: a paper pebble with the letter in that ink, or a pebble of the highlight's wash. */
+.textSwatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text, var(--ink));
+  font-weight: 650;
+  font-size: 15px;
+  --pebble-fill: var(--paper);
+  --edge-color: var(--hairline);
+}
+
+.textSwatch[data-kind='bg'] {
+  --pebble-fill: var(--tint, var(--paper));
+}
+
+.textSwatch[aria-checked='true'] {
+  --edge-color: var(--focus);
+  --edge-width: 2px;
+}
+
+.linkForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: min(380px, calc(100vw - 16px));
+  padding: 2px 2px 2px 10px;
+  color: var(--ink-muted);
+}
+
+.linkField {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  outline: none;
+}
+
+.hoverBar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: min(460px, calc(100vw - 16px));
+  padding: 4px;
+}
+
+.hoverAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .hoverAction:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.hoverAction:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.hoverAddress {
+  min-width: 0;
+  max-width: 220px;
+  padding: 0 8px;
+  overflow: hidden;
+  color: var(--link);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* ── the emoji picker ────────────────────────────────────────────────── */
+
+/* The search on top, the emoji under it in their own scroll, "Retirer l’icône" at the foot. */
+.emojiPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 12px 8px;
+}
+
+/* The search: a field (the field's paper and edge), its glyph inside at the start. */
+.emojiSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: var(--cut-field);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink-muted);
+}
+
+.emojiSearch:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.emojiSearch > svg {
+  flex: none;
+}
+
+.emojiField {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.emojiField::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.emojiField:focus-visible {
+  outline: none;
+}
+
+.emojiField::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Five rows and a half in view, so the next one shows that more lie below. */
+.emojiScroll {
+  height: 268px;
+  margin: 0 -6px;
+  padding: 0 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+}
+
+.emojiGroup + .emojiGroup {
+  margin-top: 10px;
+}
+
+/* A group renders once it nears the view: the whole catalogue costs nothing until scrolled to. */
+.emojiGroup {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+.emojiGroupName {
+  padding: 6px 2px 4px;
+  color: var(--ink-muted);
+}
+
+.emojiNothing {
+  padding: 16px 4px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+}
+
+.emojiChoice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+}
+
+@media (hover: hover) {
+  .emojiChoice:hover {
+    --pebble-fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.emojiChoice:active {
+  --pebble-fill: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* The current one lies on a matcha pebble. */
+.emojiChoice[aria-pressed='true'] {
+  --pebble-fill: var(--action-container);
+}
+
+.emojiNone {
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--link);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+@media (hover: hover) {
+  .emojiNone:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.emojiNone:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+/* ── dragging ────────────────────────────────────────────────────────── */
+
+.dragGhost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  max-width: 300px;
+  padding: 8px 14px;
+  overflow: hidden;
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--outline),
+    var(--shadow-float);
+  color: var(--ink);
+  pointer-events: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.dropIndicator {
+  position: fixed;
+  z-index: 29;
+  border-radius: 2px;
+  background: var(--focus);
+  pointer-events: none;
+}
+
+.dropIndicator[data-zone='inside'] {
+  border-radius: var(--cut-tab);
+  background: color-mix(in srgb, var(--action-container) 45%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--focus);
+}
+
+/* The box dragged from the page's empty space: the blocks it touches are selected. */
+.marquee {
+  position: fixed;
+  z-index: 29;
+  border-radius: var(--cut-small);
+  background: color-mix(in srgb, var(--action-container) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--focus) 70%, transparent);
+  pointer-events: none;
+}
+
+/* ── a finger's bar, on the keyboard ────────────────────────────────── */
+
+/* The bar's stage: the whole window, casting its lift along its outline. */
+.blockBarStage {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  filter: var(--drop-float);
+}
+
+/* Its own outline (`data-outline`), a firm edge along it. */
+.blockBar {
+  --edge-color: var(--outline);
+  position: fixed;
+  left: 50%;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  isolation: isolate;
+  transform: translateX(-50%);
+  background: var(--paper);
+  color: var(--ink);
+  pointer-events: auto;
+  transition: opacity var(--duration-short) var(--ease-decelerate);
+}
+
+.blockBar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+.blockBar[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-short) var(--ease-accelerate),
+    visibility 0s var(--duration-short);
+}
+
+/* ── the pages' home ─────────────────────────────────────────────────── */
+
+.tileIcon {
+  color: var(--ink-muted);
+}
+
+.tileEmoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+/* The notes' frame (the board's): the create strip on the search strip's edge, then the sections. */
+.home {
+  max-width: 1040px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+}
+
+.homeIntro {
+  max-width: 62ch;
+  margin: 0 0 8px;
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* A section's head is the wall's ("Épinglées"): a 40 band, its words 4 in. */
+.homeSection + .homeSection {
+  margin-top: 20px;
+}
+
+.homeHead {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0 0 4px;
+  padding-left: 4px;
+}
+
+/* The pages changed last, three abreast where there is room. */
+.recent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+/* A recent sheet is as tall as what it says (the collections' tiles keep their even height). */
+.recent > li > a {
+  min-height: 0;
+}
+
+/* Where a page sits and when it changed: quieter than its title and its words. */
+.tileFoot {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.tilePath {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Every top-level page, one row each; the rows' words line up with the tiles'. */
+.allPages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 -12px;
+}
+
+.pageRow {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .pageRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.pageRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.pageRowIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  font-size: 22px;
+}
+
+.pageRowTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pageRowFacts {
+  white-space: nowrap;
+}
+
+/* The pages in the bin are in the Corbeille: one quiet line says so. */
+.binLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 28px 0 0 -12px;
+  padding: 0 12px;
+  border-radius: var(--cut-tab);
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .binLink:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.binLink:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* ── the pages in the bin (shown in the Corbeille) ──────────────────── */
+
+.bin {
+  margin-top: 40px;
+}
+
+.binHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.binNote {
+  margin: 2px 0 10px;
+}
+
+.binList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.binHead + .binList {
+  margin-top: 8px;
+}
+
+.binRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 6px 6px 6px 14px;
+  /* Its own outline, its hairline edge a ring along it. */
+  position: relative;
+  background: var(--paper);
+}
+
+.binIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  color: var(--ink-muted);
+}
+
+.binIcon .tileEmoji {
+  font-size: 22px;
+}
+
+.binText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── a phone-sized window ────────────────────────────────────────────── */
+
+@media (max-width: 719px) {
+  .page {
+    --gutter: 30px;
+    padding: 8px 16px 0 var(--gutter);
+  }
+  .title {
+    font-size: 30px;
+    line-height: 37px;
+  }
+  .pageIcon {
+    width: 60px;
+    height: 60px;
+    font-size: 44px;
+  }
+  .gutterButton:first-child {
+    display: none;
+  }
+  .columns {
+    flex-direction: column;
+  }
+  .columnGap {
+    display: none;
+  }
+  .bookmarkPicture {
+    width: 88px;
+  }
+  .embedLink {
+    flex-direction: column;
+  }
+  .embedLinkFrame {
+    width: 100%;
+    max-width: 240px;
+  }
+  .recent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  /* The facts go under the title. */
+  .pageRow {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .pageRowIcon {
+    grid-row: span 2;
+  }
+  .pageRowFacts {
+    grid-column: 2;
+    white-space: normal;
+  }
+}
+
+/* A finger: the bar on the keyboard holds the block's actions, so no gutter by the screen's edge, and the column is even; the page's foot keeps room for the bar, so the last blocks scroll clear of it. */
+@media (max-width: 719px) and (pointer: coarse) {
+  .page {
+    --gutter: 16px;
+    padding-bottom: 96px;
+  }
+  .gutter {
+    display: none;
+  }
+}

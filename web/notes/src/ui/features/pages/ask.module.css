@@ -1,0 +1,415 @@
+/*
+ * "Demander à Claude" on the pages: from 720px a panel docked beside the page (the page keeps its
+ * column, narrower), under 720px the phone's bottom sheet. A conversation: the scope, the questions
+ * and answers with their numbered sources, the question being written at the foot.
+ */
+
+/* The page and the docked panel side by side while a conversation is open. */
+.withAsk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.withAsk[data-asking] {
+  grid-template-columns: minmax(0, 1fr) min(400px, 38%);
+  column-gap: 8px;
+}
+
+.dock {
+  position: sticky;
+  top: calc(var(--header-height, 64px) + 4px);
+  height: calc(100vh - var(--header-height, 64px) - 20px);
+  padding-right: 12px;
+  animation: dock-in var(--duration-medium) var(--ease-decelerate) both;
+}
+
+.dock[data-closing] {
+  animation: dock-out var(--duration-short) var(--ease-accelerate) both;
+}
+
+@keyframes dock-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes dock-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock,
+  .dock[data-closing] {
+    animation-duration: 1ms;
+  }
+}
+
+.dockLift {
+  height: 100%;
+}
+
+.panel {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+/* In the bottom sheet: the sheet's own paper, most of the screen. */
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  height: min(82dvh, 720px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px 6px 16px;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headText h2,
+.headText p {
+  margin: 0;
+}
+
+.about {
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.scope > p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+/* The conversation scrolls; the question being written stays at the foot. */
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 16px;
+}
+
+.starters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.starters > p {
+  margin: 0 0 4px;
+  color: var(--ink-muted);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: turn-in var(--duration-medium) var(--ease-decelerate) both;
+}
+
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn {
+    animation: none;
+  }
+}
+
+/* The question: the person's own words, set apart on the field's tone. */
+.question {
+  align-self: flex-end;
+  max-width: 88%;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--cut-tab);
+  background: var(--field);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.waiting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-muted);
+}
+
+.waiting p {
+  flex: 1;
+  margin: 0;
+}
+
+.failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.failed p {
+  margin: 0;
+  color: var(--danger);
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paragraph {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paragraph p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.paragraph ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+/* A citation's mark, after the words it backs: a small number on the action's wash. */
+.cite {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  margin: 0 1px 0 3px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--cut-detail);
+  background: var(--action-container);
+  color: var(--on-action-container);
+  font: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  vertical-align: 2px;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+/* A finger's room around a small mark. */
+.cite::after {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+}
+
+@media (hover: hover) {
+  .cite:hover {
+    background: color-mix(in srgb, var(--on-action-container) 18%, var(--action-container));
+  }
+}
+
+.cite:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .source:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.source:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.source .cite {
+  grid-row: span 2;
+  margin: 2px 0 0;
+  vertical-align: baseline;
+}
+
+.sourcePage,
+.sourceQuote {
+  min-width: 0;
+  margin: 0;
+}
+
+.sourcePage {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceQuote {
+  color: var(--ink-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.web {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 8px;
+  list-style: none;
+}
+
+.web a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.private {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin: auto 0;
+  padding: 16px;
+  border-radius: var(--cut-panel);
+  background: var(--paper-high);
+}
+
+.private p {
+  margin: 0;
+}
+
+/* The question being written, at the foot, its send button at the field's end. */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.composeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.composeRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* One line to start, growing with the question (the field's own minimum is for forms). */
+.composer textarea.composeInput {
+  min-height: 46px;
+  max-height: 160px;
+  padding: 11px 14px;
+  field-sizing: content;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.choice > span:first-child {
+  flex: 1;
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}

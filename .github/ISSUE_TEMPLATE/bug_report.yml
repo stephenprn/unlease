@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A vulnerability never goes in an issue: report it privately ([security policy](https://github.com/stephenprn/unlease/security/policy)).
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The server's, from the Administration (or the `unlease-server listening` line of its log).
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Carnet for Android
+        - Carnet on the web
+        - The server (install, settings, backups, sync)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: And what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: |
+        1. Open a collection
+        2. Share a link to it from the browser
+        3. ...
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: The phone and its Android version, or the browser and its system.
+      placeholder: Pixel 8, Android 16 / Firefox 140, macOS 26
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The server's log around it (`docker compose logs --since 1h unlease`). Remove anything private first (addresses, tokens, titles of your notes).
+      render: text

@@ -1,0 +1,398 @@
+/* "Classer un lien", and the snip: the slip a shared link is cut out on. */
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 54px;
+  padding: 0 4px 0 14px;
+  border-radius: var(--cut-field);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .field:hover {
+    box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  }
+}
+
+.field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.field > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+}
+
+/* What the broom took off the address; an empty live region until then. */
+.cleaned {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cleaned:not(:empty) {
+  margin-top: 8px;
+}
+
+.cleaned > svg {
+  flex: none;
+  color: var(--link);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* A paper tab per collection, each cut its own way; the chosen one washed matcha. */
+.targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.target {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: 240px;
+  padding: 0 14px 0 9px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.target > svg {
+  flex: none;
+}
+
+@media (hover: hover) {
+  .target:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  }
+}
+
+.target:active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper));
+}
+
+/* Chosen: the paper chip ringed in matcha, as a picker marks its choice, so an emblem always sits on paper. */
+.target[aria-checked='true'] {
+  --icon-solid: 1;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.targetName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.help {
+  text-wrap: pretty;
+}
+
+/* In the phone's bottom sheet the collections run in one row that scrolls sideways. */
+@media (max-width: 719px) {
+  .targets {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* Out to the sheet's edges, with room for the chosen chip's ring and the focus ring. */
+    margin: -4px -16px;
+    padding: 4px 16px;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+  }
+  .target {
+    flex: none;
+    min-height: 48px;
+  }
+}
+
+/* ── the snip ────────────────────────────────────────────────────────────── */
+
+.host {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2;
+  width: min(400px, calc(100vw - 32px));
+}
+
+/* Clear of the docked navigation. */
+@media (min-width: 1100px) {
+  .host {
+    left: calc(var(--nav-width) + 24px);
+  }
+}
+
+@media (max-width: 719px) {
+  .host {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The slip: dark paper by day, light paper at night, grained like every sheet. */
+.slip {
+  --sheet: var(--slip);
+  padding: 4px 6px 6px 18px;
+  border-radius: var(--cut-slip);
+  color: var(--on-slip);
+  box-shadow: var(--lift-float);
+  /* It rises into place from below the bar it sits over, and sinks away faster (the phone's). */
+  animation: slip-in var(--duration-long) var(--ease-decelerate);
+}
+
+.slip[data-leaving] {
+  animation: slip-out var(--duration-exit) var(--ease-accelerate) forwards;
+}
+
+/* Under its own move sheet: gone from sight and from reach until the sheet is, then back where it was. */
+.slip[data-covered] {
+  visibility: hidden;
+}
+
+.slipHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+}
+
+.slipTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slip .queued {
+  flex: none;
+  color: var(--on-slip-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.slip .close {
+  --icon-ink: var(--on-slip-muted);
+}
+
+.slip .site {
+  margin-top: -6px;
+  padding-right: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--on-slip-muted);
+}
+
+/* The tray, the dashed cut line with its scissors, and the stop the link lands on. */
+.cutRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 8px;
+}
+
+.cutTrack {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  max-width: 220px;
+  height: 26px;
+  background: repeating-linear-gradient(90deg, var(--on-slip-muted) 0 8px, transparent 8px 14px) 0 50% / 100% 2px no-repeat;
+}
+
+/* The cut behind the scissors, from the tray: slip ink while they work, the collection's pigment once filed. */
+.cutTrail {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 11px;
+  height: 3px;
+  margin-top: -1.5px;
+  background: var(--cut-ink, var(--on-slip-muted));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: background-color var(--duration-long) var(--ease-standard);
+}
+
+.blade {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  display: flex;
+  color: var(--on-slip);
+}
+
+/* The blades cross at the glyph's middle: they turn about that pivot. */
+.blade svg {
+  transform-origin: 48% 50%;
+}
+
+.slip[data-state='reading'] .blade svg {
+  animation: snip 130ms var(--ease-standard) infinite alternate;
+}
+
+/* Where the emblem will land: the pebble's dashed edge. */
+.emptyStop {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  --edge-color: var(--on-slip-muted);
+  --edge-width: 2px;
+  --edge-dash: 4.5 3.5;
+  transition: opacity var(--duration-long) var(--ease-standard);
+}
+
+.slip[data-state='kept'] .emptyStop {
+  opacity: 0.35;
+}
+
+/* The collection's emblem pinned as the cut arrives: a short overshoot, a small turn, then still. */
+.landing {
+  flex: none;
+  display: flex;
+  animation: land 440ms var(--ease-land) 120ms both;
+}
+
+.slipFoot {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+}
+
+.slip .headline {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--on-slip);
+}
+
+.slipAction {
+  flex: none;
+  min-height: 44px;
+  min-width: 48px;
+  margin: 2px 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: transparent;
+  color: var(--slip-action);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 18px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .slipAction:hover {
+    background: var(--slip-high);
+  }
+}
+
+.slipAction:active {
+  background: var(--slip-high);
+}
+
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+}
+
+@keyframes slip-out {
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes snip {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-24deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slip[data-state='reading'] .blade svg {
+    animation: none;
+  }
+  .slip,
+  .landing {
+    animation-name: fade-in;
+  }
+  .slip[data-leaving] {
+    animation-name: fade-out;
+  }
+}

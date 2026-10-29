@@ -1,0 +1,1246 @@
+/*
+ * A link in its collection, on the wall as on the phone: a cut 4:5 frame; where it comes from and
+ * what it costs, what it is, two facts; the stamp when done. Inset by 6, so its hover, cut like a
+ * panel, stays in the page's margin.
+ */
+.row {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 115px;
+  margin: 0 6px;
+  padding: 10px 16px 10px 10px;
+  /* For its link's focus ring; its veil takes the row's organic outline. */
+  border-radius: var(--cut-panel);
+}
+
+/* The row's veil, in its own outline (`--outline-clip`): its rule above it stays whole. */
+.row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: var(--outline-clip, none);
+  pointer-events: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+/* Rules start where the text does, as on the phone, so the pictures read as one column. */
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 100px;
+  right: 0;
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* A veil of ink inside the row's own cut, under the pointer (a finger leaves none behind): the image well keeps its step below it. */
+@media (hover: hover) {
+  .row:hover::after {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row:has(> .hit:active)::after {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.hit:focus-visible {
+  outline-offset: -3px;
+}
+
+/* The frame and the stamp pressed on it: the stamp is centred on the picture, whatever its word. */
+.frame {
+  position: relative;
+  flex: none;
+}
+
+.image {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 95px;
+  overflow: hidden;
+  /* Its own outline; its edge (`OutlineEdge`) in the outline ink lies over the picture, so a white product shot still has its frame on white paper. */
+  --edge-color: var(--outline);
+  clip-path: var(--outline-clip, none);
+  background: var(--paper-high);
+  color: var(--ink-muted);
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+
+.image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A picture lies on cream paper: by day a product shot's white becomes the paper (multiply), at night it glares less. */
+.image[data-picture] {
+  background: var(--paper);
+  isolation: isolate;
+}
+
+.image[data-picture] img {
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.row[data-done] .image {
+  opacity: 0.55;
+}
+
+.stampSpot {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Stamped while in view, as on the phone: the stamp comes down from 1.3 onto the paper and settles inked (no rebound). */
+.stampLanding {
+  animation: stamp-press var(--duration-medium) var(--ease-decelerate) both;
+}
+
+/* Put back to do: the stamp fades where it was. */
+.stampLeaving {
+  animation: stamp-lift var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+@keyframes stamp-press {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1.3);
+  }
+}
+
+@keyframes stamp-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes stamp-lift {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stampLanding {
+    animation-name: stamp-fade;
+  }
+}
+
+/* As tall as the frame (taller only with larger text): where it comes from and what it is from its top, the facts on its foot. */
+.text {
+  flex: 1;
+  min-width: 0;
+  min-height: 95px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.overline {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-height: 20px;
+  min-width: 0;
+}
+
+.source {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.row[data-done] .title,
+.title[data-address] {
+  color: var(--ink-muted);
+}
+
+.price {
+  flex: none;
+}
+
+.row[data-done] .price {
+  color: var(--ink-muted);
+}
+
+.facts {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 18px;
+}
+
+/* As on the phone: the danger glyph, the reason on one line in the second ink, "Réessayer" after it. */
+.failed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 18px;
+}
+
+.failed svg {
+  flex: none;
+  color: var(--danger);
+}
+
+.failedText {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Its target straddles the first line, so the row keeps the line's height. */
+.failed .retry {
+  margin: -5px 0;
+}
+
+.skipped {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Alone on its line: its label lines up with the text above, its target straddles the line as "Réessayer"'s does. */
+.skipped .retry {
+  margin: -5px 0 -5px -8px;
+}
+
+/* Only the buttons rise above the row's link: the rest of the line still opens the link. */
+.retry {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--link);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@media (hover: hover) {
+  .retry:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.retry:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+.trailing {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-width: 44px;
+}
+
+/* The stamp and the page show under a pointer or the keyboard, not as a column of icons. A finger keeps the page one tap away, as on the phone, and stamps from the link's panel. */
+@media (hover: hover) {
+  .trailing {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+
+  .row:hover .trailing,
+  .row:focus-within .trailing {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none) {
+  .stampAction {
+    display: none;
+  }
+}
+
+/*
+ * From 720px, a compact row, so a desk screen holds more of them: a 56 by 70 frame, the facts right
+ * under the title, the price at the row's end on the source's line. The stamp and the page come
+ * over that end under a pointer or the keyboard and the text's end fades under them, so no column
+ * stays empty for them; under a finger the page, always shown, keeps its own room after the text.
+ */
+@media (min-width: 720px) {
+  .row {
+    min-height: 86px;
+    padding: 8px 16px 8px 10px;
+  }
+
+  .row + .row::before {
+    left: 80px;
+  }
+
+  .image {
+    width: 56px;
+    height: 70px;
+  }
+
+  .image svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* The stamp in the small frame's measure, so its longest word stays clear of the text. */
+  .stampSpot {
+    scale: 0.86;
+  }
+
+  .text {
+    min-height: 70px;
+    justify-content: center;
+    gap: 4px;
+  }
+}
+
+@media (min-width: 720px) and (hover: hover) {
+  /* Over the row's end, out of the text's way until hovered. */
+  .trailing {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    min-width: 0;
+    transform: translateY(-50%);
+  }
+
+  /* The veil is a mask slid in from the end, so nothing reflows. A mask makes a stacking context: the text rises above the row's link and lets clicks through to it. */
+  .text {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+    -webkit-mask: linear-gradient(to left, transparent 84px, #000 120px) 0 0 / 200% 100% no-repeat;
+    mask: linear-gradient(to left, transparent 84px, #000 120px) 0 0 / 200% 100% no-repeat;
+    transition:
+      -webkit-mask-position var(--duration-short) var(--ease-standard),
+      mask-position var(--duration-short) var(--ease-standard);
+  }
+
+  .row:hover .text,
+  .row:focus-within .text {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+
+  .retry {
+    pointer-events: auto;
+  }
+
+  /* "Réessayer" never reaches the veiled end: it must stay in reach while the row is hovered. */
+  .failed {
+    padding-right: 112px;
+  }
+}
+
+/* Reading: small scissors working along a dashed cut line. */
+.track {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  height: 14px;
+  background: repeating-linear-gradient(90deg, var(--outline) 0 5px, transparent 5px 9px) 0 50% / 100% 2px no-repeat;
+}
+
+.trackScissors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  color: var(--link);
+  animation: along 1.3s var(--ease-standard) infinite alternate;
+}
+
+.trackScissors svg {
+  transform-origin: 40% 50%;
+  animation: snip 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes along {
+  to {
+    transform: translateX(var(--run));
+  }
+}
+
+@keyframes snip {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trackScissors,
+  .trackScissors svg {
+    animation: none;
+  }
+  .trackScissors {
+    transform: translateX(calc(var(--run) / 2));
+  }
+}
+
+/* The link's own page, as a side sheet beside its collection. */
+
+/* Under 720px it is the phone's page (LinkScreen), on the note paper; the side sheet keeps the ground's. */
+@media (max-width: 719px) {
+  .page {
+    background: var(--paper);
+  }
+}
+
+.panelHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px 10px 6px 12px;
+}
+
+/* The collection it is in, and the way to another: a picker, its chevron says so. */
+.sign {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .sign:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.sign:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.sign:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.signEmblem {
+  flex: none;
+  transform: rotate(-8deg);
+}
+
+.signName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signChevron {
+  flex: none;
+  margin-left: -6px;
+  color: var(--ink-muted);
+}
+
+.panelHeadSpace {
+  flex: 1;
+}
+
+.panelScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The kept pictures, each in a cut frame; more than one scroll sideways. */
+.gallery {
+  display: flex;
+  gap: 10px;
+  padding: 2px 22px 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 22px;
+  scrollbar-width: thin;
+}
+
+/*
+ * A picture's frame: its own proportion (`--ratio`, set once it loads; 4:5 until then), no taller
+ * than leaves the title and the price in the first view, no wider than the sheet. So the picture
+ * fills it whatever its shape, and several sit side by side at one height.
+ */
+.galleryItem {
+  --frame-height: min(320px, 38vh);
+  flex: none;
+  display: flex;
+  width: min(100%, calc(var(--frame-height) * var(--ratio, 0.8)));
+  aspect-ratio: var(--ratio, 0.8);
+  overflow: hidden;
+  /* Its own outline, from the picture it holds. */
+  clip-path: var(--outline-clip, none);
+  background: var(--paper-high);
+  scroll-snap-align: start;
+}
+
+/* Loaded, it lies on cream paper as a row's picture does: by day a product shot's white becomes the paper. */
+.galleryItem[data-picture] {
+  background: var(--paper);
+  isolation: isolate;
+}
+
+.galleryItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.gallery:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Several pictures: which one is in view, in the phone's dots. */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 12px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--outline);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.dot[data-shown] {
+  background: var(--ink);
+}
+
+/* Groups apart, their parts close: head, what became of the reading, what it is, the note, the details. */
+.detailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 22px 32px;
+}
+
+.detailBody[data-bare] {
+  padding-top: 6px;
+}
+
+/* The head and the modules under it. */
+.headGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* No picture: the kind's frame beside the title, as in the collection's row. */
+.headRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.headRow > .heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.headFrame {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 95px;
+  /* Its outline (`OutlinedBox`) edged in the outline ink. */
+  --edge-color: var(--outline);
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Focused only as the sheet's starting point: a heading takes no ring. */
+.detailTitle:focus {
+  outline: none;
+}
+
+.detailTitle {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+/* The price in the editor title's size, as on the phone, the stamp beside it once done, or the small "Codes promo" while it is still wanted. */
+.priceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-height: 32px;
+}
+
+/* Not read, or not readable: what happened, and the way on, in one well. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.notice > svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.noticeBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* Its label lines up with the words above; its hover keeps the well's room below it, as the words do above. */
+.noticeAction {
+  margin: 4px 0 0 -14px;
+}
+
+.noticeFailed {
+  color: var(--danger);
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary {
+  max-width: 65ch;
+}
+
+/* The facts Claude pulled: a well in its own outline, ruled by paper. */
+.factsWell {
+  --sheet: var(--paper-high);
+  margin: 0;
+  overflow: hidden;
+  clip-path: var(--outline-clip, none);
+}
+
+/* The label in meta, on the value's first baseline. */
+.fact {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--paper);
+}
+
+.fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The note grows with what is written, then scrolls; no resize grip pokes out of its cut corner. */
+textarea.noteInput {
+  resize: none;
+  field-sizing: content;
+  min-height: 96px;
+  max-height: 320px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.urlLine {
+  overflow-wrap: anywhere;
+}
+
+.urlLine a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* The two things done here, at the sheet's foot whatever the scroll: stamp it, open the page. */
+.panelFoot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--hairline);
+}
+
+.open {
+  flex: 1;
+}
+
+@media (max-width: 719px) {
+  .gallery {
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+  /* A phone's first screen: the picture a little taller, the title and the price still under it. */
+  .galleryItem {
+    --frame-height: min(360px, 44vh);
+  }
+  .detailBody {
+    padding: 16px 16px 32px;
+  }
+  .detailBody[data-bare] {
+    padding-top: 6px;
+  }
+  .fact {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .panelFoot {
+    padding-inline: 16px;
+  }
+}
+
+/* Promo codes: a dialog a little narrower than a form's. */
+.couponsFrame {
+  --frame-width: min(480px, 100vw - 32px);
+}
+
+.couponsWaiting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 8px;
+  color: var(--ink-muted);
+}
+
+.couponsError {
+  color: var(--danger);
+}
+
+/* The codes: a well in its own outline, ruled by paper, as the facts are. */
+.couponsWell {
+  --sheet: var(--paper-high);
+  overflow: hidden;
+  clip-path: var(--outline-clip, none);
+}
+
+.coupon {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 6px 12px 16px;
+}
+
+.coupon + .coupon {
+  border-top: 1px solid var(--paper);
+}
+
+.couponText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* The code as it is typed at checkout: the monospace on paper, in the detail radius, selected whole. */
+.couponCode {
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  border-radius: var(--cut-detail);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.couponSource a,
+.couponTips a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.couponTips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.couponTips ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Claude's answer, arriving: each code fades up into place a beat after the one above. */
+.arriving {
+  animation: coupon-in var(--duration-medium) var(--ease-decelerate) both;
+  animation-delay: calc(min(var(--arrive, 0), 8) * 30ms);
+}
+
+@keyframes coupon-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arriving {
+    animation-name: coupon-fade;
+  }
+}
+
+@keyframes coupon-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A link's modules: small tonal buttons under its title, wrapping on a narrow sheet. */
+.moduleBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* An offer's shop and its price on one line. */
+.offerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.offerCheaper {
+  color: var(--ok);
+}
+
+/* An offer without a page keeps its button's room. */
+.offerSpace {
+  flex: none;
+  width: 44px;
+}
+
+@media (pointer: coarse) {
+  .offerSpace {
+    width: 48px;
+  }
+}
+
+/* A module's choices (ingredients to tick, where they go): rows in the dialog's own inset. */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.choice:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.choice > svg {
+  flex: none;
+}
+
+/* A checkbox glyph: ink when open, ink-muted when ticked, never matcha. */
+.choiceDone {
+  color: var(--ink-muted);
+}
+
+.choiceText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The chosen place: its tick in matcha. */
+.choiceMark {
+  color: var(--focus);
+}
+
+/* A value between two small buttons: servings, a season, an episode. In the module bar it is one of its small tonal buttons. */
+/* Outside the module bar, a sunken track holding its two ends and the value (the phone's). */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--cut-track);
+  background: var(--track);
+}
+
+.stepper[data-bar] {
+  min-height: 32px;
+  padding: 0 2px;
+  border-radius: var(--cut-button);
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.stepperValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 7.5em;
+  text-align: center;
+}
+
+.stepper[data-bar] .stepperValue {
+  min-width: 6.5em;
+}
+
+/* A rating against its scale: a thin track, filled to its share. */
+.ratingMeter {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin: 6px 0 4px;
+  border-radius: var(--cut-track);
+  background: linear-gradient(to right, var(--ink-muted) calc(var(--share, 0) * 100%), var(--track) 0);
+}
+
+/* Where a series was left: the two steppers side by side, under each other when narrow. */
+.recapPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+/* Claude's words: paragraphs a breath apart. */
+.answerText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* A paragraph: its lines one under the other, a list among them. */
+.answerPart {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.answerPart p {
+  margin: 0;
+}
+
+.answerList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+/* A recap's people: the name, then where they stand. */
+/* The people in a well ruled by paper, as the facts are (the phone's). */
+.people {
+  margin: 0;
+}
+
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+}
+
+.person + .person {
+  border-top: 1px solid var(--paper);
+}
+
+.person dd {
+  margin: 0;
+}
+
+/* The cook mode: as wide as a cookbook opened flat, its step in large type. */
+.cookFrame {
+  --frame-width: min(920px, 100vw - 48px);
+}
+
+.cookTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cookColumns {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+  align-items: start;
+  gap: 32px;
+}
+
+.cookIngredients {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A ticked ingredient steps back, unstruck. */
+.choice[data-done] {
+  color: var(--ink-muted);
+}
+
+.cookMethod {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 12em;
+}
+
+.cookStepText {
+  font-size: 24px;
+  line-height: 36px;
+  text-wrap: pretty;
+}
+
+@media (max-width: 719px) {
+  .cookStepText {
+    font-size: 21px;
+    line-height: 32px;
+  }
+}
+
+/* A duration in a step: a press starts its timer. */
+/* A duration in the step's words: set in its weight, the chip under the step starts it. */
+.duration {
+  font-weight: 600;
+}
+
+.stepTimers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.timerChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: var(--action-container);
+  color: var(--on-action-container);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .timerChip:hover {
+    background: color-mix(in srgb, var(--on-action-container) 10%, var(--action-container));
+  }
+}
+
+/* The timers running: pills in the cook mode's head, and above the app wherever the person goes. */
+.timerStrip,
+.timerTray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timerTray {
+  position: fixed;
+  top: calc(var(--header-height, 0px) + 12px);
+  right: 16px;
+  z-index: 3;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: calc(100vw - 32px);
+}
+
+.timerPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px 0 12px;
+  border-radius: var(--cut-chip);
+  background: var(--slip);
+  color: var(--on-slip);
+}
+
+.timerTray .timerPill {
+  box-shadow: var(--shadow-float);
+}
+
+.timerPill .tabular {
+  min-width: 3.2em;
+}
+
+/* What it times, and under it in meta the recipe it was started for when that is not the one shown (the phone's). */
+.timerWhat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 22ch;
+}
+
+.timerWhat > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timerRecipe {
+  color: inherit;
+  opacity: 0.78;
+}
+
+/* Rung: it waits in the warning's tone until it is dismissed. */
+.timerPill[data-done] {
+  background: var(--waiting);
+  color: var(--ink);
+  animation: timer-rung 1.2s var(--ease-standard) 3;
+}
+
+@keyframes timer-rung {
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timerPill[data-done] {
+    animation: none;
+  }
+}
+
+/* On a phone the cook mode is a whole page: the step's buttons stand at its foot, in the thumb's reach. */
+@media (max-width: 719px) {
+  .cookFrame {
+    height: 100%;
+  }
+  .cookFrame[data-foot] > :last-child {
+    margin-top: auto;
+  }
+}

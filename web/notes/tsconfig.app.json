@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    // No `baseUrl` (TypeScript 6 refuses it): paths resolve from this file.
+    // The same alias is in vite.config.ts, which Vitest reads too.
+    "paths": {
+      "@unlease/core/*": ["../../packages/core/src/*"],
+      "@unlease/design/*": ["../../packages/design/src/*"],
+      "@unlease/notes/*": ["../../packages/notes/src/*"]
+    }
+  },
+  "include": ["src"]
+}

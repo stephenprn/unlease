@@ -1,0 +1,387 @@
+/*
+ * The page itself: the font, the wall and its paper grain, and every browser
+ * surface themed from the palette (selection, caret, focus, scrollbars).
+ * Colours, cuts and lifts are custom properties generated from core/design/
+ * (virtual:carnet/tokens.css).
+ */
+
+@font-face {
+  font-family: 'Signika';
+  /* One variable file: weight 300-700 and the grade axis (-30..0). */
+  src: url('/fonts/signika-variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font: 'Signika', ui-sans-serif, system-ui, sans-serif;
+  /* Code's face, the one other: the system's monospace. */
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  --header-row: 64px;
+  /* The docked navigation's width: read by the shell and by the live layer (snackbar, transfer) outside it. */
+  --nav-width: 0px;
+  --radius-pill: 999px;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --duration-short: 150ms;
+  --duration-medium: 250ms;
+  --duration-long: 300ms;
+  /* A sheet or the drawer leaving: quicker than the 300ms it took to come in. */
+  --duration-exit: 200ms;
+  /* Paper off the wall: the shared lifts (design/palette.ts LIFTS). */
+  --shadow-raised: var(--lift-raised);
+  --shadow-float: var(--lift-float);
+  /* Paper settling: a quick exponential ease-out, for every hover and entrance. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Kept for the snip alone: a collection's emblem pinned as the cut arrives, a short overshoot. */
+  --ease-land: cubic-bezier(0.34, 1.45, 0.52, 1);
+  /* A pebble springing back after the press (Material 3's fast spatial spring): the one give in the interface. */
+  --ease-spring: cubic-bezier(0.42, 1.67, 0.21, 0.9);
+  /*
+   * The ground: its film grain (strength baked into the file) over its layers (Carnet's two tones, or
+   * the ground Réglages lays), all fixed to the window. Whatever paints the ground (the header, a bar,
+   * the drawer) paints these layers, so no seam shows where it meets the page.
+   */
+  --ground-paint: url('/ground-grain.png') repeat fixed 0 0 / 256px 256px, var(--ground-layers);
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --nav-width: 264px;
+  }
+}
+
+/* Réglages' "Grain du papier" off: every sheet's grain goes, the colours stay. */
+:root[data-grain='off'] {
+  --grain: 0 !important;
+}
+
+/* The ground's own grain off ("Grain sur le fond"): its layers alone. */
+:root[data-ground-grain='off'] {
+  --ground-paint: var(--ground-layers);
+}
+
+/*
+ * Every screen's frame, in both spaces: its content starts the same distance under the header, on
+ * the search strip's left edge, and keeps room at its foot (for the phone-sized bottom bar).
+ */
+:root {
+  --screen-top: 8px;
+  --screen-side: 24px;
+  --screen-foot: 120px;
+}
+
+@media (max-width: 719px) {
+  :root {
+    --screen-top: 4px;
+    --screen-side: 12px;
+    --screen-foot: 140px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Corners: a container draws its own continuous corner as a path (`Outline`), in every browser. A
+ * control's `border-radius` is a plain round corner, made continuous where the browser can
+ * (`corner-shape`); that corner runs tighter, so the scale's radii grow to match (`--corner-scale`).
+ * A dot stays a circle.
+ */
+@supports (corner-shape: squircle) {
+  :root {
+    /* A squircle corner runs 0.54 as deep as a round one: this radius matches the round one's depth. */
+    --corner-scale: 1.84;
+  }
+  :where(*, *::before, *::after) {
+    corner-shape: squircle;
+  }
+  :where(.dot, [data-dot]) {
+    corner-shape: round;
+  }
+}
+
+/*
+ * The pebble: the brand's stone (design/pebbles.ts), `--pebble-0` to `--pebble-3` (turned so
+ * neighbours differ). An element wearing it is clipped to it (`data-pebble`), or paints it on its
+ * `::before` (`data-pebble-under`) so its own focus ring stays whole. Pressed, it gives toward a
+ * circle at once, and springs back when let go.
+ */
+:where([data-pebble]) {
+  clip-path: var(--pebble);
+  transition: clip-path var(--pebble-return, 380ms) var(--pebble-ease, var(--ease-spring));
+}
+
+/* A control whose tint lies on a pebble behind its content: it sets `--pebble-fill` for its states. */
+:where([data-pebble-under]) {
+  position: relative;
+  isolation: isolate;
+}
+
+:where([data-pebble-under])::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--pebble-fill, transparent);
+  clip-path: var(--pebble);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    clip-path var(--pebble-return, 380ms) var(--pebble-ease, var(--ease-spring));
+}
+
+:where([data-pebble='0'], [data-pebble-under='0']) {
+  --pebble: var(--pebble-0);
+  --pebble-given: var(--pebble-0-pressed);
+}
+:where([data-pebble='1'], [data-pebble-under='1']) {
+  --pebble: var(--pebble-1);
+  --pebble-given: var(--pebble-1-pressed);
+}
+:where([data-pebble='2'], [data-pebble-under='2']) {
+  --pebble: var(--pebble-2);
+  --pebble-given: var(--pebble-2-pressed);
+}
+:where([data-pebble='3'], [data-pebble-under='3']) {
+  --pebble: var(--pebble-3);
+  --pebble-given: var(--pebble-3-pressed);
+}
+
+:where([data-pebble]:not([data-still]):active, :active > [data-pebble]:not([data-still]), [data-pebble-under]:not([data-still]):active) {
+  --pebble: var(--pebble-given);
+  --pebble-return: 90ms;
+  --pebble-ease: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-pebble], [data-pebble-under]::before) {
+    transition: none;
+  }
+}
+
+html {
+  font-family: var(--font);
+  font-variation-settings: 'GRAD' var(--grad);
+  font-synthesis: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* The scrollbar's room stays reserved, so the page never shifts as it grows long enough to scroll. */
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--edge) transparent;
+  /* The ground: two tones of the wall under their grain, fixed to the window while the page scrolls over it. */
+  background: var(--ground-paint);
+  color: var(--ink);
+  accent-color: var(--focus);
+}
+
+/* Under a layer the page holds still; the scrollbar's room becomes padding, so the scrim reaches the window's edge (layers.ts). */
+html[data-locked] {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  padding-right: var(--locked-gutter, 0px);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  /* Transparent: the html paints the ground. */
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 400;
+}
+
+/*
+ * Three layers, in paint order: the app, then modal layers (#overlays), then
+ * what must stay reachable over a dialog (#live: snackbar, transfer, tooltip).
+ * Isolating the app keeps its own z-indexes (the sticky sign) beneath any layer.
+ */
+#root {
+  isolation: isolate;
+}
+
+/*
+ * A sheet of paper: its colour, its grain between the colour and the content.
+ * `isolation` makes the grain's negative z-index paint above the sheet's own
+ * background and below everything in it. Set `--sheet` for a washed sheet.
+ */
+.paper {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--sheet, var(--paper));
+}
+/* A plain container in its own organic outline (`outlines.ts`, `data-outline="kind:seed"`): its paint clipped to it. */
+[data-outline] {
+  clip-path: var(--outline-clip, none);
+}
+
+/* Its edge, where it has one (`data-edge`): a ring along the outline, one pixel wide, in `--edge-color`. */
+[data-outline][data-edge]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--edge-color, var(--hairline));
+  clip-path: var(--outline-ring, none);
+}
+
+.paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+#overlays {
+  position: relative;
+  z-index: 1;
+}
+
+#live {
+  position: relative;
+  z-index: 2;
+}
+
+::selection {
+  background: var(--highlight);
+  color: var(--ink);
+}
+
+input,
+textarea,
+[contenteditable] {
+  caret-color: var(--focus);
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* On the slip (snackbar, transfer) the deep matcha would vanish: the slip's own action takes over. */
+[data-surface='slip'] :focus-visible {
+  outline-color: var(--slip-action);
+}
+
+[data-surface='slip'] ::selection {
+  background: var(--slip-action);
+  color: var(--slip);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--edge);
+  border-radius: 7px 5px 8px 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-faint);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+/* A key's tab speaks the interface's own face, never the browser's monospace. */
+kbd {
+  font-family: var(--font);
+  font-weight: 600;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* A match: the peach, and an underline in the text's own ink, so it reads on any wash. */
+mark {
+  background: var(--highlight);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Visually hidden but read aloud. */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion: nothing travels, zooms or swings, but fades and colour changes stay (each module swaps its moving keyframes for fades and stops its decorative loops). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow !important;
+    scroll-behavior: auto !important;
+  }
+}

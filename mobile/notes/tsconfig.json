@@ -1,0 +1,24 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // No `baseUrl`: TypeScript 6 makes it a hard error, so the paths are
+    // relative to this file instead. The same aliases are in babel.config.js
+    // and jest.config.js; the shared packages live at the repository root.
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@data/*": ["./src/data/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@platform/*": ["./src/platform/*"],
+      "@unlease/core/*": ["../../packages/core/src/*"],
+      "@unlease/design/*": ["../../packages/design/src/*"],
+      "@unlease/notes/*": ["../../packages/notes/src/*"]
+    }
+  },
+  "include": ["App.tsx", "index.js", "src/**/*.ts", "src/**/*.tsx", "specs/**/*.ts", "__mocks__/**/*.ts", "__mocks__/**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}

@@ -1,0 +1,91 @@
+<resources>
+
+    <!-- The window ground follows night mode, matching the app's ground until JavaScript draws. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/window_ground</item>
+    </style>
+
+    <!-- The quick window over the home screen: the scrim is the window itself, so a tap on a widget
+         answers at once, before JavaScript draws the sheet over it. -->
+    <style name="QuickTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/wgen_scrim</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@style/QuickAnimations</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="QuickAnimations">
+        <item name="android:windowEnterAnimation">@anim/quick_in</item>
+        <item name="android:windowExitAnimation">@anim/quick_out</item>
+        <item name="android:activityOpenEnterAnimation">@anim/quick_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/quick_out</item>
+    </style>
+
+    <!-- The widgets' type at the app's sizes (DESIGN.md Typography), in sp. A launcher cannot load an
+         app's font, so this is the system's; titles are set in Signika by the app (WidgetType.kt), and
+         these are their plain twins. -->
+    <style name="WidgetText">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/wgen_ink</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineHeight">21sp</item>
+    </style>
+    <!-- A widget's head: a collection's, a label's or a note's name. -->
+    <style name="WidgetText.Title">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">22sp</item>
+    </style>
+    <style name="WidgetText.CardTitle">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="WidgetText.Body" />
+    <style name="WidgetText.RowTitle">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:lineHeight">20sp</item>
+    </style>
+    <style name="WidgetText.Meta">
+        <item name="android:textColor">@color/wgen_ink_muted</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineHeight">18sp</item>
+    </style>
+    <style name="WidgetText.MetaStrong" parent="WidgetText.Meta">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    <style name="WidgetText.LabelSmall">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight">16sp</item>
+    </style>
+    <!-- What a field says before anything is typed. -->
+    <style name="WidgetText.Hint">
+        <item name="android:textColor">@color/wgen_ink_muted</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">23sp</item>
+    </style>
+    <!-- A text button: deep terracotta. -->
+    <style name="WidgetText.Action">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/wgen_link</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">18sp</item>
+    </style>
+
+    <!-- An icon button: a 24 glyph in a 48 target, its pebble's tint behind it only under the press. -->
+    <style name="WidgetIconButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:scaleType">center</item>
+    </style>
+    <!-- Beside a widget's title: the glyph a step smaller (22), the target still 48. -->
+    <style name="WidgetIconButton.Head">
+        <item name="android:padding">13dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+</resources>

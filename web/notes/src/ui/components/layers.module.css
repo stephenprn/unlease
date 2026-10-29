@@ -1,0 +1,793 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  /* The scrim's timing: a dialog's (250 in on standard, 150 out); sheets and the drawer follow their panel. */
+  --scrim-in: var(--duration-medium);
+  --scrim-in-ease: var(--ease-standard);
+  --scrim-out: var(--duration-short);
+  --scrim-out-ease: var(--ease-standard);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: fade var(--scrim-in) var(--scrim-in-ease);
+}
+
+/*
+ * A centred dialog's scrim: a lighter dim over a soft blur, so the page reads as set aside rather
+ * than blacked out (one sharp sheet among blurred ones is found at a glance). Sheets and the drawer
+ * keep the flat dim: dragged often, on phones. The scrim's opacity fades; the blur never animates.
+ */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .center > .scrim:not(.clear) {
+    background: var(--scrim-soft);
+    -webkit-backdrop-filter: blur(5px) saturate(0.9);
+    backdrop-filter: blur(5px) saturate(0.9);
+  }
+}
+
+/* Asked for less transparency: the flat dim, nothing seen through. */
+@media (prefers-reduced-transparency: reduce) {
+  .center > .scrim:not(.clear) {
+    background: var(--scrim);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* No dimming: a menu or a popover, or a layer over one that dims already (it never stacks a second). */
+.clear {
+  background: transparent;
+  animation: none;
+}
+
+/*
+ * The panel's stage: the layer's whole box, laid out as the layer is (its alignment and padding,
+ * the keyboard's too), casting the panel's lift: a drop shadow follows the panel's organic outline,
+ * which a box-shadow under its clip could not. It lets presses through to the scrim, except on the panel.
+ */
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: inherit;
+  align-items: inherit;
+  justify-content: inherit;
+  padding: inherit;
+  pointer-events: none;
+  filter: var(--drop-float);
+}
+
+.stage > * {
+  pointer-events: auto;
+}
+
+/* A panel's edge (`OutlineEdge`), over its content: the outline ink, firm at night where the lift fades. */
+.panelEdge {
+  --edge-color: var(--outline);
+  z-index: 2;
+}
+
+/* Centered dialog: the note editor, confirmations, and on a wide screen the capture and collection dialogs. */
+.center {
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+/* The ground's paper with a firm edge (at night it is all that parts it from the scrim); it settles in from a touch smaller. */
+.centerPanel {
+  position: relative;
+  isolation: isolate;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--wall);
+  color: var(--ink);
+  clip-path: var(--outline-clip, none);
+  animation: dialog-in var(--duration-medium) var(--ease-decelerate);
+  outline: none;
+}
+
+/* The phone's bottom sheet, under 720px: it rises from its own height and stands on the keyboard. */
+.bottom {
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: calc(8px + env(safe-area-inset-top));
+}
+
+.bottom,
+.side,
+.start {
+  --scrim-in: var(--duration-long);
+  --scrim-in-ease: var(--ease-decelerate);
+  --scrim-out: var(--duration-exit);
+  --scrim-out-ease: var(--ease-accelerate);
+}
+
+/* habits-garden's sheet: the ground's own paper, an outline lip on top and sides, its two top corners uneven. */
+.sheetPanel {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  max-height: 88%;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--wall);
+  color: var(--ink);
+  clip-path: var(--outline-clip, none);
+  animation: sheet-in var(--duration-long) var(--ease-decelerate);
+  outline: none;
+}
+
+/* The handle the sheet is dragged by: a 36 by 5 bar in the outline ink, centred in a 28 strip. */
+.sheetHandle {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.sheetHandle:active {
+  cursor: grabbing;
+}
+
+.sheetHandle::before {
+  content: '';
+  width: 36px;
+  height: 5px;
+  /* A small detail with its own tiny unequal corners, the phone's. */
+  border-radius: 3px 2px 3px 2px;
+  background: var(--outline);
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* A dialog sized for the middle of a wide screen fills the sheet instead, the handle standing where its top margin was. */
+.sheetPanel > .sheetBody > * {
+  width: auto;
+  max-width: none;
+  padding-top: 0;
+}
+
+/* A picker dropped from a button has no margins of its own: the sheet's 16, as on the phone. */
+.sheetPicker {
+  padding: 0 16px 4px;
+}
+
+/* Side sheet: a link's details, beside its collection. */
+.side {
+  justify-content: flex-end;
+}
+
+.sidePanel {
+  position: relative;
+  isolation: isolate;
+  width: min(480px, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--wall);
+  color: var(--ink);
+  clip-path: var(--outline-clip, none);
+  animation: slide-left var(--duration-long) var(--ease-decelerate);
+  outline: none;
+}
+
+/* The navigation drawer on narrow screens, as on the phone: the screen's full height against its left edge, square, a straight edge on its open side. */
+.start {
+  justify-content: flex-start;
+}
+
+.startPanel {
+  position: relative;
+  isolation: isolate;
+  width: min(312px, 86vw);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  /* The ground itself, the full height of the window, grain and all (no sheet grain over it). */
+  --grain: 0;
+  background: var(--ground-paint);
+  color: var(--ink);
+  border-right: 1px solid var(--outline);
+  animation: slide-right var(--duration-long) var(--ease-decelerate);
+  outline: none;
+}
+
+/* Every sheet carries the paper's grain between its colour and its content. */
+.centerPanel::before,
+.sheetPanel::before,
+.sidePanel::before,
+.startPanel::before,
+.popover::before,
+.snack::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+/* Under 720px, dialogs that hold a whole page (the editor, a link) take the screen, and open as a page does on the phone. */
+@media (max-width: 719px) {
+  .center.full {
+    padding: 0;
+  }
+  .center.full .centerPanel {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100%;
+    max-height: none;
+    clip-path: none;
+    animation-name: page-in;
+    animation-duration: var(--duration-long);
+  }
+  .side .sidePanel {
+    width: 100%;
+    clip-path: none;
+  }
+  /* A whole page has no outline, nor edge, nor lift. */
+  .center.full .panelEdge,
+  .side .panelEdge {
+    display: none;
+  }
+  .center.full .stage,
+  .side .stage {
+    filter: none;
+  }
+}
+
+.popover {
+  /* The phone's menu (Menu.tsx): it grows from its anchor over 200 and fades back into it in 120. */
+  --duration-menu: 200ms;
+  --duration-menu-exit: 120ms;
+  position: fixed;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: min(360px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: hidden;
+  padding: 8px 0;
+  background: var(--paper);
+  color: var(--ink);
+  /* Its outline; a firm edge (`OutlineEdge`): at night the lift is invisible, and a menu often floats on paper. */
+  clip-path: var(--outline-clip, none);
+  animation: pop var(--duration-menu) var(--ease-decelerate);
+  outline: none;
+  pointer-events: auto;
+}
+
+/* A menu's stage: the whole window (a filter makes it the menu's frame for `position: fixed`), casting its lift. */
+.popoverStage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  filter: var(--drop-float);
+}
+
+.popoverScroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* A menu: 6 in from its edge, so each row's press stays inside it. */
+.menu {
+  min-width: 210px;
+  padding: 6px;
+}
+
+/* A row of a menu: 40 under a mouse, the phone's 48 under a finger. */
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 16px;
+  line-height: 23px;
+}
+@media (pointer: coarse) {
+  .menuItem {
+    min-height: 48px;
+  }
+}
+.menuItem svg {
+  flex: none;
+  color: var(--ink);
+}
+.menuItem:focus-visible {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+@media (hover: hover) {
+  .menuItem:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.menuItem:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.menuItem:focus-visible {
+  outline-offset: -2px;
+}
+.menuItem.dangerItem,
+.menuItem.dangerItem svg {
+  color: var(--danger);
+}
+/* Nothing to do here now: the second ink, and no tint under the pointer. */
+.menuItem[aria-disabled='true'],
+.menuItem[aria-disabled='true'] svg {
+  color: var(--ink-muted);
+  cursor: default;
+}
+.menuItem[aria-disabled='true']:hover,
+.menuItem[aria-disabled='true']:active {
+  background: transparent;
+}
+.menuSeparator {
+  height: 1px;
+  margin: 6px 6px;
+  background: var(--hairline);
+}
+.menuShortcut {
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A keyboard hint means nothing under a finger. */
+@media (pointer: coarse) {
+  .menuShortcut {
+    display: none;
+  }
+}
+
+/*
+ * A dialog's frame (`DialogFrame`): the head and the actions stay, the body between them is the one
+ * thing that scrolls, so its scrollbar runs from under the title to above the actions, clear of the
+ * dialog's corners. Each edge takes a hairline once the body runs under it.
+ */
+.frame {
+  --frame-side: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  /* A dialog sets its own width and its body's gap through these. */
+  width: var(--frame-width, min(560px, 100vw - 32px));
+}
+
+/* Rows inset 6, so each one's press stays inside the dialog; the title stands over their words. */
+.frame[data-kind='list'] {
+  --frame-side: 6px;
+  --frame-width: min(440px, 100vw - 32px);
+  --frame-gap: 2px;
+}
+
+.frame[data-kind='list'] .frameHead {
+  padding: 14px 10px 6px 16px;
+}
+
+/* Without actions the body still stops short of the foot's corners. */
+.frame:not([data-foot]) {
+  padding-bottom: 12px;
+}
+
+.frameHead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 20px 16px 12px 24px;
+  box-shadow: inset 0 -1px 0 transparent;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.frameHead[data-edge],
+.frameFoot[data-edge] {
+  --frame-edge: var(--hairline);
+}
+
+.frameHead[data-edge] {
+  box-shadow: inset 0 -1px 0 var(--frame-edge);
+}
+
+.frameTitle {
+  min-width: 0;
+  text-wrap: balance;
+}
+
+.frameBody {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--frame-gap, 16px);
+  padding: 4px var(--frame-side) 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The body scrolls; what is in it keeps its height (a clipped well would otherwise shrink to fit and cut its rows). */
+.frameBody > * {
+  flex-shrink: 0;
+}
+
+.frame[data-kind='list'] .frameBody {
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+
+.frameFoot {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 24px 20px;
+  box-shadow: inset 0 1px 0 transparent;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.frameFoot[data-edge] {
+  box-shadow: inset 0 1px 0 var(--frame-edge);
+}
+
+/* The phone's sheet: its handle stands where the head's top margin was, and its content keeps the sheet's 16 from the edges. */
+@media (max-width: 719px) {
+  .frame {
+    --frame-side: 16px;
+  }
+  .frameHead,
+  .frame[data-kind='list'] .frameHead {
+    padding: 0 16px 12px;
+  }
+  .frameFoot {
+    padding: 12px 16px 4px;
+  }
+  .frame:not([data-foot]) {
+    padding-bottom: 4px;
+  }
+}
+
+/* Confirmation dialog: 86% of a phone's width, up to 400. */
+.dialog {
+  --frame-width: min(400px, 86vw);
+}
+.frame.dialog .frameHead {
+  padding: 24px 24px 12px;
+}
+.dialogMessage {
+  color: var(--ink-muted);
+}
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Snackbar: one line of what happened and, for anything destructive, the way back. */
+.snackHost {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 3;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  pointer-events: none;
+}
+/*
+ * The slip: its tone's glyph 16 in from the left, the message, then the action chip standing 6 in
+ * from the right edge as it does from the top and foot; without one the message keeps 18 on the
+ * right, the room the glyph's ink keeps on the left.
+ */
+.snack {
+  position: relative;
+  isolation: isolate;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 18px 0 16px;
+  border-radius: var(--cut-slip);
+  background: var(--slip);
+  color: var(--on-slip);
+  box-shadow: var(--shadow-float);
+  /* Sideways it is the slip's to throw; up and down still scroll the page. */
+  touch-action: pan-y;
+  animation: slip-in var(--duration-medium) var(--ease-decelerate);
+}
+/* Held by the hand: no text selection under the swipe. */
+.snack[data-dragging] {
+  user-select: none;
+}
+/* Dismissed: the slip sinks a little and fades, quicker than it rose. */
+.snack[data-state='closed'] {
+  pointer-events: none;
+  animation: slip-out var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+.snack[data-action] {
+  padding-right: 6px;
+}
+
+.snackGlyph {
+  flex: none;
+  color: var(--on-slip-muted);
+}
+
+.snack[data-tone='success'] .snackGlyph {
+  color: var(--slip-ok);
+}
+
+.snack[data-tone='warning'] .snackGlyph {
+  color: var(--slip-waiting);
+}
+
+.snack[data-tone='error'] .snackGlyph {
+  color: var(--slip-danger);
+}
+
+.snackMessage {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 0;
+  text-wrap: pretty;
+}
+
+/* The chip keeps a little more room from the words than they keep from the glyph. */
+.snack[data-action] .snackMessage {
+  margin-right: 4px;
+}
+/* habits-garden's toast action: its own chip on the slip, edged in cream. */
+.snackAction {
+  flex: none;
+  min-height: 40px;
+  margin: 4px 0;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--on-slip) 22%, transparent);
+  border-radius: var(--cut-chip);
+  background: transparent;
+  color: var(--slip-action);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+@media (hover: hover) {
+  .snackAction:hover {
+    background: var(--slip-high);
+  }
+}
+
+.snackAction:active {
+  background: var(--slip-high);
+}
+@media (max-width: 719px) {
+  .snackHost {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    transform: none;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 4;
+  max-width: 280px;
+  padding: 5px 9px;
+  border-radius: var(--cut-small);
+  background: var(--slip);
+  color: var(--on-slip);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: var(--lift-raised);
+  animation: fade var(--duration-short) var(--ease-standard);
+}
+
+.tooltip[data-state='closed'] {
+  animation: fade-out var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+/* Leaving: the layer lets go of the pointer at once, and each part leaves faster than it came, accelerating away. */
+.layer[data-state='closed'] {
+  pointer-events: none;
+}
+
+.layer[data-state='closed'] .scrim {
+  animation: fade-out var(--scrim-out) var(--scrim-out-ease) forwards;
+}
+
+.layer[data-state='closed'] .scrim.clear {
+  animation: none;
+}
+
+.layer[data-state='closed'] .centerPanel {
+  animation: dialog-out var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+.layer[data-state='closed'] .sheetPanel {
+  animation: sheet-out var(--duration-exit) var(--ease-accelerate) forwards;
+}
+
+/* Thrown off by the hand, it is already on its way out with the hand's speed. */
+.layer[data-state='closed'] .sheetPanel[data-thrown] {
+  animation: none;
+}
+
+.layer[data-state='closed'] .sidePanel {
+  animation: slide-out-right var(--duration-exit) var(--ease-accelerate) forwards;
+}
+
+.layer[data-state='closed'] .startPanel {
+  animation: slide-out-left var(--duration-exit) var(--ease-accelerate) forwards;
+}
+
+.layer[data-state='closed'] .popover {
+  animation: pop-out var(--duration-menu-exit) var(--ease-accelerate) forwards;
+}
+
+@media (max-width: 719px) {
+  .layer[data-state='closed'].center.full .centerPanel {
+    animation: page-out var(--duration-exit) var(--ease-accelerate) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .centerPanel,
+  .center.full .centerPanel,
+  .sheetPanel,
+  .sidePanel,
+  .startPanel,
+  .popover,
+  .snack {
+    animation-name: fade;
+  }
+  .layer[data-state='closed'] .centerPanel,
+  .layer[data-state='closed'].center.full .centerPanel,
+  .layer[data-state='closed'] .sheetPanel,
+  .layer[data-state='closed'] .sidePanel,
+  .layer[data-state='closed'] .startPanel,
+  .layer[data-state='closed'] .popover,
+  .snack[data-state='closed'] {
+    animation-name: fade-out;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* Nothing grows from nothing, and nothing tilts: a dialog settles in from 0.94 and leaves to 0.97. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+/* A page on the phone (Android's fade_from_bottom): up from 8% of its height as it fades in. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8%);
+  }
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(8%);
+  }
+}
+/* A little past its own height, so its lift is gone too. */
+@keyframes sheet-in {
+  from {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+@keyframes sheet-out {
+  to {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+@keyframes slide-out-right {
+  to {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+/* The drawer leaves past its own width, the screen margin and its shadow. */
+@keyframes slide-out-left {
+  to {
+    transform: translateX(calc(-100% - 32px));
+  }
+}
+@keyframes slide-left {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes slide-right {
+  from {
+    transform: translateX(calc(-100% - 32px));
+  }
+}
+/* The slip rises a short way into place and sinks away, quicker. */
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes slip-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

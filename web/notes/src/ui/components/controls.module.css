@@ -1,0 +1,433 @@
+/* Buttons: filled (terracotta) for the one primary action, tonal (matcha wash) for secondary, text for tertiary. Soft sheets, their radius under half their height. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--cut-button);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-out);
+}
+
+/* Paper gives a little under the finger. */
+.button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Disabled sinks to a well with its label in the second ink, readable and plainly off; a busy button keeps its colours, its spinner says it is working. */
+.button:disabled:not([aria-busy='true']) {
+  color: var(--ink-muted);
+  box-shadow: none;
+}
+.filled:disabled:not([aria-busy='true']),
+.tonal:disabled:not([aria-busy='true']),
+.danger:disabled:not([aria-busy='true']) {
+  background: var(--paper-high);
+}
+
+.filled {
+  background: var(--action);
+  color: var(--on-action);
+}
+/* Hover deepens the fill toward the ink, so its label keeps 4.5:1. */
+@media (hover: hover) {
+  .filled:not(:disabled):hover {
+    box-shadow: var(--lift-card);
+    background: color-mix(in srgb, var(--action) 90%, var(--ink));
+  }
+}
+
+.tonal {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+@media (hover: hover) {
+  .tonal:not(:disabled):hover {
+    background: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+  }
+}
+
+.tonal:not(:disabled):active {
+  background: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+}
+
+.text {
+  background: transparent;
+  color: var(--link);
+  padding: 0 14px;
+}
+@media (hover: hover) {
+  .text:not(:disabled):hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.text:not(:disabled):active {
+  background: color-mix(in srgb, var(--link) 12%, transparent);
+}
+
+/* A quiet destructive action in a list ("Supprimer la clé"): danger ink on no fill. */
+.dangerText {
+  border-radius: var(--cut-button);
+  background: transparent;
+  color: var(--danger);
+  padding: 0 14px;
+}
+@media (hover: hover) {
+  .dangerText:not(:disabled):hover {
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+  }
+}
+
+.dangerText:not(:disabled):active {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* The destructive confirm: the button in danger. */
+.danger {
+  border-radius: var(--cut-button);
+  background: var(--danger);
+  color: var(--on-danger);
+}
+@media (hover: hover) {
+  .danger:not(:disabled):hover {
+    background: color-mix(in srgb, var(--danger) 88%, var(--on-danger));
+  }
+}
+
+.danger:not(:disabled):active {
+  background: color-mix(in srgb, var(--danger) 88%, var(--on-danger));
+}
+
+.outlined {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--outline);
+}
+@media (hover: hover) {
+  .outlined:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.outlined:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.small {
+  min-height: 32px;
+  padding: 0 14px;
+}
+
+.stretch {
+  width: 100%;
+}
+
+/*
+ * Icon buttons, as on the phone: a 24 glyph, its hover, press and chosen state painted on the brand's
+ * pebble behind it (`::before`, `data-pebble-under`), 44 wide, Material's 48 under a finger. The
+ * button keeps its own box, so its focus ring stays whole; the pebble gives under the press.
+ */
+.iconButton {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--icon-ink, var(--ink));
+}
+/* A veil under the pointer (a finger leaves none behind), the press tint under a finger: on the pebble. */
+@media (hover: hover) {
+  .iconButton:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, currentColor 6%, transparent);
+  }
+}
+.iconButton:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, currentColor 10%, transparent);
+}
+.iconButton:disabled {
+  color: var(--ink-faint);
+}
+.iconButton[aria-pressed='true'],
+.iconButton.selected {
+  --pebble-fill: var(--action-container);
+  color: var(--on-action-container);
+  --icon-solid: 1;
+}
+/* Chosen and under the pointer or the finger: the matcha deepens toward its ink, as a tonal button's, rather than giving way to the veil. */
+@media (hover: hover) {
+  .iconButton[aria-pressed='true']:not(:disabled):hover,
+  .iconButton.selected:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+  }
+}
+.iconButton[aria-pressed='true']:not(:disabled):active,
+.iconButton.selected:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+}
+/* On the slip (snackbar, transfer): its own inks. */
+.onSlip {
+  --icon-ink: var(--on-slip);
+}
+.compact {
+  width: 32px;
+  height: 32px;
+}
+@media (pointer: coarse) {
+  .iconButton {
+    width: 48px;
+    height: 48px;
+  }
+  .compact {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/*
+ * Text fields, as on the phone: field paper drawn by its edge, the label fixed above (a moving
+ * label is one more thing to read). Focus thickens the edge to 2px of matcha. The edge is drawn
+ * inside the padding (an inset shadow, never rounded off as a 1.5px border is), so the text never
+ * moves: the phone's padding giving the difference back, done once.
+ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.fieldLabel {
+  margin-left: 4px;
+}
+.input {
+  width: 100%;
+  min-height: 52px;
+  padding: 13.5px 19.5px;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 23px;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+/* A multiline field grows with what is typed, never through a grip poking out of its cut. */
+textarea.input {
+  resize: none;
+  field-sizing: content;
+  min-height: 96px;
+  max-height: 320px;
+}
+.input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+@media (hover: hover) {
+  .input:hover {
+    box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  }
+}
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+.invalid,
+.invalid:focus {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+@media (hover: hover) {
+  .invalid:hover {
+    box-shadow: inset 0 0 0 2px var(--danger);
+  }
+}
+.help {
+  margin-left: 4px;
+}
+.error {
+  margin-left: 4px;
+  color: var(--danger);
+}
+
+/*
+ * A choice among two to four, as on the phone: capsule segments in a sunken track, the chosen one a
+ * sheet of paper lifted out of it, its check in matcha, sliding to the segment chosen. `--segments`
+ * and `--at` are set inline.
+ */
+.segmented {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--cut-track);
+  background: var(--track);
+}
+.segmentPebble {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px - (var(--segments) - 1) * 4px) / var(--segments));
+  border-radius: var(--cut-segment);
+  background: var(--segment-sheet);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+  transform: translateX(calc(var(--at) * (100% + 4px)));
+  transition: transform var(--duration-medium) var(--ease-standard);
+  pointer-events: none;
+}
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-segment);
+  background: transparent;
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+/* The inks change hands with the tick, as the sheet passes halfway: the label in ink, the tick in matcha. */
+.segment[data-shown] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.segment[data-shown] > svg {
+  color: var(--focus);
+}
+.segment > svg {
+  flex: none;
+}
+.segmentLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A veil of ink inside the segment's own cut; the chosen one already lies on its pebble. */
+@media (hover: hover) {
+  .segment:not([aria-checked='true']):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+.segmented[aria-disabled='true'] .segment {
+  cursor: default;
+}
+@media (hover: hover) {
+  .segmented[aria-disabled='true'] .segment:hover {
+    background: transparent;
+  }
+}
+
+.segmented[aria-disabled='true'] .segment:active {
+  background: transparent;
+}
+
+/* A checklist box: the icon set's box in a 40px target, its tint on a pebble (the phone's). */
+.checkbox {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+/* In the bin a box is inert, not faded: it takes no tint either. */
+@media (hover: hover) {
+  .checkbox:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.checkbox:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.checkbox[aria-checked='true'] {
+  color: var(--ink-muted);
+}
+
+.switch {
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid var(--edge);
+  border-radius: 999px;
+  background: var(--paper-high);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--ink-faint);
+  /* Material's thumb grows from 16 to 24 px when on: scaled, so nothing re-lays out. */
+  transform: translateY(-50%) scale(0.667);
+  transition:
+    transform var(--duration-medium) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
+}
+.switch[aria-checked='true'],
+.switch[data-checked] {
+  background: var(--focus);
+  border-color: var(--focus);
+}
+.switch[aria-checked='true']::after,
+.switch[data-checked]::after {
+  transform: translateY(-50%) translateX(20px) scale(1);
+  background: var(--on-action);
+}
+
+.spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 800ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

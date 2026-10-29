@@ -1,0 +1,49 @@
+{
+  "title": "Your direction: a grainy gradient and Carnet's own icons",
+  "question": "As you said: a light grainy gradient behind everything (matcha, lilac and peach with a fine grain), small improvements (the search strip, chips and bottom bar turn translucent so the gradient runs under them; the capture pebble takes the same grain and light), and an original icon set. The gradient and improvements are the same on every card; only the icons change. Each card: the board, the drawer, and the set itself. Pick a set, or steer (stronger or fainter gradient, other colours…).",
+  "options": [
+    {
+      "id": "decoupe",
+      "label": "Découpé",
+      "kicker": "THE BOLDEST",
+      "lineage": "The collection emblems: shapes cut from paper with scissors",
+      "thesis": "Solid icons cut from paper like the emblems: straight cuts a little off true, details cut out as holes, so the whole interface speaks the emblems' language.",
+      "palette": ["#C6E0A0", "#ECDEFC", "#FFCEB2", "#EEE8D2", "#201E1D"],
+      "materials": ["solid ink silhouettes", "cuts slightly off true", "details cut out", "pebbles as the bell's clapper and the settings knobs"],
+      "viewport": "Board on the grainy gradient, translucent search and bar, solid cut-paper icons; the drawer in the same ground and icons.",
+      "risk": "Heavy at small sizes and close to any filled set unless the cuts stay visible; selected icons can no longer switch from line to fill.",
+      "case": "One language for icons and emblems: everything is cut paper.",
+      "comp": ".impeccable/mocks/twists/grad-decoupe.webp"
+    },
+    {
+      "id": "galet",
+      "label": "Galet",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "The brand's pebble, set into a clean line icon wherever a dot belongs",
+      "thesis": "Clean round-ended lines with one signature: the pebble of the mark is the bell's clapper, the sun of a photo, the knobs of the settings, the three dots of More, the bullets of a list.",
+      "palette": ["#C6E0A0", "#ECDEFC", "#FFCEB2", "#EEE8D2", "#201E1D"],
+      "materials": ["1.9px round-ended lines", "the mark's pebble as every dot", "soft rounded frames"],
+      "viewport": "Board on the grainy gradient, translucent search and bar, line icons with their little pebbles; the drawer in the same ground and icons.",
+      "risk": "The quietest of the three: at a glance it reads as a well-made line set, the pebbles reward a second look.",
+      "case": "Original without shouting, legible at every size, and tied to the mark.",
+      "comp": ".impeccable/mocks/twists/grad-galet.webp"
+    },
+    {
+      "id": "croquis",
+      "label": "Croquis",
+      "kicker": "THE MOST HAND-MADE",
+      "lineage": "An architect's sketch in a carnet: one fine pen, lines running past their corners",
+      "thesis": "Icons drawn like a quick architectural sketch: straight lines that cross at the corners, loops that overlap where they close, one fine pen for everything.",
+      "palette": ["#C6E0A0", "#ECDEFC", "#FFCEB2", "#EEE8D2", "#201E1D"],
+      "materials": ["1.6px fine pen", "lines crossing at the corners", "loops overlapping where they close"],
+      "viewport": "Board on the grainy gradient, translucent search and bar, sketched line icons and sketched checkboxes; the drawer in the same ground and icons.",
+      "risk": "Can read unfinished: at 24px a crossing corner can look like a slip of the pen, and checkboxes become little frames.",
+      "case": "The most personal: the app looks drawn in its own carnet.",
+      "comp": ".impeccable/mocks/twists/grad-croquis.webp"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "canon": false,
+  "buildPath": { "value": "comp", "toggle": false }
+}

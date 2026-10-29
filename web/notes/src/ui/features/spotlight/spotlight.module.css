@@ -1,0 +1,877 @@
+/*
+ * The spotlight: the dialog's paper near the top of the window, a matcha-ringed field, the type
+ * chips and the refining menus under it, then the results and, on a wide screen, the chosen one
+ * beside them. Rows press inside their own tab-shaped tint; nothing moves under the pointer.
+ */
+.panel {
+  width: min(720px, calc(100vw - 32px));
+  margin-top: 8vh;
+  align-self: flex-start;
+}
+
+@media (min-width: 1100px) {
+  .panel {
+    width: min(1040px, calc(100vw - 96px));
+  }
+}
+
+.spotlight {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: min(640px, calc(100vh - 96px - 8vh));
+  min-height: 0;
+}
+
+/* ── the field ──────────────────────────────────────────────────────────── */
+
+.head {
+  flex: none;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Filters lie in the field before the words; too many for one line, the words go to the next. */
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+  padding: 6px 8px 6px 14px;
+  border-radius: var(--cut-search);
+  background: var(--field);
+  box-shadow: inset 0 0 0 2px var(--focus);
+  color: var(--ink-muted);
+}
+
+.glyph {
+  flex: none;
+  display: flex;
+  margin-right: 2px;
+}
+
+.input {
+  flex: 1 1 160px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 400 18px/24px var(--font);
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.key {
+  flex: none;
+  padding: 0 6px;
+  border-radius: var(--cut-detail);
+  box-shadow: inset 0 0 0 1px var(--outline);
+  color: var(--ink-faint);
+  font: 500 12px/20px var(--font);
+}
+
+/* A filter in the field: a small matcha sheet, its way out inside it. */
+.token {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  height: 30px;
+  padding: 0 3px 0 9px;
+  border-radius: var(--cut-small);
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.tokenName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tokenRemove {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--cut-detail);
+  background: transparent;
+  color: inherit;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .tokenRemove:hover {
+    background: color-mix(in srgb, var(--on-action-container) 8%, transparent);
+  }
+}
+
+.tokenRemove:active {
+  background: color-mix(in srgb, var(--on-action-container) 12%, transparent);
+}
+
+/* ── the types and the refining menus ───────────────────────────────────── */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.scopes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.scopes::-webkit-scrollbar {
+  display: none;
+}
+
+.scope {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .scope:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+  .scope[aria-checked='true']:hover {
+    background: color-mix(in srgb, var(--on-action-container) 6%, var(--action-container));
+  }
+}
+
+.scope:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* The type chosen: matcha, as everything chosen is. */
+.scope[aria-checked='true'] {
+  background: var(--action-container);
+  box-shadow: none;
+  color: var(--on-action-container);
+}
+
+.count {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.scope[aria-checked='true'] .count {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.refines {
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+
+.refine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 6px 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .refine:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.refine:active,
+.refine[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+
+.refine[data-active] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .refine[data-active]:hover {
+    background: color-mix(in srgb, var(--on-action-container) 6%, var(--action-container));
+    color: var(--on-action-container);
+  }
+}
+
+.refine[data-active]:active,
+.refine[data-active][aria-expanded='true'] {
+  background: color-mix(in srgb, var(--on-action-container) 10%, var(--action-container));
+  color: var(--on-action-container);
+}
+
+.menuGap {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
+/* ── the results ────────────────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.spotlight[data-wide] .body {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+}
+
+.results {
+  min-height: 0;
+  padding: 6px 8px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+
+.notice {
+  margin: 6px 10px 2px;
+  color: var(--ink-muted);
+}
+
+.nothing {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 10px 8px;
+  color: var(--ink);
+}
+
+.nothing :last-child {
+  color: var(--ink-muted);
+}
+
+.group {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 16px 10px 6px;
+  color: var(--ink-muted);
+}
+
+.list > div:first-child > .group {
+  padding-top: 8px;
+}
+
+.groupCount {
+  color: var(--ink-faint);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.row[data-active] {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 23px;
+  color: var(--ink-muted);
+}
+
+.emoji,
+.emojiLarge {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.emoji {
+  font-size: 19px;
+  line-height: 23px;
+}
+
+.emojiLarge {
+  font-size: 30px;
+  line-height: 40px;
+}
+
+/* A link's own picture in its 4:5 frame, small: products and posters compare whole. */
+.thumb,
+.thumbLarge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--track);
+  color: var(--ink-muted);
+}
+
+.thumb {
+  width: 24px;
+  height: 30px;
+  border-radius: var(--cut-detail);
+}
+
+.thumbLarge {
+  width: 72px;
+  height: 90px;
+  border-radius: var(--cut-frame);
+}
+
+.thumb[data-picture],
+.thumbLarge[data-picture] {
+  background: var(--paper);
+}
+
+.thumb img,
+.thumbLarge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.title,
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--ink-muted);
+}
+
+.snippet {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  color: var(--ink-muted);
+}
+
+.snippet mark {
+  color: var(--ink);
+}
+
+.when {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.row[data-kind='more'] {
+  min-height: 36px;
+  padding: 6px 10px 6px 50px;
+  color: var(--link);
+}
+
+.row[data-kind='more'] .title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.row[data-kind='widen'] .title {
+  color: var(--link);
+  font-weight: 600;
+}
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+
+.preview {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 28px 32px;
+  border-left: 1px solid var(--hairline);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+
+.previewArticle {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 64ch;
+}
+
+.previewHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.previewMark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--ink-muted);
+}
+
+.previewHeading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 7px;
+}
+
+.previewMark[data-type='link'] + .previewHeading {
+  padding-top: 0;
+}
+
+.previewTitle {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.previewFacts {
+  color: var(--ink-muted);
+}
+
+.previewWhen::before {
+  content: ' · ';
+}
+
+/* A note as it lies on the wall: its own sheet, washed in its colour (no second grain: the dialog has one). */
+.noteSheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 18px;
+  border-radius: var(--cut-card);
+  background: var(--sheet, var(--paper));
+  color: var(--ink);
+}
+
+.noteSheet[data-line] {
+  --sheet: var(--tint);
+}
+
+.noteBody {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.checks li[data-indent] {
+  padding-left: 28px;
+}
+
+.checks svg,
+.blockTodo svg {
+  flex: none;
+  margin-top: 1.5px;
+  color: var(--ink-muted);
+}
+
+.checks li[data-checked] span,
+.blockTodo[data-checked] span {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-faint);
+}
+
+.quiet {
+  color: var(--ink-muted);
+}
+
+.pageBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blockHeading {
+  margin-top: 8px;
+  color: var(--ink);
+  font: 650 17px/24px var(--font);
+  overflow-wrap: anywhere;
+}
+
+.blockHeading[data-level='h1'] {
+  font-size: 21px;
+  line-height: 28px;
+  letter-spacing: -0.2px;
+}
+
+.blockHeading[data-level='h2'] {
+  font-size: 19px;
+  line-height: 26px;
+}
+
+.blockText,
+.blockTable {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.blockTable {
+  font-variant-numeric: tabular-nums;
+}
+
+.blockItem {
+  position: relative;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+
+.blockItem::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--ink-muted);
+}
+
+.blockTodo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.blockCode {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--cut-frame);
+  background: var(--track);
+  color: var(--ink);
+  font: 14px/21px var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.blockCallout {
+  padding: 10px 14px;
+  border-radius: var(--cut-panel);
+  background: var(--tint);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.blockFile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.blockFile svg {
+  flex: none;
+}
+
+.hint {
+  color: var(--ink);
+}
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.linkList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.linkList li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkList svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.linkList li[data-done] {
+  color: var(--ink-muted);
+}
+
+.linkBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 5px 16px;
+  margin: 0;
+}
+
+.facts > div {
+  display: contents;
+}
+
+.facts dt {
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.comment {
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.commentLabel {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-muted);
+}
+
+.address {
+  color: var(--link);
+  overflow-wrap: anywhere;
+}
+
+/* With nothing chosen: what the field understands, quietly, on the list's top line. */
+.tips {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 46ch;
+  padding-top: 2px;
+}
+
+.tipsTitle {
+  color: var(--ink);
+}
+
+.tipsLead {
+  color: var(--ink-muted);
+}
+
+.tipList {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px 16px;
+  margin: 4px 0 0;
+}
+
+.tipList > div {
+  display: contents;
+}
+
+.tipList dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+
+.foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 18px 10px;
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-muted);
+}
+
+.hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.hints > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.total {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Under a finger, the chips and the menus take a finger's height. */
+@media (pointer: coarse) {
+  .scope,
+  .refine {
+    height: 40px;
+  }
+  .token {
+    height: 34px;
+  }
+  .tokenRemove {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* A phone-sized window: the sheet holds it, the field at its top, the list taking what the keyboard leaves. */
+@media (max-width: 719px) {
+  /* The types and the menus scroll as one strip to the sheet's edges, what lies past them fading. */
+  .filters {
+    gap: 8px;
+    margin-inline: -12px;
+    padding-inline: 12px;
+    scroll-padding-inline: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
+  }
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+  .scopes {
+    flex: none;
+    overflow: visible;
+  }
+  .panel {
+    width: auto;
+    margin-top: 0;
+    align-self: auto;
+  }
+  .spotlight {
+    flex: 0 1 min(72vh, 620px);
+    height: auto;
+  }
+  .head {
+    padding: 4px 12px 10px;
+  }
+  .field {
+    min-height: 52px;
+  }
+  .input {
+    height: 40px;
+    font-size: 17px;
+  }
+  .results {
+    padding: 6px 6px 24px;
+  }
+  .row {
+    min-height: 52px;
+  }
+}

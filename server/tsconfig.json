@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "lib": ["es2024"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    // No `baseUrl` (TypeScript 6 refuses it): paths resolve from this file.
+    // The same aliases are repeated in build.mjs (esbuild) and vitest.config.ts.
+    "paths": {
+      "@unlease/core/*": ["../packages/core/src/*"],
+      "@unlease/design/*": ["../packages/design/src/*"],
+      "@unlease/notes/*": ["../packages/notes/src/*"]
+    }
+  },
+  "include": ["src", "test", "vitest.config.ts"]
+}

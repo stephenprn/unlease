@@ -1,0 +1,218 @@
+/*
+ * The page tree in the navigation: rows a little denser than the destinations above them, each
+ * page's sub-pages under a chevron, the chosen row matcha as every navigation row is.
+ */
+
+.tree,
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 34px;
+  padding-right: 4px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .row {
+    min-height: 44px;
+  }
+}
+
+@media (hover: hover) {
+  .row:hover {
+    --row-ground: color-mix(in srgb, var(--ink) 6%, var(--wall));
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+/* The page on screen, as every chosen navigation place: the whole row on matcha, its title stronger. */
+.row[data-current] {
+  --row-ground: var(--action-container);
+  font-weight: 600;
+  --icon-solid: 1;
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.row[data-current] .chevron,
+.row[data-current] .icon {
+  color: inherit;
+}
+
+.chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+.chevron svg {
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+
+.chevron[data-open] svg {
+  transform: rotate(90deg);
+}
+
+/* A page with nothing under it keeps the chevron's room, so its icon lines up with its neighbours'. */
+.chevron[data-empty] {
+  visibility: hidden;
+}
+
+@media (hover: hover) {
+  .chevron:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.chevron:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+
+.link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 6px;
+  border-radius: var(--cut-tab);
+  color: inherit;
+  text-decoration: none;
+  font-weight: inherit;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.icon {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--ink-muted);
+}
+
+.icon > * {
+  position: relative;
+}
+
+.emoji {
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Its "+" and its menu, shown under a hovering pointer or keyboard focus (always under a finger),
+ * laid over the end of the title on the row's own ground so the title keeps its width.
+ */
+.row {
+  --row-ground: var(--wall);
+  font-weight: 500;
+}
+
+.actions {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-left: 14px;
+  background: linear-gradient(to right, transparent, var(--row-ground) 14px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.row:hover .actions,
+.row:focus-within .actions {
+  pointer-events: auto;
+}
+
+.row:hover .actions,
+.row:focus-within .actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .actions {
+    position: static;
+    padding-left: 0;
+    background: none;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: inherit;
+}
+
+@media (hover: hover) {
+  .action:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.action:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* Under a finger the row keeps one target at a finger's size: its menu, which also adds a sub-page. */
+@media (pointer: coarse) {
+  .action {
+    width: 40px;
+    height: 40px;
+  }
+  .addAction {
+    display: none;
+  }
+}

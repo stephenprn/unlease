@@ -1,0 +1,107 @@
+# A release, from its version tag (vX.Y.Z, or vX.Y.Z-rc.N for a release candidate): docs/RELEASING.md.
+#   1. the tag must match every version in the repository and the changelog (tools/release/version.mjs --check);
+#   2. the checks run on the tagged commit (ci.yml);
+#   3. the image is published (image.yml) and Carnet's APK built (android.yml);
+#   4. the GitHub release is made from CHANGELOG.md, with the APK, a docker-compose.yml and an example.env
+#      pinned to this version, and SHA256SUMS. A release candidate is a prerelease;
+#   5. the web demo on GitHub Pages moves to this release (pages.yml), a release candidate's excepted.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Tag and versions agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node tools/release/version.mjs --check "$GITHUB_REF_NAME"
+
+  checks:
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+
+  image:
+    needs: checks
+    uses: ./.github/workflows/image.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+  apk:
+    needs: checks
+    uses: ./.github/workflows/android.yml
+    secrets: inherit
+
+  publish:
+    name: GitHub release
+    needs: [image, apk]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: carnet-apk
+          path: dist
+      - name: Install files pinned to this version, checksums, notes
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/unlease
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed "s/\${UNLEASE_VERSION:-latest}/\${UNLEASE_VERSION:-${VERSION}}/" docker-compose.yml > dist/docker-compose.yml
+          grep -qF "unlease:\${UNLEASE_VERSION:-${VERSION}}" dist/docker-compose.yml
+          sed "s/^UNLEASE_VERSION=.*/UNLEASE_VERSION=${VERSION}/" .env.example > dist/example.env
+          grep -qx "UNLEASE_VERSION=${VERSION}" dist/example.env
+          (cd dist && sha256sum -- *.apk docker-compose.yml example.env > SHA256SUMS && cat SHA256SUMS)
+          node tools/release/version.mjs --notes "$GITHUB_REF_NAME" > notes.md
+          cat >> notes.md <<EOF
+
+          ## Install or upgrade
+
+          - **Server:** \`${IMAGE}:${VERSION}\` (amd64, arm64). A new server: download \`docker-compose.yml\` and \`example.env\` below, as [docs/SELF-HOSTING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/SELF-HOSTING.md) shows. An upgrade: set \`UNLEASE_VERSION=${VERSION}\` in \`.env\`, server first ([docs/UPGRADING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/UPGRADING.md)).
+          - **Carnet for Android:** \`carnet-${GITHUB_REF_NAME}.apk\` below, once the server runs this version.
+          - **Checksums:** \`SHA256SUMS\` (\`sha256sum -c SHA256SUMS\`).
+          EOF
+      - id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Unlease ${{ github.ref_name }}
+          body_path: notes.md
+          files: dist/*
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+      # Published once every file is attached: a repository with immutable releases takes no file afterwards.
+      - run: gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" -F draft=false --silent
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.release.outputs.id }}
+
+  demo:
+    name: Web demo
+    # A release candidate keeps the demo on the last release, as it keeps `latest`.
+    if: ${{ !contains(github.ref_name, '-') }}
+    needs: publish
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

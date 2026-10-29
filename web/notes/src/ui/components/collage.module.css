@@ -1,0 +1,29 @@
+/*
+ * A collage's pieces are laid down as it appears (design/collage: collageEntrances): each
+ * drifts in from just outside its place and turns into it, the back first. Turned and moved about
+ * its own centre on the board.
+ */
+.piece {
+  transform-box: view-box;
+  animation: lay var(--lay) var(--ease-decelerate) var(--delay) both;
+}
+
+@keyframes lay {
+  from {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--turn)) scale(var(--from));
+  }
+}
+
+/* Movement goes; the pieces still arrive one after the other. */
+@media (prefers-reduced-motion: reduce) {
+  .piece {
+    animation-name: appear;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A paragraph of a text note; the whole note opens from any of them. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/line"
+    style="@style/WidgetText.Body"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="10dp"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp" />

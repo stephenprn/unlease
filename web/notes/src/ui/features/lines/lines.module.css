@@ -1,0 +1,717 @@
+/*
+ * Collections: a collection's page (its head, the add strip, its links on the wall), the
+ * Collections wall of pinned sheets, and the dialogs that make, change and move them.
+ */
+
+/* ── a collection's page ─────────────────────────────────────────────────── */
+
+/* The whole page width, so the washed emblem leaves by the screen's edge and never scrolls it. */
+.screen {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  min-height: calc(100vh - var(--header-height, 64px));
+  --ghost: clamp(240px, 38vw, 520px);
+}
+
+.head {
+  position: relative;
+}
+
+/* The washed emblem: present enough to own the page, quiet enough to read over. It fades out
+   toward its foot, so whatever ends below it never cuts it. */
+.ghost {
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--ghost) * -0.18);
+  right: calc(var(--ghost) * -0.2);
+  width: var(--ghost);
+  height: var(--ghost);
+  /* As on the phone: quiet enough that the description over it holds 4.5:1 on every pigment. */
+  opacity: 0.14;
+  transform: rotate(-12deg);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
+}
+
+.headInner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'mark text actions';
+  align-items: start;
+  column-gap: 20px;
+  max-width: 880px;
+  padding: 30px 24px 2px;
+}
+
+/* The collection's emblem on its stone, the emblem turned on it as the mark's card lies on its pebble. */
+.headMark {
+  grid-area: mark;
+  margin-top: -4px;
+}
+
+.headMark > svg {
+  transform: rotate(-8deg);
+}
+
+.headText {
+  grid-area: text;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.headTitle {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.headHint {
+  max-width: 60ch;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* The count recedes: the name leads, the sentence supports it. */
+.headMeta {
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.headActions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -8px;
+}
+
+.page {
+  max-width: 880px;
+  padding: 20px 24px 120px;
+}
+
+/* The add strip, as on the phone: field paper cut like the search strip, edged in outline; matcha while typed in. */
+.add {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 54px;
+  padding: 0 4px 0 16px;
+  border-radius: var(--cut-search);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1px var(--outline);
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.add:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.add > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.addInput {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.addInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.addInput:focus-visible {
+  outline: none;
+}
+
+/*
+ * The links, on the wall as on the phone, the done ones at the foot of the same list. It reaches
+ * past the page's margin by the rows' own 6px inset and 6 more, so their frames stand just inside
+ * the add strip's edge.
+ */
+.list {
+  margin: 8px -12px 0;
+}
+
+/* "Déjà faits", over the done links: lined up with their frames. */
+.heading {
+  padding: 24px 16px 8px;
+}
+
+/* An empty collection: the outline of the sheet its links will fill. */
+.empty {
+  /* Its outline (`OutlinedBox`), dashed. */
+  --edge-color: var(--outline);
+  --edge-width: 1.5px;
+  --edge-dash: 7 5;
+  margin-top: 16px;
+  padding: 36px 28px;
+  color: var(--ink-muted);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+@media (max-width: 719px) {
+  /* As on the phone: the actions on their own row, the washed emblem cut where the head ends. */
+  .head {
+    overflow: clip;
+  }
+  .headInner {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'actions actions'
+      'mark text';
+    column-gap: 14px;
+    padding: 4px 12px 6px 16px;
+  }
+  .headActions {
+    justify-self: end;
+    margin: 0 -4px 6px 0;
+  }
+  .page {
+    padding: 14px 12px 140px;
+  }
+}
+
+/* ── the Collections wall ─────────────────────────────────────────────────── */
+
+.collections {
+  max-width: 1040px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+}
+
+.intro {
+  max-width: 62ch;
+  margin: 10px 0 26px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: 16px;
+}
+
+/* A tile's slot (`TileSlot`): it lifts the tile (a drop shadow along its outline) and rings it on keyboard focus. */
+.tileSlot {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  filter: var(--drop-card);
+  transition: filter var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .tileSlot:hover {
+    filter: var(--drop-raised);
+  }
+}
+
+/* A sheet still to cut casts no shadow. */
+.tileSlot[data-dashed] {
+  filter: none;
+}
+
+.tileSlot:has(:focus-visible) .tileRing {
+  opacity: 1;
+}
+
+/* A sheet pinned to the wall, each cut its own way (its outline, from its id), edged in the hairline as every card is. */
+.tile {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 206px;
+  padding: 16px 16px 14px;
+  clip-path: var(--outline-clip, none);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform var(--duration-medium) var(--ease-out);
+}
+
+/* Its focus is the slot's ring: the clip would cut an outline off. */
+.tile:focus-visible,
+.newTile:focus-visible {
+  outline: none;
+}
+
+.tile:active {
+  transform: scale(0.985);
+}
+
+/* The collection's emblem on its stone, turned a little as the mark's card lies on its pebble. */
+.tileMark {
+  align-self: flex-start;
+  margin: 0 0 12px -4px;
+}
+
+.tileMark > svg {
+  transform: rotate(-6deg);
+}
+
+.tileName {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.tileHint {
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* What waits inside: the first kept pictures, cropped to pebbles (each its neighbour's other turn). */
+.glimpses {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* A kept picture cropped to a pebble (`data-pebble`), a well until it loads. */
+.glimpse {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  background: var(--paper-high);
+}
+
+.glimpse img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tileCount {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+/* A new collection: the dashed outline of a sheet still to cut. */
+.newTile {
+  --edge-color: var(--dashed);
+  --edge-dash: 6 5;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 206px;
+  padding: 16px;
+  border: 0;
+  clip-path: var(--outline-clip, none);
+  background: transparent;
+  color: var(--link);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .newTile:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.newTile:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+@media (max-width: 719px) {
+  /* The title is up in the top bar here, so the words start just under it, as on the phone. */
+  .intro {
+    margin: 0 0 16px;
+  }
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tile,
+  .newTile {
+    min-height: 190px;
+    padding: 14px;
+  }
+}
+
+/* ── the dialogs ──────────────────────────────────────────────────────────── */
+
+/* The sentence grows with what is written, then scrolls; no resize grip pokes out of its cut corner. */
+textarea.hintInput {
+  resize: none;
+  field-sizing: content;
+  min-height: 73px;
+  max-height: 200px;
+}
+
+.purpose {
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px 0 9px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  box-shadow: inset 0 0 0 1.5px var(--outline);
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+/* An outlined chip: hover firms its edge and nothing moves. */
+@media (hover: hover) {
+  .suggestion:hover {
+    box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  }
+}
+
+/* A piece of the wall, with the collection pinned to it as it will hang; a hairline parts it from the dialog's paper. */
+.preview {
+  --sheet: var(--wall);
+  /* A card's outline (`OutlinedBox`), edged in the outline ink. */
+  --edge-color: var(--outline);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 92px;
+  padding: 14px 18px;
+}
+
+.previewMark {
+  flex: none;
+  display: flex;
+  transform: rotate(-8deg);
+  animation: mark-in var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes mark-in {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .previewMark {
+    animation-name: mark-fade;
+  }
+}
+
+@keyframes mark-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.previewText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.previewTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewHint {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.moveRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .moveRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.moveRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.moveRow[aria-current='true'] {
+  background: var(--action-container);
+  box-shadow: inset 0 0 0 1.5px var(--focus);
+  color: var(--on-action-container);
+}
+
+.moveRow[aria-current='true'] .moveHint {
+  color: var(--on-action-container);
+}
+
+/* The current collection's cut-out lies on a scrap of paper, so its pigment never sits on the matcha. */
+.moveRow[aria-current='true'] .moveMark {
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 4px var(--paper);
+}
+
+.moveRow > svg {
+  flex: none;
+  color: var(--focus);
+}
+
+.moveMark {
+  flex: none;
+  display: flex;
+}
+
+.moveText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.moveHint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── deleting a collection, reviewing its links ───────────────────────────── */
+
+/* A collection opened from the bin: why nothing can be changed, and the way back, in the well. */
+.trashBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px 10px 18px;
+  background: var(--paper-high);
+}
+
+.choiceLead {
+  padding: 0 10px 8px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* A choice that sends links to the bin: the danger ink, its glyph too. */
+.dangerRow,
+.dangerRow .moveHint {
+  color: var(--danger);
+}
+
+/* Claude's answer, arriving: each row fades up into place a beat after the one above (the first eight). */
+.arriving {
+  animation: row-in var(--duration-medium) var(--ease-decelerate) both;
+  animation-delay: calc(min(var(--arrive, 0), 8) * 30ms);
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arriving {
+    animation-name: fade-in;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* While Claude reads: the scissors' track over a line of meta. */
+.reviewWaiting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 8px 10px 20px;
+  color: var(--ink-muted);
+}
+
+.reviewNote {
+  padding: 0 10px;
+}
+
+.reviewError {
+  color: var(--danger);
+}
+
+/* A checkbox glyph: ink when open, ink-muted when ticked, never matcha. */
+.box {
+  flex: none;
+  display: flex;
+  color: var(--ink);
+}
+
+[aria-checked='true'] > .box {
+  color: var(--ink-muted);
+}
+
+.reviewTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* "Y ranger les liens de Non classé…": the row is the checkbox, pressed as a tab-cut pebble. */
+.fillOption {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  margin: 0 -10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .fillOption:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.fillOption:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* "Modules": a list dialog a little wider than the others, for the rows' sentences. */
+.modulesFrame[data-kind='list'] {
+  --frame-width: min(520px, 100vw - 32px);
+}
+
+.moduleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+}
+
+.moduleGroupTitle {
+  padding: 0 10px 4px;
+}
+
+/* One module: its glyph, what it does, for which links and at what cost, and its switch. */
+.moduleRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .moduleRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.moduleRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.moduleRow > svg {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.moduleText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Its name, what it does, then for which links and at what cost, a step quieter. */
+.moduleText .t-meta {
+  margin-top: 2px;
+  color: var(--ink-muted);
+}
+
+.moduleMissing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink);
+}
+
+.moduleMissing svg {
+  flex: none;
+}

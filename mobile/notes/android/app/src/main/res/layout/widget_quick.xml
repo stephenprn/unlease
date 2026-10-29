@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Actions rapides, one row: the app's bottom bar (the ground's foot, its grain) as a 56 strip, the height of the link strip, centred in its
+     cell; the capture pebble at its right. The narrower sizes hide the rarer actions (CaptureWidgetProvider). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/wgen_bar_ground"
+        android:foreground="@drawable/wgen_bar_edge"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <ImageView
+            android:id="@+id/quick_search"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_0"
+            android:contentDescription="@string/widget_search"
+            android:src="@drawable/wgen_g_search" />
+
+        <ImageView
+            android:id="@+id/quick_checklist"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_1"
+            android:contentDescription="@string/widget_checklist"
+            android:src="@drawable/wgen_g_checklist" />
+
+        <ImageView
+            android:id="@+id/quick_photo"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_2"
+            android:contentDescription="@string/widget_photo"
+            android:src="@drawable/wgen_g_image" />
+
+        <ImageView
+            android:id="@+id/quick_camera"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_3"
+            android:contentDescription="@string/widget_camera"
+            android:src="@drawable/wgen_g_camera" />
+
+        <ImageView
+            android:id="@+id/quick_link"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_0"
+            android:contentDescription="@string/widget_link"
+            android:src="@drawable/wgen_g_link" />
+
+        <ImageView
+            android:id="@+id/quick_reminder"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_1"
+            android:contentDescription="@string/widget_reminder"
+            android:src="@drawable/wgen_g_bell_plus" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- A 52 by 48 target; the pebble drawn inside it, a little larger than a glyph's pebble. -->
+        <FrameLayout
+            android:id="@+id/quick_note"
+            android:layout_width="52dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/widget_note">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="42dp"
+                android:layout_gravity="center"
+                android:background="@drawable/wgen_capture_2"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:paddingStart="12dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/wgen_g_plus_on_leaf" />
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

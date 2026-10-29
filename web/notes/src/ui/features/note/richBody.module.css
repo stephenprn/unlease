@@ -1,0 +1,115 @@
+/*
+ * A note's body as written: one block per line, every line on the editor body's 26px pitch, headings
+ * included, so a ruled paper under it stays in step and picking a paper never moves the words.
+ */
+.body {
+  position: relative;
+  outline: none;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Signika has no italic: the browser leans it. */
+  font-synthesis: style;
+}
+
+.body > [data-heading='1'] {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.body > [data-heading='2'] {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.15px;
+}
+
+.body > [data-heading='3'] {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.body [data-b] {
+  font-weight: 650;
+}
+
+.body > [data-heading] [data-b] {
+  font-weight: 700;
+}
+
+.body [data-i] {
+  font-style: italic;
+}
+
+.body [data-u] {
+  text-decoration-line: underline;
+  text-underline-offset: 3px;
+}
+
+/* « Note » while nothing is written, where the first line's words will be. */
+.body[data-empty]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* ── the formatting bar: in the menu's paper and Float lift, its buttons the icon buttons ── */
+
+.formatBar {
+  padding: 4px;
+}
+
+.formatRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.formatDivider {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--hairline);
+}
+
+/* Under a finger: a strip of the ground on the keyboard (the phone's bar over its keys), where the note's own bar stands. */
+.dockedBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 4px env(safe-area-inset-bottom);
+  background: var(--ground-paint);
+  box-shadow: inset 0 1px 0 var(--hairline);
+  color: var(--ink);
+  animation: dock-in var(--duration-medium) var(--ease-decelerate);
+}
+
+.dockedBar[data-keyboard] {
+  padding-bottom: 0;
+}
+
+@keyframes dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dockedBar {
+    animation-name: dock-fade;
+  }
+}
+
+@keyframes dock-fade {
+  from {
+    opacity: 0;
+  }
+}

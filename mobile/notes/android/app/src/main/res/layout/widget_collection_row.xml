@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A link, as the collection's page lists it: its picture in a 4:5 frame (products compare whole), its
+     source and price, its title on two lines; the website a tap away at its end. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <LinearLayout
+        android:id="@+id/row_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/wgen_row_press"
+        android:gravity="center_vertical"
+        android:minHeight="64dp"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:background="@drawable/wgen_frame_well"
+            android:foreground="@drawable/wgen_frame_edge">
+
+            <ImageView
+                android:id="@+id/row_kind"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/row_picture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/row_source"
+                style="@style/WidgetText.MetaStrong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/row_title"
+                style="@style/WidgetText.RowTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/row_open"
+            android:layout_width="44dp"
+            android:layout_height="48dp"
+            android:background="@drawable/wgen_press_2"
+            android:contentDescription="@string/widget_open_site"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/wgen_g_external_ink_muted" />
+    </LinearLayout>
+</FrameLayout>

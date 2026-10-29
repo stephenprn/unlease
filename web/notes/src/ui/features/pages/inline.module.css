@@ -1,0 +1,289 @@
+/*
+ * What a page's text holds besides words, and the table of contents: a date's editor (the usual
+ * days as small chips, a month of days, a time), the emojis « : » offers, and the headings listed
+ * as quiet rows.
+ */
+
+/* ── a date's editor ─────────────────────────────────────────────────── */
+
+.dateEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 12px 4px;
+}
+
+.dateHead {
+  padding: 4px 4px 0;
+}
+
+/* The usual days: small paper chips, the one the date is on in matcha with a matcha edge. */
+.quickDays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quickDay {
+  position: relative;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--cut-small);
+  background: var(--paper);
+  color: var(--ink);
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+
+/* The press stays inside the chip's own corners. */
+.quickDay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .quickDay:hover::after {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.quickDay:active::after {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.quickDay[aria-pressed='true'] {
+  border-color: var(--focus);
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+/* A month: its name between the arrows, the weekdays' initials, then its days. */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.monthHead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.monthName {
+  flex: 1;
+  text-align: center;
+}
+
+/* Onde draws one chevron: the way back is the way on, turned round. */
+.previous svg {
+  transform: scaleX(-1);
+}
+
+.days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+}
+
+.weekday {
+  width: 36px;
+  padding: 2px 0;
+  text-align: center;
+}
+
+.dayGap {
+  width: 36px;
+  height: 36px;
+}
+
+/* A day holds a number: a calm sheet, never a pebble; today ringed, the chosen day in matcha. */
+.day {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .day:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.day:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.day[aria-current='date'] {
+  box-shadow: inset 0 0 0 1.5px var(--focus);
+  font-weight: 600;
+}
+
+.day[aria-pressed='true'] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+  font-weight: 600;
+}
+
+/* Chosen and under the pointer or the finger: the matcha deepens toward its ink. */
+@media (hover: hover) {
+  .day[aria-pressed='true']:hover {
+    background: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+  }
+}
+
+.day[aria-pressed='true']:active {
+  background: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+}
+
+@media (pointer: coarse) {
+  .weekday,
+  .dayGap,
+  .day {
+    width: 40px;
+  }
+
+  .dayGap,
+  .day {
+    height: 40px;
+  }
+}
+
+/* « Heure »: a row that is the switch itself, its press inside the row's own corners. */
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.switchRow > svg {
+  color: var(--ink-muted);
+}
+
+.switchRow > span:first-of-type {
+  flex: 1;
+}
+
+@media (hover: hover) {
+  .switchRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.switchRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.timeField {
+  min-height: 44px;
+  padding: 9px 14px;
+}
+
+.dateFoot {
+  display: flex;
+  margin: 0 -4px;
+}
+
+/* ── emojis: those « : » offers, the picker « / » opens ──────────────── */
+
+.emojiMenu {
+  width: min(300px, calc(100vw - 16px));
+}
+
+/* Where the caret was drawn, for the picker to drop from (`left`, `top` and `height` set as it opens). */
+.caretAnchor {
+  position: fixed;
+  width: 0;
+  pointer-events: none;
+}
+
+/* ── a table of contents ─────────────────────────────────────────────── */
+
+/* No frame: the page reads as a document, its headings listed as quiet rows, each further in by its depth. */
+.toc {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tocEntry {
+  display: block;
+  min-height: 32px;
+  margin: 0 -8px;
+  padding: 4px 8px;
+  border-radius: var(--cut-tab);
+  color: var(--ink-muted);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.tocEntry[data-depth='1'] {
+  padding-left: 24px;
+}
+
+.tocEntry[data-depth='2'] {
+  padding-left: 40px;
+}
+
+.tocEntry[data-depth='3'] {
+  padding-left: 56px;
+}
+
+@media (hover: hover) {
+  .tocEntry:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.tocEntry:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.tocEntry:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .tocEntry {
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+.tocEmpty {
+  padding: 6px 0;
+}
