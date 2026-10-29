@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@unlease/core/*": ["../../packages/core/src/*"],
+      "@unlease/design/*": ["../../packages/design/src/*"],
+      "@unlease/notes/*": ["../../packages/notes/src/*"]
+    }
+  },
+  "include": ["vite.config.ts", "build"]
+}

@@ -1,0 +1,86 @@
+/*
+ * The type scale: one humanist face, the phone's roles (ui/theme/typography.ts)
+ * at the same sizes. Cards set title and body at one size and let weight carry
+ * the rank, so a hundred cards never read as a hundred headlines.
+ */
+
+.t-display {
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 35px;
+  letter-spacing: -0.5px;
+}
+.t-title {
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 26px;
+  letter-spacing: -0.1px;
+}
+.t-editor-title {
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.15px;
+}
+.t-editor-body {
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 26px;
+}
+.t-section {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  color: var(--ink-muted);
+}
+.t-card-title {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 21px;
+}
+.t-card-body {
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 21px;
+}
+.t-body {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 23px;
+}
+.t-body-strong {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 23px;
+}
+.t-meta {
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+.t-meta-strong {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+.t-label {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+}
+.t-label-small {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.2px;
+}
+.t-price {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}

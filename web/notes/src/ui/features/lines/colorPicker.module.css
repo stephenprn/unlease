@@ -1,0 +1,154 @@
+/* The pickers: gouaches as pebbles of painted paper, emblems as cut-outs on paper tabs. */
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* A pebble of painted paper (its turn set inline, so neighbours never match), its edge drawn along it. */
+.swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on);
+  --pebble-fill: var(--fill);
+  --edge-color: transparent;
+  --edge-width: 3px;
+}
+
+/* Hover and press stay inside the pebble: its paint darkens a little, never a lift. */
+@media (hover: hover) {
+  .swatch:hover {
+    --pebble-fill: color-mix(in srgb, var(--fill) 92%, var(--ink));
+  }
+}
+
+.swatch:active {
+  --pebble-fill: color-mix(in srgb, var(--fill) 86%, var(--ink));
+}
+
+/* The chosen one is ringed in ink, as on the phone. */
+.swatch[aria-checked='true'] {
+  --edge-color: var(--ink);
+}
+
+/* "No colour" is drawn by its edge alone, as on the phone. */
+.none {
+  --pebble-fill: var(--paper);
+  --edge-color: var(--outline);
+  --edge-width: 1px;
+  color: var(--ink);
+}
+
+@media (hover: hover) {
+  .none:hover {
+    --pebble-fill: var(--paper);
+    --edge-color: var(--ink-faint);
+  }
+}
+
+.none[aria-checked='true'] {
+  --edge-color: var(--ink);
+  --edge-width: 3px;
+}
+
+/* Emblems: the fourteen cut-outs, each on its own turn of the pebble. */
+.emblems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.emblemCell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  --edge-color: transparent;
+  --edge-width: 2px;
+}
+
+@media (hover: hover) {
+  .emblemCell:hover {
+    --pebble-fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.emblemCell:active {
+  --pebble-fill: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* Chosen: on a paper pebble ringed in matcha, so the pigment never sits on the matcha. */
+.emblemCell[aria-checked='true'] {
+  --pebble-fill: var(--paper);
+  --edge-color: var(--focus);
+}
+
+/* The cut-out turns to its slant and back rather than jumping. */
+.emblemCell > svg:first-child {
+  transition: transform var(--duration-medium) var(--ease-decelerate);
+}
+
+/* The chosen cut-out sits pinned at a slant, as it will on the collection's page. */
+.emblemCell[aria-checked='true'] > svg:first-child {
+  transform: rotate(-8deg);
+}
+
+/* The paper pebble and its matcha ring settle in from a touch smaller as the choice lands; the last one's fade away (their colours' own transitions). */
+.emblemCell[aria-checked='true']::before,
+.emblemCell[aria-checked='true'] > svg:last-child {
+  animation: settle var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes settle {
+  from {
+    transform: scale(0.9);
+  }
+}
+
+/* The chosen colour's tick settles in with its ring. */
+.swatch[aria-checked='true'] > svg:last-child {
+  animation: tick-in var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes tick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emblemCell[aria-checked='true']::before,
+  .emblemCell[aria-checked='true'] > svg:last-child {
+    animation: none;
+  }
+  .swatch[aria-checked='true'] > svg:last-child {
+    animation-name: tick-fade;
+  }
+}
+
+@keyframes tick-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.emblemCell:focus-visible {
+  outline-offset: 1px;
+}

@@ -1,0 +1,82 @@
+# Every push and pull request: the shared packages, each program's checks, and the English dictionaries.
+# A release runs it too, on its tag, before anything is published (release.yml).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Shared packages (typecheck, lint, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+
+  web:
+    name: Carnet on the web (typecheck, lint, tests, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify -w web/notes
+
+  server:
+    name: Server (typecheck, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify -w server
+
+  mobile:
+    name: Carnet for Android (typecheck, lint, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/notes
+    env:
+      # Its screen tests read French, the language the device reports.
+      LANG: fr_FR.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/notes/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+
+  i18n:
+    name: English dictionaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node tools/i18n/check.mjs

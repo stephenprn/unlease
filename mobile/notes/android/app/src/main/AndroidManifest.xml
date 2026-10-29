@@ -1,0 +1,175 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Sync and link reading need the owner's server, so the release build keeps INTERNET. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- To hear the network come back, so sync resumes at once. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- RECEIVE_BOOT_COMPLETED lets Notifee re-arm triggers after a restart. Sideloaded, never on
+         Play, so the store's exact-alarm policy does not apply. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Declared by Notifee for features this app never uses. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" tools:node="remove" />
+
+    <!-- Picker and camera are reached by intent: no storage or camera permission is held. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+
+        <!-- The share sheet: links and text, one image or several (src/app/intake.ts). -->
+        <intent-filter android:label="Classer dans Carnet">
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+        <intent-filter android:label="Ajouter à Carnet">
+            <action android:name="android.intent.action.SEND" />
+            <action android:name="android.intent.action.SEND_MULTIPLE" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="image/*" />
+        </intent-filter>
+
+        <!-- carnet://note/<id>, line/<id>, link/<id>, label/<id>, capture/<kind>: custom scheme, no host. -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="carnet" />
+        </intent-filter>
+      </activity>
+
+      <!-- The home-screen widgets (android/.../widget, docs/ARCHITECTURE.md). The providers are exported
+           because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->
+
+      <receiver
+        android:name=".widget.CaptureWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_capture_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_capture_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.LinkWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_link_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_link_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.CollectionWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_collection_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_collection_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.LabelWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_label_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_label_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.NoteWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_note_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_note_info" />
+      </receiver>
+
+      <!-- A tick on a note widget: only our own PendingIntents reach it. -->
+      <receiver android:name=".widget.WidgetTickReceiver" android:exported="false" />
+
+      <!-- The quick window over the home screen: the link field and the pickers. Exported for the
+           launcher's configuration step; its own task, gone once left, never in Recents. -->
+      <activity
+        android:name=".widget.QuickActivity"
+        android:theme="@style/QuickTheme"
+        android:exported="true"
+        android:label="@string/app_name"
+        android:taskAffinity="${applicationId}.quick"
+        android:excludeFromRecents="true"
+        android:noHistory="true"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:windowSoftInputMode="adjustResize">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+        </intent-filter>
+      </activity>
+
+      <!-- Sends a widget list's tap on to the app or a website; it never shows. -->
+      <activity
+        android:name=".widget.WidgetRouterActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
+
+      <!-- Lets the system camera app write one photo into files/photos; not exported. -->
+      <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.files"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/file_paths" />
+      </provider>
+
+      <service android:name="app.notifee.core.ForegroundService" tools:node="remove" />
+    </application>
+</manifest>

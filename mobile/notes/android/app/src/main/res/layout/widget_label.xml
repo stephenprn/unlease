@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notes d'un label: a piece of the board. The label's tag and name head it (a tap opens the label in
+     the app); a list and the capture pebble start a note wearing it; its notes are sheets on the slab. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="6dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp">
+
+            <LinearLayout
+                android:id="@+id/label_open"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_label_open"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingEnd="8dp">
+
+                <ImageView
+                    android:id="@+id/label_tag"
+                    android:layout_width="24dp"
+                    android:layout_height="17dp"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/wgen_tag" />
+
+                <!-- Its name in Signika (WidgetType); the text view is its plain twin. -->
+                <ImageView
+                    android:id="@+id/label_name_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/label_name"
+                    style="@style/WidgetText.Title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/label_new_list"
+                style="@style/WidgetIconButton.Head"
+                android:background="@drawable/wgen_press_3"
+                android:contentDescription="@string/widget_checklist"
+                android:src="@drawable/wgen_g_checklist" />
+
+            <!-- A 48 target; the capture pebble drawn inside it, the size of a glyph's pebble. -->
+            <FrameLayout
+                android:id="@+id/label_new_note"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="@string/widget_note">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/wgen_capture_1"
+                    android:duplicateParentState="true"
+                    android:importantForAccessibility="no"
+                    android:paddingStart="10dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="8dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/wgen_g_plus_on_leaf" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/label_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="true"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="8dp"
+                android:paddingStart="8dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="8dp"
+                android:scrollbars="none" />
+
+            <LinearLayout
+                android:id="@+id/label_static"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/label_empty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingBottom="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/WidgetText.Meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_label_empty" />
+
+                <LinearLayout
+                    android:id="@+id/label_empty_add"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/wgen_control_press"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/wgen_g_plus_link" />
+
+                    <TextView
+                        style="@style/WidgetText.Action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/widget_label_create" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

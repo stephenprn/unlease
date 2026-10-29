@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The picker's preview of a collection widget: sample content. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_panel_ground" android:foreground="@drawable/wgen_panel_edge">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="62dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="12dp" android:paddingTop="6dp" android:paddingEnd="6dp">
+            <FrameLayout android:layout_width="44dp" android:layout_height="40dp">
+                <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/wgen_pebble_2" android:tint="@color/wgen_wash_blue" />
+                <ImageView android:layout_width="26dp" android:layout_height="26dp" android:layout_gravity="center" android:src="@drawable/wgen_emblem_lune" android:tint="@color/wgen_pigment_blue" />
+            </FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="11dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/WidgetText.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:drawableEnd="@drawable/wgen_g_chevron_down_ink_muted" android:drawablePadding="2dp" android:text="Films" />
+                <TextView style="@style/WidgetText.Meta" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="4 liens" />
+            </LinearLayout>
+            <ImageView style="@style/WidgetIconButton.Head" android:src="@drawable/wgen_g_plus" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="64dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+            <FrameLayout android:layout_width="40dp" android:layout_height="50dp" android:background="@drawable/wgen_frame_well" android:foreground="@drawable/wgen_frame_edge">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/wgen_g_film_ink_muted" />
+            </FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/WidgetText.MetaStrong" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="Allociné" />
+                <TextView style="@style/WidgetText.RowTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:maxLines="2" android:text="Les Herbes sèches" />
+            </LinearLayout>
+            <ImageView android:layout_width="44dp" android:layout_height="48dp" android:padding="12dp" android:scaleType="fitCenter" android:src="@drawable/wgen_g_external_ink_muted" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="64dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+            <FrameLayout android:layout_width="40dp" android:layout_height="50dp" android:background="@drawable/wgen_frame_well" android:foreground="@drawable/wgen_frame_edge">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/wgen_g_film_ink_muted" />
+            </FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/WidgetText.MetaStrong" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="Mubi" />
+                <TextView style="@style/WidgetText.RowTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:maxLines="2" android:text="Perfect Days" />
+            </LinearLayout>
+            <ImageView android:layout_width="44dp" android:layout_height="48dp" android:padding="12dp" android:scaleType="fitCenter" android:src="@drawable/wgen_g_external_ink_muted" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="64dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+            <FrameLayout android:layout_width="40dp" android:layout_height="50dp" android:background="@drawable/wgen_frame_well" android:foreground="@drawable/wgen_frame_edge">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/wgen_g_film_ink_muted" />
+            </FrameLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/WidgetText.MetaStrong" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="Arte" />
+                <TextView style="@style/WidgetText.RowTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:maxLines="2" android:text="Le Règne animal" />
+            </LinearLayout>
+            <ImageView android:layout_width="44dp" android:layout_height="48dp" android:padding="12dp" android:scaleType="fitCenter" android:src="@drawable/wgen_g_external_ink_muted" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

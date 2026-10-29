@@ -1,0 +1,21 @@
+/* A formatted body to be read: its marks as written (a card's bold is the weight `layoutCard` measures). */
+.b,
+.heading {
+  font-weight: 700;
+}
+
+.i {
+  font-style: italic;
+  /* Signika has no italic: the browser leans it. */
+  font-synthesis: style;
+}
+
+.u {
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+}
+
+/* A drawing at the width it is given: the preview fills it. */
+.drawing {
+  width: 100%;
+}

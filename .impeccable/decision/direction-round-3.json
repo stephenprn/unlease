@@ -1,0 +1,254 @@
+{
+  "title": "Choose the component language",
+  "question": "The roll assigned Papeterie. Keep it, take an alternate, or re-roll. Each picture is a working prototype of that direction (the board, the drawer, Réglages with the info card), drawn with Carnet's real font, colours, icons and emblems. Every option keeps your layout, behaviour, palette, Signika and the emblems; the left panel is full height and straight in all of them.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Papeterie",
+      "kicker": "THE ROLL",
+      "lineage": "Japanese stationery: MD paper, Hobonichi, Traveler's notebooks",
+      "thesis": "A precise notebook: every sheet die-cut with the same smooth corner, and on it your own things: index tabs, washi tape, the brand sticker.",
+      "palette": [
+        "#EDE8D0",
+        "#F8F5E6",
+        "#201E1D",
+        "#A75C2A",
+        "#BED999",
+        "#9CC15F"
+      ],
+      "materials": [
+        "die-cut paper, one smooth corner",
+        "washi tape on pinned notes",
+        "index tabs on collections"
+      ],
+      "viewport": "Identical die-cut cards on the wall; pinned notes taped; each collection a divider with its name on an index tab; the drawer a full-height straight sheet; the info card a matcha memo.",
+      "risk": "Two permanent ornaments (tape, tabs) where the research says one signature: either one spreading turns it kitsch.",
+      "raised": [
+        {
+          "from": "challenger-folio",
+          "raise": "Every card is the same plate: one die-cut, one paper, one edge; variety comes only from what is written and the wash chosen."
+        },
+        {
+          "from": "challenger-specimen",
+          "raise": "Chrome carries no ornament: search, bars and rows are type and line; the twists live on content alone."
+        },
+        {
+          "from": "challenger-goods",
+          "raise": "Each card's furniture sits in fixed places: title, body, footer, tape always where the eye expects them."
+        },
+        {
+          "from": "challenger-jcard",
+          "raise": "Tape, tab and stamp are drawn inside the card's computed box: the wall never shifts for them."
+        },
+        {
+          "from": "challenger-sleeve",
+          "raise": "Nothing is labelled twice: a collection's name lives on its tab alone."
+        }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.webp",
+      "hero": ".impeccable/mocks/decision/assigned.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Galet et feuille",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Organic modernism (Perriand, Noguchi) and the Carnet mark: a sheet resting on a pebble",
+      "thesis": "Text lives on calm sheets; state and identity live on the brand's pebble, the one organic form, which gives under the finger.",
+      "palette": [
+        "#EDE8D0",
+        "#F8F5E6",
+        "#201E1D",
+        "#A75C2A",
+        "#BED999",
+        "#E5E8FE"
+      ],
+      "materials": [
+        "smooth slabs, one corner for all",
+        "river pebbles in each collection's wash",
+        "shape morphing on touch"
+      ],
+      "viewport": "Identical calm cards; every collection's emblem lies on a pebble of its wash; the chosen place, the open info and the capture button are pebbles.",
+      "risk": "The most familiar of the four: its twist lives in motion and small stones, so a still screen can read plain.",
+      "comp": ".impeccable/mocks/decision/model-pick.webp",
+      "hero": ".impeccable/mocks/decision/model-pick.webp"
+    },
+    {
+      "id": "challenger-warm",
+      "label": "Surface chaleureuse",
+      "verdict": "competitive",
+      "lineage": "warm consumer app surfaces",
+      "thesis": "White soft-cornered cards on a warm ground, big targets, one action colour that appears only where something can be done.",
+      "palette": [
+        "#F4EDE2",
+        "#FFFDF9",
+        "#201E1D",
+        "#A75C2A"
+      ],
+      "materials": [
+        "white cards",
+        "soft round corners",
+        "one action colour"
+      ],
+      "viewport": "White cards on a warm ground, no grain, terracotta only on what acts: the capture button, the filled button, the chosen row.",
+      "case": "Fuses cleanly and is the clearest of all; loses on identity: no twist, matcha and paper go, it reads like any friendly app.",
+      "risk": "Carnet loses its family look with Bonsai and its paper.",
+      "comp": ".impeccable/mocks/decision/challenger-warm.webp",
+      "hero": ".impeccable/mocks/decision/challenger-warm.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-warm-consumer-app-surface.webp"
+    },
+    {
+      "id": "challenger-folio",
+      "label": "Folio botanique",
+      "verdict": "declined",
+      "lineage": "botanical folios: fixed-scale plates",
+      "thesis": "Every note a plate at the same scale and ground, hairline sepia rules.",
+      "palette": [
+        "#F6F1E6",
+        "#D9CDB5",
+        "#2E5E3D",
+        "#B21E18"
+      ],
+      "materials": [
+        "cream plates",
+        "engraved rules"
+      ],
+      "viewport": "Arched plates in a row.",
+      "risk": "Engraved serifs and ornament fight the practical side.",
+      "case": "Organic and calm, but decorative rather than practical, and its serif display breaks Carnet's single face.",
+      "kept": "Every plate the same scale and ground.",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp"
+    },
+    {
+      "id": "challenger-specimen",
+      "label": "Spécimen typographique",
+      "verdict": "declined",
+      "lineage": "variable font specimens",
+      "thesis": "Type alone carries the page, no ornament.",
+      "palette": [
+        "#FAFAF7",
+        "#111111",
+        "#E4572E"
+      ],
+      "materials": [
+        "flat paper",
+        "type scale"
+      ],
+      "viewport": "A giant glyph over a grid.",
+      "risk": "Leaves no room for the paper or the emblems.",
+      "case": "A note board has nothing to specimen; it would erase the emblems and the paper.",
+      "kept": "No ornament on chrome: type and line carry the hierarchy.",
+      "hero": "https://impeccable.style/worlds/cards/variable-font-specimen-hero.webp"
+    },
+    {
+      "id": "challenger-jcard",
+      "label": "Jaquette de cassette",
+      "verdict": "declined",
+      "lineage": "hand-lettered mixtape j-cards",
+      "thesis": "Ballpoint lists timed to fill the tape exactly.",
+      "palette": [
+        "#FFFFFF",
+        "#1F3FA6",
+        "#9A9A9A",
+        "#D2232A"
+      ],
+      "materials": [
+        "lined inlay stock",
+        "ballpoint"
+      ],
+      "viewport": "A folded tracklist.",
+      "risk": "Handwriting undoes premium and clean.",
+      "case": "Nostalgic and hand-made; loses both premium and clarity.",
+      "kept": "Each card fills its measured capacity exactly.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card-hero.webp"
+    },
+    {
+      "id": "challenger-sleeve",
+      "label": "Pochette Factory",
+      "verdict": "declined",
+      "lineage": "Saville's Factory Records catalog sleeves",
+      "thesis": "Matte black, coded colour strips instead of names.",
+      "palette": [
+        "#111111",
+        "#FFFFFF",
+        "#E83F2E",
+        "#2E7DE8"
+      ],
+      "materials": [
+        "matte black",
+        "white hairline plot"
+      ],
+      "viewport": "One plot owning the field.",
+      "risk": "Codes instead of names fight finding things fast.",
+      "case": "Hiding names behind codes contradicts a board built to find things in seconds.",
+      "kept": "Nothing labelled twice.",
+      "hero": "https://impeccable.style/worlds/cards/brand-identity-canon-saville-catalog-sleeve-hero.webp"
+    },
+    {
+      "id": "challenger-goods",
+      "label": "Catalogue de mascottes",
+      "verdict": "declined",
+      "lineage": "character goods catalogs",
+      "thesis": "Rounded mascots ranked in a pastel grid, each with its fixed name plate.",
+      "palette": [
+        "#FCE4EC",
+        "#E3F2FD",
+        "#FFF8E1",
+        "#FF6F61"
+      ],
+      "materials": [
+        "pastel cells",
+        "white keylines"
+      ],
+      "viewport": "A roster of mascots.",
+      "risk": "Reads childish, not premium.",
+      "case": "Fantasy without restraint: childish where you asked for premium.",
+      "kept": "Fixed furniture in fixed places.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-character-goods-catalog-hero.webp"
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "La norme du genre",
+    "thesis": "Google Keep on Material 3, executed impeccably: outlined 12dp cards, a full-round search bar, 8dp chips, a 16dp FAB.",
+    "palette": [
+      "#EDE8D0",
+      "#F8F5E6",
+      "#201E1D",
+      "#BED999"
+    ],
+    "materials": [
+      "outlined flat cards",
+      "Material 3 components"
+    ],
+    "viewport": "Keep's board in Carnet's colours: outlined cards, no lift, the standard drawer made full height and straight.",
+    "risk": "Indistinguishable from Keep by design: the reason Carnet exists goes quiet.",
+    "comp": ".impeccable/mocks/decision/canon.webp",
+    "hero": ".impeccable/mocks/decision/canon.webp"
+  },
+  "steer": true,
+  "seed": "66bef433",
+  "roll": {
+    "scope": "direction",
+    "mode": "operate",
+    "assignedIndex": 4,
+    "assigned": "Papeterie (Japanese stationery), candidate 4 of 7 on the grounded list",
+    "pick": "Galet et feuille (organic modernism fused with the Carnet mark), candidate 1 of 7"
+  },
+  "answer": {
+    "optionId": "model-pick",
+    "label": "Galet et feuille",
+    "steer": "",
+    "buildPath": "code",
+    "answeredAt": "2026-10-22"
+  }
+}

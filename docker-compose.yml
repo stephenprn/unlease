@@ -1,0 +1,25 @@
+# Unlease with Docker Compose. Next to this file, a .env (a release's example.env, or .env.example) with
+# UNLEASE_TOKEN set, then:
+#   docker compose up -d
+# UNLEASE_VERSION in .env picks the release to run (docs/UPGRADING.md).
+# The web app and its API answer on port 8080 of this machine: put HTTPS in front of it
+# (docs/SELF-HOSTING.md has Caddy, nginx, Traefik and Cloudflare Tunnel examples).
+services:
+  unlease:
+    image: ghcr.io/stephenprn/unlease:${UNLEASE_VERSION:-latest}
+    # To run this checkout instead of a published image, replace `image` with:
+    # build: .
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Pinned so an UNLEASE_DATA_DIR left in .env cannot move the data off the volume.
+      UNLEASE_DATA_DIR: /data
+    volumes:
+      - unlease-data:/data
+    # Loopback only: the reverse proxy on this machine reaches it; change to "8080:8080" for one elsewhere.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  unlease-data:

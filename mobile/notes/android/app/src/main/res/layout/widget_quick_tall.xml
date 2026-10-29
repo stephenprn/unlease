@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Actions rapides, two rows or more: the board's search strip on top, then the actions named, the
+     capture pebble last. A label sits under a pebble, never on it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:id="@+id/quick_search"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/wgen_bar_field"
+            android:contentDescription="@string/widget_search"
+            android:foreground="@drawable/wgen_fg_strip">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="11dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_widget_mark" />
+
+                <!-- In Signika (WidgetType); the text view is its plain twin. -->
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1">
+
+                    <ImageView
+                        android:id="@+id/quick_search_hint_image"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:importantForAccessibility="no"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/quick_search_hint"
+                        style="@style/WidgetText.Hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:importantForAccessibility="no"
+                        android:maxLines="1"
+                        android:text="@string/widget_search_hint" />
+                </FrameLayout>
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/quick_checklist"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_checklist"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wgen_g_checklist" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_checklist" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quick_photo"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_photo"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wgen_g_image" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_photo" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quick_camera"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_camera"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wgen_g_camera" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_camera" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quick_link"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_link"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wgen_g_link" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_link" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quick_reminder"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_reminder"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wgen_g_bell_plus" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_reminder" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/quick_note"
+                android:layout_width="0dp"
+                android:layout_height="68dp"
+                android:layout_weight="1"
+                android:background="@drawable/wgen_row_press"
+                android:contentDescription="@string/widget_note"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/quick_note_pebble"
+                    android:layout_width="46dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/wgen_capture_2"
+                    android:duplicateParentState="true"
+                    android:importantForAccessibility="no"
+                    android:paddingStart="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/wgen_g_plus_on_leaf" />
+
+                <TextView
+                    style="@style/WidgetText.LabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_short_note" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

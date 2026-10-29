@@ -1,0 +1,235 @@
+/*
+ * A note's colour and paper: three groups of round pebbles, one size for every swatch, each group a
+ * grid that fills the picker's width in full rows (fifteen colours in five columns, eight gradients
+ * and eight papers in four, or one row of eight where the picker is wide).
+ */
+
+.finishes {
+  /* Every swatch, colour, gradient or paper: one pebble, as wide as it is high. */
+  --swatch: 44px;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 2px 4px 4px;
+}
+
+@media (pointer: coarse) {
+  .finishes {
+    --swatch: 48px;
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The group's name, and at its end the chosen colour's (its pebble carries none). */
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+  color: var(--ink-muted);
+}
+
+.chosenName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.grid {
+  display: grid;
+  justify-items: center;
+}
+
+.colors {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  row-gap: 8px;
+}
+
+.finishGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 12px;
+  column-gap: 4px;
+}
+
+/* Wide enough for eight names side by side: each finish group is one row. */
+@container (min-width: 520px) {
+  .finishGrid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* The colours: a pebble of the wash the note will wear, edged in its pigment so neighbours tell apart. */
+.pebble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--swatch);
+  height: var(--swatch);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  --pebble-fill: var(--tint);
+  --edge-color: var(--fill);
+  --edge-width: 2px;
+}
+
+/* "Sans couleur": plain paper drawn by its edge alone, struck through. */
+.none {
+  --pebble-fill: var(--paper);
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+}
+
+@media (hover: hover) {
+  .none:hover {
+    --edge-color: var(--ink-faint);
+  }
+}
+
+.slash {
+  position: relative;
+  width: 2px;
+  height: calc(var(--swatch) - 16px);
+  border-radius: 1px;
+  background: var(--ink-muted);
+  transform: rotate(45deg);
+}
+
+/* Chosen: a ring of ink on a colour. */
+.pebble[aria-checked='true'] {
+  --edge-color: var(--ink);
+  --edge-width: 3px;
+}
+
+/* A gradient or a paper over its name: the whole column is its target, its focus ring a container's corners. */
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 2px 2px;
+  border: 0;
+  border-radius: var(--cut-panel);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--duration-short) var(--ease-standard);
+}
+
+/* Hover stays inside the swatch's own pebble: its wash darkens a little, its edge firms; nothing moves. */
+@media (hover: hover) {
+  .pebble:not([aria-checked='true']):hover {
+    --pebble-fill: color-mix(in srgb, var(--tint) 94%, var(--ink));
+  }
+  .option:hover {
+    color: var(--ink);
+  }
+  .option:hover .swatch {
+    --edge-color: var(--outline);
+  }
+}
+
+.pebble:active {
+  --pebble-fill: color-mix(in srgb, var(--tint) 90%, var(--ink));
+}
+
+.option[aria-checked='true'] {
+  color: var(--ink);
+}
+
+/* A gradient or a paper: a pebble painted as the note will be, edged in a hairline. */
+.swatch {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--swatch);
+  height: var(--swatch);
+  color: var(--ink);
+  --edge-color: var(--hairline);
+}
+
+/* Chosen: the matcha edge, thick enough to read on any wash. */
+.option[aria-checked='true'] .swatch {
+  --edge-color: var(--focus);
+  --edge-width: 2.5px;
+}
+
+/* The picker's check, on the chosen swatch: a small leaf-matcha pebble, settling in as it is chosen. */
+.check {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--leaf);
+  color: var(--on-leaf);
+  animation: check-in var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check {
+    animation-name: check-fade;
+  }
+}
+
+@keyframes check-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.paperLayer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Flecks lie a hand apart on a note: the swatch shows them at half size, so a few fall inside it. */
+.paperLayer[data-pattern='speckle'] {
+  inset: -50%;
+  transform: scale(0.5);
+}
+
+/* Two lines at most ("Brume lavande"): a name is never cut mid-word. */
+.name {
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-align: center;
+  text-wrap: balance;
+  hyphens: manual;
+}
+
+.swatch[data-line] {
+  --sheet: var(--tint);
+}

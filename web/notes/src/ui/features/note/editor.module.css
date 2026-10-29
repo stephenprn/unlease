@@ -1,0 +1,1046 @@
+/* The note editor: the card's own sheet lifted off the wall, washed like the card, grained. */
+.panel {
+  width: min(680px, 100%);
+  height: auto;
+  max-height: min(860px, calc(100vh - 96px));
+  overflow: hidden;
+}
+
+/* The sheet itself (`paper`): it covers the dialog's own paper, so the wash and the grain are its. */
+.surface {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: inherit;
+}
+
+.surface:focus-visible {
+  outline: none;
+}
+
+.surface[data-line] {
+  --sheet: var(--tint);
+}
+
+/* A new wash comes over the sheet gently as it is picked (a gradient, painted as an image, simply changes). */
+.surface {
+  transition: background-color var(--duration-medium) var(--ease-standard);
+}
+
+/* On the note's own colour, a toggle that is on (pinned, a reminder set) lies on a pebble of ink veil: matcha would clash with the wash. */
+.surface button[aria-pressed='true'] {
+  --pebble-fill: var(--veil);
+  color: var(--ink);
+  --icon-solid: 1;
+}
+
+/* Under the pointer or the finger the veil deepens; it never turns to the matcha of the icon button's own chosen state. */
+.surface button[aria-pressed='true']:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+@media (hover: hover) {
+  .surface button[aria-pressed='true']:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, var(--ink) 16%, transparent);
+  }
+}
+
+.surface[data-dropping]::after {
+  content: 'Déposez les images ici';
+  position: absolute;
+  inset: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--cut-panel);
+  border: 2px dashed var(--focus);
+  background: color-mix(in srgb, var(--sheet, var(--paper)) 88%, transparent);
+  color: var(--focus);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* What is written, at least as tall as the sheet: a ruled paper runs on to its foot, cut at its edges. */
+.sheet {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+}
+
+.writing {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A text note's title ends on the body's rules, then one line is skipped: on every paper, so picking one never moves the words. */
+.sheet[data-kind='text'] .titleInput {
+  padding-bottom: 18px;
+}
+
+/* The title and, by it, the pin: the pin's pebble keeps the content's inset, clear of the dialog's corner. */
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 16px 0 20px;
+}
+
+.titleInput,
+.bodyInput {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  resize: none;
+  field-sizing: content;
+  overflow: hidden;
+}
+
+.titleInput::placeholder,
+.bodyInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.titleInput:focus-visible,
+.bodyInput:focus-visible {
+  outline: none;
+}
+
+.titleInput {
+  flex: 1;
+  min-height: 40px;
+}
+
+.bodyWrap {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px 8px;
+}
+
+.checkWrap {
+  position: relative;
+  flex: 1 0 auto;
+}
+
+/*
+ * A ruled paper (lines, Seyès), from the sheet's top to its foot: it reaches far past the text it
+ * rules (a whole number of rules, so they stay in step) and the sheet cuts it. Over the wash and the
+ * grain, under everything written.
+ */
+.ruledPaper {
+  position: absolute;
+  inset: calc(var(--pitch) * -80) 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* On the body's own 26px lines, under each baseline (the text pads 6px above), headings included. */
+.bodyWrap > .ruledPaper {
+  --pitch: 26px;
+  background-position: 0 3px;
+}
+
+/* On a checklist, one rule under each row: 48 under a finger, 36 with a mouse (see the checklist). */
+.checkWrap > .ruledPaper {
+  --pitch: 48px;
+  background-position: 0 0;
+}
+
+/* A note's dots or grid: over the wash and the grain, under everything written. */
+.paperLayer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.pickerBody {
+  padding: 0 8px 8px;
+}
+
+.bodyInput {
+  flex: 1 0 auto;
+  min-height: 120px;
+  /* The text is a contenteditable: nothing of a line's heading is clipped. */
+  overflow: visible;
+}
+
+.pin {
+  margin-top: 0;
+}
+
+.chips {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 20px 12px;
+}
+
+/* The reminder and the labels a note wears: capsules outlined in pencil. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--outline);
+  border-radius: var(--cut-chip);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .chip:not(:disabled):hover {
+    border-color: var(--ink-faint);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.chip:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.chip:disabled {
+  cursor: default;
+}
+
+/* Its time passed, the words turn danger and the chip stays outlined, as on the phone. */
+.chip[data-past] {
+  color: var(--danger);
+}
+
+.toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 12px 6px 10px;
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+
+/* Under 720px, the phone's screen: a top bar on the note's own paper (back, then the note's toggles)... */
+.topBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--header-row);
+  padding: 0 4px;
+}
+
+.barSpace {
+  flex: 1;
+}
+
+/* ...and at the foot, what to add and change, the date between, above the hairline and the gesture bar. */
+.bottomBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 4px env(safe-area-inset-bottom);
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+
+/* "Ajouter", the phone's sheet of list rows: 56 high, inset 6, each pressed as its own tab. */
+.addSheet {
+  padding: 4px 0;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: calc(100% - 12px);
+  min-height: 56px;
+  margin: 0 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .addRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.addRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.addRow:focus-visible {
+  outline-offset: -2px;
+}
+
+.addText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The pin has gone up to the top bar: the title runs to the same margin as the text. */
+.phone .head {
+  padding: 10px 20px 0;
+}
+
+.edited {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In the bin the bottom bar has no "Plus d'actions": its slot stays, so the date keeps the middle (the phone's toolbarEnd). */
+.barEnd {
+  flex: none;
+  width: 44px;
+}
+
+@media (pointer: coarse) {
+  .barEnd {
+    width: 48px;
+  }
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 12px 16px 12px 20px;
+  background: var(--paper-high);
+  box-shadow: inset 0 -1px 0 var(--hairline);
+}
+
+.bannerText {
+  flex: 1;
+  min-width: 200px;
+}
+
+.gone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 32px 32px;
+  text-align: center;
+}
+
+/* Photos at the top of the note: one at full width, more in a registered grid. */
+.photos {
+  display: grid;
+  grid-template-columns: repeat(var(--photo-columns, 2), minmax(0, 1fr));
+  gap: 4px;
+}
+
+.photos[data-single] {
+  grid-template-columns: 1fr;
+}
+
+.photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--paper-high);
+  cursor: zoom-in;
+}
+
+.photo:focus-visible {
+  outline-offset: -3px;
+}
+
+.photos[data-single] .photo {
+  aspect-ratio: auto;
+  max-height: 420px;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photos[data-single] .photo img {
+  height: auto;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.photoPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  color: var(--ink-faint);
+}
+
+.photoCell {
+  position: relative;
+}
+
+/* The × over a photo is written on a slip, so it reads on any picture, light or dark. */
+.photoRemove {
+  background: var(--slip);
+  box-shadow: var(--lift-raised);
+}
+
+@media (hover: hover) {
+  .photoRemove:not(:disabled):hover {
+    background: var(--slip-high);
+  }
+}
+
+.photoRemove:not(:disabled):active {
+  background: var(--slip-high);
+}
+
+.photoRemove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.photoCell:focus-within .photoRemove {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .photoCell:hover .photoRemove {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .photoRemove {
+    opacity: 1;
+  }
+}
+
+/* The viewer: the photo alone on black. */
+.viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--viewer);
+  animation: viewer-in var(--duration-medium) var(--ease-decelerate);
+}
+
+.viewer:focus-visible {
+  outline: none;
+}
+
+.viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Closing: the black lifts away with the photo still on it. */
+[data-state='closed'] > .viewer {
+  animation: viewer-out var(--duration-short) var(--ease-accelerate) forwards;
+}
+
+@keyframes viewer-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* The controls, the phone's: light lines on a shade of the viewer's black fading down from the top, so they read over a light photo. */
+.viewerBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: calc(6px + env(safe-area-inset-top)) 6px 24px;
+  background-image: linear-gradient(color-mix(in srgb, var(--viewer) 55%, transparent), transparent);
+}
+
+.viewerNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Over the photo's middle, a soft spot of the same shade under each arrow. */
+.viewerNav::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--viewer) 50%, transparent), transparent);
+}
+
+.viewerPrev {
+  left: 12px;
+}
+
+.viewerNext {
+  right: 12px;
+}
+
+/* The checklist: rows of 48, the phone's, so a ruled paper's lines fall under each one.
+   Its lists are positioned: each item glides and fades in its own (useListMotion). */
+.checklist {
+  position: relative;
+  padding: 0 12px 8px 4px;
+}
+
+.checkList,
+.doneList {
+  position: relative;
+}
+
+.checkItem {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 48px;
+  border-radius: var(--cut-tab);
+  background: transparent;
+}
+
+/* A dragged item is lifted off the sheet, a strip of the same paper; let go, it stays lifted until it lies down. */
+.checkItem[data-dragging],
+.checkItem[data-settling] {
+  z-index: 2;
+  background: var(--sheet, var(--paper));
+  box-shadow: var(--lift-raised);
+}
+
+/* The box, the grip and the × centre on the first line (24 down). */
+.checkItem > button[role='checkbox'] {
+  margin-top: 4px;
+}
+
+.grip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: grab;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.checkItem:focus-within .grip,
+.checkItem[data-dragging] .grip {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .checkItem:hover .grip {
+    opacity: 1;
+  }
+}
+
+.checkItem[data-dragging] .grip {
+  cursor: grabbing;
+}
+
+@media (pointer: coarse) {
+  .grip {
+    opacity: 1;
+  }
+}
+
+.gripSpace {
+  flex: none;
+  width: 24px;
+}
+
+.checkInput {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  resize: none;
+  field-sizing: content;
+  overflow: hidden;
+}
+
+.checkInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.checkInput:focus-visible {
+  outline: none;
+}
+
+.checkItem:focus-within {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+/* Hidden, the × takes no tap: a finger on the end of a row edits it, never deletes it unseen. */
+.removeItem {
+  margin-top: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (pointer: coarse) {
+  .removeItem {
+    margin-top: 4px;
+  }
+}
+
+/* Under a finger, only the item being edited offers its ×, as on the phone; checked ones always do. */
+.checkItem:focus-within .removeItem,
+.checkItem[data-done] .removeItem {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: hover) {
+  .checkItem:hover .removeItem {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.dropLine {
+  position: absolute;
+  left: 28px;
+  right: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--focus);
+  pointer-events: none;
+}
+
+.addItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin-left: 30px;
+  padding: 0 12px 0 6px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 16px;
+}
+
+@media (hover: hover) {
+  .addItem:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.addItem:active {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* The ticked group is whole rows, flush under the others on every paper (a ruled one keeps in step); its hairline takes no room. */
+.doneSection {
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+
+/* On a ruled paper a rule stands for its hairline. */
+.checkWrap[data-ruled] .doneSection {
+  box-shadow: none;
+}
+
+.doneToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 12px 0 4px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+@media (hover: hover) {
+  .doneToggle:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.doneToggle:active {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.doneText {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 4px;
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--ink-muted) 70%, transparent);
+  overflow-wrap: anywhere;
+}
+
+/* With a mouse, rows of 36, nearer a page's density; the box and the × keep 32 to aim at, centred on the first line (18 down). A finger keeps the phone's 48. */
+@media (pointer: fine) {
+  .checkWrap > .ruledPaper {
+    --pitch: 36px;
+  }
+
+  .checkItem,
+  .addItem,
+  .doneToggle {
+    min-height: 36px;
+  }
+
+  .checkItem > button[role='checkbox'] {
+    width: 32px;
+    height: 32px;
+    margin: 2px 4px 0;
+  }
+
+  .grip {
+    height: 36px;
+  }
+
+  .checkInput,
+  .doneText {
+    padding-block: 5px;
+  }
+
+  .removeItem {
+    margin-top: 2px;
+  }
+}
+
+/* Pickers dropped from the toolbar. */
+.picker {
+  padding: 8px;
+}
+
+/* The label sheet holds focus here on a phone, as a panel does: a place, not a control, so no ring. */
+.picker:focus-visible {
+  outline: none;
+}
+
+.pickerTitle {
+  padding: 6px 10px 8px;
+}
+
+/* Under 720px a picker is the phone's sheet: its title in the title style, 24 in from the edge and 12 above what it heads. */
+@media (max-width: 719px) {
+  .pickerTitle {
+    padding: 0 0 12px;
+  }
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 15px;
+}
+
+.pickerRow:focus-visible {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+@media (hover: hover) {
+  .pickerRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.pickerRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.pickerRow:focus-visible {
+  outline-offset: -2px;
+}
+
+.pickerRow[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.pickerRow[data-danger] {
+  color: var(--danger);
+}
+
+.pickerAdd {
+  color: var(--link);
+}
+
+.pickerWhen {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pickerNote {
+  padding: 6px 10px 4px;
+}
+
+.custom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 4px 10px 8px;
+}
+
+.customField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.custom input {
+  min-height: 40px;
+  padding: 7px 10px;
+}
+
+.customFoot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Under 720px, the phone's day and time chips: paper chips cut in turn, the chosen one matcha. */
+.when {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 10px 8px;
+}
+
+.days {
+  display: flex;
+  gap: 8px;
+  /* The days run past the edge: the row scrolls sideways, edge to edge. */
+  margin: 0 -10px;
+  padding: 0 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.hours {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quarters {
+  display: flex;
+  gap: 8px;
+}
+
+.whenChip {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  color: var(--ink);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+
+/* The press stays inside the chip's own corners. */
+.whenChip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .whenChip:hover::after {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.whenChip:active::after {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.whenChip:focus-visible {
+  outline-offset: -3px;
+}
+
+.whenChip[aria-checked='true'] {
+  border-color: var(--focus);
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.whenChip[aria-checked='true'] .dayName {
+  color: inherit;
+}
+
+/* A day holds two lines: a calm sheet, not a capsule. */
+.day {
+  width: 56px;
+  height: 64px;
+  border-radius: var(--cut-field);
+}
+
+.hour {
+  width: 64px;
+  height: 48px;
+}
+
+.quarter {
+  flex: 1;
+  height: 48px;
+}
+
+.whenFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.labelFilter {
+  margin: 4px 6px 6px;
+  width: calc(100% - 12px);
+}
+
+/* A label to tick: its own tag is the box (outlined off, filled on); the real checkbox under it is for the keyboard. */
+.labelRow {
+  /* Holds the hidden checkbox, so it scrolls with its row. */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .labelRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.labelRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.labelRow:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.labelName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The plus of "Créer « … »" sits in the tags' 26px column. */
+.labelList .pickerAdd svg {
+  margin: 0 3px;
+}
+
+.labelList {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.emptyLabels {
+  padding: 8px 10px 12px;
+}

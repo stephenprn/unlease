@@ -1,0 +1,60 @@
+# Carnet's Android APK, every ABI in one file, with its SHA-256:
+#   by hand (Actions > Android > Run workflow)  -> a workflow artifact, to try a branch
+#   a release (release.yml, after the checks)   -> attached to the release as carnet-vX.Y.Z.apk
+#
+# Signing: set four repository secrets and the APK is signed with your upload key:
+#   ANDROID_KEYSTORE_BASE64   base64 of the .jks file (base64 -i upload.jks | pbcopy)
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Without them it is signed with the public debug key: fine to try, but anyone could sign an
+# update with that key, so a release meant for others should carry a real one.
+name: Android
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/notes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/notes/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - name: Upload key
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ]; then echo "::warning::No upload key in the secrets: the APK is signed with the debug key."; exit 0; fi
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/upload.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
+      - name: Build
+        working-directory: mobile/notes/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64 --no-daemon
+      - name: Name the APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "carnet-${GITHUB_REF_NAME//\//-}.apk"
+          sha256sum carnet-*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: carnet-apk
+          path: mobile/notes/carnet-*.apk
+          if-no-files-found: error

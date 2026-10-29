@@ -1,0 +1,213 @@
+/* The first-run screen and the board's search count: paper pinned to the wall, as everywhere else. */
+
+/* The board while searching: how many notes answer, a line of meta over them (the phone's notice). */
+.resultCount {
+  padding: 12px 4px 8px;
+}
+
+.resultHint {
+  max-width: 62ch;
+  padding: 0 4px;
+  color: var(--ink-muted);
+}
+
+/* First run: the mark, a collage, and the form on its own sheet. */
+.setup {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 16px 48px;
+}
+
+/* The interface's language, named in itself, out of the way at the top right. */
+.setupLanguage {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.setupColumn {
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.setupBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+/* The mark and the collage settle in as the page opens: a short drop, upright all the way (an arrival never swings). */
+.setupMark,
+.setupArt {
+  display: flex;
+  animation: pinned var(--duration-long) var(--ease-decelerate) both;
+}
+
+.setupArt {
+  animation-delay: 90ms;
+}
+
+@keyframes pinned {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setupMark,
+  .setupArt {
+    animation-name: fade-in;
+  }
+}
+
+.tagline {
+  max-width: 320px;
+  color: var(--ink-muted);
+}
+
+/* The form's wrapper casts its lift along its outline; the form is clipped to it. */
+.setupLift {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.setupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  clip-path: var(--outline-clip, none);
+}
+
+/* Keeping the notes here: the quieter way, and what it leaves open. */
+.setupLocal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.setupAfter {
+  max-width: 340px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.setupAfter a {
+  color: var(--link);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+/* "Votre serveur": one row per setting, its dot on its title's line. */
+.setupTasks {
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.setupTaskDot {
+  align-self: flex-start;
+  margin-top: 7px;
+}
+
+/* Without S3, the way to add it, under the line that says so. */
+.setupRestoreS3 {
+  padding: 0 16px 8px 38px;
+}
+
+/* The setup's next steps: the Administration's sheets on the setup's column, one step at a time. */
+.setupFlow {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.setupHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 4px 0;
+}
+
+.setupHeadText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.setupSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-faint);
+}
+
+.setupSteps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.setupSteps li[aria-current='step'] {
+  color: var(--ink);
+}
+
+.setupSteps li[data-past] {
+  color: var(--ink-muted);
+}
+
+.setupIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.setupIntro h1:focus {
+  outline: none;
+}
+
+.setupIntro p {
+  max-width: 62ch;
+  color: var(--ink-muted);
+}
+
+/* Back on the left, on on the right; under 720px the column ends on them, thumbs' reach. */
+.setupNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 16px;
+}
+
+/* Back to Carnet's own colours and ground, under the appearance step's two sections. */
+.setupReset {
+  align-self: center;
+}

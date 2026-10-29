@@ -1,0 +1,129 @@
+{
+  "title": "Choose Carnet's twist",
+  "question": "Five signature twists, from the smallest to the biggest. Each picture is a working prototype drawn on today's board with Carnet's real font, colours, icons and emblems. Every option keeps your layout, behaviour, Signika, the sheets and the pebbles. Pick one, or steer (for example: Jazz plus the stamp).",
+  "options": [
+    {
+      "id": "tampon",
+      "label": "Le tampon",
+      "kicker": "THE SMALLEST",
+      "lineage": "French office rubber stamps, the one Carnet already presses on finished links",
+      "thesis": "A checklist ticked to the end gets the stamp links already get, in its own verb: BOUCLÉE for a suitcase, ACHETÉ for shopping, FAIT otherwise.",
+      "palette": [
+        "#9E2B25",
+        "#F8F5E6",
+        "#EDE8D0",
+        "#201E1D"
+      ],
+      "materials": [
+        "vermilion rubber stamp",
+        "a verb per kind of list",
+        "the press: 1.3 to 1 at full ink"
+      ],
+      "viewport": "Board as today; a finished list shows its count and its stamp in a row of its own. Ticking the last item stamps the open note, with Annuler on the slip.",
+      "risk": "Lives on completion, not at rest: a week with nothing finished looks like today.",
+      "case": "Grows the moment you already like best, with no new colour and no new form.",
+      "comp": ".impeccable/mocks/twists/tampon.webp"
+    },
+    {
+      "id": "timbre",
+      "label": "Le timbre",
+      "kicker": "LINKS ONLY",
+      "lineage": "Philately and the carnet de voyage: perforated stamps, postmarks, un carnet de timbres",
+      "thesis": "Every link Claude keeps is a stamp glued into its collection: the picture perforated, the snip cutting along the perforation, done as the postmark that cancels it.",
+      "palette": [
+        "#FFFDF6",
+        "#EDE8D0",
+        "#9E2B25",
+        "#6B4A8C",
+        "#201E1D"
+      ],
+      "materials": [
+        "perforated stamp paper around each picture",
+        "round postmark with cancel waves",
+        "the perforation as the snip's cut line"
+      ],
+      "viewport": "Board: a collection card shows its links as little stamps; a shared link is cut along a perforation and lands as a stamp (Collé dans Films & séries). Collection: every picture a stamp, done ones postmarked.",
+      "risk": "The notes board barely changes, and the perforated edge must stay crisp and regular or it turns scrapbook.",
+      "case": "Makes the half Keep does not have (links read by Claude) unmistakable.",
+      "comp": ".impeccable/mocks/twists/timbre.webp"
+    },
+    {
+      "id": "jazz",
+      "label": "Jazz",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Matisse's Jazz (1947): plates of flat gouache colour, one cut-out figure on each",
+      "thesis": "The emblems stop whispering: each collection becomes a plate of its full pigment with its cut-out in cream paper, small on the board, full-bleed at the head of its page.",
+      "palette": [
+        "#6B4A8C",
+        "#7B2036",
+        "#C2410C",
+        "#F6EFE0",
+        "#EDE8D0",
+        "#201E1D"
+      ],
+      "materials": [
+        "flat gouache plates in each collection's pigment",
+        "cream cut-outs, large and cropped by the edge",
+        "notes stay calm cream sheets"
+      ],
+      "viewport": "Board: the chips become a row of colour plates and a pinned collection is a small plate, its star cut big and cropped. Mode: a bordeaux head with a giant cream flower, the add-link strip straddling its edge; a chip unfolds into that head.",
+      "risk": "Pigment leaves the cut-outs for whole plates (a rule bends), and seven collections make a loud row; colour stays on collections, never on notes.",
+      "case": "Amplifies what Carnet already owns since you picked the cut-outs, and it shows on a still screen.",
+      "comp": ".impeccable/mocks/twists/jazz.webp"
+    },
+    {
+      "id": "cahier",
+      "label": "Le cahier",
+      "kicker": "THE GROUND",
+      "lineage": "The French school cahier: Seyès grands carreaux and the red margin",
+      "thesis": "The board is a page of a French cahier: faint grands carreaux under every sheet, one red margin line, and a Seyès paper a note can take, its text sitting on the big lines.",
+      "palette": [
+        "#6068C4",
+        "#D6403A",
+        "#EDE8D0",
+        "#F8F5E6",
+        "#201E1D"
+      ],
+      "materials": [
+        "Seyès ruling on the ground",
+        "one red margin line",
+        "Seyès paper for notes"
+      ],
+      "viewport": "Board: the cards rest on a ruled page, the red margin along the left edge. Editor: a note on Seyès paper, margin at 42, every line on a big line.",
+      "risk": "Unmistakably French but school-ish; the ruling has to stay faint or a hundred notes on a grid get busy, and it competes with a note's own dots or lines.",
+      "case": "The most culturally specific: no other notes app could wear it.",
+      "comp": ".impeccable/mocks/twists/cahier.webp"
+    },
+    {
+      "id": "couverture",
+      "label": "La couverture",
+      "kicker": "THE BIGGEST",
+      "lineage": "Clothbound notebooks, and a family shelf: Carnet, Agenda, Album, Classeur, Bonsai, each in its own cloth",
+      "thesis": "Carnet is held in a cloth cover: the bottom bar, the drawer and the slip are cobalt bookcloth with a fine weave, and everything you write stays cream paper.",
+      "palette": [
+        "#2A4B8D",
+        "#F6F0E2",
+        "#9CC15F",
+        "#EDE8D0",
+        "#F8F5E6"
+      ],
+      "materials": [
+        "cobalt bookcloth with a fine weave",
+        "cream foil emblems inside the cover",
+        "the mark debossed",
+        "a cloth to choose: Cobalt, Bordeaux, Sarcelle, Moutarde, Charbon"
+      ],
+      "viewport": "Board: a cobalt cloth band at the foot holding the bar and the matcha pebble. Drawer: the inside of the cover, foil emblems, the mark debossed. Réglages: choose your cloth.",
+      "risk": "A coloured band on every screen and a coloured drawer is a lot of colour for a calm app; chrome leaves paper, terracotta and matcha.",
+      "case": "The strongest brand move, and it scales to the whole family of apps.",
+      "comp": ".impeccable/mocks/twists/couverture.webp"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "canon": false,
+  "buildPath": {
+    "value": "comp",
+    "toggle": false
+  }
+}

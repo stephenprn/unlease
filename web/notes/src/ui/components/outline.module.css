@@ -1,0 +1,90 @@
+/* An outline's edge: inside the clipped container, along its outline; the clip keeps the inner half of the stroke. */
+.edge {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge path {
+  fill: none;
+  stroke: var(--edge-color, var(--hairline));
+  stroke-width: calc(var(--edge-width, 1px) * 2);
+  stroke-dasharray: var(--edge-dash, none);
+  transition:
+    stroke var(--duration-short) var(--ease-standard),
+    stroke-width var(--duration-short) var(--ease-standard);
+}
+
+/* Keyboard focus, around the outline: in an unclipped ancestor, 4 px out (`RING_GAP`), the stroke whole. */
+.ring {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.ring path {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2px;
+}
+
+/* An outlined container (`OutlinedBox`): its paint clipped to its outline. */
+.box {
+  position: relative;
+  clip-path: var(--outline-clip, none);
+}
+
+/* Its lift, cast by a wrapper: a drop shadow follows the outline, which a box-shadow under a clip cannot. */
+.lift {
+  transition: filter var(--duration-short) var(--ease-standard);
+}
+
+.lift[data-lift='card'] {
+  filter: var(--drop-card);
+}
+
+.lift[data-lift='raised'] {
+  filter: var(--drop-raised);
+}
+
+.lift[data-lift='float'] {
+  filter: var(--drop-float);
+}
+
+/* Lifted a little more under the pointer (a card, a bookmark): the shadow moves, the text never does. */
+@media (hover: hover) {
+  .lift[data-raise]:hover {
+    filter: var(--drop-raised);
+  }
+}
+
+/* A pebble's edge or ring (`PebbleEdge`): inside the pebble by half its width, so its outer side is the pebble's. */
+.pebbleEdge {
+  position: absolute;
+  inset: calc(var(--edge-width, 1px) / 2);
+  z-index: 1;
+  width: calc(100% - var(--edge-width, 1px));
+  height: calc(100% - var(--edge-width, 1px));
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pebbleEdge path {
+  fill: none;
+  stroke: var(--edge-color, var(--hairline));
+  stroke-width: var(--edge-width, 1px);
+  stroke-dasharray: var(--edge-dash, none);
+  /* A ring chosen or let go thickens and fades in step, never in one jump. */
+  transition:
+    stroke var(--duration-short) var(--ease-standard),
+    stroke-width var(--duration-short) var(--ease-standard);
+}

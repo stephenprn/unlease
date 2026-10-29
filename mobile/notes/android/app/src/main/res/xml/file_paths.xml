@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one directory a FileProvider URI may point into: the camera's photo before import. -->
+<paths>
+    <files-path name="photos" path="photos/" />
+</paths>

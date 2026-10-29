@@ -1,0 +1,68 @@
+<resources>
+    <string name="app_name">Carnet</string>
+
+    <!-- The widgets, as the launcher's picker lists them. -->
+    <string name="widget_capture_label">Actions rapides</string>
+    <string name="widget_capture_description">Une recherche, une note, une liste, un rappel, une photo (galerie ou appareil) ou un lien, en un geste.</string>
+    <string name="widget_link_label">Classer un lien</string>
+    <string name="widget_link_description">Collez un lien : Claude le lit et le range, sans ouvrir l’application.</string>
+    <string name="widget_collection_label">Collection</string>
+    <string name="widget_collection_description">Les liens d’une collection, et un lien ajouté en un geste.</string>
+    <string name="widget_label_label">Notes d’un label</string>
+    <string name="widget_label_description">Les notes d’un label, à ouvrir ou à compléter.</string>
+    <string name="widget_note_label">Note</string>
+    <string name="widget_note_description">Une note ou une liste, à cocher depuis l’écran d’accueil.</string>
+
+    <!-- Actions rapides. -->
+    <string name="widget_search">Rechercher</string>
+    <string name="widget_search_hint">Rechercher dans vos notes</string>
+    <string name="widget_note">Nouvelle note</string>
+    <string name="widget_checklist">Nouvelle liste</string>
+    <string name="widget_photo">Nouvelle note avec photo</string>
+    <string name="widget_camera">Prendre une photo</string>
+    <string name="widget_link">Classer un lien</string>
+    <string name="widget_reminder">Nouveau rappel</string>
+    <string name="widget_short_note">Note</string>
+    <string name="widget_short_checklist">Liste</string>
+    <string name="widget_short_photo">Photo</string>
+    <string name="widget_short_camera">Caméra</string>
+    <string name="widget_short_link">Lien</string>
+    <string name="widget_short_reminder">Rappel</string>
+
+    <!-- Collection. -->
+    <string name="widget_collection_pick">Changer de collection</string>
+    <string name="widget_collection_add">Ajouter un lien</string>
+    <string name="widget_collection_empty">Rien à faire ici pour l’instant.</string>
+    <string name="widget_collection_open">Voir la collection</string>
+    <string name="widget_open_site">Ouvrir le site</string>
+    <string name="widget_reading">Claude lit la page…</string>
+
+    <!-- Notes d’un label. -->
+    <string name="widget_label_open">Ouvrir le label</string>
+    <string name="widget_label_empty">Aucune note avec ce label.</string>
+    <string name="widget_label_create">Créer une note</string>
+
+    <!-- Note. -->
+    <string name="widget_note_open">Ouvrir la note</string>
+    <string name="widget_note_empty_list">Cette liste est vide.</string>
+    <string name="widget_note_empty_text">Cette note est vide.</string>
+    <string name="widget_untitled_note">Note</string>
+    <string name="widget_untitled_list">Liste</string>
+    <string name="widget_tick">Cocher %1$s</string>
+    <string name="widget_untick">Décocher %1$s</string>
+    <plurals name="widget_checked">
+        <item quantity="one">%d élément coché</item>
+        <item quantity="many">%d éléments cochés</item>
+        <item quantity="other">%d éléments cochés</item>
+    </plurals>
+
+    <!-- A widget with nothing to show yet, or whose note is gone. -->
+    <string name="widget_waiting">Touchez pour afficher vos notes ici.</string>
+    <string name="widget_choose_collection">Touchez pour choisir une collection.</string>
+    <string name="widget_choose_label">Touchez pour choisir un label.</string>
+    <string name="widget_choose_note">Touchez pour choisir une note.</string>
+    <string name="widget_gone_collection">Cette collection n’existe plus.</string>
+    <string name="widget_gone_label">Ce label n’existe plus.</string>
+    <string name="widget_gone_note">Cette note n’est plus là.</string>
+    <string name="widget_choose_other">Choisir…</string>
+</resources>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Classer un lien: the app's add-link strip, a field on the home screen; a tap opens the field itself. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/link_strip"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/wgen_bar_field"
+        android:contentDescription="@string/widget_link"
+        android:foreground="@drawable/wgen_fg_strip">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wgen_g_link" />
+
+            <!-- In Signika (WidgetType); the text view is its plain twin, and what the picker's preview shows. -->
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/link_hint_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/link_hint"
+                    style="@style/WidgetText.Hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_link" />
+            </FrameLayout>
+
+            <!-- Claude reads and files it: shown only while the server reads links. -->
+            <ImageView
+                android:id="@+id/link_sparkle"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wgen_g_sparkle_ink_muted" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

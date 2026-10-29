@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Classer un lien in one cell: the capture pebble alone, flat on the home screen. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/link_pebble"
+        android:layout_width="62dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:background="@drawable/wgen_capture_1"
+        android:contentDescription="@string/widget_link"
+        android:scaleType="center"
+        android:src="@drawable/wgen_g_link_on_leaf" />
+</FrameLayout>

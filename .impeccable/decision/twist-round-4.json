@@ -1,0 +1,62 @@
+{
+  "title": "Fanciful icons on a simple grainy gradient",
+  "question": "The background is now a simple grainy gradient in two tones: beige to a darker beige by day, grey to a darker grey at night. Four icon sets with much more fantasy; each card shows the board by day, the drawer at night, and the set. Pick one, or steer (for example: Papiers colorés with the Bonbons' colours).",
+  "options": [
+    {
+      "id": "papier",
+      "label": "Papiers colorés",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Matisse cut-outs, like the collection emblems: coloured paper pieces cut with scissors",
+      "thesis": "Every icon is a little collage of coloured paper: a blue bell with a yellow clapper, a green bin with a pink lid, a pencil with its pink eraser, sliders with yellow and pink knobs.",
+      "palette": ["#2F5DA8", "#D2412F", "#3F8A52", "#F2B33D", "#E9789F", "#201E1D"],
+      "materials": ["flat coloured paper pieces", "cuts a little off true", "an ink key piece for legibility", "night versions of every colour"],
+      "viewport": "Board by day with collage icons in the search bar, the checklists and the bottom bar; the drawer at night with the same pieces brightened.",
+      "risk": "Colour everywhere competes with the notes' own colours; each icon needs a dark key piece to stay readable at 24px.",
+      "case": "The most Carnet: the icons speak the emblems' cut-paper language, and nobody else draws icons like this.",
+      "comp": ".impeccable/mocks/twists/fun-papier.webp"
+    },
+    {
+      "id": "bonbon",
+      "label": "Bonbons",
+      "kicker": "THE MOST PLAYFUL",
+      "lineage": "Candy and inflated toys: puffy, glossy, pastel",
+      "thesis": "Chunky, puffy shapes in candy colours, lit from the top left with a glint: a butter-yellow bell, a mint bin with a pink lid, a lilac magnifier.",
+      "palette": ["#F79CC0", "#7FD3AE", "#B49CF0", "#FFCC55", "#7EC4F2", "#FFA77C"],
+      "materials": ["soft 3D shading", "candy pastels", "a white glint on every shape"],
+      "viewport": "Board by day with puffy candy icons; the drawer at night where they glow like sweets.",
+      "risk": "3D icons are a known trend, and pastels get pale on the beige ground at small sizes.",
+      "case": "The most fun to touch: every tap lands on a sweet.",
+      "comp": ".impeccable/mocks/twists/fun-bonbon.webp"
+    },
+    {
+      "id": "feutre",
+      "label": "Feutre & fluo",
+      "kicker": "THE MOST PERSONAL",
+      "lineage": "A bullet journal: black felt-tip doodles over quick highlighter swipes",
+      "thesis": "Each icon is a felt-tip doodle drawn over a swipe of yellow, pink, green or blue highlighter, as if you had marked up your own carnet.",
+      "palette": ["#201E1D", "#FFE14D", "#FF9ACB", "#A4EC7A", "#8FD3FF"],
+      "materials": ["thick felt-tip lines, gently uneven", "fluorescent highlighter swipes", "multiply blending by day"],
+      "viewport": "Board by day with doodled icons and highlighter swipes; the drawer at night with softer swipes.",
+      "risk": "Hand-drawn can tip into scrappy; the swipes need to stay short and consistent.",
+      "case": "Feels written by you, in your own notebook.",
+      "comp": ".impeccable/mocks/twists/fun-feutre.webp"
+    },
+    {
+      "id": "frimousses",
+      "label": "Frimousses",
+      "kicker": "THE CUTEST",
+      "lineage": "Little characters: the things that keep your stuff smile back",
+      "thesis": "Clean line icons where the objects that hold your things have little faces: the bell, the note, the archive box and the bin smile, the magnifier looks around, the sun in a photo is happy.",
+      "palette": ["#201E1D", "#E9789F", "#F2B33D", "#EEE8D2"],
+      "materials": ["clean round-ended lines", "dot eyes and small smiles", "pink cheeks"],
+      "viewport": "Board by day where the photo's sun and the reminder bell smile; the drawer at night where Notes, Rappels, Archives and Corbeille have faces.",
+      "risk": "Can read childish, and a smiling bin is funny once, maybe less the hundredth time.",
+      "case": "Instant affection: the app has a personality.",
+      "comp": ".impeccable/mocks/twists/fun-frimousses.webp"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "canon": false,
+  "buildPath": { "value": "comp", "toggle": false }
+}

@@ -1,0 +1,415 @@
+/* The navigation: rows on the wall (docked) or on the drawer's sheet; the current place's whole row lies on matcha. */
+.nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/*
+ * The two spaces, notes and pages: the segmented control's sunken track, a sheet of paper lying
+ * under the current one and sliding across to the other (250, standard). The current side reads in
+ * ink at 600 with its glyph solid; the other in the second ink, veiled under the pointer.
+ */
+.spaces {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 4px;
+  border-radius: var(--cut-track);
+  background: var(--track);
+}
+
+.spaceSheet {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 12px) / 2);
+  border-radius: var(--cut-segment);
+  background: var(--segment-sheet);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+  transform: translateX(calc(var(--at) * (100% + 4px)));
+  transition: transform var(--duration-medium) var(--ease-standard);
+  pointer-events: none;
+}
+
+.space {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: var(--cut-segment);
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+.space svg {
+  flex: none;
+}
+
+.space[aria-current='true'] {
+  --icon-solid: 1;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .space:not([aria-current='true']):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.space:not([aria-current='true']):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (pointer: coarse) {
+  .space {
+    min-height: 44px;
+  }
+}
+
+/* How far the scroller's top fades: nothing at rest, a soft edge once rows have gone up under it. Registered, so it eases. */
+@property --nav-fade {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+/*
+ * Everything but the foot scrolls; the archive, the bin and the settings stay in reach. Its last
+ * 24px fade, so a row cut by the foot reads as "more below", never as a row sliced in two; the
+ * padding under the last row lets it scroll clear of the fade. Once scrolled, its top fades and
+ * blurs the same way, as the page slides under the header.
+ */
+.navMain {
+  --nav-fade: 0px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  /* 4px of room on its sides and top for a row's focus ring (2px, 2px out), given back by the margin. */
+  margin: -4px -4px 0;
+  padding: 4px 4px 28px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--nav-fade), #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--nav-fade), #000 calc(100% - 24px), transparent);
+  transition: --nav-fade var(--duration-medium) var(--ease-standard);
+}
+
+.navMain[data-scrolled] {
+  --nav-fade: 32px;
+}
+
+/* The blur under that fade: pinned to the scroller's top, taking no room, the rows softening as they go up into it. */
+.navBlur {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  height: 0;
+  /* The list's gap after it, given back. */
+  margin-bottom: -2px;
+  pointer-events: none;
+}
+
+.navBlur::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  opacity: 0;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+
+.navMain[data-scrolled] .navBlur::before {
+  opacity: 1;
+}
+
+/* The other space's list arrives from its side: a short shift and a fade, as a page does on a phone. */
+.navMain[data-enter='forward'] {
+  animation: space-forward var(--duration-medium) var(--ease-decelerate);
+}
+
+.navMain[data-enter='back'] {
+  animation: space-back var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes space-forward {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes space-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes space-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navMain[data-enter] {
+    animation-name: space-fade;
+  }
+  .spaceSheet {
+    transition: none;
+  }
+}
+
+/* Its keyboard focus (a scroller takes the tab in Chromium) as an inset ring, not a line down the page. */
+.navMain:focus-visible {
+  outline-offset: -2px;
+}
+
+.navFoot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+}
+
+.drawerBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 22px 14px;
+}
+
+.drawerScroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px 16px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-height: 48px;
+  }
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.item:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/*
+ * The chosen place: the whole row lies on matcha (a collection's or a label's own wash, so a
+ * pigment never sits on matcha), the glyph solid, the name in the stronger weight.
+ */
+.item[aria-current='page'] {
+  font-weight: 600;
+  --icon-solid: 1;
+  background: var(--stone, var(--action-container));
+  color: var(--stone-ink, var(--on-action-container));
+}
+
+/* An "add" row at a section's end: a row like the others, in the second ink. */
+.quiet {
+  color: var(--ink-muted);
+}
+
+.item svg {
+  flex: none;
+}
+
+.itemName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemCount {
+  flex: none;
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.item[aria-current='page'] .itemCount {
+  color: inherit;
+}
+
+
+/* Every leading mark in one 24 slot, so names line up whatever stands before them. */
+.markSlot {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.markSlot > svg {
+  position: relative;
+}
+
+/* A section: its title over its rows, more room above it than inside it. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.headingTitle {
+  min-width: 0;
+  margin: 0;
+}
+
+/* A title that folds nothing (the pages' tree, the one list of its space): the second ink, in line with the rows' marks. */
+.headingStill {
+  padding: 0 12px;
+  color: var(--ink-muted);
+}
+
+/* The title folds its section: a quiet control, its chevron turning as it opens. */
+.headingToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .headingToggle:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.headingToggle:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.headingChevron {
+  display: inline-flex;
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+
+.headingChevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.headingAction {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--cut-small);
+  color: var(--link);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 32px;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .headingAction:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.headingAction:active {
+  background: color-mix(in srgb, var(--link) 12%, transparent);
+}
+
+@media (pointer: coarse) {
+  .heading,
+  .headingToggle,
+  .headingAction {
+    min-height: 44px;
+  }
+  .headingAction {
+    line-height: 44px;
+  }
+}

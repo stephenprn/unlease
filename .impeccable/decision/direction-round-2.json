@@ -1,0 +1,247 @@
+{
+  "seed": "a361b696",
+  "scope": "direction",
+  "mode": "operate",
+  "assignedIndex": 7,
+  "answer": {
+    "optionId": "model-pick",
+    "buildPath": "code"
+  },
+  "title": "Choose Stif's new world",
+  "question": "Your pins hold for every card: matcha green leads, paper grain, hand-cut edges, warm and cool colours, more fun. The roll picked the world they live in. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Speckled stoneware",
+      "kicker": "THE ROLL",
+      "lineage": "Hand-thrown tea bowls: speckled clay, oribe green glaze, persimmon and cobalt glazes, the potter's seal",
+      "thesis": "Every note is a glazed piece, every collection a glaze, and Claude is the kiln that fires each link into its bowl.",
+      "palette": [
+        "#EFE6D6",
+        "#FAF6EE",
+        "#2B241D",
+        "#5F7F35",
+        "#D9652B",
+        "#2F5E8C",
+        "#A9C8B8"
+      ],
+      "materials": [
+        "speckled oatmeal clay (the grain)",
+        "ash-white glaze cards with hand-thrown rims",
+        "glaze drips and pools",
+        "the potter's seal stamp"
+      ],
+      "viewport": "Speckled clay ground; a glazed search bowl; collections as a row of glaze-dipped pebbles; two columns of ash-glazed cards with uneven rims; a persimmon capture button.",
+      "risk": "Can read zen and quiet: the fun has to come from glaze colour, drips and the wobble, never from ornament.",
+      "raised": [
+        {
+          "from": "Convention circle catalog",
+          "raise": "State is hand-marked: selection is a brushed ring around the piece, done is a brush strike and the potter's seal, never a fade alone."
+        },
+        {
+          "from": "Boxed-software manual",
+          "raise": "Collections show their extent: each pebble in the strip carries its count, the fullest first after the pinned ones."
+        },
+        {
+          "from": "Data-sublime field",
+          "raise": "Figures obey one rule everywhere: prices and counts in tabular figures, aligned in one column inside a collection."
+        },
+        {
+          "from": "Star atlas",
+          "raise": "One fixed ramp of mark sizes (44, 28, 20) wherever a collection appears, so its size always means the same thing."
+        },
+        {
+          "from": "Factory records sleeve",
+          "raise": "Each screen gives one piece the room: the board's capture bowl, a collection's header, a link's photo."
+        }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Papiers découpés",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Matisse's cut-outs: gouache-painted sheets cut with scissors and pinned to the studio wall",
+      "thesis": "Every note is a hand-cut sheet pinned to a warm wall, every collection a cut-out emblem, and Claude snips each link into place.",
+      "palette": [
+        "#F6F1E7",
+        "#6F9A45",
+        "#2F4FB8",
+        "#F0644B",
+        "#F5CF3A",
+        "#1F1C17"
+      ],
+      "materials": [
+        "gouache-washed paper with tooth",
+        "scissor-cut edges, never two alike",
+        "a cut-out emblem per collection (leaf, star, wave, wedge)",
+        "pins"
+      ],
+      "viewport": "A warm paper wall; cut-out emblems for each collection across the top; two columns of cut sheets with uneven edges; a matcha leaf as the capture button.",
+      "risk": "Strong colour can get loud at a hundred notes: emblems carry the colour, sheets stay pale."
+    },
+    {
+      "id": "challenger-zoo-map",
+      "label": "Garden guide map",
+      "verdict": "competitive",
+      "lineage": "A zoo and gardens guide map: swelling lobes of flat colour, capsule signs, a coastline that does the dividing",
+      "thesis": "Your collections are areas on a guide map; a shared link walks the path and settles in its area, its photo cropped to the area's shape.",
+      "palette": [
+        "#F5F1E4",
+        "#8BB35A",
+        "#2C2E2A",
+        "#FF705D",
+        "#F5D23A",
+        "#3B8FE0",
+        "#E7C2F5"
+      ],
+      "materials": [
+        "flat colour lobes (grained, per your pin)",
+        "capsule controls in coral, sun, pond and lilac",
+        "photos cropped to blobs"
+      ],
+      "viewport": "A matcha lobe swelling across the top holding search and the collection capsules; the cream board below; blob-cropped photos on cards.",
+      "case": "Wins on fun and on warm and cool colour; ties on clarity, since a map of areas suits collections better than free notes.",
+      "risk": "A map again: after the metro it can feel like a second transit diagram unless the lobes always mean a collection.",
+      "hero": "https://impeccable.style/worlds/cards/aww2-zoo-gardens-guide-map-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/aww2-zoo-gardens-guide-map.webp"
+    },
+    {
+      "id": "challenger-doujin",
+      "label": "Convention circle catalog",
+      "verdict": "declined",
+      "lineage": "Newsprint fan-convention catalogs: stamp-sized drawings in a numbered grid, circled in biro",
+      "thesis": "The board as a catalog page of tiny cells, the ones you care about circled by hand.",
+      "palette": [
+        "#EDE8DC",
+        "#1A1A1A",
+        "#2E6FD8"
+      ],
+      "materials": [
+        "newsprint",
+        "biro circles and strikes"
+      ],
+      "viewport": "A dense grid of thumbnail cells with codes.",
+      "case": "Single black ink drops matcha and the warm and cool colours you asked for.",
+      "kept": "Hand-marked state: a brushed ring for selected, a brush strike for done.",
+      "risk": "Too dense and too grey for daily notes.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-doujin-event-catalog-hero.webp"
+    },
+    {
+      "id": "challenger-manual",
+      "label": "Boxed-software manual",
+      "verdict": "declined",
+      "lineage": "Tabbed reference manuals with acetate leaves over coloured divider boards",
+      "thesis": "Collections as divider tabs down the edge, their height set by how much they hold.",
+      "palette": [
+        "#F2F0EA",
+        "#E06A1F",
+        "#F2C200",
+        "#3F9E4D",
+        "#1F8A8A",
+        "#2B4FBF"
+      ],
+      "materials": [
+        "acetate",
+        "divider board"
+      ],
+      "viewport": "A tab rail with the open section as the page.",
+      "case": "Hard 90 ms steps and no grain fight the soft, hand-made feel you pinned.",
+      "kept": "Collections show their extent: counts on every collection mark.",
+      "risk": "Reads like documentation, not like a place you want to open.",
+      "hero": "https://impeccable.style/worlds/cards/rw-manual-acetate-tab-board-hero.webp"
+    },
+    {
+      "id": "challenger-datamatics",
+      "label": "Data-sublime field",
+      "verdict": "declined",
+      "lineage": "Black and white barcode fields and sine lattices",
+      "thesis": "Notes as columns in a pure black and white data field.",
+      "palette": [
+        "#000000",
+        "#FFFFFF"
+      ],
+      "materials": [
+        "hairline bars",
+        "monospace figures"
+      ],
+      "viewport": "Barcode columns with tabular figures.",
+      "case": "Colder than the metro, the exact opposite of the brief.",
+      "kept": "One rule applied totally: tabular figures for every price and count.",
+      "risk": "No warmth at all.",
+      "hero": "https://impeccable.style/worlds/cards/ikeda-datamatics-hero.webp"
+    },
+    {
+      "id": "challenger-star-atlas",
+      "label": "Star atlas",
+      "verdict": "declined",
+      "lineage": "Celestial charts: magnitude dots on a navy sphere",
+      "thesis": "Notes as stars sized by importance.",
+      "palette": [
+        "#0E1A3A",
+        "#F4F1E8",
+        "#E0A030",
+        "#C0392B"
+      ],
+      "materials": [
+        "navy chart ground",
+        "chalk stars"
+      ],
+      "viewport": "A sky chart of notes.",
+      "case": "Navy night is the cold feeling you want gone.",
+      "kept": "A fixed size ramp: a collection mark is always 44, 28 or 20.",
+      "risk": "Cold and abstract.",
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-star-atlas-hero.webp"
+    },
+    {
+      "id": "challenger-factory",
+      "label": "Factory records sleeve",
+      "verdict": "declined",
+      "lineage": "Matte black catalogue sleeves with coded colour strips",
+      "thesis": "Every note a catalogue number on black.",
+      "palette": [
+        "#121212",
+        "#F4F4F4",
+        "#E8432E",
+        "#2EA3E8"
+      ],
+      "materials": [
+        "matte black",
+        "white hairlines"
+      ],
+      "viewport": "A black index of numbers.",
+      "case": "Black and coded: neither warm nor clear.",
+      "kept": "One piece owns each screen.",
+      "risk": "Unreadable without the legend.",
+      "hero": "https://impeccable.style/worlds/cards/brand-identity-canon-saville-catalog-sleeve-hero.webp"
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "Keep's arrangement in Material 3, themed matcha, executed at full craft.",
+    "palette": [
+      "#FBFDF6",
+      "#1B1C18",
+      "#4D6A2E",
+      "#DCEBC8"
+    ],
+    "materials": [
+      "Material 3 surfaces",
+      "tonal containers",
+      "Material Symbols"
+    ],
+    "viewport": "Search bar, masonry of pastel cards, bottom bar and FAB, as Keep does it.",
+    "risk": "Indistinguishable from Keep by design, which is what you asked to leave."
+  },
+  "steer": true
+}

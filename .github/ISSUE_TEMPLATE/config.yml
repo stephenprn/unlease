@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/stephenprn/unlease/security/advisories/new
+    about: Privately, seen only by the maintainer. Never in a public issue.
+  - name: Documentation
+    url: https://github.com/stephenprn/unlease/blob/main/docs/README.md
+    about: Installing, upgrading, every setting, how it works.
