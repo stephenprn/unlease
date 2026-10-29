@@ -85,6 +85,8 @@ keystore.properties
 !mobile/*/android/keystore.properties.example
 
 # Unlease: the server's local secrets and data, the web builds, review captures.
+# The web apps' build tooling is source: kept, despite the Xcode and Android `build/` above.
+!web/*/build/
 server/.env
 server/data/
 server/dist/

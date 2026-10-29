@@ -12,6 +12,9 @@ module.exports = {
     '^@ui/(.*)$': '<rootDir>/src/ui/$1',
     '^@platform/(.*)$': '<rootDir>/src/platform/$1',
     '^@unlease/(core|design|notes)/(.*)$': '<rootDir>/../../packages/$1/src/$2',
+    // Babel's helpers in the shared packages' files resolve from this app, as Metro resolves them
+    // (metro.config.js): the workspace above is not installed in CI.
+    '^@babel/runtime/(.*)$': '<rootDir>/node_modules/@babel/runtime/$1',
   },
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
 };
