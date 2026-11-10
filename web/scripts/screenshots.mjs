@@ -7,6 +7,9 @@
  *   UNLEASE_URL=http://localhost:5173 npm run screenshots   # or uses a running one
  *   UNLEASE_LOCALE=en npm run screenshots   # the interface in English (files end in -en)
  *
+ * The demo's notes, links, pages and people are in English whatever the interface's language: the
+ * selectors for them are English, those for the interface's words follow `UNLEASE_LOCALE`.
+ *
  * Output: .impeccable/review/web/<surface>-<scheme>-<width>.png, at the repository's root
  */
 import { mkdirSync } from 'node:fs';
@@ -22,7 +25,7 @@ const VIEWPORTS = [
 ];
 const SCHEMES = ['light', 'dark'];
 const LOCALE = process.env.UNLEASE_LOCALE === 'en' ? 'en' : 'fr';
-const PASTED = 'https://www.cinema-lumiere.fr/films/la-nuit-des-phares';
+const PASTED = 'https://www.lumiere-cinema.example/films/the-night-of-the-lighthouses';
 
 /** A collection's "Modules", from its menu. */
 async function openModules(page) {
@@ -39,7 +42,7 @@ function shoppingModules(module, shown) {
     await page.getByRole('switch', { name: /^(Seconde main|Second-hand)/ }).click();
     await page.keyboard.press('Escape');
     await page.waitForTimeout(400);
-    await page.getByRole('link', { name: /^(Veste en laine bouillie|Boiled wool jacket)/ }).first().click();
+    await page.getByRole('link', { name: /^Boiled wool jacket/ }).first().click();
     await page.waitForTimeout(700);
     if (!module) return;
     await page.getByRole('button', { name: module }).click();
@@ -68,10 +71,10 @@ const RATINGS = /^(Notes|Ratings)/;
 const RECAP = /^(Résumé jusqu’ici|Story so far)/;
 const COVERAGE = /^(Autres regards|Other takes)/;
 const ASK = /^(Demander à Claude|Ask Claude)/;
-// The demo's records are in the interface's language (`web/demo/demoEnglish.ts`).
-const FILM = /^(Les Feux de septembre|September Fires)/;
-const SERIES = /^(Station Nord|Station North)/;
-const ARTICLE = /^(Pourquoi les villes ralentissent|Why cities are slowing down)/;
+// The demo's records, in English whatever the interface's language (`web/demo/demoData.ts`).
+const FILM = /^September Fires/;
+const SERIES = /^Station North/;
+const ARTICLE = /^Why cities are slowing down/;
 
 /** A paste on the board, as the browser fires it. */
 async function paste(page, text) {
@@ -106,7 +109,7 @@ const SURFACES = [
     // ...and once it has answered.
     async act(page) {
       await page.getByRole('button', { name: /^(Codes promo|Promo codes)$/ }).click();
-      await page.getByText('LIVRAISON', { exact: true }).waitFor();
+      await page.getByText('FREESHIP', { exact: true }).waitFor();
       await page.waitForTimeout(700);
     },
   },
@@ -114,13 +117,13 @@ const SURFACES = [
   { name: 'line-modules', path: '/notes/line/line-mode?demo=1', act: openModules },
   { name: 'link-modules', path: '/notes/line/line-mode?demo=1', act: shoppingModules() },
   { name: 'link-cheaper', path: '/notes/line/line-mode?demo=1', act: shoppingModules(/^(Moins cher ailleurs|Cheaper elsewhere)$/, 'Grand Bazar') },
-  { name: 'link-secondhand', path: '/notes/line/line-mode?demo=1', act: shoppingModules(/^(Seconde main|Second-hand)$/, 'Le Grenier') },
+  { name: 'link-secondhand', path: '/notes/line/line-mode?demo=1', act: shoppingModules(/^(Seconde main|Second-hand)$/, 'The Attic') },
   {
     name: 'link-groceries',
     path: '/notes/link/demo-link-inbox-2?demo=1',
     async act(page) {
       await page.getByRole('button', { name: /^(Liste de courses|Shopping list)$/ }).click();
-      await page.getByText('4 pommes').waitFor();
+      await page.getByText('4 apples').waitFor();
       await page.waitForTimeout(700);
     },
   },
@@ -141,7 +144,7 @@ const SURFACES = [
       await page.waitForTimeout(700);
     },
   },
-  { name: 'link-coverage', path: '/notes/line/line-lire?demo=1', act: withModules([COVERAGE], ARTICLE, /^(Autres regards|Other takes)$/, 'Le Quotidien du Matin') },
+  { name: 'link-coverage', path: '/notes/line/line-lire?demo=1', act: withModules([COVERAGE], ARTICLE, /^(Autres regards|Other takes)$/, 'The Morning Daily') },
   { name: 'link-ask', path: '/notes/line/line-lire?demo=1', act: withModules([ASK], ARTICLE, /^(Demander à Claude|Ask Claude)$/) },
   {
     name: 'link-ask-answer',
@@ -171,7 +174,7 @@ const SURFACES = [
     async act(page) {
       await page.getByRole('button', { name: /^(Une personne de plus|One more person)$/ }).click();
       await page.getByRole('button', { name: /^(En cuisine|Cook mode)$/ }).click();
-      await page.getByText(/Préchauffer/).first().waitFor();
+      await page.getByText(/Preheat/).first().waitFor();
       await page.getByRole('button', { name: /^(Suivante|Next)$/ }).click();
       await page.getByRole('button', { name: /^(Lancer un minuteur|Start a)/ }).first().click();
       await page.waitForTimeout(1500);
@@ -342,16 +345,16 @@ SURFACES.push(
   { name: 'slip-error', path: '/notes?demo=1', act: slip('error', 'Ce n’est pas un lien') },
   // The spotlight (⌘P, Ctrl+P or Ctrl+K): empty on what was opened lately, then searching.
   { name: 'spotlight', path: '/pages/demo-page-lisbonne?demo=1', act: spotlight() },
-  { name: 'spotlight-search', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'lisbon' : 'lisbonne') },
-  { name: 'spotlight-link', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'wool jacket' : 'veste laine') },
-  { name: 'spotlight-typo', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'crepes lisbn' : 'crepes lisbone') },
+  { name: 'spotlight-search', path: '/notes?demo=1', act: spotlight('lisbon') },
+  { name: 'spotlight-link', path: '/notes?demo=1', act: spotlight('wool jacket') },
+  { name: 'spotlight-typo', path: '/notes?demo=1', act: spotlight('crepes lisbn') },
   { name: 'spotlight-nothing', path: '/notes?demo=1', act: spotlight('zanzibar') },
   {
     name: 'spotlight-filters',
     path: '/notes?demo=1',
     // A label typed after #, a date from its menu, then Tab to the notes alone.
     async act(page) {
-      await spotlight('#trav')(page);
+      await spotlight('#wor')(page);
       await page.keyboard.press('Enter');
       await page.getByRole('button', { name: /^Modifié/ }).click();
       await page.getByRole('menuitem', { name: '30 derniers jours' }).click();

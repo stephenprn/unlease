@@ -2,7 +2,7 @@
  * Agenda's routes as the demo's fake server answers them (`fakeServer.ts`): the events mentioning
  * something, the weather (made up from the day), an event read from words or from a link (the
  * device's own reading, or a fixed one), questions about the calendar, the holidays' countries and
- * regions (France's days, written as the real server writes them), a subscription read again, the
+ * regions (France's days, named in English as the demo's other records are), a subscription read again, the
  * browser's reminders (none in the demo), and Pages' pages made for Agenda (an event's notes, the
  * day's page), written into the store as the real server writes them.
  */
@@ -64,18 +64,18 @@ function frenchDays(year: number): NagerHoliday[] {
   ];
 }
 
-/** The holidays' calendar and its days, as the server keeps them (France only in the demo; another country leaves none). */
-export function writeHolidays(store: CalendarStore, country: string | null, region: string | null, now: number, english = false): void {
+/** The holidays' calendar and its days, as the server keeps them (France only in the demo; another country leaves none), in English. */
+export function writeHolidays(store: CalendarStore, country: string | null, region: string | null, now: number): void {
   const today = new Date(now).toISOString().slice(0, 10);
   const stored = store
     .records()
     .filter(record => record.type === 'calendarEvent' && record.fields.feedId === HOLIDAYS_FEED_ID)
     .map(record => ({ event: eventFromRecord(record), fields: record.fields }));
-  // A demo in English names them in English (Nager.Date's `name`), as it writes its other records.
-  const days = (country === 'FR' ? holidayYears(today).flatMap(frenchDays) : []).map(day => (english ? { ...day, localName: day.name } : day));
+  // Named in English (Nager.Date's `name`), as the demo's other records are written.
+  const days = (country === 'FR' ? holidayYears(today).flatMap(frenchDays) : []).map(day => ({ ...day, localName: day.name }));
   const plan = planFeed(holidayDrafts(days, region), stored, () => createId(now), now);
   if (country) {
-    store.write('calendarFeed', HOLIDAYS_FEED_ID, { kind: 'holidays', name: `${english ? 'Public holidays' : 'Jours fériés'} · ${country === 'FR' ? 'France' : country}`, url: '', color: 'green', hidden: false, position: 'a0', refreshedAt: now, error: '', createdAt: now, deletedAt: null });
+    store.write('calendarFeed', HOLIDAYS_FEED_ID, { kind: 'holidays', name: `Public holidays · ${country === 'FR' ? 'France' : country}`, url: '', color: 'green', hidden: false, position: 'a0', refreshedAt: now, error: '', createdAt: now, deletedAt: null });
   } else if (store.records().some(record => record.type === 'calendarFeed' && record.id === HOLIDAYS_FEED_ID)) {
     store.write('calendarFeed', HOLIDAYS_FEED_ID, { deletedAt: now });
   }
@@ -85,7 +85,7 @@ export function writeHolidays(store: CalendarStore, country: string | null, regi
 
 /** A weather made up from the day: the same each time, never true. */
 // What no map finds, as Open-Meteo's search answers: the day's weather falls to its next place.
-const NOWHERE = /^(visio|zoom|meet|teams|en ligne|online|t[ée]l[ée]phone|salle .*)$/i;
+const NOWHERE = /^(visio|video call|zoom|meet|teams|en ligne|online|t[ée]l[ée]phone|phone|salle .*)$/i;
 
 function weatherFor(place: string): Response {
   if (!place.trim() || NOWHERE.test(place.trim())) return json({ place: '', days: [] });
@@ -136,13 +136,16 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
     const link = store.records().find(record => record.type === 'link' && record.id === request.linkId);
     if (!link) return json({ error: 'Ce lien n’existe plus' }, 409);
     const day = addDays(request.now.slice(0, 10), 10);
-    return json({ proposal: { title: String(link.fields.title || 'Événement'), start: `${day}T20:00`, end: `${day}T22:30`, timeZone: request.timeZone, place: 'Salle Pleyel, Paris', description: String(link.fields.summary ?? ''), url: String(link.fields.url ?? '') } });
+    return json({ proposal: { title: String(link.fields.title || (request.lang === 'en' ? 'Event' : 'Événement')), start: `${day}T20:00`, end: `${day}T22:30`, timeZone: request.timeZone, place: 'Salle Pleyel, Paris', description: String(link.fields.summary ?? ''), url: String(link.fields.url ?? '') } });
   }
   if (path === '/api/calendar/ask' && method === 'POST') {
     const request = parseCalendarAskRequest(body);
     if (!request) return json({ error: 'Requête invalide' }, 400);
     const lines = request.context.split('\n').filter(line => line >= request.now.slice(0, 10)).slice(0, 3);
-    return json({ answer: lines.length > 0 ? `Dans la démo, Claude ne répond pas vraiment. Vos prochains événements :\n${lines.map(line => `• ${line}`).join('\n')}` : 'Dans la démo, Claude ne répond pas vraiment : rien de prévu.' });
+    const english = request.lang === 'en';
+    const next = lines.map(line => `• ${line}`).join('\n');
+    if (english) return json({ answer: lines.length > 0 ? `In the demo, Claude doesn’t really answer. Your next events:\n${next}` : 'In the demo, Claude doesn’t really answer: nothing planned.' });
+    return json({ answer: lines.length > 0 ? `Dans la démo, Claude ne répond pas vraiment. Vos prochains événements :\n${next}` : 'Dans la démo, Claude ne répond pas vraiment : rien de prévu.' });
   }
   if (path === '/api/calendar/holidays/countries' && method === 'GET') {
     return json({ countries: [{ code: 'FR', name: 'France' }, { code: 'BE', name: 'Belgium' }, { code: 'CH', name: 'Switzerland' }, { code: 'GB', name: 'United Kingdom' }, { code: 'US', name: 'United States' }, { code: 'DE', name: 'Germany' }] });

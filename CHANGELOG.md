@@ -6,7 +6,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
-- The demo speaks your browser's language (English unless it is French), its notes, pages, events and people included; `?lang=en` or `?lang=fr` picks one.
+- The demo's notes, pages, events and people are in English; its interface follows your browser (English unless it is French), and `?lang=en` or `?lang=fr` picks one.
 
 ## [0.1.1] - 2026-11-10
 

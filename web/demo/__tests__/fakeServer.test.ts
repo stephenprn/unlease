@@ -39,6 +39,36 @@ describe('the demo’s server', () => {
     // A pull naming Carnet's types alone gets no block.
     expect(server.pull(0, ['note', 'link']).records.every(record => record.type !== 'block')).toBe(true);
   });
+
+  it('keeps France’s holidays in English, as the demo’s records', () => {
+    const server = new FakeServer();
+    server.seedHolidays(Date.UTC(2026, 10, 10, 12));
+    const records = server.pull(0).records;
+    expect(records.find(record => record.type === 'calendarFeed')?.fields.name).toBe('Public holidays · France');
+    const titles = records.filter(record => record.type === 'calendarEvent').map(record => record.fields.title);
+    expect(titles).toEqual(expect.arrayContaining(['Christmas Day', 'Bastille Day']));
+    expect(titles).not.toContain('Noël');
+  });
+
+  it('reads a link in the language it was saved in', () => {
+    vi.useFakeTimers();
+    try {
+      const server = new FakeServer();
+      const saved = (id: string, lang: string): SyncRecord => ({
+        type: 'link',
+        id,
+        fields: { noteId: 'inbox', url: `https://www.maille-et-fil.fr/bonnet-${id}`, status: 'pending', autoFile: false, kind: 'other', lang, attributes: [], createdAt: 1, deletedAt: null },
+        clocks: Object.fromEntries(['noteId', 'url', 'status', 'autoFile', 'kind', 'lang', 'attributes', 'createdAt', 'deletedAt'].map(key => [key, formatHlc(Date.now(), 0, 'web001')])),
+      });
+      server.push([saved('en', 'en'), saved('fr', 'fr')]);
+      vi.advanceTimersByTime(3_200);
+      const read = (id: string) => linkFromRecord(server.pull(0).records.find(record => record.id === id)!);
+      expect(read('en')).toMatchObject({ title: 'Fisherman rib beanie', siteName: 'Knit & Purl' });
+      expect(read('fr')).toMatchObject({ title: 'Bonnet en côtes anglaises', siteName: 'Knit & Purl' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('the demo’s templates', () => {
@@ -52,7 +82,7 @@ describe('the demo’s templates', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it('seeds « Vin », read by « Vins », and the recipe kind’s changed, its recipe read with the preset before', () => {
+  it('seeds "Wine", read by "Wines", and the recipe kind’s changed, its recipe read with the preset before', () => {
     const records = buildDemoRecords(Date.now());
     const templates = Object.fromEntries(records.filter(record => record.type === 'linkTemplate').map(record => [record.id, linkTemplateFromRecord(record)]));
     // « Non classé » is every device's own seed, not the demo's.
@@ -60,20 +90,20 @@ describe('the demo’s templates', () => {
     const notes = { inbox, ...Object.fromEntries(records.filter(record => record.type === 'note').map(record => [record.id, noteFromRecord(record)])) };
     const links = records.filter(record => record.type === 'link').map(linkFromRecord);
     const vin = templates[DEMO_WINE_TEMPLATE]!;
-    expect(vin).toMatchObject({ name: 'Vin', kind: null });
+    expect(vin).toMatchObject({ name: 'Wine', kind: null });
     expect(vin.fields.map(field => [field.name, field.type])).toEqual([
-      ['Domaine', 'text'],
-      ['Millésime', 'number'],
-      ['Cépages', 'list'],
-      ['Région', 'text'],
-      ['Accords', 'text'],
+      ['Estate', 'text'],
+      ['Vintage', 'number'],
+      ['Grapes', 'list'],
+      ['Region', 'text'],
+      ['Pairings', 'text'],
     ]);
-    expect(collectionsOfTemplate(vin.id, notes).map(note => note.title)).toEqual(['Vins']);
+    expect(collectionsOfTemplate(vin.id, notes).map(note => note.title)).toEqual(['Wines']);
     expect(linksOfTemplate(vin, links, notes, templates)).toHaveLength(2);
     expect(linksReadBefore(vin, links, notes, templates)).toEqual([]);
     const recipe = templates[kindTemplateId('recipe')]!;
-    expect(recipe.fields.at(-1)).toMatchObject({ name: 'Végétarien', type: 'yesno' });
-    expect(linksReadBefore(recipe, links, notes, templates).map(link => link.title)).toEqual(['Tarte fine aux pommes']);
+    expect(recipe.fields.at(-1)).toMatchObject({ name: 'Vegetarian', type: 'yesno' });
+    expect(linksReadBefore(recipe, links, notes, templates).map(link => link.title)).toEqual(['Thin apple tart']);
   });
 
   it('reads a link with its collection’s template, in its fields’ order, and writes the version', () => {

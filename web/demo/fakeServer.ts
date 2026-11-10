@@ -66,74 +66,109 @@ interface Stored {
   seq: number;
 }
 
+/** What the pretend Claude writes of a page, in the link's language (`lang`), as Claude does. */
+interface ReadWords {
+  readonly title: string;
+  readonly summary: string;
+  readonly attributes: readonly LinkAttribute[];
+}
+
 interface Reading {
   readonly match: RegExp;
   readonly lineId: string | null;
   readonly kind: LinkKind;
+  /** The site's own name, the demo's (in English, as its records). */
   readonly siteName: string;
-  readonly title: string;
-  readonly summary: string;
   readonly price: number | null;
-  readonly attributes: readonly LinkAttribute[];
   readonly imageIds: readonly string[];
+  readonly words: Readonly<Record<Locale, ReadWords>>;
 }
 
-/** A wine the pretend Claude reads (a cellar's page), filed in « Vins » with its template's facts. */
+/** A wine the pretend Claude reads (a cellar's page), filed in "Wines" with its template's facts. */
 const WINE_READING: Reading = {
-  match: /cave-|\/vins?\//,
+  match: /cave-|cellar|\/(vins?|wines?)\//,
   lineId: 'line-vins',
   kind: 'product',
-  siteName: 'Cave des coteaux',
-  title: 'Côtes-du-Rhône Les Galets 2022',
-  summary: 'Un rouge du sud gourmand et épicé, à ouvrir une heure avant.',
+  siteName: 'Hillside Cellar',
   price: 11.9,
-  attributes: [
-    { label: 'Domaine', value: 'Domaine des Ormes' },
-    { label: 'Millésime', value: '2022' },
-    { label: 'Cépages', value: 'Grenache, syrah' },
-    { label: 'Région', value: 'Côtes-du-Rhône' },
-    { label: 'Accords', value: 'Grillades, fromages affinés' },
-  ],
   imageIds: [],
+  words: {
+    fr: {
+      title: 'Côtes-du-Rhône Les Galets 2022',
+      summary: 'Un rouge du sud gourmand et épicé, à ouvrir une heure avant.',
+      attributes: [
+        { label: 'Domaine', value: 'Domaine des Ormes' },
+        { label: 'Millésime', value: '2022' },
+        { label: 'Cépages', value: 'Grenache, syrah' },
+        { label: 'Région', value: 'Côtes-du-Rhône' },
+        { label: 'Accords', value: 'Grillades, fromages affinés' },
+      ],
+    },
+    en: {
+      title: 'Côtes-du-Rhône Les Galets 2022',
+      summary: 'A rich, spicy southern red; open it an hour before.',
+      attributes: [
+        { label: 'Estate', value: 'Domaine des Ormes' },
+        { label: 'Vintage', value: '2022' },
+        { label: 'Grapes', value: 'Grenache, Syrah' },
+        { label: 'Region', value: 'Côtes-du-Rhône' },
+        { label: 'Pairings', value: 'Grilled meat, aged cheeses' },
+      ],
+    },
+  },
 };
 
 /** What the pretend Claude reads, by URL. */
 const READINGS: readonly Reading[] = [
   {
-    match: /phares/,
+    match: /phares|lighthouse/,
     lineId: 'line-films',
     kind: 'film',
-    siteName: 'Cinéma Lumière',
-    title: 'La Nuit des phares',
-    summary: 'Un gardien de phare et sa fille, une tempête, une nuit entière pour rallumer la lanterne. Premier film d’une réalisatrice bretonne.',
+    siteName: 'Lumière Cinema',
     price: null,
-    attributes: [
-      { label: 'Durée', value: '1 h 48' },
-      { label: 'Sortie', value: 'Novembre' },
-    ],
     imageIds: ['demo-poster3'],
+    words: {
+      fr: {
+        title: 'La Nuit des phares',
+        summary: 'Un gardien de phare et sa fille, une tempête, une nuit entière pour rallumer la lanterne. Premier film d’une réalisatrice bretonne.',
+        attributes: [
+          { label: 'Durée', value: '1 h 48' },
+          { label: 'Sortie', value: 'Novembre' },
+        ],
+      },
+      en: {
+        title: 'The Night of the Lighthouses',
+        summary: 'A lighthouse keeper and his daughter, a storm, one whole night to light the lantern again. A first feature by a Breton director.',
+        attributes: [
+          { label: 'Running time', value: '1h 48m' },
+          { label: 'Release', value: 'November' },
+        ],
+      },
+    },
   },
   {
-    match: /bonnet/,
+    match: /bonnet|beanie/,
     lineId: 'line-mode',
     kind: 'product',
-    siteName: 'Maille & Fil',
-    title: 'Bonnet en côtes anglaises',
-    summary: 'Bonnet en laine mérinos, maille côtes anglaises, revers large.',
+    siteName: 'Knit & Purl',
     price: 39,
-    attributes: [{ label: 'Couleur', value: 'Gris chiné' }],
     imageIds: [],
+    words: {
+      fr: { title: 'Bonnet en côtes anglaises', summary: 'Bonnet en laine mérinos, maille côtes anglaises, revers large.', attributes: [{ label: 'Couleur', value: 'Gris chiné' }] },
+      en: { title: 'Fisherman rib beanie', summary: 'A merino wool beanie in fisherman rib, with a wide turn-up.', attributes: [{ label: 'Colour', value: 'Heather grey' }] },
+    },
   },
   {
-    match: /lampe|luminaire/,
+    match: /lampe|luminaire|lamp/,
     lineId: 'line-maison',
     kind: 'product',
-    siteName: 'Maison Clair',
-    title: 'Applique murale en laiton',
-    summary: 'Applique orientable en laiton brossé, abat-jour conique.',
+    siteName: 'Clair Home',
     price: 119,
-    attributes: [{ label: 'Finition', value: 'Laiton brossé' }],
     imageIds: ['demo-lamp-2'],
+    words: {
+      fr: { title: 'Applique murale en laiton', summary: 'Applique orientable en laiton brossé, abat-jour conique.', attributes: [{ label: 'Finition', value: 'Laiton brossé' }] },
+      en: { title: 'Brass wall light', summary: 'An adjustable wall light in brushed brass, with a conical shade.', attributes: [{ label: 'Finish', value: 'Brushed brass' }] },
+    },
   },
   WINE_READING,
 ];
@@ -147,7 +182,7 @@ const CANNED: Readonly<Record<Locale, { readonly names: Readonly<Record<string, 
     types: { number: '4', date: '14 novembre 2026', duration: '45 min', list: 'Premier, second', yesno: 'Non' },
   },
   en: {
-    names: { difficulte: 'Easy', difficulty: 'Easy', vegetarien: 'Yes', vegetarian: 'Yes', domaine: 'Domaine des Ormes', millesime: '2022', cepages: 'Grenache, Syrah', region: 'Rhône Valley', accords: 'Grilled meat, cheese' },
+    names: { difficulte: 'Easy', difficulty: 'Easy', vegetarien: 'Yes', vegetarian: 'Yes', domaine: 'Domaine des Ormes', estate: 'Domaine des Ormes', millesime: '2022', vintage: '2022', cepages: 'Grenache, Syrah', grapes: 'Grenache, Syrah', region: 'Rhône Valley', accords: 'Grilled meat, cheese', pairings: 'Grilled meat, cheese' },
     types: { number: '4', date: '14 November 2026', duration: '45 min', list: 'First, second', yesno: 'No' },
   },
 };
@@ -206,9 +241,8 @@ export class FakeServer {
   private apps: AppId[];
   private setupDone: boolean;
 
-  constructor({ reading = true, apps = ['notes', 'pages'], setupDone = true, english = false }: { reading?: boolean; apps?: readonly AppId[]; setupDone?: boolean; english?: boolean } = {}) {
+  constructor({ reading = true, apps = ['notes', 'pages'], setupDone = true }: { reading?: boolean; apps?: readonly AppId[]; setupDone?: boolean } = {}) {
     this.apps = apps.filter(isReadyApp);
-    this.english = english;
     this.setupDone = setupDone;
     this.settings = reading
       ? { enabled: true, keySource: 'app', keyHint: '…k3Xq', model: 'claude-opus-5-5', budgetUsd: 15 }
@@ -216,9 +250,6 @@ export class FakeServer {
     this.pages = { ...PAGES_ASK_DEFAULTS, enabled: reading };
     this.calendar = { holidays: { country: 'FR', region: null }, publishPath: '/ical/demo-0123456789abcdef.ics', ask: reading };
   }
-
-  /** A demo in English: what the server writes itself (the holidays) is in English too. */
-  private readonly english: boolean;
 
   /** Agenda's: the holidays (France), a published address, questions on when the demo reads links. */
   private calendar: CalendarSettings;
@@ -230,7 +261,7 @@ export class FakeServer {
 
   /** The holidays the server keeps for its country, as the real one fetches them. */
   seedHolidays(now: number = Date.now()): void {
-    writeHolidays({ records: () => this.allRecords(), write: (type, id, patch) => this.write(type, id, patch) }, this.calendar.holidays.country, this.calendar.holidays.region, now, this.english);
+    writeHolidays({ records: () => this.allRecords(), write: (type, id, patch) => this.write(type, id, patch) }, this.calendar.holidays.country, this.calendar.holidays.region, now);
   }
 
   private readonly records = new Map<string, Stored>();
@@ -246,7 +277,7 @@ export class FakeServer {
     configured: true,
     endpoint: 'https://s3.fr-par.scw.cloud',
     region: 'fr-par',
-    bucket: 'sauvegardes-maison',
+    bucket: 'home-backups',
     prefix: 'unlease/',
     accessKeyId: 'SCWDEMO7Q2K4M8XP1ZTA',
     secretHint: '…9f2c',
@@ -316,18 +347,19 @@ export class FakeServer {
     const stored = this.records.get(`link:${linkId}`);
     if (!stored) return;
     const link = linkFromRecord(stored.record);
-    // A link whose address says "lent" stays in reading, for screenshots of that state.
-    if (/lent/.test(link.url)) return;
+    // A link at a slow loom's address (or one that says "lent") stays in reading, for screenshots of that state.
+    if (/slow-loom|lent/.test(link.url)) return;
     this.reading.add(linkId);
     setTimeout(() => {
       this.reading.delete(linkId);
       const current = linkFromRecord(this.records.get(`link:${linkId}`)!.record);
       if (current.status !== 'pending' || current.deletedAt !== null) return;
-      if (/echec|fermee/.test(current.url)) {
+      if (/closed-shop|echec|fermee/.test(current.url)) {
         this.write('link', linkId, { status: 'failed', error: 'Page protégée contre les robots', analyzedAt: Date.now() });
         return;
       }
       const found = READINGS.find(entry => entry.match.test(current.url));
+      const said = found?.words[current.lang];
       const line = found?.lineId && this.records.has(`note:${found.lineId}`) ? found.lineId : null;
       // Read again (« Relire »), a link keeps what the demo cannot read better.
       const kind = found?.kind ?? current.kind;
@@ -335,11 +367,11 @@ export class FakeServer {
       const into = current.autoFile ? (line ?? INBOX_ID) : current.noteId;
       const source = linkTemplateSource(this.templates(), { noteId: into, kind }, this.collections());
       const fields = source.from === 'collection' ? source.template.fields : (source.template?.fields ?? null);
-      const facts = current.attributes.length > 0 ? current.attributes : (found?.attributes ?? []);
+      const facts = current.attributes.length > 0 ? current.attributes : (said?.attributes ?? []);
       const patch: Fields = {
         status: 'ready',
-        title: current.title || found?.title || 'Page sans titre',
-        summary: current.summary || (found?.summary ?? ''),
+        title: current.title || said?.title || (current.lang === 'fr' ? 'Page sans titre' : 'Untitled page'),
+        summary: current.summary || (said?.summary ?? ''),
         siteName: current.siteName || (found?.siteName ?? ''),
         kind,
         price: found?.price ?? current.price ?? null,
@@ -600,7 +632,7 @@ export class FakeServer {
     const interval = { off: 0, '6h': 6 * HOUR, daily: 24 * HOUR, weekly: 7 * 24 * HOUR }[this.backup.recurrence];
     const lastAt = this.lastRun?.finishedAt ?? null;
     return {
-      server: { version: 'démo', notes, pages, contacts, events, files, fileBytes: bytes },
+      server: { version: 'demo', notes, pages, contacts, events, files, fileBytes: bytes },
       backup: {
         running: this.backupRunning,
         last: this.lastRun,
@@ -691,12 +723,12 @@ export class FakeServer {
     await delay(2_400);
     const english = request.lang === 'en';
     const shop = request.link.site || (english ? 'the shop' : 'la boutique');
-    const code = foldText(shop).replace(/[^a-z0-9]/g, '').toUpperCase().slice(0, 8) || 'BIENVENUE';
+    const code = foldText(shop).replace(/[^a-z0-9]/g, '').toUpperCase().slice(0, 8) || 'WELCOME';
     const until = new Date(Date.now() + 12 * 86_400_000).toISOString().slice(0, 10);
     return json({
       coupons: [
-        { code: `${code}15`, benefit: english ? '15% off your first order' : '15 % sur la première commande', conditions: english ? 'New customers' : 'Nouveaux clients', kind: 'percent', value: 15, minimum: null, expires: until, confirmed: true, source: 'Le Coin des Codes', sourceUrl: 'https://codes.example/' },
-        { code: 'LIVRAISON', benefit: english ? 'Free delivery' : 'Livraison offerte', conditions: '', kind: 'shipping', value: null, minimum: 50, expires: null, confirmed: false, source: 'Réducs & Co', sourceUrl: null },
+        { code: `${code}15`, benefit: english ? '15% off your first order' : '15 % sur la première commande', conditions: english ? 'New customers' : 'Nouveaux clients', kind: 'percent', value: 15, minimum: null, expires: until, confirmed: true, source: 'Code Corner', sourceUrl: 'https://codes.example/' },
+        { code: 'FREESHIP', benefit: english ? 'Free delivery' : 'Livraison offerte', conditions: '', kind: 'shipping', value: null, minimum: 50, expires: null, confirmed: false, source: 'Deals & Co', sourceUrl: null },
       ],
       tips: [{ text: english ? `10% off for signing up to ${shop}'s newsletter.` : `10 % de remise en s’inscrivant à la lettre de ${shop}.`, url: null }],
       searchedAt: Date.now(),
@@ -718,8 +750,8 @@ export class FakeServer {
       return json({
         offers: [
           { shop: 'Grand Bazar', title: '', price: round(base * 0.88), currency, shipping: 0, condition: 'new', details: english ? 'In stock' : 'En stock', url: 'https://grand-bazar.example/' },
-          { shop: 'Le Comptoir des Objets', title: '', price: round(base * 0.95), currency, shipping: 4.9, condition: 'new', details: '', url: 'https://comptoir-objets.example/' },
-          { shop: 'Maison Durable', title: '', price: base + 10, currency, shipping: 0, condition: 'new', details: english ? 'Ships in a week' : 'Expédié sous une semaine', url: null },
+          { shop: 'The Object Counter', title: '', price: round(base * 0.95), currency, shipping: 4.9, condition: 'new', details: '', url: 'https://object-counter.example/' },
+          { shop: 'Durable Home', title: '', price: base + 10, currency, shipping: 0, condition: 'new', details: english ? 'Ships in a week' : 'Expédié sous une semaine', url: null },
         ],
         range: null,
         note: '',
@@ -728,8 +760,8 @@ export class FakeServer {
     }
     return json({
       offers: [
-        { shop: 'Le Grenier', title: english ? `${request.link.title}, size M` : `${request.link.title}, taille M`, price: round(base * 0.5), currency, shipping: 5.5, condition: 'used', details: english ? 'Very good condition' : 'Très bon état', url: 'https://le-grenier.example/' },
-        { shop: 'Second Souffle', title: '', price: round(base * 0.62), currency, shipping: 0, condition: 'refurbished', details: english ? '12-month warranty' : 'Garantie 12 mois', url: 'https://second-souffle.example/' },
+        { shop: 'The Attic', title: english ? `${request.link.title}, size M` : `${request.link.title}, taille M`, price: round(base * 0.5), currency, shipping: 5.5, condition: 'used', details: english ? 'Very good condition' : 'Très bon état', url: 'https://the-attic.example/' },
+        { shop: 'Second Wind', title: '', price: round(base * 0.62), currency, shipping: 0, condition: 'refurbished', details: english ? '12-month warranty' : 'Garantie 12 mois', url: 'https://second-wind.example/' },
       ],
       range: { low: round(base * 0.45), high: round(base * 0.65), currency },
       note: '',
@@ -737,7 +769,7 @@ export class FakeServer {
     });
   }
 
-  /** `POST /api/recipe`: the demo's tart, read from its page. */
+  /** `POST /api/recipe`: the demo's tart, read from its page, in its own words (English) whatever the language, as the server keeps a recipe. */
   private async recipe(body: unknown): Promise<Response> {
     const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
     const request = parseRecipeRequest(body);
@@ -745,15 +777,15 @@ export class FakeServer {
     await delay(900);
     if (!/recette|recipe|tarte/.test(request.link.url)) return json({ error: 'Aucun ingrédient sur cette page' }, 502);
     return json({
-      ingredients: ['1 pâte feuilletée', '4 pommes', '40 g de beurre', '3 cuillères à soupe de sucre', '1 sachet de sucre vanillé'],
-      servings: '6 personnes',
+      ingredients: ['1 sheet of puff pastry', '4 apples', '40 g butter', '3 tablespoons sugar', '1 sachet of vanilla sugar'],
+      servings: '6 people',
       steps: [
-        { section: '', text: 'Préchauffer le four à 200 °C.' },
-        { section: '', text: 'Dérouler la pâte sur une plaque, la piquer à la fourchette et la laisser au frais 10 min.' },
-        { section: 'Les pommes', text: 'Éplucher les pommes, les couper en lamelles fines et les disposer en rosace sur la pâte.' },
-        { section: 'Les pommes', text: 'Parsemer de beurre en petits morceaux, de sucre et de sucre vanillé.' },
-        { section: 'La cuisson', text: 'Enfourner 25 à 30 minutes, jusqu’à ce que les bords soient dorés.' },
-        { section: 'La cuisson', text: 'Laisser tiédir 5 min avant de servir.' },
+        { section: '', text: 'Preheat the oven to 200 °C.' },
+        { section: '', text: 'Unroll the pastry on a baking tray, prick it with a fork and chill it for 10 min.' },
+        { section: 'The apples', text: 'Peel the apples, slice them thinly and lay them in a rosette on the pastry.' },
+        { section: 'The apples', text: 'Dot with small pieces of butter, then sprinkle with the sugar and the vanilla sugar.' },
+        { section: 'Baking', text: 'Bake for 25 to 30 minutes, until the edges are golden.' },
+        { section: 'Baking', text: 'Leave to cool for 5 min before serving.' },
       ],
     });
   }
@@ -835,8 +867,8 @@ export class FakeServer {
     return jsonResponse({
       story: english ? 'Ten years on, more and more towns are slowing their streets down.' : 'Dix ans après les premières, de plus en plus de villes ralentissent leurs rues.',
       outlets: [
-        { outlet: 'Le Quotidien du Matin', title: 'Villes à 30 : le bilan chiffré', url: 'https://quotidien-du-matin.example/villes-30', date: day(3), angle: english ? 'The figures' : 'Les chiffres', adds: english ? 'Serious accidents down by a third in the towns studied.' : 'Les accidents graves ont baissé d’un tiers dans les villes étudiées.' },
-        { outlet: 'Auto Magazine', title: 'Le 30 km/h, une fausse bonne idée ?', url: 'https://auto-magazine.example/30-kmh', date: day(5), angle: english ? 'The drivers’ side' : 'Du côté des automobilistes', adds: english ? 'Says journeys got longer, which the saved article disputes.' : 'Parle de trajets rallongés, ce que l’article enregistré conteste.' },
+        { outlet: 'The Morning Daily', title: 'Towns at 30: the figures', url: 'https://morning-daily.example/towns-at-30', date: day(3), angle: english ? 'The figures' : 'Les chiffres', adds: english ? 'Serious accidents down by a third in the towns studied.' : 'Les accidents graves ont baissé d’un tiers dans les villes étudiées.' },
+        { outlet: 'Auto Magazine', title: '30 km/h: a good idea gone wrong?', url: 'https://auto-magazine.example/30-kmh', date: day(5), angle: english ? 'The drivers’ side' : 'Du côté des automobilistes', adds: english ? 'Says journeys got longer, which the saved article disputes.' : 'Parle de trajets rallongés, ce que l’article enregistré conteste.' },
         { outlet: 'City Lab Weekly', title: 'What French towns learned from slowing down', url: 'https://citylab-weekly.example/slow-towns', date: day(8), angle: english ? 'Seen from abroad' : 'Vu de l’étranger', adds: '' },
       ],
       note: english ? 'They agree on the fall in accidents; they differ on journey times.' : 'Tous s’accordent sur la baisse des accidents ; ils divergent sur les temps de trajet.',
@@ -899,16 +931,17 @@ export class FakeServer {
     if (!request) return jsonResponse({ error: 'Essai de modèle invalide' }, 400);
     if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
     await delay(1_500);
-    if (/echec|fermee/.test(request.url)) return jsonResponse({ error: 'Page protégée contre les robots' }, 502);
+    if (/closed-shop|echec|fermee/.test(request.url)) return jsonResponse({ error: 'Page protégée contre les robots' }, 502);
     const found = READINGS.find(entry => entry.match.test(request.url));
+    const said = found?.words[request.lang];
     const saved = [...this.records.values()]
       .map(row => row.record)
       .filter(record => record.type === 'link' && record.fields.url === request.url && record.fields.deletedAt === null)
       .map(linkFromRecord)
       .find(link => link.attributes.length > 0 || link.title);
-    const filled = filledFields(request.fields, saved?.attributes ?? found?.attributes ?? [], request.lang);
+    const filled = filledFields(request.fields, saved?.attributes ?? said?.attributes ?? [], request.lang);
     const values = Object.fromEntries(filled.map(fact => [request.fields.find(each => each.name === fact.label)!.id, fact.value]));
-    return jsonResponse({ title: saved?.title || found?.title || 'Page d’exemple', values, costUsd: 0.004 });
+    return jsonResponse({ title: saved?.title || said?.title || (request.lang === 'fr' ? 'Page d’exemple' : 'Sample page'), values, costUsd: 0.004 });
   }
 
   /** When « Vérifier le prix » last read each link: once a minute, as the server. */
@@ -931,7 +964,7 @@ export class FakeServer {
     await delay(1_100);
     const link = linkFromRecord(record);
     if (link.price === null) return jsonResponse({ outcome: 'hidden', price: null, currency: null, before: null, by: null, note: 'Claude n’a pas trouvé de prix sur cette page.' });
-    const amount = /merinos/.test(link.url) && link.priceBefore === null ? link.price - 10 : link.price;
+    const amount = /merino/.test(link.url) && link.priceBefore === null ? link.price - 10 : link.price;
     const update = priceUpdate({ ...link, priceCheckedAt: link.priceCheckedAt ?? link.createdAt, analyzedAt: null }, { amount, currency: link.currency }, now);
     this.write('link', link.id, { ...update.fields });
     const after = linkFromRecord(this.records.get(`link:${link.id}`)!.record);
@@ -946,14 +979,15 @@ export class FakeServer {
     await delay(500);
     const { link } = request;
     if (!this.seerr.keyHint) return jsonResponse({ url: seerrSearchUrl(this.seerr.url, link) ?? this.seerr.url, status: null, title: '' });
-    const there = /septembre/i.test(link.title);
+    const there = /septembre|september/i.test(link.title);
     return jsonResponse({ url: seerrPageUrl(this.seerr.url, link.kind === 'series' ? 'tv' : 'movie', there ? 81_312 : 92_407), status: there ? 'available' : link.kind === 'series' ? 'partial' : 'missing', title: `${link.title} (2025)` });
   }
 
   /**
    * `POST /api/pages/copies`: Pages makes the article into a page, as the server would read it: the
-   * link's card first, who wrote it and when, then a few blocks and its picture; the link's `copy`
-   * points at the page in the same change.
+   * link's card first, who wrote it and when, then a few blocks and its picture, in the article's own
+   * words (the demo's, in English) whatever the language; the link's `copy` points at the page in the
+   * same change.
    */
   private async copy(body: unknown): Promise<Response> {
     const request = parseCopyRequest(body);
@@ -972,13 +1006,13 @@ export class FakeServer {
     this.write('block', pageId, blockFields({ kind: 'page', parentId: null, position: keysBetween(tops[tops.length - 1] ?? null, null, 1)[0]!, createdAt: now, text: title, trashedAt: null }));
     const blocks: Omit<NewBlockFields, 'parentId' | 'position' | 'createdAt'>[] = [
       { kind: 'bookmark', target: { type: 'link', id: request.link.id } },
-      { kind: 'text', text: '{i:Claire Martin · 14 octobre 2026}' },
-      { kind: 'text', text: 'Il y a dix ans, ralentir une ville passait pour une lubie. Aujourd’hui, des dizaines de communes ont fait le pas, et les chiffres commencent à parler.' },
-      { kind: 'h2', text: 'Ce qui a changé' },
-      { kind: 'text', text: 'Moins de bruit, moins d’accidents graves, et des rues où {b:les enfants vont seuls à l’école}.' },
-      { kind: 'bullet', text: 'Zones à 30 km/h généralisées' },
-      { kind: 'bullet', text: 'Rues scolaires fermées aux voitures aux heures d’entrée' },
-      { kind: 'callout', text: '{i:« On a gagné du calme sans perdre de temps. »}' },
+      { kind: 'text', text: '{i:Claire Martin · 14 October 2026}' },
+      { kind: 'text', text: 'Ten years ago, slowing a city down passed for a fad. Today dozens of towns have taken the step, and the figures are starting to speak.' },
+      { kind: 'h2', text: 'What changed' },
+      { kind: 'text', text: 'Less noise, fewer serious accidents, and streets where {b:children walk to school on their own}.' },
+      { kind: 'bullet', text: '30 km/h zones across the whole town' },
+      { kind: 'bullet', text: 'School streets closed to cars at drop-off and pick-up times' },
+      { kind: 'callout', text: '{i:“We gained calm without losing any time.”}' },
     ];
     const keys = keysBetween(null, null, blocks.length);
     blocks.forEach((block, at) => this.write('block', createId(now), blockFields({ ...block, parentId: pageId, position: keys[at]!, createdAt: now })));
@@ -1117,7 +1151,7 @@ export class FakeServer {
   async handle(url: URL, init: RequestInit | undefined): Promise<Response> {
     const method = (init?.method ?? 'GET').toUpperCase();
     const json = (value: unknown): Response => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
-    if (url.pathname === '/api/health') return json({ ok: true, version: 'démo', apiVersion: 1, apps: this.apps, setup: this.setupDone, analysis: this.settings.enabled });
+    if (url.pathname === '/api/health') return json({ ok: true, version: 'demo', apiVersion: 1, apps: this.apps, setup: this.setupDone, analysis: this.settings.enabled });
     if (url.pathname === '/api/settings') {
       if (method === 'PUT') return this.updateSettings(JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>);
       await delay(80);

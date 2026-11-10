@@ -17,12 +17,12 @@ const PLACES: readonly Place[] = [
   place('12 Rue des Lilas', { street: '12 Rue des Lilas', postalCode: '75019', city: 'Paris', country: 'France' }, 48.877, 2.394),
   place('8 Quai de la Gare', { street: '8 Quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, 48.835, 2.373),
   place('Arkose Montreuil', { street: '33 Rue du Progrès', postalCode: '93100', city: 'Montreuil', country: 'France' }, 48.857, 2.436),
-  place('Cinéma du quartier', { street: '4 Rue de la Lune', postalCode: '75002', city: 'Paris', country: 'France' }, 48.87, 2.35),
+  place('The local cinema', { street: '4 Rue de la Lune', postalCode: '75002', city: 'Paris', country: 'France' }, 48.87, 2.35),
   place('Gare de Lyon', { street: 'Place Louis-Armand', postalCode: '75012', city: 'Paris', country: 'France' }, 48.844, 2.374),
   place('Gare Part-Dieu', { street: '5 Place Charles Béraudier', postalCode: '69003', city: 'Lyon', country: 'France' }, 45.761, 4.86),
   place('21 Baker Lane', { street: '21 Baker Lane', postalCode: 'NW1 6XE', city: 'London', country: 'United Kingdom' }, 51.523, -0.158),
   { label: 'Lyon, France', name: 'Lyon', detail: 'Auvergne-Rhône-Alpes, France', street: '', postalCode: '', city: 'Lyon', region: 'Auvergne-Rhône-Alpes', country: 'France', lat: 45.758, lon: 4.835 },
-  { label: 'Lisbonne, Portugal', name: 'Lisbonne', detail: 'Portugal', street: '', postalCode: '', city: 'Lisbonne', region: '', country: 'Portugal', lat: 38.722, lon: -9.139 },
+  { label: 'Lisbon, Portugal', name: 'Lisbon', detail: 'Portugal', street: '', postalCode: '', city: 'Lisbon', region: '', country: 'Portugal', lat: 38.722, lon: -9.139 },
   { label: 'Paris, France', name: 'Paris', detail: 'Île-de-France, France', street: '', postalCode: '', city: 'Paris', region: 'Île-de-France', country: 'France', lat: 48.857, lon: 2.352 },
 ];
 

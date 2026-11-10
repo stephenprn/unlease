@@ -3,7 +3,7 @@
  * sheets with the continuous corner, each app's mark on its pebble, Onde glyphs, threads in the link's
  * terracotta, Signika. Every value comes from `@unlease/design` (handed in as `design`) and the marks
  * from `web/build/brand.ts`; `readme-images.mjs` renders each page by day and by night. Their words are
- * English, the demo's English records where they show the demo (`web/demo/demoEnglish.ts`).
+ * English, the demo's own records where they show the demo (`web/demo/demoData.ts`).
  *
  * One spacing scale for all of them (`--gap-*`): a picture at README size must breathe, so a card holds
  * few things, with room around each, and threads get room to curve between sheets.

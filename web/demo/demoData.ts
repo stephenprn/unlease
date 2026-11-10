@@ -1,7 +1,8 @@
 /**
- * The dev demo's notes, lines, links, pages and contacts: synthetic French content, written
- * through the library's own door with past times, so cards say "Modifiée hier"
- * and lines sort as they would after a few weeks of use. Development only.
+ * The dev demo's notes, lines, links, pages and contacts: synthetic content written in English,
+ * whatever the interface's language (it follows the browser, or `?lang=`); people, streets, wines and
+ * a few places keep their own names. Written through the library's own door with past times, so cards
+ * say they were edited yesterday and lines sort as they would after a few weeks of use. Development only.
  */
 import { shiftDay } from '@unlease/core/services/dates';
 import { finishStroke, serializeStrokes } from '@unlease/notes/services/drawing';
@@ -14,7 +15,6 @@ import { kindTemplateId, presetNames, templateSignature } from '@unlease/notes/s
 import { blockFields } from '@unlease/pages/sync/entities';
 import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entities';
 import { calendarChanges } from './demoCalendar';
-import { inEnglish } from './demoEnglish';
 import type { BlockKind, BlockTarget, CellValue, TableColumn } from '@unlease/pages/models/blocks';
 import type { LineColor, NotePattern } from '@unlease/design/colors';
 import type { DrawingInk, DrawingSize, DrawingTool } from '@unlease/notes/models/drawing';
@@ -84,30 +84,37 @@ interface LinkSeed {
 }
 
 /**
- * « Modèles de fiche »: one of the person's own, « Vin », that « Vins » reads its links with, and the
- * recipe kind's changed (« Végétarien » added), so the list shows « Modifié » and the recipe kept in
- * « Non classé », read with the preset, offers « Relire ». Stored in French, as the demo's readings.
+ * « Ce que Claude relève »: "Wines" notes its own facts on its links (a list named "Wine"), and the
+ * recipe kind's usual facts are changed ("Vegetarian" added), so the overview shows « Modifiées » and
+ * the recipe kept in « Non classé », noted with the preset, offers « Relever à nouveau ». Stored in
+ * English, as the demo's readings.
  */
 export const DEMO_WINE_TEMPLATE = 'demo-template-vin';
 const field = (id: string, name: string, type: TemplateField['type'], hint = ''): TemplateField => ({ id, name, type, hint });
 const WINE_FIELDS: readonly TemplateField[] = [
-  field('domaine', 'Domaine', 'text', 'Le domaine ou le château qui le produit'),
-  field('millesime', 'Millésime', 'number', 'L’année de la vendange'),
-  field('cepages', 'Cépages', 'list'),
-  field('region', 'Région', 'text', 'L’appellation, ou la région'),
-  field('accords', 'Accords', 'text', 'Les plats avec lesquels le servir'),
+  field('domaine', 'Estate', 'text', 'The estate or château that makes it'),
+  field('millesime', 'Vintage', 'number', 'The vintage year'),
+  field('cepages', 'Grapes', 'list'),
+  field('region', 'Region', 'text', 'The appellation, or the region'),
+  field('accords', 'Pairings', 'text', 'The dishes to serve it with'),
 ];
+/** The recipe kind's preset fields as an English speaker keeps them, by id (written out: `tools/demo/seed-server.ts` runs without the dictionary). */
+const RECIPE_ENGLISH: Readonly<Record<string, readonly [name: string, hint: string]>> = {
+  totalTime: ['Total time', 'Preparation and cooking included'],
+  servings: ['Servings', 'For how many people, or how many pieces'],
+  difficulty: ['Difficulty', 'Easy, medium or hard'],
+};
 const RECIPE_FIELDS: readonly TemplateField[] = [
-  ...KIND_TEMPLATES.recipe.map(preset => field(preset.id, presetNames(preset).fr, preset.type, preset.hint)),
-  field('vegetarien', 'Végétarien', 'yesno', 'Sans viande ni poisson'),
+  ...KIND_TEMPLATES.recipe.map(preset => field(preset.id, RECIPE_ENGLISH[preset.id]?.[0] ?? presetNames(preset).en, preset.type, RECIPE_ENGLISH[preset.id]?.[1] ?? preset.hint)),
+  field('vegetarien', 'Vegetarian', 'yesno', 'No meat or fish'),
 ];
 const WINE_READ = templateSignature(WINE_FIELDS);
 
 const LABELS = [
-  { id: 'demo-label-perso', name: 'Perso', color: 'blue' as const },
-  { id: 'demo-label-travail', name: 'Travail', color: 'orange' as const },
-  { id: 'demo-label-maison', name: 'Maison', color: 'green' as const },
-  { id: 'demo-label-idees', name: 'Idées', color: 'lilac' as const },
+  { id: 'demo-label-perso', name: 'Personal', color: 'blue' as const },
+  { id: 'demo-label-travail', name: 'Work', color: 'orange' as const },
+  { id: 'demo-label-maison', name: 'Home', color: 'green' as const },
+  { id: 'demo-label-idees', name: 'Ideas', color: 'lilac' as const },
 ];
 
 const at = (now: number, days: number, hour: number, minute = 0): number => {
@@ -153,7 +160,7 @@ const ring = (cx: number, cy: number, r: number, from = 0, to = 360): [number, n
     return [cx + Math.cos(angle) * r, cy + Math.sin(angle) * r];
   });
 
-/** « Plan du potager »: beds, a path, the sun and where the water is. */
+/** "Vegetable garden plan": beds, a path, the sun and where the water is. */
 const GARDEN = sketch(7, [
   [['pen', 1, 'ink'], [[90, 140], [470, 130], [480, 420], [95, 430], [90, 140]]],
   [['pen', 1, 'ink'], [[560, 150], [910, 140], [905, 430], [555, 420], [560, 150]]],
@@ -186,35 +193,35 @@ const ROUTE = sketch(11, [
 
 /** Board order, first to last. */
 const NOTES: readonly NoteSeed[] = [
-  { id: 'demo-portail', kind: 'text', title: 'Code du portail', body: 'Portail : 4512B\nInterphone : Martin, 3e gauche', labels: ['demo-label-perso'], pinned: true, ago: 2 * DAY },
+  { id: 'demo-portail', kind: 'text', title: 'Gate code', body: 'Gate: 4512B\nIntercom: Martin, 3rd floor left', labels: ['demo-label-perso'], pinned: true, ago: 2 * DAY },
   {
     id: 'demo-courses',
     kind: 'checklist',
-    title: 'Courses samedi',
+    title: 'Saturday shopping',
     labels: ['demo-label-maison'],
     pinned: true,
     ago: 3 * DAY,
     checks: [
-      ['Lait d’avoine', false],
-      ['Pain de seigle', false],
-      ['Tomates cerises', false],
+      ['Oat milk', false],
+      ['Rye bread', false],
+      ['Cherry tomatoes', false],
       ['Parmesan', false],
-      ['Café en grains', false],
-      ['Citrons', false],
-      ['Œufs', true],
-      ['Beurre demi-sel', true],
+      ['Coffee beans', false],
+      ['Lemons', false],
+      ['Eggs', true],
+      ['Salted butter', true],
     ],
   },
-  { id: 'line-films', kind: 'links', title: 'Films & séries', code: 'F', color: 'violet', hint: 'Films et séries à voir, au cinéma ou en streaming.', pinned: true, ago: 35 * DAY },
-  { id: 'demo-resto', kind: 'text', title: 'Anniversaire de Léa', rich: true, body: 'Réserver pour six samedi soir, plutôt vers Oberkampf. Demander à {@contact=demo-contact-lea} si elle préfère italien ou libanais.', color: 'orange', people: ['demo-contact-lea'], reminder: now => at(now, 1, 18), ago: 40 * MINUTE },
-  { id: 'demo-garage', kind: 'text', title: 'Appeler le garage', body: 'Contrôle technique avant le 30. Demander s’ils font aussi la vidange.', reminder: now => at(now, 1, 9), ago: 5 * HOUR },
-  { id: 'demo-mutuelle', kind: 'text', title: 'Renvoyer le formulaire de la mutuelle', body: 'Signé, avec le RIB. L’enveloppe est dans l’entrée.', reminder: now => at(now, -1, 18), ago: 4 * DAY },
+  { id: 'line-films', kind: 'links', title: 'Films & series', code: 'F', color: 'violet', hint: 'Films and series to watch, at the cinema or streaming.', pinned: true, ago: 35 * DAY },
+  { id: 'demo-resto', kind: 'text', title: 'Léa’s birthday', rich: true, body: 'Book a table for six on Saturday evening, around Oberkampf. Ask {@contact=demo-contact-lea} whether she’d like Italian or Lebanese.', color: 'orange', people: ['demo-contact-lea'], reminder: now => at(now, 1, 18), ago: 40 * MINUTE },
+  { id: 'demo-garage', kind: 'text', title: 'Call the garage', body: 'Car inspection before the 30th. Ask whether they change the oil too.', reminder: now => at(now, 1, 9), ago: 5 * HOUR },
+  { id: 'demo-mutuelle', kind: 'text', title: 'Send back the health insurance form', body: 'Signed, with the bank details. The envelope is in the hall.', reminder: now => at(now, -1, 18), ago: 4 * DAY },
   {
     id: 'demo-lyon',
     kind: 'text',
-    title: 'Week-end à Lyon',
+    title: 'Weekend in Lyon',
     rich: true,
-    body: '# Samedi\nArrivée à {b:10 h 12}, gare de la Part-Dieu.\nDéjeuner au {i:Café des Fédérations}, la table est réservée.\n## Dimanche\nMarché du quai Saint-Antoine, puis {u:la colline de Fourvière} à pied.\n### À ne pas oublier\nLes {b:billets retour} et le chargeur.',
+    body: '# Saturday\nArrive at {b:10:12}, Part-Dieu station.\nLunch at {i:Café des Fédérations}, the table is booked.\n## Sunday\nQuai Saint-Antoine market, then {u:Fourvière hill} on foot.\n### Don’t forget\nThe {b:return tickets} and the charger.',
     color: 'sky',
     labels: ['demo-label-perso'],
     ago: 3 * HOUR,
@@ -222,33 +229,33 @@ const NOTES: readonly NoteSeed[] = [
   {
     id: 'demo-cadeaux',
     kind: 'checklist',
-    title: 'Idées cadeaux Maman',
+    title: 'Gift ideas for Mum',
     color: 'lilac',
     labels: ['demo-label-idees'],
     ago: 1 * DAY,
     checks: [
-      ['Un atelier de céramique', false],
-      ['Un plaid en laine', false],
-      ['Un livre de photographies de jardins', false],
-      ['Une journée au spa', true],
+      ['A ceramics workshop', false],
+      ['A wool throw', false],
+      ['A photo book of gardens', false],
+      ['A day at the spa', true],
     ],
   },
   {
     id: 'demo-rive',
     kind: 'text',
-    title: 'Réunion projet Rive',
-    body: 'Points à aborder :\n- budget du dernier trimestre\n- planning des livraisons\n- qui reprend le dossier client en janvier ?',
+    title: 'Rive project meeting',
+    body: 'To cover:\n- last quarter’s budget\n- the delivery schedule\n- who takes over the client file in January?',
     labels: ['demo-label-travail'],
     reminder: now => at(now, 2, 9, 30),
     ago: 6 * DAY,
   },
-  { id: 'demo-potager', kind: 'drawing', title: 'Plan du potager', drawing: GARDEN, pattern: 'grid', labels: ['demo-label-maison'], ago: 7 * HOUR },
-  { id: 'demo-balcon', kind: 'text', title: 'Plan du balcon', body: 'Jasmin étoilé côté mur, trois pots de basilic, tomates cerises si le soleil suffit.', color: 'green', photo: 'demo-balcony', ago: 5 * DAY },
+  { id: 'demo-potager', kind: 'drawing', title: 'Vegetable garden plan', drawing: GARDEN, pattern: 'grid', labels: ['demo-label-maison'], ago: 7 * HOUR },
+  { id: 'demo-balcon', kind: 'text', title: 'Balcony plan', body: 'Star jasmine along the wall, three pots of basil, cherry tomatoes if the sun is enough.', color: 'green', photo: 'demo-balcony', ago: 5 * DAY },
   {
     id: 'demo-crepes',
     kind: 'text',
-    title: 'Pâte à crêpes',
-    body: '250 g de farine\n4 œufs\n50 cl de lait\n1 pincée de sel\n2 cuillères à soupe de sucre\n50 g de beurre fondu\n\nMélanger la farine et les œufs, ajouter le lait petit à petit en fouettant. Laisser reposer une heure. Cuire à feu moyen, une louche par crêpe, en retournant dès que les bords dorent.',
+    title: 'Crêpe batter',
+    body: '250 g flour\n4 eggs\n500 ml milk\n1 pinch of salt\n2 tablespoons sugar\n50 g melted butter\n\nMix the flour and the eggs, then whisk in the milk a little at a time. Leave to rest for an hour. Cook over a medium heat, one ladle per crêpe, turning as soon as the edges turn golden.',
     color: 'yellow',
     labels: ['demo-label-maison'],
     ago: 12 * DAY,
@@ -256,297 +263,296 @@ const NOTES: readonly NoteSeed[] = [
   {
     id: 'demo-valise',
     kind: 'checklist',
-    title: 'Valise Lisbonne',
+    title: 'Lisbon packing',
     color: 'sky',
     labels: ['demo-label-perso'],
     ago: 20 * DAY,
     checks: [
-      ['Passeport', false],
-      ['Adaptateur', false],
-      ['Maillot de bain', false],
-      ['Crème solaire', false],
-      ['Chargeur', false],
-      ['Lunettes de soleil', false],
-      // eslint-disable-next-line no-restricted-syntax -- a notebook to pack, not the app
-      ['Carnet', false],
-      ['Billets imprimés', true],
-      ['Réservation de l’hôtel', true],
+      ['Passport', false],
+      ['Adapter', false],
+      ['Swimsuit', false],
+      ['Sunscreen', false],
+      ['Charger', false],
+      ['Sunglasses', false],
+      ['Notebook', false],
+      ['Printed tickets', true],
+      ['Hotel booking', true],
     ],
   },
-  { id: 'demo-citation', kind: 'text', title: '', body: '« Ce n’est pas le temps qui manque, c’est nous qui lui manquons. »\nÀ retrouver : qui l’a écrit ?', labels: ['demo-label-idees'], ago: 30 * DAY },
-  { id: 'demo-velo', kind: 'text', title: 'Vélo', body: 'Pneu arrière à changer, 700×28. Garder la chambre à air de secours.', ago: 26 * DAY },
+  { id: 'demo-citation', kind: 'text', title: '', body: '“We don’t lack time; time lacks us.”\nTo look up: who wrote it?', labels: ['demo-label-idees'], ago: 30 * DAY },
+  { id: 'demo-velo', kind: 'text', title: 'Bike', body: 'Rear tyre to replace, 700×28. Keep the spare inner tube.', ago: 26 * DAY },
   // « Suivi des prix » switched on, with the defaults: its products' prices are read each day.
-  { id: 'line-mode', kind: 'links', title: 'Mode', code: 'M', color: 'magenta', hint: 'Vêtements, chaussures et accessoires à acheter.', modules: [...DEFAULT_MODULES, PRICE_WATCH], ago: 35 * DAY },
-  { id: 'line-restos', kind: 'links', title: 'Restaurants', code: 'R', color: 'orange', hint: 'Restaurants, cafés et bars à essayer.', ago: 35 * DAY },
-  { id: 'line-lire', kind: 'links', title: 'À lire', code: 'L', color: 'blue', hint: 'Articles, essais et livres à lire.', ago: 35 * DAY },
-  { id: 'line-maison', kind: 'links', title: 'Maison', code: 'H', color: 'green', hint: 'Meubles, déco et objets pour la maison.', modules: [...DEFAULT_MODULES, PRICE_WATCH], ago: 35 * DAY },
-  { id: 'line-voyages', kind: 'links', title: 'Voyages', code: 'V', color: 'sky', hint: 'Lieux, hôtels et idées de voyage.', ago: 35 * DAY },
-  { id: 'line-cadeaux', kind: 'links', title: 'Cadeaux', code: 'C', color: 'red', hint: 'Des idées de cadeaux pour vos proches, gardées depuis Contacts.', ago: 30 * DAY },
-  { id: 'line-vins', kind: 'links', title: 'Vins', code: 'V', color: 'lilac', hint: 'Les bouteilles à goûter, à offrir ou à racheter.', templateId: DEMO_WINE_TEMPLATE, ago: 20 * DAY },
-  { id: 'demo-wifi', kind: 'text', title: 'Ancien wifi', body: 'Réseau : Maison-5G\nÀ supprimer de la box.', archived: true, ago: 60 * DAY },
-  { id: 'demo-brouillon', kind: 'text', title: 'Brouillon de lettre', body: 'Madame, Monsieur, je me permets de…', trashedAgo: 2 * DAY, ago: 9 * DAY },
+  { id: 'line-mode', kind: 'links', title: 'Fashion', code: 'F', color: 'magenta', hint: 'Clothes, shoes and accessories to buy.', modules: [...DEFAULT_MODULES, PRICE_WATCH], ago: 35 * DAY },
+  { id: 'line-restos', kind: 'links', title: 'Restaurants', code: 'R', color: 'orange', hint: 'Restaurants, cafés and bars to try.', ago: 35 * DAY },
+  { id: 'line-lire', kind: 'links', title: 'To read', code: 'T', color: 'blue', hint: 'Articles, essays and books to read.', ago: 35 * DAY },
+  { id: 'line-maison', kind: 'links', title: 'Home', code: 'H', color: 'green', hint: 'Furniture, decor and things for the home.', modules: [...DEFAULT_MODULES, PRICE_WATCH], ago: 35 * DAY },
+  { id: 'line-voyages', kind: 'links', title: 'Travel', code: 'T', color: 'sky', hint: 'Places, hotels and travel ideas.', ago: 35 * DAY },
+  { id: 'line-cadeaux', kind: 'links', title: 'Gifts', code: 'G', color: 'red', hint: 'Gift ideas for the people close to you, kept from Contacts.', ago: 30 * DAY },
+  { id: 'line-vins', kind: 'links', title: 'Wines', code: 'W', color: 'lilac', hint: 'Bottles to taste, give or buy again.', templateId: DEMO_WINE_TEMPLATE, ago: 20 * DAY },
+  { id: 'demo-wifi', kind: 'text', title: 'Old wifi', body: 'Network: Home-5G\nTo delete from the router.', archived: true, ago: 60 * DAY },
+  { id: 'demo-brouillon', kind: 'text', title: 'Draft letter', body: 'Dear Sir or Madam, I am writing to…', trashedAgo: 2 * DAY, ago: 9 * DAY },
 ];
 
 /** Each line's links, first to last. */
 const LINKS: readonly LinkSeed[] = [
   {
     line: 'line-vins',
-    url: 'https://www.cave-des-coteaux.fr/vins/saumur-champigny-les-terres-rouges-2020',
+    url: 'https://www.hillside-cellar.example/wines/saumur-champigny-les-terres-rouges-2020',
     ago: 6 * DAY,
     title: 'Saumur-Champigny Les Terres rouges 2020',
     kind: 'product',
-    siteName: 'Cave des coteaux',
-    summary: 'Un rouge de Loire souple et fruité, élevé en cuve, à boire frais dans les trois ans.',
+    siteName: 'Hillside Cellar',
+    summary: 'A supple, fruity Loire red, aged in vats, to drink cool within three years.',
     price: 14.5,
     attributes: [
-      { label: 'Domaine', value: 'Domaine des Varinelles' },
-      { label: 'Millésime', value: '2020' },
-      { label: 'Cépages', value: 'Cabernet franc' },
-      { label: 'Région', value: 'Saumur-Champigny, Loire' },
-      { label: 'Accords', value: 'Charcuterie, volaille rôtie' },
+      { label: 'Estate', value: 'Domaine des Varinelles' },
+      { label: 'Vintage', value: '2020' },
+      { label: 'Grapes', value: 'Cabernet franc' },
+      { label: 'Region', value: 'Saumur-Champigny, Loire' },
+      { label: 'Pairings', value: 'Charcuterie, roast poultry' },
     ],
     readWith: WINE_READ,
   },
   {
     line: 'line-vins',
-    url: 'https://www.cave-des-coteaux.fr/vins/chablis-premier-cru-montmains-2021',
+    url: 'https://www.hillside-cellar.example/wines/chablis-premier-cru-montmains-2021',
     ago: 12 * DAY,
     title: 'Chablis premier cru Montmains 2021',
     kind: 'product',
-    siteName: 'Cave des coteaux',
-    summary: 'Un blanc de Bourgogne tendu et minéral, sur des notes d’agrumes.',
+    siteName: 'Hillside Cellar',
+    summary: 'A taut, mineral white Burgundy with notes of citrus.',
     price: 27,
     attributes: [
-      { label: 'Domaine', value: 'Domaine Laroche' },
-      { label: 'Millésime', value: '2021' },
-      { label: 'Cépages', value: 'Chardonnay' },
-      { label: 'Région', value: 'Chablis, Bourgogne' },
-      { label: 'Accords', value: 'Huîtres, poisson grillé' },
+      { label: 'Estate', value: 'Domaine Laroche' },
+      { label: 'Vintage', value: '2021' },
+      { label: 'Grapes', value: 'Chardonnay' },
+      { label: 'Region', value: 'Chablis, Burgundy' },
+      { label: 'Pairings', value: 'Oysters, grilled fish' },
     ],
     readWith: WINE_READ,
-    comment: 'Pour le réveillon.',
+    comment: 'For New Year’s Eve.',
   },
   {
     line: 'line-cadeaux',
-    url: 'https://www.librairie-des-jardins.fr/jardins-de-lumiere',
+    url: 'https://www.garden-books.example/gardens-of-light',
     ago: 2 * DAY,
-    title: 'Jardins de lumière',
+    title: 'Gardens of Light',
     kind: 'book',
-    siteName: 'Librairie des jardins',
-    summary: 'Un beau livre de photographies : cinquante jardins d’Europe au fil des saisons.',
+    siteName: 'Garden Books',
+    summary: 'A beautiful photo book: fifty European gardens through the seasons.',
     price: 45,
-    attributes: [{ label: 'Auteur', value: 'Claire Dumas' }],
+    attributes: [{ label: 'Author', value: 'Claire Dumas' }],
     people: ['demo-contact-lea'],
   },
   {
     line: 'line-cadeaux',
-    url: 'https://www.atelier-nord.fr/cahier-cuir',
+    url: 'https://www.northside-atelier.example/engraved-leather-notebook',
     ago: 5 * DAY,
-    title: 'Cahier en cuir gravé',
+    title: 'Engraved leather notebook',
     kind: 'product',
-    siteName: 'Atelier Nord',
+    siteName: 'Northside Atelier',
     price: 32,
-    attributes: [{ label: 'Matière', value: 'Cuir végétal' }],
+    attributes: [{ label: 'Material', value: 'Vegan leather' }],
     people: ['demo-contact-noah', 'demo-contact-sarah'],
   },
   {
     line: 'line-mode',
-    url: 'https://www.tissage-lent.fr/chemise-en-lin',
+    url: 'https://www.slow-loom.example/linen-shirt',
     ago: 3 * MINUTE,
     status: 'pending',
   },
   {
     line: 'line-mode',
-    url: 'https://www.atelier-nord.fr/veste-laine-bouillie',
+    url: 'https://www.northside-atelier.example/boiled-wool-jacket',
     ago: 2 * DAY,
-    title: 'Veste en laine bouillie',
+    title: 'Boiled wool jacket',
     kind: 'product',
-    siteName: 'Atelier Nord',
-    summary: 'Veste droite en laine bouillie, doublure en coton, deux poches plaquées. Coupe un peu ample : prendre sa taille habituelle.',
+    siteName: 'Northside Atelier',
+    summary: 'A straight boiled-wool jacket, cotton lining, two patch pockets. A slightly loose cut: take your usual size.',
     price: 189,
     priceBefore: 215,
     priceChangedAgo: 1 * DAY,
     attributes: [
-      { label: 'Couleur', value: 'Camel' },
-      { label: 'Matière', value: 'Laine bouillie' },
-      { label: 'Tailles', value: 'S à XL' },
+      { label: 'Colour', value: 'Camel' },
+      { label: 'Material', value: 'Boiled wool' },
+      { label: 'Sizes', value: 'S to XL' },
     ],
     images: ['demo-jacket'],
-    comment: 'En M. Voir en boutique avant.',
+    comment: 'Size M. See it in the shop first.',
   },
   {
     line: 'line-mode',
-    url: 'https://www.pas-de-cote.fr/baskets-cuir-blanc',
+    url: 'https://www.side-step.example/white-leather-sneakers',
     ago: 4 * DAY,
-    title: 'Baskets en cuir blanc',
+    title: 'White leather sneakers',
     kind: 'product',
-    siteName: 'Pas de côté',
-    summary: 'Baskets basses en cuir pleine fleur, semelle cousue, fabriquées au Portugal.',
+    siteName: 'Side Step',
+    summary: 'Low-top full-grain leather sneakers with a stitched sole, made in Portugal.',
     price: 129,
     priceCheckedAgo: 5 * HOUR,
-    attributes: [{ label: 'Pointure', value: '42' }],
+    attributes: [{ label: 'Shoe size', value: '42' }],
     images: ['demo-sneakers'],
   },
   {
     line: 'line-mode',
-    url: 'https://boutique-fermee.fr/sac-cabas',
+    url: 'https://closed-shop.example/tote-bag',
     ago: 6 * DAY,
     status: 'failed',
+    // The server's own sentence, stored in French as the real server writes it: the apps show it in their language (`t`).
     error: 'Page protégée contre les robots',
   },
   {
     line: 'line-mode',
-    url: 'https://www.maille-et-fil.fr/pull-col-roule-merinos',
+    url: 'https://www.knit-and-purl.example/merino-roll-neck',
     ago: 8 * DAY,
-    title: 'Pull col roulé en mérinos',
+    title: 'Merino roll-neck jumper',
     kind: 'product',
-    siteName: 'Maille & Fil',
-    summary: 'Pull fin en laine mérinos extra-fine, col roulé, se porte seul ou sous une veste.',
+    siteName: 'Knit & Purl',
+    summary: 'A fine extra-fine merino roll-neck jumper, worn on its own or under a jacket.',
     price: 89.9,
-    attributes: [{ label: 'Couleur', value: 'Marine' }],
+    attributes: [{ label: 'Colour', value: 'Navy' }],
     images: ['demo-sweater'],
   },
   {
     line: 'line-mode',
-    url: 'https://www.atelier-nord.fr/echarpe-cachemire',
+    url: 'https://www.northside-atelier.example/cashmere-scarf',
     ago: 15 * DAY,
-    title: 'Écharpe en cachemire',
+    title: 'Cashmere scarf',
     kind: 'product',
-    siteName: 'Atelier Nord',
+    siteName: 'Northside Atelier',
     price: 75,
-    attributes: [{ label: 'Couleur', value: 'Bordeaux' }],
+    attributes: [{ label: 'Colour', value: 'Burgundy' }],
     images: ['demo-scarf'],
     doneAgo: 9 * DAY,
   },
   {
     line: 'line-films',
-    url: 'https://www.cinema-lumiere.fr/films/les-feux-de-septembre',
+    url: 'https://www.lumiere-cinema.example/films/september-fires',
     ago: 1 * DAY,
-    title: 'Les Feux de septembre',
+    title: 'September Fires',
     kind: 'film',
-    siteName: 'Cinéma Lumière',
-    summary: 'Dans un village de Provence, un été d’incendies rapproche deux frères brouillés. Drame lumineux, porté par ses deux acteurs.',
+    siteName: 'Lumière Cinema',
+    summary: 'In a village in Provence, a summer of wildfires brings two estranged brothers back together. A luminous drama, carried by its two leads.',
     attributes: [
-      { label: 'Durée', value: '1 h 52' },
-      { label: 'Genre', value: 'Drame' },
+      { label: 'Running time', value: '1h 52m' },
+      { label: 'Genre', value: 'Drama' },
     ],
     images: ['demo-poster1'],
   },
   {
     line: 'line-films',
-    url: 'https://www.ecrans-du-soir.fr/series/station-nord',
+    url: 'https://www.evening-screens.example/series/station-north',
     ago: 3 * DAY,
-    title: 'Station Nord, saison 2',
+    title: 'Station North, season 2',
     kind: 'series',
-    siteName: 'Écrans du soir',
-    summary: 'Polar dans une base scientifique de l’Arctique. La deuxième saison suit l’hiver polaire.',
-    attributes: [{ label: 'Épisodes', value: '8' }],
+    siteName: 'Evening Screens',
+    summary: 'A thriller on an Arctic research base. The second season follows the polar winter.',
+    attributes: [{ label: 'Episodes', value: '8' }],
     images: ['demo-poster2'],
   },
   {
     line: 'line-films',
-    url: 'https://www.cinema-lumiere.fr/films/le-dernier-quai',
+    url: 'https://www.lumiere-cinema.example/films/the-last-platform',
     ago: 18 * DAY,
-    title: 'Le Dernier Quai',
+    title: 'The Last Platform',
     kind: 'film',
-    siteName: 'Cinéma Lumière',
+    siteName: 'Lumière Cinema',
     images: ['demo-poster4'],
     doneAgo: 11 * DAY,
   },
   {
     line: 'line-restos',
-    url: 'https://www.le-comptoir-des-halles.fr',
+    url: 'https://www.the-market-counter.example',
     ago: 2 * DAY,
-    title: 'Le Comptoir des Halles',
+    title: 'The Market Counter',
     kind: 'restaurant',
-    siteName: 'Le Comptoir des Halles',
-    summary: 'Bistrot de quartier, cuisine du marché, ardoise qui change chaque jour.',
+    siteName: 'The Market Counter',
+    summary: 'Neighbourhood bistro, market cooking, a menu board that changes every day.',
     attributes: [
-      { label: 'Cuisine', value: 'Bistrot' },
-      { label: 'Quartier', value: 'Châtelet' },
-      { label: 'Prix', value: '25 à 40 € par personne' },
+      { label: 'Cuisine', value: 'Bistro' },
+      { label: 'Neighbourhood', value: 'Châtelet' },
+      { label: 'Price', value: '€25 to €40 a head' },
     ],
     images: ['demo-plate'],
   },
   {
     line: 'line-restos',
-    url: 'https://www.mezze-and-co.fr',
+    url: 'https://www.mezze-and-co.example',
     ago: 9 * DAY,
     title: 'Mezze & Co',
     kind: 'restaurant',
     siteName: 'Mezze & Co',
-    attributes: [{ label: 'Cuisine', value: 'Libanaise' }],
+    attributes: [{ label: 'Cuisine', value: 'Lebanese' }],
     images: ['demo-mezze'],
   },
   {
     line: 'line-lire',
-    url: 'https://www.revue-urbaine.fr/pourquoi-les-villes-ralentissent',
+    url: 'https://www.urban-review.example/why-cities-are-slowing-down',
     ago: 4 * DAY,
-    title: 'Pourquoi les villes ralentissent',
+    title: 'Why cities are slowing down',
     kind: 'article',
-    siteName: 'La Revue urbaine',
-    summary: 'Zones à 30 km/h, rues scolaires, places rendues aux piétons : une enquête sur dix ans de villes plus lentes.',
-    attributes: [{ label: 'Lecture', value: '12 min' }],
+    siteName: 'The Urban Review',
+    summary: '30 km/h zones, school streets, squares given back to pedestrians: an inquiry into ten years of slower cities.',
+    attributes: [{ label: 'Reading time', value: '12 min' }],
     images: ['demo-article'],
   },
   {
     line: 'line-maison',
-    url: 'https://www.maison-clair.fr/lampe-de-bureau-articulee',
+    url: 'https://www.clair-home.example/adjustable-desk-lamp',
     ago: 7 * DAY,
-    title: 'Lampe de bureau articulée',
+    title: 'Adjustable desk lamp',
     kind: 'product',
-    siteName: 'Maison Clair',
+    siteName: 'Clair Home',
     price: 64,
     priceBefore: 59,
     priceChangedAgo: 3 * DAY,
-    attributes: [{ label: 'Couleur', value: 'Jaune moutarde' }],
+    attributes: [{ label: 'Colour', value: 'Mustard yellow' }],
     images: ['demo-lamp'],
   },
   {
     line: 'line-voyages',
-    url: 'https://www.gites-des-lacs.fr/annecy-bord-du-lac',
+    url: 'https://www.lakeside-cottages.example/annecy-lakeside',
     ago: 10 * DAY,
-    title: 'Gîte au bord du lac d’Annecy',
+    title: 'Cottage on Lake Annecy',
     kind: 'place',
-    siteName: 'Gîtes des lacs',
+    siteName: 'Lakeside Cottages',
     price: 145,
-    attributes: [{ label: 'Capacité', value: '4 personnes' }],
+    attributes: [{ label: 'Capacity', value: '4 people' }],
     images: ['demo-lake'],
   },
   {
     line: INBOX_ID,
-    url: 'https://www.carnet-de-route.fr/trois-jours-a-porto',
+    url: 'https://www.travel-notes.example/three-days-in-porto',
     ago: 5 * HOUR,
-    title: 'Trois jours à Porto, carnet de route',
+    title: 'Three days in Porto, a travel journal',
     kind: 'article',
-    // eslint-disable-next-line no-restricted-syntax -- a travel blog's name, not the app
-    siteName: 'Carnet de route',
+    siteName: 'Travel Notes',
   },
   {
     // Saved while reading was off: kept plain until someone asks for it to be read.
     line: INBOX_ID,
-    url: 'https://www.maille-et-fil.fr/bonnet-cotes-anglaises',
+    url: 'https://www.knit-and-purl.example/fisherman-rib-beanie',
     ago: 2 * DAY,
     status: 'skipped',
   },
   {
     // The same evening: two kept unread, so the collection offers to read them all.
     line: INBOX_ID,
-    url: 'https://www.revue-urbaine.fr/le-retour-des-tramways',
+    url: 'https://www.urban-review.example/the-return-of-trams',
     ago: 2 * DAY + 20 * MINUTE,
     status: 'skipped',
   },
   {
     line: INBOX_ID,
-    url: 'https://www.cuisine-du-jour.fr/recettes/tarte-fine-aux-pommes',
+    url: 'https://www.todays-kitchen.example/recipes/thin-apple-tart',
     ago: 3 * DAY,
-    title: 'Tarte fine aux pommes',
+    title: 'Thin apple tart',
     kind: 'recipe',
-    siteName: 'Cuisine du jour',
-    summary: 'Une pâte feuilletée, quatre pommes en lamelles fines, du beurre et du sucre : prête en quarante minutes.',
+    siteName: 'Today’s Kitchen',
+    summary: 'Puff pastry, four thinly sliced apples, butter and sugar: ready in forty minutes.',
     attributes: [
-      { label: 'Temps total', value: '40 min' },
-      { label: 'Portions', value: '6' },
+      { label: 'Total time', value: '40 min' },
+      { label: 'Servings', value: '6' },
     ],
   },
 ];
@@ -575,58 +581,58 @@ interface BlockSeed {
 const row = (cells: Readonly<Record<string, CellValue>>): BlockSeed => ({ kind: 'row', cells });
 
 const BUDGET: TableColumn[] = [
-  { id: 'poste', name: 'Poste', type: 'text', width: 220 },
-  { id: 'montant', name: 'Montant', type: 'number', unit: '€', width: 120 },
-  { id: 'paye', name: 'Payé', type: 'checkbox', width: 90 },
+  { id: 'poste', name: 'Item', type: 'text', width: 220 },
+  { id: 'montant', name: 'Amount', type: 'number', unit: '€', width: 120 },
+  { id: 'paye', name: 'Paid', type: 'checkbox', width: 90 },
   {
     id: 'categorie',
-    name: 'Catégorie',
+    name: 'Category',
     type: 'select',
     width: 150,
     options: [
       { id: 'transport', name: 'Transport', color: 'blue' },
-      { id: 'logement', name: 'Logement', color: 'lilac' },
-      { id: 'sorties', name: 'Sorties', color: 'orange' },
+      { id: 'logement', name: 'Lodging', color: 'lilac' },
+      { id: 'sorties', name: 'Outings', color: 'orange' },
     ],
   },
   { id: 'date', name: 'Date', type: 'date', width: 140 },
 ];
 
 const LECTURES: TableColumn[] = [
-  { id: 'titre', name: 'Titre', type: 'text', width: 220 },
-  { id: 'auteur', name: 'Auteur', type: 'text', width: 150 },
-  { id: 'note', name: 'Note', type: 'number', unit: '/5', width: 90 },
-  { id: 'lu', name: 'Lu', type: 'checkbox', width: 70 },
+  { id: 'titre', name: 'Title', type: 'text', width: 220 },
+  { id: 'auteur', name: 'Author', type: 'text', width: 150 },
+  { id: 'note', name: 'Rating', type: 'number', unit: '/5', width: 90 },
+  { id: 'lu', name: 'Read', type: 'checkbox', width: 70 },
   {
     id: 'genre',
     name: 'Genre',
     type: 'select',
     width: 120,
     options: [
-      { id: 'roman', name: 'Roman', color: 'pink' },
-      { id: 'essai', name: 'Essai', color: 'blue' },
-      { id: 'bd', name: 'BD', color: 'green' },
+      { id: 'roman', name: 'Novel', color: 'pink' },
+      { id: 'essai', name: 'Essay', color: 'blue' },
+      { id: 'bd', name: 'Comics', color: 'green' },
     ],
   },
   {
     id: 'themes',
-    name: 'Thèmes',
+    name: 'Themes',
     type: 'multi',
     width: 170,
     options: [
-      { id: 'mer', name: 'Mer', color: 'sky' },
-      { id: 'famille', name: 'Famille', color: 'lilac' },
-      { id: 'ville', name: 'Ville', color: 'ochre' },
+      { id: 'mer', name: 'Sea', color: 'sky' },
+      { id: 'famille', name: 'Family', color: 'lilac' },
+      { id: 'ville', name: 'City', color: 'ochre' },
     ],
   },
-  { id: 'fini', name: 'Terminé le', type: 'date', width: 140 },
-  { id: 'lien', name: 'Lien', type: 'url', width: 200 },
+  { id: 'fini', name: 'Finished on', type: 'date', width: 140 },
+  { id: 'lien', name: 'Link', type: 'url', width: 200 },
 ];
 
 const PROPORTIONS: TableColumn[] = [
-  { id: 'ingredient', name: 'Ingrédient', type: 'text', width: 200 },
-  { id: 'quantite', name: 'Quantité', type: 'number', unit: 'g', width: 120 },
-  { id: 'bio', name: 'Bio', type: 'checkbox', width: 80 },
+  { id: 'ingredient', name: 'Ingredient', type: 'text', width: 200 },
+  { id: 'quantite', name: 'Quantity', type: 'number', unit: 'g', width: 120 },
+  { id: 'bio', name: 'Organic', type: 'checkbox', width: 80 },
 ];
 
 /** A day of the Lisbon trip, counted from its Thursday six or seven weeks after the demo's day: ahead of it, and the days the page's words name. */
@@ -641,55 +647,55 @@ const PAGES: readonly BlockSeed[] = [
   {
     id: 'demo-page-lisbonne',
     kind: 'page',
-    text: 'Voyage à Lisbonne',
+    text: 'Trip to Lisbon',
     icon: '✈️',
     ago: 2 * DAY,
     children: [
-      { kind: 'text', text: 'Quatre jours, du {b:jeudi} au {b:dimanche}. L’hôtel est réservé près du {a=https\\://fr.wikipedia.org/wiki/Alfama:quartier de l’Alfama}. {@contact=demo-contact-lea} y a vécu : lui demander ses cafés.' },
-      { kind: 'callout', icon: '💡', color: 'yellow', text: 'Prendre le {b:tram 28} tôt le matin : après 10 h, il est bondé.' },
+      { kind: 'text', text: 'Four days, {b:Thursday} to {b:Sunday}. The hotel is booked near the {a=https\\://en.wikipedia.org/wiki/Alfama:Alfama district}. {@contact=demo-contact-lea} lived there: ask her for her cafés.' },
+      { kind: 'callout', icon: '💡', color: 'yellow', text: 'Take {b:tram 28} early in the morning: after 10am it’s packed.' },
       { kind: 'toc' },
-      { kind: 'h2', text: 'Préparatifs' },
-      { kind: 'todo', text: 'Réserver l’hôtel', checked: true },
-      { kind: 'todo', text: 'Acheter les billets d’avion', checked: true },
-      { kind: 'todo', text: 'Imprimer les cartes d’embarquement' },
-      { kind: 'todo', text: now => `Prévenir la banque : {@date=${shiftDay(now, 1)}}` },
-      { kind: 'todo', text: now => `Enregistrement en ligne : {@date=${tripDay(now, -1)}}` },
-      { kind: 'text', text: now => `Départ le {@date=${tripDay(now, 0)}T0715} depuis Orly, retour le {@date=${tripDay(now, 3)}}.` },
-      { kind: 'text', text: 'La liste de la valise est dans {@note=demo-valise}, et les idées de sorties dans {@note=line-voyages}.' },
+      { kind: 'h2', text: 'Getting ready' },
+      { kind: 'todo', text: 'Book the hotel', checked: true },
+      { kind: 'todo', text: 'Buy the plane tickets', checked: true },
+      { kind: 'todo', text: 'Print the boarding passes' },
+      { kind: 'todo', text: now => `Tell the bank: {@date=${shiftDay(now, 1)}}` },
+      { kind: 'todo', text: now => `Online check-in: {@date=${tripDay(now, -1)}}` },
+      { kind: 'text', text: now => `Leaving {@date=${tripDay(now, 0)}T0715} from Orly, back {@date=${tripDay(now, 3)}}.` },
+      { kind: 'text', text: 'The packing list is in {@note=demo-valise}, and ideas for outings in {@note=line-voyages}.' },
       { kind: 'h2', text: 'Budget' },
       {
         kind: 'table',
         columns: BUDGET,
         children: [
-          row({ poste: 'Vols aller-retour', montant: 186, paye: true, categorie: 'transport', date: '2026-03-02' }),
-          row({ poste: 'Hôtel, trois nuits', montant: 342, paye: true, categorie: 'logement', date: '2026-03-04' }),
-          row({ poste: 'Musée des Azulejos', montant: 10, paye: false, categorie: 'sorties' }),
-          row({ poste: 'Dîner fado', montant: 70, paye: false, categorie: 'sorties' }),
+          row({ poste: 'Return flights', montant: 186, paye: true, categorie: 'transport', date: '2026-03-02' }),
+          row({ poste: 'Hotel, three nights', montant: 342, paye: true, categorie: 'logement', date: '2026-03-04' }),
+          row({ poste: 'Azulejo Museum', montant: 10, paye: false, categorie: 'sorties' }),
+          row({ poste: 'Fado dinner', montant: 70, paye: false, categorie: 'sorties' }),
         ],
       },
-      { kind: 'h2', text: 'Itinéraire' },
-      { kind: 'drawing', drawing: ROUTE, caption: 'De l’hôtel au Tage, par la Baixa.' },
+      { kind: 'h2', text: 'Itinerary' },
+      { kind: 'drawing', drawing: ROUTE, caption: 'From the hotel to the Tagus, through the Baixa.' },
       {
         kind: 'columns',
         children: [
-          { kind: 'column', children: [{ kind: 'h3', text: 'Jeudi' }, { kind: 'bullet', text: 'Arrivée vers 11 h' }, { kind: 'bullet', text: 'Alfama et le {i:miradouro} de Santa Luzia' }, { kind: 'bullet', text: 'Dîner fado' }] },
-          { kind: 'column', children: [{ kind: 'h3', text: 'Vendredi' }, { kind: 'bullet', text: 'Belém : le monastère, puis les pastéis' }, { kind: 'bullet', text: 'LX Factory en fin de journée' }] },
+          { kind: 'column', children: [{ kind: 'h3', text: 'Thursday' }, { kind: 'bullet', text: 'Arrive around 11am' }, { kind: 'bullet', text: 'Alfama and the Santa Luzia {i:miradouro}' }, { kind: 'bullet', text: 'Fado dinner' }] },
+          { kind: 'column', children: [{ kind: 'h3', text: 'Friday' }, { kind: 'bullet', text: 'Belém: the monastery, then pastéis' }, { kind: 'bullet', text: 'LX Factory in the evening' }] },
         ],
       },
-      { kind: 'toggle', text: 'Adresses utiles', children: [{ kind: 'text', text: 'Pharmacie : Rua Augusta, 98' }, { kind: 'text', text: 'Consulat : Rua de São Domingos à Lapa, 2' }] },
-      { kind: 'h3', text: 'Pour la suite du voyage' },
-      { kind: 'bookmark', target: { type: 'link', id: 'demo-link-inbox-0' }, caption: 'À lire avant de prendre le train pour Porto.' },
+      { kind: 'toggle', text: 'Useful addresses', children: [{ kind: 'text', text: 'Pharmacy: Rua Augusta, 98' }, { kind: 'text', text: 'Consulate: Rua de São Domingos à Lapa, 2' }] },
+      { kind: 'h3', text: 'For the rest of the trip' },
+      { kind: 'bookmark', target: { type: 'link', id: 'demo-link-inbox-0' }, caption: 'To read before the train to Porto.' },
       {
         id: 'demo-page-restos',
         kind: 'page',
-        text: 'Restaurants à tester',
+        text: 'Restaurants to try',
         icon: '🍽️',
         children: [
-          { kind: 'text', text: 'Ce que Claude a rangé dans {@note=line-restos}, à garder sous la main :' },
+          { kind: 'text', text: 'What Claude filed in {@note=line-restos}, to keep at hand:' },
           { kind: 'embed', target: { type: 'note', id: 'line-restos' } },
-          { kind: 'h3', text: 'À ne pas manquer' },
+          { kind: 'h3', text: 'Not to miss' },
           { kind: 'numbered', text: 'Pastéis de Belém' },
-          { kind: 'numbered', text: 'Cervejaria Ramiro, pour les crevettes' },
+          { kind: 'numbered', text: 'Cervejaria Ramiro, for the prawns' },
         ],
       },
     ],
@@ -697,64 +703,64 @@ const PAGES: readonly BlockSeed[] = [
   {
     id: 'demo-page-recettes',
     kind: 'page',
-    text: 'Recettes',
+    text: 'Recipes',
     icon: '🍳',
     ago: 12 * DAY,
     children: [
-      { kind: 'text', text: 'Les recettes testées et approuvées. Chacune a sa page ; les courses sont dans {@note=demo-courses}. La pâte à crêpes vient de {@contact=demo-contact-paul}.' },
+      { kind: 'text', text: 'Tried and approved recipes. Each has its own page; the shopping is in {@note=demo-courses}. The crêpe batter comes from {@contact=demo-contact-paul}.' },
       {
         id: 'demo-page-crepes',
         kind: 'page',
-        text: 'Pâte à crêpes',
+        text: 'Crêpe batter',
         icon: '🥞',
         children: [
           { kind: 'embed', target: { type: 'note', id: 'demo-crepes' } },
-          { kind: 'callout', icon: '🔥', color: 'orange', text: 'Laisser reposer la pâte {b:une heure} : elle n’en sera que meilleure.' },
+          { kind: 'callout', icon: '🔥', color: 'orange', text: 'Let the batter rest {b:an hour}: it will only be better for it.' },
         ],
       },
       {
         id: 'demo-page-levain',
         kind: 'page',
-        text: 'Pain au levain',
+        text: 'Sourdough bread',
         icon: '🍞',
         children: [
-          { kind: 'h2', text: 'Étapes' },
-          { kind: 'numbered', text: 'Rafraîchir le levain la veille au soir' },
-          { kind: 'numbered', text: 'Mélanger farine et eau, laisser reposer une heure ({i:autolyse})' },
-          { kind: 'numbered', text: 'Ajouter le levain et le sel, pétrir dix minutes' },
-          { kind: 'numbered', text: 'Pointage : quatre heures, avec des rabats toutes les 30 minutes' },
-          { kind: 'numbered', text: 'Façonner, puis une nuit au frigo' },
-          { kind: 'numbered', text: 'Cuire 20 minutes à 250 °C couvert, puis 25 minutes découvert' },
-          { kind: 'toggle', text: 'Si la pâte ne lève pas', children: [{ kind: 'bullet', text: 'Vérifier que le levain double en six heures' }, { kind: 'bullet', text: 'Allonger le pointage d’une heure' }] },
+          { kind: 'h2', text: 'Steps' },
+          { kind: 'numbered', text: 'Refresh the starter the night before' },
+          { kind: 'numbered', text: 'Mix the flour and water, rest for an hour ({i:autolyse})' },
+          { kind: 'numbered', text: 'Add the starter and the salt, knead for ten minutes' },
+          { kind: 'numbered', text: 'Bulk rise: four hours, with a fold every 30 minutes' },
+          { kind: 'numbered', text: 'Shape, then a night in the fridge' },
+          { kind: 'numbered', text: 'Bake 20 minutes at 250 °C covered, then 25 minutes uncovered' },
+          { kind: 'toggle', text: 'If the dough doesn’t rise', children: [{ kind: 'bullet', text: 'Check that the starter doubles in six hours' }, { kind: 'bullet', text: 'Let the bulk rise run an hour longer' }] },
           { kind: 'h2', text: 'Proportions' },
           {
             kind: 'table',
             columns: PROPORTIONS,
-            children: [row({ ingredient: 'Farine T80', quantite: 500, bio: true }), row({ ingredient: 'Eau', quantite: 350, bio: false }), row({ ingredient: 'Levain', quantite: 100, bio: true }), row({ ingredient: 'Sel', quantite: 10, bio: false })],
+            children: [row({ ingredient: 'T80 flour', quantite: 500, bio: true }), row({ ingredient: 'Water', quantite: 350, bio: false }), row({ ingredient: 'Starter', quantite: 100, bio: true }), row({ ingredient: 'Salt', quantite: 10, bio: false })],
           },
           // Three levels further down: a deep breadcrumb, folded on a narrow window.
           {
             id: 'demo-page-levain-maison',
             kind: 'page',
-            text: 'Levain maison, du démarrage à l’entretien',
+            text: 'A homemade sourdough starter, from the first day to its upkeep',
             icon: '🫙',
             children: [
-              { kind: 'text', text: 'Farine de seigle et eau à parts égales, cinq jours de suite, au chaud.' },
+              { kind: 'text', text: 'Rye flour and water in equal parts, five days running, somewhere warm.' },
               {
                 id: 'demo-page-levain-nourrir',
                 kind: 'page',
-                text: 'Nourrir le levain chaque semaine',
+                text: 'Feed the starter every week',
                 icon: '🥄',
                 children: [
-                  { kind: 'text', text: 'Une cuillère de levain, 50 g de farine, 50 g d’eau tiède.' },
+                  { kind: 'text', text: 'A spoonful of starter, 50 g flour, 50 g warm water.' },
                   {
                     id: 'demo-page-levain-calendrier',
                     kind: 'page',
-                    text: 'Calendrier des rafraîchis',
+                    text: 'Feeding schedule',
                     icon: '📅',
                     children: [
-                      { kind: 'text', text: 'Le dimanche soir, avant de le remettre au frigo.' },
-                      { kind: 'text', text: 'Le vendredi matin quand une fournée est prévue le samedi.' },
+                      { kind: 'text', text: 'On Sunday evening, before it goes back in the fridge.' },
+                      { kind: 'text', text: 'On Friday morning when a bake is planned for Saturday.' },
                     ],
                   },
                 ],
@@ -768,55 +774,55 @@ const PAGES: readonly BlockSeed[] = [
   {
     id: 'demo-page-technique',
     kind: 'page',
-    text: 'Notes techniques',
+    text: 'Tech notes',
     icon: '💻',
     ago: 5 * DAY,
     children: [
-      { kind: 'text', text: 'Ce qui me sert souvent sur le serveur de la maison.' },
-      { kind: 'h2', text: 'Sauvegarde' },
-      { kind: 'code', language: 'bash', text: 'rsync -avh --delete ~/Documents/ /mnt/sauvegarde/documents/\n\n# tous les soirs à 2 h\n0 2 * * * /usr/local/bin/sauvegarde.sh', caption: 'La ligne cron va dans crontab -e, sur le serveur.' },
-      { kind: 'h2', text: 'Petits scripts' },
+      { kind: 'text', text: 'What I often need on the home server.' },
+      { kind: 'h2', text: 'Backup' },
+      { kind: 'code', language: 'bash', text: 'rsync -avh --delete ~/Documents/ /mnt/backup/documents/\n\n# every night at 2am\n0 2 * * * /usr/local/bin/backup.sh', caption: 'The cron line goes in crontab -e, on the server.' },
+      { kind: 'h2', text: 'Small scripts' },
       { kind: 'code', language: 'typescript', text: "type Note = { title: string; tags: string[] };\n\nexport function byTag(notes: Note[], tag: string): Note[] {\n  return notes.filter(note => note.tags.includes(tag));\n}" },
-      { kind: 'code', language: 'python', text: "from pathlib import Path\n\n\ndef taille(dossier: str) -> int:\n    \"\"\"Octets occupés par un dossier.\"\"\"\n    return sum(f.stat().st_size for f in Path(dossier).rglob('*') if f.is_file())" },
-      { kind: 'text', text: 'Le port par défaut est {c:8080}, à changer dans le fichier {c:.env}.' },
-      { kind: 'callout', icon: '⚠️', color: 'red', text: 'Ne jamais mettre le jeton dans un dépôt.' },
-      { kind: 'h3', text: 'Dans les pages' },
-      { kind: 'bullet', text: '{b:/} ouvre le menu des blocs, {b:@} cite une note, une collection, un lien ou une page' },
-      { kind: 'bullet', text: '{i:Échap} sélectionne le bloc ; {b:Ctrl+Maj+↑} le remonte' },
-      { kind: 'bullet', text: 'Du {fg=blue:texte en bleu}, du {bg=yellow:surligné} et du {s:barré}' },
-      { kind: 'bullet', text: '{k:Ctrl+K} met un lien sur les mots choisis, {k:[[} cite une page et {k::} suivi d’un mot propose ses emoji' },
+      { kind: 'code', language: 'python', text: "from pathlib import Path\n\n\ndef size(folder: str) -> int:\n    \"\"\"Bytes a folder takes up.\"\"\"\n    return sum(f.stat().st_size for f in Path(folder).rglob('*') if f.is_file())" },
+      { kind: 'text', text: 'The default port is {c:8080}; change it in the {c:.env} file.' },
+      { kind: 'callout', icon: '⚠️', color: 'red', text: 'Never put the token in a repository.' },
+      { kind: 'h3', text: 'In the pages' },
+      { kind: 'bullet', text: '{b:/} opens the block menu, {b:@} cites a note, a collection, a link or a page' },
+      { kind: 'bullet', text: '{i:Esc} selects the block; {b:Ctrl+Shift+↑} moves it up' },
+      { kind: 'bullet', text: 'Some {fg=blue:blue text}, some {bg=yellow:highlighting} and some {s:strikethrough}' },
+      { kind: 'bullet', text: '{k:Ctrl+K} links the chosen words, {k:[[} cites a page and {k::} followed by a word offers its emoji' },
     ],
   },
   {
     id: 'demo-page-lectures',
     kind: 'page',
-    text: 'Lectures 2026',
+    text: 'Reading in 2026',
     icon: '📚',
     ago: 20 * DAY,
     children: [
-      { kind: 'text', text: 'Ce que je lis cette année, et ce que j’en ai pensé.' },
+      { kind: 'text', text: 'What I’m reading this year, and what I made of it.' },
       {
         kind: 'table',
         columns: LECTURES,
         children: [
-          row({ titre: 'La Nuit des phares', auteur: 'Inès Garnier', note: 4, lu: true, genre: 'roman', themes: ['mer', 'famille'], fini: '2026-02-11', lien: '' }),
-          row({ titre: 'Pourquoi les villes ralentissent', auteur: 'La Revue urbaine', note: 3.5, lu: true, genre: 'essai', themes: ['ville'], fini: '2026-03-20', lien: 'https://www.revue-urbaine.fr/pourquoi-les-villes-ralentissent' }),
-          row({ titre: 'Station Nord', auteur: '', note: null, lu: false, genre: 'bd', themes: ['mer'], fini: '', lien: '' }),
+          row({ titre: 'The Night of the Lighthouses', auteur: 'Inès Garnier', note: 4, lu: true, genre: 'roman', themes: ['mer', 'famille'], fini: '2026-02-11', lien: '' }),
+          row({ titre: 'Why cities are slowing down', auteur: 'The Urban Review', note: 3.5, lu: true, genre: 'essai', themes: ['ville'], fini: '2026-03-20', lien: 'https://www.urban-review.example/why-cities-are-slowing-down' }),
+          row({ titre: 'Station North', auteur: '', note: null, lu: false, genre: 'bd', themes: ['mer'], fini: '', lien: '' }),
         ],
       },
-      { kind: 'h2', text: 'À lire ensuite' },
+      { kind: 'h2', text: 'Read next' },
       { kind: 'embed', target: { type: 'note', id: 'line-lire' } },
-      { kind: 'text', text: 'Voir aussi {@page=demo-page-technique}.' },
+      { kind: 'text', text: 'See also {@page=demo-page-technique}.' },
     ],
   },
 ];
 // ── Contacts ────────────────────────────────────────────────────────────────
 
 const CONTACT_LABELS = [
-  { id: 'demo-clabel-famille', name: 'Famille', color: 'red' as const },
-  { id: 'demo-clabel-travail', name: 'Travail', color: 'blue' as const },
-  { id: 'demo-clabel-escalade', name: 'Escalade', color: 'green' as const },
-  { id: 'demo-clabel-voisins', name: 'Voisins', color: 'ochre' as const },
+  { id: 'demo-clabel-famille', name: 'Family', color: 'red' as const },
+  { id: 'demo-clabel-travail', name: 'Work', color: 'blue' as const },
+  { id: 'demo-clabel-escalade', name: 'Climbing', color: 'green' as const },
+  { id: 'demo-clabel-voisins', name: 'Neighbours', color: 'ochre' as const },
 ];
 
 interface ContactSeed {
@@ -839,16 +845,16 @@ interface ContactSeed {
 }
 
 const CONTACTS: readonly ContactSeed[] = [
-  { id: 'demo-contact-lea', first: 'Léa', last: 'Martin', phones: [['06 12 34 56 78', 'mobile']], emails: [['lea.martin@example.org', 'home']], birthday: { inDays: 3, year: 1991 }, labels: ['demo-clabel-famille'], favorite: true, photo: 'demo-portrait-1', note: 'Allergique aux noix. Préfère les appels le soir.', ago: 40 * DAY },
+  { id: 'demo-contact-lea', first: 'Léa', last: 'Martin', phones: [['06 12 34 56 78', 'mobile']], emails: [['lea.martin@example.org', 'home']], birthday: { inDays: 3, year: 1991 }, labels: ['demo-clabel-famille'], favorite: true, photo: 'demo-portrait-1', note: 'Allergic to nuts. Prefers calls in the evening.', ago: 40 * DAY },
   { id: 'demo-contact-paul', first: 'Paul', last: 'Martin', phones: [['06 98 76 54 32', 'mobile'], ['04 78 12 34 56', 'home']], address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France' }, birthday: '1962-11-28', labels: ['demo-clabel-famille'], favorite: true, ago: 40 * DAY },
-  { id: 'demo-contact-camille', first: 'Camille', last: 'Durand', company: 'Atelier Nord', job: 'Architecte', phones: [['07 11 22 33 44', 'mobile'], ['01 23 45 67 89', 'work']], emails: [['camille@atelier-nord.example', 'work']], address: { kind: 'work', street: '8 quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, labels: ['demo-clabel-travail'], photo: 'demo-portrait2-1', ago: 30 * DAY },
+  { id: 'demo-contact-camille', first: 'Camille', last: 'Durand', company: 'Northside Atelier', job: 'Architect', phones: [['07 11 22 33 44', 'mobile'], ['01 23 45 67 89', 'work']], emails: [['camille@atelier-nord.example', 'work']], address: { kind: 'work', street: '8 quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, labels: ['demo-clabel-travail'], photo: 'demo-portrait2-1', ago: 30 * DAY },
   { id: 'demo-contact-noah', first: 'Noah', last: 'Bernard', phones: [['06 55 44 33 22', 'mobile']], emails: [['noah.b@example.org', 'home']], birthday: { inDays: 12, year: 1994 }, labels: ['demo-clabel-escalade'], favorite: true, ago: 25 * DAY },
-  { id: 'demo-contact-ines', first: 'Inès', last: 'Lefèvre', company: 'Mairie du 3e', job: 'Chargée de mission', phones: [['04 72 00 11 22', 'work']], emails: [['ines.lefevre@example.org', 'work']], labels: ['demo-clabel-travail'], ago: 20 * DAY },
-  { id: 'demo-contact-hugo', first: 'Hugo', last: 'Moreau', phones: [['+44 7700 900123', 'mobile']], emails: [['hugo.moreau@example.co.uk', 'home']], address: { kind: 'home', street: '21 Baker Lane', postalCode: 'NW1 6XE', city: 'London', country: 'United Kingdom' }, birthday: '--04-17', labels: ['demo-clabel-escalade'], note: 'Rencontré au bloc de Fontainebleau.', ago: 18 * DAY },
+  { id: 'demo-contact-ines', first: 'Inès', last: 'Lefèvre', company: '3rd district town hall', job: 'Project officer', phones: [['04 72 00 11 22', 'work']], emails: [['ines.lefevre@example.org', 'work']], labels: ['demo-clabel-travail'], ago: 20 * DAY },
+  { id: 'demo-contact-hugo', first: 'Hugo', last: 'Moreau', phones: [['+44 7700 900123', 'mobile']], emails: [['hugo.moreau@example.co.uk', 'home']], address: { kind: 'home', street: '21 Baker Lane', postalCode: 'NW1 6XE', city: 'London', country: 'United Kingdom' }, birthday: '--04-17', labels: ['demo-clabel-escalade'], note: 'Met at the Fontainebleau boulders.', ago: 18 * DAY },
   { id: 'demo-contact-chloe', first: 'Chloé', last: 'Petit', phones: [['06 01 02 03 04', 'mobile']], birthday: { inDays: 27, year: null }, labels: ['demo-clabel-voisins'], photo: 'demo-portrait3-1', ago: 12 * DAY },
-  { id: 'demo-contact-marc', first: 'Marc', last: 'Garnier', company: 'Garnier Plomberie', job: 'Plombier', phones: [['06 77 88 99 00', 'mobile']], note: 'Intervient le samedi matin. Devis gratuit.', ago: 9 * DAY },
+  { id: 'demo-contact-marc', first: 'Marc', last: 'Garnier', company: 'Garnier Plumbing', job: 'Plumber', phones: [['06 77 88 99 00', 'mobile']], note: 'Comes on Saturday mornings. Free quote.', ago: 9 * DAY },
   { id: 'demo-contact-sarah', first: 'Sarah', last: 'Cohen', phones: [['06 45 67 89 01', 'mobile']], emails: [['sarah.cohen@example.org', 'home'], ['s.cohen@example.com', 'work']], birthday: '1989-02-09', labels: ['demo-clabel-famille', 'demo-clabel-escalade'], ago: 6 * DAY },
-  { id: 'demo-contact-julien', first: 'Julien', last: 'Roux', company: 'Atelier Nord', job: 'Dessinateur', emails: [['julien@atelier-nord.example', 'work']], labels: ['demo-clabel-travail'], ago: 4 * DAY },
+  { id: 'demo-contact-julien', first: 'Julien', last: 'Roux', company: 'Northside Atelier', job: 'Draughtsman', emails: [['julien@atelier-nord.example', 'work']], labels: ['demo-clabel-travail'], ago: 4 * DAY },
   // Her birthday is today: « Souhaiter » on her page, today's birthdays and Agenda's.
   { id: 'demo-contact-amelie', first: 'Amélie', last: 'Fontaine', phones: [['06 31 41 59 26', 'mobile']], emails: [['amelie.fontaine@example.org', 'home']], birthday: { inDays: 0, year: 1996 }, address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France' }, labels: ['demo-clabel-voisins'], ago: 3 * DAY },
   { id: 'demo-contact-old', first: 'Bruno', last: 'Lambert', phones: [['06 00 00 00 01', 'mobile']], ago: 50 * DAY, trashedAgo: 2 * DAY },
@@ -911,8 +917,7 @@ function contactChanges(now: number): { readonly time: number; readonly changes:
  * imports nothing but core and types, so `tools/demo/seed-server.ts` can push
  * the same dataset to a real server for the phone.
  */
-/** The demo's records, written in French, or in English (`demoEnglish.ts`) for a demo in English. */
-export function buildDemoRecords(now: number = Date.now(), locale: 'fr' | 'en' = 'fr'): SyncRecord[] {
+export function buildDemoRecords(now: number = Date.now()): SyncRecord[] {
   const events: { readonly time: number; readonly changes: LocalChange[] }[] = [];
   const add = (time: number, changes: LocalChange[]): void => {
     events.push({ time, changes });
@@ -922,7 +927,7 @@ export function buildDemoRecords(now: number = Date.now(), locale: 'fr' | 'en' =
   add(now - 45 * DAY, LABELS.map((label, index) => ({ type: 'label' as const, id: label.id, patch: labelFields({ name: label.name, color: label.color, position: labelKeys[index]!, createdAt: now - 45 * DAY, deletedAt: null }) })));
 
   // The templates, before the collection that reads with one.
-  add(now - 21 * DAY, [{ type: 'linkTemplate', id: DEMO_WINE_TEMPLATE, patch: linkTemplateFields({ name: 'Vin', kind: null, fields: WINE_FIELDS, createdAt: now - 21 * DAY, deletedAt: null }) }]);
+  add(now - 21 * DAY, [{ type: 'linkTemplate', id: DEMO_WINE_TEMPLATE, patch: linkTemplateFields({ name: 'Wine', kind: null, fields: WINE_FIELDS, createdAt: now - 21 * DAY, deletedAt: null }) }]);
   add(now - 2 * DAY, [{ type: 'linkTemplate', id: kindTemplateId('recipe'), patch: linkTemplateFields({ name: '', kind: 'recipe', fields: RECIPE_FIELDS, createdAt: now - 2 * DAY, deletedAt: null }) }]);
 
   const noteKeys = keysBetween(null, null, NOTES.length);
@@ -987,8 +992,8 @@ export function buildDemoRecords(now: number = Date.now(), locale: 'fr' | 'en' =
               status: seed.status ?? 'ready',
               autoFile: false,
               filedBy: line === INBOX_ID ? null : 'claude',
-              // The demo's readings are written in French.
-              lang: 'fr',
+              // The demo's readings are written in English.
+              lang: 'en',
               title: seed.title ?? '',
               summary: seed.summary ?? '',
               siteName: seed.siteName ?? '',
@@ -1068,7 +1073,7 @@ export function buildDemoRecords(now: number = Date.now(), locale: 'fr' | 'en' =
       records.push({ type: change.type, id: change.id, fields: change.patch, clocks: Object.fromEntries(Object.keys(change.patch).map(key => [key, clock])) });
     }
   }
-  return locale === 'en' ? inEnglish(records) : records;
+  return records;
 }
 
 /** Image blob ids the demo records refer to (link images and the note photo). */

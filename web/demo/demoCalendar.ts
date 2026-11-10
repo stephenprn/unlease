@@ -21,9 +21,9 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
   const zone = deviceZone() || 'Europe/Paris';
   const created = now - 20 * DAY;
   const labels = [
-    { id: 'demo-cal-travail', name: 'Travail', color: 'blue' as const },
+    { id: 'demo-cal-travail', name: 'Work', color: 'blue' as const },
     { id: 'demo-cal-sport', name: 'Sport', color: 'green' as const },
-    { id: 'demo-cal-famille', name: 'Famille', color: 'pink' as const },
+    { id: 'demo-cal-famille', name: 'Family', color: 'pink' as const },
   ];
   const keys = keysBetween(null, null, labels.length);
   const labelChanges: LocalChange[] = labels.map((label, index) => ({ type: 'calendarLabel', id: label.id, patch: labelFields({ name: label.name, color: label.color, position: keys[index]!, createdAt: created, deletedAt: null }) }));
@@ -43,19 +43,19 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
   const lunch = blankDraft(`${today}T12:30`, `${today}T13:45`, zone, [30]);
   const pottery = blankDraft(`${today}T18:30`, `${today}T20:00`, zone, [60]);
   const events: LocalChange[] = [
-    event('demo-cal-escalade', { ...climbing, title: 'Escalade au bloc', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'], rrule: 'FREQ=WEEKLY;BYDAY=TU', contactIds: ['demo-contact-noah'] }, { exdates: [`${addDays(tuesday, 21)}T19:00`] }),
-    event('demo-cal-escalade-x', { ...climbing, start: `${addDays(tuesday, 7)}T20:00`, end: `${addDays(tuesday, 7)}T22:00`, title: 'Escalade au bloc (plus tard)', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'] }, { recurringId: 'demo-cal-escalade', originalStart: `${addDays(tuesday, 7)}T19:00` }),
-    event('demo-cal-standup', { ...standup, title: 'Point d’équipe', place: 'Visio', labelIds: ['demo-cal-travail'], rrule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', contactIds: ['demo-contact-camille', 'demo-contact-julien'] }),
-    event('demo-cal-diner', { ...dinner, title: 'Dîner chez Léa', place: '12 rue des Lilas, 69003 Lyon', labelIds: ['demo-cal-famille'], contactIds: ['demo-contact-lea', 'demo-contact-paul'], description: 'Apporter le dessert. Les idées de recettes sont dans {@page=demo-page-recettes}, la réservation dans {@note=demo-resto}.' }),
-    event('demo-cal-lisbonne', { ...weekend, title: 'Week-end à Lisbonne', place: 'Lisbonne, Portugal', labelIds: ['demo-cal-famille'], description: 'Le programme : {@page=demo-page-lisbonne}.', url: 'https://www.visitlisboa.com' }),
-    event('demo-cal-dentiste', { ...dentist, title: 'Dentiste', place: 'Cabinet du Dr Roux, Paris' }),
-    event('demo-cal-dejeuner', { ...lunch, title: 'Déjeuner avec Camille', place: 'Le Petit Cambodge, Paris', contactIds: ['demo-contact-camille'] }),
-    event('demo-cal-ceramique', { ...pottery, title: 'Atelier céramique', place: 'Atelier du Canal, Paris', labelIds: ['demo-cal-sport'] }),
+    event('demo-cal-escalade', { ...climbing, title: 'Bouldering', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'], rrule: 'FREQ=WEEKLY;BYDAY=TU', contactIds: ['demo-contact-noah'] }, { exdates: [`${addDays(tuesday, 21)}T19:00`] }),
+    event('demo-cal-escalade-x', { ...climbing, start: `${addDays(tuesday, 7)}T20:00`, end: `${addDays(tuesday, 7)}T22:00`, title: 'Bouldering (later)', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'] }, { recurringId: 'demo-cal-escalade', originalStart: `${addDays(tuesday, 7)}T19:00` }),
+    event('demo-cal-standup', { ...standup, title: 'Team stand-up', place: 'Video call', labelIds: ['demo-cal-travail'], rrule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', contactIds: ['demo-contact-camille', 'demo-contact-julien'] }),
+    event('demo-cal-diner', { ...dinner, title: 'Dinner at Léa’s', place: '12 rue des Lilas, 69003 Lyon', labelIds: ['demo-cal-famille'], contactIds: ['demo-contact-lea', 'demo-contact-paul'], description: 'Bring dessert. Recipe ideas are in {@page=demo-page-recettes}, the booking in {@note=demo-resto}.' }),
+    event('demo-cal-lisbonne', { ...weekend, title: 'Long weekend in Lisbon', place: 'Lisbon, Portugal', labelIds: ['demo-cal-famille'], description: 'The programme: {@page=demo-page-lisbonne}.', url: 'https://www.visitlisboa.com' }),
+    event('demo-cal-dentiste', { ...dentist, title: 'Dentist', place: 'Dr Roux’s practice, Paris' }),
+    event('demo-cal-dejeuner', { ...lunch, title: 'Lunch with Camille', place: 'Le Petit Cambodge, Paris', contactIds: ['demo-contact-camille'] }),
+    event('demo-cal-ceramique', { ...pottery, title: 'Ceramics workshop', place: 'Canal Studio, Paris', labelIds: ['demo-cal-sport'] }),
   ];
   const feed: LocalChange = {
     type: 'calendarFeed',
     id: 'demo-cal-feed',
-    patch: feedFields({ kind: 'ics', name: 'Cinéma du quartier', url: 'https://cinema.example.org/agenda.ics', color: 'violet', hidden: false, position: 'a1', refreshedAt: now - 2 * 3_600_000, error: '', createdAt: created, deletedAt: null }),
+    patch: feedFields({ kind: 'ics', name: 'The local cinema', url: 'https://cinema.example.org/agenda.ics', color: 'violet', hidden: false, position: 'a1', refreshedAt: now - 2 * 3_600_000, error: '', createdAt: created, deletedAt: null }),
   };
   const screening = (id: string, day: string, title: string): LocalChange => ({
     type: 'calendarEvent',
@@ -63,7 +63,7 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
     patch: eventFields({
       ...blankDraft(`${day}T20:30`, `${day}T22:30`, zone),
       title,
-      place: 'Cinéma du quartier',
+      place: 'The local cinema',
       exdates: [],
       recurringId: null,
       originalStart: '',
@@ -76,6 +76,6 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
   });
   return [
     { time: created, changes: labelChanges },
-    { time: created + 60_000, changes: [...events, feed, screening('demo-cal-film-1', addDays(today, 2), 'Avant-première : Le Grand Bleu'), screening('demo-cal-film-2', addDays(today, 9), 'Ciné-club : Playtime')] },
+    { time: created + 60_000, changes: [...events, feed, screening('demo-cal-film-1', addDays(today, 2), 'Preview: The Big Blue'), screening('demo-cal-film-2', addDays(today, 9), 'Film club: Playtime')] },
   ];
 }

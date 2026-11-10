@@ -9,9 +9,10 @@
  *    `DEMO_SERVER`, any token opens it): the apps, « Votre serveur », the appearance;
  *  - `?demo=empty`: an empty board, no server;
  *  - add `&reading=off` for a server without a Claude key (links kept plain), `&apps=notes` for a
- *    server running Carnet alone, `&lang=en` (or `fr`) for its language; without it, the language it
- *    had (the browser's the first time), so another app opened from the launcher speaks the same. Its
- *    records are written in that language too (`demoEnglish.ts`).
+ *    server running Carnet alone, `&lang=en` (or `fr`) for its interface's language; without it, the
+ *    language it had (the browser's the first time), so another app opened from the launcher speaks
+ *    the same. Its notes, pages, events and people are in English whatever the language
+ *    (`demoData.ts`).
  *
  * It uses its own database and settings, and starts afresh on every load, so
  * it can never touch real notes kept in the same browser.
@@ -57,7 +58,7 @@ export async function startDemo(mode: string): Promise<() => void> {
   await deleteDatabase(NAME);
   const params = new URLSearchParams(location.search);
   const reading = params.get('reading') !== 'off';
-  // `&lang=en`: the demo in English; without it, in the language it had.
+  // `&lang=en`: the interface in English; without it, in the language it had.
   const asked = params.get('lang');
   const locale = asked === 'en' || asked === 'fr' ? asked : earlierLocale();
   const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar').split(',').filter(isReadyApp);
@@ -76,9 +77,9 @@ export async function startDemo(mode: string): Promise<() => void> {
   // Carnet's own: the board's layout, and whether the server reads links, as an earlier visit left them.
   localStorage.setItem(`${NAME}.notes`, JSON.stringify({ layout: params.get('layout') === 'list' ? 'list' : 'wall', reading: mode === 'empty' || mode === 'setup' ? null : reading }));
 
-  const server = new FakeServer({ reading, apps, setupDone: mode !== 'setup', english: locale === 'en' });
+  const server = new FakeServer({ reading, apps, setupDone: mode !== 'setup' });
   // The whole suite's records on the server too, as a real one holds them: what one app asks of another's (where a person is mentioned) finds them.
-  const seed = mode === 'setup' || mode === 'empty' ? [] : buildDemoRecords(Date.now(), locale);
+  const seed = mode === 'setup' || mode === 'empty' ? [] : buildDemoRecords(Date.now());
   server.push(seed);
   // The holidays the real server fetches from Nager.Date (France's, computed here).
   if (seed.length > 0) server.seedHolidays();
@@ -92,10 +93,10 @@ export async function startDemo(mode: string): Promise<() => void> {
     bulk(count: number): void {
       for (let i = 0; i < count; i += 1) {
         if (i % 3 === 0) {
-          const id = createNote({ kind: 'checklist', title: `Liste ${i}` });
-          for (let j = 0; j < (i % 7) + 1; j += 1) addCheck(id, `Élément ${j + 1}`);
+          const id = createNote({ kind: 'checklist', title: `List ${i}` });
+          for (let j = 0; j < (i % 7) + 1; j += 1) addCheck(id, `Item ${j + 1}`);
         } else {
-          createNote({ kind: 'text', title: i % 4 === 0 ? '' : `Note ${i}`, body: 'Une ligne de texte pour remplir la carte. '.repeat((i % 5) + 1) });
+          createNote({ kind: 'text', title: i % 4 === 0 ? '' : `Note ${i}`, body: 'A line of text to fill the card. '.repeat((i % 5) + 1) });
         }
       }
     },
