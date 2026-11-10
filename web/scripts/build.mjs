@@ -6,7 +6,7 @@
  * sends to Carnet and whose 404 page sends an app's address to that app's page (GitHub Pages has
  * one 404 page for the whole site).
  *
- *   node scripts/build.mjs [--demo] [--base /unlease/]
+ *   node scripts/build.mjs [--demo] [--base /sub/path/]   (the demo is at a site's root on demo.unlease.org)
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -40,14 +40,18 @@ for (const app of APPS) {
 }
 
 if (demo) {
-  const page = script => `<!doctype html>\n<meta charset="utf-8">\n<title>Unlease</title>\n<script>${script}</script>\n`;
+  const page = (script, body = '') => `<!doctype html>\n<meta charset="utf-8">\n<title>Unlease</title>\n${body}<script>${script}</script>\n`;
   writeFileSync(`${out}index.html`, page(`location.replace(${JSON.stringify(`${base}notes/`)} + location.search + location.hash);`));
-  // An app's place (`/unlease/pages/<id>`): its app's page, told where to go (`?to=`).
+  // An app's place (`/pages/<id>`, under the base if any): its app's page, told where to go (`?to=`). Never that page itself, nor
+  // a place outside the base: missing too (a build for another path than the site's), it would send to itself again and again,
+  // the address growing until the browser refuses it. Then it only says the page is not there.
   writeFileSync(
     `${out}404.html`,
     page(
-      `var b=${JSON.stringify(base)},r=location.pathname.slice(b.length),m=/^(pages|contacts|agenda)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
-        `location.replace(b+a+'/?to='+encodeURIComponent('/'+r+location.search)+location.hash);`,
+      `var b=${JSON.stringify(base)},p=location.pathname,r=p.slice(b.length),m=/^(pages|contacts|agenda)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
+        `if(p.indexOf(b)===0&&p!==b+a+'/'&&p!==b+a)location.replace(b+a+'/?to='+encodeURIComponent('/'+r+location.search)+location.hash);` +
+        `else document.getElementById('lost').hidden=false;`,
+      `<p id="lost" hidden>Page introuvable · Page not found. <a href="${base}">Unlease</a></p>\n`,
     ),
   );
 } else {
