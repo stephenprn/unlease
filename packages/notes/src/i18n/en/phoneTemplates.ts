@@ -1,70 +1,17 @@
-/** « Modèles de fiche » on Carnet's phone: the list, the editor and its field sheet, « Essayer », a collection's picker, the link page's lines. */
+/** « Ce que Claude relève » on Carnet's phone: what its fact sheet and its preview say that `facts`' shared words do not. */
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_PHONE_TEMPLATES: Dictionary = {
-  // The list, and where it is reached from.
-  'Modèles de fiche': 'Fact templates',
-  'Ce que Claude relève sur les liens que vous gardez.': 'What Claude notes down on the links you keep.',
-  'Ce que Claude relève sur chaque type de lien': 'What Claude notes down on each kind of link',
-  'Vos modèles': 'Your templates',
-  'Nouveau modèle': 'New template',
-  '{count} modèles au plus.': '{count} templates at most.',
-  'Par type de lien': 'By kind of link',
-  'champ': 'field',
-  'champs': 'fields',
-  '{fields} · {collections}': '{fields} · {collections}',
-  '{fields} · Aucune collection': '{fields} · No collection',
-  'Aucun champ': 'No fields',
-  '{fields} · Modifié': '{fields} · Changed',
-  // The editor.
-  'Modèle de fiche': 'Fact template',
-  'Ce modèle n’existe plus.': 'This template no longer exists.',
-  'Nom du modèle': 'Template name',
-  'Vin, plante, jeu de société…': 'Wine, plant, board game…',
-  'Lu sur les liens de {collections}.': 'Read on the links in {collections}.',
-  'Lu sur les liens de {collections} une fois enregistré.': 'Read on the links in {collections} once saved.',
-  'Choisissez-le dans le menu d’une collection.': 'Pick it from a collection’s menu.',
-  'Pour les liens que Claude reconnaît comme « {kind} ».': 'For the links Claude recognises as “{kind}”.',
-  'Champs': 'Fields',
-  'Aucun champ : Claude ne relèvera que le titre, le résumé et le prix.': 'No fields: Claude will only note down the title, the summary and the price.',
-  '{count} champs au plus.': '{count} fields at most.',
-  'Ajouter un champ': 'Add a field',
-  'Ajouter le champ « {name} »': 'Add the field “{name}”',
-  'Champs courants': 'Common fields',
-  'Modèle enregistré': 'Template saved',
-  'Rétablir l’original': 'Restore the original',
-  'Modèle d’origine rétabli': 'Original template restored',
-  'Supprimer le modèle': 'Delete template',
-  'Modèle supprimé': 'Template deleted',
-  '{links} · environ {cost} pour le relire': '{links} · about {cost} to read it again',
-  '{links} · environ {cost} pour les relire': '{links} · about {cost} to read them again',
-  'lien lu avec une autre version': 'link read with another version',
-  'liens lus avec une autre version': 'links read with another version',
-  'Tout relire': 'Read all again',
-  // A field's sheet.
-  'Modifier le champ': 'Edit field',
-  'Ce qu’il faut y mettre': 'What goes in it',
-  'Ce que Claude doit y relever': 'What Claude should note down in it',
+  // A fact's sheet.
   'Monter': 'Move up',
   'Descendre': 'Move down',
-  'Supprimer le champ': 'Delete field',
   'OK': 'OK',
-  // « Essayer ».
+  // The preview.
   'Essayer': 'Try',
   'Essayer sur': 'Try on',
-  'Voyez ce que Claude relèverait sur un lien, sans rien enregistrer.': 'See what Claude would note down on a link, without saving anything.',
   'Claude n’est pas configuré : l’essai n’est pas possible.': 'Claude is not set up: trying is not possible.',
   'Une autre adresse': 'Another address',
   'Coller une adresse': 'Paste an address',
   'Rien trouvé': 'Nothing found',
   'Lu en {seconds} s · {cost}': 'Read in {seconds} s · {cost}',
-  // A collection's picker.
-  'Selon le type de lien': 'Following each link’s kind',
-  'Chaque lien est lu avec le modèle de son type.': 'Each link is read with its kind’s template.',
-  'Modèle choisi': 'Template chosen',
-  'Gérer les modèles': 'Manage templates',
-  // A link's page.
-  'Modifier la fiche': 'Edit the template',
-  'Lu avec une version précédente de la fiche.': 'Read with an earlier version of its template.',
-  'Relire': 'Read again',
 };

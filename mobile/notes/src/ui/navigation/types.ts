@@ -24,11 +24,11 @@ export type RootStackParamList = {
   /** The Administration's home, or one of its sections (`server`, `reading`, `seerr`…). */
   Admin: { readonly section?: string } | undefined;
   Import: undefined;
-  /** « Modèles de fiche »: what Claude reads on each kind of link, and the person's own templates. */
+  /** « Ce que Claude relève »: the collections with their own facts, and each kind's usual ones. */
   Templates: undefined;
   /**
-   * A template's editor: a kind's (`kind`), one of the person's own (`id`), or a new one (neither);
-   * `collection`: a new one made from that collection's menu, chosen for it once saved.
+   * A page of facts: a collection's (`collection`), or a kind's usual facts (`kind`); `id`, an old
+   * template's id, opens the first collection noting with it (a kind's fixed id, that kind).
    */
   Template: { readonly id?: string; readonly kind?: LinkKind; readonly collection?: string } | undefined;
 };

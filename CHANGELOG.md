@@ -6,6 +6,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
+- Carnet's fact templates become "Facts Claude notes", on the web and on Android: a collection's menu opens its page, where you keep Claude's usual facts or give it its own and edit them right there, each fact one line that opens in place, its type shown as the shape of the answer (a number, a date…). Each kind's usual facts are changed from the overview, under Administration › Claude. Existing templates keep working as their collections' own facts.
 - The demo's notes, pages, events and people are in English; its interface follows your browser (English unless it is French), and `?lang=en` or `?lang=fr` picks one.
 
 ## [0.1.1] - 2026-11-10

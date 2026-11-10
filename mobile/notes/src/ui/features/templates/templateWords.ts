@@ -1,38 +1,28 @@
-/** What the templates' rows say of a template, a kind's or the person's own, and of a field (the web's words, the same). */
+/** What the rows of « Ce que Claude relève » say: a kind's usual facts, a fact, the well offering to read links again (the web's words, the same). */
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
-import { shownTitle, type LinkKind, type Note } from '@unlease/notes/models/entities';
-import type { LinkTemplate, TemplateField } from '@unlease/notes/models/templates';
-import { changedKindTemplate, collectionsOfTemplate, kindFields, shownFieldType, type Templates } from '@unlease/notes/services/templates';
+import type { LinkKind } from '@unlease/notes/models/entities';
+import type { TemplateField } from '@unlease/notes/models/templates';
+import { changedKindTemplate, kindFields, shownFieldAnswer, type Templates } from '@unlease/notes/services/templates';
 
-/** The collections that pick one of the person's own, by name (« Vins, Caves »); empty when none does. */
-export function templateCollections(template: LinkTemplate, notes: Readonly<Record<string, Note>>): string {
-  const collections = collectionsOfTemplate(template.id, notes).map(shownTitle);
-  return collections.length > 0 ? collections.join(', ') : '';
+/** A list of facts by name (« Temps total, Portions, Difficulté »), or « Aucune information ». */
+export function factNames(fields: readonly TemplateField[]): string {
+  return fields.length > 0 ? fields.map(field => field.name).join(', ') : t('Aucune information');
 }
 
-/** « 3 champs · Vins, Caves », or « 3 champs · Aucune collection ». */
-export function ownTemplateMeta(template: LinkTemplate, notes: Readonly<Record<string, Note>>): string {
-  const fields = plural(template.fields.length, 'champ');
-  const collections = templateCollections(template, notes);
-  return collections ? t('{fields} · {collections}', { fields, collections }) : t('{fields} · Aucune collection', { fields });
+/** A kind's usual facts by name, then « · Modifiées » once the person changed them. */
+export function kindFactsMeta(templates: Templates, kind: LinkKind): string {
+  const names = factNames(kindFields(templates, kind));
+  return changedKindTemplate(templates, kind) ? `${names} · ${t('Modifiées')}` : names;
 }
 
-/** A kind's fields by name (« Temps total, Portions, Difficulté »), then « · Modifié » once the person changed them. */
-export function kindTemplateMeta(templates: Templates, kind: LinkKind): string {
-  const names = kindFields(templates, kind).map(field => field.name);
-  const fields = names.length > 0 ? names.join(', ') : t('Aucun champ');
-  return changedKindTemplate(templates, kind) ? t('{fields} · Modifié', { fields }) : fields;
+/** A fact's line: what Claude notes in it, then the shape of its answer when it is not « quelques mots ». */
+export function factMeta(field: TemplateField): string {
+  return [field.hint.trim(), field.type === 'text' ? '' : shownFieldAnswer(field.type)].filter(Boolean).join(' · ');
 }
 
-/** A field's row: its type, then what to put in it (« Nombre · L’année de sortie »). */
-export function fieldMeta(field: TemplateField): string {
-  const type = shownFieldType(field.type).name;
-  return field.hint.trim() ? `${type} · ${field.hint.trim()}` : type;
-}
-
-/** « Tout relire »'s well: how many links were read with another version, and about what reading them again costs. */
-export function rereadWords(count: number, cost: string): string {
-  const links = plural(count, 'lien lu avec une autre version', 'liens lus avec une autre version');
-  return count === 1 ? t('{links} · environ {cost} pour le relire', { links, cost }) : t('{links} · environ {cost} pour les relire', { links, cost });
+/** The well over the facts: how many links were read before the change, and about what reading them again costs. */
+export function readAgainWords(count: number, cost: string): string {
+  const links = plural(count, 'lien lu', 'liens lus');
+  return count === 1 ? t('{links} avant ce changement · environ {cost} pour le relire', { links, cost }) : t('{links} avant ce changement · environ {cost} pour les relire', { links, cost });
 }

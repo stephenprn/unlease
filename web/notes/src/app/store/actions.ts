@@ -16,9 +16,9 @@ import { createId } from '@unlease/core/services/ids';
 import { planLinks, savedAddresses, type LinkPlan } from '@unlease/notes/services/savedLinks';
 import { normalizeUrl } from '@unlease/core/services/url';
 import { asLineColor, nextLineColor, type LineColor, type NoteColor, type NotePattern } from '@unlease/design/colors';
-import { INBOX_HINT, INBOX_ID, INBOX_TITLE, type LinkFiler, type LinkKind, type NoteKind } from '@unlease/notes/models/entities';
+import { INBOX_HINT, INBOX_ID, INBOX_TITLE, shownTitle, type LinkFiler, type LinkKind, type NoteKind } from '@unlease/notes/models/entities';
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
-import { kindTemplateId, presetFields, sameFields } from '@unlease/notes/services/templates';
+import { collectionTemplate, kindTemplateId, otherCollectionsOf, presetFields, sameFields } from '@unlease/notes/services/templates';
 import { GENESIS_HLC } from '@unlease/core/sync/hlc';
 import { attachmentFields, checkFields, labelFields, linkFields, linkTemplateFields, noteFields } from '@unlease/notes/sync/entities';
 import type { Fields } from '@unlease/core/sync/record';
@@ -698,6 +698,28 @@ export function deleteTemplate(id: string, now: number = Date.now()): Undo {
   const template = state().linkTemplates[id];
   if (!template || template.deletedAt !== null) return () => {};
   return writeWithUndo([{ type: 'linkTemplate', id, patch: { deletedAt: now } }]);
+}
+
+/**
+ * A collection's « Ce que Claude relève », saved whole in one batch: Claude's usual facts (`fields`
+ * null: its links read by their kind again, and its own list deleted when no other collection notes
+ * with it), or its own list (its template's fields changed, or a template made for it, named after it,
+ * and chosen). « Non classé » has none of its own. The phone's `saveCollectionFacts`.
+ */
+export function saveCollectionFacts(lineId: string, fields: readonly TemplateField[] | null, now: number = Date.now()): Undo {
+  const { notes, linkTemplates } = state();
+  const line = notes[lineId];
+  if (lineId === INBOX_ID || !line || line.kind !== 'links') return () => {};
+  const current = collectionTemplate(linkTemplates, line);
+  if (fields === null) {
+    if (!line.templateId) return () => {};
+    const changes: LocalChange[] = [{ type: 'note', id: lineId, patch: { templateId: null } }];
+    if (current && otherCollectionsOf(current.id, notes, lineId).length === 0) changes.push({ type: 'linkTemplate', id: current.id, patch: { deletedAt: now } });
+    return writeWithUndo(changes);
+  }
+  const name = shownTitle(line).trim().slice(0, TEMPLATE_LIMITS.name);
+  if (current) return writeWithUndo([{ type: 'linkTemplate', id: current.id, patch: { name, fields: keptFields(fields) } }]);
+  return saveTemplate({ id: null, name, kind: null, fields }, { forCollection: lineId }, now).undo;
 }
 
 /** A collection's « Modèle de fiche »: one of the person's own, or null (« Selon le type de lien »). « Non classé » never takes one. */

@@ -1,10 +1,11 @@
 /*
- * « Modèles de fiche »: the list (Réglages' sheets and rows), and a template's editor: its fields as
- * rows of the form's own fields (a grip, the name, the type, what to put in it, ⋮), stacked on a
- * narrow sheet; « Essayer » beside them on a wide window, under them otherwise.
+ * « Ce que Claude relève »: the overview (Réglages' sheets and rows), and a page of facts: a
+ * collection's choice of two (Claude's usual facts, or its own), its facts as lines that read as they
+ * will on a link and open in place to be changed, « Ajouter une information » and its suggestions;
+ * « Aperçu sur un lien » beside them on a wide window, under them otherwise.
  */
 
-/* ── the list ─────────────────────────────────────────────────────────────── */
+/* ── the overview ─────────────────────────────────────────────────────────── */
 
 /* The title and the line under it, read together: the page's 30 gap stays between the sections. */
 .head {
@@ -35,30 +36,7 @@
   color: var(--ink-muted);
 }
 
-/* « Nouveau modèle »: an action, in link ink, as the app's other « new » rows. */
-.newRow,
-.newRow > svg {
-  color: var(--link);
-}
-
-@media (hover: hover) {
-  .newRow.newRow:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
-  }
-}
-
-.newRow.newRow:active {
-  background: color-mix(in srgb, var(--link) 10%, transparent);
-}
-
-/* Fifty already: the row keeps its place, quiet, and says why. */
-.newRow[aria-disabled='true'],
-.newRow[aria-disabled='true'] > svg {
-  color: var(--ink-muted);
-  cursor: default;
-}
-
-/* ── the editor ───────────────────────────────────────────────────────────── */
+/* ── a page of facts ──────────────────────────────────────────────────────── */
 
 .editor {
   container: template-editor / inline-size;
@@ -66,34 +44,135 @@
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* A kind's: what it reads, and « Rétablir l'original » at the line's end while it is changed. */
-.kindLead {
+/* Under the title: whose facts these are (a kind's sentence and « Rétablir celles de Claude » under it, or the collection, a way back to it). */
+.lead2 {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   padding: 0 4px;
 }
 
 /* Under the page's own title (wide), read with it; under the top bar it keeps the page's gap. */
-.kindLeadUnderTitle {
-  margin-top: -14px;
+.leadUnderTitle {
+  margin-top: -16px;
 }
 
-.kindLead > p {
-  flex: 1 1 280px;
+.lead2 > p {
   max-width: 62ch;
   color: var(--ink-muted);
   text-wrap: pretty;
 }
 
-/* Its words on the line's own edges, at the end of the line or on one of their own. */
-.kindLead > button {
-  margin-inline: -14px;
+/* Its words on the sentence's edge. */
+.lead2 > button:not(.collectionLink) {
+  margin-left: -14px;
+}
+
+/* The collection: its stone and « Sur les liens de … », a quiet way back to it. */
+.collectionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin-left: -8px;
+  padding: 4px 12px 4px 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink-muted);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .collectionLink:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.collectionLink:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* Where its facts come from: two cards side by side, stacked on a narrow page; the chosen one on the matcha wash. */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.choice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 84px;
+  padding: 16px 16px 16px 14px;
+  border: 0;
+  border-radius: var(--cut-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-card);
+  color: var(--ink);
+  text-align: left;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-raised);
+  }
+}
+
+.choice:focus-visible {
+  outline-offset: 2px;
+}
+
+.choice[aria-checked='true'] {
+  background: var(--action-container);
+  box-shadow: inset 0 0 0 1.5px var(--focus);
+  color: var(--on-action-container);
+}
+
+.choiceGlyph {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: 28px;
+  margin-top: 1px;
+}
+
+.choiceText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choiceMeta {
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.choice[aria-checked='true'] .choiceMeta {
+  color: var(--on-action-container);
+}
+
+.choiceTick {
+  flex: none;
+  margin-top: 2px;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.choice[aria-checked='true'] .choiceTick {
+  opacity: 1;
 }
 
 .columns {
@@ -113,7 +192,7 @@
   min-width: 0;
 }
 
-/* From a window wide enough for both: « Essayer » beside the fields, staying in view as they scroll. */
+/* From a window wide enough for both: the preview beside the facts, staying in view as they scroll. */
 @container template-editor (min-width: 980px) {
   .columns {
     display: grid;
@@ -127,69 +206,60 @@
     top: calc(var(--header-height, 64px) + 16px);
   }
 
-  /* Over the fields' column, so « Rétablir l'original » ends where they do. */
-  .kindLead {
-    max-width: calc(100% - 340px - 32px);
-  }
 }
 
-/* The person's own: its name, then where it reads, as one block. */
-.nameBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.nameBlock > p {
-  padding: 0 4px;
-  color: var(--ink-muted);
-  text-wrap: pretty;
-}
-
-/* The re-reading well sits in the column's flow: no collection page's top margin here. */
+/* The noting-again well sits in the page's flow: no collection page's top margin here. */
 .well > * {
   margin-top: 0;
 }
 
-/* ── the fields ───────────────────────────────────────────────────────────── */
+/* The same list noted on other collections' links: one quiet line under the facts. */
+.shared {
+  padding: 4px 16px 12px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
 
-.fieldsBox {
-  container: template-fields / inline-size;
+/* A collection on Claude's usual facts: nothing yet to say about its links' kinds. */
+.usualEmpty {
+  padding: 12px 16px 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* Every kind's usual facts, the overview: quiet, at the card's foot. */
+.usualAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  margin: 4px 6px 2px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--link);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .usualAll:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.usualAll:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+/* ── the facts ────────────────────────────────────────────────────────────── */
+
+.facts {
   display: flex;
   flex-direction: column;
 }
 
-.fieldsHead,
-.field {
-  --field-columns: 28px minmax(0, 1fr) 176px minmax(0, 1.5fr) 44px;
-  display: grid;
-  grid-template-columns: var(--field-columns);
-  grid-template-areas: 'grip name type hint more';
-  column-gap: 8px;
-}
-
-/* The columns' names, once over the rows (each row's fields keep theirs for screen readers). */
-.fieldsHead {
-  padding: 10px 12px 2px;
-  color: var(--ink-muted);
-}
-
-.fieldsHead > :nth-child(1) {
-  grid-area: name;
-  padding-left: 4px;
-}
-
-.fieldsHead > :nth-child(2) {
-  grid-area: type;
-  padding-left: 4px;
-}
-
-.fieldsHead > :nth-child(3) {
-  grid-area: hint;
-  padding-left: 4px;
-}
-
-.fields {
+.factList {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -199,39 +269,122 @@
   list-style: none;
 }
 
-.field {
+/* A fact: the grip, then its line (which opens it) and, open, what it is made of. */
+.fact {
   position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
   align-items: start;
-  row-gap: 8px;
-  padding: 6px;
+  column-gap: 4px;
   border-radius: var(--cut-tab);
   background: var(--paper);
 }
 
-.field[data-dragging],
-.field[data-settling] {
+.fact[data-dragging],
+.fact[data-settling] {
   z-index: 2;
   box-shadow: var(--lift-raised);
 }
 
-.fieldName {
-  grid-area: name;
+.factBox {
+  min-width: 0;
+  border-radius: var(--cut-tab);
+  transition: background-color var(--duration-short) var(--ease-standard);
 }
 
-.fieldType {
-  grid-area: type;
+/* Open: on the well, so the fact being changed reads apart from its neighbours. */
+.fact[data-open] .factBox {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
-.fieldHint {
-  grid-area: hint;
+.factHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px 8px 6px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
 }
 
-.fieldMore {
-  grid-area: more;
-  margin-top: 4px;
+@media (hover: hover) {
+  .factHead:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
 }
 
-/* What to put in it: a field's height until it wraps, then as tall as its words (200 at most). */
+.factHead:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.factHead:focus-visible {
+  outline-offset: -2px;
+}
+
+.factGlyph {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.factText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.factName {
+  overflow-wrap: anywhere;
+}
+
+.factMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+
+.factChevron {
+  flex: none;
+  color: var(--ink-muted);
+  transition: transform var(--duration-short) var(--ease-standard);
+}
+
+.fact[data-open] .factChevron {
+  transform: rotate(180deg);
+}
+
+.factBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 12px 14px 38px;
+}
+
+/* « Réponse » and « Supprimer l'information » on one line, the latter at its end. */
+.factFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.factAnswer {
+  flex: 0 1 240px;
+  min-width: 200px;
+}
+
+.factFoot > button {
+  margin-right: -8px;
+}
+
+/* What Claude notes in it: a field's height until it wraps, then as tall as its words (200 at most). */
 .hintInput.hintInput {
   min-height: 52px;
   max-height: 168px;
@@ -243,14 +396,13 @@
   }
 }
 
-/* The grip: its whole height takes the hand, the keyboard's arrows move the field too. */
+/* The grip: the line's height takes the hand, the keyboard's arrows move the fact too. */
 .grip {
-  grid-area: grip;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
-  height: 52px;
+  height: 56px;
   padding: 0;
   border: 0;
   border-radius: var(--cut-small);
@@ -275,12 +427,12 @@
   outline-offset: -2px;
 }
 
-.field[data-dragging] .grip {
+.fact[data-dragging] .grip {
   color: var(--ink);
   cursor: grabbing;
 }
 
-/* Where the field let go would land: a matcha line between the rows. */
+/* Where the fact let go would land: a matcha line between the rows. */
 .dropLine {
   position: absolute;
   z-index: 3;
@@ -292,67 +444,24 @@
   pointer-events: none;
 }
 
-/* On a narrow sheet each field stacks: its name and its type on a line, what to put in it under them. */
-@container template-fields (max-width: 599px) {
-  .fieldsHead {
-    display: none;
-  }
-
-  .field {
-    --field-columns: 24px minmax(0, 1fr) minmax(0, 152px) 40px;
-    grid-template-areas:
-      'grip name type more'
-      '. hint hint hint';
-    column-gap: 6px;
-    padding: 8px 2px 10px;
-  }
-
-  .fieldMore {
-    margin-top: 6px;
-  }
-
-  .grip {
-    width: 24px;
-  }
-
-  /* Short fields: their words keep the room their paddings gave up. */
-  .fieldName input {
-    padding-inline: 14px;
-  }
-
-  .fieldType button {
-    gap: 8px;
+@media (max-width: 599px) {
+  .factBody {
     padding-left: 12px;
-    padding-right: 10px;
   }
 
-  .fields {
-    gap: 0;
-  }
-
-  .field + .field::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 30px;
-    right: 6px;
-    height: 1px;
-    background: var(--hairline);
-  }
-
-  .dropLine {
-    left: 30px;
+  .factAnswer {
+    flex-basis: 100%;
   }
 }
 
-/* No field: what Claude still reads, in the sheet's own words. */
+/* No fact: what Claude still notes, in the sheet's own words. */
 .empty {
   padding: 14px 16px 6px;
   color: var(--ink-muted);
   text-wrap: pretty;
 }
 
-/* « Ajouter un champ »: a row of the sheet in link ink, its plus on the grips' column. */
+/* « Ajouter une information »: a row of the sheet in link ink, its plus on the grips' column. */
 .add {
   display: flex;
   align-items: center;
@@ -383,7 +492,7 @@
   outline-offset: -2px;
 }
 
-/* « Champs courants »: a wrap of small chips, each a field in one press. */
+/* « Suggestions »: a wrap of small chips, each a fact in one press. */
 .common {
   display: flex;
   flex-direction: column;
@@ -444,13 +553,13 @@
   }
 }
 
-/* Eight fields: no more room, said once where « Ajouter un champ » stood. */
+/* Eight facts: no more room, said once where « Ajouter une information » stood. */
 .full {
   padding: 12px 16px 8px;
   color: var(--ink-muted);
 }
 
-/* ── « Essayer » ──────────────────────────────────────────────────────────── */
+/* ── « Aperçu sur un lien » ──────────────────────────────────────────────────────────── */
 
 .try {
   display: flex;
@@ -522,99 +631,9 @@
   }
 }
 
-/* ── a collection's « Modèle de fiche » ────────────────────────────────────── */
-
-.pickRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  min-height: 56px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: var(--cut-tab);
-  background: transparent;
-  color: var(--ink);
-  text-align: left;
-  transition: background-color var(--duration-short) var(--ease-standard);
-}
-
-.pickRow + .pickRow {
-  margin-top: var(--row-gap);
-}
-
-@media (hover: hover) {
-  .pickRow:hover {
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
-  }
-}
-
-.pickRow:active {
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
-.pickRow:focus-visible {
-  outline-offset: -2px;
-}
-
-.pickRow > svg {
-  flex: none;
-}
-
-/* The chosen one: the matcha wash and its edge, its tick in matcha (the app's pickers). */
-.pickRow[aria-checked='true'] {
-  background: var(--action-container);
-  box-shadow: inset 0 0 0 1.5px var(--focus);
-  color: var(--on-action-container);
-}
-
-.pickRow[aria-checked='true'] .pickMeta {
-  color: var(--on-action-container);
-}
-
-.pickTick {
-  color: var(--focus);
-}
-
-.pickRow[aria-checked='true'] .pickTick {
-  color: var(--on-action-container);
-}
-
-.pickText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.pickName {
-  overflow-wrap: anywhere;
-}
-
-.pickMeta {
-  color: var(--ink-muted);
-}
-
-.pickLink,
-.pickLink > svg {
-  color: var(--link);
-}
-
-@media (hover: hover) {
-  .pickLink.pickLink:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
-  }
-}
-
-.pickRule {
-  height: 1px;
-  margin: 8px 10px;
-  background: var(--hairline);
-}
-
 /* ── a link's page ────────────────────────────────────────────────────────── */
 
-/* Read with an older version of its template: one quiet line, and « Relire ». */
+/* Noted before its facts changed: one quiet line, and « Relever à nouveau ». */
 .stale {
   display: flex;
   flex-wrap: wrap;
@@ -624,7 +643,7 @@
   color: var(--ink-muted);
 }
 
-/* « Relire » close to the words it answers. */
+/* « Relever à nouveau » close to the words it answers. */
 .stale > button {
   margin-left: -6px;
 }

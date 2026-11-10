@@ -127,7 +127,7 @@ export function TrySection({ state, fields }: { state: TemplateTry; fields: read
   const picked = state.links.find(link => link.id === state.chosen);
 
   return (
-    <Section title={t('Essayer')}>
+    <Section title={t('Aperçu sur un lien')}>
       <View style={styles.section}>
         {!reading ? (
           <AppText variant="meta">
@@ -136,7 +136,7 @@ export function TrySection({ state, fields }: { state: TemplateTry; fields: read
         ) : (
           <>
             <AppText variant="meta">
-              {t('Voyez ce que Claude relèverait sur un lien, sans rien enregistrer.')}
+              {t('Voyez ce que Claude relèverait, sans rien enregistrer.')}
             </AppText>
             {state.links.length > 0 ? (
               <PickerField label={t('Lien')} value={picked ? linkRowText(picked).title : t('Une autre adresse')} icon={picked ? KIND_ICONS[picked.kind] : 'link'} onPress={() => state.setPicking(true)} />

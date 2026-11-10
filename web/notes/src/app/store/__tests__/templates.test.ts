@@ -5,10 +5,10 @@ import type { TemplateField } from '@unlease/notes/models/templates';
 import { collectionTemplate, kindTemplateId, linksReadBefore, presetFields } from '@unlease/notes/services/templates';
 
 import { freshLibrary } from '@test/library';
-import { addLink, createLine, deleteTemplate, resetKindTemplate, saveTemplate, setCollectionTemplate, updateLink } from '../actions';
+import { addLink, createLine, deleteTemplate, resetKindTemplate, saveCollectionFacts, saveTemplate, setCollectionTemplate, updateLink } from '../actions';
 import { useLibraryStore } from '../library';
 import { getRecord } from '@shared/app/store/records';
-import { addField, moveField, ownTemplates, templateKey, templatePart } from '../../templates';
+import { addField, moveField, templateKey } from '../../templates';
 
 const WINE: TemplateField[] = [
   { id: 'domain', name: 'Domaine', type: 'text', hint: 'Le domaine ou le château' },
@@ -16,6 +16,8 @@ const WINE: TemplateField[] = [
 ];
 
 const templates = () => useLibraryStore.getState().linkTemplates;
+/** The person's own lists, live. */
+const ownLists = () => Object.values(templates()).filter(template => template.kind === null && template.deletedAt === null);
 
 describe('link templates, as library writes', () => {
   beforeEach(async () => {
@@ -27,10 +29,10 @@ describe('link templates, as library writes', () => {
     const saved = templates()[id]!;
     expect(saved).toMatchObject({ name: 'Vin', kind: null, deletedAt: null });
     expect(saved.fields.map(field => field.name)).toEqual(['Domaine', 'Millésime']);
-    expect(ownTemplates(templates()).map(template => template.id)).toEqual([id]);
+    expect(ownLists().map(template => template.id)).toEqual([id]);
     undo();
     expect(templates()[id]!.deletedAt).not.toBeNull();
-    expect(ownTemplates(templates())).toEqual([]);
+    expect(ownLists()).toEqual([]);
   });
 
   it('keeps a kind’s changed template under the kind’s fixed id, and its preset is no record at all', () => {
@@ -91,6 +93,37 @@ describe('link templates, as library writes', () => {
     expect(templates()[id]!.deletedAt).not.toBeNull();
   });
 
+  it('saves a collection’s own facts as one list named after it, changes it in place, and goes back to the usual ones, undoably', () => {
+    const line = createLine({ title: 'Vins' });
+    saveCollectionFacts(line, WINE);
+    const list = collectionTemplate(templates(), useLibraryStore.getState().notes[line])!;
+    expect(list).toMatchObject({ name: 'Vins', kind: null, deletedAt: null });
+    expect(list.fields).toEqual(WINE);
+    // Changed in place: the same list, its fields.
+    saveCollectionFacts(line, [WINE[1]!]);
+    expect(collectionTemplate(templates(), useLibraryStore.getState().notes[line])).toMatchObject({ id: list.id, fields: [WINE[1]] });
+    // Back to Claude's usual facts: its list goes with it, both taken back by the undo.
+    const undo = saveCollectionFacts(line, null);
+    expect(useLibraryStore.getState().notes[line]!.templateId ?? null).toBeNull();
+    expect(templates()[list.id]!.deletedAt).not.toBeNull();
+    undo();
+    expect(collectionTemplate(templates(), useLibraryStore.getState().notes[line])?.id).toBe(list.id);
+    // « Non classé » has none of its own.
+    saveCollectionFacts(INBOX_ID, WINE);
+    expect(useLibraryStore.getState().notes[INBOX_ID]!.templateId ?? null).toBeNull();
+  });
+
+  it('keeps a list another collection notes with when one goes back to the usual facts', () => {
+    const wines = createLine({ title: 'Vins' });
+    const cellar = createLine({ title: 'Cave' });
+    saveCollectionFacts(wines, WINE);
+    const list = collectionTemplate(templates(), useLibraryStore.getState().notes[wines])!.id;
+    setCollectionTemplate(cellar, list);
+    saveCollectionFacts(wines, null);
+    expect(templates()[list]!.deletedAt).toBeNull();
+    expect(collectionTemplate(templates(), useLibraryStore.getState().notes[cellar])?.id).toBe(list);
+  });
+
   it('finds the links read with another version once a template changes', () => {
     const line = createLine({ title: 'Recettes' });
     const read = addLink('https://example.org/tarte', { noteId: line });
@@ -120,12 +153,10 @@ describe('the editor’s fields', () => {
     expect(addField(eight).id).toBeNull();
   });
 
-  it('reads the editor’s address both ways', () => {
-    expect(templateKey('new')).toEqual({ kind: 'new' });
+  it('reads a page of facts’ address: a kind’s, else a collection’s (or an old list’s) id', () => {
     expect(templateKey('kind-recipe')).toEqual({ kind: 'kind', linkKind: 'recipe' });
-    // « Lien » has no template of its own: an address naming it is read as an id, which no template has.
+    // « Lien » has no usual facts of its own: an address naming it is read as an id, which nothing has.
     expect(templateKey('kind-other')).toEqual({ kind: 'own', id: 'kind-other' });
-    expect(templatePart({ id: 'x', kind: 'film' })).toBe('kind-film');
-    expect(templatePart({ id: 'abc', kind: null })).toBe('abc');
+    expect(templateKey('abc')).toEqual({ kind: 'own', id: 'abc' });
   });
 });

@@ -1,6 +1,6 @@
 /**
  * Carnet's records as its screens read them: notes, checks, links, labels, attachments and the
- * templates links are read with (« Modèles de fiche »), each child list per note, the board's and
+ * templates links are read with (« Ce que Claude relève »), each child list per note, the board's and
  * the labels' order. A projection of the shared library
  * (`@shared/app/store/library`): only touched maps and entries are replaced, so a subscriber
  * re-renders only for its own record (held by libraryStore.test.ts). Pages shows Carnet's
@@ -19,7 +19,7 @@ export interface NotesState extends LibraryBase {
   readonly links: Readonly<Record<string, LinkItem>>;
   readonly labels: Readonly<Record<string, Label>>;
   readonly attachments: Readonly<Record<string, Attachment>>;
-  /** « Modèles de fiche », live and deleted (`deletedAt`): a kind's changed one under `template-<kind>`, the person's own by id. */
+  /** The lists of facts (« Ce que Claude relève »), live and deleted (`deletedAt`): a kind's changed one under `template-<kind>`, the person's own by id. */
   readonly linkTemplates: Readonly<Record<string, LinkTemplate>>;
   /** Live child ids per note, in display order. A note with none holds no key. */
   readonly checksByNote: Readonly<Record<string, readonly string[]>>;

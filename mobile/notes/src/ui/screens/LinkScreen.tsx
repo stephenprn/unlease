@@ -14,7 +14,7 @@ import { asLineColor } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { formatDay, formatPrice } from '@unlease/core/services/format';
-import { LINK_KIND_NAMES, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
+import { INBOX_ID, LINK_KIND_NAMES, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { linkTemplateSource, readingSignature } from '@unlease/notes/services/templates';
 import { t, tc } from '@unlease/core/i18n';
@@ -55,15 +55,15 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
   const link = parting ?? live;
   const line = useLibraryStore(s => (link ? s.notes[link.noteId] : undefined));
   const reading = useSettingsStore(selectCanRead);
-  // The « Modèle de fiche » it is read with (its collection's, else its kind's), and whether it was read with an older version.
+  // Where its facts are chosen (« Ce que Claude relève »: its collection's page, else its kind's usual facts), and whether it was noted before they changed.
   const fiche = useLibraryStore(
     useShallow(s => {
       const item = s.links[id];
-      if (!item) return { templateId: null, kind: null, stale: false };
+      if (!item) return { collection: null, kind: null, stale: false };
       const source = linkTemplateSource(s.linkTemplates, item, s.notes);
       return {
-        templateId: source.from === 'collection' ? source.template.id : null,
-        kind: source.from === 'kind' ? source.kind : null,
+        collection: item.noteId !== INBOX_ID && s.notes[item.noteId]?.kind === 'links' ? item.noteId : null,
+        kind: item.kind,
         // Read before templates existed: read with the presets.
         stale: item.status === 'ready' && (item.readWith ?? 'preset') !== readingSignature(source),
       };
@@ -292,11 +292,11 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
                     ))}
                   </Organic>
                 ) : null}
-                {/* Its template changed since it was read: what it says now is one press away. */}
+                {/* Its facts changed since it was read: what they say now is one press away. */}
                 {fiche.stale ? (
                   <View style={styles.stale}>
                     <AppText variant="meta" style={styles.flex}>
-                      {t('Lu avec une version précédente de la fiche.')}
+                      {t('Lu avant le dernier changement de ses informations.')}
                     </AppText>
                     {reading ? <Button kind="text" small label={t('Relire')} onPress={() => reanalyzeLink(id)} style={styles.staleAction} /> : null}
                   </View>
@@ -363,9 +363,9 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
           },
           { label: t('Partager'), icon: 'share', onPress: () => Share.share({ message: link.url, title: link.title || undefined }).catch(() => {}) },
           ...(reading ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onPress: () => reanalyzeLink(id) }] : []),
-          // The template it is read with: its collection's, or its kind's (a link of no kind has none to change).
-          ...(fiche.templateId || (fiche.kind && fiche.kind !== 'other')
-            ? [{ label: t('Modifier la fiche'), icon: 'rows' as const, onPress: () => navigation.navigate('Template', fiche.templateId ? { id: fiche.templateId } : { kind: fiche.kind! }) }]
+          // Where its facts are chosen: its collection's page, or its kind's usual facts (« Non classé »'s link of no kind has none).
+          ...(fiche.collection || (fiche.kind && fiche.kind !== 'other')
+            ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', fiche.collection ? { collection: fiche.collection } : { kind: fiche.kind! }) }]
             : []),
           {
             label: t('Supprimer'),

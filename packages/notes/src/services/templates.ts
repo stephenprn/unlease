@@ -9,6 +9,7 @@ import { inEnglish, t, tc } from '@unlease/core/i18n';
 import { INBOX_ID, LINK_KINDS, type LinkItem, type LinkKind, type Note } from '../models/entities';
 import {
   KIND_TEMPLATES,
+  TEMPLATE_FIELD_TYPE_ANSWERS,
   TEMPLATE_FIELD_TYPE_HINTS,
   TEMPLATE_FIELD_TYPE_NAMES,
   TEMPLATE_FIELD_TYPE_PROMPTS,
@@ -58,6 +59,11 @@ export function presetFields(kind: LinkKind): TemplateField[] {
 /** A type's name and what a value of it looks like, in the interface's language. */
 export function shownFieldType(type: TemplateFieldType): { readonly name: string; readonly hint: string } {
   return { name: t(TEMPLATE_FIELD_TYPE_NAMES[type]), hint: t(TEMPLATE_FIELD_TYPE_HINTS[type]) };
+}
+
+/** A type as the editors name it: the shape of Claude's answer (« un nombre »), in the interface's language. */
+export function shownFieldAnswer(type: TemplateFieldType): string {
+  return t(TEMPLATE_FIELD_TYPE_ANSWERS[type]);
 }
 
 const FIELD_ID = /^[A-Za-z0-9]{1,24}$/;
@@ -224,6 +230,28 @@ export function collectionsOfTemplate(templateId: string, notes: Readonly<Record
     .sort((a, b) => (a.position < b.position ? -1 : a.position > b.position ? 1 : 0));
 }
 
+/** The other collections noting their links with this template than `collectionId`: changing it there changes it here too. */
+export function otherCollectionsOf(templateId: string, notes: Readonly<Record<string, Note>>, collectionId: string): Note[] {
+  return collectionsOfTemplate(templateId, notes).filter(note => note.id !== collectionId);
+}
+
+/** The kinds of these links, the most frequent first; « Lien », which has no facts of its own, left out. */
+export function kindsOfLinks(links: readonly Pick<LinkItem, 'kind' | 'deletedAt'>[]): LinkKind[] {
+  const counts = new Map<LinkKind, number>();
+  for (const link of links) if (link.deletedAt === null && link.kind !== 'other') counts.set(link.kind, (counts.get(link.kind) ?? 0) + 1);
+  return [...counts].sort((a, b) => b[1] - a[1] || LINK_KINDS.indexOf(a[0]) - LINK_KINDS.indexOf(b[0])).map(([kind]) => kind);
+}
+
+/**
+ * What a collection's own facts start from when it takes them: the usual facts of its links' most
+ * frequent kind (a wine shop's products: their brand, colour…), to change rather than write from
+ * nothing; none when its links have no kind yet.
+ */
+export function startingFacts(templates: Templates, kinds: readonly LinkKind[]): TemplateField[] {
+  const kind = kinds[0];
+  return kind ? kindFields(templates, kind).map(field => ({ ...field })) : [];
+}
+
 /** What can be wrong with a template being shaped: its name (the person's own), a field's name, two names alike. */
 export interface TemplateProblems {
   readonly name: string | null;
@@ -247,8 +275,8 @@ export function templateProblems(
   const seen = new Map<string, string>();
   for (const field of draft.fields) {
     const clean = fold(field.name);
-    if (!clean) fields[field.id] = t('Nommez ce champ.');
-    else if (seen.has(clean)) fields[field.id] = t('Un autre champ porte ce nom.');
+    if (!clean) fields[field.id] = t('Nommez cette information.');
+    else if (seen.has(clean)) fields[field.id] = t('Une autre information porte ce nom.');
     else seen.set(clean, field.id);
   }
   return { name, fields };
@@ -258,11 +286,14 @@ export function hasProblems(problems: TemplateProblems): boolean {
   return problems.name !== null || Object.keys(problems.fields).length > 0;
 }
 
-/** Fields worth offering while one is added: every preset's (once each by name), less those the template has. */
-export function suggestedFields(current: readonly TemplateField[]): TemplateField[] {
+/**
+ * Facts worth offering while one is added: every preset's (once each by name), those of `first` (the
+ * kinds the links have, the page's own kind) before the others', less those the list has.
+ */
+export function suggestedFields(current: readonly TemplateField[], first: readonly LinkKind[] = []): TemplateField[] {
   const taken = new Set(current.map(each => fold(each.name)));
   const out: TemplateField[] = [];
-  for (const kind of LINK_KINDS) {
+  for (const kind of [...first, ...LINK_KINDS.filter(each => !first.includes(each))]) {
     for (const preset of KIND_TEMPLATES[kind]) {
       const field = presetField(preset);
       const key = fold(field.name);

@@ -1,10 +1,10 @@
 /**
- * A template's field, shaped in a sheet (the web's row of inputs): its name, its type as a grid of
- * choices (each its glyph, its name and what a value looks like), what Claude should put in it; for a
- * field already there, « Monter », « Descendre » and « Supprimer le champ » under them. « Ajouter un
- * champ » opens it empty. What is typed reaches the template's draft only on « Ajouter » or « OK »
- * (a move takes it along), which the template's own « Enregistrer » then keeps; closing it with
- * changes asks first.
+ * A fact Claude notes, shaped in a sheet (the web's fact opened in place): its name, what Claude notes
+ * in it, and « Réponse », the shape of its answer as a grid of choices (each its glyph and its words:
+ * « un nombre »); for a fact already there, « Monter », « Descendre » and « Supprimer l'information »
+ * under them. « Ajouter une information » opens it empty. What is typed reaches the page's draft only
+ * on « Ajouter » or « OK » (a move takes it along), which the page's own « Enregistrer » then keeps;
+ * closing it with changes asks first.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,7 +13,7 @@ import { t } from '@unlease/core/i18n';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { TEMPLATE_FIELD_TYPES, TEMPLATE_LIMITS, type TemplateField, type TemplateFieldType } from '@unlease/notes/models/templates';
-import { newFieldId, shownFieldType, templateProblems } from '@unlease/notes/services/templates';
+import { newFieldId, shownFieldAnswer, templateProblems } from '@unlease/notes/services/templates';
 
 import { AppText, Button, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
@@ -85,31 +85,40 @@ export function FieldSheet({ visible, fieldId, fields, onChange, onDismiss }: Fi
 
   return (
     <>
-      <Sheet visible={visible} onDismiss={cancel} title={existing ? t('Modifier le champ') : t('Ajouter un champ')} tall>
+      <Sheet visible={visible} onDismiss={cancel} title={existing ? t('Modifier l’information') : t('Ajouter une information')} tall>
         <SheetScroll keyboardShouldPersistTaps="handled">
           <View style={styles.body}>
-            <TextField label={t('Nom')} kind="text" field={form.field('name')} value={name} onChangeText={setName} maxLength={TEMPLATE_LIMITS.fieldName} autoFocus={!existing} />
-            <View style={styles.group}>
-              <AppText variant="metaStrong" style={styles.label}>
-                {t('Type')}
-              </AppText>
-              <View style={styles.types} accessibilityRole="radiogroup" accessibilityLabel={t('Type')}>
-                {TEMPLATE_FIELD_TYPES.map(each => (
-                  <TypeChoice key={each} type={each} chosen={each === type} onPress={() => setType(each)} />
-                ))}
-              </View>
-            </View>
             <TextField
-              label={t('Ce qu’il faut y mettre')}
+              label={t('Nom de l’information')}
+              kind="text"
+              field={form.field('name')}
+              value={name}
+              onChangeText={setName}
+              placeholder={t('Prix, auteur, adresse…')}
+              maxLength={TEMPLATE_LIMITS.fieldName}
+              autoFocus={!existing}
+            />
+            <TextField
+              label={t('Ce que Claude y note')}
               kind="prose"
               field={form.field('hint')}
               value={hint}
               onChangeText={setHint}
-              placeholder={t('Ce que Claude doit y relever')}
+              placeholder={t('Par exemple : l’année de sortie')}
               multiline
               maxLength={TEMPLATE_LIMITS.hint}
               style={styles.hint}
             />
+            <View style={styles.group}>
+              <AppText variant="metaStrong" style={styles.label}>
+                {t('Réponse')}
+              </AppText>
+              <View style={styles.types} accessibilityRole="radiogroup" accessibilityLabel={t('Réponse')}>
+                {TEMPLATE_FIELD_TYPES.map(each => (
+                  <AnswerChoice key={each} type={each} chosen={each === type} onPress={() => setType(each)} />
+                ))}
+              </View>
+            </View>
           </View>
           {existing ? (
             <View>
@@ -121,7 +130,7 @@ export function FieldSheet({ visible, fieldId, fields, onChange, onDismiss }: Fi
                   <TemplateRow icon="arrowDown" title={t('Descendre')} disabled={index >= fields.length - 1} onPress={() => void form.submit(() => move(1))} />
                 </>
               ) : null}
-              <TemplateRow icon="trash" title={t('Supprimer le champ')} danger onPress={remove} />
+              <TemplateRow icon="trash" title={t('Supprimer l’information')} danger onPress={remove} />
             </View>
           ) : null}
         </SheetScroll>
@@ -135,33 +144,18 @@ export function FieldSheet({ visible, fieldId, fields, onChange, onDismiss }: Fi
   );
 }
 
-/** A type to pick, two a row: its glyph, its name and what a value of it looks like; chosen, on the primary's wash with its glyph solid. */
-function TypeChoice({ type, chosen, onPress }: { type: TemplateFieldType; chosen: boolean; onPress: () => void }) {
+/** An answer's shape to pick, two a row: its glyph and its words (« un nombre »); chosen, on the primary's wash with its glyph solid. */
+function AnswerChoice({ type, chosen, onPress }: { type: TemplateFieldType; chosen: boolean; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const { name, hint } = shownFieldType(type);
-  // « Oui ou non » says its shape in its name.
-  const shape = hint !== name ? hint : null;
+  const words = shownFieldAnswer(type);
   const ink = chosen ? theme.color.onActionContainer : theme.color.ink;
   return (
-    <Tappable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: chosen }}
-      accessibilityLabel={shape ? `${name}, ${shape}` : name}
-      style={[styles.type, chosen ? styles.typeChosen : null]}
-    >
+    <Tappable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: chosen }} accessibilityLabel={words} style={[styles.type, chosen ? styles.typeChosen : null]}>
       <Icon name={FIELD_TYPE_GLYPHS[type]} size={20} color={chosen ? ink : theme.color.inkMuted} solid={chosen} />
-      <View style={styles.typeWords}>
-        <AppText variant={chosen ? 'labelStrong' : 'label'} color={ink} numberOfLines={1}>
-          {name}
-        </AppText>
-        {shape ? (
-          <AppText variant="meta" color={chosen ? ink : undefined} numberOfLines={2}>
-            {shape}
-          </AppText>
-        ) : null}
-      </View>
+      <AppText variant={chosen ? 'labelStrong' : 'label'} color={ink} numberOfLines={2} style={styles.typeWords}>
+        {words}
+      </AppText>
     </Tappable>
   );
 }
@@ -175,7 +169,7 @@ const makeStyles = (theme: Theme) =>
     label: { marginHorizontal: 4 },
     // Two a row, twice the rows' gap apart (their edges need the room a tint does not), as Agenda's layers.
     types: { flexDirection: 'row', flexWrap: 'wrap', gap: GEOMETRY.rowGap * 2 },
-    // A field's height at least, the chip radius, edged as a field; a second line of shape makes the row taller, both chips with it.
+    // A field's height at least, the chip radius, edged as a field; words on two lines make the row taller, both chips with it.
     type: { width: '47%', flexGrow: 1, minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: theme.color.edge, ...corners(SHAPES.chip) },
     typeChosen: { backgroundColor: theme.color.actionContainer, borderColor: theme.color.focus },
     typeWords: { flex: 1, gap: 1 },

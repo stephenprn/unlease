@@ -2,7 +2,7 @@
  * Carnet's places a search finds (`core/services/settingsSearch`), beside every app's: in Réglages
  * the board's layout, the reminders (the web's section: the phone rings them), cleaning the links
  * saved and the Keep import (its own section on the web, a row of « Données » on the phone); in the
- * Administration, Seerr, and « Modèles de fiche » in Claude's section.
+ * Administration, Seerr, and « Ce que Claude relève » in Claude's section.
  */
 import { tx } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS, type SettingsPlace } from '@unlease/core/services/settingsSearch';
@@ -21,9 +21,9 @@ export const NOTES_SETTINGS_PLACES: readonly SettingsPlace<GlyphName>[] = [
   { id: 'notes-clean-links', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Nettoyer les liens enregistrés'), within: tx('Données'), glyph: 'broom', words: ['suivi', 'pistage', 'utm', 'fbclid', 'tracking', 'clean', 'links'] },
   { id: 'notes-keep', app: 'notes', area: 'settings', section: KEEP_SETTINGS_SECTION, title: tx('Importer depuis Google Keep'), within: null, glyph: 'download', words: KEEP_WORDS, only: 'web' },
   { id: 'notes-keep', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Importer depuis Google Keep'), within: tx('Données'), glyph: 'download', words: KEEP_WORDS, only: 'phone' },
-  // « Modèles de fiche »: the phone's row is in the Administration's Claude section (`LinkReading`).
-  { id: 'notes-templates', app: 'notes', area: 'admin', section: 'reading', title: tx('Modèles de fiche'), within: 'Claude', glyph: 'rows', words: ['fiche', 'fiches', 'modele', 'champ', 'champs', 'relever', 'extraire', 'template', 'templates', 'field', 'fields', 'facts', 'extract'], only: 'phone' },
+  // « Ce que Claude relève »: the phone's row is in the Administration's Claude section (`LinkReading`).
+  { id: 'notes-templates', app: 'notes', area: 'admin', section: 'reading', title: tx('Ce que Claude relève'), within: 'Claude', glyph: 'list', words: ['information', 'informations', 'releve', 'relever', 'fiche', 'fiches', 'modele', 'champ', 'champs', 'extraire', 'facts', 'fact', 'notes', 'template', 'templates', 'field', 'fields', 'extract'], only: 'phone' },
   // The web's, in the same place (`ReadingExtras`).
-  { id: 'notes-templates', app: 'notes', area: 'admin', section: 'reading', title: tx('Modèles de fiche'), within: 'Claude', glyph: 'rows', words: ['fiche', 'fiches', 'modele', 'champ', 'champs', 'relever', 'extraire', 'template', 'templates', 'field', 'fields', 'facts', 'extract'], only: 'web' },
+  { id: 'notes-templates', app: 'notes', area: 'admin', section: 'reading', title: tx('Ce que Claude relève'), within: 'Claude', glyph: 'list', words: ['information', 'informations', 'releve', 'relever', 'fiche', 'fiches', 'modele', 'champ', 'champs', 'extraire', 'facts', 'fact', 'notes', 'template', 'templates', 'field', 'fields', 'extract'], only: 'web' },
   { id: 'notes-seerr', app: 'notes', area: 'admin', section: 'seerr', title: 'Seerr', within: null, glyph: 'film', words: ['overseerr', 'jellyseerr', 'jellyfin', 'plex', 'films', 'series', 'demandes', 'movies', 'shows', 'requests'] },
 ];

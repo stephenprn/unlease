@@ -1,8 +1,8 @@
 /**
  * One collection: its head, a field to add a link to it, the links to do, then the done ones. Over
  * the rows, the order and the filter this phone keeps for the collection (`lineView`), and « Tout
- * lire » while Claude could read links kept unread here, else « Tout relire » for those read with an
- * older version of its « Modèle de fiche ».
+ * lire » while Claude could read links kept unread here, else « Tout relire » for those
+ * read before the last change to its own facts (« Ce que Claude relève »).
  */
 import React, { useMemo, useState } from 'react';
 import { Keyboard, StyleSheet, TextInput, View } from 'react-native';
@@ -38,8 +38,7 @@ import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineShe
 import { EditLineSheet } from '../features/lines/EditLineSheet';
 import { FilteredEmpty, LineRefineBar, LineViewSheets, ReadAllBanner, type LineViewSheet } from '../features/lines/LineRefine';
 import { ModulesSheet } from '../features/lines/ModulesSheet';
-import { TemplatePickerSheet } from '../features/templates/TemplatePickerSheet';
-import { rereadWords } from '../features/templates/templateWords';
+import { readAgainWords } from '../features/templates/templateWords';
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { ReviewSheet } from '../features/lines/ReviewSheet';
 import { sortDeletedLinksOnSlip, sortInboxOnSlip } from '../features/lines/sortingSlips';
@@ -88,7 +87,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
     }),
   );
   const model = useSettingsStore(selectModel);
-  // Read with an older version of the collection's own template (« Modèle de fiche »): « Tout relire ».
+  // Read before the last change to the collection's own facts (« Ce que Claude relève »): « Tout relire ».
   const readBefore = useLibraryStore(
     useShallow(s => {
       const template = id === INBOX_ID ? null : collectionTemplate(s.linkTemplates, s.notes[id]);
@@ -116,7 +115,6 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   const [picking, setPicking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(false);
-  const [templateOpen, setTemplateOpen] = useState(false);
   const [refining, setRefining] = useState<LineViewSheet | null>(null);
   const insets = useSafeAreaInsets();
   // The status bar's strip of wall comes in as the head scrolls under it: at rest the ghost emblem runs to the top edge.
@@ -274,10 +272,10 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
             ) : null}
             </>
             )}
-            {/* Read again with the collection's template as it is now: once nothing is left unread (never both wells). */}
+            {/* Read again with the collection's own facts as they are now: once nothing is left unread (never both wells). */}
             {toRead < 2 && reading && !trashed && readBefore.length > 0 ? (
               <ReadAllBanner
-                text={rereadWords(readBefore.length, formatUsd(readBefore.length * CLAUDE_COST_PER_LINK[model]))}
+                text={readAgainWords(readBefore.length, formatUsd(readBefore.length * CLAUDE_COST_PER_LINK[model]))}
                 action={readBefore.length === 1 ? t('Relire') : t('Tout relire')}
                 onRead={() => {
                   const sent = readLinks(readBefore);
@@ -354,7 +352,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
           { label: t('Modifier la collection'), icon: 'edit', onPress: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onPress: () => setModulesOpen(true) },
           // What Claude reads on its links: « Non classé » reads each by its kind.
-          ...(inbox ? [] : [{ label: t('Modèle de fiche'), icon: 'rows' as const, onPress: () => setTemplateOpen(true) }]),
+          ...(inbox ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', { collection: id }) }]),
           ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onPress: () => setReviewing(true) }] : []),
           ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onPress: sortInboxOnSlip }] : []),
           {
@@ -394,15 +392,6 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         }}
       />
       <ModulesSheet id={id} visible={modulesOpen} onDismiss={() => setModulesOpen(false)} />
-      {inbox ? null : (
-        <TemplatePickerSheet
-          lineId={id}
-          visible={templateOpen}
-          onDismiss={() => setTemplateOpen(false)}
-          onCreate={() => navigation.navigate('Template', { collection: id })}
-          onManage={() => navigation.navigate('Templates')}
-        />
-      )}
       <LineViewSheets open={refining} view={view} counts={{ all, unread, failed, priceDrop }} priced={priced} onChange={next => setLineView(id, next)} onDismiss={() => setRefining(null)} />
       <ReviewSheet id={id} visible={reviewing} onDismiss={() => setReviewing(false)} />
       <DeleteLineSheet ids={[id]} visible={deleting} onDismiss={() => setDeleting(false)} onChoose={remove} onPickLine={() => setPicking(true)} />

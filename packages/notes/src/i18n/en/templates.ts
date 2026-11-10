@@ -89,6 +89,4 @@ export const EN_TEMPLATES: Dictionary = {
   // What the editor says is wrong.
   'Donnez-lui un nom.': 'Give it a name.',
   'Un modèle porte déjà ce nom.': 'A template already has this name.',
-  'Nommez ce champ.': 'Name this field.',
-  'Un autre champ porte ce nom.': 'Another field has this name.',
 };

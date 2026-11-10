@@ -57,7 +57,7 @@ export const notesModule: AppModule = {
   pageUnder: notesPageUnder,
   pathOf: notesPathOf,
   isHome: route => route.name === 'board',
-  backTo: route => (route.name === 'line' ? paths.lines : route.name === 'template' ? paths.templates : route.name === 'templates' ? adminPath('reading') : HOME),
+  backTo: route => (route.name === 'line' ? paths.lines : route.name === 'template' ? (route.id.startsWith('kind-') ? paths.templates : paths.line(route.id)) : route.name === 'templates' ? adminPath('reading') : HOME),
   overHead: route => route.name === 'line',
   useTitle: useNotesTitle,
   stillThere: notesStillThere,

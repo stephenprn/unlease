@@ -1,160 +1,209 @@
 /**
- * A « Modèle de fiche », shaped: a kind's (its name, not editable) or one of the person's own (its
- * name typed), its fields as rows (each opens its sheet: name, type, what to put in it; moved or
- * removed there), « Ajouter un champ » and the fields common to the presets one tap away, then
- * « Essayer » on one of its links before saving. A full-screen form, as Material's: × to leave
- * (asking first when something changed, `useUnsaved`), « Enregistrer » at the bar's end, which saves
- * the template whole in one batch (`saveTemplate`). A kind's changed template is set back to its
- * preset by a quiet button under its fields, one of the person's own deleted by one at the form's
- * end, each with « Annuler » (the bar keeps its room for the title on a narrow phone). Once saved,
- * links read with an older version can all be read again from the well at the top. The web's
- * `/notes/templates/:id`.
+ * « Ce que Claude relève » for one collection, or the usual facts of one kind of link (the web's
+ * `/notes/facts/<collection>` and `/notes/facts/kind-recipe`): a full-screen form, as Material's: × to
+ * leave (asking first when something changed, `useUnsaved`), « Enregistrer » at the bar's end.
+ *
+ * A collection's asks one thing first: « Les informations habituelles » (each link gets those of its
+ * kind; the kinds its links have are listed, each opening its usual facts) or « Les informations de
+ * cette collection » (one list for every link here, starting from the usual facts of its most
+ * frequent kind). A kind's is that list alone, with « Rétablir celles de Claude » under it while it
+ * is changed. The facts are rows (each opens its sheet: name, what Claude notes in it, the answer's
+ * shape; moved or removed there), « Ajouter une information » and suggestions one tap away, then a
+ * preview on one link. Saved, links read before the change can all be read again from the well at
+ * the top. Opened with an old template's id, it shows the first collection noting with it.
  */
 import React, { useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { t, tc } from '@unlease/core/i18n';
 import { formatUsd, plural } from '@unlease/core/services/format';
+import { asLineColor } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
 import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
-import { INBOX_ID, LINK_KIND_NAMES, shownTitle, type LinkKind } from '@unlease/notes/models/entities';
+import { collectionEmblem } from '@unlease/notes/models/collections';
+import { INBOX_ID, LINK_KIND_NAMES, shownTitle, type LinkItem, type LinkKind, type Note } from '@unlease/notes/models/entities';
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
-import { changedKindTemplate, kindFields, kindOfTemplateId, kindTemplateId, linksOfTemplate, linksReadBefore, newFieldId, suggestedFields, templateProblems } from '@unlease/notes/services/templates';
-import { deleteTemplate, readLinks, resetKindTemplate, saveTemplate } from '@app/store/actions';
+import {
+  changedKindTemplate,
+  collectionTemplate,
+  collectionsOfTemplate,
+  kindFields,
+  kindOfTemplateId,
+  kindsOfLinks,
+  kindTemplateId,
+  linksOfTemplate,
+  linksReadBefore,
+  linkTemplateSource,
+  newFieldId,
+  otherCollectionsOf,
+  readingSignature,
+  startingFacts,
+  suggestedFields,
+  templateProblems,
+} from '@unlease/notes/services/templates';
+import { readLinks, resetKindTemplate, saveCollectionFacts, saveTemplate } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { linksToTry } from '@app/templates';
 import { selectCanRead, selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmptyState, FormMessage, Ground, Icon, RevealScrollView, Tappable, TextField, TopBar, useForm, useUnsaved } from '../components';
+import { AppText, Button, EmblemStone, EmptyState, FormMessage, Ground, Icon, RevealScrollView, Tappable, TopBar, useForm, useUnsaved } from '../components';
 import { Section } from '@shared/ui/features/settings/Section';
 import { ReadAllBanner } from '../features/lines/LineRefine';
 import { KIND_ICONS } from '../features/links/kindIcon';
 import { FieldSheet } from '../features/templates/FieldSheet';
 import { FIELD_TYPE_GLYPHS } from '../features/templates/fieldTypes';
 import { TemplateRow } from '../features/templates/TemplateRow';
-import { fieldMeta, rereadWords, templateCollections } from '../features/templates/templateWords';
+import { factMeta, factNames, readAgainWords } from '../features/templates/templateWords';
 import { TryLinkSheet, TrySection, useTemplateTry } from '../features/templates/TryTemplate';
 import type { ScreenProps } from '../navigation/types';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
-/** How many common fields are offered under « Ajouter un champ ». */
-const SUGGESTED = 10;
+/** How many suggestions are offered under « Ajouter une information ». */
+const SUGGESTED = 8;
+
+/** A collection that can note its own facts: a live collection of links, never « Non classé ». */
+function ownsFacts(note: Note | undefined): note is Note {
+  return !!note && note.id !== INBOX_ID && note.kind === 'links' && note.deletedAt === null && note.trashedAt === null;
+}
 
 export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const params = route.params ?? {};
-  // A kind's template is opened by its kind, or by its fixed id.
+  const notes = useLibraryStore(s => s.notes);
+  // A kind's usual facts, by its kind or by its fixed id; a collection's facts, by the collection or by an old template id.
   const kind: LinkKind | null = params.kind ?? (params.id ? kindOfTemplateId(params.id) : null);
-  const ownId = kind === null ? (params.id ?? null) : null;
-  const forCollection = kind === null && ownId === null ? params.collection : undefined;
+  const lineId = kind ? null : (params.collection ?? (params.id ? (collectionsOfTemplate(params.id, notes).find(ownsFacts)?.id ?? null) : null));
+  if (kind) return <FactsForm navigation={navigation} kind={kind} />;
+  if (lineId && ownsFacts(notes[lineId])) return <FactsForm navigation={navigation} lineId={lineId} />;
+  // Deleted on another device, or a stale way to it: a way back, never a blank form.
+  return (
+    <View style={styles.screen}>
+      <Ground />
+      <TopBar onBack={() => navigation.goBack()} />
+      <EmptyState scene="trash" title={t('Cette liste d’informations n’existe plus')} text={t('Elle a été supprimée, sur cet appareil ou sur un autre.')} />
+    </View>
+  );
+}
+
+type FormProps = { readonly navigation: ScreenProps<'Template'>['navigation'] } & ({ readonly kind: LinkKind; readonly lineId?: undefined } | { readonly lineId: string; readonly kind?: undefined });
+
+function FactsForm({ navigation, kind, lineId }: FormProps) {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
   const templates = useLibraryStore(s => s.linkTemplates);
   const links = useLibraryStore(s => s.links);
   const notes = useLibraryStore(s => s.notes);
   const linksByNote = useLibraryStore(s => s.linksByNote);
   const reading = useSettingsStore(selectCanRead);
   const model = useSettingsStore(selectModel);
-  const stored = ownId ? templates[ownId] : undefined;
-  // Gone when it is opened (deleted elsewhere, a stale way to it); deleted from here, the form leaves as it was.
-  const [missing] = useState(() => ownId !== null && (!stored || stored.deletedAt !== null || stored.kind !== null));
+  const line = lineId ? notes[lineId]! : null;
+  const collection = line ? shownTitle(line) : '';
 
-  // The form starts from the template as it was opened: a kind's as it reads now, one's own as kept, a new one empty.
-  const [opened, setOpened] = useState(() => ({ name: stored?.name ?? '', fields: kind ? [...kindFields(templates, kind)] : [...(stored?.fields ?? [])] }));
+  // The form starts from the facts as they were opened: a kind's as they read now, a collection's own list or none.
+  const [opened, setOpened] = useState(() => {
+    if (kind) return { own: true, fields: [...kindFields(templates, kind)] };
+    const template = collectionTemplate(templates, line!);
+    return { own: template !== null, fields: [...(template?.fields ?? [])] };
+  });
   const scroller = useRef<React.ComponentRef<typeof RevealScrollView>>(null);
-  const [name, setName] = useState(opened.name);
+  const [own, setOwn] = useState(opened.own);
   const [fields, setFields] = useState<TemplateField[]>(opened.fields);
-  // The field sheet, and the field it is open on (kept while it sinks away).
+  // The fact sheet, and the fact it is open on (kept while it sinks away).
   const [sheet, setSheet] = useState<{ readonly open: boolean; readonly fieldId: string | null }>({ open: false, fieldId: null });
 
-  const identity = useMemo(() => (kind ? { id: kindTemplateId(kind), kind } : ownId ? { id: ownId, kind: null } : null), [kind, ownId]);
   const allLinks = useMemo(() => Object.values(links), [links]);
-  // Read with an older version of what is saved: « Tout relire » (nothing for a template not saved yet).
-  const readBefore = useMemo(() => (identity && !missing ? linksReadBefore(identity, allLinks, notes, templates) : []), [identity, missing, allLinks, notes, templates]);
-  // What it can be tried on: the links it reads, or those of the collection a new one is made for.
-  const tryLinks = useMemo(() => {
-    if (identity) return linksToTry(linksOfTemplate(identity, allLinks, notes, templates));
-    return linksToTry((forCollection ? (linksByNote[forCollection] ?? []) : []).flatMap(id => (links[id] ? [links[id]!] : [])));
-  }, [identity, allLinks, notes, templates, forCollection, linksByNote, links]);
+  // The links these facts are for: the collection's, or those a kind's usual facts note.
+  const theirLinks = useMemo((): LinkItem[] => {
+    if (kind) return linksOfTemplate({ id: kindTemplateId(kind), kind }, allLinks, notes, templates);
+    return (linksByNote[lineId!] ?? []).flatMap(id => (links[id] && links[id]!.deletedAt === null ? [links[id]!] : []));
+  }, [kind, lineId, allLinks, notes, templates, linksByNote, links]);
+  const kinds = useMemo(() => kindsOfLinks(theirLinks), [theirLinks]);
+  // Noted before the facts they read with now, as saved: « Tout relever à nouveau ».
+  const noteBefore = useMemo((): LinkItem[] => {
+    if (kind) return linksReadBefore({ id: kindTemplateId(kind), kind }, allLinks, notes, templates);
+    return theirLinks.filter(link => link.status === 'ready' && (link.readWith ?? 'preset') !== readingSignature(linkTemplateSource(templates, link, notes)));
+  }, [kind, allLinks, notes, templates, theirLinks]);
+  const tryLinks = useMemo(() => linksToTry(theirLinks), [theirLinks]);
   const trying = useTemplateTry(fields, tryLinks);
+  const template = line ? collectionTemplate(templates, line) : null;
+  const others = template && lineId ? otherCollectionsOf(template.id, notes, lineId).map(shownTitle) : [];
 
-  const others = useMemo(() => Object.values(templates).filter(other => other.id !== ownId), [templates, ownId]);
-  const problems = templateProblems({ name, kind, fields }, others);
-  const checks: Record<string, string | null> = { name: problems.name };
+  // A collection's list is named after it: only its facts are checked (a kind given, the name is not).
+  const problems = templateProblems({ name: '', kind: kind ?? 'other', fields: own ? fields : [] }, []);
+  const checks: Record<string, string | null> = {};
   for (const [id, problem] of Object.entries(problems.fields)) checks[`field:${id}`] = problem;
-  const form = useForm(checks, { order: ['name'] });
-  const dirty = name !== opened.name || JSON.stringify(fields) !== JSON.stringify(opened.fields);
+  const form = useForm(checks);
+  const dirty = own !== opened.own || (own && JSON.stringify(fields) !== JSON.stringify(opened.fields));
   const unsaved = useUnsaved(dirty, { screen: true });
-
-  if (missing) {
-    // Deleted on another device, or a stale link to it: a way back, never a blank form.
-    return (
-      <View style={styles.screen}>
-        <Ground />
-        <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Ce modèle n’existe plus.')} />
-      </View>
-    );
-  }
 
   const leave = (): void => {
     unsaved.saved();
     navigation.goBack();
   };
+  const choose = (value: boolean): void => {
+    if (value === own) return;
+    // Its own list taken for the first time: the usual facts of its links' most frequent kind, to change.
+    if (value && fields.length === 0) setFields(startingFacts(templates, kinds));
+    setOwn(value);
+  };
   const save = (): void => {
-    if (!dirty && (kind !== null || ownId !== null)) {
+    if (!dirty) {
       leave();
       return;
     }
-    const saved = saveTemplate({ id: ownId, name, kind, fields }, { forCollection });
-    showSnack(t('Modèle enregistré'), undefined, { tone: 'success' });
-    // Links read with the version before: the form stays, its well at the top offering to read them again (as the web's).
+    if (kind) {
+      saveTemplate({ id: null, name: '', kind, fields });
+      showSnack(t('Informations enregistrées'), undefined, { tone: 'success' });
+    } else {
+      const undo = saveCollectionFacts(lineId!, own ? fields : null);
+      showSnack(t('Informations enregistrées'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    }
+    // Links noted before the change: the form stays, its well at the top offering to note them again (as the web's).
     const { links: now, notes: collections, linkTemplates } = useLibraryStore.getState();
-    const waiting = reading ? linksReadBefore({ id: saved.id, kind }, Object.values(now), collections, linkTemplates) : [];
+    const waiting = !reading
+      ? []
+      : kind
+        ? linksReadBefore({ id: kindTemplateId(kind), kind }, Object.values(now), collections, linkTemplates)
+        : (useLibraryStore.getState().linksByNote[lineId!] ?? []).filter(id => {
+            const link = now[id];
+            return !!link && link.deletedAt === null && link.status === 'ready' && (link.readWith ?? 'preset') !== readingSignature(linkTemplateSource(linkTemplates, link, collections));
+          });
     if (waiting.length === 0) {
       leave();
       return;
     }
-    setOpened({ name, fields });
-    if (kind === null && ownId === null) navigation.setParams({ id: saved.id, collection: undefined });
+    setOpened({ own, fields: own ? fields : [] });
     scroller.current?.scrollTo({ y: 0, animated: true });
   };
-  const reread = (): void => {
-    const sent = readLinks(readBefore.map(link => link.id));
+  const noteAgain = (): void => {
+    const sent = readLinks(noteBefore.map(link => link.id));
     // No « Annuler »: the server starts reading at once (a collection's « Tout lire »).
     if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
   };
   const add = (field: TemplateField): void => setFields(before => [...before, { ...field, id: before.some(each => each.id === field.id) ? newFieldId(before) : field.id }]);
 
   const changed = kind ? changedKindTemplate(templates, kind) !== null : false;
-  // « Rétablir l’original »: no question, the slip takes it back.
+  // « Rétablir celles de Claude »: no question, the slip takes it back.
   const reset = (): void => {
     if (!kind) return;
     const undo = resetKindTemplate(kind);
     leave();
-    showSnack(t('Modèle d’origine rétabli'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
-  };
-  const remove = (): void => {
-    if (!ownId) return;
-    const undo = deleteTemplate(ownId);
-    leave();
-    showSnack(t('Modèle supprimé'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(t('Informations de Claude rétablies'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
   };
 
-  // Where one of the person's own is read: its collections, or the one it is made for, once saved.
-  const readOn = stored ? templateCollections(stored, notes) : '';
-  const madeFor = !stored && forCollection && forCollection !== INBOX_ID && notes[forCollection] ? shownTitle(notes[forCollection]!) : '';
   const full = fields.length >= TEMPLATE_LIMITS.fields;
-  const suggestions = full ? [] : suggestedFields(fields).slice(0, SUGGESTED);
-  const cost = formatUsd(readBefore.length * CLAUDE_COST_PER_LINK[model]);
+  // The usual facts of its links' kinds (or of the page's kind) first.
+  const suggestions = full ? [] : suggestedFields(fields, kind ? [kind] : kinds).slice(0, SUGGESTED);
+  const cost = formatUsd(noteBefore.length * CLAUDE_COST_PER_LINK[model]);
 
   return (
     <View style={styles.screen}>
       <Ground />
       <TopBar
-        title={t('Modèle de fiche')}
+        title={kind ? t('Informations habituelles · {kind}', { kind: LINK_KIND_NAMES[kind] }) : t('Ce que Claude relève')}
         closes
         onBack={() => navigation.goBack()}
         actions={<Button label={t('Enregistrer')} small busy={form.busy} onPress={() => void form.submit(save)} style={styles.saveButton} />}
@@ -166,94 +215,98 @@ export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
       ) : null}
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
         <RevealScrollView ref={scroller} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {reading && readBefore.length > 0 ? (
+          {reading && noteBefore.length > 0 && !dirty ? (
             <ReadAllBanner
-              text={rereadWords(readBefore.length, cost)}
-              action={readBefore.length === 1 ? t('Relire') : t('Tout relire')}
-              onRead={reread}
+              text={readAgainWords(noteBefore.length, cost)}
+              action={noteBefore.length === 1 ? t('Relire') : t('Tout relire')}
+              onRead={noteAgain}
               style={styles.banner}
             />
           ) : null}
 
           {kind ? (
-            <View style={styles.kindHead}>
-              <View style={styles.kindName}>
-                <Icon name={KIND_ICONS[kind]} size={24} color={theme.color.ink} />
-                <AppText variant="title" accessibilityRole="header" style={styles.fill}>
-                  {LINK_KIND_NAMES[kind]}
-                </AppText>
-              </View>
-              <AppText variant="meta" style={styles.kindLine}>
-                {t('Pour les liens que Claude reconnaît comme « {kind} ».', { kind: LINK_KIND_NAMES[kind] })}
-              </AppText>
+            <View style={styles.lead}>
+              <AppText variant="meta">{t('Claude les relève sur chaque lien qu’il reconnaît comme « {kind} », sauf dans une collection qui a les siennes.', { kind: LINK_KIND_NAMES[kind] })}</AppText>
             </View>
           ) : (
-            <TextField
-              label={t('Nom du modèle')}
-              kind="text"
-              field={form.field('name')}
-              value={name}
-              onChangeText={setName}
-              placeholder={t('Vin, plante, jeu de société…')}
-              maxLength={TEMPLATE_LIMITS.name}
-              autoFocus={ownId === null}
-              help={
-                readOn
-                  ? t('Lu sur les liens de {collections}.', { collections: readOn })
-                  : madeFor
-                    ? t('Lu sur les liens de {collections} une fois enregistré.', { collections: madeFor })
-                    : t('Choisissez-le dans le menu d’une collection.')
-              }
-            />
+            <>
+              <View style={[styles.lead, styles.collection]}>
+                <EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={18} width={30} height={27} />
+                <AppText variant="label" color={theme.color.inkMuted} style={styles.fill}>
+                  {t('Sur les liens de {collection}', { collection })}
+                </AppText>
+              </View>
+              <View accessibilityRole="radiogroup" accessibilityLabel={t('Ce que Claude relève')} style={styles.choices}>
+                <SourceChoice chosen={!own} mark={<Icon name="sparkle" size={24} color={!own ? theme.color.onActionContainer : theme.color.ink} />} title={t('Les informations habituelles')} meta={t('Chaque lien a celles de son type : la marque d’un produit, le réalisateur d’un film…')} onPress={() => choose(false)} />
+                <SourceChoice chosen={own} mark={<EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={16} width={28} height={25} />} title={t('Les informations de cette collection')} meta={t('Les mêmes sur chaque lien, celles que vous choisissez.')} onPress={() => choose(true)} />
+              </View>
+            </>
           )}
 
-          <Section title={t('Champs')}>
-            {fields.length === 0 ? (
-              <AppText variant="meta" style={styles.line}>
-                {t('Aucun champ : Claude ne relèvera que le titre, le résumé et le prix.')}
-              </AppText>
-            ) : null}
-            {fields.map(field => (
-              <TemplateRow
-                key={field.id}
-                icon={FIELD_TYPE_GLYPHS[field.type]}
-                title={field.name || t('Sans nom')}
-                meta={fieldMeta(field)}
-                strong
-                metaLine
-                error={problems.fields[field.id] ?? null}
-                onPress={() => setSheet({ open: true, fieldId: field.id })}
-              />
-            ))}
-            {full ? (
-              <AppText variant="meta" style={styles.line}>
-                {t('{count} champs au plus.', { count: TEMPLATE_LIMITS.fields })}
-              </AppText>
-            ) : (
-              <>
-                <TemplateRow icon="plus" title={t('Ajouter un champ')} adds onPress={() => setSheet({ open: true, fieldId: null })} />
-                {suggestions.length > 0 ? (
-                  <View style={styles.common}>
-                    <AppText variant="metaStrong">{t('Champs courants')}</AppText>
-                    <View style={styles.chips}>
-                      {suggestions.map(field => (
-                        <Tappable key={field.name} onPress={() => add(field)} accessibilityRole="button" accessibilityLabel={t('Ajouter le champ « {name} »', { name: field.name })} style={styles.chip}>
-                          <Icon name="plus" size={16} color={theme.color.link} />
-                          <AppText variant="label">{field.name}</AppText>
-                        </Tappable>
-                      ))}
+          {own ? (
+            <Section title={t('Informations')}>
+              {fields.length === 0 ? (
+                <AppText variant="meta" style={styles.line}>
+                  {t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')}
+                </AppText>
+              ) : null}
+              {fields.map(field => (
+                <TemplateRow
+                  key={field.id}
+                  icon={FIELD_TYPE_GLYPHS[field.type]}
+                  title={field.name || t('Information sans nom')}
+                  meta={factMeta(field) || undefined}
+                  strong
+                  metaLine
+                  error={problems.fields[field.id] ?? null}
+                  onPress={() => setSheet({ open: true, fieldId: field.id })}
+                />
+              ))}
+              {full ? (
+                <AppText variant="meta" style={styles.line}>
+                  {t('{count} informations au plus.', { count: TEMPLATE_LIMITS.fields })}
+                </AppText>
+              ) : (
+                <>
+                  <TemplateRow icon="plus" title={t('Ajouter une information')} adds onPress={() => setSheet({ open: true, fieldId: null })} />
+                  {suggestions.length > 0 ? (
+                    <View style={styles.common}>
+                      <AppText variant="metaStrong">{t('Suggestions')}</AppText>
+                      <View style={styles.chips}>
+                        {suggestions.map(field => (
+                          <Tappable key={field.name} onPress={() => add(field)} accessibilityRole="button" accessibilityLabel={t('Ajouter « {name} »', { name: field.name })} style={styles.chip}>
+                            <Icon name="plus" size={16} color={theme.color.link} />
+                            <AppText variant="label">{field.name}</AppText>
+                          </Tappable>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                ) : null}
-              </>
-            )}
-          </Section>
-          {/* Its fields as the person changed them, set back in one press: quiet, under them. */}
-          {changed ? <Button kind="text" icon="restore" label={t('Rétablir l’original')} onPress={reset} style={styles.quiet} /> : null}
+                  ) : null}
+                </>
+              )}
+              {others.length > 0 ? (
+                <AppText variant="meta" style={styles.line}>
+                  {t('Aussi relevées sur les liens de {collections}.', { collections: others.join(', ') })}
+                </AppText>
+              ) : null}
+            </Section>
+          ) : (
+            <Section title={t('Types de liens ici')}>
+              {kinds.length === 0 ? (
+                <AppText variant="meta" style={styles.line}>
+                  {t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')}
+                </AppText>
+              ) : null}
+              {kinds.map(each => (
+                <TemplateRow key={each} icon={KIND_ICONS[each]} title={LINK_KIND_NAMES[each]} meta={factNames(kindFields(templates, each))} metaLine chevron onPress={() => navigation.push('Template', { kind: each })} />
+              ))}
+              <TemplateRow icon="rows" title={t('Informations habituelles, par type de lien')} adds chevron onPress={() => navigation.navigate('Templates')} />
+            </Section>
+          )}
+          {/* The usual facts as the person changed them, set back in one press: quiet, under them. */}
+          {changed ? <Button kind="text" icon="restore" label={t('Rétablir celles de Claude')} onPress={reset} style={styles.quiet} /> : null}
 
-          <TrySection state={trying} fields={fields} />
-          {/* A quiet destructive action at the form's end, as « Supprimer la clé » is in its section. */}
-          {ownId ? <Button kind="dangerText" icon="trash" label={t('Supprimer le modèle')} onPress={remove} style={styles.quiet} /> : null}
+          {own ? <TrySection state={trying} fields={fields} /> : null}
         </RevealScrollView>
       </KeyboardAvoidingView>
 
@@ -261,6 +314,27 @@ export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
       <TryLinkSheet state={trying} />
       {unsaved.dialog}
     </View>
+  );
+}
+
+/** One of a collection's two sources of facts (Claude's sparkle, or the collection's stone): a card, the chosen one on the primary's wash with its edge and a tick. */
+function SourceChoice({ chosen, mark, title, meta, onPress }: { chosen: boolean; mark: React.ReactNode; title: string; meta: string; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  const ink = chosen ? theme.color.onActionContainer : theme.color.ink;
+  return (
+    <Tappable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: chosen }} accessibilityLabel={`${title}, ${meta}`} style={[styles.choice, chosen ? styles.choiceChosen : null]}>
+      <View style={styles.choiceMark}>{mark}</View>
+      <View style={styles.fill}>
+        <AppText variant="bodyStrong" color={ink}>
+          {title}
+        </AppText>
+        <AppText variant="meta" color={chosen ? ink : undefined}>
+          {meta}
+        </AppText>
+      </View>
+      {chosen ? <Icon name="check" size={20} color={ink} /> : null}
+    </Tappable>
   );
 }
 
@@ -275,14 +349,29 @@ const makeStyles = (theme: Theme) =>
     banner: { marginHorizontal: 0, marginTop: 0, marginBottom: 0 },
     // A text button's glyph on the panels' rows' glyphs; close under what it acts on.
     quiet: { marginLeft: 2, marginTop: -8 },
-    // On the panels' words: its glyph on the rows' glyphs (16 in), its line on their words' edge.
-    kindHead: { gap: 4, paddingHorizontal: 16 },
-    kindName: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-    // Under the name, past its glyph (24 and 16).
-    kindLine: { marginLeft: 40 },
+    // On the panels' words: 16 in, as the section heads.
+    lead: { paddingHorizontal: 16 },
+    collection: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 10 },
+    // The two sources, one over the other, the rows' gap apart twice.
+    choices: { gap: 12 },
+    choice: {
+      minHeight: 72,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 14,
+      paddingVertical: 16,
+      paddingLeft: 16,
+      paddingRight: 16,
+      borderWidth: 1,
+      borderColor: theme.color.hairline,
+      backgroundColor: theme.color.paper,
+      ...corners(SHAPES.panel),
+    },
+    choiceMark: { width: 28, alignItems: 'center' },
+    choiceChosen: { backgroundColor: theme.color.actionContainer, borderColor: theme.color.focus, borderWidth: 1.5 },
     // A line in the panel, on the rows' glyphs.
     line: { paddingHorizontal: 16, paddingVertical: 12 },
-    // The common fields, on the rows' glyphs, under « Ajouter un champ ».
+    // The suggestions, on the rows' glyphs, under « Ajouter une information ».
     common: { gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     // An edged chip on paper (a question's starters, a new collection's suggestions), its plus in link ink.

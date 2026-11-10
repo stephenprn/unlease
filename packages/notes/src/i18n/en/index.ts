@@ -5,6 +5,7 @@
  */
 import type { Dictionary } from '@unlease/core/i18n';
 import { EN_DRAWING } from './drawing';
+import { EN_FACTS } from './facts';
 import { EN_LINE_VIEWS } from './lineViews';
 import { EN_NOTES } from './notes';
 import { EN_PHONE } from './phone';
@@ -27,6 +28,7 @@ import { EN_TEMPLATE_TRY } from './templateTry';
 export const NOTES_ENGLISH: Dictionary = {
   ...EN_SHARED,
   ...EN_TEMPLATES,
+  ...EN_FACTS,
   ...EN_TEMPLATE_TRY,
   ...EN_SERVER,
   ...EN_NOTES,

@@ -240,7 +240,7 @@ describe('a template being shaped', () => {
     expect(templateProblems({ name: '', kind: 'recipe', fields: RECIPE.fields }, others).name).toBeNull();
 
     const problems = templateProblems({ name: 'Bière', kind: null, fields: [field('a', 'Brasserie'), field('b', ''), field('c', 'brasserie'), field('d', 'Style')] }, others);
-    expect(problems).toEqual({ name: null, fields: { b: 'Nommez ce champ.', c: 'Un autre champ porte ce nom.' } });
+    expect(problems).toEqual({ name: null, fields: { b: 'Nommez cette information.', c: 'Une autre information porte ce nom.' } });
     expect(hasProblems(problems)).toBe(true);
     setLocale('en');
     expect(templateProblems({ name: '', kind: null, fields: [] }, []).name).toBe('Give it a name.');

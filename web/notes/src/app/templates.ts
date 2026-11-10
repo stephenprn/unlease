@@ -1,11 +1,12 @@
 /**
- * « Modèles de fiche » as Carnet's web app reads them (`notes/services/templates`): the person's own,
- * what a template's editor opens on, and « Essayer », a template tried on one page through the
- * server (`POST /api/notes/template-try`), nothing written. The phone's `app/templates.ts`.
+ * « Ce que Claude relève » as Carnet's web app reads it (`notes/services/templates`): a page of facts'
+ * address, what a kind's page opens on, the facts' moves and additions, and the preview, facts tried
+ * on one page through the server (`POST /api/notes/template-try`), nothing written. The phone's
+ * `app/templates.ts`.
  */
 import { getLocale, t } from '@unlease/core/i18n';
 import { LINK_KINDS, type LinkKind } from '@unlease/notes/models/entities';
-import type { LinkTemplate, TemplateField } from '@unlease/notes/models/templates';
+import type { TemplateField } from '@unlease/notes/models/templates';
 import { TEMPLATE_LIMITS } from '@unlease/notes/models/templates';
 import { changedKindTemplate, newFieldId, presetFields, type Templates } from '@unlease/notes/services/templates';
 import type { TemplateTryResponse } from '@unlease/notes/sync/templateTry';
@@ -13,26 +14,13 @@ import type { TemplateTryResponse } from '@unlease/notes/sync/templateTry';
 import { useSettingsStore } from '@shared/app/store/settings';
 import { SyncError, tryTemplate } from './api';
 
-/** The person's own templates, live, by name. */
-export function ownTemplates(templates: Templates): LinkTemplate[] {
-  return Object.values(templates)
-    .filter(template => template.kind === null && template.deletedAt === null)
-    .sort((a, b) => a.name.localeCompare(b.name, getLocale(), { sensitivity: 'base' }) || a.createdAt - b.createdAt);
-}
-
-/** The editor's address for a template: `new`, a kind's (`kind-recipe`), or one of the person's own by its id. */
-export type TemplateKey = { readonly kind: 'new' } | { readonly kind: 'kind'; readonly linkKind: LinkKind } | { readonly kind: 'own'; readonly id: string };
+/** A page of facts' address: a kind's usual facts (`kind-recipe`), else an id (a collection's, or an old list's). */
+export type TemplateKey = { readonly kind: 'kind'; readonly linkKind: LinkKind } | { readonly kind: 'own'; readonly id: string };
 
 export function templateKey(part: string): TemplateKey {
-  if (part === 'new') return { kind: 'new' };
   const kind = part.startsWith('kind-') ? part.slice('kind-'.length) : '';
   if ((LINK_KINDS as readonly string[]).includes(kind) && kind !== 'other') return { kind: 'kind', linkKind: kind as LinkKind };
   return { kind: 'own', id: part };
-}
-
-/** The part of the editor's address that names a template: its kind's for a kind's, its id for one of the person's own. */
-export function templatePart(template: { readonly id: string; readonly kind: LinkKind | null }): string {
-  return template.kind !== null ? `kind-${template.kind}` : template.id;
 }
 
 /** What a kind's editor opens on: the person's changed fields, else the preset's in the interface's language. */

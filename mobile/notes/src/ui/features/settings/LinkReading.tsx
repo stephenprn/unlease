@@ -1,7 +1,7 @@
 /**
  * Carnet's part of the Claude section (`ClaudeSection`'s `extra`, in the Administration and the
  * setup): what a link read costs, the links read this month, the links kept unread while Claude
- * had no key, read now in one press, and the way to « Modèles de fiche » (what Claude reads on each
+ * had no key, read now in one press, and the way to « Ce que Claude relève » (what Claude reads on each
  * kind of link).
  */
 import React from 'react';
@@ -40,9 +40,9 @@ function LinkReading({ model, enabled, links }: { model: keyof typeof CLAUDE_COS
         />
       ) : null}
       <ListRow
-        icon="rows"
-        title={t('Modèles de fiche')}
-        supporting={t('Ce que Claude relève sur chaque type de lien')}
+        icon="list"
+        title={t('Ce que Claude relève')}
+        supporting={t('Ce que Claude relève sur chaque lien qu’il lit')}
         trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />}
         onPress={() => navigate('Templates')}
       />

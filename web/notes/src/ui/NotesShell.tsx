@@ -24,8 +24,8 @@ import { BoardScreen } from './screens/BoardScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
 import { LinesScreen } from './screens/LinesScreen';
 import { LineScreen } from './screens/LineScreen';
-import { TemplateScreen, templateTitle } from './screens/TemplateScreen';
-import { TemplatesScreen } from './screens/TemplatesScreen';
+import { FactsEditScreen, factsTitle } from './screens/FactsEditScreen';
+import { FactsScreen } from './screens/FactsScreen';
 
 /** Longer than any layer's exit, so the layer finishes leaving before the editor or the link panel unmounts. */
 const OVERLAY_EXIT_MS = 300;
@@ -41,9 +41,9 @@ export function NotesScreen({ route }: { route: Route }) {
     case 'labels':
       return <LabelsScreen />;
     case 'templates':
-      return <TemplatesScreen />;
+      return <FactsScreen />;
     case 'template':
-      return <TemplateScreen key={route.id} part={route.id} />;
+      return <FactsEditScreen key={route.id} part={route.id} />;
     default:
       return null;
   }
@@ -68,9 +68,9 @@ function titleFor(state: LibraryState, route: Route, overlay: Route): string | n
     case 'labels':
       return t('Labels');
     case 'templates':
-      return t('Modèles de fiche');
+      return t('Ce que Claude relève');
     case 'template':
-      return templateTitle(state, route.id);
+      return factsTitle(state, route.id);
     default:
       return null;
   }

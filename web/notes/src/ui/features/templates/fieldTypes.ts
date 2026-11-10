@@ -1,7 +1,7 @@
-/** A field type's glyph (the phone's the same) and the type select's choices: its name, then the shape of a value. */
+/** A fact's type: its glyph (the phone's the same) and « Réponse »'s choices. */
 import type { GlyphName } from '@unlease/design/glyphs';
 import { TEMPLATE_FIELD_TYPES, type TemplateFieldType } from '@unlease/notes/models/templates';
-import { shownFieldType } from '@unlease/notes/services/templates';
+import { shownFieldAnswer } from '@unlease/notes/services/templates';
 
 import type { SelectOption } from '@shared/ui/components/SelectField';
 
@@ -14,10 +14,7 @@ export const FIELD_TYPE_GLYPHS: Readonly<Record<TemplateFieldType, GlyphName>> =
   yesno: 'boxChecked',
 };
 
-/** « Durée · Un temps : 1 h 30 »; « Oui ou non » says its shape already. Read where shown. */
-export function fieldTypeOptions(): SelectOption<TemplateFieldType>[] {
-  return TEMPLATE_FIELD_TYPES.map(type => {
-    const { name, hint } = shownFieldType(type);
-    return { value: type, label: name === hint ? name : `${name} · ${hint}` };
-  });
+/** « Réponse »'s choices: each type as the shape of Claude's answer (« un nombre »), read where shown. */
+export function answerOptions(): SelectOption<TemplateFieldType>[] {
+  return TEMPLATE_FIELD_TYPES.map(type => ({ value: type, label: shownFieldAnswer(type) }));
 }

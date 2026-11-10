@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import type { TemplateField } from '@unlease/notes/models/templates';
-import { kindTemplateId, presetFields, templateSignature } from '@unlease/notes/services/templates';
+import { collectionTemplate, kindTemplateId, presetFields, templateSignature } from '@unlease/notes/services/templates';
 import { TEMPLATE_TRY_PATH } from '@unlease/notes/sync/templateTry';
 
 import { freshLibrary } from '@test/library';
-import { addLink, createLine, saveTemplate, setCollectionTemplate, updateLink } from '../../app/store/actions';
+import { addLink, createLine, saveCollectionFacts, saveTemplate, updateLink } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
 import { setReading } from '../../app/store/prefs';
 import { setServer } from '@shared/app/store/settings';
@@ -16,9 +16,9 @@ import { setSyncState } from '@shared/app/store/syncStatus';
 import { useUiStore } from '@shared/app/store/ui';
 import { initHistory, navigate } from '@shared/ui/router';
 import { LinkPanel } from '../features/links/LinkPanel';
+import { FactsEditScreen } from '../screens/FactsEditScreen';
+import { FactsScreen } from '../screens/FactsScreen';
 import { LineScreen } from '../screens/LineScreen';
-import { TemplateScreen } from '../screens/TemplateScreen';
-import { TemplatesScreen } from '../screens/TemplatesScreen';
 
 const WINE: TemplateField[] = [
   { id: 'domain', name: 'Domaine', type: 'text', hint: 'Le domaine ou le château' },
@@ -27,176 +27,167 @@ const WINE: TemplateField[] = [
 ];
 
 const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
-const templates = () => useLibraryStore.getState().linkTemplates;
+const state = () => useLibraryStore.getState();
+const own = (lineId: string) => collectionTemplate(state().linkTemplates, state().notes[lineId]);
 const at = (path: string): void => history.replaceState({ index: 0 }, '', path);
+/** The facts' names as their lines read them. */
+const factNames = (): string[] => within(screen.getByRole('list', { name: 'Informations' })).getAllByRole('listitem').map(item => item.getAttribute('aria-label') ?? '');
 
-describe('« Modèles de fiche »', () => {
+describe('a collection’s « Ce que Claude relève »', () => {
   let wines: string;
-  let wine: string;
+  let link: string;
 
   beforeEach(async () => {
     await freshLibrary();
     initHistory();
-    at('/notes/templates');
     setServer({ url: 'https://carnet.test', token: 'jeton' });
     setReading(true);
     wines = createLine({ title: 'Vins' });
-    wine = saveTemplate({ id: null, name: 'Vin', kind: null, fields: WINE }).id;
-    setCollectionTemplate(wines, wine);
+    link = addLink('https://cave.example.org/chablis', { noteId: wines });
+    // Read by its kind, the collection noting Claude's usual facts.
+    updateLink(link, { status: 'ready', title: 'Chablis 2021', kind: 'product', readWith: null, attributes: [{ label: 'Marque', value: 'Laroche' }] });
+    at(`/notes/facts/${wines}`);
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('lists the person’s own, then every kind’s, with what each notes', async () => {
-    saveTemplate({ id: null, name: '', kind: 'recipe', fields: [...presetFields('recipe'), { id: 'veggie', name: 'Végétarien', type: 'yesno', hint: '' }] });
-    render(<TemplatesScreen />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Modèles de fiche' })).toBeInTheDocument();
-    expect(screen.getByText('Ce que Claude relève sur les liens que vous gardez.')).toBeInTheDocument();
-    const own = screen.getByRole('region', { name: 'Vos modèles' });
-    expect(within(own).getByRole('button', { name: /^Vin\s?3\schamps · Vins$/ })).toBeInTheDocument();
-    expect(within(own).getByRole('button', { name: 'Nouveau modèle' })).toBeInTheDocument();
-    const kinds = screen.getByRole('region', { name: 'Par type de lien' });
-    // Every kind but « Lien », in the kinds' order, their fields after their name; a changed one says so.
-    expect(within(kinds).getAllByRole('button')).toHaveLength(12);
-    expect(within(kinds).getByRole('button', { name: /^Film/ })).toHaveTextContent('Réalisateur, Année, Durée, Genre, Note');
-    expect(within(kinds).getByRole('button', { name: /^Recette/ })).toHaveTextContent('Temps total, Portions, Difficulté, Végétarien · Modifié');
-
-    await userEvent.click(within(kinds).getByRole('button', { name: /^Recette/ }));
-    expect(location.pathname).toBe('/notes/templates/kind-recipe');
-  });
-
-  it('makes a new one: its name first, fields typed or picked among the common ones, saved whole', async () => {
-    at('/notes/templates/new');
-    const { unmount } = render(<TemplateScreen part="new" />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Nouveau modèle' })).toBeInTheDocument();
-    expect(screen.getByText('Aucun champ : Claude ne relèvera que le titre, le résumé et le prix.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nom du modèle')).toHaveFocus();
-
-    // Saved without a name or a named field: every problem at once, nothing written.
-    await userEvent.click(screen.getByRole('button', { name: 'Ajouter un champ' }));
-    expect(screen.getByLabelText('Nom du champ 1')).toHaveFocus();
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    expect(screen.getByText('Donnez-lui un nom.')).toBeInTheDocument();
-    expect(screen.getByText('Nommez ce champ.')).toBeInTheDocument();
-    expect(screen.getByText('2 champs sont à corriger.')).toBeInTheDocument();
-    expect(Object.keys(templates())).toEqual([wine]);
-
-    await userEvent.type(screen.getByLabelText('Nom du modèle'), 'Plante');
-    await userEvent.type(screen.getByLabelText('Nom du champ 1'), 'Exposition');
-    await userEvent.type(screen.getByLabelText('Ce qu’il faut y mettre, champ 1'), 'Soleil, mi-ombre ou ombre');
-    // A common field in one press, its type and what it holds with it.
-    await userEvent.click(screen.getByRole('button', { name: 'Ajouter le champ « Marque »' }));
-    expect(screen.getByLabelText('Nom du champ 2')).toHaveValue('Marque');
-    expect(screen.queryByRole('button', { name: 'Ajouter le champ « Marque »' })).toBeNull();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    const made = Object.values(templates()).find(template => template.name === 'Plante')!;
-    expect(made.fields).toEqual([
-      { id: 'f1', name: 'Exposition', type: 'text', hint: 'Soleil, mi-ombre ou ombre' },
-      { id: 'brand', name: 'Marque', type: 'text', hint: 'La marque ou le fabricant' },
-    ]);
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Modèle enregistré', tone: 'success' });
-    // The editor goes on with the template saved, at its own address (once the router has stepped off the entry the changes held).
-    await waitFor(() => expect(location.pathname).toBe(`/notes/templates/${made.id}`));
+  it('opens from the collection’s menu, never on « Non classé »', async () => {
+    const { unmount } = render(<LineScreen id={wines} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Plus d’actions' })[0]!);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Ce que Claude relève' }));
+    await waitFor(() => expect(location.pathname).toBe(`/notes/facts/${wines}`));
     unmount();
-  }, 20_000);
 
-  it('chooses a new one for the collection it was made from', async () => {
-    at(`/notes/templates/new?for=${wines}`);
-    render(<TemplateScreen part="new" />);
-    expect(screen.getByText('Lu sur les liens de Vins une fois enregistré.')).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('Nom du modèle'), 'Grand vin');
-    await userEvent.click(screen.getByRole('button', { name: 'Ajouter le champ « Marque »' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    const made = Object.values(templates()).find(template => template.name === 'Grand vin')!;
-    expect(useLibraryStore.getState().notes[wines]!.templateId).toBe(made.id);
+    render(<LineScreen id={INBOX_ID} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Plus d’actions' })[0]!);
+    expect(screen.queryByRole('menuitem', { name: 'Ce que Claude relève' })).toBeNull();
   });
 
-  it('moves, retypes and deletes fields, by the menu and by the keys', async () => {
-    at(`/notes/templates/${wine}`);
-    render(<TemplateScreen part={wine} />);
-    expect(screen.getByText('Lu sur les liens de Vins.')).toBeInTheDocument();
-    const names = () => screen.getAllByRole('textbox', { name: /^Nom du champ \d$/ }).map(input => (input as HTMLInputElement).value);
-    expect(names()).toEqual(['Domaine', 'Millésime', 'Cépages']);
+  it('says Claude’s usual facts are noted, and the kinds its links have with theirs', async () => {
+    render(<FactsEditScreen part={wines} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Ce que Claude relève' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Sur les liens de Vins/ })).toBeInTheDocument();
+    const choices = screen.getByRole('radiogroup', { name: 'Ce que Claude relève' });
+    expect(within(choices).getByRole('radio', { name: /^Les informations habituelles/ })).toHaveAttribute('aria-checked', 'true');
+    // Its links are products: the product's usual facts, opening them.
+    const usual = screen.getByRole('region', { name: 'Types de liens ici' });
+    const product = within(usual).getByRole('button', { name: /^Article/ });
+    expect(product).toHaveTextContent('Marque, Couleur, Taille(s), Matière, Modèle, Disponibilité');
     expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
+    await userEvent.click(product);
+    expect(location.pathname).toBe('/notes/facts/kind-product');
+  });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de « Domaine »' }));
-    expect(screen.getByRole('menuitem', { name: 'Monter' })).toHaveAttribute('aria-disabled', 'true');
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Descendre' }));
-    expect(names()).toEqual(['Millésime', 'Domaine', 'Cépages']);
-
-    // Alt+↓ from anywhere in a row, the focus staying where it was.
-    const grapes = screen.getByLabelText('Nom du champ 3');
-    grapes.focus();
-    await userEvent.keyboard('{Alt>}{ArrowUp}{/Alt}');
-    expect(names()).toEqual(['Millésime', 'Cépages', 'Domaine']);
-    expect(screen.getByDisplayValue('Cépages')).toHaveFocus();
-    expect(screen.getByText('Cépages : position 2 sur 3')).toBeInTheDocument();
-
-    // The type from the app's menu: its glyph and its name in the field.
-    await userEvent.click(screen.getByRole('button', { name: 'Type du champ 1' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Texte · Quelques mots' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de « Domaine »' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Supprimer le champ' }));
-    expect(names()).toEqual(['Millésime', 'Cépages']);
+  it('takes its own facts, starting from its links’ usual ones, changed in place and saved whole, undoably', async () => {
+    render(<FactsEditScreen part={wines} />);
+    await userEvent.click(screen.getByRole('radio', { name: /^Les informations de cette collection/ }));
+    // Its links' kind's usual facts, to change rather than write from nothing.
+    expect(factNames()).toEqual(['Marque', 'Couleur', 'Taille(s)', 'Matière', 'Modèle', 'Disponibilité']);
+    // A fact reads as one line, and opens in place.
+    const brand = screen.getByRole('button', { name: /^Marque/ });
+    expect(brand).toHaveAttribute('aria-expanded', 'false');
+    expect(brand).toHaveTextContent('La marque ou le fabricant');
+    await userEvent.click(brand);
+    expect(brand).toHaveAttribute('aria-expanded', 'true');
+    const name = screen.getByLabelText('Nom de l’information');
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Domaine');
+    await userEvent.click(screen.getByRole('button', { name: 'Réponse' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'plusieurs valeurs' }));
+    // Removing the others, then one added from nothing, and a suggestion in one press.
+    for (const other of ['Couleur', 'Taille(s)', 'Matière', 'Modèle', 'Disponibilité']) {
+      await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${other.replace(/[()]/g, '\\$&')}`) }));
+      await userEvent.click(screen.getByRole('button', { name: 'Supprimer l’information' }));
+    }
+    expect(factNames()).toEqual(['Domaine']);
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter une information' }));
+    expect(screen.getByLabelText('Nom de l’information')).toHaveFocus();
+    await userEvent.type(screen.getByLabelText('Nom de l’information'), 'Millésime');
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter « Année »' }));
+    expect(factNames()).toEqual(['Domaine', 'Millésime', 'Année']);
 
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    expect(templates()[wine]!.fields).toEqual([
-      { id: 'vintage', name: 'Millésime', type: 'text', hint: 'L’année de la vendange' },
-      { id: 'grapes', name: 'Cépages', type: 'list', hint: '' },
+    const template = own(wines)!;
+    expect(template.name).toBe('Vins');
+    expect(template.fields.map(field => [field.name, field.type])).toEqual([
+      ['Domaine', 'list'],
+      ['Millésime', 'text'],
+      ['Année', 'number'],
     ]);
-  }, 20_000);
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Informations enregistrées', action: { label: 'Annuler' } });
+    // Its link was noted before: the well offers to note it again.
+    expect(await screen.findByText(/^1\slien lu avant ce changement · environ 0,04 \$ pour le relire$/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Relire' }));
+    expect(state().links[link]!.status).toBe('pending');
+  }, 30_000);
 
-  it('stops at eight fields and says so', async () => {
-    saveTemplate({ id: wine, name: 'Vin', kind: null, fields: Array.from({ length: 8 }, (_, index) => ({ id: `f${index + 1}`, name: `Champ ${index + 1}`, type: 'text' as const, hint: '' })) });
-    render(<TemplateScreen part={wine} />);
-    expect(screen.getByText('8 champs au plus.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Ajouter un champ' })).toBeNull();
-    expect(screen.queryByText('Champs courants')).toBeNull();
+  it('keeps a fact with a problem open, and saves nothing until it is named', async () => {
+    saveCollectionFacts(wines, WINE);
+    render(<FactsEditScreen part={wines} />);
+    await userEvent.click(screen.getByRole('button', { name: /^Domaine/ }));
+    await userEvent.clear(screen.getByLabelText('Nom de l’information'));
+    // Another fact opened: the unnamed one stays open, and the save says why.
+    await userEvent.click(screen.getByRole('button', { name: /^Cépages/ }));
+    expect(screen.getAllByLabelText('Nom de l’information')).toHaveLength(2);
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(await screen.findByText('Nommez cette information.')).toBeInTheDocument();
+    expect(own(wines)!.fields).toEqual(WINE);
+  });
+
+  it('moves facts by the keys, the focus staying where it was', async () => {
+    saveCollectionFacts(wines, WINE);
+    render(<FactsEditScreen part={wines} />);
+    expect(factNames()).toEqual(['Domaine', 'Millésime', 'Cépages']);
+    screen.getByRole('button', { name: /^Cépages/ }).focus();
+    await userEvent.keyboard('{Alt>}{ArrowUp}{/Alt}');
+    expect(factNames()).toEqual(['Domaine', 'Cépages', 'Millésime']);
+    expect(screen.getByRole('button', { name: /^Cépages/ })).toHaveFocus();
+    expect(screen.getByText('Cépages : position 2 sur 3')).toBeInTheDocument();
+  });
+
+  it('goes back to Claude’s usual facts: its list goes with it, undoably', async () => {
+    saveCollectionFacts(wines, WINE);
+    const template = own(wines)!.id;
+    render(<FactsEditScreen part={wines} />);
+    await userEvent.click(screen.getByRole('radio', { name: /^Les informations habituelles/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(own(wines)).toBeNull();
+    expect(state().linkTemplates[template]!.deletedAt).not.toBeNull();
+    act(() => useUiStore.getState().snack!.action!.run());
+    expect(own(wines)!.id).toBe(template);
+  });
+
+  it('says when its list is noted on other collections too', () => {
+    saveCollectionFacts(wines, WINE);
+    const cellar = createLine({ title: 'Cave' });
+    useLibraryStore.setState(s => ({ notes: { ...s.notes, [cellar]: { ...s.notes[cellar]!, templateId: own(wines)!.id } } }));
+    render(<FactsEditScreen part={wines} />);
+    expect(screen.getByText('Aussi relevées sur les liens de Cave.')).toBeInTheDocument();
+  });
+
+  it('stops at eight facts and says so', () => {
+    saveCollectionFacts(
+      wines,
+      Array.from({ length: 8 }, (_, index) => ({ id: `f${index + 1}`, name: `Information ${index + 1}`, type: 'text' as const, hint: '' })),
+    );
+    render(<FactsEditScreen part={wines} />);
+    expect(screen.getByText('8 informations au plus.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ajouter une information' })).toBeNull();
+    expect(screen.queryByText('Suggestions')).toBeNull();
   });
 
   it('asks before leaving with changes', async () => {
-    at(`/notes/templates/${wine}`);
-    render(<TemplateScreen part={wine} />);
-    await userEvent.type(screen.getByLabelText('Nom du modèle'), ' blanc');
+    render(<FactsEditScreen part={wines} />);
+    await userEvent.click(screen.getByRole('radio', { name: /^Les informations de cette collection/ }));
     act(() => navigate('/notes'));
     expect(await screen.findByRole('alertdialog', { name: 'Abandonner les modifications ?' })).toBeInTheDocument();
-    expect(location.pathname).toBe(`/notes/templates/${wine}`);
+    expect(location.pathname).toBe(`/notes/facts/${wines}`);
   });
 
-  it('sets a kind’s template back to its preset, undoably', async () => {
-    saveTemplate({ id: null, name: '', kind: 'book', fields: [WINE[0]!] });
-    render(<TemplateScreen part="kind-book" />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Livre' })).toBeInTheDocument();
-    expect(screen.getByText('Pour les liens que Claude reconnaît comme « Livre ».')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Rétablir l’original' }));
-    expect(templates()[kindTemplateId('book')]!.deletedAt).not.toBeNull();
-    // The editor follows: the preset's fields, nothing to save.
-    expect(screen.getAllByRole('textbox', { name: /^Nom du champ \d$/ }).map(input => (input as HTMLInputElement).value)).toEqual(['Auteur', 'Éditeur', 'Année', 'Pages']);
-    expect(screen.queryByRole('button', { name: 'Rétablir l’original' })).toBeNull();
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Modèle d’origine rétabli', action: { label: 'Annuler' } });
-    act(() => useUiStore.getState().snack!.action!.run());
-    expect(templates()[kindTemplateId('book')]!.deletedAt).toBeNull();
-    expect(screen.getByLabelText('Nom du champ 1')).toHaveValue('Domaine');
-  });
-
-  it('deletes one of the person’s own from its menu, undoably', async () => {
-    at(`/notes/templates/${wine}`);
-    render(<TemplateScreen part={wine} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Supprimer le modèle' }));
-    expect(templates()[wine]!.deletedAt).not.toBeNull();
-    // The editor stays as it was until the list is on screen.
-    expect(screen.queryByText('Ce modèle n’existe plus')).toBeNull();
-    await waitFor(() => expect(location.pathname).toBe('/notes/templates'));
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Modèle supprimé', action: { label: 'Annuler' } });
-  });
-
-  it('tries the fields on one of its links and lists every field, a dash for none', async () => {
-    const link = addLink('https://cave.example.org/chablis', { noteId: wines });
-    updateLink(link, { status: 'ready', title: 'Chablis 2021', readWith: templateSignature(WINE) });
+  it('previews its facts on one of its links, every fact listed, a dash for none, nothing written', async () => {
+    saveCollectionFacts(wines, WINE);
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith(TEMPLATE_TRY_PATH)) {
         const body = JSON.parse(String(init?.body)) as { url: string; fields: TemplateField[] };
@@ -207,45 +198,77 @@ describe('« Modèles de fiche »', () => {
       return json({}, 404);
     });
     vi.stubGlobal('fetch', fetchMock);
-    render(<TemplateScreen part={wine} />);
-    const panel = screen.getByRole('region', { name: 'Essayer' });
+    render(<FactsEditScreen part={wines} />);
+    const panel = screen.getByRole('region', { name: 'Aperçu sur un lien' });
     expect(within(panel).getByRole('button', { name: 'Lien' })).toHaveTextContent('Chablis 2021');
     await userEvent.click(within(panel).getByRole('button', { name: 'Essayer' }));
-    const result = await within(panel).findByText('Chablis premier cru');
-    expect(result).toBeInTheDocument();
+    expect(await within(panel).findByText('Chablis premier cru')).toBeInTheDocument();
     expect(within(panel).getByText('Domaine Laroche')).toBeInTheDocument();
     expect(within(panel).getByLabelText('Rien trouvé')).toHaveTextContent('—');
-    expect(within(panel).getByText(/^Lu en [\d,]+\ss · 0,004\s\$$/)).toBeInTheDocument();
-    // Nothing written.
-    expect(templates()[wine]!.fields).toEqual(WINE);
+    expect(own(wines)!.fields).toEqual(WINE);
+  });
+
+  it('follows an old address naming its list to the collection', async () => {
+    saveCollectionFacts(wines, WINE);
+    const template = own(wines)!.id;
+    at(`/notes/templates/${template}`);
+    render(<FactsEditScreen part={template} />);
+    await waitFor(() => expect(location.pathname).toBe(`/notes/facts/${wines}`));
+  });
+});
+
+describe('a kind’s usual facts', () => {
+  beforeEach(async () => {
+    await freshLibrary();
+    initHistory();
+    setServer({ url: 'https://carnet.test', token: 'jeton' });
+    setReading(true);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('changes them, and goes back to Claude’s, undoably', async () => {
+    saveTemplate({ id: null, name: '', kind: 'book', fields: [WINE[0]!] });
+    render(<FactsEditScreen part="kind-book" />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Informations habituelles · Livre' })).toBeInTheDocument();
+    expect(screen.getByText('Claude les relève sur chaque lien qu’il reconnaît comme « Livre », sauf dans une collection qui a les siennes.')).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Rétablir celles de Claude' }));
+    expect(state().linkTemplates[kindTemplateId('book')]!.deletedAt).not.toBeNull();
+    // The page follows: Claude's facts, nothing to save.
+    expect(factNames()).toEqual(['Auteur', 'Éditeur', 'Année', 'Pages']);
+    expect(screen.queryByRole('button', { name: 'Rétablir celles de Claude' })).toBeNull();
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Informations de Claude rétablies', action: { label: 'Annuler' } });
+    act(() => useUiStore.getState().snack!.action!.run());
+    expect(factNames()).toEqual(['Domaine']);
   });
 
   it('says the server’s refusal, and offers nothing without Claude or offline', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'Budget Claude du mois atteint' }, 402)));
-    const { unmount } = render(<TemplateScreen part="kind-film" />);
-    let panel = screen.getByRole('region', { name: 'Essayer' });
+    const { unmount } = render(<FactsEditScreen part="kind-film" />);
+    let panel = screen.getByRole('region', { name: 'Aperçu sur un lien' });
     await userEvent.type(within(panel).getByRole('textbox', { name: 'Adresse' }), 'https://example.org/film');
     await userEvent.click(within(panel).getByRole('button', { name: 'Essayer' }));
     expect(await within(panel).findByRole('alert')).toHaveTextContent(/Budget|Le serveur a répondu 402/);
     unmount();
 
     act(() => setSyncState({ phase: 'offline', message: 'Serveur injoignable' }));
-    const offline = render(<TemplateScreen part="kind-film" />);
-    panel = screen.getByRole('region', { name: 'Essayer' });
+    const offline = render(<FactsEditScreen part="kind-film" />);
+    panel = screen.getByRole('region', { name: 'Aperçu sur un lien' });
     expect(within(panel).getByText('Serveur injoignable')).toBeInTheDocument();
     offline.unmount();
 
     setReading(false);
-    render(<TemplateScreen part="kind-film" />);
-    panel = screen.getByRole('region', { name: 'Essayer' });
+    render(<FactsEditScreen part="kind-film" />);
+    panel = screen.getByRole('region', { name: 'Aperçu sur un lien' });
     expect(within(panel).getByText('Claude n’est pas configuré : l’essai n’est pas possible.')).toBeInTheDocument();
-    expect(within(panel).queryByRole('button', { name: 'Essayer' })).toBeNull();
   }, 20_000);
 });
 
-describe('a collection’s « Modèle de fiche », and a link read with another version', () => {
+describe('the overview, and a link’s page', () => {
   let wines: string;
-  let wine: string;
   let link: string;
 
   beforeEach(async () => {
@@ -254,47 +277,39 @@ describe('a collection’s « Modèle de fiche », and a link read with another 
     setServer({ url: 'https://carnet.test', token: 'jeton' });
     setReading(true);
     wines = createLine({ title: 'Vins' });
-    wine = saveTemplate({ id: null, name: 'Vin', kind: null, fields: WINE }).id;
     link = addLink('https://cave.example.org/chablis', { noteId: wines });
-    // Read by kind, before the collection had its template.
-    updateLink(link, { status: 'ready', title: 'Chablis 2021', kind: 'product', readWith: null, attributes: [{ label: 'Marque', value: 'Laroche' }] });
+    updateLink(link, { status: 'ready', title: 'Chablis 2021', kind: 'product', readWith: null });
   });
 
-  it('is chosen from the collection’s menu, at once and undoably, never on « Non classé »', async () => {
-    render(<LineScreen id={wines} />);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Plus d’actions' })[0]!);
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Modèle de fiche' }));
-    const picker = screen.getByRole('radiogroup', { name: 'Modèle de fiche' });
-    expect(within(picker).getByRole('radio', { name: /^Selon le type de lien/ })).toHaveAttribute('aria-checked', 'true');
-    await userEvent.click(within(picker).getByRole('radio', { name: /^Vin\s?3\schamps$/ }));
-    expect(useLibraryStore.getState().notes[wines]!.templateId).toBe(wine);
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Modèle choisi', action: { label: 'Annuler' } });
-
-    // Its links read with another version: the well over the rows offers to read them again.
-    expect(await screen.findByText(/^1\slien lu avec une autre version · environ 0,04 \$ pour le relire$/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Relire' }));
-    expect(useLibraryStore.getState().links[link]!.status).toBe('pending');
+  it('lists the collections with their own facts, then every kind’s usual ones', async () => {
+    saveCollectionFacts(wines, WINE);
+    saveTemplate({ id: null, name: '', kind: 'recipe', fields: [...presetFields('recipe'), { id: 'veggie', name: 'Végétarien', type: 'yesno', hint: '' }] });
+    render(<FactsScreen />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Ce que Claude relève' })).toBeInTheDocument();
+    const collections = screen.getByRole('region', { name: 'Collections qui ont les leurs' });
+    expect(within(collections).getByRole('button', { name: /^Vins/ })).toHaveTextContent('Domaine, Millésime, Cépages');
+    const kinds = screen.getByRole('region', { name: 'Informations habituelles, par type de lien' });
+    // Every kind but « Lien », in the kinds' order, their facts after their name; a changed one says so.
+    expect(within(kinds).getAllByRole('button')).toHaveLength(12);
+    expect(within(kinds).getByRole('button', { name: /^Film/ })).toHaveTextContent('Réalisateur, Année, Durée, Genre, Note');
+    expect(within(kinds).getByRole('button', { name: /^Recette/ })).toHaveTextContent('Temps total, Portions, Difficulté, Végétarien · Modifiées');
+    await userEvent.click(within(collections).getByRole('button', { name: /^Vins/ }));
+    expect(location.pathname).toBe(`/notes/facts/${wines}`);
   });
 
-  it('has no picker on « Non classé »', async () => {
-    render(<LineScreen id={INBOX_ID} />);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Plus d’actions' })[0]!);
-    expect(screen.queryByRole('menuitem', { name: 'Modèle de fiche' })).toBeNull();
-  });
-
-  it('says on the link’s page that it was read with another version, and opens the template it reads with', async () => {
-    setCollectionTemplate(wines, wine);
+  it('says on the link’s page it was noted before its facts changed, and opens its collection’s', async () => {
+    saveCollectionFacts(wines, WINE);
     render(<LinkPanel id={link} onClose={() => {}} />);
-    expect(screen.getByText('Lu avec une version précédente de la fiche.')).toBeInTheDocument();
+    expect(screen.getByText('Lu avant le dernier changement de ses informations.')).toBeInTheDocument();
     await userEvent.click(screen.getAllByRole('button', { name: 'Plus d’actions' })[0]!);
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Modifier la fiche' }));
-    await waitFor(() => expect(location.pathname).toBe(`/notes/templates/${wine}`));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Ce que Claude relève' }));
+    await waitFor(() => expect(location.pathname).toBe(`/notes/facts/${wines}`));
   });
 
-  it('reads as current a link read with the template it has now', () => {
-    setCollectionTemplate(wines, wine);
+  it('reads as current a link noted with the facts it has now', () => {
+    saveCollectionFacts(wines, WINE);
     updateLink(link, { readWith: templateSignature(WINE) });
     render(<LinkPanel id={link} onClose={() => {}} />);
-    expect(screen.queryByText('Lu avec une version précédente de la fiche.')).toBeNull();
+    expect(screen.queryByText('Lu avant le dernier changement de ses informations.')).toBeNull();
   });
 });

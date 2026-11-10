@@ -14,7 +14,7 @@ import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { formatDay, formatPrice } from '@unlease/core/services/format';
-import { LINK_KIND_NAMES, shownTitle } from '@unlease/notes/models/entities';
+import { INBOX_ID, LINK_KIND_NAMES, shownTitle } from '@unlease/notes/models/entities';
 import { linkTemplateSource, readingSignature } from '@unlease/notes/services/templates';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 
@@ -23,7 +23,6 @@ import { useBlobUrl } from '@shared/app/media/images';
 import { deleteLink, moveLink, reanalyzeLink, saveTypedText } from '../../../app/store/actions';
 import { onBeforePause } from '@shared/app/sync/loop';
 import { useLibraryStore } from '../../../app/store/library';
-import { templatePart } from '../../../app/templates';
 import templateStyles from '../templates/templates.module.css';
 import { paths } from '../../routes';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
@@ -136,14 +135,14 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const narrow = useMedia(NARROW);
   const leave = narrow ? ({ icon: 'back', label: t('Retour') } as const) : ({ icon: 'close', label: t('Fermer') } as const);
   const reading = useCanRead();
-  // The template it is read with (« Modifier la fiche »): its collection's, else its kind's; a link of no kind has none.
-  const template = useLibraryStore(s => {
+  // Where its facts are chosen (« Ce que Claude relève »): its collection's page, else its kind's usual facts; « Non classé »'s link of no kind has none.
+  const factsPart = useLibraryStore(s => {
     const shown = s.links[id];
     if (!shown) return null;
-    const source = linkTemplateSource(s.linkTemplates, shown, s.notes);
-    return source.from === 'collection' ? templatePart(source.template) : source.kind === 'other' ? null : templatePart({ id: '', kind: source.kind });
+    if (shown.noteId !== INBOX_ID && s.notes[shown.noteId]?.kind === 'links') return shown.noteId;
+    return shown.kind === 'other' ? null : `kind-${shown.kind}`;
   });
-  // Read with another version of that template than the one it has now (never read with one: the presets').
+  // Noted before the last change to the facts it reads with now (never with any: the presets').
   const readBefore = useLibraryStore(s => {
     const shown = s.links[id];
     return !!shown && shown.status === 'ready' && (shown.readWith ?? 'preset') !== readingSignature(linkTemplateSource(s.linkTemplates, shown, s.notes));
@@ -331,10 +330,10 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
                   ))}
                 </dl>
               ) : null}
-              {/* Read with another version of its template: under the facts, the way to read it again. */}
+              {/* Read before its facts changed: under them, the way to read it again. */}
               {reading && readBefore ? (
                 <p className={`${templateStyles.stale} t-meta`}>
-                  <span>{t('Lu avec une version précédente de la fiche.')}</span>
+                  <span>{t('Lu avant le dernier changement de ses informations.')}</span>
                   <Button kind="text" small onClick={() => reanalyzeLink(id)}>
                     {t('Relire')}
                   </Button>
@@ -409,8 +408,8 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
             : []),
           // Reading again only means something when the server reads links.
           ...(reading ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
-          // What Claude notes on it: the template it is read with.
-          ...(template ? [{ label: t('Modifier la fiche'), icon: 'rows' as const, onSelect: () => navigate(paths.template(template)) }] : []),
+          // What Claude notes on it: where its facts are chosen.
+          ...(factsPart ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(factsPart)) }] : []),
           {
             label: t('Supprimer'),
             icon: 'trash',

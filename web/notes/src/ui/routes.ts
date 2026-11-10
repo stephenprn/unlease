@@ -1,9 +1,9 @@
 /**
  * Carnet's places, all under `/notes`: the board and its views, a note over the board it was opened
- * from, a collection, a link over its collection, the lists of collections and labels, the « Modèles
- * de fiche » and a template's editor (`/notes/templates/kind-recipe`, `/notes/templates/new`, one of
- * the person's own by its id), and the capture links of the installed app (`/notes/capture/note`,
- * its shortcuts and share target).
+ * from, a collection, a link over its collection, the lists of collections and labels, « Ce que Claude
+ * relève » (`/notes/facts`), a collection's facts (`/notes/facts/<collection>`) and a kind's usual facts
+ * (`/notes/facts/kind-recipe`), and the capture links of the installed app (`/notes/capture/note`, its
+ * shortcuts and share target). The old `/notes/templates` addresses read as the same places.
  */
 import { decodePart, type Route } from '@shared/ui/router';
 
@@ -20,7 +20,7 @@ declare module '@shared/ui/router' {
     readonly lines: object;
     readonly labels: object;
     readonly templates: object;
-    /** `new`, a kind's (`kind-recipe`) or one of the person's own by its id (`app/templates`' `templateKey`). */
+    /** A collection's facts (its id), or a kind's usual facts (`kind-recipe`; `app/templates`' `templateKey`). */
     readonly template: { readonly id: string };
     readonly capture: { readonly kind: CaptureKind };
   }
@@ -40,8 +40,8 @@ export function parseNotesRoute(path: string): Route | null {
   if (rest === '/trash') return { name: 'board', view: 'trash' };
   if (rest === '/lines') return { name: 'lines' };
   if (rest === '/labels') return { name: 'labels' };
-  if (rest === '/templates') return { name: 'templates' };
-  const match = /^\/(label|note|line|link|templates|capture)\/([^/]+)$/.exec(rest);
+  if (rest === '/facts' || rest === '/templates') return { name: 'templates' };
+  const match = /^\/(label|note|line|link|facts|templates|capture)\/([^/]+)$/.exec(rest);
   if (!match) return null;
   const id = decodePart(match[2]!);
   switch (match[1]) {
@@ -53,6 +53,7 @@ export function parseNotesRoute(path: string): Route | null {
       return { name: 'line', id };
     case 'link':
       return { name: 'link', id };
+    case 'facts':
     case 'templates':
       return { name: 'template', id };
     default:
@@ -76,8 +77,9 @@ export const paths = {
   link: (id: string): string => `${HOME}/link/${encodeURIComponent(id)}`,
   lines: `${HOME}/lines`,
   labels: `${HOME}/labels`,
-  templates: `${HOME}/templates`,
-  /** A template's editor: `new` (`?for=<collection>` chooses it there once saved), `kind-<kind>`, or an id. */
-  template: (part: string, forCollection?: string): string => `${HOME}/templates/${encodeURIComponent(part)}${forCollection ? `?for=${encodeURIComponent(forCollection)}` : ''}`,
+  /** « Ce que Claude relève ». */
+  templates: `${HOME}/facts`,
+  /** A collection's facts (its id), or a kind's usual facts (`kind-<kind>`). */
+  template: (part: string): string => `${HOME}/facts/${encodeURIComponent(part)}`,
   trash: `${HOME}/trash`,
 } as const;

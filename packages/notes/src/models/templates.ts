@@ -170,6 +170,19 @@ export const TEMPLATE_FIELD_TYPE_HINTS: Readonly<Record<TemplateFieldType, strin
 };
 
 /**
+ * Each type as the editors name it: the shape of Claude's answer, in a few words (« Réponse : un
+ * nombre »), read where shown. « quelques mots » is the default, left unsaid beside a fact.
+ */
+export const TEMPLATE_FIELD_TYPE_ANSWERS: Readonly<Record<TemplateFieldType, string>> = {
+  text: tx('quelques mots'),
+  number: tx('un nombre'),
+  date: tx('une date'),
+  duration: tx('une durée'),
+  list: tx('plusieurs valeurs'),
+  yesno: tx('oui ou non'),
+};
+
+/**
  * How each type is asked of Claude, in English (the prompt's language): the value it writes, in the
  * message's language. Fixed words, so what the person types is the only thing that varies.
  */

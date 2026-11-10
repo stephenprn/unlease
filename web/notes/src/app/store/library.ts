@@ -32,7 +32,7 @@ export interface LibraryState {
   readonly links: Readonly<Record<string, LinkItem>>;
   readonly labels: Readonly<Record<string, Label>>;
   readonly attachments: Readonly<Record<string, Attachment>>;
-  /** What Claude reads from links (« Modèles de fiche »): the kinds' changed ones and the person's own, deleted ones too (`deletedAt`). */
+  /** What Claude notes on links (« Ce que Claude relève »): the kinds' changed ones and the person's own, deleted ones too (`deletedAt`). */
   readonly linkTemplates: Readonly<Record<string, LinkTemplate>>;
   /** Live child ids per note, in display order. A note with none holds no key. */
   readonly checksByNote: Readonly<Record<string, readonly string[]>>;

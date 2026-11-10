@@ -1,8 +1,8 @@
 /**
- * « Essayer »: the fields as they stand, unsaved, read by Claude on one link (one this template reads,
- * or an address pasted), each field listed with what Claude put in it (a dash where it found nothing),
- * then how long it took and what it cost. Nothing is written. Without Claude it says so and offers
- * nothing; offline, it waits with the sync's own words.
+ * « Aperçu sur un lien »: the facts as they stand, unsaved, noted by Claude on one link (one of those
+ * they are for, or an address pasted), each listed with what Claude put in it (a dash where it found
+ * nothing), then how long it took and what it cost. Nothing is written. Without Claude it says so and
+ * offers nothing; offline, it waits with the sync's own words.
  */
 import { useEffect, useRef, useState } from 'react';
 
@@ -95,7 +95,7 @@ export function TryPanel({ fields, links }: TryPanelProps) {
 
   return (
     <div className={styles.try}>
-      <p className="t-meta">{t('Voyez ce que Claude relèverait sur un lien, sans rien enregistrer.')}</p>
+      <p className="t-meta">{t('Voyez ce que Claude relèverait, sans rien enregistrer.')}</p>
       {links.length > 0 ? <SelectField label={t('Lien')} value={link ? link.id : PASTE} options={options} icon={link ? 'link' : 'copy'} onChange={setChoice} /> : null}
       {pasting ? (
         <TextField

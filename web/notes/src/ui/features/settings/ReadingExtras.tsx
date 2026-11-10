@@ -1,7 +1,7 @@
 /**
  * Carnet's lines in the Claude form (the Administration's, the setup's): what reading a link and a
  * module's search cost with the model chosen, the links read this month, the links kept plain
- * while nothing read them, to read now, and, in the Administration, the way to « Modèles de fiche »
+ * while nothing read them, to read now, and, in the Administration, the way to « Ce que Claude relève »
  * (what Claude notes on each kind of link) (the phone's `linkReadingExtra`).
  */
 import type { ServerSettings } from '@unlease/core/sync/settings';
@@ -49,10 +49,10 @@ export function ReadingExtras({ settings, usage }: { server: ServerConfig; setti
       ) : null}
       {onboarded ? (
         <button type="button" className={styles.row} onClick={() => navigate(paths.templates)}>
-          <Icon name="rows" size={24} />
+          <Icon name="list" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Modèles de fiche')}</span>
-            <span className="t-meta">{t('Ce que Claude relève sur chaque type de lien')}</span>
+            <span className="t-body">{t('Ce que Claude relève')}</span>
+            <span className="t-meta">{t('Ce que Claude relève sur chaque lien qu’il lit')}</span>
           </span>
           <Icon name="chevronRight" size={20} />
         </button>

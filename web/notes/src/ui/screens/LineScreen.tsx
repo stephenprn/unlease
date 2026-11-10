@@ -3,8 +3,8 @@
  * ones done, stamped, at the foot under "Déjà faits". One list, as on the phone, so a link
  * stamped (or put back) files itself there rather than leaving one list for another. Over the
  * rows, the order and the filter this browser keeps for the collection (`lineView`), and « Tout
- * lire » while Claude could read links kept unread here, else « Tout relire » for the links read with
- * another version of the collection's « Modèle de fiche ».
+ * lire » while Claude could read links kept unread here, else « Tout relire » for the links read
+ * before the last change to the collection's own facts (« Ce que Claude relève »).
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -43,7 +43,6 @@ import { FilteredEmpty, LineRefine, ReadAllBanner } from '../features/lines/Line
 import { DeleteLineDialog, type LinksFate } from '../features/lines/DeleteLineDialog';
 import { EditLineDialog } from '../features/lines/LineDialogs';
 import { ModulesDialog } from '../features/lines/ModulesDialog';
-import { TemplatePickerDialog } from '../features/templates/TemplatePickerDialog';
 import styles from '../features/lines/lines.module.css';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { MoveDialog } from '../features/lines/MoveDialog';
@@ -98,7 +97,7 @@ export function LineScreen({ id }: { id: string }) {
       }).length,
   );
   const reading = useCanRead();
-  // Its links read with another version of its « Modèle de fiche » than the one it has now.
+  // Its links noted before the last change to its own facts (« Ce que Claude relève »).
   const stale = useLibraryStore(
     useShallow(s => {
       const template = id === INBOX_ID ? null : collectionTemplate(s.linkTemplates, s.notes[id]);
@@ -113,7 +112,6 @@ export function LineScreen({ id }: { id: string }) {
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [modules, setModules] = useState(false);
-  const [template, setTemplate] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [picking, setPicking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -284,8 +282,8 @@ export function LineScreen({ id }: { id: string }) {
           <ReadAllBanner
             text={
               toReread === 1
-                ? t('{links} · environ {cost} pour le relire', { links: plural(1, 'lien lu avec une autre version', 'liens lus avec une autre version'), cost: rereadCost })
-                : t('{links} · environ {cost} pour les relire', { links: plural(toReread, 'lien lu avec une autre version', 'liens lus avec une autre version'), cost: rereadCost })
+                ? t('{links} avant ce changement · environ {cost} pour le relire', { links: plural(1, 'lien lu', 'liens lus'), cost: rereadCost })
+                : t('{links} avant ce changement · environ {cost} pour les relire', { links: plural(toReread, 'lien lu', 'liens lus'), cost: rereadCost })
             }
             action={toReread === 1 ? t('Relire') : t('Tout relire')}
             onRead={rereadAll}
@@ -310,7 +308,7 @@ export function LineScreen({ id }: { id: string }) {
           { label: t('Modifier la collection'), icon: 'edit', onSelect: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onSelect: () => setModules(true) },
           // What Claude notes on its links: « Non classé » reads each link by its kind.
-          ...(inbox ? [] : [{ label: t('Modèle de fiche'), icon: 'rows' as const, onSelect: () => setTemplate(true) }]),
+          ...(inbox ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(id)) }]),
           ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onSelect: () => setReviewing(true) }] : []),
           ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onSelect: sortInboxOnSlip }] : []),
           {
@@ -352,7 +350,6 @@ export function LineScreen({ id }: { id: string }) {
       />
       <ReviewDialog id={id} open={reviewing} onDismiss={() => setReviewing(false)} />
       <ModulesDialog id={id} open={modules} onDismiss={() => setModules(false)} />
-      <TemplatePickerDialog lineId={id} open={template} onDismiss={() => setTemplate(false)} />
       <DeleteLineDialog ids={[id]} open={deleting} onDismiss={() => setDeleting(false)} onChoose={remove} onPickLine={() => setPicking(true)} />
       <MoveDialog open={picking} currentLineId={null} exclude={[id]} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
     </div>
