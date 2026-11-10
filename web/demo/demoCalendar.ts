@@ -35,8 +35,9 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
   const climbing = blankDraft(`${tuesday}T19:00`, `${tuesday}T21:00`, zone, [60]);
   const standup = blankDraft(`${addDays(today, -14)}T09:30`, `${addDays(today, -14)}T09:45`, zone, [5]);
   const dinner = blankDraft(`${addDays(today, 3)}T20:00`, `${addDays(today, 3)}T23:00`, zone, [120]);
-  const weekendStart = next(addDays(today, 7), 5);
-  const weekend = blankDraft(weekendStart, addDays(weekendStart, 3), '', [-540]);
+  // The trip the pages plan (`tripDay` in demoData.ts): the first Thursday six weeks out, to the Sunday.
+  const tripStart = next(addDays(today, 42), 4);
+  const weekend = blankDraft(tripStart, addDays(tripStart, 4), '', [-540]);
   const dentist = blankDraft(`${addDays(today, 1)}T14:00`, `${addDays(today, 1)}T14:30`, zone, [60]);
   // Today lived in too (« Aujourd'hui »): a lunch, and an evening class.
   const lunch = blankDraft(`${today}T12:30`, `${today}T13:45`, zone, [30]);

@@ -644,7 +644,7 @@ const PAGES: readonly BlockSeed[] = [
     icon: '✈️',
     ago: 2 * DAY,
     children: [
-      { kind: 'text', text: 'Quatre jours, du {b:jeudi} au {b:dimanche}. L’hôtel est réservé près du {a=https\\://fr.wikipedia.org/wiki/Alfama:quartier de l’Alfama}.' },
+      { kind: 'text', text: 'Quatre jours, du {b:jeudi} au {b:dimanche}. L’hôtel est réservé près du {a=https\\://fr.wikipedia.org/wiki/Alfama:quartier de l’Alfama}. {@contact=demo-contact-lea} y a vécu : lui demander ses cafés.' },
       { kind: 'callout', icon: '💡', color: 'yellow', text: 'Prendre le {b:tram 28} tôt le matin : après 10 h, il est bondé.' },
       { kind: 'toc' },
       { kind: 'h2', text: 'Préparatifs' },
