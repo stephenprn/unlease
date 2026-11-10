@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-10
+
 ### Changed
 
 - The demo moves to https://demo.unlease.org (its old address leads there).
@@ -33,5 +35,6 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/stephenprn/unlease/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/stephenprn/unlease/releases/tag/v0.1.0

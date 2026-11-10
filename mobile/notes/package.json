@@ -1,6 +1,6 @@
 {
   "name": "@unlease/notes-mobile",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Carnet for Android: the notes app of Unlease, in React Native.",
   "license": "MIT",
   "repository": {

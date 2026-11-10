@@ -1,6 +1,6 @@
 {
   "name": "@unlease/server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unlease's server: sync, files, backups and each app's own routes (Carnet's link reading).",
   "license": "MIT",
   "repository": {
