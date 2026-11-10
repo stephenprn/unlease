@@ -2,7 +2,11 @@
  * The README's pictures as pages, drawn in the apps' own materials: the ground under its grain, cream
  * sheets with the continuous corner, each app's mark on its pebble, Onde glyphs, threads in the link's
  * terracotta, Signika. Every value comes from `@unlease/design` (handed in as `design`) and the marks
- * from `web/build/brand.ts`; `readme-images.mjs` renders each page by day and by night.
+ * from `web/build/brand.ts`; `readme-images.mjs` renders each page by day and by night. Their words are
+ * English, the demo's English records where they show the demo (`web/demo/demoEnglish.ts`).
+ *
+ * One spacing scale for all of them (`--gap-*`): a picture at README size must breathe, so a card holds
+ * few things, with room around each, and threads get room to curve between sheets.
  *
  * Threads are laid out in the page once it is drawn: each joins two items by the edges of the sheets
  * holding them (`data-threads`), so they follow the words wherever the text wraps.
@@ -33,13 +37,14 @@ function frame(design, scheme, body, threads = []) {
   --pink: ${pigment('pink').fill}; --pink-wash: ${pigment('pink').tint}; --ochre: ${pigment('ochre').fill}; --ochre-wash: ${pigment('ochre').tint};
   --sky: ${pigment('sky').fill}; --sky-wash: ${pigment('sky').tint};  --red: ${pigment('red').fill}; --red-wash: ${pigment('red').tint}; --orange-wash: ${pigment('orange').tint}; --blue: ${pigment('blue').fill};
   --cs: 1;
+  --gap-xs: 6px; --gap-s: 10px; --gap-m: 16px; --gap-l: 24px; --gap-xl: 40px; --gap-xxl: 64px;
 }
 @supports (corner-shape: squircle) { :root { --cs: 1.84; } * { corner-shape: squircle; } .dot { corner-shape: round; } }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--site); }
 body { font: 400 16px/22px Signika, sans-serif; font-variation-settings: 'GRAD' var(--grad); color: var(--ink); font-synthesis: none; -webkit-font-smoothing: antialiased; }
 p, h2, h3 { margin: 0; }
-.ground { position: relative; width: ${WIDTH}px; padding: 32px; border-radius: calc(28px * var(--cs)); background: url(/ground-grain.png) repeat 0 0 / 256px 256px, linear-gradient(180deg, var(--ground-top), var(--ground-bottom)); }
+.ground { position: relative; width: ${WIDTH}px; padding: var(--gap-xl); border-radius: calc(28px * var(--cs)); background: url(/ground-grain.png) repeat 0 0 / 256px 256px, linear-gradient(180deg, var(--ground-top), var(--ground-bottom)); }
 .sheet { position: relative; isolation: isolate; background: var(--paper); border-radius: calc(20px * var(--cs)); box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-card); }
 .sheet::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: url(/grain.png) repeat 0 0 / 200px 200px; opacity: var(--grain); }
 .panel { border-radius: calc(22px * var(--cs)); }
@@ -51,14 +56,14 @@ p, h2, h3 { margin: 0; }
 .pebble > svg:first-child { position: absolute; inset: 0; }
 .pebble > :not(:first-child) { position: relative; }
 .mark { display: block; flex: none; }
-.app-head { display: flex; align-items: center; gap: 10px; margin: 0 0 12px 2px; }
+.app-head { display: flex; align-items: center; gap: var(--gap-s); margin: 0 0 var(--gap-m) 2px; }
 .app-name { font-weight: 600; font-size: 20px; line-height: 26px; }
 .replaces { font-size: 14px; line-height: 19px; color: var(--muted); }
-.section { font-weight: 600; font-size: 14px; line-height: 20px; color: var(--muted); margin: 0 0 10px 2px; }
+.section { font-weight: 600; font-size: 14px; line-height: 20px; color: var(--muted); margin: 0 0 var(--gap-m) 2px; }
 .title { font-weight: 600; font-size: 20px; line-height: 26px; }
 .strong { font-weight: 600; }
 .meta { font-size: 14px; line-height: 19px; color: var(--muted); }
-.row { display: flex; align-items: center; gap: 12px; }
+.row { display: flex; align-items: center; gap: var(--gap-s); }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: calc(9px * var(--cs)); box-shadow: inset 0 0 0 1px var(--outline); font-weight: 500; font-size: 14px; line-height: 20px; white-space: nowrap; }
 .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13.5px; }
 svg.threads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
@@ -183,32 +188,32 @@ export function bannerPage(design, brand, scheme, shots) {
   ]
     .map(
       ([app, shot]) =>
-        `<figure>${appHead(app, { replaces: true })}<img class="shot" src="data:image/jpeg;base64,${shots[`${shot}-${scheme}`].toString('base64')}" alt=""></figure>`,
+        `<figure>${appHead(app, { replaces: true })}<div class="sheet panel bezel"><img class="shot" src="data:image/jpeg;base64,${shots[`${shot}-${scheme}`].toString('base64')}" alt=""></div></figure>`,
     )
     .join('');
   return frame(
     design,
     scheme,
     `<style>
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 32px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-xl) var(--gap-xl); }
 figure { margin: 0; }
-.shot { display: block; width: 100%; aspect-ratio: 1440 / 900; border-radius: calc(20px * var(--cs)); box-shadow: 0 0 0 1px var(--hairline), var(--lift-float); }
+/* Each window in a paper bezel, so what it shows never runs to the frame's edge. */
+.bezel { padding: 12px; box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-float); }
+.shot { display: block; width: 100%; aspect-ratio: 1440 / 900; border-radius: calc(12px * var(--cs)); box-shadow: 0 0 0 1px var(--hairline); }
 </style><div class="tiles">${tiles}</div>`,
   );
 }
 
 /**
- * One person seen from the four apps, in the demo's own (French) records under the English interface:
- * Léa's card in the middle, reached from the trip's page that mentions her, the note about her birthday
- * dinner, and her birthday and the dinner at hers in Agenda; around her, quieter, the apps' other links
- * (the page's checklist in Carnet, the weekend's event pointing at the page, a note's reminder).
+ * One person seen from the four apps, in the demo's English records: Léa's card in the middle, reached
+ * from the trip's page that mentions her, the note about her birthday dinner, and her birthday and the
+ * dinner at hers in Agenda; quieter, the note's reminder in Agenda. A card holds only what a thread
+ * starts from or ends at, and no thread crosses a card.
  */
 export function linksPage(design, brand, scheme) {
   const { glyph, pebble, tag, appHead } = pieces(design, brand);
   const days = demoDays(Date.now());
-  const check = (words, done = false) =>
-    `<div class="row check${done ? ' done' : ''}">${glyph(done ? 'boxChecked' : 'box', 18, done ? 'var(--muted)' : 'var(--ink)')}<span>${words}</span></div>`;
-  const dot = color => `<span class="dot" style="width:10px;height:10px;border-radius:50%;background:${color};margin:0 4px"></span>`;
+  const dot = color => `<span class="dot" style="width:10px;height:10px;border-radius:50%;background:${color};margin:0 5px"></span>`;
   const event = (id, mark, words, wash) => `<div class="event" id="${id}" style="background:${wash}">${mark}<span>${words}</span></div>`;
   const fact = (id, name, words, meta = '') =>
     `<div class="row fact" id="${id}">${glyph(name, 20)}<div><div>${words}</div>${meta ? `<div class="meta">${meta}</div>` : ''}</div></div>`;
@@ -216,82 +221,69 @@ export function linksPage(design, brand, scheme) {
     design,
     scheme,
     `<style>
-.board { display: grid; grid-template-columns: 284px 236px 256px; column-gap: 40px; }
-.left { display: grid; gap: 34px; }
-.middle { align-self: start; margin-top: 170px; }
-.right { display: grid; grid-template-rows: auto 1fr; }
-.wall { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
-.stack { display: grid; gap: 10px; }
-.note { padding: 12px; display: grid; gap: 5px; font-size: 15px; line-height: 21px; }
-.note .strong { font-weight: 700; }
-.note.sky { background: var(--sky-wash); }
-.note.orange { background: var(--orange-wash); }
-.check { gap: 7px; }
-.check.done span { color: var(--muted); text-decoration: line-through; }
-.who-chip { display: inline-flex; align-items: center; gap: 6px; justify-self: start; font-size: 14px; color: var(--muted); }
-.doc { padding: 16px 18px 18px; display: grid; gap: 10px; }
+.board { display: grid; grid-template-columns: 228px 236px 248px; column-gap: 64px; }
+.left { display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-xxl); }
+.middle { padding-top: 176px; }
+.right { display: flex; flex-direction: column; }
+.note { padding: var(--gap-l) 20px; display: grid; gap: var(--gap-s); font-size: 15px; line-height: 21px; background: var(--orange-wash); }
+.note .strong { font-weight: 700; font-size: 16px; }
+.note .chips { display: grid; gap: var(--gap-s); justify-items: start; margin-top: var(--gap-xs); }
+.who-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.doc { padding: var(--gap-l) 20px; display: grid; gap: var(--gap-m); }
 .doc .name { font-weight: 700; font-size: 22px; line-height: 28px; }
+.doc p { line-height: 26px; }
 .atom { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; border-radius: calc(5px * var(--cs)); background: var(--veil); font-weight: 600; vertical-align: -3px; line-height: 24px; white-space: nowrap; }
 .mention { color: var(--link); }
-.person { padding: 16px 16px 18px; display: grid; gap: 10px; }
-.who { display: flex; align-items: center; gap: 12px; }
+.person { padding: var(--gap-l) 20px; display: grid; gap: var(--gap-m); }
+.who { display: flex; align-items: center; gap: 14px; }
 .who .name { font-weight: 700; font-size: 20px; line-height: 26px; }
 .label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
-.fact { gap: 10px; align-items: flex-start; font-size: 15px; line-height: 21px; }
-.group { margin-top: 4px; }
-.agenda { padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
-.day { display: grid; gap: 6px; }
-.event { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: calc(9px * var(--cs)); font-weight: 600; font-size: 15px; line-height: 20px; }
+.fact { gap: 12px; align-items: flex-start; font-size: 15px; line-height: 21px; }
+.group { display: grid; gap: var(--gap-s); padding-top: var(--gap-m); box-shadow: inset 0 1px 0 var(--hairline); }
+/* Tall enough that Friday's events sit level with the rows of Léa's card they join. */
+.agenda { min-height: 366px; padding: var(--gap-l) 16px; display: grid; align-content: space-between; gap: var(--gap-xl); }
+.day { display: grid; gap: var(--gap-s); }
+.event { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: calc(9px * var(--cs)); font-weight: 600; font-size: 15px; line-height: 20px; }
 </style>
 <div class="board">
   <div class="left">
     <section>${appHead('notes')}
-      <div class="wall">
-        <div class="sheet note sky" id="c-pack"><span class="strong">Valise Lisbonne</span>${check('Passeport')}${check('Adaptateur')}${check('Chargeur')}</div>
-        <div class="stack">
-          <div class="sheet note" id="c-garage"><span class="strong">Appeler le garage</span><span>Contrôle technique avant le 30.</span><span class="chip" style="justify-self:start">${glyph('bell', 15)}Tomorrow, 09:00</span></div>
-          <div class="sheet note orange" id="c-lea"><span class="strong">Anniversaire de Léa</span><span>Réserver pour six samedi soir, plutôt vers Oberkampf.</span><span class="who-chip">${glyph('person', 15, 'var(--muted)')}Léa Martin</span></div>
-        </div>
+      <div class="sheet card note" id="c-note">
+        <span class="strong">Léa’s birthday</span>
+        <span>Book a table for six on Saturday evening, around Oberkampf.</span>
+        <div class="chips"><span class="chip" id="c-reminder">${glyph('bell', 15)}Tomorrow, 18:00</span><span class="who-chip" id="c-lea">${glyph('person', 15, 'var(--muted)')}Léa Martin</span></div>
       </div>
     </section>
     <section>${appHead('pages')}
       <div class="sheet panel doc" id="page">
-        <p class="name">Voyage à Lisbonne</p>
-        <p>Quatre jours, du jeudi au dimanche. <span class="atom mention" id="p-lea">${glyph('person', 17, 'var(--link)')}Léa Martin</span> y a vécu : lui demander ses cafés.</p>
-        <p>La liste de la valise est dans <span class="atom" id="p-pack">${glyph('checklist', 17)}Valise Lisbonne</span>.</p>
+        <p class="name">Trip to Lisbon</p>
+        <p>Four days, Thursday to Sunday. <span class="atom mention" id="p-lea">${glyph('person', 17, 'var(--link)')}Léa Martin</span> lived there: ask her for her cafés.</p>
       </div>
     </section>
   </div>
   <section class="middle">${appHead('contacts')}
     <div class="sheet card person" id="person">
-      <div class="who">${pebble(glyph('person', 24), { width: 50, height: 46, turn: 1, fill: 'var(--pink-wash)' })}<div><div class="name">Léa Martin</div><span class="label">${tag('var(--red)')}Famille</span></div></div>
+      <div class="who">${pebble(glyph('person', 24), { width: 50, height: 46, turn: 1, fill: 'var(--pink-wash)' })}<div><div class="name">Léa Martin</div><span class="label">${tag('var(--red)')}Family</span></div></div>
       ${fact('k-bday', 'cake', days.birthdate, `In 3 days · ${days.age} years`)}
-      <div class="meta strong group">Seen together</div>
-      ${fact('k-dinner', 'calendar', 'Dîner chez Léa')}
-      <div class="meta strong group">Mentioned in</div>
-      ${fact('k-note', 'note', 'Anniversaire de Léa')}
-      ${fact('k-link', 'link', 'Jardins de lumière')}
-      ${fact('k-page', 'page', 'Voyage à Lisbonne')}
+      <div class="group"><div class="meta strong">Seen together</div>${fact('k-dinner', 'calendar', 'Dinner at Léa’s')}</div>
+      <div class="group"><div class="meta strong">Mentioned in</div>${fact('k-note', 'note', 'Léa’s birthday')}${fact('k-link', 'link', 'Gardens of Light')}${fact('k-page', 'page', 'Trip to Lisbon')}</div>
     </div>
   </section>
   <section class="right">${appHead('calendar')}
     <div class="sheet panel agenda" id="agenda">
-      <div class="day"><span class="meta strong">Tomorrow</span>${event('a-garage', glyph('bell', 17, 'var(--ochre)'), '09:00 Appeler le garage', 'var(--ochre-wash)')}${event('a-team', dot('var(--blue)'), '09:30 Point d’équipe', 'var(--well)')}</div>
-      <div class="day"><span class="meta strong">${days.birthday}</span>${event('a-bday', glyph('cake', 17, 'var(--pink)'), 'Léa Martin’s birthday', 'var(--pink-wash)')}${event('a-dinner', dot('var(--red)'), '20:00 Dîner chez Léa', 'var(--well)')}</div>
-      <div class="day"><span class="meta strong">${days.trip}</span>${event('a-trip', dot('var(--red)'), 'Week-end à Lisbonne', 'var(--red-wash)')}</div>
+      <div class="day"><span class="meta strong">Tomorrow</span>${event('a-reminder', glyph('bell', 17, 'var(--ochre)'), '18:00 Léa’s birthday', 'var(--ochre-wash)')}</div>
+      <div class="day"><span class="meta strong">${days.birthday}</span>${event('a-bday', glyph('cake', 17, 'var(--pink)'), 'Léa Martin’s birthday', 'var(--pink-wash)')}${event('a-dinner', dot('var(--pink)'), '20:00 Dinner at Léa’s', 'var(--well)')}</div>
     </div>
   </section>
 </div>`,
     [
       // Léa, from the three other apps.
-      { from: { item: '#c-lea', side: 'right' }, to: { item: '#k-note', sheet: '#person', side: 'left' } },
+      { from: { item: '#c-lea', sheet: '#c-note', side: 'right' }, to: { item: '#k-note', sheet: '#person', side: 'left' } },
       { from: { item: '#p-lea', sheet: '#page', side: 'right' }, to: { item: '#k-page', sheet: '#person', side: 'left' } },
-      { from: { item: '#a-bday', sheet: '#agenda', side: 'left' }, to: { item: '#k-bday', sheet: '#person', side: 'right' } },
-      { from: { item: '#a-dinner', sheet: '#agenda', side: 'left' }, to: { item: '#k-dinner', sheet: '#person', side: 'right' } },
-      // The apps' other links, quieter.
-      { from: { item: '#p-pack', sheet: '#page', side: 'top', along: 0.42 }, to: { item: '#c-pack', side: 'bottom', along: 0.86 }, quiet: true, reach: 20 },
-      { from: { item: '#a-garage', sheet: '#agenda', side: 'left' }, to: { item: '#c-garage', side: 'right', along: 0.3 }, label: 'reminder', quiet: true },
-      { from: { item: '#a-trip', sheet: '#agenda', side: 'left' }, to: { item: '#page', side: 'right', along: 0.82 }, label: 'its programme', quiet: true },
+      { from: { item: '#a-bday', sheet: '#agenda', side: 'left' }, to: { item: '#k-bday', sheet: '#person', side: 'right' }, reach: 40 },
+      { from: { item: '#a-dinner', sheet: '#agenda', side: 'left' }, to: { item: '#k-dinner', sheet: '#person', side: 'right' }, reach: 40 },
+      // The note's reminder in Agenda: quieter.
+      { from: { item: '#c-note', side: 'right', along: 0.2 }, to: { item: '#a-reminder', sheet: '#agenda', side: 'left' }, label: 'reminder', quiet: true },
     ],
   );
 }
@@ -307,34 +299,34 @@ export function runPage(design, brand, scheme) {
     design,
     scheme,
     `<style>
-.columns { display: grid; grid-template-columns: 220px 292px 196px; gap: 74px; align-items: start; }
-.devices { display: grid; gap: 18px; }
-.phone { width: 150px; padding: 26px 16px 22px; justify-self: center; border-radius: calc(26px * var(--cs)); background: linear-gradient(180deg, var(--ground-top), var(--ground-bottom)); }
+.columns { display: grid; grid-template-columns: 204px 272px 212px; gap: 74px; align-items: start; }
+.devices { display: grid; gap: var(--gap-l); }
+.phone { width: 150px; padding: 28px 16px 24px; justify-self: center; border-radius: calc(26px * var(--cs)); background: linear-gradient(180deg, var(--ground-top), var(--ground-bottom)); }
 .phone::before { opacity: calc(var(--grain) * 0.6); }
-.phone .camera { position: absolute; top: 10px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--outline); }
-.phone .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; justify-items: center; }
+.phone .camera { position: absolute; top: 11px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--outline); }
+.phone .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 10px; justify-items: center; }
 .phone .app { display: grid; justify-items: center; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 500; }
-.browser { padding: 10px 12px 16px; }
+.browser { padding: 12px 12px 18px; }
 .address { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: calc(13px * var(--cs)); background: var(--field); box-shadow: inset 0 0 0 1px var(--hairline); font-size: 13px; color: var(--muted); }
-.browser .marks { display: flex; justify-content: center; gap: 14px; margin-top: 14px; }
-.caption { text-align: center; }
-.server-column { padding-top: 30px; }
-.server { padding: 18px; display: grid; gap: 14px; }
-.server .head { display: flex; align-items: center; gap: 12px; }
-.item { align-items: flex-start; gap: 12px; padding: 0 2px; }
-.volume { padding: 12px 14px 14px; background: var(--well); display: grid; gap: 8px; }
+.browser .marks { display: flex; justify-content: center; gap: 12px; margin-top: var(--gap-m); }
+.caption { text-align: center; margin-top: calc(-1 * var(--gap-s)); }
+.server-column { padding-top: 36px; }
+.server { padding: var(--gap-l) 20px; display: grid; gap: 20px; }
+.server .head { display: flex; align-items: center; gap: 14px; }
+.item { align-items: flex-start; gap: 14px; padding: 0 2px; }
+.volume { padding: var(--gap-m) 16px 18px; background: var(--well); display: grid; gap: var(--gap-s); margin-top: 4px; }
 .volume .file { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; line-height: 19px; }
 .optional-column { align-self: stretch; display: flex; flex-direction: column; }
-.services { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
-.services .later { display: grid; gap: 14px; margin-bottom: 4px; }
-.service { display: flex; align-items: center; gap: 12px; padding: 14px; }
+.services { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap-l); }
+.services .later { display: grid; gap: var(--gap-l); margin-bottom: 4px; }
+.service { display: flex; align-items: center; gap: 14px; padding: 16px 14px; }
 </style>
 <div class="columns">
   <section><p class="section">Your devices</p>
     <div class="devices">
       <div class="sheet phone" id="phone"><span class="camera dot"></span><div class="grid">${apps.map(app => `<div class="app">${mark(app, 40)}${brand.webAppName(app)}</div>`).join('')}</div></div>
-      <p class="caption"><span class="strong">Android apps</span><br><span class="meta">offline first, synced when back online</span></p>
-      <div class="sheet panel browser" id="browser"><div class="address">${glyph('globe', 15, 'var(--muted)')}unlease.example.org/notes</div><div class="marks">${apps.map(app => mark(app, 34)).join('')}</div></div>
+      <p class="caption"><span class="strong">Android apps</span><br><span class="meta">work offline, sync when they can</span></p>
+      <div class="sheet panel browser" id="browser"><div class="address">${glyph('globe', 15, 'var(--muted)')}unlease.example.org</div><div class="marks">${apps.map(app => mark(app, 34)).join('')}</div></div>
       <p class="caption"><span class="strong">Web apps</span><br><span class="meta">in any browser, installable</span></p>
     </div>
   </section>
@@ -342,11 +334,11 @@ export function runPage(design, brand, scheme) {
     <div class="sheet panel server" id="server">
       <div class="head">${pebble(glyph('server'), { width: 46, height: 42, turn: 2 })}<div><div class="title">Unlease, on your server</div><div class="meta">one Docker container</div></div></div>
       ${item('refresh', 'Sync for every app', 'each device’s changes, merged')}
-      ${item('apps', 'The four web apps', '/notes · /pages · /agenda · /contacts')}
+      ${item('apps', 'The web apps you pick', '/notes · /pages · /agenda · /contacts')}
       ${item('key', 'Your token', 'one secret for your devices')}
       <div class="frame volume"><div class="row" style="gap:8px">${glyph('archive', 20)}<span class="strong">The /data volume</span></div>
         <div class="file"><span class="mono">unlease.sqlite</span><span class="meta">every record</span></div>
-        <div class="file" id="v-blobs"><span class="mono">blobs/</span><span class="meta">photos and files</span></div>
+        <div class="file" id="v-blobs"><span class="mono">blobs/</span><span class="meta">photos, files</span></div>
         <div class="file" id="v-backups"><span class="mono">backups/</span><span class="meta">a copy each day</span></div>
       </div>
     </div>
@@ -356,7 +348,7 @@ export function runPage(design, brand, scheme) {
       ${service('claude', 'sparkle', 'Claude API', 'reads links, answers questions', 0)}
       <div class="later">
         ${service('seafile', 'image', 'Seafile', 'photos and files in your library', 1)}
-        ${service('s3', 'cloud', 'S3 storage', 'readable backups: Markdown, JSON, vCard, iCalendar', 3)}
+        ${service('s3', 'cloud', 'S3 storage', 'backups you can read', 3)}
       </div>
     </div>
   </section>
@@ -365,8 +357,8 @@ export function runPage(design, brand, scheme) {
       { from: { item: '#phone', side: 'right' }, to: { item: '#server .head', sheet: '#server', side: 'left' }, label: 'HTTPS' },
       { from: { item: '#browser', side: 'right' }, to: { item: '#server .volume', sheet: '#server', side: 'left' }, label: 'HTTPS' },
       { from: { item: '#server .head', sheet: '#server', side: 'right' }, to: { item: '#claude', side: 'left' }, dashed: true },
-      { from: { item: '#v-blobs', sheet: '#server', side: 'right' }, to: { item: '#seafile', side: 'left' }, dashed: true, reach: 50 },
-      { from: { item: '#v-backups', sheet: '#server', side: 'right' }, to: { item: '#s3', side: 'left' }, dashed: true, reach: 50 },
+      { from: { item: '#v-blobs', sheet: '#server', side: 'right' }, to: { item: '#seafile', side: 'left' }, dashed: true, reach: 56 },
+      { from: { item: '#v-backups', sheet: '#server', side: 'right' }, to: { item: '#s3', side: 'left' }, dashed: true, reach: 56 },
     ],
   );
 }
@@ -376,19 +368,19 @@ export function privacyPage(design, brand, scheme) {
   const { glyph, pebble } = pieces(design, brand);
   const kept = (name, words) => `<div class="row kept">${glyph(name)}<span>${words}</span></div>`;
   const leaves = (id, name, title, what, when, turn, kind = 'sheet') =>
-    `<div class="${kind} frame leaves" id="${id}">${pebble(glyph(name), { turn })}<div><div class="strong">${title}</div><div>${what}</div><div class="meta when">${when}</div></div></div>`;
+    `<div class="${kind} frame leaves" id="${id}">${pebble(glyph(name), { turn })}<div class="words"><div class="strong">${title}</div><div>${what}</div><div class="meta">${when}</div></div></div>`;
   return frame(
     design,
     scheme,
     `<style>
-.columns { display: grid; grid-template-columns: 262px 1fr; gap: 60px; align-items: center; }
-.stays { padding: 18px 20px 20px; display: grid; gap: 12px; }
-.stays .head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
-.kept { gap: 12px; }
-.never { margin-top: 4px; padding-top: 12px; box-shadow: inset 0 1px 0 var(--hairline); }
-.out { display: grid; gap: 12px; }
-.leaves { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px 13px 12px; font-size: 15px; line-height: 21px; }
-.when { margin-top: 2px; }
+.columns { display: grid; grid-template-columns: 250px 1fr; gap: 72px; align-items: center; }
+.stays { padding: var(--gap-l) 20px; display: grid; gap: 14px; }
+.stays .head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.kept { gap: 14px; }
+.never { margin-top: 6px; padding-top: var(--gap-m); box-shadow: inset 0 1px 0 var(--hairline); }
+.out { display: grid; gap: var(--gap-m); }
+.leaves { display: flex; align-items: flex-start; gap: 16px; padding: 16px 18px 16px 14px; font-size: 15px; line-height: 21px; }
+.leaves .words { display: grid; gap: 3px; }
 </style>
 <div class="columns">
   <section>
@@ -405,20 +397,16 @@ export function privacyPage(design, brand, scheme) {
   </section>
   <section><p class="section">It leaves only when a feature needs it</p>
     <div class="out">
-      ${leaves('o-claude', 'sparkle', 'Claude, by Anthropic', 'A link’s address and what your server read of it, your collections’ names and a few titles to file it, your template’s fields; its name, shop and price for a module’s web search; a page’s text when you ask about it.', 'Only with your API key, within your monthly budget.', 0)}
+      ${leaves('o-claude', 'sparkle', 'Claude, by Anthropic', 'To file a link: its address, what your server read of it, your collections’ names. For a module: a web search on the link. For a question: the page’s text.', 'Only with your API key, within your monthly budget.', 0)}
       ${leaves('o-web', 'globe', 'The pages you save', 'Your server reads each link to keep its words and pictures.', 'When you save a link.', 1)}
-      ${leaves('o-storage', 'cloud', 'Your S3, Seafile and Seerr', 'Backups, photos and files; requests to your Seerr, with its key.', 'Only once you set them up.', 2)}
-      ${leaves('o-places', 'mapPin', 'Calendars, holidays, weather, places', 'The calendars you subscribe to; your country to Nager.Date, a place’s name to Open-Meteo, what you type for an address to Photon.', 'When an event or an address needs it.', 3)}
+      ${leaves('o-storage', 'cloud', 'Your S3, Seafile and Seerr', 'Backups, photos and files; requests to your Seerr.', 'Only once you set them up.', 2)}
+      ${leaves('o-places', 'mapPin', 'Calendars, holidays, weather, places', 'The calendars you subscribe to; your country, a place’s name, what you type for an address.', 'When an event or an address needs it.', 3)}
       ${leaves('o-push', 'bell', 'Your browser’s push service', 'A reminder, encrypted end to end.', 'Only if you turn notifications on.', 0)}
-      ${leaves('o-apps', 'phone', 'What the apps load themselves', 'A link’s own picture until your server keeps a copy; a video’s player when you play it (YouTube without cookies, Vimeo, Dailymotion); the sites you open.', 'From your device, not from the server.', 1, 'optional')}
+      ${leaves('o-apps', 'phone', 'What the apps load themselves', 'A link’s own picture until your server keeps a copy; a video’s player when you play it.', 'From your device, not from the server.', 1, 'optional')}
     </div>
   </section>
 </div>`,
-    ['o-claude', 'o-web', 'o-storage', 'o-places', 'o-push'].map(id => ({
-      from: { item: '#stays', side: 'right' },
-      to: { item: `#${id}`, side: 'left' },
-      reach: 30,
-    })),
+    ['o-claude', 'o-web', 'o-storage', 'o-places', 'o-push'].map(id => ({ from: { item: '#stays', side: 'right' }, to: { item: `#${id}`, side: 'left' }, reach: 34 })),
   );
 }
 
@@ -442,22 +430,22 @@ export function installPage(design, brand, scheme) {
     design,
     scheme,
     `<style>
-.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; align-items: stretch; }
-.step { padding: 16px 16px 18px; display: grid; grid-template-rows: auto auto 1fr auto; justify-items: start; gap: 8px; font-size: 15px; line-height: 21px; }
-.step .title { margin-top: 4px; }
-.detail { justify-self: stretch; padding: 7px 8px; background: var(--well); font-size: 13.5px; line-height: 19px; color: var(--muted); }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; align-items: stretch; }
+.step { padding: 20px 16px 18px; display: grid; grid-template-rows: auto auto 1fr auto; justify-items: start; gap: var(--gap-s); font-size: 15px; line-height: 21px; }
+.step .title { margin-top: 6px; }
+.detail { justify-self: stretch; padding: 8px 9px; background: var(--well); font-size: 13.5px; line-height: 19px; color: var(--muted); margin-top: 6px; }
 .detail .mono { font-size: 12px; white-space: nowrap; }
 </style>
 <div class="steps">
   ${step('s1', 'download', 'Start the server', 'Download the Compose file, set a token, start one container.', '<span class="mono" style="color:var(--ink)">docker compose up -d</span>', 0)}
-  ${step('s2', 'globe', 'Add HTTPS', 'Your phone reaches the server over HTTPS, through your proxy or a tunnel.', 'Caddy, nginx, Traefik, Cloudflare Tunnel', 1)}
+  ${step('s2', 'globe', 'Add HTTPS', 'Your phones reach it over HTTPS: a proxy, a tunnel or Tailscale.', 'Caddy, nginx, Traefik, Cloudflare', 1)}
   ${step('s3', 'settings', 'Run the setup', 'Open your address: pick the apps, then Claude, backups and files if you want them.', 'Asked once, for every app', 2)}
-  ${step('s4', 'phone', 'Install the apps', 'Open the web apps in a browser; on Android, install the APKs.', 'One APK per app, from the release', 3)}
+  ${step('s4', 'phone', 'Install the apps', 'Open the web apps in a browser; on Android, install the APKs.', 'One APK per app', 3)}
 </div>`,
     [
       ['s1', 's2'],
       ['s2', 's3'],
       ['s3', 's4'],
-    ].map(([from, to]) => ({ from: { item: `#${from} .pebble`, sheet: `#${from}`, side: 'right' }, to: { item: `#${to} .pebble`, sheet: `#${to}`, side: 'left' }, reach: 14 })),
+    ].map(([from, to]) => ({ from: { item: `#${from} .pebble`, sheet: `#${from}`, side: 'right' }, to: { item: `#${to} .pebble`, sheet: `#${to}`, side: 'left' }, reach: 16 })),
   );
 }

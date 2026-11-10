@@ -26,37 +26,148 @@ const SCHEMES = ['light', 'dark'];
 
 /** The banner's screens: each app's home. */
 const HOMES = { 'carnet-board': '/notes', 'pages-home': '/pages', 'agenda-week': '/agenda/week', 'contacts-list': '/contacts' };
-/**
- * A closer look at each app, by file name: where it is in the demo, the part of the screen it shows (cut
- * on its own edges: a heading, a grid line, a sheet), the window's height when it needs more, and
- * what it leaves out: a collection's ghost emblem spills past any cut narrow enough to read.
- */
-const CLOSEUPS = {
-  carnet: { path: '/notes/line/line-mode', clip: { x: 280, y: 84, width: 850, height: 570 }, hide: '[class*="_ghost_"]' },
-  pages: { path: '/pages/demo-page-lisbonne', clip: { x: 465, y: 626, width: 775, height: 540 }, height: 1200 },
-  agenda: { path: '/agenda/week', clip: { x: 288, y: 128, width: 823, height: 502 } },
-  contacts: { path: '/contacts/contact/demo-contact-lea', clip: { x: 288, y: 70, width: 720, height: 650 } },
-};
 /** The drawn pictures, by file name. */
 const PICTURES = { links: linksPage, run: runPage, privacy: privacyPage, install: installPage };
+/** The ground left round a close-up's content on every side, in CSS pixels. */
+const MARGIN = 40;
+/**
+ * A closer look at each app, by file name: where it is in the demo, the window it is seen in, the
+ * elements it shows (`roots`: the picture is cut round what they paint, `MARGIN` on every side) and
+ * what `prepare` changes first for the cut to have its margin: the calendar ends above the window's
+ * foot, the page keeps room on its right, Carnet's watermark goes.
+ */
+const CLOSEUPS = {
+  carnet: {
+    path: '/notes/line/line-mode',
+    // The collection's emblem as a watermark spills past the window: a close-up leaves it out.
+    prepare: page =>
+      page.evaluate(() => {
+        for (const ghost of document.querySelectorAll('main header svg[aria-hidden="true"]')) if (ghost.getBoundingClientRect().width > 300) ghost.style.visibility = 'hidden';
+      }),
+    roots: page => [page.locator('main header').first(), page.locator('main form').first(), ...[0, 1, 2, 3].map(at => page.locator('main ul > li').nth(at))],
+  },
+  pages: {
+    path: '/pages/demo-page-lisbonne',
+    size: { width: 1440, height: 1300 },
+    roots: page => [page.getByText('Getting ready', { exact: true }).last(), page.locator('table').first(), page.getByRole('button', { name: 'New row' }).first()],
+  },
+  agenda: {
+    path: '/agenda/week',
+    size: { width: 1200, height: 860 },
+    prepare: page =>
+      page.evaluate(() => {
+        document.documentElement.style.paddingRight = '16px';
+        const frame = document.querySelector('main [role="toolbar"] + *');
+        if (frame instanceof HTMLElement) Object.assign(frame.style, { flex: 'none', height: '560px' });
+      }),
+    roots: page => [page.getByRole('toolbar').first(), page.locator('main [role="toolbar"] + *').first()],
+  },
+  contacts: {
+    path: '/contacts/contact/demo-contact-lea',
+    roots: page => [page.locator('main header').first(), page.locator('main nav').first(), page.locator('main section').nth(0), page.locator('main section').nth(1)],
+  },
+};
 
 /**
- * A screen of the demo as a JPEG (the paper's grain makes a PNG ten times heavier), whole or its `clip`,
- * at `scale`, without what `hide` names. The interface in English on a French device: the demo's people
+ * What `roots` paint, in the page: the box round their words, pictures, fields and every surface with a
+ * colour, an edge or a shadow (the ground a bar paints aside), within the roots themselves (a scrolled list
+ * paints past them, unseen).
+ */
+function painted(roots) {
+  let box = null;
+  const add = rect => {
+    if (rect.width < 1 || rect.height < 1) return;
+    box = box ? { left: Math.min(box.left, rect.left), top: Math.min(box.top, rect.top), right: Math.max(box.right, rect.right), bottom: Math.max(box.bottom, rect.bottom) } : { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+  };
+  const seen = element => {
+    for (let at = element; at; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') return false;
+    }
+    return true;
+  };
+  let bounds = null;
+  for (const root of roots) {
+    const own = root.getBoundingClientRect();
+    bounds = bounds ? { left: Math.min(bounds.left, own.left), top: Math.min(bounds.top, own.top), right: Math.max(bounds.right, own.right), bottom: Math.max(bounds.bottom, own.bottom) } : { left: own.left, top: own.top, right: own.right, bottom: own.bottom };
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    for (let node = walker.currentNode; node; node = walker.nextNode()) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (!node.textContent.trim() || !seen(node.parentElement)) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) add(rect);
+        continue;
+      }
+      if (!seen(node)) continue;
+      const style = getComputedStyle(node);
+      // The ground a bar paints (fixed to the window, as the page's) is not a surface of its own.
+      const ground = style.backgroundAttachment.includes('fixed');
+      const surface = (!ground && (style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none')) || style.boxShadow !== 'none' || (style.borderTopStyle !== 'none' && style.borderTopWidth !== '0px');
+      if (surface || /^(img|svg|canvas|input|textarea|video)$/i.test(node.tagName)) add(node.getBoundingClientRect());
+    }
+  }
+  return {
+    left: Math.max(box.left, bounds.left),
+    top: Math.max(box.top, bounds.top),
+    right: Math.min(box.right, bounds.right),
+    bottom: Math.min(box.bottom, bounds.bottom),
+  };
+}
+
+/**
+ * Hides, in place (nothing moves), every element wholly outside `box`: the app's bars, a neighbour above
+ * or below, so a close-up's margin is the ground alone. What lies within it stays, between its roots too.
+ */
+function hideOutside(box) {
+  for (const element of document.body.querySelectorAll('*')) {
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) continue;
+    if (rect.bottom <= box.top || rect.top >= box.bottom || rect.right <= box.left || rect.left >= box.right) element.style.visibility = 'hidden';
+  }
+}
+
+/** A close-up's cut: what its roots paint and `MARGIN` round it, what lies outside hidden. */
+async function closeupClip(page, roots, size) {
+  const handles = (await Promise.all(roots.map(root => root.elementHandles()))).flat();
+  const box = await page.evaluate(painted, handles);
+  await page.evaluate(hideOutside, box);
+  const clip = { x: box.left - MARGIN, y: box.top - MARGIN, width: box.right - box.left + 2 * MARGIN, height: box.bottom - box.top + 2 * MARGIN };
+  if (clip.x < 0 || clip.y < 0 || clip.x + clip.width > size.width || clip.y + clip.height > size.height) throw new Error(`No room for the margin round ${JSON.stringify(box)} in ${size.width}×${size.height}`);
+  return clip;
+}
+
+/**
+ * A screen of the demo as a JPEG (the paper's grain makes a PNG ten times heavier), whole or a close-up
+ * (`roots`, see `CLOSEUPS`), at `scale`. The interface in English on a French device: the demo's people
  * are French, and a device's region is what their numbers are read in.
  */
-async function capture(browser, base, path, scheme, { clip, scale = 1, height = 900, hide } = {}) {
-  const context = await browser.newContext({ viewport: { width: 1440, height }, deviceScaleFactor: scale, colorScheme: scheme, locale: 'fr-FR', timezoneId: 'Europe/Paris' });
+async function capture(browser, base, path, scheme, { roots, prepare, scale = 1, size = { width: 1440, height: 900 } } = {}) {
+  const context = await browser.newContext({ viewport: size, deviceScaleFactor: scale, colorScheme: scheme, locale: 'fr-FR', timezoneId: 'Europe/Paris' });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${base}${path}?demo=1&lang=en`);
   await page.waitForTimeout(2_500);
-  if (hide) await page.addStyleTag({ content: `${hide} { visibility: hidden !important; }` });
-  const shot = await page.screenshot({ type: 'jpeg', quality: QUALITY, clip });
+  if (prepare) {
+    await prepare(page);
+    await page.waitForTimeout(300);
+  }
+  const shot = await page.screenshot({ type: 'jpeg', quality: QUALITY, clip: roots ? await closeupClip(page, roots(page), size) : undefined });
   await context.close();
   if (errors.length > 0) throw new Error(`${path}: ${errors.join(' | ')}`);
   return shot;
+}
+
+/** A JPEG's size in pixels, from its frame header. */
+function jpegSize(bytes) {
+  for (let at = 2; at < bytes.length; ) {
+    const marker = bytes[at + 1];
+    const length = bytes.readUInt16BE(at + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) return { height: bytes.readUInt16BE(at + 5), width: bytes.readUInt16BE(at + 7) };
+    at += 2 + length;
+  }
+  throw new Error('Not a JPEG');
 }
 
 /** A drawn picture at twice its size, on a page of its own address so its font and grains load from it. */
@@ -111,9 +222,10 @@ async function main() {
     for (const scheme of SCHEMES) {
       for (const [name, path] of Object.entries(HOMES)) shots[`${name}-${scheme}`] = await capture(browser, base, path, scheme);
       writeFileSync(`${OUT}banner-${scheme}.jpg`, await draw(browser, bannerPage(design, brand, scheme, shots)));
-      for (const [name, { path, clip, height, hide }] of Object.entries(CLOSEUPS)) {
-        const shot = await capture(browser, base, path, scheme, { clip, height, hide, scale: 2 });
-        writeFileSync(`${OUT}${name}-${scheme}.jpg`, await draw(browser, closeupPage(design, brand, scheme, shot, clip)));
+      for (const [name, { path, roots, prepare, size }] of Object.entries(CLOSEUPS)) {
+        const shot = await capture(browser, base, path, scheme, { roots, prepare, size, scale: 2 });
+        const { width: shotWidth, height: shotHeight } = jpegSize(shot);
+        writeFileSync(`${OUT}${name}-${scheme}.jpg`, await draw(browser, closeupPage(design, brand, scheme, shot, { width: shotWidth, height: shotHeight })));
       }
       for (const [name, page] of Object.entries(PICTURES)) writeFileSync(`${OUT}${name}-${scheme}.jpg`, await draw(browser, page(design, brand, scheme)));
     }
