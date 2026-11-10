@@ -226,3 +226,26 @@ The web apps are plain static files. To serve them from a static host (Cloudflar
 ## Without a public address
 
 On a LAN only, the web apps work over plain HTTP from a browser on that LAN (without its offline copy), but the Android apps need HTTPS. A private mesh with certificates (Tailscale's HTTPS, a VPN to your home with a reverse proxy and a certificate for a name it resolves) works the same as a public address.
+
+The Android apps trust only the certificate authorities Android ships with, not one you made yourself: give the server a certificate from a public authority for a name you own (Let's Encrypt's DNS challenge issues one for a name that only your LAN resolves), or use Tailscale's.
+
+## Without internet access
+
+The server needs nothing from the internet to run: no account, no licence check; it reaches out only for the features listed below. Bring the image in from a machine that has internet, the same release as the two files:
+
+```bash
+# On a machine with internet
+docker pull ghcr.io/stephenprn/unlease:0.2.0
+docker save ghcr.io/stephenprn/unlease:0.2.0 -o unlease-0.2.0.tar
+curl -fsSLO https://github.com/stephenprn/unlease/releases/download/v0.2.0/docker-compose.yml
+curl -fsSL -o example.env https://github.com/stephenprn/unlease/releases/download/v0.2.0/example.env
+
+# On the server, with the three files copied over
+docker load -i unlease-0.2.0.tar
+cp example.env .env    # then set UNLEASE_TOKEN as in Run it
+docker compose up -d
+```
+
+The APKs come from the same release page, copied to the phones (a USB cable, a shared folder) and opened there.
+
+Everything you write, sync, search, back up to an S3 or a Seafile on your network, and restore works without internet. What reads the outside does not work without it: Claude (reading links, answering questions), a link's page and pictures, Agenda's subscribed calendars, public holidays and weather, and the places offered as you type an address (point `UNLEASE_PLACES_URL` at your own Photon, or turn it off). The certificate for the Android apps is the one part to fetch from outside ([above](#without-a-public-address)); browsers on the LAN need none.

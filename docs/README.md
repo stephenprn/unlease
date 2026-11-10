@@ -9,7 +9,7 @@ Sorted by what you came for (the [Diátaxis](https://diataxis.fr/) split): learn
 
 ## How-to guides
 
-- [Self-hosting](SELF-HOSTING.md): HTTPS in front (Caddy, nginx, Traefik, Cloudflare Tunnel), the setup, the phones, turning apps on and off, your data, hosting the web app elsewhere, a server without a public address.
+- [Self-hosting](SELF-HOSTING.md): HTTPS in front (Caddy, nginx, Traefik, Cloudflare Tunnel), the setup, the phones, turning apps on and off, your data, hosting the web app elsewhere, a server without a public address or without internet access.
 - [Upgrading](UPGRADING.md): to a new release, the server first; pinning a version; going back.
 - [Backups and restores](SELF-HOSTING.md#your-data): what to copy, Unlease's own S3 backups, restoring from the Administration.
 - [Contributing](../CONTRIBUTING.md): set up the repository, the checks, a pull request.
