@@ -4,6 +4,10 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Fixed
+
+- On the web, an app picked in the launcher (or another app's place opened from a menu, the drawer or the search) opens again: the browser no longer stays on the app you were in.
+
 ## [0.1.0] - 2026-11-10
 
 The first release: the Unlease server and four apps, Carnet, Pages, Contacts and Agenda, on the web and on Android.

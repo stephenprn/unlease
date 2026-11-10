@@ -450,30 +450,37 @@ export interface NavigateOptions {
 
 /** How another app's page is opened: the browser loads it whole (a test watches it here, jsdom loads nothing). */
 export const otherApp = {
-  open(href: string): void {
-    location.assign(href);
+  open(href: string, how?: { readonly replace: true }): void {
+    if (how?.replace) location.replace(href);
+    else location.assign(href);
   },
 };
 
 /**
  * Another app's place (`/pages/<id>` from Carnet): its own page, loaded whole. The dev server's demo
  * (`?demo`) goes along, so the other app opens on its made-up data too.
+ *
+ * Asked for from something that closed (the launcher's tile), the page takes over the entry it gave
+ * back, as one of this app's would, and nothing steps off it: a step of the history while the page
+ * loads cancels the load, and the browser stays where it was.
  */
-function openOtherApp(to: string): void {
+function openOtherApp(to: string, replace: boolean): void {
   const demo = import.meta.env.DEV ? new URLSearchParams(location.search).get('demo') : null;
   const href = demo !== null && !/[?&]demo\b/.test(to) ? `${to}${to.includes('?') ? '&' : '?'}demo=${encodeURIComponent(demo)}` : to;
-  otherApp.open(browserPath(href));
+  const here = readState();
+  const takeOver = givenBack(here);
+  // Given back no more: `settle` leaves this entry alone while the page loads.
+  if (takeOver) history.replaceState({ index: here.index }, '');
+  if (replace || takeOver) otherApp.open(browserPath(href), { replace: true });
+  else otherApp.open(browserPath(href));
 }
 
 export function navigate(to: string, options: NavigateOptions = {}): void {
   if (!options.background && asksFirst(() => navigate(to, options))) return;
-  if (to.startsWith('/') && !ownsPath(to)) {
-    openOtherApp(to);
-    return;
-  }
   // Asked for from inside something open (a menu's item, a dialog's button, a row of the drawer): after its commit.
   if (readState().base !== undefined) afterCommit();
-  write(() => go(to, options));
+  if (to.startsWith('/') && !ownsPath(to)) write(() => openOtherApp(to, options.replace ?? false));
+  else write(() => go(to, options));
 }
 
 function go(to: string, { replace = false, background }: NavigateOptions): void {

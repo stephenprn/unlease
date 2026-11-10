@@ -129,8 +129,13 @@ describe('the launcher', () => {
     expect(within(dialog).queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();
     // Every app is ready: nothing is announced.
     expect(within(dialog).queryByRole('list', { name: 'Bientôt disponible' })).not.toBeInTheDocument();
+    // Pages loads over the entry the launcher gave back, and the history stays still while it loads: a step would cancel the load.
+    const step = vi.spyOn(history, 'go');
     await user.click(within(apps).getByRole('link', { name: 'Pages' }));
-    expect(load).toHaveBeenCalledWith('/pages');
+    await waitFor(() => expect(load).toHaveBeenCalledWith('/pages', { replace: true }));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(step).not.toHaveBeenCalled();
+    expect(load).toHaveBeenCalledTimes(1);
   });
 
   it('leaves out an app the server does not run', async () => {
