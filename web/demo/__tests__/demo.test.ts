@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { startDemo } from '../demo';
 
@@ -15,13 +15,18 @@ describe('the demo’s language', () => {
   afterEach(() => {
     window.fetch = fetched;
     localStorage.clear();
+    vi.restoreAllMocks();
   });
 
-  it('is French the first time, the one its address names, then the one it had: another app opened from the launcher speaks the same', async () => {
+  it('is the browser’s the first time, the one its address names, then the one it had: another app opened from the launcher speaks the same', async () => {
+    const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('fr-FR');
     expect(await load('/notes?demo=1')).toBe('fr');
-    expect(await load('/notes?demo=1&lang=en')).toBe('en');
-    expect(await load('/pages')).toBe('en');
-    expect(await load('/agenda?lang=fr')).toBe('fr');
-    expect(await load('/contacts')).toBe('fr');
+    localStorage.clear();
+    language.mockReturnValue('en-GB');
+    expect(await load('/notes?demo=1')).toBe('en');
+    expect(await load('/pages?lang=fr')).toBe('fr');
+    expect(await load('/agenda')).toBe('fr');
+    expect(await load('/contacts?lang=en')).toBe('en');
+    expect(await load('/notes')).toBe('en');
   });
 });

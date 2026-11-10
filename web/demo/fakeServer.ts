@@ -206,8 +206,9 @@ export class FakeServer {
   private apps: AppId[];
   private setupDone: boolean;
 
-  constructor({ reading = true, apps = ['notes', 'pages'], setupDone = true }: { reading?: boolean; apps?: readonly AppId[]; setupDone?: boolean } = {}) {
+  constructor({ reading = true, apps = ['notes', 'pages'], setupDone = true, english = false }: { reading?: boolean; apps?: readonly AppId[]; setupDone?: boolean; english?: boolean } = {}) {
     this.apps = apps.filter(isReadyApp);
+    this.english = english;
     this.setupDone = setupDone;
     this.settings = reading
       ? { enabled: true, keySource: 'app', keyHint: '…k3Xq', model: 'claude-opus-5-5', budgetUsd: 15 }
@@ -215,6 +216,9 @@ export class FakeServer {
     this.pages = { ...PAGES_ASK_DEFAULTS, enabled: reading };
     this.calendar = { holidays: { country: 'FR', region: null }, publishPath: '/ical/demo-0123456789abcdef.ics', ask: reading };
   }
+
+  /** A demo in English: what the server writes itself (the holidays) is in English too. */
+  private readonly english: boolean;
 
   /** Agenda's: the holidays (France), a published address, questions on when the demo reads links. */
   private calendar: CalendarSettings;
@@ -226,7 +230,7 @@ export class FakeServer {
 
   /** The holidays the server keeps for its country, as the real one fetches them. */
   seedHolidays(now: number = Date.now()): void {
-    writeHolidays({ records: () => this.allRecords(), write: (type, id, patch) => this.write(type, id, patch) }, this.calendar.holidays.country, this.calendar.holidays.region, now);
+    writeHolidays({ records: () => this.allRecords(), write: (type, id, patch) => this.write(type, id, patch) }, this.calendar.holidays.country, this.calendar.holidays.region, now, this.english);
   }
 
   private readonly records = new Map<string, Stored>();

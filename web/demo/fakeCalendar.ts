@@ -65,16 +65,17 @@ function frenchDays(year: number): NagerHoliday[] {
 }
 
 /** The holidays' calendar and its days, as the server keeps them (France only in the demo; another country leaves none). */
-export function writeHolidays(store: CalendarStore, country: string | null, region: string | null, now: number): void {
+export function writeHolidays(store: CalendarStore, country: string | null, region: string | null, now: number, english = false): void {
   const today = new Date(now).toISOString().slice(0, 10);
   const stored = store
     .records()
     .filter(record => record.type === 'calendarEvent' && record.fields.feedId === HOLIDAYS_FEED_ID)
     .map(record => ({ event: eventFromRecord(record), fields: record.fields }));
-  const days = country === 'FR' ? holidayYears(today).flatMap(frenchDays) : [];
+  // A demo in English names them in English (Nager.Date's `name`), as it writes its other records.
+  const days = (country === 'FR' ? holidayYears(today).flatMap(frenchDays) : []).map(day => (english ? { ...day, localName: day.name } : day));
   const plan = planFeed(holidayDrafts(days, region), stored, () => createId(now), now);
   if (country) {
-    store.write('calendarFeed', HOLIDAYS_FEED_ID, { kind: 'holidays', name: `Jours fériés · ${country === 'FR' ? 'France' : country}`, url: '', color: 'green', hidden: false, position: 'a0', refreshedAt: now, error: '', createdAt: now, deletedAt: null });
+    store.write('calendarFeed', HOLIDAYS_FEED_ID, { kind: 'holidays', name: `${english ? 'Public holidays' : 'Jours fériés'} · ${country === 'FR' ? 'France' : country}`, url: '', color: 'green', hidden: false, position: 'a0', refreshedAt: now, error: '', createdAt: now, deletedAt: null });
   } else if (store.records().some(record => record.type === 'calendarFeed' && record.id === HOLIDAYS_FEED_ID)) {
     store.write('calendarFeed', HOLIDAYS_FEED_ID, { deletedAt: now });
   }

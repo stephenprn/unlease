@@ -14,6 +14,7 @@ import { kindTemplateId, presetNames, templateSignature } from '@unlease/notes/s
 import { blockFields } from '@unlease/pages/sync/entities';
 import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entities';
 import { calendarChanges } from './demoCalendar';
+import { inEnglish } from './demoEnglish';
 import type { BlockKind, BlockTarget, CellValue, TableColumn } from '@unlease/pages/models/blocks';
 import type { LineColor, NotePattern } from '@unlease/design/colors';
 import type { DrawingInk, DrawingSize, DrawingTool } from '@unlease/notes/models/drawing';
@@ -205,7 +206,7 @@ const NOTES: readonly NoteSeed[] = [
     ],
   },
   { id: 'line-films', kind: 'links', title: 'Films & séries', code: 'F', color: 'violet', hint: 'Films et séries à voir, au cinéma ou en streaming.', pinned: true, ago: 35 * DAY },
-  { id: 'demo-resto', kind: 'text', title: 'Anniversaire de Léa', rich: true, body: 'Réserver pour six samedi soir, plutôt vers Oberkampf. Demander à {@contact=demo-contact-lea} si elle préfère italien ou libanais.', color: 'orange', people: ['demo-contact-lea'], ago: 40 * MINUTE },
+  { id: 'demo-resto', kind: 'text', title: 'Anniversaire de Léa', rich: true, body: 'Réserver pour six samedi soir, plutôt vers Oberkampf. Demander à {@contact=demo-contact-lea} si elle préfère italien ou libanais.', color: 'orange', people: ['demo-contact-lea'], reminder: now => at(now, 1, 18), ago: 40 * MINUTE },
   { id: 'demo-garage', kind: 'text', title: 'Appeler le garage', body: 'Contrôle technique avant le 30. Demander s’ils font aussi la vidange.', reminder: now => at(now, 1, 9), ago: 5 * HOUR },
   { id: 'demo-mutuelle', kind: 'text', title: 'Renvoyer le formulaire de la mutuelle', body: 'Signé, avec le RIB. L’enveloppe est dans l’entrée.', reminder: now => at(now, -1, 18), ago: 4 * DAY },
   {
@@ -910,7 +911,8 @@ function contactChanges(now: number): { readonly time: number; readonly changes:
  * imports nothing but core and types, so `tools/demo/seed-server.ts` can push
  * the same dataset to a real server for the phone.
  */
-export function buildDemoRecords(now: number = Date.now()): SyncRecord[] {
+/** The demo's records, written in French, or in English (`demoEnglish.ts`) for a demo in English. */
+export function buildDemoRecords(now: number = Date.now(), locale: 'fr' | 'en' = 'fr'): SyncRecord[] {
   const events: { readonly time: number; readonly changes: LocalChange[] }[] = [];
   const add = (time: number, changes: LocalChange[]): void => {
     events.push({ time, changes });
@@ -1066,7 +1068,7 @@ export function buildDemoRecords(now: number = Date.now()): SyncRecord[] {
       records.push({ type: change.type, id: change.id, fields: change.patch, clocks: Object.fromEntries(Object.keys(change.patch).map(key => [key, clock])) });
     }
   }
-  return records;
+  return locale === 'en' ? inEnglish(records) : records;
 }
 
 /** Image blob ids the demo records refer to (link images and the note photo). */

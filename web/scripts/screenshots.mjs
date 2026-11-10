@@ -39,7 +39,7 @@ function shoppingModules(module, shown) {
     await page.getByRole('switch', { name: /^(Seconde main|Second-hand)/ }).click();
     await page.keyboard.press('Escape');
     await page.waitForTimeout(400);
-    await page.getByRole('link', { name: /^Veste en laine bouillie/ }).first().click();
+    await page.getByRole('link', { name: /^(Veste en laine bouillie|Boiled wool jacket)/ }).first().click();
     await page.waitForTimeout(700);
     if (!module) return;
     await page.getByRole('button', { name: module }).click();
@@ -68,9 +68,10 @@ const RATINGS = /^(Notes|Ratings)/;
 const RECAP = /^(Résumé jusqu’ici|Story so far)/;
 const COVERAGE = /^(Autres regards|Other takes)/;
 const ASK = /^(Demander à Claude|Ask Claude)/;
-const FILM = /^Les Feux de septembre/;
-const SERIES = /^Station Nord/;
-const ARTICLE = /^Pourquoi les villes ralentissent/;
+// The demo's records are in the interface's language (`web/demo/demoEnglish.ts`).
+const FILM = /^(Les Feux de septembre|September Fires)/;
+const SERIES = /^(Station Nord|Station North)/;
+const ARTICLE = /^(Pourquoi les villes ralentissent|Why cities are slowing down)/;
 
 /** A paste on the board, as the browser fires it. */
 async function paste(page, text) {
@@ -341,9 +342,9 @@ SURFACES.push(
   { name: 'slip-error', path: '/notes?demo=1', act: slip('error', 'Ce n’est pas un lien') },
   // The spotlight (⌘P, Ctrl+P or Ctrl+K): empty on what was opened lately, then searching.
   { name: 'spotlight', path: '/pages/demo-page-lisbonne?demo=1', act: spotlight() },
-  { name: 'spotlight-search', path: '/notes?demo=1', act: spotlight('lisbonne') },
-  { name: 'spotlight-link', path: '/notes?demo=1', act: spotlight('veste laine') },
-  { name: 'spotlight-typo', path: '/notes?demo=1', act: spotlight('crepes lisbone') },
+  { name: 'spotlight-search', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'lisbon' : 'lisbonne') },
+  { name: 'spotlight-link', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'wool jacket' : 'veste laine') },
+  { name: 'spotlight-typo', path: '/notes?demo=1', act: spotlight(LOCALE === 'en' ? 'crepes lisbn' : 'crepes lisbone') },
   { name: 'spotlight-nothing', path: '/notes?demo=1', act: spotlight('zanzibar') },
   {
     name: 'spotlight-filters',
