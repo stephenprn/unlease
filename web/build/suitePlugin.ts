@@ -70,7 +70,7 @@ function folderOf(path: string): WebApp | null {
  * null on the dev server, which serves every app's.
  */
 export function suitePlugin(app: WebApp | null): Plugin {
-  // `/notes/` once built (`/unlease/notes/` for the demo on GitHub Pages); `/` on the dev server.
+  // `/notes/` once built (the demo's too, at demo.unlease.org's root; under `--base` when a host serves it under a path); `/` on the dev server.
   let base = '/';
 
   /**

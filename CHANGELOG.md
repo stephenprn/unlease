@@ -4,6 +4,10 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Changed
+
+- The demo moves to https://demo.unlease.org (its old address leads there).
+
 ### Fixed
 
 - On the web, an app picked in the launcher (or another app's place opened from a menu, the drawer or the search) opens again: the browser no longer stays on the app you were in.

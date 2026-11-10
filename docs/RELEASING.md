@@ -19,7 +19,7 @@ A release is a version tag. One version, [Semantic Versioning](https://semver.or
    - `ci.yml` runs on the tagged commit;
    - `image.yml` pushes `ghcr.io/stephenprn/unlease:0.2.0`, `:0.2` and `:latest` (amd64 and arm64, with its provenance and an SBOM, and a signed attestation on a public repository), `android.yml` builds the four APKs (every ABI, all signed with the same upload key from the secrets: the apps share a connection through a permission only same-signed apps hold) and checks each one's certificate with `apksigner`: never a debug key, and the one `ANDROID_SIGNING_CERT_SHA256` names when it is set;
    - the GitHub release is drafted from the changelog's section (`--notes`), gets `carnet-v0.2.0.apk`, `pages-v0.2.0.apk`, `contacts-v0.2.0.apk` and `agenda-v0.2.0.apk`, a `docker-compose.yml` and an `example.env` pinned to `UNLEASE_VERSION=0.2.0` (what the install instructions download from `releases/latest/download/`), and `SHA256SUMS`, then is published;
-   - the web demo on GitHub Pages moves to the release (`pages.yml`: `npm run build:demo` under the site's path, each app under its own, `/unlease/notes/` and `/unlease/pages/`, with a `404.html` that sends a deep link to its app). A release candidate leaves it on the last release; Actions > Pages > Run workflow publishes any branch's.
+   - the web demo on GitHub Pages, https://demo.unlease.org, moves to the release (`pages.yml`: `npm run build:demo` for the site's path, each app under its own, `/notes/`, `/pages/`, `/contacts/` and `/agenda/`, with a `404.html` that sends a deep link to its app). A release candidate leaves it on the last release; Actions > Pages > Run workflow publishes any branch's.
 
 The first time, make the image public in its GitHub package settings (packages start private), so servers pull it without logging in. `main` alone keeps publishing `:edge` (`image.yml`).
 
@@ -29,6 +29,8 @@ The first time too, for the demo: Settings > Pages > Source **GitHub Actions**, 
 gh api -X POST repos/stephenprn/unlease/pages -f build_type=workflow
 gh api -X POST repos/stephenprn/unlease/environments/github-pages/deployment-branch-policies -f name='v*' -f type=tag
 ```
+
+The demo's domain (`demo.unlease.org`) is the repository's Pages setting (Settings > Pages > Custom domain, with a `CNAME` record to `<owner>.github.io` at the DNS), not a file in the repository: a workflow deployment needs no `CNAME` file. Without one, a fork's demo is at `https://<owner>.github.io/<repository>/`; `pages.yml` builds for whichever path GitHub gives.
 
 ## A release candidate
 

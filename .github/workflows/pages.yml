@@ -1,4 +1,4 @@
-# The web demo on GitHub Pages: Carnet's, Pages', Contacts' and Agenda's web apps in the browser with made-up notes, pages, people and events, and a
+# The web demo on GitHub Pages, at https://demo.unlease.org (the repository's Pages domain): Carnet's, Pages', Contacts' and Agenda's web apps in the browser with made-up notes, pages, people and events, and a
 # fake server inside each page (web/demo). Nothing leaves the browser, and every load starts afresh.
 #   a release (release.yml, once it is published) -> the demo of that release
 #   by hand (Actions > Pages > Run workflow)      -> the demo of the chosen branch
@@ -31,7 +31,8 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
       - run: npm ci
-      # Under the site's sub-path (/unlease on <owner>.github.io): each app under its own (/unlease/notes/, /unlease/pages/, /unlease/contacts/, /unlease/agenda/);
+      # At the site's root on a domain of its own (demo.unlease.org/notes/, /pages/, /contacts/, /agenda/); under the repository's
+      # path on <owner>.github.io without one (/unlease/notes/…): GitHub says which (base_path).
       # a host's unknown path gets 404.html, which sends an app's address to its app's page (scripts/build.mjs).
       - run: npm run build:demo -w web -- --base "${{ steps.pages.outputs.base_path }}/"
       - uses: actions/upload-pages-artifact@v3

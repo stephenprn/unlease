@@ -41,7 +41,7 @@ The demo (its own database, reset on each load, with a fake server in the page t
 - `?demo=empty` nothing, no server
 - add `&apps=notes` for a server running Carnet alone, `&reading=off` for one without a Claude key, `&lang=en` for English (kept as you go from one app to another)
 
-`npm run build:demo` builds every app as a static site into `dist-demo/` (`notes/`, `pages/`, `contacts/`), where every load is the demo, its root sending to Carnet and its `404.html` sending an app's address to that app's page; `-- --base /sub/path/` for a host that serves it under a path. Each release publishes it on GitHub Pages (`.github/workflows/pages.yml`), at `https://stephenprn.github.io/unlease/`.
+`npm run build:demo` builds every app as a static site into `dist-demo/` (`notes/`, `pages/`, `contacts/`, `agenda/`), where every load is the demo, its root sending to Carnet and its `404.html` sending an app's address to that app's page; `-- --base /sub/path/` for a host that serves it under a path. Each release publishes it on GitHub Pages (`.github/workflows/pages.yml`), at `https://demo.unlease.org` (a fork without a domain of its own: under `/<repository>/` on its `github.io` site).
 
 | Script | |
 | --- | --- |
