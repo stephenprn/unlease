@@ -52,6 +52,7 @@ The demo (its own database, reset on each load, with a fake server in the page t
 | `npm run typecheck` | both TypeScript programs (apps, build tooling) |
 | `npm run verify` | all of the above, then both builds |
 | `npm run screenshots` | every surface, light and dark, 1440 and 390 px, into `../.impeccable/review/web/` (Playwright; run `npx playwright install chromium` once) |
+| `npm run readme-images` | the README's pictures, light and dark, into `../docs/images/`: the demo's screens and the diagrams drawn from the design system (`scripts/readme/pictures.mjs`); `-- links run` redraws only those |
 
 ## Deploy
 

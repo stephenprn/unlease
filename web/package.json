@@ -18,7 +18,8 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "verify": "npm run typecheck && npm run lint && npm run test && node scripts/build.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "readme-images": "node scripts/readme-images.mjs"
   },
   "engines": {
     "node": ">=22.12"
