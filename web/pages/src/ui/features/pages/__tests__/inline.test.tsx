@@ -253,13 +253,14 @@ describe('emojis', () => {
 });
 
 describe('keyboard keys', () => {
-  it('are set from the formatting bar, and typing at their end goes after them', async () => {
-    const user = userEvent.setup();
+  it('are set from the formatting bar, and typing at their end goes after them', () => {
     const page = createPage({ title: 'Voyage' });
     const block = insertBlock(page, page, 0, { kind: 'text', text: 'Appuyez sur Ctrl+K' });
     render(<PageView id={page} />);
     act(() => openFormat({ block, start: 12, end: 18, link: false }));
-    await user.click(screen.getByRole('button', { name: 'Touches' }));
+    // Pressed at once: the bar is open on offsets with nothing selected in the document, and anything
+    // closing it during user-event's pauses (a `selectionchange` jsdom delivers late) left the press on a removed button once in CI.
+    fireEvent.click(screen.getByRole('button', { name: 'Touches' }));
     expect(text(block)).toBe('Appuyez sur {k:Ctrl+K}');
     expect(rich(block).querySelector('[data-k]')).toHaveTextContent('Ctrl+K');
   });

@@ -98,8 +98,8 @@ describe('« Modèles de fiche »', () => {
       { id: 'brand', name: 'Marque', type: 'text', hint: 'La marque ou le fabricant' },
     ]);
     expect(useUiStore.getState().snack).toMatchObject({ message: 'Modèle enregistré', tone: 'success' });
-    // The editor goes on with the template saved, at its own address.
-    expect(location.pathname).toBe(`/notes/templates/${made.id}`);
+    // The editor goes on with the template saved, at its own address (once the router has stepped off the entry the changes held).
+    await waitFor(() => expect(location.pathname).toBe(`/notes/templates/${made.id}`));
     unmount();
   }, 20_000);
 

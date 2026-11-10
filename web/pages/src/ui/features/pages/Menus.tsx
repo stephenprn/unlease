@@ -140,7 +140,8 @@ function useListKeys(rows: readonly Row[], close: () => void, register: boolean,
   useLayoutEffect(() => {
     takeRef.current = take;
   });
-  useEffect(() => {
+  // Taken with the commit that shows the menu, never a moment after: a key pressed once it shows is its.
+  useLayoutEffect(() => {
     if (!register) return;
     return setMenuKeys(event => {
       const taken = takeRef.current(event.key === pickOn ? 'Enter' : event.key);
