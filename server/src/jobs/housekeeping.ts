@@ -1,6 +1,6 @@
 /**
  * Hourly chores, each safe to run any number of times:
- *  - each app's own (`ServerApp.chores`: Carnet empties its bin);
+ *  - each app's own, while it is on (`ServerApp.chores`: Carnet's and Pages' bins);
  *  - blob files no app's record points at any more are deleted once a week old (a photo
  *    uploaded before its record syncs) and unused for UNUSED_GRACE_DAYS (a file block cut
  *    and pasted later, an undo); those of a record the server itself tombstoned lately
@@ -12,7 +12,7 @@
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { SUITE_SLUG } from '@unlease/core/apps';
+import { SUITE_SLUG, type AppId } from '@unlease/core/apps';
 import { hlcNode, randomNodeId } from '@unlease/core/sync/hlc';
 import { filesInUse } from '../apps/hooks';
 import type { ServerApp } from '../apps/types';
@@ -36,8 +36,10 @@ export interface HousekeepingOptions {
   readonly sync: SyncService;
   readonly records: RecordStore;
   readonly blobs: BlobStore;
-  /** The apps whose chores run and whose files stay. */
+  /** The apps whose files stay (every one, on or off), and whose chores run while they are on. */
   readonly apps: readonly ServerApp[];
+  /** Whether an app is on (`AppRunner.isOn`); every app is, without it. */
+  readonly isOn?: (id: AppId) => boolean;
   /** Where `backups/` goes; without it, no snapshots. */
   readonly dataDir?: string;
   readonly now?: () => number;
@@ -83,7 +85,8 @@ export class Housekeeping {
 
   private async pass(): Promise<HousekeepingReport> {
     const now = this.now();
-    const tombstoned = this.options.apps.reduce((sum, app) => sum + (app.chores?.(now) ?? 0), 0);
+    const isOn = this.options.isOn ?? (() => true);
+    const tombstoned = this.options.apps.reduce((sum, app) => sum + (isOn(app.id) ? (app.chores?.(now) ?? 0) : 0), 0);
     const blobsRemoved = await this.collectBlobs();
     const snapshot = this.snapshot();
     if (tombstoned > 0 || blobsRemoved > 0 || snapshot) log.info('housekeeping', { tombstoned, blobsRemoved, snapshot });

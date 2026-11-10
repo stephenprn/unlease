@@ -11,7 +11,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[2]
-FONTS = ROOT / "mobile/notes/assets/fonts"
+FONTS = ROOT / "mobile/shared/assets/fonts"
 OUT = ROOT / "packages/design/src/advances.ts"
 WEIGHTS = {"regular": "Signika-Regular.ttf", "bold": "Signika-Bold.ttf"}
 

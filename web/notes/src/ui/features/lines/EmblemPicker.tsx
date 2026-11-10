@@ -6,8 +6,8 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { t } from '@unlease/core/i18n';
 import type { LineColor } from '@unlease/design/colors';
 
-import { Emblem } from '../../components/Emblem';
-import { PebbleEdge } from '../../components/Outline';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { PebbleEdge } from '@shared/ui/components/Outline';
 import styles from './colorPicker.module.css';
 
 export interface EmblemPickerProps {

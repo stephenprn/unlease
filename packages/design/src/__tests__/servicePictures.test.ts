@@ -12,17 +12,17 @@ describe('Seafile’s pictures', () => {
     ]);
   });
 
-  it('draw the mark in the primary: its pebble, its card, the leaf cut through to the pebble, nothing around', async () => {
+  it('draw the drive in the primary: the mark’s pebble, a folder, its fold cut through to the pebble, nothing around', async () => {
     const appearance = { ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.pivoine };
     const { width, height, pixels } = decodePng((await servicePicture('logo', appearance)).bytes);
     expect([width, height]).toEqual([256, 256]);
     const { tile, card } = markColors(appearance.primary);
     expect(tile).not.toBe(MARK_COLORS.tile);
     const rgba = (x: number, y: number): number[] => [...pixels.subarray((y * width + x) * 4, (y * width + x) * 4 + 4)];
-    // Over the card's top edge, on the card's lower right, in the leaf, in a corner.
-    expect(rgba(128, 22)).toEqual([...parseHex(tile), 255]);
-    expect(rgba(166, 184)).toEqual([...parseHex(card), 255]);
-    expect(rgba(137, 120)).toEqual([...parseHex(tile), 255]);
+    // Over the folder's top edge, on the folder's lower right, in its fold, in a corner.
+    expect(rgba(154, 51)).toEqual([...parseHex(tile), 255]);
+    expect(rgba(166, 166)).toEqual([...parseHex(card), 255]);
+    expect(rgba(128, 115)).toEqual([...parseHex(tile), 255]);
     expect(rgba(2, 2)).toEqual([0, 0, 0, 0]);
   });
 

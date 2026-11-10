@@ -2,15 +2,15 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { freshLibrary } from '../../test/library';
+import { freshLibrary } from '@test/library';
 import { addCheck, addLink, createLabel, createLine, createNote, setPinned, trashNotes } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
-import { createPage, insertBlock, trashPage } from '../../app/store/pages';
-import { setOnboarded } from '../../app/store/settings';
-import { useUiStore } from '../../app/store/ui';
-import { App } from '../App';
+import { setOnboarded } from '@shared/app/store/settings';
+import { useUiStore } from '@shared/app/store/ui';
+import { App } from '@shared/ui/App';
 import { layoutWall, wallGeometry, WALL_TOP } from '../features/board/wallLayout';
-import { initHistory } from '../router';
+import { initHistory } from '@shared/ui/router';
+import { useNotesUiStore } from '@notes/app/store/notesUi';
 
 describe('the board', () => {
   beforeEach(async () => {
@@ -52,7 +52,7 @@ describe('the board', () => {
     // "Non classé" has no tab while it is empty.
     expect(within(tabs).queryByRole('link', { name: /^Non classé/ })).not.toBeInTheDocument();
     await user.click(within(tabs).getByRole('button', { name: 'Nouvelle collection' }));
-    expect(useUiStore.getState().newLineOpen).toBe(true);
+    expect(useNotesUiStore.getState().newLineOpen).toBe(true);
   });
 
   it('lists the collections and the labels in the navigation', () => {
@@ -60,40 +60,54 @@ describe('the board', () => {
     createLabel('Travail');
     render(<App />);
     const nav = screen.getByRole('navigation', { name: 'Navigation' });
-    expect(within(nav).getByRole('link', { name: 'Toutes les collections' })).toHaveAttribute('href', '/lines');
-    expect(within(nav).getByRole('link', { name: 'Restaurants' })).toHaveAttribute('href', '/line/line-restos');
-    expect(within(nav).getByRole('link', { name: 'Modifier les labels' })).toHaveAttribute('href', '/labels');
+    expect(within(nav).getByRole('link', { name: 'Toutes les collections' })).toHaveAttribute('href', '/notes/lines');
+    expect(within(nav).getByRole('link', { name: 'Restaurants' })).toHaveAttribute('href', '/notes/line/line-restos');
+    expect(within(nav).getByRole('link', { name: 'Modifier les labels' })).toHaveAttribute('href', '/notes/labels');
     expect(within(nav).getByRole('link', { name: 'Travail' })).toBeInTheDocument();
   });
 
-  it('finds pages by the words of their blocks, above the notes, opening them at the block that matched', async () => {
+  it('keeps a label’s rename to a name already worn, says why under it, and lets Escape give the old one back', async () => {
     const user = userEvent.setup();
-    const page = createPage({ title: 'Voyage à Lisbonne' });
-    const block = insertBlock(page, page, 0, { kind: 'text', text: 'Hôtel près de l’Alfama' });
-    createNote({ kind: 'text', title: 'Alfama, le soir', body: '' });
+    createLabel('Maison');
+    const travail = createLabel('Travail');
+    history.replaceState(null, '', '/notes/labels');
+    initHistory();
     render(<App />);
-    await user.type(screen.getByRole('searchbox', { name: 'Rechercher' }), 'alfama');
-    expect(screen.getByRole('heading', { name: /^2\srésultats$/ })).toBeInTheDocument();
-    const pages = screen.getByRole('region', { name: 'Pages' });
-    expect(within(pages).getByRole('link', { name: /Voyage à Lisbonne/ })).toHaveAttribute('href', `/page/${page}#block-${block}`);
-    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    const name = screen.getByRole('textbox', { name: 'Renommer Travail' });
+    await user.clear(name);
+    await user.type(name, 'maison{Enter}');
+    expect(name).toHaveFocus();
+    expect(name).toHaveValue('maison');
+    expect(name).toHaveAccessibleDescription('Ce label existe déjà : choisissez un autre nom.');
+    expect(useLibraryStore.getState().labels[travail]!.name).toBe('Travail');
+    // A free name clears it at once, and Enter saves it.
+    await user.type(name, ' du lac');
+    expect(name).not.toHaveAttribute('aria-invalid');
+    await user.type(name, '{Enter}');
+    expect(useLibraryStore.getState().labels[travail]!.name).toBe('maison du lac');
+    const renamed = screen.getByRole('textbox', { name: 'Renommer maison du lac' });
+    await user.clear(renamed);
+    await user.type(renamed, 'Maison{Enter}{Escape}');
+    expect(renamed).toHaveValue('maison du lac');
+    expect(renamed).not.toHaveAttribute('aria-invalid');
   });
 
-  it('keeps the pages thrown away in the one bin with the notes, and empties both together', async () => {
+  it('keeps its own bin: the notes thrown away, emptied together', async () => {
     const user = userEvent.setup();
     const note = createNote({ kind: 'text', title: 'Vieille note' });
     trashNotes([note]);
-    const page = createPage({ title: 'Brouillon' });
-    trashPage(page);
-    history.replaceState(null, '', '/trash');
+    history.replaceState(null, '', '/notes/trash');
     initHistory();
     render(<App />);
-    expect(screen.getByRole('region', { name: 'Pages · 1' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Notes · 1' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Vieille note/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Vider la corbeille' }));
-    await user.click(within(screen.getByRole('alertdialog', { name: 'Vider la corbeille ?' })).getByRole('button', { name: 'Vider' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Vider la corbeille ?' });
+    // The phone's words, for one act on both clients.
+    expect(within(dialog).getByText('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Vider' }));
     expect(useLibraryStore.getState().notes[note]!.deletedAt).not.toBeNull();
-    expect(useLibraryStore.getState().blocks[page]!.deletedAt).not.toBeNull();
+    expect(useUiStore.getState().snack).toMatchObject({ tone: 'success' });
+    expect(useUiStore.getState().snack?.message).toMatch(/^1\snote supprimée définitivement$/);
   });
 
   it('searches everything not in the bin and marks the matches', async () => {
@@ -135,7 +149,7 @@ describe('the board', () => {
     await user.click(screen.getByRole('link', { name: 'Ouvre-moi' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('textbox', { name: 'Titre' })).toHaveValue('Ouvre-moi');
-    expect(location.pathname).toMatch(/^\/note\//);
+    expect(location.pathname).toMatch(/^\/notes\/note\//);
     await act(async () => {
       await user.keyboard('{Escape}');
     });
@@ -144,7 +158,7 @@ describe('the board', () => {
 
   it('opens a note started from Rappels on its reminder, as the phone does', async () => {
     const user = userEvent.setup();
-    history.replaceState({ index: 0 }, '', '/reminders');
+    history.replaceState({ index: 0 }, '', '/notes/reminders');
     render(<App />);
     await user.click(screen.getByRole('button', { name: /^Créer une note/ }));
     const picker = await screen.findByRole('dialog', { name: 'Rappel' });

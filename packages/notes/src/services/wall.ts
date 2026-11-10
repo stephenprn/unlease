@@ -43,7 +43,7 @@ export interface CardShape {
   readonly hasCheckedSummary: boolean;
   readonly hasPhoto: boolean;
   readonly hasThumbs: boolean;
-  /** Labels or a reminder: a footer row. */
+  /** Labels, a reminder or people (their faces): a footer row. */
   readonly hasFooter: boolean;
 }
 

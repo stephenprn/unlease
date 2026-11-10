@@ -1,4 +1,4 @@
-import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,12 +7,8 @@ import { parseDrawing, serializeStrokes } from '@unlease/notes/services/drawing'
 
 import { createNote, updateNote } from '../../../../app/store/actions';
 import { useLibraryStore } from '../../../../app/store/library';
-import { undoPage } from '../../../../app/store/pageHistory';
-import { createPage, insertBlock } from '../../../../app/store/pages';
-import { useUiStore } from '../../../../app/store/ui';
-import { freshLibrary } from '../../../../test/library';
-import { PageContext } from '../../pages/PageContext';
-import { DrawingBlock, openDrawingEditor } from '../DrawingBlock';
+import { useUiStore } from '@shared/app/store/ui';
+import { freshLibrary } from '@test/library';
 import { DrawingPreview } from '../DrawingPreview';
 import { DrawingSheet } from '../DrawingSheet';
 import { resetPen, usePen } from '../pen';
@@ -88,6 +84,12 @@ describe('a drawing note’s sheet', () => {
     expect(drawingOf(id)).toBe('');
     await user.click(screen.getByRole('button', { name: 'Rétablir' }));
     expect(strokesIn(id)).toHaveLength(1);
+  });
+
+  it('offers no « Fond » of its own: a note’s drawing lies on the note’s colour, from « Couleur et papier »', () => {
+    const id = createNote({ kind: 'drawing' });
+    render(<DrawingSheet noteId={id} editable />);
+    expect(screen.queryByRole('button', { name: /^Fond/ })).toBeNull();
   });
 
   it('erases every line the eraser passes over, and « Tout effacer » can be taken back', async () => {
@@ -185,50 +187,6 @@ describe('an editing session', () => {
     expect(save).not.toHaveBeenCalled();
     expect(result.current.canUndo).toBe(false);
     expect(useUiStore.getState().snack).toMatchObject({ tone: 'warning', message: 'Ce dessin est plein : effacez des traits pour en ajouter d’autres.' });
-  });
-});
-
-describe('a page’s drawing', () => {
-  function PageDrawing({ page, id, readOnly = false }: { page: string; id: string; readOnly?: boolean }) {
-    const block = useLibraryStore(s => s.blocks[id]!);
-    return (
-      <PageContext.Provider value={{ page, readOnly }}>
-        <DrawingBlock block={block} />
-      </PageContext.Provider>
-    );
-  }
-  const drawingIn = (id: string): string => useLibraryStore.getState().blocks[id]!.drawing;
-
-  it('invites to draw, opens the editor on it, and keeps each stroke in the page’s undo', async () => {
-    const user = userEvent.setup();
-    const page = createPage({ title: 'Croquis' });
-    const id = insertBlock(page, page, 0, { kind: 'drawing' });
-    render(<PageDrawing page={page} id={id} />);
-    await user.click(screen.getByRole('button', { name: 'Cliquez pour dessiner' }));
-    const dialog = screen.getByRole('dialog', { name: 'Dessin' });
-    // The tool in hand has the focus, so the keyboard starts there.
-    expect(within(dialog).getByRole('button', { name: 'Stylo' })).toHaveFocus();
-    drag(sheet(), [
-      [10, 10],
-      [100, 100],
-    ]);
-    expect(parseDrawing(drawingIn(id))).toHaveLength(1);
-    await user.click(within(dialog).getByRole('button', { name: 'Terminé' }));
-    expect(screen.getByRole('button', { name: 'Modifier le dessin' })).toBeInTheDocument();
-    undoPage(page);
-    expect(drawingIn(id)).toBe('');
-  });
-
-  it('opens from « / » as soon as the block is made, and only shows the drawing on a page in the bin', () => {
-    const page = createPage({ title: 'Croquis' });
-    const id = insertBlock(page, page, 0, { kind: 'drawing' });
-    const { unmount } = render(<PageDrawing page={page} id={id} />);
-    act(() => openDrawingEditor(page, id));
-    expect(screen.getByRole('dialog', { name: 'Dessin' })).toBeInTheDocument();
-    unmount();
-    render(<PageDrawing page={page} id={id} readOnly />);
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.getByText('Dessin vide')).toBeInTheDocument();
   });
 });
 

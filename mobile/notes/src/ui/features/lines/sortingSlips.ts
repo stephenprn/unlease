@@ -9,7 +9,8 @@ import { sortedSummary } from '@unlease/notes/services/sorting';
 import { fillLine, sortInbox, sortIntoLines, type Sorted } from '@app/sorting';
 import type { Undo } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { setSorting, showSnack, useUiStore, type SnackTone } from '@app/store/uiStore';
+import { showSnack, type SnackTone } from '@shared/app/store/uiStore';
+import { setSorting, useCaptureStore } from '@app/store/captureStore';
 
 const titleOf = (id: string): string => (id === INBOX_ID ? t(INBOX_TITLE) : (useLibraryStore.getState().notes[id]?.title ?? ''));
 const BUSY = tx('Claude range déjà des liens : réessayez dans un instant');
@@ -25,7 +26,7 @@ function summary(sorted: Sorted, nothing: string): string {
 }
 
 async function withSlip(working: string, run: () => Promise<Sorted>, done: (sorted: Sorted) => void, failed: (reason: string) => void, busy: () => void = () => showSnack(t(BUSY), undefined, { tone: 'warning' })): Promise<void> {
-  if (useUiStore.getState().sorting) {
+  if (useCaptureStore.getState().sorting) {
     busy();
     return;
   }

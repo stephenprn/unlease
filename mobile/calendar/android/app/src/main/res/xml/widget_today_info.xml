@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawn from what JavaScript hands over; updated every half hour, and at each start and end of what it shows (TodayWidgetProvider), so « En cours » stays true. Two cells: what runs or comes next; three cells or rows: the list. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:targetCellWidth="3" android:targetCellHeight="3"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_message"
+    android:previewLayout="@layout/widget_today"
+    android:description="@string/widget_today_description"
+    android:widgetCategory="home_screen" />

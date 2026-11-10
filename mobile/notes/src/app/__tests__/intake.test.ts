@@ -1,10 +1,10 @@
 import { INBOX_ID } from '@unlease/notes/models/entities';
-import { closeDatabase, openDatabase } from '@data/db/database';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
 
 import { receiveShare } from '../intake';
 import { ensureInbox } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore } from '../store/libraryStore';
-import { useSettingsStore } from '../store/settingsStore';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
 
 const share = (over: Partial<{ text: string; subject: string; files: string[] }>) => ({
   id: 'share-1',
@@ -27,7 +27,7 @@ beforeEach(() => {
 describe('a share from another app', () => {
   it('files a shared link automatically, titled by the page title the browser sent', async () => {
     const result = await receiveShare(share({ text: 'https://shop.fr/veste?utm_source=ig', subject: 'Veste en laine' }));
-    expect(result).toMatchObject({ kind: 'links', reading: true });
+    expect(result).toMatchObject({ kind: 'links', reading: true, more: 0 });
     const id = result.kind === 'links' ? result.links[0]!.id : '';
     expect(useLibraryStore.getState().links[id]).toMatchObject({ noteId: INBOX_ID, autoFile: true, title: 'Veste en laine', url: 'https://shop.fr/veste' });
   });
@@ -49,6 +49,13 @@ describe('a share from another app', () => {
     useSettingsStore.setState({ reading: false });
     const result = await receiveShare(share({ text: 'https://a.fr' }));
     expect(result).toMatchObject({ kind: 'links', reading: false });
+  });
+
+  it('saves the first twenty links of a share offering more, and counts the others', async () => {
+    const urls = Array.from({ length: 23 }, (_, index) => `https://shop.fr/${index}`);
+    const result = await receiveShare(share({ text: urls.join('\n') }));
+    expect(result).toMatchObject({ kind: 'links', more: 3 });
+    expect(Object.values(useLibraryStore.getState().links).map(link => link.url).sort()).toEqual(urls.slice(0, 20).sort());
   });
 
   it('keeps links plain when no server is connected', async () => {

@@ -88,8 +88,8 @@ export const DESIGN_ENGLISH: Dictionary = {
   'Ajustée le jour pour rester lisible.': 'Adjusted by day to stay readable.',
   'Ajustée la nuit pour rester lisible.': 'Adjusted at night to stay readable.',
   'Gardée telle quelle le jour et la nuit.': 'Kept as picked, by day and at night.',
-  'Principale de {palette}': '{palette} primary',
-  'Accent de {palette}': '{palette} accent',
+  '{palette}, couleur principale': '{palette} primary',
+  '{palette}, couleur d’accent': '{palette} accent',
 
   // The look carried to other services (customCss.ts)
   'Habiller vos autres services…': 'Style your other services…',

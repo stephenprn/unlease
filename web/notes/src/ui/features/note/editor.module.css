@@ -128,6 +128,12 @@
   min-height: 40px;
 }
 
+/* « Dans l’agenda », on the words' column: the head on their edge, the rows' tint reaching past it. */
+.events {
+  margin-top: 8px;
+  padding: 0 20px 16px;
+}
+
 .bodyWrap {
   position: relative;
   flex: 1 0 auto;
@@ -174,8 +180,16 @@
   pointer-events: none;
 }
 
+/* The colours' groups: their heads on the picker's own column (a row's words, 18 in), as far from its top as from its side. */
 .pickerBody {
-  padding: 0 8px 8px;
+  padding: 8px 4px;
+}
+
+/* On a phone the sheet's title heads it. */
+@media (max-width: 719px) {
+  .pickerBody {
+    padding-top: 0;
+  }
 }
 
 .bodyInput {
@@ -244,6 +258,11 @@
   min-height: 56px;
   padding: 6px 12px 6px 10px;
   box-shadow: inset 0 1px 0 var(--hairline);
+}
+
+/* « Fermer » sits in the dialog's corner: its own corner there concentric with the dialog's (`--outline-radius`, 12 in from its side). */
+.toolbar > button:last-child {
+  border-bottom-right-radius: max(var(--cut-button), calc((var(--outline-radius, 28px) - 12px) * var(--corner-scale)));
 }
 
 /* Under 720px, the phone's screen: a top bar on the note's own paper (back, then the note's toggles)... */
@@ -420,20 +439,23 @@
   position: relative;
 }
 
-/* The × over a photo is written on a slip, so it reads on any picture, light or dark. */
+/*
+ * The × over a photo is written on a slip, so it reads on any picture, light or dark: its pebble in
+ * the slip's dark (`data-pebble-under`), lifted along the pebble's own edge, never a square.
+ */
 .photoRemove {
-  background: var(--slip);
-  box-shadow: var(--lift-raised);
+  --pebble-fill: var(--slip);
+  filter: var(--drop-raised);
 }
 
 @media (hover: hover) {
   .photoRemove:not(:disabled):hover {
-    background: var(--slip-high);
+    --pebble-fill: var(--slip-high);
   }
 }
 
 .photoRemove:not(:disabled):active {
-  background: var(--slip-high);
+  --pebble-fill: var(--slip-high);
 }
 
 .photoRemove {
@@ -677,9 +699,12 @@
 }
 
 .addItem {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 12px;
+  /* Its plus in the boxes' column, its words on the items' (the box's 32 or 40, then the text's own 4 in). */
+  gap: 16px;
   min-height: 48px;
   margin-left: 30px;
   padding: 0 12px 0 6px;
@@ -690,15 +715,34 @@
   font-size: 16px;
 }
 
+/*
+ * The add row's and the ticked group's tint lies 2 in from their row's top and foot: the rows keep
+ * the paper's pitch, and the tint keeps clear of the items' boxes next to it.
+ */
+.addItem::before,
+.doneToggle::before {
+  content: '';
+  position: absolute;
+  inset: 2px 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: transparent;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
 @media (hover: hover) {
   .addItem:hover {
     color: var(--ink);
+  }
+  .addItem:hover::before {
     background: color-mix(in srgb, var(--ink) 6%, transparent);
   }
 }
 
 .addItem:active {
   color: var(--ink);
+}
+.addItem:active::before {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
@@ -713,6 +757,8 @@
 }
 
 .doneToggle {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -729,12 +775,16 @@
 @media (hover: hover) {
   .doneToggle:hover {
     color: var(--ink);
+  }
+  .doneToggle:hover::before {
     background: color-mix(in srgb, var(--ink) 6%, transparent);
   }
 }
 
 .doneToggle:active {
   color: var(--ink);
+}
+.doneToggle:active::before {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
@@ -814,6 +864,10 @@
   color: var(--ink);
   text-align: left;
   font-size: 15px;
+}
+
+.pickerRow + .pickerRow {
+  margin-top: var(--row-gap);
 }
 
 .pickerRow:focus-visible {
@@ -1037,10 +1091,34 @@
 }
 
 .labelList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
   max-height: 280px;
   overflow-y: auto;
 }
 
 .emptyLabels {
   padding: 8px 10px 12px;
+}
+
+/* « Annuler » and « Rétablir » in the date's place on a phone-sized window: the pair in the middle of the bar, faded in where the date was. */
+.steps {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: steps-in var(--duration-short) var(--ease-decelerate) both;
+}
+
+@keyframes steps-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* « Rétablir »: undo's glyph, mirrored. */
+.redo svg {
+  transform: scaleX(-1);
 }

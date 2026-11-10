@@ -12,14 +12,14 @@ import { linkShop } from '@unlease/notes/services/modules';
 import { ratingShare, ratingSource, ratingValue } from '@unlease/notes/services/works';
 import type { Rating } from '@unlease/notes/sync/works';
 
-import { useMinute } from '../../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { findRatings } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
-import { useOutline } from '../../components/Outline';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
+import { useOutline } from '@shared/ui/components/Outline';
 import { ReadingTrack } from './ReadingTrack';
 import { useModuleSearch } from './useModuleSearch';
 import styles from './links.module.css';
@@ -46,7 +46,7 @@ function RatingRow({ rating, index }: { rating: Rating; index: number }) {
         <span className={styles.ratingMeter} style={{ '--share': ratingShare(rating) } as CSSProperties} aria-hidden="true" />
         {rating.count ? <p className="t-meta">{rating.count}</p> : null}
       </div>
-      {url ? <IconButton icon="external" label={t('Voir sur {site}', { site: rating.source })} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('Voir sur {site}', { site: rating.source })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }

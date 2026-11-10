@@ -83,6 +83,12 @@ export const SHAPES = {
   segment: all(RADII.bar - 4),
   /** A settings group, a facts table, a notice, a callout. */
   panel: all(RADII.panel),
+  /** A row opening a settings group (6 in, as rows sit): its top corners concentric with the group's, the others a row's. */
+  panelRowFirst: [concentric(RADII.panel, 6), concentric(RADII.panel, 6), RADII.row, RADII.row],
+  /** A row closing a settings group: its bottom corners concentric with the group's. */
+  panelRowLast: [RADII.row, RADII.row, concentric(RADII.panel, 6), concentric(RADII.panel, 6)],
+  /** A settings group's only row: every corner concentric with the group's. */
+  panelRowOnly: all(concentric(RADII.panel, 6)),
   card: all(RADII.card),
   /** A dashed "add" affordance. */
   dashed: all(RADII.chip),

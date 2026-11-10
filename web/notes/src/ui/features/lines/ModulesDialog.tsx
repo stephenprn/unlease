@@ -12,13 +12,15 @@ import { lineModules, moduleCost, moduleMissing, withModule } from '@unlease/not
 
 import { setLineModules } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectServerSettings, useServerSettingsStore } from '../../../app/store/serverSettings';
-import { selectCanRead, selectSeerr, selectServer, useSettingsStore } from '../../../app/store/settings';
-import { SwitchMark } from '../../components/Checkbox';
-import { DialogFrame } from '../../components/Dialog';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
-import { formatUsd } from '../../money';
+import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { selectServer, useSettingsStore } from '@shared/app/store/settings';
+import { useCanRead, useSeerr } from '../../../app/store/prefs';
+import { useServerRuns } from '@shared/app/apps';
+import { SwitchMark } from '@shared/ui/components/Checkbox';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
+import { formatUsd } from '@shared/ui/money';
 import styles from './lines.module.css';
 
 export function ModulesDialog({ id, open, onDismiss }: { id: string; open: boolean; onDismiss: () => void }) {
@@ -33,12 +35,14 @@ export function ModulesDialog({ id, open, onDismiss }: { id: string; open: boole
 function ModulesBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDismiss: () => void }) {
   const line = useLibraryStore(s => s.notes[id]);
   const server = useSettingsStore(selectServer);
-  const reading = useSettingsStore(selectCanRead);
-  const seerr = useSettingsStore(selectSeerr);
+  const reading = useCanRead();
+  const seerr = useSeerr();
   const model = useServerSettingsStore(selectServerSettings)?.analysis.model ?? 'claude-opus-5-5';
+  const pages = useServerRuns('pages');
+  const agenda = useServerRuns('calendar');
   if (!line) return null;
   const on = lineModules(line);
-  const can = { server: server !== null, reading, seerr };
+  const can = { server: server !== null, reading, seerr, pages, agenda };
 
   return (
     <DialogFrame kind="list" title={t('Modules')} titleId={titleId} onClose={onDismiss} className={styles.modulesFrame}>

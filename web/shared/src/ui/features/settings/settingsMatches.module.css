@@ -1,0 +1,101 @@
+/*
+ * The settings a home's search finds, above its own results: a small group under its name, then
+ * list rows (the glyph 16 in, a 24 slot, the words at 56), each pressing inside its tab-shaped tint.
+ * The group's name and the rows' glyphs sit on the column of the count under them (4 in).
+ */
+.group {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  padding-top: 4px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 4px 4px 2px;
+  color: var(--ink-muted);
+}
+
+/* « Tout voir »: the navigation's heading action, its words ending on the rows' chevrons. */
+.all {
+  min-height: 32px;
+  margin-right: -6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--link);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .all:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.all:active {
+  background: color-mix(in srgb, var(--link) 12%, transparent);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0 -12px;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 10px 8px 16px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.row > svg {
+  flex: none;
+}
+
+/* The way there, quieter than the words. */
+.row > svg:last-child {
+  color: var(--ink-faint);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.where {
+  color: var(--ink-muted);
+}
+
+@media (pointer: coarse) {
+  .all {
+    min-height: 44px;
+  }
+}

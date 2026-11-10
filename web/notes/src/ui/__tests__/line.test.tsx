@@ -2,11 +2,13 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { freshLibrary } from '../../test/library';
+import { freshLibrary } from '@test/library';
 import { addLink, createLine, setLinkDone, updateLink } from '../../app/store/actions';
-import { getRecord, useLibraryStore } from '../../app/store/library';
-import { setReading, setServer } from '../../app/store/settings';
-import { useUiStore } from '../../app/store/ui';
+import { getRecord } from '@shared/app/store/records';
+import { useLibraryStore } from '../../app/store/library';
+import { setServer } from '@shared/app/store/settings';
+import { setReading } from '../../app/store/prefs';
+import { useUiStore } from '@shared/app/store/ui';
 import { NewLineDialog } from '../features/lines/LineDialogs';
 import { LinkPanel } from '../features/links/LinkPanel';
 import { LineScreen } from '../screens/LineScreen';
@@ -26,7 +28,7 @@ describe('a collection page', () => {
     ready = addLink('https://www.atelier-nord.fr/veste', { noteId: line });
     updateLink(ready, { status: 'ready', title: 'Veste en laine bouillie', kind: 'product', siteName: 'Atelier Nord', price: 189, currency: 'EUR', attributes: [{ label: 'Couleur', value: 'Camel' }] });
     failed = addLink('https://boutique-fermee.fr/sac', { noteId: line });
-    updateLink(failed, { status: 'failed', error: 'La page refuse les robots.' });
+    updateLink(failed, { status: 'failed', error: 'Page protégée contre les robots' });
     done = addLink('https://www.atelier-nord.fr/echarpe', { noteId: line });
     updateLink(done, { status: 'ready', title: 'Écharpe en cachemire', kind: 'product', price: 75, currency: 'EUR' });
     setLinkDone(done, true, Date.UTC(2026, 9, 10, 12));
@@ -49,7 +51,7 @@ describe('a collection page', () => {
     expect(within(open).getByText(/^189\s€$/)).toBeInTheDocument();
     expect(within(open).getByText('Camel')).toBeInTheDocument();
     // Failed: the reason and the way to try again.
-    expect(within(open).getByText('La page refuse les robots.')).toBeInTheDocument();
+    expect(within(open).getByText('Page protégée contre les robots')).toBeInTheDocument();
 
     // Done: stamped, at the foot of the same list, under "Déjà faits" (one list, as on the phone).
     const rows = within(open).getAllByRole('listitem');
@@ -201,7 +203,8 @@ describe('collections', () => {
     const user = userEvent.setup();
     const made: string[] = [];
     const { rerender } = render(<NewLineDialog open onDismiss={() => {}} onCreated={id => made.push(id)} />);
-    expect(screen.getByText(/^Une collection rassemble des liens du même genre/)).toBeInTheDocument();
+    // What a collection is, its name's and its sentence's help say: no paragraph says it again over them.
+    expect(screen.queryByText(/^Une collection rassemble des liens du même genre/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Créer la collection Films & séries' }));
     expect(getRecord('note', 'line-films')!.fields).toMatchObject({ kind: 'links', title: 'Films & séries', code: 'F', emblem: 'etoile', color: 'yellow' });
 
@@ -215,5 +218,21 @@ describe('collections', () => {
     await user.type(within(dialog).getByRole('textbox', { name: 'Ce qui va dans cette collection' }), 'Idées de cadeaux pour les proches');
     await user.click(within(dialog).getByRole('button', { name: 'Créer la collection' }));
     expect(useLibraryStore.getState().notes[made[1]!]).toMatchObject({ title: 'Cadeaux', code: 'C', emblem: 'feuille', hint: 'Idées de cadeaux pour les proches' });
+  });
+
+  it('refuses a name another collection goes by, « Non classé » too, and makes nothing', async () => {
+    const user = userEvent.setup();
+    createLine({ id: 'line-lire', title: 'À lire' });
+    render(<NewLineDialog open onDismiss={() => {}} onCreated={() => {}} />);
+    const dialog = screen.getByRole('dialog', { name: 'Nouvelle collection' });
+    const name = within(dialog).getByRole('textbox', { name: 'Nom' });
+    for (const taken of ['a LIRE', 'non classé']) {
+      await user.clear(name);
+      await user.type(name, taken);
+      await user.click(within(dialog).getByRole('button', { name: 'Créer la collection' }));
+      expect(name).toHaveAccessibleDescription(/Une collection porte déjà ce nom : choisissez-en un autre\./);
+      expect(name).toHaveFocus();
+    }
+    expect(useLibraryStore.getState().noteOrder.filter(id => useLibraryStore.getState().notes[id]?.kind === 'links')).toHaveLength(2);
   });
 });

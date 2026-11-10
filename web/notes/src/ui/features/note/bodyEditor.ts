@@ -9,13 +9,21 @@
  * the browser's own undo would lose its way: the editor keeps its own steps (typing grouped until a
  * pause, a move of the caret or another kind of change). Markdown typed at the caret becomes what it
  * writes: `# `, `## `, `### ` at a line's start a heading, `**gras**` bold, `*italique*` italic.
+ * « @ » after a space (or at a line's start) asks the host for a person to mention (`host.mention`,
+ * the words typed after it); the person picked takes the « @ » and those words' place as a mention,
+ * one character, which makes the note formatted as a first mark does. A copy keeps its mentions.
+ *
+ * In the note editor the note's own history takes the undo (`host.history`, its « Annuler » and
+ * « Rétablir » for the whole note): ⌘Z here goes to it, and where the editor would start a step of
+ * its own, what was typed is saved and the history told that its typing step ends there.
  */
-import { clearFormat, headingIn, headingShortcut, linesText, noteLines, noteMarksAt, noteRangeHas, serializeLines, setHeading, setNoteFlag, type HeadingLevel, type NoteLine } from '@unlease/notes/services/noteBody';
+import { clearFormat, headingIn, headingShortcut, linesText, linesWords, noteLines, noteMarksAt, noteRangeHas, serializeLines, setHeading, setNoteFlag, type HeadingLevel, type NoteLine } from '@unlease/notes/services/noteBody';
+import type { Ref } from '@unlease/core/refs';
 import type { Marks } from '@unlease/core/services/richText';
 import { mapCaret } from '@unlease/core/sync/textMerge';
 
 import { cutLines, deleteBackward, deleteForward, inlineMarkdown, insertText, linesLength, marksAtStart, replaceRange, splitLine, spotOf, textLines } from './lineEdits';
-import { caretOnRoot, isCanonical, linesFromHtml, readLines, renderLines, selectionOffsets, setSelectionOffsets, type TextSelection } from './noteDom';
+import { caretOnRoot, isCanonical, linesFromHtml, linesHtml, readLines, renderLines, selectionOffsets, setSelectionOffsets, type TextSelection } from './noteDom';
 
 const SAVE_DELAY_MS = 350;
 /** Typing goes on in one step of the undo until a pause this long. */
@@ -46,7 +54,24 @@ export interface BodyHost {
   readonly limit: number;
   /** A paste holding pictures is left to the sheet around, which attaches them. */
   readonly takesPictures: boolean;
+  /** « @ » typed: the words after it (a person's name being looked for), or null once the picker should go. */
+  readonly mention?: (query: string | null) => void;
+  /** A key while the picker is up (arrows, Entrée, Tab, Échap): true when the picker took it. */
+  readonly mentionKey?: (key: string) => boolean;
+  /** The note's own history, where the editor has one: it takes the undo, and hears where a step ends. */
+  readonly history?: () => BodyHistory | null;
 }
+
+/** The note editor's « Annuler » and « Rétablir », as the body uses them. */
+export interface BodyHistory {
+  readonly undo: () => void;
+  readonly redo: () => void;
+  /** What is typed next is a step of its own. */
+  readonly seal: () => void;
+}
+
+/** The words looked for after « @ » stop being a name past this many characters. */
+const MENTION_QUERY_MAX = 40;
 
 interface Step {
   readonly lines: NoteLine[];
@@ -83,6 +108,8 @@ export class BodyEditor {
   /** The letters the browser is typing (its input event may not say). */
   private letters: string | null = null;
   private editable = true;
+  /** Where the « @ » being answered stands, while the picker is up. */
+  private mentionAt: number | null = null;
 
   constructor(
     private readonly root: HTMLElement,
@@ -92,6 +119,8 @@ export class BodyEditor {
     root.addEventListener('input', this.onInput);
     root.addEventListener('keydown', this.onKeyDown);
     root.addEventListener('paste', this.onPaste);
+    root.addEventListener('copy', this.onCopy);
+    root.addEventListener('cut', this.onCut);
     root.addEventListener('compositionstart', this.onCompositionStart);
     root.addEventListener('compositionend', this.onCompositionEnd);
     root.addEventListener('focus', this.onFocus);
@@ -108,6 +137,8 @@ export class BodyEditor {
     this.root.removeEventListener('input', this.onInput);
     this.root.removeEventListener('keydown', this.onKeyDown);
     this.root.removeEventListener('paste', this.onPaste);
+    this.root.removeEventListener('copy', this.onCopy);
+    this.root.removeEventListener('cut', this.onCut);
     this.root.removeEventListener('compositionstart', this.onCompositionStart);
     this.root.removeEventListener('compositionend', this.onCompositionEnd);
     this.root.removeEventListener('focus', this.onFocus);
@@ -206,12 +237,45 @@ export class BodyEditor {
     this.host.selected(null);
   }
 
+  /** The person picked after « @ »: a mention in place of the « @ » and the words typed after it, then a space. */
+  insertMention(target: Ref): void {
+    const at = this.mentionAt;
+    const selection = selectionOffsets(this.root);
+    this.closeMention();
+    if (!this.editable || at === null || !selection) return;
+    const end = Math.max(selection.end, at + 1);
+    if (document.activeElement !== this.root) this.root.focus({ preventScroll: true });
+    this.remember('other');
+    const edit = replaceRange(this.lines, at, end, [{ heading: 0, runs: [{ kind: 'mention', target }, { kind: 'text', text: ' ', marks: {} }] }]);
+    this.apply(edit.lines, edit.caret);
+    // Saved at once: the note is formatted from its first mention, as from its first mark.
+    this.flush();
+  }
+
+  /** The picker goes (Échap, a pick, the caret elsewhere); the « @ » stays as typed. */
+  closeMention(): void {
+    if (this.mentionAt === null) return;
+    this.mentionAt = null;
+    this.host.mention?.(null);
+  }
+
+  /** The names the mentions show changed (a rename in Contacts): the lines drawn again, the caret kept. */
+  refreshMentions(): void {
+    const selection = document.activeElement === this.root ? selectionOffsets(this.root) : null;
+    renderLines(this.root, this.lines);
+    if (selection) setSelectionOffsets(this.root, selection.start, selection.end, selection.backward);
+  }
+
   undo(): void {
-    this.travel(this.undoSteps, this.redoSteps);
+    const history = this.host.history?.();
+    if (history) history.undo();
+    else this.travel(this.undoSteps, this.redoSteps);
   }
 
   redo(): void {
-    this.travel(this.redoSteps, this.undoSteps);
+    const history = this.host.history?.();
+    if (history) history.redo();
+    else this.travel(this.redoSteps, this.undoSteps);
   }
 
   // ── drawing and saving ──────────────────────────────────────────────────
@@ -281,7 +345,27 @@ export class BodyEditor {
         if (data === '*') this.pending = { caret: shortcut.caret, marks: {} };
       }
     }
+    if (inputType === 'insertText' && data === '@' && this.host.mention) {
+      const caret = selectionOffsets(this.root);
+      const text = linesText(lines);
+      if (caret && caret.start === caret.end && caret.start > 0 && (caret.start === 1 || /\s/.test(text.charAt(caret.start - 2)))) this.mentionAt = caret.start - 1;
+    }
     this.edited(lines);
+    this.followMention();
+  }
+
+  /** The words typed after « @ », for the picker; it goes once the caret leaves them or they stop being a name. */
+  private followMention(): void {
+    const at = this.mentionAt;
+    if (at === null) return;
+    const selection = selectionOffsets(this.root);
+    const text = linesText(this.lines);
+    const typed = selection && selection.start === selection.end && selection.start > at ? text.slice(at, selection.start) : null;
+    if (!typed || !typed.startsWith('@') || /[\n￼]/.test(typed) || /\s\s/.test(typed) || typed.length > MENTION_QUERY_MAX + 1) {
+      this.closeMention();
+      return;
+    }
+    this.host.mention?.(typed.slice(1));
   }
 
   // ── undo ────────────────────────────────────────────────────────────────
@@ -293,6 +377,14 @@ export class BodyEditor {
   }
 
   private push(step: Step): void {
+    // The note's history takes the steps: what was typed before this one is saved, and its typing step ends. Not while an
+    // edit from elsewhere waits to be merged with it: the change's own save merges the two (a first mark carried onto them).
+    const history = this.host.history?.();
+    if (history) {
+      const waiting = !!this.latest && !!this.base && (this.latest.body !== this.base.body || this.latest.rich !== this.base.rich);
+      if (this.draft && !this.composing && !waiting) this.flush();
+      history.seal();
+    }
     this.undoSteps.push(step);
     if (this.undoSteps.length > MAX_STEPS) this.undoSteps.shift();
   }
@@ -482,6 +574,18 @@ export class BodyEditor {
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     if (event.isComposing || this.composing) return;
+    if (this.mentionAt !== null && !event.ctrlKey && !event.metaKey && !event.altKey && ['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeMention();
+        return;
+      }
+      if (this.host.mentionKey?.(event.key)) {
+        event.preventDefault();
+        return;
+      }
+    }
     if (MOVES.has(event.key)) {
       this.moved = true;
       this.pending = null;
@@ -523,6 +627,30 @@ export class BodyEditor {
     this.insert(lines, selectionOffsets(this.root) ?? { start: end, end, backward: false });
   };
 
+  /** The selected lines, their marks and mentions kept: the words for anywhere, the formatted lines for a note or a page. */
+  private copySelection(event: ClipboardEvent): TextSelection | null {
+    const selection = selectionOffsets(this.root);
+    if (!selection || selection.start === selection.end || !event.clipboardData) return null;
+    const after = replaceRange(this.lines, 0, selection.start).lines;
+    const lines = cutLines(after, selection.end - selection.start);
+    event.preventDefault();
+    event.clipboardData.setData('text/plain', linesWords(lines));
+    event.clipboardData.setData('text/html', linesHtml(lines));
+    return selection;
+  }
+
+  private readonly onCopy = (event: ClipboardEvent): void => {
+    this.copySelection(event);
+  };
+
+  private readonly onCut = (event: ClipboardEvent): void => {
+    const selection = this.editable ? this.copySelection(event) : null;
+    if (!selection) return;
+    this.remember('other');
+    const edit = replaceRange(this.lines, selection.start, selection.end);
+    this.apply(edit.lines, edit.caret);
+  };
+
   private readonly onCompositionStart = (): void => {
     this.remember('insert');
     this.composing = true;
@@ -542,6 +670,7 @@ export class BodyEditor {
   };
 
   private readonly onBlur = (): void => {
+    this.closeMention();
     this.flush();
     this.pending = null;
     this.host.selected(null);
@@ -571,6 +700,7 @@ export class BodyEditor {
       const selection = selectionOffsets(this.root);
       if (!selection || selection.start !== this.pending.caret || selection.end !== selection.start) this.pending = null;
     }
+    if (this.mentionAt !== null) this.followMention();
     if (!this.pressing) this.updateBar();
   };
 }

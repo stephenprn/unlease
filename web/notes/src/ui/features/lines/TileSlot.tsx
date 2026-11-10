@@ -6,7 +6,7 @@
  */
 import type { ReactNode } from 'react';
 
-import { OutlineRing, useOutline } from '../../components/Outline';
+import { OutlineRing, useOutline } from '@shared/ui/components/Outline';
 import styles from './lines.module.css';
 
 export function TileSlot({ dashed = false, children }: { dashed?: boolean; children: (d: string | null) => ReactNode }) {

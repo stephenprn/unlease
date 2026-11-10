@@ -1,8 +1,8 @@
 /**
- * Shares and the clipboard via the Intake TurboModule. A missing module (JS reloaded
+ * Shares via the Intake TurboModule (Carnet's own: the clipboard is the suite's, `@shared/platform/clipboard`). A missing module (JS reloaded
  * against an older native build) reads as "nothing was shared", never a crash.
  */
-import NativeIntake, { type SharedPayload } from '../../specs/NativeIntake';
+import NativeIntake, { type SharedPayload } from '../../../shared/specs/NativeIntake';
 
 export type Share = SharedPayload;
 
@@ -22,23 +22,4 @@ export function onShare(listener: (share: Share) => void): () => void {
     if (share.id) listener(share);
   });
   return () => subscription.remove();
-}
-
-export async function readClipboard(): Promise<string> {
-  if (!NativeIntake) return '';
-  try {
-    return await NativeIntake.readClipboardText();
-  } catch {
-    return '';
-  }
-}
-
-/** False when it could not be copied (refused, or a native build without the call). */
-export async function copyText(text: string): Promise<boolean> {
-  if (!NativeIntake?.writeClipboardText) return false;
-  try {
-    return await NativeIntake.writeClipboardText(text);
-  } catch {
-    return false;
-  }
 }

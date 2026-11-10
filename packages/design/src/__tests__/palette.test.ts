@@ -1,10 +1,22 @@
 import { LINE_COLORS, NOTE_GRADIENTS } from '../colors';
 import { gradientColors } from '../backgrounds';
-import { contrast, GROUNDS, LINES, ROLES, type Mode } from '../palette';
+import { contrast, fieldOn, GROUNDS, LINES, ROLES, type Mode } from '../palette';
 
 /** WCAG AA in both modes: 4.5:1 for text, 3:1 for large text, glyphs and control edges. */
 describe.each<Mode>(['light', 'dark'])('%s palette', mode => {
   const r = ROLES[mode];
+
+  it('lays a field as a veil: the card’s field on a card, a lighter patch of any ground, every ink still reading', () => {
+    expect(contrast(fieldOn(r.paper, mode), r.field)).toBeLessThan(1.06);
+    // A field lies on a card, a sheet or the ground, never in a well.
+    for (const surface of [r.wall, r.paper, GROUNDS[mode].top, GROUNDS[mode].bottom]) {
+      const field = fieldOn(surface, mode);
+      expect(contrast(r.ink, field)).toBeGreaterThanOrEqual(7);
+      expect(contrast(r.inkFaint, field)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(r.edge, field)).toBeGreaterThanOrEqual(3);
+      expect(contrast(r.focus, field)).toBeGreaterThanOrEqual(3);
+    }
+  });
 
   it('keeps every ink readable on the paper it is written on', () => {
     for (const ground of [r.wall, r.paper, r.paperHigh, r.field]) {

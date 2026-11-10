@@ -1,8 +1,8 @@
 /** A value stepped one notch at a time between two small buttons: servings, a season, an episode. */
 import type { GlyphName } from '@unlease/design/glyphs';
 
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
 import styles from './links.module.css';
 
 export interface StepperProps {
@@ -22,12 +22,12 @@ export interface StepperProps {
 export function Stepper({ label, value, lessLabel, moreLabel, onLess, onMore, inBar, icon }: StepperProps) {
   return (
     <div role="group" aria-label={label} className={styles.stepper} data-bar={inBar || undefined}>
-      <IconButton icon="minus" label={lessLabel} onClick={onLess} disabled={!onLess} compact={inBar} />
+      <IconButton icon="minus" label={lessLabel} onClick={onLess} disabled={!onLess} compact={inBar} size={inBar ? 18 : 24} />
       <span className={`${styles.stepperValue} t-label tabular`} aria-live="polite">
         {icon ? <Icon name={icon} size={18} /> : null}
         {value}
       </span>
-      <IconButton icon="plus" label={moreLabel} onClick={onMore} disabled={!onMore} compact={inBar} />
+      <IconButton icon="plus" label={moreLabel} onClick={onMore} disabled={!onMore} compact={inBar} size={inBar ? 18 : 24} />
     </div>
   );
 }

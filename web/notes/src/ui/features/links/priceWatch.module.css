@@ -1,0 +1,25 @@
+/* « Suivi des prix » under the price (`PriceWatch.tsx`), its lines in meta. */
+.watch {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Close to the price it speaks of: 4 under its row, not the heading's 10. */
+.watch[data-under-price] {
+  margin-top: -6px;
+}
+
+/* The price went down: the good news, in the ok ink (as a cheaper offer). A rise stays in meta's own ink. */
+.drop {
+  color: var(--ok);
+}
+
+/* When it was read, and the way to read it now, on one line while they fit. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 4px;
+  min-height: 32px;
+}

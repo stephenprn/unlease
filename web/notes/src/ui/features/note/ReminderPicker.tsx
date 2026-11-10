@@ -1,8 +1,8 @@
 /**
  * Setting a reminder: the phone's quick choices for the usual cases, then a
  * day and a time for everything else. Under 720px the day and the time are the
- * phone's chips (ReminderSheet: the next two weeks, the hours from 6 to 22, the
- * quarters), in place of the list; wider, a date and a time field under it. The
+ * phone's chips (ReminderSheet: the next two weeks, or as far as the reminder set,
+ * the hours from 6 to 22, the quarters), in place of the list; wider, a date and a time field under it. The
  * web app stores and shows it; the phone is what rings, so the picker says so.
  */
 import { useState, type RefObject } from 'react';
@@ -10,13 +10,13 @@ import { useState, type RefObject } from 'react';
 import { getLocale, t } from '@unlease/core/i18n';
 import { dayDelta, formatDay, formatReminder, weekdayNames } from '@unlease/core/services/format';
 
-import { Button } from '../../components/Button';
-import { Icon } from '../../components/Icon';
-import { Popover } from '../../components/Popover';
-import inputs from '../../components/controls.module.css';
-import { NARROW, useMedia } from '../../useMedia';
+import { Button } from '@shared/ui/components/Button';
+import { Icon } from '@shared/ui/components/Icon';
+import { Popover } from '@shared/ui/components/Popover';
+import inputs from '@shared/ui/components/controls.module.css';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from './editor.module.css';
-import { arrowKeys } from './radioKeys';
+import { arrowKeys } from '@shared/ui/components/radioKeys';
 
 function at(day: Date, hour: number, minute = 0): number {
   const date = new Date(day);
@@ -72,12 +72,16 @@ function CustomTime({ current, now, onSet }: { current: number | null; now: numb
   const [clock, setClock] = useState(timeValue(start - (start % 900_000)));
   const chosen = parseLocal(day, clock);
   const valid = chosen !== null && chosen > now;
+  // Pressed on a moment gone: said as a problem, not by a button that cannot be pressed.
+  const [tried, setTried] = useState(false);
   return (
     <form
       className={styles.custom}
+      noValidate
       onSubmit={event => {
         event.preventDefault();
         if (valid && chosen !== null) onSet(chosen);
+        else setTried(true);
       }}
     >
       <label className={`${styles.customField} t-meta-strong`}>
@@ -89,12 +93,24 @@ function CustomTime({ current, now, onSet }: { current: number | null; now: numb
         <input type="time" className={inputs.input} value={clock} step={300} onChange={event => setClock(event.target.value)} required />
       </label>
       <div className={styles.customFoot}>
-        <span className="t-meta">{chosen !== null ? (valid ? formatReminder(chosen, now) : t('Choisissez un moment à venir')) : ''}</span>
-        <Button type="submit" small disabled={!valid}>
+        <When chosen={chosen} valid={valid} tried={tried} now={now} />
+        <Button type="submit" small>
           {t('Enregistrer')}
         </Button>
       </div>
     </form>
+  );
+}
+
+/** The moment chosen, read in words; once a moment gone was sent, the problem in its place. */
+function When({ chosen, valid, tried, now, strong }: { chosen: number | null; valid: boolean; tried: boolean; now: number; strong?: boolean }) {
+  if (chosen !== null && valid) return <span className={strong ? 't-body-strong' : 't-meta'}>{formatReminder(chosen, now)}</span>;
+  if (!tried) return <span className="t-meta">{t('Choisissez un moment à venir')}</span>;
+  return (
+    <span className={`${inputs.error} t-meta`} role="status">
+      <Icon name="error" size={16} className={inputs.errorGlyph} />
+      <span>{t('Ce moment est passé : choisissez un moment à venir.')}</span>
+    </span>
   );
 }
 
@@ -113,14 +129,17 @@ const HOURS = Array.from({ length: 17 }, (_, index) => index + 6);
 const QUARTERS = [0, 15, 30, 45];
 const QUARTER_MS = 900_000;
 
-/** The phone's chips: a day of the next two weeks, an hour, a quarter. */
+/** The phone's chips: a day of the next two weeks (and as far as the reminder set), an hour, a quarter. */
 function CustomChips({ current, now, onSet }: { current: number | null; now: number; onSet: (time: number) => void }) {
   // Where the chips start: the reminder set, else in an hour, on the nearest quarter.
   const [start] = useState(() => new Date(Math.round((current ?? now + 3_600_000) / QUARTER_MS) * QUARTER_MS));
-  const [day, setDay] = useState(() => Math.min(DAY_COUNT - 1, Math.max(0, dayDelta(start.getTime(), now))));
+  const [startDay] = useState(() => Math.max(0, dayDelta(start.getTime(), now)));
+  const [day, setDay] = useState(startDay);
   const [hour, setHour] = useState(start.getHours());
   const [minute, setMinute] = useState(start.getMinutes());
-  const days = Array.from({ length: DAY_COUNT }, (_, index) => {
+  const [tried, setTried] = useState(false);
+  // Two weeks to pick from, and as far as the reminder already set, as the phone's sheet: saving never moves it to day 14.
+  const days = Array.from({ length: Math.max(DAY_COUNT, startDay + 1) }, (_, index) => {
     const date = new Date(now);
     date.setDate(date.getDate() + index);
     return date;
@@ -185,8 +204,13 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
         ))}
       </div>
       <div className={styles.whenFoot}>
-        <span className="t-body-strong">{formatReminder(chosen, now)}</span>
-        <Button disabled={chosen <= now} onClick={() => onSet(chosen)}>
+        <When chosen={chosen} valid={chosen > now} tried={tried} now={now} strong />
+        <Button
+          onClick={() => {
+            if (chosen > now) onSet(chosen);
+            else setTried(true);
+          }}
+        >
           {t('Enregistrer')}
         </Button>
       </div>
@@ -210,7 +234,8 @@ export function ReminderPicker({ open, anchor, current, now, onDismiss, onSet }:
   return (
     <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Rappel')} width={340}>
       <div className={styles.picker}>
-        <h2 className={`${styles.pickerTitle} ${narrow ? 't-title' : 't-label'}`}>{t('Rappel')}</h2>
+        {/* A sheet on a phone says what it holds; by the bell it came from, the times do. */}
+        {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Rappel')}</h2> : null}
         {/* On a phone the chips take the list's place, as in the phone's sheet. */}
         {narrow && custom ? (
           <CustomChips current={current} now={now} onSet={set} />

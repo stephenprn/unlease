@@ -10,12 +10,14 @@ import { normalizeUrl } from '@unlease/core/services/url';
 import { parseIngredients, parseSteps, type RecipeRequest, type RecipeResponse } from '@unlease/notes/sync/recipe';
 import { log } from '../../../log';
 import { buildDigest } from './digest';
-import type { Fetcher } from './fetcher';
+import type { Fetcher } from '../../../reading/fetcher';
 import { ModelError } from './model';
 import type { AnalysisContext } from './provider';
-import { readLink } from './reader';
-import { BUDGET_SPENT, withCutOffCall, type ModuleOutcome } from './searches';
-import { monthStart, type UsageStore } from './usage';
+import { readLink } from '../../../reading/reader';
+import { BUDGET_SPENT, withCutOffCall, type ModuleOutcome } from '../../../claude/outcome';
+import { BudgetSpentError } from '../../../claude/client';
+import type { CallUsage, UsageStore } from '../../../claude/usage';
+import type { ModuleTask } from './usage';
 
 const KEEP_MS = 30 * 86_400_000;
 /** The read and Claude share it, within the apps' wait (100 s). */
@@ -82,8 +84,8 @@ export class RecipeReader {
     const started = this.now();
     const deadline = AbortSignal.timeout(DEADLINE_MS);
     const read = await readLink(request.link.url, this.options.fetcher, AbortSignal.any([deadline, AbortSignal.timeout(READ_DEADLINE_MS)]));
-    const record = (answer: RecipeResponse | null, stepsRead: boolean, error: string | null, spent: Parameters<UsageStore['recordModule']>[1]['usage']) =>
-      usage.recordModule('recipe', { linkId: request.link.id, url, usage: spent, ok: answer !== null, error, durationMs: this.now() - started, result: answer ? { ...answer, stepsRead, lang: request.lang } : null });
+    const record = (answer: RecipeResponse | null, stepsRead: boolean, error: string | null, spent: CallUsage | null) =>
+      usage.record('recipe' satisfies ModuleTask, { linkId: request.link.id, url, usage: spent, ok: answer !== null, error, durationMs: this.now() - started, result: answer ? { ...answer, stepsRead, lang: request.lang } : null });
     // What the page gave before still serves when it cannot give more now: the list, without its method.
     const orKept = (refusal: ModuleOutcome<RecipeResponse>): ModuleOutcome<RecipeResponse> => (kept && kept.ingredients.length > 0 ? { ok: true, answer: kept } : refusal);
     // A page gone or refused for good: Claude would be paid to find nothing.
@@ -97,13 +99,13 @@ export class RecipeReader {
     }
 
     const { model, budgetUsd } = this.options.analysis();
-    const spent = usage.costSince(monthStart(this.now())) >= budgetUsd;
+    const hold = model ? usage.hold(budgetUsd) : null;
     // Without Claude, the ingredients alone still make a shopping list and half a cook mode.
-    if (structured && (!model || spent)) return { ok: true, answer: structured };
+    if (structured && (!model || !hold)) return { ok: true, answer: structured };
     if (!model) return orKept({ ok: false, status: 409, error: read.page ? 'Cette page ne donne pas ses ingrédients toute seule : ajoutez une clé Claude pour qu’il les lise.' : (read.error ?? 'La page n’a pas pu être lue') });
-    if (spent) return orKept({ ok: false, status: 409, error: BUDGET_SPENT });
+    if (!hold) return orKept({ ok: false, status: 409, error: BUDGET_SPENT });
     try {
-      const found = await model.listIngredients(
+      const found = await model.holding(hold).listIngredients(
         {
           url: request.link.url,
           digest: buildDigest({ read, candidates: [] }),
@@ -134,7 +136,9 @@ export class RecipeReader {
       // Cut off, it was reading the page (with web_fetch at most), not searching the web.
       record(null, false, message, deadline.aborted ? withCutOffCall(cost, model.model, true) : cost);
       // The ingredients the page gave still serve.
-      return structured ? { ok: true, answer: structured } : orKept({ ok: false, status: 502, error: message });
+      return structured ? { ok: true, answer: structured } : orKept({ ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message });
+    } finally {
+      hold.release();
     }
   }
 }

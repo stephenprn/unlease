@@ -7,7 +7,9 @@
  *
  * Everything that is not the editor reads a body through here: `bodyText` for the words alone (a
  * search, a widget, a notification, the clipboard), `bodyMarkdown` for a backup, `cardParagraphs`
- * for a card's height. Offsets are in the plain text, a line break counting one.
+ * for a card's height. Offsets are in the plain text, a line break counting one; a mention (a
+ * contact, `{@contact=<id>}`) counts one there, and reads as its subject's name everywhere else
+ * (`noteMentions`).
  */
 import type { AdvanceWeight } from '@unlease/design/advances';
 import {
@@ -25,8 +27,10 @@ import {
   type Marks,
   type Run,
 } from '@unlease/core/services/richText';
+import { dateWords } from '@unlease/core/services/dates';
 import { mapCaret } from '@unlease/core/sync/textMerge';
 import type { WeightedRun } from '@unlease/design/textWrap';
+import { mentionName, mentionsVersion } from './noteMentions';
 
 export type HeadingLevel = 0 | 1 | 2 | 3;
 
@@ -72,9 +76,14 @@ export function linesText(lines: readonly NoteLine[]): string {
   return lines.map(line => richToPlain(line.runs)).join('\n');
 }
 
+/** The words alone, as people read them: a mention as its subject's name, a date in words. */
+export function linesWords(lines: readonly NoteLine[]): string {
+  return lines.map(line => richToPlain(line.runs, mentionName, dateWords)).join('\n');
+}
+
 /** A note's words without their formatting: what a search, a widget, a notification or the clipboard reads. */
 export function bodyText(note: { readonly body: string; readonly rich: boolean }): string {
-  return note.rich ? linesText(noteLines(note.body, true)) : note.body;
+  return note.rich ? linesWords(noteLines(note.body, true)) : note.body;
 }
 
 /** Plain text written into a note in its own form (a checklist turned back into text, a share). */
@@ -259,6 +268,10 @@ export function bodyMarkdown(note: { readonly body: string; readonly rich: boole
     .map(line => {
       let text = '';
       for (const run of line.runs) {
+        if (run.kind === 'mention') {
+          text += `@${mentionName(run.target)}`;
+          continue;
+        }
         if (run.kind !== 'text') continue;
         let piece = run.text;
         if (!piece.trim()) {
@@ -293,7 +306,8 @@ export function cardParagraphs(lines: readonly NoteLine[]): WeightedRun[][] {
   return lines.map(line =>
     line.runs.map(run => {
       const weight: AdvanceWeight = line.heading > 0 || (run.kind === 'text' && run.marks.b) ? 'bold' : 'regular';
-      return { text: run.kind === 'text' ? run.text : '￼', weight };
+      // A mention is drawn as its subject's name, in the line's weight (`mentionName`).
+      return { text: run.kind === 'text' ? run.text : run.kind === 'mention' ? mentionName(run.target) : '￼', weight };
     }),
   );
 }
@@ -311,16 +325,17 @@ export function noteCardLines(note: { readonly kind: string; readonly body: stri
   return lines;
 }
 
-const weighted = new WeakMap<object, WeightedRun[][]>();
+const weighted = new WeakMap<object, { readonly version: number; readonly paragraphs: WeightedRun[][] }>();
 
-/** A formatted note's card paragraphs in their weights (`cardParagraphs` of `noteCardLines`), read once per version of the note; null for a plain body. */
+/** A formatted note's card paragraphs in their weights (`cardParagraphs` of `noteCardLines`), read once per version of the note and of the names it mentions; null for a plain body. */
 export function noteCardParagraphs(note: { readonly kind: string; readonly body: string; readonly rich: boolean }): WeightedRun[][] | null {
   const lines = noteCardLines(note);
   if (!lines) return null;
-  let paragraphs = weighted.get(lines);
-  if (!paragraphs) {
-    paragraphs = cardParagraphs(lines);
-    weighted.set(lines, paragraphs);
+  const version = mentionsVersion();
+  let found = weighted.get(lines);
+  if (!found || found.version !== version) {
+    found = { version, paragraphs: cardParagraphs(lines) };
+    weighted.set(lines, found);
   }
-  return paragraphs;
+  return found.paragraphs;
 }

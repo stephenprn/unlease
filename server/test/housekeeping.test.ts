@@ -64,30 +64,6 @@ describe('emptying the bin', () => {
   });
 });
 
-describe('emptying the pages bin', () => {
-  it('tombstones a page trashed long enough ago with every block under it, sub-pages included', async () => {
-    const old = T0 - (TRASH_RETENTION_DAYS + 1) * DAY;
-    server.sync.push([
-      rec('block', 'voyage', { kind: 'page', parentId: null, text: 'Voyage', trashedAt: old, deletedAt: null }, old),
-      rec('block', 'para', { kind: 'text', parentId: 'voyage', text: 'Lisbonne', deletedAt: null }, old),
-      rec('block', 'cols', { kind: 'columns', parentId: 'voyage', deletedAt: null }, old),
-      rec('block', 'col', { kind: 'column', parentId: 'cols', deletedAt: null }, old),
-      rec('block', 'jour', { kind: 'page', parentId: 'col', text: 'Jour 1', trashedAt: null, deletedAt: null }, old),
-      rec('block', 'item', { kind: 'todo', parentId: 'jour', text: 'Tram 28', deletedAt: null }, old),
-      rec('block', 'later', { kind: 'page', parentId: 'voyage', text: 'Binned on its own', trashedAt: T0 - DAY, deletedAt: null }, T0 - DAY),
-      rec('block', 'recent', { kind: 'page', parentId: null, text: 'Récente', trashedAt: T0 - DAY, deletedAt: null }, T0 - DAY),
-      rec('block', 'kept', { kind: 'text', parentId: 'recent', text: 'Reste', deletedAt: null }, T0 - DAY),
-    ]);
-    const report = await housekeeping.run();
-    expect(report.tombstoned).toBe(6);
-    for (const id of ['voyage', 'para', 'cols', 'col', 'jour', 'item']) expect(server.records.get('block', id)!.fields.deletedAt, id).toBe(T0);
-    expect(server.records.get('block', 'later')!.fields.deletedAt).toBeNull();
-    expect(server.records.get('block', 'recent')!.fields.deletedAt).toBeNull();
-    expect(server.records.get('block', 'kept')!.fields.deletedAt).toBeNull();
-    expect((await housekeeping.run()).tombstoned).toBe(0);
-  });
-});
-
 describe('collecting blobs', () => {
   async function blob(id: string, createdAt: number) {
     server.time.value = createdAt;

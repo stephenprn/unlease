@@ -6,17 +6,16 @@ import { noteLines, type NoteLine } from '@unlease/notes/services/noteBody';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import { writeFields } from '@unlease/core/sync/record';
 
-import { freshLibrary } from '../../test/library';
+import { freshLibrary } from '@test/library';
 import { createNote, updateNote } from '../../app/store/actions';
-import { acknowledge, getRecord, mergeRemote, useLibraryStore } from '../../app/store/library';
-import { createPage, insertBlock } from '../../app/store/pages';
-import { setOnboarded } from '../../app/store/settings';
-import { App } from '../App';
+import { acknowledge, getRecord, mergeRemote } from '@shared/app/store/records';
+import { useLibraryStore } from '../../app/store/library';
+import { setOnboarded } from '@shared/app/store/settings';
+import { App } from '@shared/ui/App';
 import { deleteBackward, deleteForward, insertText, replaceRange, splitLine, textLines } from '../features/note/lineEdits';
 import { NoteEditor } from '../features/note/NoteEditor';
 import { linesFromHtml, readLines, renderLines, selectionOffsets, setSelectionOffsets } from '../features/note/noteDom';
-import { PageView } from '../features/pages/PageView';
-import { initHistory } from '../router';
+import { initHistory } from '@shared/ui/router';
 
 const state = () => useLibraryStore.getState();
 const lines = (body: string): NoteLine[] => noteLines(body, true);
@@ -279,23 +278,6 @@ describe('a formatted note elsewhere', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Rechercher' }), 'gare');
     const found = document.querySelector<HTMLElement>(`[data-note-id="${id}"] p`)!;
     expect(within(found).getByText('gare', { selector: 'mark' }).parentElement).toHaveClass('b');
-  });
-
-  it('is typed and formatted in a page’s embed as in its editor', async () => {
-    const id = createNote({ kind: 'text', title: 'Valise' });
-    updateNote(id, { body: '## Papiers\n{b:Passeport}', rich: true });
-    const page = createPage({ title: 'Voyage' });
-    insertBlock(page, page, 0, { kind: 'embed', target: { type: 'note', id } });
-    render(<PageView id={page} />);
-    const body = await screen.findByRole('textbox', { name: 'Texte de la note' });
-    expect(body.querySelector('[data-heading="2"]')?.textContent).toBe('Papiers');
-    act(() => {
-      body.focus();
-      setSelectionOffsets(body, 0, 7);
-      document.dispatchEvent(new Event('selectionchange'));
-    });
-    fireEvent.click(within(screen.getByRole('toolbar', { name: 'Mise en forme' })).getByRole('button', { name: 'Titre 2' }));
-    expect(state().notes[id]!.body).toBe('Papiers\n{b:Passeport}');
   });
 
   it('is shown in the spotlight’s preview as written', async () => {

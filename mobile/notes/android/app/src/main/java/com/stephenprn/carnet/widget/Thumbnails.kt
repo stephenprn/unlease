@@ -8,7 +8,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
-import com.stephenprn.carnet.organic.Squircle
+import com.stephenprn.unlease.organic.Squircle
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection

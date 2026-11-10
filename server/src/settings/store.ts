@@ -1,24 +1,33 @@
 /**
- * Settings set from the apps' Administration, one row per key: link reading
+ * Settings set from the apps' Administration, one row per key: the apps the server runs and
+ * whether its first run is over, link reading
  * (the Claude key, the model, the monthly budget, with the environment as a
  * fallback: an app value wins, then the environment, then the default), the
  * questions about the pages, the S3 backup, the drive that holds the files and Seerr. They are read on every use,
  * so a change applies without a restart. Secrets are stored as they are and
  * only their last characters leave the server.
  */
+import { randomBytes } from 'node:crypto';
 import type { StatementSync } from 'node:sqlite';
+import { READY_APPS, type AppId } from '@unlease/core/apps';
 import {
   BACKUP_KEEP_DEFAULT,
+  COUNTRY_PATTERN,
+  REGION_PATTERN,
   DRIVE_FOLDER_DEFAULT,
   isBackupRecurrence,
   isClaudeModel,
   isPagesReach,
+  isStorageClass,
   PAGES_ASK_DEFAULTS,
+  parseEnabledApps,
   type BackupRecurrence,
+  type CalendarSettings,
   type ClaudeModel,
   type DriveProvider,
   type PagesAskSettings,
   type ServerSettings,
+  type StorageClass,
 } from '@unlease/core/sync/settings';
 import { transaction, type Database } from '../db/database';
 
@@ -52,7 +61,10 @@ export interface BackupConfig {
   readonly accessKeyId: string;
   readonly secretAccessKey: string;
   readonly recurrence: BackupRecurrence;
+  /** Days a snapshot stays on S3 (the newest one always does). */
   readonly keep: number;
+  /** The class files and snapshots are sent in from now on. */
+  readonly storageClass: StorageClass;
 }
 
 /** Seerr, for the films and series modules: its address, and its API key when one was given. */
@@ -74,20 +86,43 @@ export interface DriveConfig {
   readonly leaving: boolean;
 }
 
+const APPS_KEY = 'apps.enabled';
+const SETUP_KEY = 'setup.done';
 const KEY = 'anthropicApiKey';
 const MODEL = 'model';
 const BUDGET = 'budgetUsd';
-const BACKUP_KEYS = ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secretAccessKey', 'recurrence', 'keep'] as const;
+const BACKUP_KEYS = ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secretAccessKey', 'recurrence', 'keep', 'storageClass'] as const;
 const DRIVE_KEYS = ['provider', 'url', 'token', 'folder', 'repoId', 'library', 'leaving'] as const;
 const SEERR_KEYS = ['url', 'apiKey'] as const;
 
+const CALENDAR_COUNTRY = 'calendar.country';
+const CALENDAR_REGION = 'calendar.region';
+const CALENDAR_PUBLISH = 'calendar.publish';
+const CALENDAR_ASK = 'calendar.ask';
+
+/** Agenda's public holidays: a country, and maybe one of its regions. */
+export interface HolidaysConfig {
+  readonly country: string | null;
+  readonly region: string | null;
+}
+
+/** What changes of Agenda's settings, checked by `applySettingsPatch`. */
+export interface CalendarChanges {
+  readonly holidays?: HolidaysConfig;
+  readonly publish?: boolean | 'renew';
+  readonly ask?: boolean;
+}
+
 const hintOf = (secret: string): string => `…${secret.slice(-4)}`;
+const storageClassOf = (value: unknown): StorageClass => (isStorageClass(value) ? value : 'STANDARD');
 
 export class SettingsStore {
   private readonly all: StatementSync;
   private readonly put: StatementSync;
   private readonly remove: StatementSync;
   private readonly driveFiles: StatementSync;
+  private readonly appsListeners = new Set<(enabled: readonly AppId[]) => void>();
+  private readonly holidaysListeners = new Set<(holidays: HolidaysConfig) => void>();
 
   constructor(
     private readonly db: Database,
@@ -97,6 +132,53 @@ export class SettingsStore {
     this.put = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value');
     this.remove = db.prepare('DELETE FROM settings WHERE key = ?');
     this.driveFiles = db.prepare('SELECT COUNT(*) AS count FROM drive_files');
+  }
+
+  /** The apps the server runs: every ready one until the Administration (or the first run) chose. */
+  enabledApps(): AppId[] {
+    const stored = this.stored().get(APPS_KEY);
+    let parsed: unknown = null;
+    try {
+      parsed = typeof stored === 'string' ? JSON.parse(stored) : null;
+    } catch {
+      parsed = null;
+    }
+    return parseEnabledApps(parsed) ?? [...READY_APPS];
+  }
+
+  /** Ready apps only, at least one (`parseEnabledApps`): checked by `applySettingsPatch`. Tells the listeners when the list changes. */
+  updateApps(enabled: readonly AppId[]): void {
+    const next = parseEnabledApps(enabled);
+    if (!next) return;
+    const before = this.enabledApps();
+    this.put.run(APPS_KEY, JSON.stringify(next));
+    if (before.join() !== next.join()) for (const listener of this.appsListeners) listener(next);
+  }
+
+  /** Hears every change of the apps the server runs (their background work starts and stops). */
+  onApps(listener: (enabled: readonly AppId[]) => void): () => void {
+    this.appsListeners.add(listener);
+    return () => this.appsListeners.delete(listener);
+  }
+
+  /** The server's own first run is over: the next device skips it. False until it is said so. */
+  setupDone(): boolean {
+    return this.stored().get(SETUP_KEY) === 1;
+  }
+
+  /** Once over, for good: nothing sets it back (a restore leaves settings alone). */
+  markSetupDone(): void {
+    this.put.run(SETUP_KEY, 1);
+  }
+
+  /**
+   * At start, once: a server that never stored the flag (one from before it existed) is set up when
+   * it already holds data, and a new one is not. Stored either way, so data that comes later (a
+   * device syncing before the first run ends) never passes for an old server.
+   */
+  settleSetup(holdsData: boolean): void {
+    if (this.stored().has(SETUP_KEY)) return;
+    this.put.run(SETUP_KEY, holdsData ? 1 : 0);
   }
 
   /** Files the drive holds for the server, or still has to delete. */
@@ -140,6 +222,7 @@ export class SettingsStore {
       secretAccessKey: text('secretAccessKey'),
       recurrence: isBackupRecurrence(recurrence) ? recurrence : 'off',
       keep: typeof keep === 'number' && Number.isInteger(keep) && keep >= 1 ? keep : BACKUP_KEEP_DEFAULT,
+      storageClass: storageClassOf(stored.get('backup.storageClass')),
     };
     return config.endpoint && config.region && config.bucket && config.accessKeyId && config.secretAccessKey ? config : null;
   }
@@ -184,6 +267,50 @@ export class SettingsStore {
     });
   }
 
+  /** Agenda's public holidays: none until the setup or the Administration picks a country. */
+  holidays(): HolidaysConfig {
+    const stored = this.stored();
+    const country = stored.get(CALENDAR_COUNTRY);
+    const region = stored.get(CALENDAR_REGION);
+    const code = typeof country === 'string' && COUNTRY_PATTERN.test(country) ? country : null;
+    return { country: code, region: code && typeof region === 'string' && REGION_PATTERN.test(region) && region.startsWith(`${code}-`) ? region : null };
+  }
+
+  /** The published calendar's secret, or null while it is not published. */
+  publishSecret(): string | null {
+    const value = this.stored().get(CALENDAR_PUBLISH);
+    return typeof value === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(value) ? value : null;
+  }
+
+  calendar(): CalendarSettings {
+    const secret = this.publishSecret();
+    return { holidays: this.holidays(), publishPath: secret ? `/ical/${secret}.ics` : null, ask: this.stored().get(CALENDAR_ASK) === 1 };
+  }
+
+  /** Hears every change of the holidays' country or region (the server fetches them again). */
+  onHolidays(listener: (holidays: HolidaysConfig) => void): () => void {
+    this.holidaysListeners.add(listener);
+    return () => this.holidaysListeners.delete(listener);
+  }
+
+  updateCalendar(changes: CalendarChanges): void {
+    const before = this.holidays();
+    transaction(this.db, () => {
+      if (changes.holidays) {
+        if (changes.holidays.country) this.put.run(CALENDAR_COUNTRY, changes.holidays.country);
+        else this.remove.run(CALENDAR_COUNTRY);
+        if (changes.holidays.country && changes.holidays.region) this.put.run(CALENDAR_REGION, changes.holidays.region);
+        else this.remove.run(CALENDAR_REGION);
+      }
+      if (changes.publish === false) this.remove.run(CALENDAR_PUBLISH);
+      // Published again, it keeps the address it had; renewed, the old one stops answering.
+      else if (changes.publish === 'renew' || (changes.publish === true && !this.publishSecret())) this.put.run(CALENDAR_PUBLISH, randomBytes(24).toString('base64url'));
+      if (changes.ask !== undefined) this.put.run(CALENDAR_ASK, changes.ask ? 1 : 0);
+    });
+    const after = this.holidays();
+    if (before.country !== after.country || before.region !== after.region) for (const listener of this.holidaysListeners) listener(after);
+  }
+
   /** Seerr, or null when it is not linked. */
   seerr(): SeerrConfig | null {
     const stored = this.stored();
@@ -206,8 +333,11 @@ export class SettingsStore {
     const recurrence = text('backup.recurrence');
     const keep = stored.get('backup.keep');
     return {
+      apps: { enabled: this.enabledApps() },
+      setup: { done: this.setupDone() },
       analysis: { enabled: apiKey !== null, keySource, keyHint: apiKey ? hintOf(apiKey) : null, model, budgetUsd },
       pages: this.pages(),
+      calendar: this.calendar(),
       backup: {
         configured: backup !== null,
         endpoint: text('backup.endpoint'),
@@ -218,6 +348,7 @@ export class SettingsStore {
         secretHint: text('backup.secretAccessKey') ? hintOf(text('backup.secretAccessKey')) : null,
         recurrence: isBackupRecurrence(recurrence) ? recurrence : 'off',
         keep: typeof keep === 'number' && Number.isInteger(keep) && keep >= 1 ? keep : BACKUP_KEEP_DEFAULT,
+        storageClass: storageClassOf(stored.get('backup.storageClass')),
       },
       drive: {
         provider: drive ? drive.provider : null,

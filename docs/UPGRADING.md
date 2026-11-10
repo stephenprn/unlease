@@ -14,13 +14,17 @@ Unlease ships as releases: one version (`X.Y.Z`, [Semantic Versioning](https://s
    ```
 
    The Administration shows the server's version too.
-4. **Then the apps**: on each phone, install the release's APK over the one there (it keeps the phone's data; the same signing key is needed). The web app comes with the server: reload the page.
+4. **Then the apps**: on each phone, install the release's APK of each app over the one there (it keeps the phone's data; the same signing key is needed). The web apps come with the server: reload their pages.
 
 Keep your `docker-compose.yml` unless the release notes say to change it: the one attached to each release is the reference.
 
+## Behind a reverse proxy
+
+The server brakes wrong tokens per client address. Releases up to 0.1 took that address from `CF-Connecting-IP` or `X-Real-IP` whoever sent them; it now takes the connection's own unless `UNLEASE_TRUSTED_PROXY_HEADER` names the one header your proxy sets. Nothing stops working without it: the right token always passes, so your devices are never refused. But behind a proxy every request then comes from the proxy, so the brake counts every guess together and the log names the proxy. Add to `.env` the line [SELF-HOSTING.md](SELF-HOSTING.md#the-clients-address) gives for your proxy (`cf-connecting-ip` for a Cloudflare Tunnel, also with a proxy of yours behind it; `x-real-ip` for the nginx and Caddy examples; `x-forwarded-for` for Traefik), then `docker compose up -d`. While you are there, check the log's first lines for `UNLEASE_TOKEN has N characters`: a token under 32 characters deserves a new one (`openssl rand -hex 32`, then on each device).
+
 ## Why the server goes first
 
-An app sends what it knows. A server older than the app drops a field or a record type it does not know, for good: the app will not send it again. A server newer than the apps is fine: older apps just do not use what is new.
+An app sends what it knows. A server older than the app drops a field or a record type it does not know, for good: the app will not send it again. A server newer than the apps is fine: older apps just do not use what is new. The coming release adds Carnet's fact templates (a new `linkTemplate` record, a collection's template, the version a link was read with) and the price watch's fields: a template made on an app that reached an older server first would be lost.
 
 ## Which version to run
 

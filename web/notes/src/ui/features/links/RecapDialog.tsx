@@ -12,13 +12,13 @@ import { formatDay } from '@unlease/core/services/format';
 import { linkShop } from '@unlease/notes/services/modules';
 import { RECAP_LIMITS, recapStopWords } from '@unlease/notes/services/works';
 
-import { useMinute } from '../../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { findRecap } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
-import { Button } from '../../components/Button';
-import { useOutline } from '../../components/Outline';
-import { DialogFrame } from '../../components/Dialog';
-import { Layer } from '../../components/Layer';
+import { Button } from '@shared/ui/components/Button';
+import { useOutline } from '@shared/ui/components/Outline';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Layer } from '@shared/ui/components/Layer';
 import { ReadingTrack } from './ReadingTrack';
 import { Stepper } from './Stepper';
 import { useModuleSearch } from './useModuleSearch';

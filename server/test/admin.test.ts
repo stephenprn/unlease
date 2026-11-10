@@ -47,7 +47,7 @@ describe('the administration', () => {
   it('gives the apps the S3 and drive parts of the settings, without secrets', async () => {
     const target = server();
     const settings = parseServerSettings(await (await target.app.request('/api/settings', { headers: AUTH })).json());
-    expect(settings?.backup).toMatchObject({ configured: false, secretHint: null, recurrence: 'off', keep: 30 });
+    expect(settings?.backup).toMatchObject({ configured: false, secretHint: null, recurrence: 'off', keep: 30, storageClass: 'STANDARD' });
     expect(settings?.drive).toEqual({ provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false });
   });
 });

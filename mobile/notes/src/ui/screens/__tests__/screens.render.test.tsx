@@ -8,14 +8,14 @@ import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'rea
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
-import { closeDatabase } from '@data/db/database';
-import { writePreference } from '@data/repositories/stateRepository';
-import { openDatabase } from '@data/db/database';
+import { closeDatabase } from '@shared/data/db/database';
+import { writePreference } from '@shared/data/repositories/stateRepository';
+import { openDatabase } from '@shared/data/db/database';
 import { resetBootstrap } from '@app/bootstrap';
-import { addCheck, addLink, createLabel, createLine, createNote, setLabels, setReminder, toggleCheck, trashNotes, updateLink } from '@app/store/actions';
+import { addCheck, addLink, createLabel, createLine, createNote, deleteLink, setLabels, setReminder, toggleCheck, trashNotes, updateLink } from '@app/store/actions';
 import { acknowledge, getRecord, mergeRemote, resetLibrary, useLibraryStore } from '@app/store/libraryStore';
-import { setSyncState } from '@app/store/syncStore';
-import { useUiStore } from '@app/store/uiStore';
+import { setSyncState } from '@shared/app/store/syncStore';
+import { useUiStore } from '@shared/app/store/uiStore';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import { writeFields } from '@unlease/core/sync/record';
 import { AppProviders } from '@app/providers/AppProviders';
@@ -110,7 +110,7 @@ describe('first run', () => {
   it('opens on the setup screen', async () => {
     const tree = await boot(false);
     expect(textOf(tree)).toContain('Se connecter');
-    expect(textOf(tree)).toContain('Garder mes notes sur ce téléphone');
+    expect(textOf(tree)).toContain('Tout garder sur ce téléphone');
   });
 });
 
@@ -168,9 +168,13 @@ describe.each([
     expect(textOf(tree)).not.toContain('Tester et enregistrer');
     await go('Admin');
     expect(textOf(tree)).toContain('Administration');
+    // Without a server, every section but the server's own waits for one.
+    expect(textOf(tree)).toContain('Aucun serveur relié');
+    expect(textOf(tree)).toContain('Reliez d’abord un serveur');
+    await go('Admin', { section: 'server' });
     expect(textOf(tree)).toContain('Se connecter');
-    // Without a server, nothing to back up or to send to a drive yet.
-    expect(textOf(tree)).not.toContain('Sauvegarde sur S3');
+    await go('Admin', { section: 'backup' });
+    expect(textOf(tree)).toContain('Relier un serveur');
     await go('Import');
     expect(textOf(tree)).toContain('Google Takeout');
   });
@@ -221,14 +225,14 @@ describe('the board head and the drawer', () => {
     const rows = () => outermost(tree, props => props.accessibilityRole === 'menuitem').map(textIn);
     const inbox = () => rows().find(row => row.startsWith('Non classé'));
     expect(inbox()).toBeUndefined();
-    // No collection to list: the row that makes one.
-    expect(rows()).toContain('Créer une collection');
+    // The row that makes one, after the collections, as on the web.
+    expect(rows()).toContain('Nouvelle collection');
     await act(async () => {
       addLink('https://plain.fr/x', { noteId: INBOX_ID });
     });
     // Its count at the row's end, as on the web's navigation.
     expect(inbox()).toBe('Non classé1');
-    expect(rows()).not.toContain('Créer une collection');
+    expect(rows()).toContain('Nouvelle collection');
   });
 });
 
@@ -248,13 +252,50 @@ describe('a link added on a collection’s page', () => {
       await act(async () => field().props.onSubmitEditing());
     };
     await submit('https://cinema.fr/cleo?utm_source=x');
-    expect(useUiStore.getState().snack?.message).toBe('Ce lien est déjà dans Films : ajouté ici aussi');
+    // Added (with the other collection's reading): done, as on the web.
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Ce lien est déjà dans Films : ajouté ici aussi', tone: 'success' });
     const copy = useLibraryStore.getState().linksByNote[cadeaux]!;
     expect(copy).toHaveLength(1);
     expect(useLibraryStore.getState().links[copy[0]!]).toMatchObject({ status: 'ready', title: 'Cléo de 5 à 7' });
     await submit('https://cinema.fr/cleo');
-    expect(useUiStore.getState().snack?.message).toBe('Ce lien est déjà dans cette collection');
+    // Nothing added: news.
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Ce lien est déjà dans cette collection', tone: 'info' });
     expect(useLibraryStore.getState().linksByNote[cadeaux]).toEqual(copy);
+  });
+});
+
+describe('a link’s page', () => {
+  it('names a link nobody read as its row does, says where to connect a server, and when it was read only once it was', async () => {
+    let plain = '';
+    let failed = '';
+    let gone = '';
+    const tree = await boot(true, () => {
+      const line = createLine({ title: 'Envies' });
+      plain = addLink('https://boutique.fr/produits/sac-cabas-en-toile', { noteId: line });
+      updateLink(plain, { status: 'skipped' });
+      failed = addLink('https://bloque.fr/page', { noteId: line });
+      updateLink(failed, { status: 'failed', error: 'La page refuse les robots.', analyzedAt: Date.now() });
+      gone = addLink('https://cinema.fr/film', { noteId: line });
+    });
+    await go('Link', { id: plain });
+    // Its title read from the address, its source under it (the web's `linkRowText`), the address itself below.
+    expect(textOf(tree)).toContain('Sac cabas en toile');
+    expect(textOf(tree)).toContain('boutique.fr');
+    expect(textOf(tree)).toContain('https://boutique.fr/produits/sac-cabas-en-toile');
+    expect(textOf(tree)).toContain('Connectez-le dans l’administration.');
+    expect(textOf(tree)).not.toContain('lu le');
+    // The way there, under the words.
+    expect(textOf(tree)).toContain('Administration');
+
+    await go('Link', { id: failed });
+    expect(textOf(tree)).toContain('lecture tentée le');
+    expect(textOf(tree)).not.toContain('lu le');
+
+    await act(async () => {
+      deleteLink(gone);
+    });
+    await go('Link', { id: gone });
+    expect(textOf(tree)).toContain('Ce lien n’existe plus.');
   });
 });
 
@@ -362,6 +403,30 @@ describe('a note in the bin', () => {
     expect(useUiStore.getState().snack?.message).toBe('Note supprimée définitivement');
   });
 
+  it('is emptied from Réglages as in every app: its count, a question, then nothing to press', async () => {
+    let gone: string[] = [];
+    const tree = await boot(true, () => {
+      gone = [createNote({ kind: 'text', title: 'Brouillon' }), createNote({ kind: 'text', title: 'Ancienne note' })];
+      trashNotes(gone);
+    });
+    await go('Settings');
+    const row = () => outermost(tree, props => props.title === 'Vider la corbeille')[0]!;
+    expect(row().props.supporting).toMatch(/^2\snotes dans la corbeille$/);
+    await act(async () => {
+      (row().props.onPress as () => void)();
+    });
+    const dialog = outermost(tree, props => props.title === 'Vider la corbeille ?' && props.visible === true)[0]!;
+    expect(dialog.props.message).toBe('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.');
+    await act(async () => {
+      (dialog.props.onConfirm as () => void)();
+      jest.advanceTimersByTime(400);
+    });
+    for (const id of gone) expect(getRecord('note', id)!.fields.deletedAt).not.toBeNull();
+    expect(useUiStore.getState().snack?.message).toMatch(/^2\snotes supprimées définitivement$/);
+    expect(row().props.supporting).toBe('La corbeille est vide.');
+    expect(row().props.onPress).toBeUndefined();
+  });
+
   it('says so when a paste is longer than a note can hold', async () => {
     let id = '';
     const tree = await boot(true, () => {
@@ -391,5 +456,109 @@ describe('a note in the bin', () => {
     expect(useUiStore.getState().snack).toBeNull();
     expect(getRecord('note', empty)!.fields.trashedAt).toBeNull();
     expect(getRecord('note', empty)!.fields.deletedAt).not.toBeNull();
+  });
+});
+
+describe('the board and the note as on the web', () => {
+  /** The outermost pressable whose words are exactly these (a chip, a row). */
+  const pressableWith = (tree: ReactTestRenderer, words: string): ReactTestInstance => outermost(tree, props => typeof props.onPress === 'function').find(node => textIn(node) === words)!;
+
+  it('puts a label on every picked note from the selection bar, with « Annuler »', async () => {
+    let label = '';
+    let note = '';
+    const tree = await boot(true, () => {
+      label = createLabel('Perso');
+      note = createNote({ kind: 'text', title: 'Code du portail', body: '4512B' });
+      useUiStore.setState({ snack: null });
+    });
+    await act(async () => {
+      outermost(tree, props => typeof props.onLongPress === 'function' && String(props.accessibilityLabel ?? '').startsWith('Code du portail'))[0]!.props.onLongPress();
+    });
+    await act(async () => {
+      outermost(tree, props => props.icon === 'tag' && props.label === 'Labels' && typeof props.onPress === 'function')[0]!.props.onPress();
+      jest.advanceTimersByTime(400);
+    });
+    expect(textOf(tree)).toContain('Labels des notes sélectionnées');
+    await act(async () => {
+      outermost(tree, props => props.accessibilityRole === 'checkbox' && props.accessibilityLabel === 'Perso')[0]!.props.onPress();
+    });
+    expect(useLibraryStore.getState().notes[note]!.labelIds).toEqual([label]);
+    expect(useUiStore.getState().snack).toMatchObject({ message: '« Perso » ajouté', action: { label: 'Annuler' } });
+    await act(async () => {
+      useUiStore.getState().snack!.action!.run();
+    });
+    expect(useLibraryStore.getState().notes[note]!.labelIds).toEqual([]);
+  });
+
+  it('offers to open a duplicate, and shares no drawing as text', async () => {
+    let note = '';
+    let drawing = '';
+    const tree = await boot(true, () => {
+      note = createNote({ kind: 'text', title: 'Recette', body: 'Farine' });
+      drawing = createNote({ kind: 'drawing', title: 'Plan' });
+      useUiStore.setState({ snack: null });
+    });
+    const menuItems = () => outermost(tree, props => Array.isArray(props.items) && (props.items as { label: string }[]).some(item => item.label === 'Dupliquer'))[0]!.props.items as { label: string; onPress: () => void }[];
+    await go('Note', { id: drawing });
+    expect(menuItems().map(item => item.label)).toEqual(['Dupliquer', 'Supprimer']);
+    await go('Note', { id: note });
+    expect(menuItems().map(item => item.label)).toEqual(['Partager', 'Dupliquer', 'Supprimer']);
+    await act(async () => {
+      menuItems().find(item => item.label === 'Dupliquer')!.onPress();
+    });
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Note dupliquée', action: { label: 'Ouvrir' }, tone: 'success' });
+  });
+
+  it('says a reminder’s moment is gone when « Enregistrer » is pressed on it, never by a button that cannot be pressed', async () => {
+    jest.setSystemTime(new Date(2026, 10, 6, 15, 0));
+    let note = '';
+    const tree = await boot(true, () => {
+      note = createNote({ kind: 'text', title: 'Garage' });
+    });
+    await go('Note', { id: note, reminder: true });
+    await act(async () => {
+      outermost(tree, props => props.title === 'Choisir la date et l’heure' && typeof props.onPress === 'function')[0]!.props.onPress();
+    });
+    await act(async () => {
+      pressableWith(tree, '6 h').props.onPress();
+    });
+    const save = outermost(tree, props => props.label === 'Enregistrer' && typeof props.onPress === 'function')[0]!;
+    expect(save.props.disabled).toBeFalsy();
+    await act(async () => {
+      save.props.onPress();
+    });
+    expect(textOf(tree)).toContain('Ce moment est passé : choisissez un moment à venir.');
+    expect(useLibraryStore.getState().notes[note]!.reminderAt).toBeNull();
+  });
+
+  it('counts each label’s notes, and keeps a name another label wears as typed, saying why under its row', async () => {
+    let work = '';
+    const tree = await boot(true, () => {
+      const perso = createLabel('Perso');
+      work = createLabel('Travail');
+      setLabels(createNote({ kind: 'text', title: 'Portail' }), [perso]);
+    });
+    await go('Labels');
+    // The count is written as French writes it, a no-break space after the number.
+    expect(outermost(tree, props => /^1\snote avec Perso$/.test(String(props.accessibilityLabel)))).toHaveLength(1);
+    expect(outermost(tree, props => /^0\snote avec Travail$/.test(String(props.accessibilityLabel)))).toHaveLength(1);
+    const field = () => outermost(tree, props => typeof props.onChangeText === 'function' && String(props.accessibilityLabel ?? '').startsWith('Renommer Travail'))[0]!;
+    await act(async () => {
+      field().props.onChangeText('Perso');
+    });
+    await act(async () => {
+      field().props.onBlur();
+    });
+    expect(useLibraryStore.getState().labels[work]!.name).toBe('Travail');
+    expect(field().props.value).toBe('Perso');
+    expect(textOf(tree)).toContain('Ce label existe déjà : choisissez un autre nom.');
+    await act(async () => {
+      field().props.onChangeText('Bureau');
+    });
+    expect(textOf(tree)).not.toContain('Ce label existe déjà : choisissez un autre nom.');
+    await act(async () => {
+      field().props.onBlur();
+    });
+    expect(useLibraryStore.getState().labels[work]!.name).toBe('Bureau');
   });
 });

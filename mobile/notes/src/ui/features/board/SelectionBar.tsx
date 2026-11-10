@@ -13,10 +13,10 @@ import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 
 import { AnimatedOrganic, AppText, IconButton } from '../../components';
-import { duration } from '../../theme/motion';
-import { corners } from '../../theme/shape';
-import { useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { duration } from '@shared/ui/theme/motion';
+import { corners } from '@shared/ui/theme/shape';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import { SEARCH_HEIGHT, SEARCH_TOP } from './BoardHeader';
 
 function SelectionBarComponent({ count, onClose, children }: { count: number; onClose: () => void; children: React.ReactNode }) {

@@ -1,0 +1,75 @@
+/* The places offered under a place's field: the menu's paper, rows pressing inside their own cut. */
+.panel {
+  padding: 6px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  max-width: calc(100vw - 32px);
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  min-height: 48px;
+  padding: 5px 10px;
+  border-radius: var(--cut-row);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.row[data-active] {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.row > svg {
+  color: var(--ink-muted);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text > span + span {
+  color: var(--ink-muted);
+}
+
+.said {
+  padding: 10px 10px 8px;
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+
+.credit {
+  padding: 6px 10px 2px;
+  border-top: 1px solid var(--hairline);
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@media (pointer: coarse) {
+  .row {
+    min-height: 52px;
+  }
+}

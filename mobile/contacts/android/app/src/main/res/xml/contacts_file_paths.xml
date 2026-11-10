@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The shared paths (mobile/shared's file_paths.xml: the camera's photo before import) and Contacts'
+     own: a card (.vcf) made to be shared, in the cache. -->
+<paths>
+    <files-path name="photos" path="photos/" />
+    <cache-path name="shared" path="shared/" />
+</paths>

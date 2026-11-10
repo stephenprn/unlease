@@ -5,9 +5,9 @@
 import { createId } from '@unlease/core/services/ids';
 
 import { addAttachment } from '../store/actions';
-import { requestSync } from '../sync/loop';
-import { storeFile } from './files';
-import { primeBlobUrl } from './images';
+import { requestSync } from '@shared/app/sync/loop';
+import { storeFile } from '@shared/app/media/files';
+import { primeBlobUrl } from '@shared/app/media/images';
 
 /** The image types the server accepts (core's attachment schema). */
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/avif']);

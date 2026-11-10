@@ -1,0 +1,9 @@
+<resources>
+
+    <!-- The window ground follows night mode, matching the app's ground until JavaScript draws. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/window_ground</item>
+    </style>
+
+</resources>

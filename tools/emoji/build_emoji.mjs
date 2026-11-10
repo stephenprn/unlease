@@ -13,7 +13,7 @@ import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 
 // The web app's devDependency, wherever the workspace installed it.
-const DATA = dirname(createRequire(resolve('web/notes/package.json')).resolve('emojibase-data/package.json'));
+const DATA = dirname(createRequire(resolve('web/package.json')).resolve('emojibase-data/package.json'));
 const read = file => JSON.parse(readFileSync(resolve(DATA, file), 'utf8'));
 
 /** Newer than this, an emoji draws as a blank box on many systems still. */

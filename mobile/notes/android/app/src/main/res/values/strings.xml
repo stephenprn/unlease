@@ -1,68 +1,91 @@
 <resources>
     <string name="app_name">Carnet</string>
 
-    <!-- The widgets, as the launcher's picker lists them. -->
-    <string name="widget_capture_label">Actions rapides</string>
-    <string name="widget_capture_description">Une recherche, une note, une liste, un rappel, une photo (galerie ou appareil) ou un lien, en un geste.</string>
-    <string name="widget_link_label">Classer un lien</string>
-    <string name="widget_link_description">Collez un lien : Claude le lit et le range, sans ouvrir l’application.</string>
-    <string name="widget_collection_label">Collection</string>
-    <string name="widget_collection_description">Les liens d’une collection, et un lien ajouté en un geste.</string>
-    <string name="widget_label_label">Notes d’un label</string>
-    <string name="widget_label_description">Les notes d’un label, à ouvrir ou à compléter.</string>
-    <string name="widget_note_label">Note</string>
-    <string name="widget_note_description">Une note ou une liste, à cocher depuis l’écran d’accueil.</string>
+    <!--
+    English by default, French in values-fr: the same rule as the app's own words (French on a phone in
+    French, English otherwise). The language chosen in Réglages reaches them as the app's language
+    (LocaleManager, Android 13 and later).
+    -->
 
-    <!-- Actions rapides. -->
-    <string name="widget_search">Rechercher</string>
-    <string name="widget_search_hint">Rechercher dans vos notes</string>
-    <string name="widget_note">Nouvelle note</string>
-    <string name="widget_checklist">Nouvelle liste</string>
-    <string name="widget_photo">Nouvelle note avec photo</string>
-    <string name="widget_camera">Prendre une photo</string>
-    <string name="widget_link">Classer un lien</string>
-    <string name="widget_reminder">Nouveau rappel</string>
+    <!-- The widgets, as the launcher's picker lists them. -->
+    <string name="widget_capture_label">Quick actions</string>
+    <string name="widget_capture_description">A search, a note, a list, a reminder, a photo (gallery or camera) or a link, in one tap.</string>
+    <string name="widget_link_label">File a link</string>
+    <string name="widget_link_description">Paste a link: Claude reads it and files it, without opening the app.</string>
+    <string name="widget_collection_label">Collection</string>
+    <string name="widget_collection_description">A collection’s links, and a link added in one tap.</string>
+    <string name="widget_label_label">A label’s notes</string>
+    <string name="widget_label_description">A label’s notes, to open or to add to.</string>
+    <string name="widget_note_label">Note</string>
+    <string name="widget_note_description">A note or a list, ticked from the home screen.</string>
+
+    <!-- Quick actions. -->
+    <string name="widget_search">Search</string>
+    <string name="widget_search_hint">Search your notes</string>
+    <string name="widget_note">New note</string>
+    <string name="widget_checklist">New list</string>
+    <string name="widget_photo">New note with a photo</string>
+    <string name="widget_camera">Take a photo</string>
+    <string name="widget_link">File a link</string>
+    <string name="widget_reminder">New reminder</string>
     <string name="widget_short_note">Note</string>
-    <string name="widget_short_checklist">Liste</string>
+    <string name="widget_short_checklist">List</string>
     <string name="widget_short_photo">Photo</string>
-    <string name="widget_short_camera">Caméra</string>
-    <string name="widget_short_link">Lien</string>
-    <string name="widget_short_reminder">Rappel</string>
+    <string name="widget_short_camera">Camera</string>
+    <string name="widget_short_link">Link</string>
+    <string name="widget_short_reminder">Reminder</string>
 
     <!-- Collection. -->
-    <string name="widget_collection_pick">Changer de collection</string>
-    <string name="widget_collection_add">Ajouter un lien</string>
-    <string name="widget_collection_empty">Rien à faire ici pour l’instant.</string>
-    <string name="widget_collection_open">Voir la collection</string>
-    <string name="widget_open_site">Ouvrir le site</string>
-    <string name="widget_reading">Claude lit la page…</string>
+    <string name="widget_collection_pick">Change collection</string>
+    <string name="widget_collection_add">Add a link</string>
+    <string name="widget_collection_empty">Nothing to do here for now.</string>
+    <string name="widget_collection_open">See the collection</string>
+    <string name="widget_open_site">Open the site</string>
+    <string name="widget_reading">Claude is reading the page…</string>
 
-    <!-- Notes d’un label. -->
-    <string name="widget_label_open">Ouvrir le label</string>
-    <string name="widget_label_empty">Aucune note avec ce label.</string>
-    <string name="widget_label_create">Créer une note</string>
+    <!-- A label's notes. -->
+    <string name="widget_label_open">Open the label</string>
+    <string name="widget_label_empty">No notes with this label.</string>
+    <string name="widget_label_create">Create a note</string>
 
     <!-- Note. -->
-    <string name="widget_note_open">Ouvrir la note</string>
-    <string name="widget_note_empty_list">Cette liste est vide.</string>
-    <string name="widget_note_empty_text">Cette note est vide.</string>
+    <string name="widget_note_open">Open the note</string>
+    <string name="widget_note_empty_list">This list is empty.</string>
+    <string name="widget_note_empty_text">This note is empty.</string>
     <string name="widget_untitled_note">Note</string>
-    <string name="widget_untitled_list">Liste</string>
-    <string name="widget_tick">Cocher %1$s</string>
-    <string name="widget_untick">Décocher %1$s</string>
+    <string name="widget_untitled_list">List</string>
+    <string name="widget_tick">Tick %1$s</string>
+    <string name="widget_untick">Untick %1$s</string>
     <plurals name="widget_checked">
-        <item quantity="one">%d élément coché</item>
-        <item quantity="many">%d éléments cochés</item>
-        <item quantity="other">%d éléments cochés</item>
+        <item quantity="one">%d ticked item</item>
+        <item quantity="other">%d ticked items</item>
     </plurals>
 
     <!-- A widget with nothing to show yet, or whose note is gone. -->
-    <string name="widget_waiting">Touchez pour afficher vos notes ici.</string>
-    <string name="widget_choose_collection">Touchez pour choisir une collection.</string>
-    <string name="widget_choose_label">Touchez pour choisir un label.</string>
-    <string name="widget_choose_note">Touchez pour choisir une note.</string>
-    <string name="widget_gone_collection">Cette collection n’existe plus.</string>
-    <string name="widget_gone_label">Ce label n’existe plus.</string>
-    <string name="widget_gone_note">Cette note n’est plus là.</string>
-    <string name="widget_choose_other">Choisir…</string>
+    <string name="widget_waiting">Tap to show your notes here.</string>
+    <string name="widget_choose_collection">Tap to choose a collection.</string>
+    <string name="widget_choose_label">Tap to choose a label.</string>
+    <string name="widget_choose_note">Tap to choose a note.</string>
+    <string name="widget_gone_collection">This collection no longer exists.</string>
+    <string name="widget_gone_label">This label no longer exists.</string>
+    <string name="widget_gone_note">This note is no longer here.</string>
+    <string name="widget_choose_other">Choose…</string>
+
+    <!-- The pickers' previews: sample notes, never the person's. -->
+    <string name="widget_preview_label">Food</string>
+    <string name="widget_preview_market">Saturday market</string>
+    <string name="widget_preview_tomatoes">Cherry tomatoes</string>
+    <string name="widget_preview_basil">Basil</string>
+    <string name="widget_preview_bread">Country bread</string>
+    <string name="widget_preview_meals">Meal ideas</string>
+    <string name="widget_preview_meals_body">Squash gratin, miso soup, leek tart</string>
+    <string name="widget_preview_suitcase">Suitcase</string>
+    <string name="widget_preview_passport">Passport</string>
+    <string name="widget_preview_charger">Phone charger</string>
+    <string name="widget_preview_swimsuit">Swimsuit</string>
+    <string name="widget_preview_tickets">Train tickets</string>
+    <string name="widget_preview_films">Films</string>
+    <string name="widget_preview_links">4 links</string>
+    <string name="widget_preview_film_1">About Dry Grasses</string>
+    <string name="widget_preview_film_3">The Animal Kingdom</string>
 </resources>

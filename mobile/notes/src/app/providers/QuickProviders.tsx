@@ -7,7 +7,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ThemeProvider } from '@ui/theme/ThemeProvider';
+import { ThemeProvider } from '@shared/ui/theme/ThemeProvider';
 import { QuickRoot, type QuickLaunch } from '@ui/features/widgets/QuickRoot';
 
 import { bootstrap } from '../bootstrap';

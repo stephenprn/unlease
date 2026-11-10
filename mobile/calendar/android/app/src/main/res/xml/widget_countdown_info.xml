@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Its event is chosen as it is placed, and again from the launcher (reconfigurable): the quick window's
+     picker. Drawn from what JavaScript hands over; updated every half hour so the count turns with the day. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="2" android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:configure="com.stephenprn.agenda.widget.QuickActivity"
+    android:widgetFeatures="reconfigurable"
+    android:initialLayout="@layout/widget_message"
+    android:previewLayout="@layout/widget_countdown_wide"
+    android:description="@string/widget_countdown_description"
+    android:widgetCategory="home_screen" />

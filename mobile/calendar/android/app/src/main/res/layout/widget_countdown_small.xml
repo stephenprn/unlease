@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compte à rebours, one cell: a slab of the ground; the count (« J-12 », in Signika) and, under it,
+     the event's colour as a dot before its title. A tap opens it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:id="@+id/countdown_open"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/wgen_row_press"
+        android:contentDescription="@string/widget_open_app"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/countdown_count_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/countdown_count"
+                style="@style/WidgetText.Count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:importantForAccessibility="no"
+                android:maxLines="1"
+                android:text="@string/widget_preview_count" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/countdown_dot"
+                android:layout_width="5dp"
+                android:layout_height="5dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wgen_dot"
+                android:tint="@color/wgen_link" />
+
+            <TextView
+                android:id="@+id/countdown_title"
+                style="@style/WidgetText.MetaStrong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:ellipsize="end"
+                android:importantForAccessibility="no"
+                android:maxLines="1"
+                android:text="@string/widget_preview_event" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

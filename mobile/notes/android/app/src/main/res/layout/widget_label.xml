@@ -2,6 +2,9 @@
 <!-- Notes d'un label: a piece of the board. The label's tag and name head it (a tap opens the label in
      the app); a list and the capture pebble start a note wearing it; its notes are sheets on the slab. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wgen_panel_ground"
@@ -127,6 +130,7 @@
                 android:visibility="gone">
 
                 <TextView
+                    android:id="@+id/w_label_empty"
                     style="@style/WidgetText.Meta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -150,6 +154,7 @@
                         android:src="@drawable/wgen_g_plus_link" />
 
                     <TextView
+                        android:id="@+id/w_label_create"
                         style="@style/WidgetText.Action"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

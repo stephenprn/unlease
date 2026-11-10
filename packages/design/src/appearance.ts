@@ -13,7 +13,7 @@
 import { APPS } from '@unlease/core/apps';
 import { localized, t, tx } from '@unlease/core/i18n';
 import { LINE_COLORS } from './colors';
-import { isHex, mixOklab, withAlpha } from './color';
+import { isHex, mixOklab, normalizeHex, oklabDistance, withAlpha } from './color';
 import { GROUNDS, LINES, luminance, MARK_COLORS, mix, oklch, ROLES, toOklch, type MarkColors, type Mode, type Roles } from './palette';
 
 // ---------------------------------------------------------------------------------------------
@@ -408,6 +408,27 @@ export function markColors(primary: string): MarkColors {
   return markMemo(primary, () => ({ tile: nearest(primary, color => ratio(MARK_COLORS.card, color) >= MARK_STEP, MARK_COLORS.tile), card: MARK_COLORS.card }));
 }
 
+/**
+ * The palette whose launcher icon stands for a primary on the phone. Android cannot paint a launcher
+ * icon: it shows one of those made beforehand, one per palette (the mark as `markColors` paints it
+ * for the palette's primary, tools/icons/build_android_drawables.mjs). A palette's primary takes its
+ * own; a primary picked precisely the palette whose primary looks nearest (OKLab).
+ */
+export function launcherPalette(primary: string): PaletteKey {
+  const hex = normalizeHex(primary);
+  if (!hex) return 'carnet';
+  let best: PaletteKey = 'carnet';
+  let least = Infinity;
+  for (const key of PALETTES) {
+    const distance = oklabDistance(hex, PALETTE_COLORS[key].primary);
+    if (distance < least) {
+      best = key;
+      least = distance;
+    }
+  }
+  return best;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Painting a ground.
 
@@ -684,7 +705,7 @@ export interface PickSuggestion {
 export function pickSuggestions(target: PickTarget): readonly PickSuggestion[] {
   if (target === 'ground') return GROUND_COLORS.map(key => ({ name: GROUND_NAMES[key], color: groundPaint({ kind: 'preset', key }, 'light').base }));
   return PALETTES.map(key => ({
-    name: target === 'primary' ? t('Principale de {palette}', { palette: PALETTE_NAMES[key] }) : t('Accent de {palette}', { palette: PALETTE_NAMES[key] }),
+    name: target === 'primary' ? t('{palette}, couleur principale', { palette: PALETTE_NAMES[key] }) : t('{palette}, couleur d’accent', { palette: PALETTE_NAMES[key] }),
     color: PALETTE_COLORS[key][target],
   }));
 }

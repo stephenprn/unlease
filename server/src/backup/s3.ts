@@ -1,11 +1,13 @@
 /**
  * A small S3 client: Signature V4, path-style addresses (`<endpoint>/<bucket>/<key>`), enough to
- * put, get, list and delete objects on any S3-compatible store (Scaleway, OVH, MinIO, AWS). Bodies
+ * put (in a storage class), get, list, delete and bring out of cold storage (`thaw`) objects on any
+ * S3-compatible store (Scaleway, OVH, MinIO, AWS). Bodies
  * are sent unsigned (`UNSIGNED-PAYLOAD`, over https), so a file streams from disk as a Blob. A
  * request S3 could not answer (the network, a 5xx, throttling) is tried again a few times: every
  * call here is idempotent, and a body (a Buffer or a Blob) can be sent twice.
  */
 import { createHash, createHmac } from 'node:crypto';
+import { isColdStorage } from '@unlease/core/sync/settings';
 
 export interface S3Location {
   /** A bare origin: `https://s3.fr-par.scw.cloud`. */
@@ -20,7 +22,21 @@ export interface S3Object {
   readonly key: string;
   readonly size: number;
   readonly lastModified: number;
+  /** "STANDARD", "GLACIER"…, as S3 lists it. */
+  readonly storageClass: string;
 }
+
+/** Days an object brought out of cold storage stays readable: time to run a restore again, or download it. */
+export const THAW_DAYS = 7;
+
+/** What a thaw request found: just asked, already readable, or on its way out. */
+export type ThawState = 'started' | 'ready' | 'ongoing';
+
+/** Said of a snapshot asked out of cold storage: it can be fetched once S3 has brought it out. */
+export const GLACIER_WAIT = 'Cette sauvegarde est dans Glacier : sa sortie est demandée, réessayez dans quelques heures';
+
+/** A cold object S3 will not hand over before it is brought out (`thaw`). */
+export const isFrozen = (error: unknown): boolean => error instanceof S3Error && error.code === 'InvalidObjectState';
 
 export class S3Error extends Error {
   constructor(
@@ -39,6 +55,8 @@ export function s3Problem(error: unknown): string {
   if (!(error instanceof S3Error)) return 'Stockage S3 injoignable';
   if (error.code === 'network') return 'Stockage S3 injoignable';
   if (error.code === 'NoSuchBucket') return 'Bucket introuvable';
+  if (error.code === 'InvalidStorageClass') return 'Ce stockage ne propose pas cette classe';
+  if (error.code === 'InvalidObjectState') return GLACIER_WAIT;
   if (error.code === 'InvalidAccessKeyId' || error.code === 'SignatureDoesNotMatch' || error.status === 401) return 'Clés refusées par S3';
   if (error.code === 'AuthorizationHeaderMalformed' || error.code === 'PermanentRedirect' || error.status === 301) return 'Mauvaise région pour ce bucket';
   if (error.code === 'AccessDenied' || error.status === 403) return 'Accès refusé par S3 : vérifiez les droits de la clé';
@@ -192,9 +210,38 @@ export class S3Client {
     return response;
   }
 
-  async put(key: string, body: Buffer | Blob, contentType: string, signal?: AbortSignal): Promise<void> {
-    const response = await this.request('PUT', key, { body, headers: { 'content-type': contentType }, signal });
+  /** Sends an object, in `storageClass` when it is not the bucket's standard one. */
+  async put(key: string, body: Buffer | Blob, contentType: string, signal?: AbortSignal, storageClass?: string): Promise<void> {
+    const headers: Record<string, string> = { 'content-type': contentType };
+    if (storageClass && storageClass !== 'STANDARD') headers['x-amz-storage-class'] = storageClass;
+    const response = await this.request('PUT', key, { body, headers, signal });
     await response.body?.cancel();
+  }
+
+  /** Whether an object can be read now: false while it sleeps in cold storage, not brought out yet. */
+  async readable(key: string): Promise<boolean> {
+    const response = await this.request('HEAD', key, { timeoutMs: 30_000 });
+    await response.body?.cancel();
+    if (!isColdStorage(response.headers.get('x-amz-storage-class'))) return true;
+    return /ongoing-request="false"/.test(response.headers.get('x-amz-restore') ?? '');
+  }
+
+  /** Asks S3 to bring a cold object out for `days` (hours later it can be read). */
+  async thaw(key: string, days: number = THAW_DAYS): Promise<ThawState> {
+    const body = Buffer.from(`<RestoreRequest><Days>${days}</Days></RestoreRequest>`);
+    try {
+      const response = await this.request('POST', key, {
+        query: { restore: '' },
+        body,
+        headers: { 'content-type': 'application/xml', 'content-md5': createHash('md5').update(body).digest('base64') },
+        timeoutMs: 30_000,
+      });
+      await response.body?.cancel();
+      return response.status === 200 ? 'ready' : 'started';
+    } catch (error) {
+      if (error instanceof S3Error && (error.code === 'RestoreAlreadyInProgress' || error.status === 409)) return 'ongoing';
+      throw error;
+    }
   }
 
   /** The object's bytes as a stream, and its size. */
@@ -221,7 +268,7 @@ export class S3Client {
         const block = match[1]!;
         const key = tag(block, 'Key');
         if (key === null) continue;
-        out.push({ key, size: Number(tag(block, 'Size') ?? 0), lastModified: Date.parse(tag(block, 'LastModified') ?? '') || 0 });
+        out.push({ key, size: Number(tag(block, 'Size') ?? 0), lastModified: Date.parse(tag(block, 'LastModified') ?? '') || 0, storageClass: tag(block, 'StorageClass') || 'STANDARD' });
       }
       token = tag(xml, 'IsTruncated') === 'true' ? tag(xml, 'NextContinuationToken') : null;
     } while (token && out.length < limit);

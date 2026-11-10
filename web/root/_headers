@@ -1,0 +1,52 @@
+# Cloudflare Pages response headers, for the whole site (every app, under /notes/, /pages/, /contacts/ and /agenda/).
+# The API host is chosen in the app's settings, so connect-src allows any
+# https origin, never a plain-http or local one (the dev server sends no
+# policy, and a server serving the apps is 'self'); images come from the
+# server as blob: URLs, or from the pages a link points to (https:). A page's
+# videos play from blob: URLs or their https address, its PDFs show in a
+# blob: frame, and its videos by address in their site's own player.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data: https:; media-src 'self' blob: https:; frame-src blob: https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com; font-src 'self'; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+  Strict-Transport-Security: max-age=31536000
+
+/notes/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/notes/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pages/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pages/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/contacts/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/contacts/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/agenda/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/agenda/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Each app's worker holds its whole path, `/notes` as well as `/notes/…`.
+/notes/sw.js
+  Service-Worker-Allowed: /notes
+
+/pages/sw.js
+  Service-Worker-Allowed: /pages
+
+/contacts/sw.js
+  Service-Worker-Allowed: /contacts
+
+/agenda/sw.js
+  Service-Worker-Allowed: /agenda

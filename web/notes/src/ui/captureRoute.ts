@@ -2,11 +2,16 @@
  * `/capture/note`, `/capture/checklist`, `/capture/link` (the installed app's
  * shortcuts) and `/capture/share?…` (its share target): act once at boot, then
  * replace the address with where the action leads, so Back never repeats it.
+ * Any page can open these addresses, so what one brings is never saved on
+ * arrival: a share's links prefill the capture dialog, its text asks before
+ * becoming a note (`readShare`); the shortcuts open an empty note, dropped if
+ * left empty, or the dialog.
  */
-import { receiveShare } from '../app/capture';
+import { readShare } from '../app/capture';
 import { addCheck, createNote } from '../app/store/actions';
-import { openCapture, setEditorFocus } from '../app/store/ui';
-import { appPath, navigate, parseRoute, paths } from './router';
+import { askSharedNote, openCapture, setEditorFocus } from '../app/store/notesUi';
+import { appPath, navigate, parseRoute } from '@shared/ui/router';
+import { paths } from './routes';
 
 export function handleCaptureRoute(): void {
   const route = parseRoute(appPath(location.pathname));
@@ -16,24 +21,25 @@ export function handleCaptureRoute(): void {
     case 'note': {
       const id = createNote({ kind: 'text' });
       setEditorFocus('body');
-      navigate(paths.note(id), { replace: true, background: '/' });
+      navigate(paths.note(id), { replace: true, background: paths.board });
       return;
     }
     case 'checklist': {
       const id = createNote({ kind: 'checklist' });
       addCheck(id, '');
       setEditorFocus('check');
-      navigate(paths.note(id), { replace: true, background: '/' });
+      navigate(paths.note(id), { replace: true, background: paths.board });
       return;
     }
     case 'link':
-      navigate('/', { replace: true });
+      navigate(paths.board, { replace: true });
       openCapture('');
       return;
     case 'share': {
-      navigate('/', { replace: true });
-      const result = receiveShare({ title: params.get('title') ?? '', text: params.get('text') ?? '', url: params.get('url') ?? '' });
-      if (result.kind === 'note') navigate(paths.note(result.id), { background: '/' });
+      navigate(paths.board, { replace: true });
+      const shared = readShare({ title: params.get('title') ?? '', text: params.get('text') ?? '', url: params.get('url') ?? '' });
+      if (shared.kind === 'links') openCapture(shared.text, shared.title);
+      else if (shared.kind === 'note') askSharedNote({ title: shared.title, body: shared.body });
     }
   }
 }

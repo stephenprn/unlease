@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A day of the month: its number (on the primary's pebble today), a dot under it when it holds something. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@drawable/wgen_row_press">
+
+    <ImageView
+        android:id="@+id/cell_today"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/wgen_pebble_1_leaf"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/cell_number"
+        style="@style/WidgetText.LabelSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no" />
+
+    <ImageView
+        android:id="@+id/cell_dot"
+        android:layout_width="5dp"
+        android:layout_height="5dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="3dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/wgen_dot"
+        android:visibility="invisible" />
+</FrameLayout>

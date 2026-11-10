@@ -4,8 +4,8 @@
  * a light one (well under 12 000 characters, a few thousand tokens).
  */
 import { displayHost } from '@unlease/core/services/url';
-import type { ImageCandidate } from './html';
-import type { LinkRead } from './reader';
+import type { ImageCandidate } from '../../../reading/html';
+import type { LinkRead } from '../../../reading/reader';
 
 const LIMITS = { structured: 3500, structuredItem: 1500, text: 6000, url: 300, total: 12_000 };
 

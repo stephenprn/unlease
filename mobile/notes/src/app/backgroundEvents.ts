@@ -6,7 +6,7 @@ import { disarm, readEvent } from '@platform/notifications';
 import { bootstrap } from './bootstrap';
 import { answerReminder, reconcileReminders } from './hooks/useReminders';
 import { useLibraryStore } from './store/libraryStore';
-import { flushNow } from './sync/syncManager';
+import { flushNow } from '@shared/app/sync/syncManager';
 
 export async function handleBackgroundEvent(event: Event): Promise<void> {
   const reminder = readEvent(event);

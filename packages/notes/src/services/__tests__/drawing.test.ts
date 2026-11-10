@@ -1,4 +1,4 @@
-import { DRAWING_MIN_HEIGHT, type Stroke } from '../../models/drawing';
+import { DRAWING_MIN_HEIGHT, drawingBackgroundName, drawingBackgroundOf, isDrawingBackground, type Stroke } from '../../models/drawing';
 import { mergeField } from '@unlease/core/sync/textMerge';
 import {
   decodePoints,
@@ -90,7 +90,6 @@ describe('merging drawings', () => {
 
   it('is the merge a drawing field gets through sync', () => {
     expect(mergeField('note', 'drawing', base, serializeStrokes([a, c]), serializeStrokes([a, b]), false)).toBe(serializeStrokes([a, b, c]));
-    expect(mergeField('block', 'drawing', base, serializeStrokes([a, c]), serializeStrokes([a, b]), true)).toBe(serializeStrokes([a, b, c]));
   });
 });
 
@@ -124,5 +123,21 @@ describe('drawing geometry', () => {
     expect(noteDrawingRatio(note)).toBe(1);
     expect(noteDrawingRatio({ kind: 'drawing', drawing: '' })).toBeNull();
     expect(noteDrawingRatio({ kind: 'text', drawing: note.drawing })).toBeNull();
+  });
+});
+
+describe('a drawing’s background', () => {
+  it('is the paper, a pigment or none, the paper until another is chosen', () => {
+    expect(isDrawingBackground('paper')).toBe(true);
+    expect(isDrawingBackground('sky')).toBe(true);
+    expect(isDrawingBackground('none')).toBe(true);
+    expect(isDrawingBackground('aube')).toBe(false);
+    expect(isDrawingBackground(null)).toBe(false);
+    expect(drawingBackgroundOf(null)).toBe('paper');
+    expect(drawingBackgroundOf('later')).toBe('paper');
+    expect(drawingBackgroundOf('none')).toBe('none');
+    expect(drawingBackgroundOf('sky')).toBe('sky');
+    expect(drawingBackgroundName('none')).toBe('Sans fond');
+    expect(drawingBackgroundName('paper')).toBe('Papier');
   });
 });

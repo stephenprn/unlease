@@ -1,7 +1,8 @@
 /**
  * The HTTP API: the platform's routes (sync, files, settings, the Administration) and each app's
- * own (`apps/`). Everything is JSON except blob bytes and archives; everything needs the bearer
- * token except the health check, a download by ticket (the ticket is the key) and CORS preflights,
+ * own (`apps/`), answered only while that app is on (`ServerSettings.apps`: 404 otherwise). Everything is JSON except blob bytes, archives and calendars; everything needs the bearer
+ * token except the health check, a download by ticket (the ticket is the key), an app's public
+ * routes (Agenda's published calendar, its secret in its address) and CORS preflights,
  * which browsers send without it. With a web app's build at hand (`UNLEASE_WEB_DIR`), it also
  * serves the app outside `/api` (`http/web.ts`).
  */
@@ -12,9 +13,10 @@ import { join } from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { getConnInfo } from '@hono/node-server/conninfo';
-import { Hono, type Context } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
+import { APPS } from '@unlease/core/apps';
 import { isRestoreMode } from '@unlease/core/sync/admin';
 import { API_VERSION, parseSyncRequest } from '@unlease/core/sync/protocol';
 import { isValidId } from '@unlease/core/sync/schema';
@@ -22,10 +24,10 @@ import pkg from '../package.json' with { type: 'json' };
 import type { Administration } from './admin';
 import type { Env, ServerApp } from './apps/types';
 import { archiveName, SNAPSHOT_NAME } from './backup/archive';
-import { s3Problem } from './backup/s3';
+import { GLACIER_WAIT, isFrozen, s3Problem } from './backup/s3';
 import { processUpload, UnsupportedImageError } from './blobs/images';
 import type { BlobInfo, BlobStore } from './blobs/store';
-import type { Config } from './config';
+import type { Config, ProxyHeader } from './config';
 import { AuthGuard } from './http/auth';
 import { webApp } from './http/web';
 import { log } from './log';
@@ -50,12 +52,14 @@ const MULTIPART_RESTORE_LIMIT = 200 * MB;
 export const VERSION: string = pkg.version;
 
 export interface AppOptions {
-  readonly config: Pick<Config, 'token' | 'corsOrigins'> & Partial<Pick<Config, 'webDir'>>;
+  readonly config: Pick<Config, 'token' | 'corsOrigins'> & Partial<Pick<Config, 'webDir' | 'trustedProxyHeader'>>;
   readonly sync: SyncService;
   readonly blobs: BlobStore;
   readonly settings: SettingsStore;
-  /** The apps this server runs: their routes beside the platform's. */
+  /** The apps this server can run (`apps/registry.ts`): their routes beside the platform's, each while it is on. */
   readonly apps?: readonly ServerApp[];
+  /** Routes the apps share, served whatever is on (Claude's spending). */
+  readonly routes?: (app: Hono<Env>) => void;
   /** How a new Claude key is checked before it is stored. */
   readonly listModels?: ListModels;
   /** How new keys, buckets and drives are tried before they are stored. */
@@ -67,10 +71,21 @@ export interface AppOptions {
   readonly stopping?: () => boolean;
 }
 
-/** Behind Cloudflare the socket is the tunnel, so the client's address comes from its headers. */
-function clientIp(c: Context<Env>): string {
-  const forwarded = c.req.header('cf-connecting-ip') ?? c.req.header('x-real-ip');
-  if (forwarded?.trim()) return forwarded.trim();
+/** Longer than any address: a header's value is cut to this before it keys the brake. */
+const MAX_ADDRESS = 64;
+
+/**
+ * The client's address, for the brake on wrong tokens: the connection's own, which nobody can forge,
+ * unless `UNLEASE_TRUSTED_PROXY_HEADER` names the header the proxy in front sets to it (behind a
+ * proxy the connection is the proxy's). Of `X-Forwarded-For`, the last entry: the one the nearest
+ * proxy, the trusted one, appended; what comes before it is the client's to write.
+ */
+export function clientAddress(c: Context<Env>, trusted: ProxyHeader | null): string {
+  if (trusted) {
+    const raw = c.req.header(trusted);
+    const value = (trusted === 'x-forwarded-for' ? raw?.split(',').at(-1) : raw)?.trim();
+    if (value) return value.slice(0, MAX_ADDRESS);
+  }
   try {
     return getConnInfo(c).remote.address ?? 'unknown';
   } catch {
@@ -87,7 +102,12 @@ export function createApp(options: AppOptions): Hono<Env> {
   const checks: SettingsChecks = { ...defaultChecks, ...(options.listModels ? { listModels: options.listModels } : {}), ...options.checks };
   const admin = options.admin;
   const now = options.now ?? Date.now;
-  const guard = new AuthGuard(config.token, now);
+  const guard = new AuthGuard(config.token, { now, warn: log.warn });
+  const clientIp = (c: Context<Env>) => clientAddress(c, config.trustedProxyHeader ?? null);
+  const braked = (c: Context<Env>, ip: string) => {
+    guard.recordLimited();
+    return c.json({ error: 'too many failed attempts, try again later' }, 429, { 'Retry-After': String(guard.retryAfter(ip)) });
+  };
   const app = new Hono<Env>();
 
   app.onError((error, c) => {
@@ -112,17 +132,25 @@ export function createApp(options: AppOptions): Hono<Env> {
     return next();
   });
 
+  // What a device learns before it has the token, and needs then: the protocol (a web app finds the
+  // server serving it by it), the apps that are on, whether the server's first run is over (the
+  // setup's steps) and whether Claude reads links. Not the release: the Administration says it.
+  const enabledApps = () => {
+    const enabled = settings.enabledApps();
+    return (options.apps ?? []).map(one => one.id).filter(id => enabled.includes(id));
+  };
   app.get('/api/health', c =>
-    c.json({ ok: true, version: VERSION, apiVersion: API_VERSION, apps: (options.apps ?? []).map(one => one.id), analysis: settings.effective().apiKey !== null }),
+    c.json({ ok: true, apiVersion: API_VERSION, apps: enabledApps(), setup: settings.setupDone(), analysis: settings.effective().apiKey !== null }),
   );
 
-  // An archive by ticket: a plain link the browser downloads, so no bearer token. An unknown ticket counts as a failed attempt.
+  // An archive by ticket: a plain link the browser downloads, so no bearer token. A live ticket always
+  // opens; an unknown one counts as a wrong guess, and a braked address's guesses are answered 429.
   app.get('/api/downloads/:ticket', async c => {
-    const ip = clientIp(c);
-    if (guard.isLimited(ip)) return c.json({ error: 'too many failed attempts, try again later' }, 429, { 'Retry-After': String(guard.retryAfter(ip)) });
     const target = admin?.ticket(c.req.param('ticket')) ?? null;
     if (!admin || !target) {
-      guard.recordFailure(ip);
+      const ip = clientIp(c);
+      if (guard.isLimited(ip)) return braked(c, ip);
+      guard.recordFailure({ ip, path: c.req.path.replace(/[^/]+$/, ':ticket') });
       return c.json({ error: 'Lien de téléchargement expiré' }, 404);
     }
     const headers = {
@@ -136,6 +164,7 @@ export function createApp(options: AppOptions): Hono<Env> {
         const { body, size } = await admin.backups.download(target.name, c.req.raw.signal);
         return c.body(body, 200, { ...headers, ...(size > 0 ? { 'Content-Length': String(size) } : {}) });
       } catch (error) {
+        if (isFrozen(error)) return c.json({ error: GLACIER_WAIT }, 409);
         return c.json({ error: s3Problem(error) }, 502);
       }
     }
@@ -147,19 +176,32 @@ export function createApp(options: AppOptions): Hono<Env> {
     return c.body(Readable.toWeb(stream) as ReadableStream<Uint8Array>, 200, headers);
   });
 
-  // The web app, before the token is asked for: its page and files are public, its data is not.
-  const web = webApp(config.webDir ?? null);
+  // What an app serves without the token, its own secret in the address (Agenda's published calendar), while it is on.
+  for (const one of options.apps ?? []) {
+    if (!one.publicRoutes) continue;
+    const own = new Hono<Env>();
+    one.publicRoutes(own);
+    const gate: MiddlewareHandler<Env> = async (c, next) => (settings.enabledApps().includes(one.id) ? next() : c.json({ error: 'not found' }, 404));
+    const paths = new Set<string>();
+    for (const { method, path } of own.routes) {
+      if (paths.has(`${method} ${path}`)) continue;
+      paths.add(`${method} ${path}`);
+      app.on(method, path, gate);
+    }
+    app.route('/', own);
+  }
+
+  // The web apps, before the token is asked for: their pages and files are public, their data is not.
+  const web = webApp(config.webDir ?? null, () => settings.enabledApps());
   if (web) app.use('*', web);
 
+  // The right token always passes; wrong ones are counted per client address, and a braked address's are answered 429.
   app.use('*', async (c, next) => {
     if (c.req.method === 'OPTIONS') return next();
-    const ip = clientIp(c);
-    if (guard.isLimited(ip)) {
-      return c.json({ error: 'too many failed attempts, try again later' }, 429, { 'Retry-After': String(guard.retryAfter(ip)) });
-    }
     if (!guard.verify(c.req.header('authorization'))) {
-      guard.recordFailure(ip);
-      log.warn('rejected a request without a valid token', { ip, path: c.req.path });
+      const ip = clientIp(c);
+      if (guard.isLimited(ip)) return braked(c, ip);
+      guard.recordFailure({ ip, path: c.req.path });
       return c.json({ error: 'unauthorized' }, 401, { 'WWW-Authenticate': 'Bearer' });
     }
     c.header('X-Content-Type-Options', 'nosniff');
@@ -293,8 +335,22 @@ export function createApp(options: AppOptions): Hono<Env> {
     return c.body(bytes.body, 200, { ...headers, 'Content-Length': String(bytes.size) });
   });
 
-  // Each app's own routes, behind the same token.
-  for (const one of options.apps ?? []) one.routes?.(app);
+  // Each app's own routes, behind the same token, while it is on: a gate goes before each of its routes.
+  for (const one of options.apps ?? []) {
+    if (!one.routes) continue;
+    const own = new Hono<Env>();
+    one.routes(own);
+    const off = `${APPS[one.id].name} n’est pas activé sur ce serveur`;
+    const gate: MiddlewareHandler<Env> = async (c, next) => (settings.enabledApps().includes(one.id) ? next() : c.json({ error: off }, 404));
+    const paths = new Set<string>();
+    for (const { method, path } of own.routes) {
+      if (paths.has(`${method} ${path}`)) continue;
+      paths.add(`${method} ${path}`);
+      app.on(method, path, gate);
+    }
+    app.route('/', own);
+  }
+  options.routes?.(app);
 
   const noStore = { 'Cache-Control': 'no-store' };
   app.get('/api/settings', c => c.json(settings.view(), 200, noStore));
@@ -309,7 +365,7 @@ export function createApp(options: AppOptions): Hono<Env> {
     const outcome = await applySettingsPatch(settings, body, checks);
     if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);
     // Field names only: keys and secrets are never logged.
-    log.info('settings changed', { fields: Object.keys(body as object).filter(name => ['anthropicApiKey', 'model', 'budgetUsd', 'pages', 'backup', 'drive', 'seerr'].includes(name)) });
+    log.info('settings changed', { fields: Object.keys(body as object).filter(name => ['apps', 'setupDone', 'anthropicApiKey', 'model', 'budgetUsd', 'pages', 'calendar', 'backup', 'drive', 'seerr'].includes(name)) });
     // A drive just set, or being turned off: its first pass now.
     if ('drive' in (body as object)) void admin?.drive.run();
     return c.json(settings.view(), 200, noStore);
@@ -411,6 +467,12 @@ export function createApp(options: AppOptions): Hono<Env> {
     const snapshot = body?.snapshot;
     if (typeof snapshot !== 'string' || !SNAPSHOT_NAME.test(snapshot)) return c.json({ error: 'Sauvegarde inconnue' }, 400);
     if (!settings.backup()) return c.json({ error: 'Sauvegarde S3 non configurée' }, 409);
+    // One asleep in cold storage (Glacier) is asked out, and downloaded hours later.
+    try {
+      if (!(await admin.backups.readyToDownload(snapshot))) return c.json({ error: GLACIER_WAIT }, 409, noStore);
+    } catch (error) {
+      return c.json({ error: s3Problem(error) }, 502);
+    }
     return c.json({ url: `/api/downloads/${admin.issueTicket({ kind: 'snapshot', name: snapshot })}`, name: snapshot }, 200, noStore);
   });
 

@@ -22,7 +22,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
     val data = store.payload(id) ?: return WidgetMessage.waiting(context)
     if (data.optBoolean("gone")) return WidgetMessage.gone(context, id, KIND)
 
-    val views = RemoteViews(context.packageName, R.layout.widget_label)
+    val views = widgetViews(context, R.layout.widget_label)
     // Beside the tag (24) and its paddings, the list button (48) and the capture pebble (50).
     WidgetType.title(context, views, R.id.label_name_image, R.id.label_name, data.optString("name"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 168f, 1, R.color.wgen_ink)
     views.setContentDescription(R.id.label_open, data.optString("name"))
@@ -44,7 +44,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
   }
 
   private fun card(context: Context, note: JSONObject): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_label_card).apply {
+      widgetViews(context, R.layout.widget_label_card).apply {
         val title = note.optString("title")
         val body = note.optString("body")
         val more = note.optString("more")
@@ -62,7 +62,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
           val item = items!!.optJSONObject(i) ?: continue
           addView(
               R.id.card_items,
-              RemoteViews(context.packageName, R.layout.widget_label_item).apply {
+              widgetViews(context, R.layout.widget_label_item).apply {
                 setTextViewText(R.id.item_text, item.optString("text"))
                 if (item.optInt("indent") > 0) setViewPadding(R.id.item, dp(context, 20), 0, 0, 0)
               },

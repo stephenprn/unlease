@@ -1,9 +1,10 @@
 /**
  * What a backup archive holds for eyes, beside `unlease.json` (what restores): each app's Markdown
- * under its own folder (Carnet's: `apps/notes/markdown.ts`), the photos and files under `Fichiers/`,
+ * under its own folder (Carnet's: `apps/notes/markdown.ts`, Pages': `apps/pages/markdown.ts`), the photos and files under `Fichiers/`,
  * and `LISEZMOI.md`, which says what is where.
  */
 import { SUITE_NAME, SUITE_SLUG } from '@unlease/core/apps';
+import { LINES, ROLES } from '@unlease/design/palette';
 
 /** Where the archive keeps photos and files. */
 export const FILES_DIR = 'Fichiers';
@@ -19,6 +20,17 @@ export function localTime(time: number): string {
 export function relativeLink(from: string, to: string): string {
   return `<${'../'.repeat(from.split('/').length - 1)}${to}>`;
 }
+
+/** A front matter: JSON strings are valid YAML. */
+export function frontMatter(entries: readonly (readonly [string, unknown])[]): string {
+  const lines = entries.filter(([, value]) => value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)).map(([key, value]) => `${key}: ${JSON.stringify(value)}`);
+  return `---\n${lines.join('\n')}\n---\n\n`;
+}
+
+export const escapeLabel = (text: string): string => text.replace(/([[\]\\])/g, '\\$1');
+
+/** A drawing's inks as the day paints them: its file reads on white. */
+export const DAY_INKS = (ink: string): string => (ink === 'ink' ? ROLES.light.ink : (LINES.light[ink as keyof typeof LINES.light]?.fill ?? ROLES.light.ink));
 
 export interface MarkdownFile {
   readonly path: string;

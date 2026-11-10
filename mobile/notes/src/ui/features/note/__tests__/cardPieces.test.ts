@@ -1,5 +1,6 @@
 import { cardParagraphs, noteLines } from '@unlease/notes/services/noteBody';
 import { textReach } from '@unlease/design/textWrap';
+import { setMentionNamer } from '@unlease/notes/services/noteMentions';
 
 import { cardPieces, type CardPiece } from '../cardPieces';
 
@@ -41,5 +42,13 @@ describe('a formatted body on its card', () => {
     const shown = pieces('Le {b:croissant} du coin', 3, 'croiss');
     expect(shown.filter(piece => piece.match).map(piece => piece.text)).toEqual(['croiss']);
     expect(shown.find(piece => piece.text === 'ant')?.bold).toBe(true);
+  });
+
+  it('names a person mentioned, and finds them by that name', () => {
+    setMentionNamer(target => (target.id === 'abc' ? 'Léa Martin' : null));
+    const shown = pieces('Appeler {@contact=abc} demain', 3, 'léa');
+    expect(shown.map(piece => piece.text).join('')).toBe('Appeler Léa Martin demain');
+    expect(shown.filter(piece => piece.match).map(piece => piece.text)).toEqual(['Léa']);
+    setMentionNamer(() => null);
   });
 });

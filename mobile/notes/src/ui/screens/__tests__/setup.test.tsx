@@ -1,9 +1,11 @@
 /**
- * The first run against a stand-in server: connecting (a refusal said under the field it concerns),
- * the appearance (kept as it comes, or chosen), "Votre serveur" on a server that held nothing (S3
- * from Scaleway in Paris, the newest snapshot brought back, a row left for later), a server already
- * in use joined straight from the appearance, resuming mid-setup; and a phone that keeps its notes,
- * choosing its colours and its ground.
+ * The first run against a stand-in server: connecting (a refusal said under the field it concerns,
+ * or a sibling app's connection in one tap), « Vos applications » on a server still to set up
+ * (Carnet locked on, Pages ticked or not and saved at once, the announced ones not tickable), "Votre
+ * serveur" (S3 from Scaleway in Paris, the newest snapshot brought back, a row left for later), the
+ * appearance (kept as it comes, chosen, or a sibling's), « Commencer » marking the server set up; a
+ * server already set up joined straight from the appearance, resuming mid-setup; and a phone that
+ * keeps everything here, choosing its colours and its ground.
  */
 import React from 'react';
 import { BackHandler, TextInput } from 'react-native';
@@ -13,15 +15,16 @@ import { DEFAULT_APPEARANCE, PALETTE_COLORS } from '@unlease/design/appearance';
 import { restoreSummary } from '@unlease/core/services/admin';
 import type { AdminStatus, RestoreReport } from '@unlease/core/sync/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
-import { closeDatabase, openDatabase } from '@data/db/database';
-import { readPreferences, writePreference } from '@data/repositories/stateRepository';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
+import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { resetBootstrap } from '@app/bootstrap';
 import { resetLibrary } from '@app/store/libraryStore';
-import { useSettingsStore } from '@app/store/settingsStore';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
 import { AppProviders } from '@app/providers/AppProviders';
 import { navigationRef } from '@ui/navigation/navigationRef';
 
-import { state as media, __reset as resetMedia } from '../../../../__mocks__/NativeMedia';
+import { state as media, __reset as resetMedia } from '../../../../../shared/__mocks__/NativeMedia';
+import { state as suite, __reset as resetSuite } from '../../../../../shared/__mocks__/NativeSuiteLink';
 
 jest.useFakeTimers();
 
@@ -29,10 +32,13 @@ const NEWEST = 'carnet-2026-10-26T03-00-00Z.tar.gz';
 const OLDER = 'carnet-2026-10-25T03-00-00Z.tar.gz';
 
 const UNSET: ServerSettings = {
+  apps: { enabled: ['notes'] },
+  setup: { done: false },
   analysis: { enabled: false, keySource: null, keyHint: null, model: 'claude-opus-5-5', budgetUsd: 15 },
   pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
-  backup: { configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null, recurrence: 'off', keep: 30 },
+  backup: { configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null, recurrence: 'off', keep: 30, storageClass: 'STANDARD' },
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
+  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
 };
 
@@ -47,10 +53,10 @@ let server: Server;
 
 function status(): AdminStatus {
   return {
-    server: { version: '0.1.0', notes: server.notes, pages: 0, files: 0, fileBytes: 0 },
+    server: { version: '0.1.0', notes: server.notes, pages: 0, contacts: 0, events: 0, files: 0, fileBytes: 0 },
     backup: { running: false, last: null, lastSuccessAt: null, nextAt: null },
     drive: { running: false, files: 0, bytes: 0, waiting: 0, lastPassAt: null, error: null },
-    restore: { running: server.restoring, startedAt: null, finishedAt: null, error: null, report: server.report },
+    restore: { running: server.restoring, startedAt: null, finishedAt: null, error: null, report: server.report, thawing: false },
   };
 }
 
@@ -71,11 +77,15 @@ function fakeFetch(input: string, init?: { method?: string; body?: unknown }) {
   const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
   calls.push({ method, path: `${url.pathname}${url.search}`, body });
   if (url.pathname === '/api/sync') return new Promise(() => {});
-  if (url.pathname === '/api/health') return Promise.resolve(answer({ ok: true, analysis: false, version: '0.1.0' }));
+  if (url.pathname === '/api/health') return Promise.resolve(answer({ ok: true, analysis: false, version: '0.1.0', apps: server.settings.apps.enabled, setup: server.settings.setup.done }));
   if (url.pathname === '/api/settings' && method === 'PUT') {
-    const patch = body?.backup as Partial<ServerSettings['backup']> & { secretAccessKey?: string };
-    const { secretAccessKey, ...fields } = patch;
-    server.settings = { ...server.settings, backup: { ...server.settings.backup, ...fields, configured: true, secretHint: `…${secretAccessKey?.slice(-4)}`, recurrence: 'daily' } };
+    if (Array.isArray(body?.apps)) server.settings = { ...server.settings, apps: { enabled: body.apps as ServerSettings['apps']['enabled'] } };
+    if (body?.setupDone === true) server.settings = { ...server.settings, setup: { done: true } };
+    if (body?.backup) {
+      const patch = body.backup as Partial<ServerSettings['backup']> & { secretAccessKey?: string };
+      const { secretAccessKey, ...fields } = patch;
+      server.settings = { ...server.settings, backup: { ...server.settings.backup, ...fields, configured: true, secretHint: `…${secretAccessKey?.slice(-4)}`, recurrence: 'daily' } };
+    }
     return Promise.resolve(answer(server.settings));
   }
   if (url.pathname === '/api/settings') return Promise.resolve(answer(server.settings));
@@ -164,6 +174,7 @@ beforeEach(() => {
   calls = [];
   backs = [];
   resetMedia();
+  resetSuite();
   server = { settings: UNSET, notes: 0, restoring: false, report: null };
   global.fetch = jest.fn(fakeFetch) as unknown as typeof fetch;
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, handler) => {
@@ -172,26 +183,41 @@ beforeEach(() => {
   });
 });
 
+const puts = () => calls.filter(call => call.method === 'PUT' && call.path === '/api/settings').map(call => call.body);
+
+async function connect(tree: ReactTestRenderer, address = 'carnet.test'): Promise<void> {
+  const [field, token] = fields(tree);
+  await type(field!, address);
+  await type(token!, 'jeton');
+  await press(tree, 'Se connecter');
+}
+
 describe('the first run', () => {
-  it('sets a new server up from its list: S3 from Scaleway in Paris, the newest snapshot restored, then the board', async () => {
+  it('sets a new server up: its apps, then its list (S3 from Scaleway in Paris, the newest snapshot restored), the appearance, then the board', async () => {
     const tree = await boot(false);
-    const [address, token] = fields(tree);
-    await type(address!, 'carnet.test');
-    await type(token!, 'jeton');
-    await press(tree, 'Se connecter');
+    // Each field says where its value comes from.
+    expect(textOf(tree)).toContain('La valeur de UNLEASE_TOKEN');
+    await connect(tree);
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
     // Not onboarded until the end.
     expect(useSettingsStore.getState().onboarded).toBe(false);
-    // How the app looks here first: kept as it comes, it is skipped.
-    expect(textOf(tree)).toContain('Étape 2 sur 3');
-    expect(textOf(tree)).toContain('Palettes');
-    await press(tree, 'Passer');
-    expect(useSettingsStore.getState().appearance).toEqual(DEFAULT_APPEARANCE);
-    expect(textOf(tree)).toContain('Étape 3 sur 3');
+
+    // The server's apps first: Carnet is this app, locked on; the others ticked or not. The head says whose setup it is, as on the web.
+    expect(textOf(tree)).toContain('Mise en route · Étape 2 sur 4');
+    expect(textOf(tree)).toContain('Vos applications');
+    const carnet = pressables(tree, 'Carnet');
+    expect(carnet).toHaveLength(0);
+    expect(textOf(tree)).toContain('Cette application');
+    expect(pressables(tree, 'Agenda')).toHaveLength(1);
+    await press(tree, 'Pages');
+    expect(puts()).toContainEqual({ apps: ['notes', 'pages'] });
+    await press(tree, 'Continuer');
+
+    expect(textOf(tree)).toContain('Étape 3 sur 4');
     expect(textOf(tree)).toContain('Votre serveur');
     // On a server that held nothing, bringing a backup back comes first; every row waits to be opened.
-    for (const row of ['Retrouver vos données', 'Lecture des liens par Claude', 'Sauvegarde sur S3', 'Fichiers sur Seafile', 'Films et séries avec Seerr']) expect(pressables(tree, row)).toHaveLength(1);
-    expect(textOf(tree).indexOf('Retrouver vos données')).toBeLessThan(textOf(tree).indexOf('Lecture des liens par Claude'));
+    for (const row of ['Retrouver vos données', 'Claude', 'Sauvegarde sur S3', 'Fichiers sur Seafile', 'Films et séries avec Seerr']) expect(pressables(tree, row)).toHaveLength(1);
+    expect(textOf(tree).indexOf('Retrouver vos données')).toBeLessThan(textOf(tree).indexOf('Sauvegarde sur S3'));
 
     await press(tree, 'Sauvegarde sur S3');
     // No snapshot list, download or archive restore in the setup.
@@ -208,8 +234,7 @@ describe('the first run', () => {
     await type(secret!, 'secret-k3Xq');
     expect(pressables(tree, 'Plus tard')).toHaveLength(1);
     await press(tree, 'Tester et enregistrer');
-    const put = calls.find(call => call.method === 'PUT' && call.path === '/api/settings');
-    expect(put?.body).toEqual({
+    expect(puts()).toContainEqual({
       backup: { endpoint: 'https://s3.eu-west-3.amazonaws.com', region: 'eu-west-3', bucket: 'sauvegardes', prefix: 'unlease', accessKeyId: 'AKIA', secretAccessKey: 'secret-k3Xq' },
     });
 
@@ -227,35 +252,75 @@ describe('the first run', () => {
 
     server.restoring = false;
     server.notes = 12;
-    server.report = { mode: 'merge', source: NEWEST, records: 12, files: 3, missingFiles: 0, needDrive: 0 };
+    server.report = { mode: 'merge', source: NEWEST, records: 12, files: 3, missingFiles: 0, needDrive: 0, coldFiles: 0 };
     await settle(3_000);
     expect(textOf(tree)).toContain(restoreSummary(server.report));
     await press(tree, 'Continuer');
     expect(textOf(tree)).toContain('Votre serveur');
 
-    // A row opened, Back goes to the list, not out of the app.
-    await press(tree, 'Lecture des liens par Claude');
-    expect(textOf(tree)).toContain('Claude');
+    // A row opened, Back goes to the list, not out of the app; Claude's form says what each app on asks of it.
+    await press(tree, 'Claude');
+    expect(textOf(tree)).toContain('Carnet : chaque lien enregistré est lu');
+    expect(textOf(tree)).toContain('Pages : des questions sur vos pages');
     expect(await pressBack()).toBe(true);
     expect(pressables(tree, 'Sauvegarde sur S3')).toHaveLength(1);
 
+    // How the apps look here comes last.
+    await press(tree, 'Continuer');
+    expect(textOf(tree)).toContain('Étape 4 sur 4');
+    expect(textOf(tree)).toContain('Palettes');
     await press(tree, 'Commencer');
+    // Set up once for every device.
+    expect(puts()).toContainEqual({ setupDone: true });
+    expect(useSettingsStore.getState().onboarded).toBe(true);
+    expect(useSettingsStore.getState().apps).toEqual(['notes', 'pages']);
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
+  });
+
+  it('keeps Carnet on a server that ran another app alone, and never asks for an announced one', async () => {
+    server.settings = { ...UNSET, apps: { enabled: ['pages'] } };
+    const tree = await boot(false);
+    await connect(tree);
+    expect(textOf(tree)).toContain('Vos applications');
+    // This app goes on at once.
+    expect(puts()).toContainEqual({ apps: ['pages', 'notes'] });
+    // Pages unticked, Carnet stays.
+    await press(tree, 'Pages');
+    expect(puts()).toContainEqual({ apps: ['notes'] });
+    expect(server.settings.apps.enabled).toEqual(['notes']);
+  });
+
+  it('joins a server already set up straight from the appearance, and leaves its setup alone', async () => {
+    server.notes = 4;
+    server.settings = { ...UNSET, setup: { done: true } };
+    const tree = await boot(false);
+    await connect(tree, 'https://carnet.test');
+    expect(textOf(tree)).toContain('Étape 2 sur 2');
+    expect(textOf(tree)).not.toContain('Votre serveur');
+    expect(textOf(tree)).not.toContain('Vos applications');
+    await press(tree, 'Commencer');
+    expect(puts()).toEqual([]);
     expect(useSettingsStore.getState().onboarded).toBe(true);
     expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
   });
 
-  it('joins a server already in use straight from the appearance', async () => {
-    server.notes = 4;
+  it('connects in one tap with the connection of a sibling app on this phone, and starts from its colours', async () => {
+    server.settings = { ...UNSET, setup: { done: true } };
+    suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '' }];
     const tree = await boot(false);
-    const [address, token] = fields(tree);
-    await type(address!, 'https://carnet.test');
-    await type(token!, 'jeton');
-    await press(tree, 'Se connecter');
+    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts']);
+    expect(textOf(tree)).toContain('Pages est déjà relié à carnet.test sur ce téléphone.');
+    await press(tree, 'Utiliser la connexion de Pages');
+    expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
+    // Nothing typed: the token was the sibling's.
+    expect(calls.find(call => call.path === '/api/settings' && call.method === 'GET')).toBeDefined();
     expect(textOf(tree)).toContain('Étape 2 sur 2');
-    expect(textOf(tree)).not.toContain('Votre serveur');
+    expect(textOf(tree)).toContain('Les couleurs de Pages sur ce téléphone, reprises ici.');
+    expect(useSettingsStore.getState().appearance).toMatchObject(PALETTE_COLORS.sarcelle);
     await press(tree, 'Commencer');
     expect(useSettingsStore.getState().onboarded).toBe(true);
-    expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
+    // And this app tells its siblings in turn.
+    expect(suite.shared).toMatchObject({ server: 'https://carnet.test', token: 'jeton' });
   });
 
   it('says a refused token under the token, and keeps what was typed', async () => {
@@ -274,12 +339,38 @@ describe('the first run', () => {
     expect(fields(tree)[1]!.props.value).toBe('mauvais');
   });
 
-  it('resumes after the server when reopened mid-setup, and Back returns to the server', async () => {
+  it('says what is missing under each field first, then goes from the address to the token, whose « OK » connects', async () => {
+    const tree = await boot(false);
+    let [address, token] = fields(tree);
+    // The keyboard's action moves on, then closes it on the last field.
+    expect(address!.props.returnKeyType).toBe('next');
+    expect(token!.props.returnKeyType).toBe('done');
+    // Autofill keeps the pair: the person's own server.
+    expect(address!.props.autoComplete).toBe('username');
+    expect(token!.props.autoComplete).toBe('password');
+    await press(tree, 'Se connecter');
+    expect(textOf(tree)).toContain('Saisissez l’adresse de votre serveur.');
+    expect(textOf(tree)).toContain('Saisissez le jeton de votre serveur.');
+    expect(textOf(tree)).toContain('2 champs sont à corriger.');
+    expect(calls.filter(call => call.path === '/api/health')).toEqual([]);
+    [address, token] = fields(tree);
+    await type(address!, 'carnet.test');
+    // Right again at once: its problem goes as it is typed.
+    expect(textOf(tree)).not.toContain('Saisissez l’adresse de votre serveur.');
+    await type(fields(tree)[1]!, 'jeton');
+    await act(async () => {
+      fields(tree)[1]!.props.onSubmitEditing({ nativeEvent: { text: 'jeton' } });
+    });
+    await settle();
+    expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
+  });
+
+  it('resumes after the welcome when reopened mid-setup, and Back returns to it', async () => {
     const tree = await boot(true);
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(textOf(tree)).toContain('Palettes');
-    // The server still holds nothing: its list is a step.
-    expect(textOf(tree)).toContain('Étape 2 sur 3');
+    // The server is still to set up: its apps come first.
+    expect(textOf(tree)).toContain('Vos applications');
+    expect(textOf(tree)).toContain('Étape 2 sur 4');
     expect(await pressBack()).toBe(true);
     expect(textOf(tree)).toContain('Se connecter');
     expect(fields(tree)[0]!.props.value).toBe('https://carnet.test');
@@ -289,7 +380,7 @@ describe('the first run', () => {
 
   it('says plainly when there is no S3 to restore from, offers to add it, and restores a file from the phone instead', async () => {
     const tree = await boot(true);
-    await press(tree, 'Passer');
+    await press(tree, 'Continuer');
     await press(tree, 'Retrouver vos données');
     expect(textOf(tree)).toContain('Pas de stockage S3');
     await press(tree, 'Ajouter le stockage S3');
@@ -305,21 +396,21 @@ describe('the first run', () => {
     server.restoring = false;
     await settle(3_000);
     await press(tree, 'Plus tard');
-    expect(pressables(tree, 'Lecture des liens par Claude')).toHaveLength(1);
+    expect(pressables(tree, 'Claude')).toHaveLength(1);
   });
 
   it('speaks English from the welcome on', async () => {
     const tree = await boot(false);
     await press(tree, 'English');
     expect(useSettingsStore.getState().locale).toBe('en');
-    expect(pressables(tree, 'Keep my notes on this phone')).toHaveLength(1);
+    expect(pressables(tree, 'Keep everything on this phone')).toHaveLength(1);
     await press(tree, 'Français');
     expect(useSettingsStore.getState().locale).toBe('fr');
   });
 
-  it('lets a phone that keeps its notes choose its colours and its ground, then start', async () => {
+  it('lets a phone that keeps everything here choose its colours and its ground, then start', async () => {
     const tree = await boot(false);
-    await press(tree, 'Garder mes notes sur ce téléphone');
+    await press(tree, 'Tout garder sur ce téléphone');
     expect(textOf(tree)).toContain('Étape 2 sur 2');
     expect(textOf(tree)).toContain('Palettes');
     expect(pressables(tree, 'Commencer')).toHaveLength(1);

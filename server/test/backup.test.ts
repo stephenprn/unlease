@@ -103,15 +103,31 @@ describe('S3 settings', () => {
     expect(await putSettings(target, { backup: { ...S3, bucket: 'Pas Un Bucket' } })).toMatchObject({ status: 400, body: { error: 'Nom de bucket invalide' } });
     expect(target.settings.backup()).toBeNull();
   });
+
+  it('tries a storage class on the bucket before keeping it, and refuses one the store does not offer', async () => {
+    const target = server();
+    expect((await putSettings(target, { backup: S3 })).body.backup).toMatchObject({ storageClass: 'STANDARD' });
+    expect(await putSettings(target, { backup: { storageClass: 'FROID' } })).toMatchObject({ status: 400, body: { error: 'Classe de stockage inconnue' } });
+    target.s3.refusedClasses.add('DEEP_ARCHIVE');
+    expect(await putSettings(target, { backup: { storageClass: 'DEEP_ARCHIVE' } })).toMatchObject({ status: 400, body: { error: 'Ce stockage ne propose pas cette classe' } });
+    expect(target.settings.backup()?.storageClass).toBe('STANDARD');
+    target.s3.log.length = 0;
+    // The class alone counts as a change of connection: the probe goes in it.
+    const saved = await putSettings(target, { backup: { storageClass: 'GLACIER' } });
+    expect(saved).toMatchObject({ status: 200, body: { backup: { storageClass: 'GLACIER' } } });
+    expect(target.s3.log).toEqual(['GET ', 'PUT carnet/.unlease-essai', 'DELETE carnet/.unlease-essai']);
+    expect(await putSettings(target, { backup: { keep: 0 } })).toMatchObject({ status: 400, body: { error: 'Durée de conservation invalide' } });
+    expect((await putSettings(target, { backup: { keep: 400 } })).body.backup).toMatchObject({ keep: 400 });
+  });
 });
 
 describe('a backup run', () => {
-  it('sends each file once, then a readable snapshot, and keeps the newest ones', async () => {
+  it('sends each file once, then a readable snapshot, and keeps those of the last `keep` days', async () => {
     const target = server();
     const { photo } = await seedLibrary(target);
-    expect((await putSettings(target, { backup: { ...S3, keep: 2 } })).status).toBe(200);
+    expect((await putSettings(target, { backup: { ...S3, keep: 1 } })).status).toBe(200);
     for (let run = 0; run < 3; run += 1) {
-      target.time.value += 3_600_000;
+      target.time.value += 86_400_000;
       await target.backups.run('manual');
       expect(target.backups.status().last).toMatchObject({ ok: true, filesSent: run === 0 ? 2 : 0 });
     }
@@ -121,15 +137,17 @@ describe('a backup run', () => {
     expect(target.s3.objects.has(`carnet/fichiers/${PDF}.pdf`)).toBe(true);
 
     const files = await entries(target.s3.objects.get(snapshots(target).at(-1)!)!.data);
-    expect([...files.keys()].filter(name => name.endsWith('.md')).sort()).toEqual(['Carnet/Collections/Recettes.md', 'Carnet/Notes/Courses.md', 'Carnet/Pages/Projet.md', 'Carnet/Pages/Projet/Sous-page.md', 'LISEZMOI.md']);
+    expect([...files.keys()].filter(name => name.endsWith('.md')).sort()).toEqual(['Carnet/Collections/Recettes.md', 'Carnet/Notes/Courses.md', 'LISEZMOI.md', 'Pages/Projet.md', 'Pages/Projet/Sous-page.md']);
     expect([...files.keys()].some(name => name.startsWith('Fichiers/'))).toBe(false);
+    // Each app's line, its folder named after it.
+    expect(files.get('LISEZMOI.md')!.toString('utf8')).toMatch(/- `Carnet\/` : [^\n]+\n- `Pages\/` : une page par fichier/);
     const courses = files.get('Carnet/Notes/Courses.md')!.toString('utf8');
     expect(courses).toContain('titre: "Courses"');
     expect(courses).toContain('- [ ] lait');
     expect(courses).toContain('](<../../Fichiers/Carnet/Notes/Courses/');
-    const projet = files.get('Carnet/Pages/Projet.md')!.toString('utf8');
-    expect(projet).toContain('[Sous-page](<../../Carnet/Pages/Projet/Sous-page.md>)');
-    expect(projet).toContain('[Plan.pdf](<../../Fichiers/Carnet/Pages/Projet/Plan.pdf>)');
+    const projet = files.get('Pages/Projet.md')!.toString('utf8');
+    expect(projet).toContain('[Sous-page](<../Pages/Projet/Sous-page.md>)');
+    expect(projet).toContain('[Plan.pdf](<../Fichiers/Pages/Projet/Plan.pdf>)');
     expect(files.get('Carnet/Collections/Recettes.md')!.toString('utf8')).toContain('- [Tarte aux pommes](<https://example.fr/tarte>) · Exemple');
     const document = JSON.parse(files.get('unlease.json')!.toString('utf8'));
     expect(document).toMatchObject({ format: 'unlease-backup', version: 1 });
@@ -159,7 +177,7 @@ describe('a backup run', () => {
     const document = JSON.parse((await entries(target.s3.objects.get(snapshots(target)[0]!)!.data)).get('unlease.json')!.toString('utf8'));
     const drive = Object.fromEntries(document.files.map((file: { id: string; drive: string | null }) => [file.id, file.drive]));
     expect(drive[PHOTO]).toMatch(/^\/Unlease\/Carnet\/Notes\/Courses\/.+\.jpg$/);
-    expect(drive[PDF]).toBe('/Unlease/Carnet/Pages/Projet/Plan.pdf');
+    expect(drive[PDF]).toBe('/Unlease/Pages/Projet/Plan.pdf');
     expect(target.seafile.files()).toEqual(expect.arrayContaining([drive[PHOTO], drive[PDF]]));
   });
 
@@ -171,9 +189,9 @@ describe('a backup run', () => {
     expect(target.s3.objects.has(`carnet/fichiers/${PHOTO}.jpg`)).toBe(true);
     expect((await putSettings(target, { drive: SEAFILE(target) })).status).toBe(200);
     await target.drive.run();
-    target.time.value += 60_000;
+    target.time.value += 2 * 86_400_000;
     await target.backups.run('manual');
-    target.time.value += 60_000;
+    target.time.value += 2 * 86_400_000;
     await target.backups.run('manual');
     expect([...target.s3.objects.keys()].filter(key => key.startsWith('carnet/fichiers/'))).toEqual([]);
   });
@@ -186,14 +204,14 @@ describe('a backup run', () => {
     expect(target.s3.objects.has(`carnet/fichiers/${PHOTO}.jpg`)).toBe(true);
     // Its file gone while its photo still shows in the note: S3's copy may be the last one, it stays.
     await target.blobs.remove(PHOTO);
-    target.time.value += 60_000;
+    target.time.value += 2 * 86_400_000;
     await target.backups.run('manual');
     expect(target.s3.objects.has(`carnet/fichiers/${PHOTO}.jpg`)).toBe(true);
     // The photo deleted too: once no kept snapshot names it, it goes.
     await postSync(target, { node: 'phone1', since: 0, records: [rec('attachment', PHOTO, { deletedAt: T0 }, T0)] });
-    target.time.value += 60_000;
+    target.time.value += 2 * 86_400_000;
     await target.backups.run('manual');
-    target.time.value += 60_000;
+    target.time.value += 2 * 86_400_000;
     await target.backups.run('manual');
     expect(snapshots(target)).toHaveLength(1);
     expect(target.s3.objects.has(`carnet/fichiers/${PHOTO}.jpg`)).toBe(false);
@@ -244,7 +262,7 @@ describe('a backup run', () => {
     // Once it holds something, its own snapshots come and go; the old server's stays, and so do its files.
     await postSync(fresh, { node: 'phone2', since: 0, records: [rec('note', 'note-neuve', { kind: 'text', title: 'Neuve', body: '', labelIds: [], pinned: false, archived: false, trashedAt: null, position: 'a0', createdAt: T0, deletedAt: null }, T0, 'phone2')] });
     for (let run = 0; run < 3; run += 1) {
-      fresh.time.value += 3_600_000;
+      fresh.time.value += 2 * 86_400_000;
       await fresh.backups.run('manual');
     }
     expect(snapshots(fresh)).toHaveLength(2);
@@ -261,6 +279,40 @@ describe('a backup run', () => {
     await target.backups.run('manual');
     expect(snapshots(target)).toHaveLength(2);
     expect(target.backups.status().last).toMatchObject({ ok: true, error: 'L’horloge du serveur semble en retard : les anciennes sauvegardes sont gardées' });
+  });
+
+  it('sends files and snapshots in the class chosen, and lists the cold ones as such', async () => {
+    const target = server();
+    await seedLibrary(target);
+    expect((await putSettings(target, { backup: { ...S3, storageClass: 'GLACIER' } })).status).toBe(200);
+    await target.backups.run('manual');
+    expect(target.backups.status().last).toMatchObject({ ok: true });
+    expect(target.s3.objects.get(`carnet/fichiers/${PHOTO}.jpg`)?.storageClass).toBe('GLACIER');
+    expect(target.s3.objects.get(snapshots(target)[0]!)?.storageClass).toBe('GLACIER');
+    const list = (await (await target.app.request('/api/admin/backups', { headers: AUTH })).json()) as { snapshots: { cold: boolean }[] };
+    expect(list.snapshots).toEqual([expect.objectContaining({ cold: true })]);
+    // Standard again: sent without the header, so the bucket's default applies.
+    expect((await putSettings(target, { backup: { storageClass: 'STANDARD' } })).status).toBe(200);
+    target.time.value += 3_600_000;
+    await target.backups.run('manual');
+    expect(target.s3.objects.get(snapshots(target).at(-1)!)?.storageClass).toBeUndefined();
+  });
+
+  it('asks a cold snapshot out of Glacier before handing a download of it', async () => {
+    const target = server();
+    await seedLibrary(target);
+    expect((await putSettings(target, { backup: { ...S3, storageClass: 'GLACIER' } })).status).toBe(200);
+    await target.backups.run('manual');
+    const name = snapshots(target)[0]!.slice('carnet/sauvegardes/'.length);
+    const ask = () => target.app.request('/api/admin/downloads', { method: 'POST', headers: { ...AUTH, 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot: name }) });
+    const first = await ask();
+    expect(first.status).toBe(409);
+    expect(await first.json()).toEqual({ error: 'Cette sauvegarde est dans Glacier : sa sortie est demandée, réessayez dans quelques heures' });
+    expect(target.s3.log).toContain(`POST carnet/sauvegardes/${name}`);
+    expect((await ask()).status).toBe(409);
+    target.s3.thawAll();
+    const ticket = (await (await ask()).json()) as { url: string };
+    expect((await target.app.request(ticket.url)).status).toBe(200);
   });
 
   it('tries again what S3 could not answer, and never what it refused', async () => {
@@ -448,6 +500,44 @@ describe('restoring', () => {
     expect(target.records.get('note', NOTE)?.fields.title).toBe('Courses');
   });
 
+  it('asks a snapshot in Glacier out with its files, then restores it once run again', async () => {
+    const source = server();
+    await seedLibrary(source);
+    expect((await putSettings(source, { backup: { ...S3, storageClass: 'GLACIER' } })).status).toBe(200);
+    await source.backups.run('manual');
+    const name = snapshots(source)[0]!.slice('carnet/sauvegardes/'.length);
+    const target = server();
+    for (const [key, object] of source.s3.objects) target.s3.objects.set(key, object);
+    expect((await putSettings(target, { backup: S3 })).status).toBe(200);
+
+    expect((await restore(target, 'merge', { snapshot: name })).status).toBe(202);
+    await settle(target);
+    expect(target.restore.status()).toMatchObject({ running: false, error: null, report: null, thawing: true });
+    expect(target.s3.log.filter(line => line.startsWith('POST ')).sort()).toEqual([`POST carnet/fichiers/${PDF}.pdf`, `POST carnet/fichiers/${PHOTO}.jpg`, `POST carnet/sauvegardes/${name}`]);
+    const status = (await (await target.app.request('/api/admin', { headers: AUTH })).json()) as { restore: { thawing: boolean } };
+    expect(status.restore.thawing).toBe(true);
+
+    target.s3.thawAll();
+    expect((await restore(target, 'merge', { snapshot: name })).status).toBe(202);
+    await settle(target);
+    expect(target.restore.status()).toMatchObject({ error: null, thawing: false, report: { files: 2, missingFiles: 0, coldFiles: 0 } });
+  });
+
+  it('counts a cold file it met while restoring, asked out for the next run', async () => {
+    const { source, name } = await backedUp();
+    const target = server();
+    for (const [key, object] of source.s3.objects) target.s3.objects.set(key, key.endsWith(`${PHOTO}.jpg`) ? { ...object, storageClass: 'GLACIER' } : object);
+    expect((await putSettings(target, { backup: S3 })).status).toBe(200);
+    expect((await restore(target, 'merge', { snapshot: name })).status).toBe(202);
+    await settle(target);
+    expect(target.restore.status()).toMatchObject({ thawing: false, report: { files: 1, missingFiles: 0, coldFiles: 1 } });
+    expect(target.s3.objects.get(`carnet/fichiers/${PHOTO}.jpg`)?.thawed).toBe('ongoing');
+    target.s3.thawAll();
+    expect((await restore(target, 'merge', { snapshot: name })).status).toBe(202);
+    await settle(target);
+    expect(target.restore.status()).toMatchObject({ report: { files: 1, coldFiles: 0 } });
+  });
+
   it('rolls back what changed since, under a fresh server clock, and keeps what was created since', async () => {
     const { source, name } = await backedUp();
     const later = T0 + 60_000;
@@ -476,7 +566,7 @@ describe('restoring', () => {
     expect(ticket.name).toBe('unlease-2026-10-18T12-00-00Z-complet.tar.gz');
     const archive = Buffer.from(await (await source.app.request(ticket.url)).arrayBuffer());
     const inside = await entries(archive);
-    expect(inside.get(`Fichiers/Carnet/Pages/Projet/Plan.pdf`)?.equals(pdf)).toBe(true);
+    expect(inside.get(`Fichiers/Pages/Projet/Plan.pdf`)?.equals(pdf)).toBe(true);
 
     const target = server();
     expect((await restore(target, 'merge', new Uint8Array(archive), 'application/gzip')).status).toBe(202);

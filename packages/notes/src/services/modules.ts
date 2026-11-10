@@ -1,14 +1,14 @@
 /**
  * Which link modules show where (`notes/models/modules`): a collection's picks, the links each one
  * fits, what it needs; and the pieces of the modules that need no server (the way to a place, the
- * resale sites' searches, SensCritique's search, finding a link's kept copy).
+ * resale sites' searches, SensCritique's search). A link's kept copy is its `copy`, a page in Pages.
  */
 import { t, tx, type Locale } from '@unlease/core/i18n';
 import type { LinkItem, LinkKind, Note } from '../models/entities';
 import { DEFAULT_MODULES, isLinkModule, LINK_MODULES, MODULE_NEEDS, type LinkModule } from '../models/modules';
 import { BRIEF_FACTS, type LinkBrief } from '../sync/brief';
 import { CLAUDE_COST_PER_QUESTION, CLAUDE_COST_PER_WEB_SEARCH, type ClaudeModel } from '@unlease/core/sync/settings';
-import { isInBin, type BlockMap, type ChildIndex } from './blocks';
+import { APPS } from '@unlease/core/apps';
 import { cleanSiteName, linkRowText } from './linkRow';
 import { foldText } from '@unlease/core/services/search';
 import { siteDomain, slugTitle } from '@unlease/core/services/url';
@@ -40,6 +40,9 @@ export function moduleFits(module: LinkModule, link: LinkItem): boolean {
       return link.kind === 'product' && link.price !== null && !link.done;
     case 'secondhand':
       return link.kind === 'product' && !link.done;
+    case 'pricewatch':
+      // Something to buy, read as such (with its price or not: the watch may find one); bought, it is no longer watched.
+      return link.kind === 'product' && !link.done;
     case 'servings':
     case 'groceries':
     case 'cooking':
@@ -53,6 +56,8 @@ export function moduleFits(module: LinkModule, link: LinkItem): boolean {
       return (link.kind === 'film' || link.kind === 'series') && workTitle(link) !== '';
     case 'directions':
       return PLACE_KINDS.has(link.kind) && placeQuery(link) !== null;
+    case 'agenda':
+      return !link.done && (link.kind === 'event' || hasDateFact(link));
     case 'archive':
     case 'coverage':
       return link.kind === 'article';
@@ -61,11 +66,22 @@ export function moduleFits(module: LinkModule, link: LinkItem): boolean {
   }
 }
 
-/** What this device can reach: a server (it reads pages), Claude through it, and Seerr when the server has it. */
+/** Words of the facts Claude read that name a day (« Date : 12 mars », "When: …"): a link worth putting in the calendar. */
+const DATE_FACT = /^(date|dates|quand|when|le|jour|day|horaires?|séance|seance|showtime|départ|depart|departure|arrivée|arrivee|arrival|check-in|vol|flight)$/i;
+
+/** Whether what Claude read of a link holds a date (a fact labelled as one). */
+export function hasDateFact(link: Pick<LinkItem, 'attributes'>): boolean {
+  return link.attributes.some(fact => DATE_FACT.test(fact.label.trim()) && /\d/.test(fact.value));
+}
+
+/** What this device can reach: a server (it reads pages), Claude through it, Seerr when the server has it, and Pages when the server runs it. */
 export interface ModuleAbilities {
   readonly server: boolean;
   readonly reading: boolean;
   readonly seerr: boolean;
+  readonly pages: boolean;
+  /** Agenda runs on the server (« Ajouter à l’agenda »). */
+  readonly agenda: boolean;
 }
 
 export function moduleWorks(module: LinkModule, can: ModuleAbilities): boolean {
@@ -78,6 +94,10 @@ export function moduleWorks(module: LinkModule, can: ModuleAbilities): boolean {
       return can.reading;
     case 'seerr':
       return can.server && can.seerr;
+    case 'pages':
+      return can.server && can.pages;
+    case 'agenda':
+      return can.server && can.reading && can.agenda;
   }
 }
 
@@ -90,8 +110,10 @@ export function linkModules(link: LinkItem, line: Pick<Note, 'modules'> | null |
 export function moduleCost(module: LinkModule, model: ClaudeModel, usd: (value: number) => string): string {
   if (module === 'ask') return t('Environ {cost} par question, davantage avec le web', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
   if (MODULE_NEEDS[module] === 'claude') return t('Environ {cost} par recherche', { cost: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) });
+  if (module === 'agenda') return t('Environ {cost} par événement', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
   if (module === 'groceries') return t('Gratuit, ou Claude si la page ne donne pas ses ingrédients');
   if (module === 'cooking') return t('Gratuit, ou Claude si la page ne donne pas ses étapes');
+  if (module === 'pricewatch') return t('Gratuit, ou Claude une fois par semaine si la page cache son prix');
   return t('Gratuit');
 }
 
@@ -99,6 +121,8 @@ export function moduleCost(module: LinkModule, model: ClaudeModel, usd: (value: 
 export function moduleMissing(module: LinkModule, can: ModuleAbilities): string {
   if (moduleWorks(module, can)) return '';
   if (MODULE_NEEDS[module] === 'server' || !can.server) return t('Il faut un serveur relié');
+  if (MODULE_NEEDS[module] === 'pages') return t('Il faut activer {app} sur le serveur', { app: APPS.pages.name });
+  if (MODULE_NEEDS[module] === 'agenda' && !can.agenda) return t('Il faut activer {app} sur le serveur', { app: APPS.calendar.name });
   return MODULE_NEEDS[module] === 'seerr' ? t('Il faut relier Seerr dans l’administration') : t('Il faut une clé Claude');
 }
 
@@ -222,14 +246,3 @@ export function marketplaceSearches(link: Pick<LinkItem, 'title' | 'url' | 'curr
   return MARKETPLACES[region].map(site => ({ name: site.name, url: site.search(query) }));
 }
 
-/** The page "Garder une copie" made for a link: a live page whose first block is a bookmark of it. */
-export function copyOf(linkId: string, blocks: BlockMap, children: ChildIndex): string | null {
-  for (const block of Object.values(blocks)) {
-    if (block.kind !== 'bookmark' || block.deletedAt !== null || block.target?.type !== 'link' || block.target.id !== linkId || !block.parentId) continue;
-    const page = blocks[block.parentId];
-    if (!page || page.kind !== 'page' || page.deletedAt !== null || isInBin(blocks, page.id)) continue;
-    const first = (children[page.id] ?? []).find(id => blocks[id]?.deletedAt === null);
-    if (first === block.id) return page.id;
-  }
-  return null;
-}

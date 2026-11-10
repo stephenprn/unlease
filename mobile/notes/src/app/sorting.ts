@@ -11,8 +11,8 @@ import { SORT_LIMITS, type SortMove, type SortResponse, type SortTarget, type So
 import { linesOf } from './hooks/useLines';
 import { applyMoves, type Undo } from './store/actions';
 import { useLibraryStore } from './store/libraryStore';
-import { useSettingsStore } from './store/settingsStore';
-import { sortLinks, SyncError } from './sync/transport';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
+import { sortLinks, SyncError } from '@app/sync/transport';
 
 export interface Sorted {
   readonly moved: readonly SortMove[];

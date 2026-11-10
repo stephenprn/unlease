@@ -10,20 +10,20 @@
   },
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android --main-activity .MainActivity",
     "start": "react-native start",
-    "lint": "eslint src specs __mocks__ jest.setup.js App.tsx",
+    "lint": "eslint --flag v10_config_lookup_from_file src __mocks__ jest.setup.js App.tsx ../shared/src ../shared/specs ../shared/__mocks__",
     "test": "jest src",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify": "npm run typecheck && npm run lint -- --quiet && npm run test -- --silent",
     "fonts": "python3 ../../tools/fonts/build_fonts.py"
   },
   "codegenConfig": {
-    "name": "CarnetSpec",
+    "name": "UnleaseSpec",
     "type": "all",
-    "jsSrcsDir": "./specs",
+    "jsSrcsDir": "../shared/specs",
     "android": {
-      "javaPackageName": "com.stephenprn.carnet.specs"
+      "javaPackageName": "com.stephenprn.unlease.specs"
     }
   },
   "dependencies": {

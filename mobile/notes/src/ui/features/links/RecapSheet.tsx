@@ -15,10 +15,10 @@ import { RECAP_LIMITS, recapStopWords } from '@unlease/notes/services/works';
 import { findRecap } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Button, Organic, Sheet, SheetScroll } from '../../components';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { ReadingTrack } from './ReadingTrack';
+import { AppText, Button, FormFoot, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { Stepper } from './Stepper';
 import { useModuleSearch } from './useModuleSearch';
 
@@ -35,13 +35,13 @@ const LAST_STOPS = new Map<string, Stop>();
 export function RecapSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={MODULE_NAMES.recap} tall>
-      <RecapBody id={id} />
+      <RecapBody id={id} onDismiss={onDismiss} />
     </Sheet>
   );
 }
 
 /** Mounted with the sheet each time it opens: the picker first, then the question, dropped when the sheet goes. */
-function RecapBody({ id }: { id: string }) {
+function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
   const link = useLibraryStore(s => s.links[id]);
@@ -60,6 +60,7 @@ function RecapBody({ id }: { id: string }) {
   if (picking) {
     const { season, episode } = stop;
     return (
+      <>
       <SheetScroll contentContainerStyle={styles.body}>
         <AppText variant="bodyStrong" accessibilityRole="header">
           {t('Où vous êtes-vous arrêté ?')}
@@ -82,8 +83,12 @@ function RecapBody({ id }: { id: string }) {
           onMore={(episode ?? 0) < RECAP_LIMITS.episodes ? () => setStop({ season, episode: (episode ?? 0) + 1 }) : undefined}
         />
         <AppText variant="meta">{t('Claude s’arrête là : rien de la suite, ni d’indice sur ce qui vient.')}</AppText>
-        <Button label={t('Résumer')} icon="rewind" onPress={summarize} style={styles.end} />
       </SheetScroll>
+      <FormFoot>
+        <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
+        <Button label={t('Résumer')} icon="rewind" onPress={summarize} />
+      </FormFoot>
+      </>
     );
   }
 
@@ -100,20 +105,23 @@ function RecapBody({ id }: { id: string }) {
   }
   if (phase.kind === 'failed') {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
-        </AppText>
-        <View style={styles.actions}>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+          </AppText>
+        </SheetScroll>
+        <FormFoot>
           {change}
           <Button label={t('Réessayer')} onPress={() => search(false)} />
-        </View>
-      </View>
+        </FormFoot>
+      </>
     );
   }
   const { recap, characters, searchedAt } = phase.answer;
   const paragraphs = recap.split(/\n\s*\n/).filter(paragraph => paragraph.trim());
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       {phase.answer.stop ? <AppText variant="bodyStrong">{phase.answer.stop}</AppText> : null}
       <View style={styles.recap}>
@@ -139,20 +147,19 @@ function RecapBody({ id }: { id: string }) {
         </View>
       ) : null}
       <AppText variant="meta">{t('Écrit par Claude le {day} d’après des résumés trouvés sur le web, sans rien de la suite.', { day: formatDay(searchedAt, Date.now()) })}</AppText>
-      <View style={styles.actions}>
-        {change}
-        <Button kind="tonal" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
-      </View>
     </SheetScroll>
+    <FormFoot>
+      {change}
+      <Button kind="tonal" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
+    </FormFoot>
+    </>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-    waiting: { gap: 12, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
-    end: { alignSelf: 'flex-end' },
+    body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+    waiting: { gap: 12, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
     recap: { gap: 12 },
     people: { gap: 8 },
     // Who is who: a well in its own outline, ruled by paper, as the offers are.

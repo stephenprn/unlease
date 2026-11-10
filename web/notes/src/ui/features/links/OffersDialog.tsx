@@ -14,14 +14,14 @@ import { linkShop, marketplaceSearches } from '@unlease/notes/services/modules';
 import { offerDetails, offerGap, rangeText } from '@unlease/notes/services/offers';
 import type { Offer, OfferMarket, OfferResponse } from '@unlease/notes/sync/offers';
 
-import { useMinute } from '../../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { findOffers } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
-import { useOutline } from '../../components/Outline';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
+import { useOutline } from '@shared/ui/components/Outline';
 import { ReadingTrack } from './ReadingTrack';
 import styles from './links.module.css';
 
@@ -53,7 +53,7 @@ function OfferRow({ offer, market, link, index }: { offer: Offer; market: OfferM
         {details ? <p className="t-meta">{details}</p> : null}
       </div>
       {/* Without a page, its room stays: the prices keep one column. */}
-      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }

@@ -12,7 +12,10 @@ async function bodyBytes(init?: RequestInit): Promise<Buffer> {
 
 /** One bucket, path-style (`/<bucket>/<key>`). */
 export class FakeS3 {
-  readonly objects = new Map<string, { data: Buffer; type: string; at: number }>();
+  /** `storageClass` absent: STANDARD. A cold one (GLACIER, DEEP_ARCHIVE) reads only once `thawed` is 'yes'. */
+  readonly objects = new Map<string, { data: Buffer; type: string; at: number; storageClass?: string; thawed?: 'ongoing' | 'yes' }>();
+  /** Classes this store refuses (InvalidStorageClass). */
+  readonly refusedClasses = new Set<string>();
   /** Every request, `METHOD key`. */
   readonly log: string[] = [];
   /** Set to make every request fail this way. */
@@ -40,8 +43,25 @@ export class FakeS3 {
     if (failure) return this.error(failure.status, failure.code);
     this.log.push(`${method} ${key}`);
     if (method === 'PUT') {
-      this.objects.set(key, { data: await bodyBytes(init), type: headers.get('content-type') ?? '', at: this.now() });
+      const storageClass = headers.get('x-amz-storage-class') ?? undefined;
+      if (storageClass && this.refusedClasses.has(storageClass)) return this.error(400, 'InvalidStorageClass');
+      this.objects.set(key, { data: await bodyBytes(init), type: headers.get('content-type') ?? '', at: this.now(), ...(storageClass ? { storageClass } : {}) });
       return new Response(null, { status: 200 });
+    }
+    if (method === 'HEAD') {
+      const object = this.objects.get(key);
+      if (!object) return new Response(null, { status: 404 });
+      const restore: Record<string, string> = object.thawed ? { 'x-amz-restore': `ongoing-request="${object.thawed === 'ongoing'}"` } : {};
+      return new Response(null, { status: 200, headers: { 'content-length': String(object.data.length), ...(object.storageClass ? { 'x-amz-storage-class': object.storageClass } : {}), ...restore } });
+    }
+    if (method === 'POST' && url.searchParams.has('restore')) {
+      const object = this.objects.get(key);
+      if (!object) return this.error(404, 'NoSuchKey');
+      if (!this.cold(object)) return this.error(403, 'InvalidObjectState');
+      if (object.thawed === 'yes') return new Response(null, { status: 200 });
+      if (object.thawed === 'ongoing') return this.error(409, 'RestoreAlreadyInProgress');
+      object.thawed = 'ongoing';
+      return new Response(null, { status: 202 });
     }
     if (method === 'DELETE') {
       this.objects.delete(key);
@@ -52,17 +72,27 @@ export class FakeS3 {
       const max = Number(url.searchParams.get('max-keys') ?? 1000);
       const keys = [...this.objects.keys()].filter(name => name.startsWith(prefix)).sort().slice(0, max);
       const contents = keys
-        .map(name => `<Contents><Key>${xmlEscape(name)}</Key><LastModified>${new Date(this.objects.get(name)!.at).toISOString()}</LastModified><Size>${this.objects.get(name)!.data.length}</Size></Contents>`)
+        .map(name => `<Contents><Key>${xmlEscape(name)}</Key><LastModified>${new Date(this.objects.get(name)!.at).toISOString()}</LastModified><Size>${this.objects.get(name)!.data.length}</Size><StorageClass>${this.objects.get(name)!.storageClass ?? 'STANDARD'}</StorageClass></Contents>`)
         .join('');
       return new Response(`<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><IsTruncated>false</IsTruncated>${contents}</ListBucketResult>`, { headers: { 'content-type': 'application/xml' } });
     }
     if (method === 'GET') {
       const object = this.objects.get(key);
       if (!object) return this.error(404, 'NoSuchKey');
+      if (this.cold(object) && object.thawed !== 'yes') return this.error(403, 'InvalidObjectState');
       return new Response(new Uint8Array(object.data), { headers: { 'content-length': String(object.data.length), 'content-type': object.type } });
     }
     return this.error(405, 'MethodNotAllowed');
   };
+
+  /** Hours later: every object asked out of cold storage can be read. */
+  thawAll(): void {
+    for (const object of this.objects.values()) if (object.thawed === 'ongoing') object.thawed = 'yes';
+  }
+
+  private cold(object: { storageClass?: string }): boolean {
+    return object.storageClass === 'GLACIER' || object.storageClass === 'DEEP_ARCHIVE';
+  }
 
   private error(status: number, code: string): Response {
     return new Response(`<?xml version="1.0"?><Error><Code>${code}</Code><Message>${code}</Message></Error>`, { status, headers: { 'content-type': 'application/xml' } });

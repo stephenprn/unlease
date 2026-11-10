@@ -15,17 +15,26 @@
  * words selected (`RichBody`). Photos come from the image button, a drop on
  * the sheet, or a paste. With focus outside the text fields, E archives and #
  * deletes; Ctrl+Entrée closes.
+ *
+ * « Annuler » and « Rétablir » step through what was done to the note since it
+ * opened (`useNoteHistory`): in the wide bar always, each disabled at its end;
+ * on a phone-sized window in the date's place once something is done, as on
+ * the phone. ⌘Z and ⌘⇧Z (Ctrl+Z, Ctrl+Maj+Z, Ctrl+Y elsewhere) take them
+ * anywhere in the sheet, in its text fields too: one history for the whole note,
+ * never the browser's own per field, which would know nothing of the items an
+ * Enter split, a colour or a label. A drawing's strokes keep their own pair.
  */
-import { useEffect, useId, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react';
 
 import type { GlyphName } from '@unlease/design/glyphs';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { isLineColor, isNoteGradient, isRuledPattern } from '@unlease/design/colors';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { cutNotice, formatEdited, formatReminder } from '@unlease/core/services/format';
 import { bodyText } from '@unlease/notes/services/noteBody';
 
-import { useMinute } from '../../../app/hooks/useMinute';
+import { EventsMentioning } from '../events/EventsMentioning';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { attachFiles } from '../../../app/media/attach';
 import {
   canDuplicate,
@@ -41,31 +50,37 @@ import {
   setLabels,
   setPinned,
   setReminder,
+  setPeople,
   trashNotes,
   saveTypedText,
   addCheck,
 } from '../../../app/store/actions';
+import { useHasPeople } from '../../../app/hooks/useNotePeople';
+import { NoteHistoryContext, useNoteHistory } from '../../../app/hooks/useNoteHistory';
 import { useLibraryStore } from '../../../app/store/library';
 import { noteEditedAt } from '@unlease/notes/sync/entities';
-import { showError, showSnack, showUndo, showWarning, takeEditorFocus } from '../../../app/store/ui';
-import { onBeforePause } from '../../../app/sync/loop';
-import { Button } from '../../components/Button';
-import { Confirm } from '../../components/Dialog';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
-import { LabelMark } from '../../components/LabelMark';
-import { Layer } from '../../components/Layer';
-import { Menu, type MenuItem } from '../../components/Menu';
-import { Popover } from '../../components/Popover';
+import { showError, showSnack, showUndo, showWarning } from '@shared/app/store/ui';
+import { takeEditorFocus } from '../../../app/store/notesUi';
+import { onBeforePause } from '@shared/app/sync/loop';
+import { Button } from '@shared/ui/components/Button';
+import { Confirm } from '@shared/ui/components/Dialog';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { LabelMark } from '@shared/ui/components/LabelMark';
+import { Layer } from '@shared/ui/components/Layer';
+import { Menu, type MenuItem } from '@shared/ui/components/Menu';
+import { Popover } from '@shared/ui/components/Popover';
 import { currentPage, openNote } from '../../commands';
-import { isEditable } from '../../dom';
-import { parseRoute } from '../../router';
-import { NARROW, useMedia } from '../../useMedia';
+import { isApple, isEditable } from '@shared/ui/dom';
+import { parseRoute } from '@shared/ui/router';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { NoteFinishPicker } from './NoteFinishPicker';
 import { DrawingSheet } from '../drawing/DrawingSheet';
 import { ChecklistEditor } from './ChecklistEditor';
 import styles from './editor.module.css';
 import { LabelPicker } from './LabelPicker';
+import { PeopleChips } from '../people/PeopleChips';
+import { PeoplePicker } from '../people/PeoplePicker';
 import { PhotoGrid } from './PhotoGrid';
 import { ReminderPicker } from './ReminderPicker';
 import { RichBody, type RichBodyHandle } from './RichBody';
@@ -74,7 +89,7 @@ import { useKeptCaret } from './useKeptCaret';
 
 const SAVE_DELAY_MS = 350;
 
-type Picker = 'reminder' | 'color' | 'labels' | 'more' | 'add' | null;
+type Picker = 'reminder' | 'color' | 'labels' | 'people' | 'more' | 'add' | null;
 
 
 /** How many editors show each note: StrictMode mounts twice, and a note is discarded only once nothing shows it. */
@@ -142,6 +157,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const labels = useLibraryStore(s => s.labels);
   const now = useMinute();
   const narrow = useMedia(NARROW);
+  // People are offered once this browser holds some (Contacts' records, synced as Carnet reads them), or the note names some.
+  const hasPeople = useHasPeople();
   const titleId = useId();
   const [focus] = useState(takeEditorFocus);
   const [picker, setPicker] = useState<Picker>(null);
@@ -162,6 +179,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const reminderAnchor = useRef<HTMLButtonElement>(null);
   const colorAnchor = useRef<HTMLButtonElement>(null);
   const labelsAnchor = useRef<HTMLButtonElement>(null);
+  const peopleAnchor = useRef<HTMLButtonElement>(null);
   const moreAnchor = useRef<HTMLButtonElement>(null);
   const addAnchor = useRef<HTMLButtonElement>(null);
   const dragDepth = useRef(0);
@@ -195,7 +213,33 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     setTitleDraft(null);
   };
 
+  // « Annuler » and « Rétablir »: this session's changes, what is typed saved first (a drawing's strokes keep their own pair).
+  const history = useNoteHistory(id, !!note && note.deletedAt === null && note.trashedAt === null && note.kind !== 'drawing' && parting === undefined && !closing, () => {
+    flush('title');
+    flush('body');
+  });
+  const historyRef = useRef(history);
+  useLayoutEffect(() => {
+    historyRef.current = history;
+  });
+  // The browser's own « Annuler » (its menu) in a field of the sheet is the note's too; the body takes its own first.
+  const present = !!note && note.deletedAt === null;
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!present || !surface) return;
+    const onBeforeInput = (event: InputEvent): void => {
+      const steps = historyRef.current;
+      if (event.defaultPrevented || !steps.enabled || (event.inputType !== 'historyUndo' && event.inputType !== 'historyRedo')) return;
+      event.preventDefault();
+      if (event.inputType === 'historyUndo') steps.undo();
+      else steps.redo();
+    };
+    surface.addEventListener('beforeinput', onBeforeInput);
+    return () => surface.removeEventListener('beforeinput', onBeforeInput);
+  }, [present]);
+
   const editTitle = (value: string): void => {
+    history.keystroke();
     if (typed.current.title === null) typedFrom.current.title = useLibraryStore.getState().notes[id]?.title ?? '';
     typed.current.title = value;
     setTitleDraft(value);
@@ -297,6 +341,17 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    // ⌘Z and ⌘⇧Z (Ctrl+Y too, off a Mac) anywhere in the sheet: the note's own history (the body already handed it its own).
+    const key = event.key.toLowerCase();
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.nativeEvent.isComposing && !event.nativeEvent.defaultPrevented && history.enabled) {
+      const redo = (key === 'z' && event.shiftKey) || (key === 'y' && event.ctrlKey && !event.metaKey && !event.shiftKey);
+      if (key === 'z' || redo) {
+        event.preventDefault();
+        if (redo) history.redo();
+        else history.undo();
+        return;
+      }
+    }
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       event.preventDefault();
       close();
@@ -349,10 +404,10 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
           },
         }
       : { label: t('Masquer les cases à cocher'), supporting: t('La liste redevient du texte'), icon: 'note', onSelect: () => convertToText(id) };
-  // The web's "Partager": the note's text on the clipboard.
+  // The web's "Partager": the note's text on the clipboard, so it wears the copy, not the share.
   const copyText: MenuItem = {
     label: t('Copier le texte'),
-    icon: 'share',
+    icon: 'copy',
     onSelect: () => {
       flush('title');
       flush('body');
@@ -367,8 +422,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     },
   };
   const remove: MenuItem = { label: t('Supprimer'), icon: 'trash', danger: true, shortcut: '#', separatorBefore: true, onSelect: trash };
-  // On a phone the checkboxes are added with the rest, under "Ajouter", and the menu keeps the phone's order.
-  const menuItems: MenuItem[] = note.kind === 'drawing' ? [duplicate, remove] : narrow ? [copyText, duplicate, remove] : [duplicate, checkboxes, copyText, remove];
+  // The phone's order everywhere (its « Partager », « Dupliquer », « Supprimer »); a drawing has no words to copy. On a phone-sized
+  // window the checkboxes are added with the rest, under "Ajouter"; wider, where nothing else adds them, they come before « Supprimer ».
+  const menuItems: MenuItem[] = note.kind === 'drawing' ? [duplicate, remove] : narrow ? [copyText, duplicate, remove] : [copyText, duplicate, checkboxes, remove];
 
   const pin = (
     <IconButton
@@ -395,267 +451,298 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const archiveButton = <IconButton icon={note.archived ? 'unarchive' : 'archive'} label={note.archived ? t('Désarchiver') : t('Archiver')} shape={narrow ? 2 : 1} shortcut="E" onClick={archive} />;
   const colorButton = <IconButton ref={colorAnchor} icon="palette" label={t('Couleur et papier')} shape={1} hasPopup="dialog" expanded={picker === 'color'} onClick={() => setPicker('color')} />;
   const labelsButton = <IconButton ref={labelsAnchor} icon="tag" label={t('Labels')} shape={2} hasPopup="dialog" expanded={picker === 'labels'} onClick={() => setPicker('labels')} />;
+  const offersPeople = hasPeople || note.contactIds.length > 0;
+  const peopleButton = offersPeople ? (
+    <IconButton ref={peopleAnchor} icon={note.contactIds.length > 0 ? 'people' : 'personPlus'} label={t('Personnes')} shape={0} hasPopup="dialog" expanded={picker === 'people'} onClick={() => setPicker('people')} />
+  ) : null;
   const moreButton = <IconButton ref={moreAnchor} icon="more" label={t('Plus d’actions')} shape={narrow ? 1 : 2} hasPopup="menu" expanded={picker === 'more'} onClick={() => setPicker('more')} />;
   const forever = <IconButton icon="trash" label={t('Supprimer définitivement')} onClick={() => setConfirmForever(true)} />;
   const edited = <p className={`${styles.edited} t-meta`}>{formatEdited(Math.max(editedAt, note.editedAt), now)}</p>;
+  const apple = isApple();
+  // Redo is undo's glyph, mirrored, as the drawing's tools and the pages' bar draw it.
+  const steps = (
+    <>
+      <IconButton icon="undo" label={tc('undo', 'Annuler')} shortcut={apple ? '⌘Z' : 'Ctrl+Z'} disabled={!history.canUndo} shape={narrow ? 3 : 0} onClick={history.undo} />
+      <IconButton icon="undo" label={t('Rétablir')} shortcut={apple ? '⇧⌘Z' : `Ctrl+${t('Maj')}+Z`} disabled={!history.canRedo} shape={narrow ? 0 : 1} className={styles.redo} onClick={history.redo} />
+    </>
+  );
 
   return (
-    <Layer
-      open={!closing}
-      onDismiss={close}
-      full
-      routed
-      labelledBy={titleId}
-      panelClassName={styles.panel}
-      // A new note starts in its text; an opened one focuses the dialog itself, so E and # work at once.
-      initialFocus={focus === 'body' && note.kind === 'text' ? bodyRef : focus === 'check' ? undefined : surfaceRef}
-    >
-      <div
-        ref={surfaceRef}
-        tabIndex={-1}
-        className={`${styles.surface} ${narrow ? styles.phone : ''} paper`}
-        data-line={isLineColor(note.color) ? note.color : undefined}
-        data-gradient={isNoteGradient(note.color) ? note.color : undefined}
-        data-dropping={dropping || undefined}
-        onKeyDown={onKeyDown}
-        onPaste={onPaste}
-        onDragEnter={event => {
-          if (!editable || !hasFiles(event)) return;
-          dragDepth.current += 1;
-          setDropping(true);
-        }}
-        onDragOver={event => {
-          if (editable && hasFiles(event)) event.preventDefault();
-        }}
-        onDragLeave={() => {
-          dragDepth.current = Math.max(0, dragDepth.current - 1);
-          if (dragDepth.current === 0) setDropping(false);
-        }}
-        onDrop={event => {
-          if (!editable || !hasFiles(event)) return;
-          event.preventDefault();
-          dragDepth.current = 0;
-          setDropping(false);
-          void addPhotos([...event.dataTransfer.files]);
-        }}
+    <NoteHistoryContext.Provider value={history}>
+      <Layer
+        open={!closing}
+        onDismiss={close}
+        full
+        routed
+        labelledBy={titleId}
+        panelClassName={styles.panel}
+        // A new note starts in its text; an opened one focuses the dialog itself, so E and # work at once.
+        initialFocus={focus === 'body' && note.kind === 'text' ? bodyRef : focus === 'check' ? undefined : surfaceRef}
       >
-        {narrow ? (
-          <div className={styles.topBar}>
-            <IconButton icon="back" label={t('Retour')} onClick={close} />
-            <span className={styles.barSpace} />
-            {editable ? (
-              <>
-                {pin}
-                {reminderButton}
-                {archiveButton}
-              </>
-            ) : null}
-          </div>
-        ) : null}
-        {!editable ? (
-            <div className={styles.banner}>
-              <p className={`${styles.bannerText} t-meta`}>{t('Une note dans la corbeille ne peut pas être modifiée.')}</p>
-              <Button kind="tonal" small icon="restore" onClick={() => restoreNotes([id])}>
-                {t('Restaurer')}
-              </Button>
+        <div
+          ref={surfaceRef}
+          tabIndex={-1}
+          className={`${styles.surface} ${narrow ? styles.phone : ''} paper`}
+          data-line={isLineColor(note.color) ? note.color : undefined}
+          data-gradient={isNoteGradient(note.color) ? note.color : undefined}
+          data-dropping={dropping || undefined}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          onDragEnter={event => {
+            if (!editable || !hasFiles(event)) return;
+            dragDepth.current += 1;
+            setDropping(true);
+          }}
+          onDragOver={event => {
+            if (editable && hasFiles(event)) event.preventDefault();
+          }}
+          onDragLeave={() => {
+            dragDepth.current = Math.max(0, dragDepth.current - 1);
+            if (dragDepth.current === 0) setDropping(false);
+          }}
+          onDrop={event => {
+            if (!editable || !hasFiles(event)) return;
+            event.preventDefault();
+            dragDepth.current = 0;
+            setDropping(false);
+            void addPhotos([...event.dataTransfer.files]);
+          }}
+        >
+          {narrow ? (
+            <div className={styles.topBar}>
+              <IconButton icon="back" label={t('Retour')} onClick={close} />
+              <span className={styles.barSpace} />
+              {editable ? (
+                <>
+                  {pin}
+                  {reminderButton}
+                  {archiveButton}
+                </>
+              ) : null}
             </div>
           ) : null}
-          {/* Covering papers lie still over the whole sheet; ruled ones scroll with the text they rule. */}
-          {note.pattern && !ruled ? <span className={styles.paperLayer} data-pattern={note.pattern} aria-hidden="true" /> : null}
-          <div className={styles.scroll}>
-            <div className={styles.sheet} data-kind={note.kind}>
-            <PhotoGrid noteId={id} editable={editable} />
-            <div className={styles.head}>
-              <textarea
-                ref={titleRef}
-                id={titleId}
-                className={`${styles.titleInput} t-editor-title`}
-                value={title}
-                rows={1}
-                readOnly={!editable}
-                placeholder={t('Titre')}
-                maxLength={TEXT_LIMITS.note.title}
-                aria-label={t('Titre')}
-                onPaste={event => noticeCut(event, TEXT_LIMITS.note.title, 'Titre')}
-                onChange={event => editTitle(event.target.value.replace(/\r?\n/g, ' '))}
-                onBlur={() => flush('title')}
-                onKeyDown={event => {
-                  // Ctrl+Entrée closes the note (the sheet's own keys): it must not start an item first.
-                  if (event.key !== 'Enter' || event.nativeEvent.isComposing || event.ctrlKey || event.metaKey) return;
-                  event.preventDefault();
-                  if (note.kind === 'text') bodyApi.current?.focus('start');
-                  else if (note.kind === 'drawing') event.currentTarget.blur();
-                  else {
-                    const first = document.querySelector<HTMLTextAreaElement>(`[data-note-editor='${id}'] textarea[aria-label='${t('Texte de l’élément')}']`);
-                    if (first) first.focus();
-                    else addCheck(id, '');
-                  }
+          {!editable ? (
+              <div className={styles.banner}>
+                <p className={`${styles.bannerText} t-meta`}>{t('Une note dans la corbeille ne peut pas être modifiée.')}</p>
+                <Button kind="tonal" small icon="restore" onClick={() => restoreNotes([id])}>
+                  {t('Restaurer')}
+                </Button>
+              </div>
+            ) : null}
+            {/* Covering papers lie still over the whole sheet; ruled ones scroll with the text they rule. */}
+            {note.pattern && !ruled ? <span className={styles.paperLayer} data-pattern={note.pattern} aria-hidden="true" /> : null}
+            <div className={styles.scroll}>
+              <div className={styles.sheet} data-kind={note.kind}>
+              <PhotoGrid noteId={id} editable={editable} />
+              <div className={styles.head}>
+                <textarea
+                  ref={titleRef}
+                  id={titleId}
+                  className={`${styles.titleInput} t-editor-title`}
+                  value={title}
+                  rows={1}
+                  readOnly={!editable}
+                  placeholder={t('Titre')}
+                  maxLength={TEXT_LIMITS.note.title}
+                  aria-label={t('Titre')}
+                  onPaste={event => noticeCut(event, TEXT_LIMITS.note.title, 'Titre')}
+                  onChange={event => editTitle(event.target.value.replace(/\r?\n/g, ' '))}
+                  onBlur={() => flush('title')}
+                  onKeyDown={event => {
+                    // Ctrl+Entrée closes the note (the sheet's own keys): it must not start an item first.
+                    if (event.key !== 'Enter' || event.nativeEvent.isComposing || event.ctrlKey || event.metaKey) return;
+                    event.preventDefault();
+                    if (note.kind === 'text') bodyApi.current?.focus('start');
+                    else if (note.kind === 'drawing') event.currentTarget.blur();
+                    else {
+                      const first = document.querySelector<HTMLTextAreaElement>(`[data-note-editor='${id}'] textarea[aria-label='${t('Texte de l’élément')}']`);
+                      if (first) first.focus();
+                      else addCheck(id, '');
+                    }
+                  }}
+                />
+                {editable && !narrow ? pin : null}
+              </div>
+              <div data-note-editor={id} className={styles.writing}>
+                {note.kind === 'drawing' ? (
+                  <DrawingSheet noteId={id} editable={editable} />
+                ) : note.kind === 'text' ? (
+                  <div className={styles.bodyWrap} data-ruled={ruled ? '' : undefined}>
+                    {ruled ? <span className={styles.ruledPaper} data-pattern={ruled} aria-hidden="true" /> : null}
+                    <RichBody
+                      handle={bodyApi}
+                      inputRef={bodyRef}
+                      noteId={id}
+                      editable={editable}
+                      className={`${styles.bodyInput} t-editor-body`}
+                      placeholder={t('Note')}
+                      label={t('Texte de la note')}
+                      takesPictures
+                      onText={setBodyWords}
+                      still={parting !== undefined}
+                    />
+                  </div>
+                ) : (
+                  <div className={styles.checkWrap} data-ruled={ruled ? '' : undefined}>
+                    {ruled ? <span className={styles.ruledPaper} data-pattern={ruled} aria-hidden="true" /> : null}
+                    <ChecklistEditor noteId={id} editable={editable} autoFocusFirst={focus === 'check'} />
+                  </div>
+                )}
+              </div>
+              {/* The events that mention the note, in Agenda. */}
+              <EventsMentioning type="note" id={id} className={styles.events} />
+              </div>
+            </div>
+            {/* What the note wears, at its foot above the bar that changes it, as on its card: never lost mid-sheet or after the ticked items. */}
+            {note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0 ? (
+              <div className={styles.chips}>
+                {note.reminderAt !== null ? (
+                  <button
+                    type="button"
+                    className={styles.chip}
+                    data-past={note.reminderAt < now || undefined}
+                    onClick={() => setPicker('reminder')}
+                    aria-label={t('Rappel : {when}. Modifier', { when: formatReminder(note.reminderAt, now) })}
+                    disabled={!editable}
+                  >
+                    <Icon name="bell" size={16} />
+                    {formatReminder(note.reminderAt, now)}
+                  </button>
+                ) : null}
+                {noteLabels.map(label => (
+                  <button key={label!.id} type="button" className={styles.chip} onClick={() => setPicker('labels')} aria-label={t('Label {name}. Modifier', { name: label!.name })} disabled={!editable}>
+                    <LabelMark name={label!.name} color={label!.color} />
+                  </button>
+                ))}
+                <PeopleChips ids={note.contactIds} />
+              </div>
+            ) : null}
+            {narrow ? (
+              // The phone's bottom bar; in the bin it keeps the date and "Supprimer définitivement", as on the phone.
+              <div className={styles.bottomBar} role="toolbar" aria-label={t('Actions de la note')}>
+                {editable ? (
+                  <>
+                    <IconButton ref={addAnchor} icon="plus" label={t('Ajouter')} hasPopup="dialog" expanded={picker === 'add'} onClick={() => setPicker('add')} />
+                    {colorButton}
+                    {labelsButton}
+                  </>
+                ) : (
+                  forever
+                )}
+                {/* The date, until something is done to the note: then « Annuler » and « Rétablir » in its place, as on the phone. */}
+                {history.started ? <span className={styles.steps}>{steps}</span> : edited}
+                {editable ? moreButton : <span className={styles.barEnd} aria-hidden="true" />}
+              </div>
+            ) : (
+              <div className={styles.toolbar} role="toolbar" aria-label={t('Actions de la note')}>
+                {editable ? (
+                  <>
+                    {reminderButton}
+                    {colorButton}
+                    {labelsButton}
+                    {peopleButton}
+                    <IconButton icon="image" label={t('Ajouter une image')} onClick={() => fileInput.current?.click()} />
+                    {archiveButton}
+                    {moreButton}
+                    {history.enabled ? steps : null}
+                  </>
+                ) : (
+                  forever
+                )}
+                {edited}
+                <Button kind="text" onClick={close}>
+                  {t('Fermer')}
+                </Button>
+              </div>
+            )}
+            {editable ? (
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={event => {
+                  const files = [...(event.target.files ?? [])];
+                  event.target.value = '';
+                  void addPhotos(files);
                 }}
               />
-              {editable && !narrow ? pin : null}
-            </div>
-            <div data-note-editor={id} className={styles.writing}>
-              {note.kind === 'drawing' ? (
-                <DrawingSheet noteId={id} editable={editable} />
-              ) : note.kind === 'text' ? (
-                <div className={styles.bodyWrap} data-ruled={ruled ? '' : undefined}>
-                  {ruled ? <span className={styles.ruledPaper} data-pattern={ruled} aria-hidden="true" /> : null}
-                  <RichBody
-                    handle={bodyApi}
-                    inputRef={bodyRef}
-                    noteId={id}
-                    editable={editable}
-                    className={`${styles.bodyInput} t-editor-body`}
-                    placeholder={t('Note')}
-                    label={t('Texte de la note')}
-                    takesPictures
-                    onText={setBodyWords}
-                    still={parting !== undefined}
-                  />
-                </div>
-              ) : (
-                <div className={styles.checkWrap} data-ruled={ruled ? '' : undefined}>
-                  {ruled ? <span className={styles.ruledPaper} data-pattern={ruled} aria-hidden="true" /> : null}
-                  <ChecklistEditor noteId={id} editable={editable} autoFocusFirst={focus === 'check'} />
-                </div>
-              )}
-            </div>
-            </div>
-          </div>
-          {/* What the note wears, at its foot above the bar that changes it, as on its card: never lost mid-sheet or after the ticked items. */}
-          {note.reminderAt !== null || noteLabels.length > 0 ? (
-            <div className={styles.chips}>
-              {note.reminderAt !== null ? (
-                <button
-                  type="button"
-                  className={styles.chip}
-                  data-past={note.reminderAt < now || undefined}
-                  onClick={() => setPicker('reminder')}
-                  aria-label={t('Rappel : {when}. Modifier', { when: formatReminder(note.reminderAt, now) })}
-                  disabled={!editable}
-                >
-                  <Icon name="bell" size={16} />
-                  {formatReminder(note.reminderAt, now)}
-                </button>
-              ) : null}
-              {noteLabels.map(label => (
-                <button key={label!.id} type="button" className={styles.chip} onClick={() => setPicker('labels')} aria-label={t('Label {name}. Modifier', { name: label!.name })} disabled={!editable}>
-                  <LabelMark name={label!.name} color={label!.color} />
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {narrow ? (
-            // The phone's bottom bar; in the bin it keeps the date and "Supprimer définitivement", as on the phone.
-            <div className={styles.bottomBar} role="toolbar" aria-label={t('Actions de la note')}>
-              {editable ? (
-                <>
-                  <IconButton ref={addAnchor} icon="plus" label={t('Ajouter')} hasPopup="dialog" expanded={picker === 'add'} onClick={() => setPicker('add')} />
-                  {colorButton}
-                  {labelsButton}
-                </>
-              ) : (
-                forever
-              )}
-              {edited}
-              {editable ? moreButton : <span className={styles.barEnd} aria-hidden="true" />}
-            </div>
-          ) : (
-            <div className={styles.toolbar} role="toolbar" aria-label={t('Actions de la note')}>
-              {editable ? (
-                <>
-                  {reminderButton}
-                  {colorButton}
-                  {labelsButton}
-                  <IconButton icon="image" label={t('Ajouter une image')} onClick={() => fileInput.current?.click()} />
-                  {archiveButton}
-                  {moreButton}
-                </>
-              ) : (
-                forever
-              )}
-              {edited}
-              <Button kind="text" onClick={close}>
-                {t('Fermer')}
-              </Button>
-            </div>
-          )}
-          {editable ? (
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={event => {
-                const files = [...(event.target.files ?? [])];
-                event.target.value = '';
-                void addPhotos(files);
-              }}
-            />
-          ) : null}
-      </div>
-
-      <ReminderPicker
-        open={picker === 'reminder'}
-        anchor={reminderAnchor}
-        current={note.reminderAt}
-        now={now}
-        onDismiss={() => setPicker(null)}
-        onSet={time => {
-          const undo = setReminder(id, time);
-          if (time) showSnack(t('Rappel : {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
-          else showUndo(t('Rappel supprimé'), undo);
-        }}
-      />
-      <Popover open={picker === 'color'} anchor={colorAnchor} onDismiss={() => setPicker(null)} label={t('Couleur et papier')} width={344}>
-        <div className={styles.picker}>
-          <h2 className={`${styles.pickerTitle} ${narrow ? 't-title' : 't-label'}`}>{t('Couleur et papier')}</h2>
-          <div className={styles.pickerBody}>
-            <NoteFinishPicker color={note.color} pattern={note.pattern} onColor={color => setColor(id, color)} onPattern={pattern => setPattern(id, pattern)} />
-          </div>
+            ) : null}
         </div>
-      </Popover>
-      <LabelPicker open={picker === 'labels'} anchor={labelsAnchor} selected={note.labelIds} onDismiss={() => setPicker(null)} onChange={ids => setLabels(id, ids)} />
-      <Menu open={picker === 'more'} anchor={moreAnchor} onDismiss={() => setPicker(null)} items={menuItems} label={t('Plus d’actions')} />
-      <Popover open={narrow && picker === 'add'} anchor={addAnchor} onDismiss={() => setPicker(null)} label={t('Ajouter')} width={320}>
-        <div className={styles.addSheet}>
-          <AddRow
-            icon="image"
-            label={t('Ajouter une image')}
-            onSelect={() => {
-              setPicker(null);
-              fileInput.current?.click();
-            }}
-          />
-          {note.kind === 'drawing' ? null : (
+
+        <ReminderPicker
+          open={picker === 'reminder'}
+          anchor={reminderAnchor}
+          current={note.reminderAt}
+          now={now}
+          onDismiss={() => setPicker(null)}
+          onSet={time => {
+            const undo = setReminder(id, time);
+            if (time) showSnack(t('Rappel : {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
+            else showUndo(t('Rappel supprimé'), undo);
+          }}
+        />
+        <Popover open={picker === 'color'} anchor={colorAnchor} onDismiss={() => setPicker(null)} label={t('Couleur et papier')} width={344}>
+          <div className={styles.picker}>
+            {/* A sheet on a phone, away from its button, says what it holds; by its button, its groups do. */}
+            {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Couleur et papier')}</h2> : null}
+            <div className={styles.pickerBody}>
+              <NoteFinishPicker color={note.color} pattern={note.pattern} onColor={color => setColor(id, color)} onPattern={pattern => setPattern(id, pattern)} />
+            </div>
+          </div>
+        </Popover>
+        <LabelPicker open={picker === 'labels'} anchor={labelsAnchor} selected={note.labelIds} onDismiss={() => setPicker(null)} onChange={ids => setLabels(id, ids)} />
+        {/* On a phone-sized window it is asked for from « Ajouter », whose button anchors it. */}
+        <PeoplePicker open={picker === 'people'} anchor={narrow ? addAnchor : peopleAnchor} selected={note.contactIds} onDismiss={() => setPicker(null)} onChange={ids => setPeople('note', id, ids)} />
+        <Menu open={picker === 'more'} anchor={moreAnchor} onDismiss={() => setPicker(null)} items={menuItems} label={t('Plus d’actions')} />
+        <Popover open={narrow && picker === 'add'} anchor={addAnchor} onDismiss={() => setPicker(null)} label={t('Ajouter')} width={320}>
+          <div className={styles.addSheet}>
             <AddRow
-              icon={checkboxes.icon}
-              label={checkboxes.label}
-              supporting={checkboxes.supporting}
+              icon="image"
+              label={t('Ajouter une image')}
               onSelect={() => {
                 setPicker(null);
-                checkboxes.onSelect();
+                fileInput.current?.click();
               }}
             />
-          )}
-        </div>
-      </Popover>
-      <Confirm
-        open={confirmForever}
-        title={t('Supprimer définitivement ?')}
-        message={t('Cette note disparaîtra de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={t('Supprimer')}
-        danger
-        onCancel={() => setConfirmForever(false)}
-        onConfirm={() => {
-          setConfirmForever(false);
-          part();
-          deleteForever([id]);
-          onClose();
-          showSnack(t('Note supprimée définitivement'), undefined, { tone: 'success' });
-        }}
-      />
-    </Layer>
+            {offersPeople ? (
+              <AddRow
+                icon="personPlus"
+                label={t('Personnes')}
+                supporting={t('Pour qui, ou à propos de qui')}
+                onSelect={() => setPicker('people')}
+              />
+            ) : null}
+            {note.kind === 'drawing' ? null : (
+              <AddRow
+                icon={checkboxes.icon}
+                label={checkboxes.label}
+                supporting={checkboxes.supporting}
+                onSelect={() => {
+                  setPicker(null);
+                  checkboxes.onSelect();
+                }}
+              />
+            )}
+          </div>
+        </Popover>
+        <Confirm
+          open={confirmForever}
+          title={t('Supprimer définitivement ?')}
+          message={t('Cette note disparaîtra de tous vos appareils. Cette action est irréversible.')}
+          confirmLabel={t('Supprimer')}
+          danger
+          onCancel={() => setConfirmForever(false)}
+          onConfirm={() => {
+            setConfirmForever(false);
+            part();
+            deleteForever([id]);
+            onClose();
+            showSnack(t('Note supprimée définitivement'), undefined, { tone: 'success' });
+          }}
+        />
+      </Layer>
+    </NoteHistoryContext.Provider>
   );
 }

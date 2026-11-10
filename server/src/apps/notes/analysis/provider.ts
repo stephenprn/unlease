@@ -1,11 +1,9 @@
 /**
- * What the next analysis runs with, from the live settings: the model (or
- * none, when no key is set) and the monthly budget. The SDK client is kept per
- * API key and rebuilt only when the key changes.
+ * Carnet's link model over the suite's Claude client (`claude/provider.ts`): what the next reading,
+ * sorting call or module runs with, from the live settings, or no model when no key is set.
  */
-import type { Effort } from '../../../config';
-import type { SettingsStore } from '../../../settings/store';
-import { anthropicMessages, ClaudeLinkModel, type LinkModel, type MessagesApi } from './model';
+import type { ClaudeProvider } from '../../../claude/provider';
+import { ClaudeLinkModel, type LinkModel } from './model';
 
 export interface AnalysisContext {
   /** Null when no key is set: links are not read at all. */
@@ -13,32 +11,11 @@ export interface AnalysisContext {
   readonly budgetUsd: number;
 }
 
-export interface LinkModelProviderOptions {
-  readonly effort: Effort;
-  readonly createApi?: (apiKey: string) => MessagesApi;
-  readonly sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
-}
-
 export class LinkModelProvider {
-  private client: { readonly apiKey: string; readonly api: MessagesApi } | null = null;
-
-  constructor(
-    private readonly settings: SettingsStore,
-    private readonly options: LinkModelProviderOptions,
-  ) {}
+  constructor(private readonly claude: ClaudeProvider) {}
 
   current(): AnalysisContext {
-    const { apiKey, model, budgetUsd } = this.settings.effective();
-    if (!apiKey) {
-      this.client = null;
-      return { model: null, budgetUsd };
-    }
-    if (this.client?.apiKey !== apiKey) {
-      this.client = { apiKey, api: (this.options.createApi ?? anthropicMessages)(apiKey) };
-    }
-    return {
-      model: new ClaudeLinkModel(this.client.api, { model, effort: this.options.effort, sleep: this.options.sleep }),
-      budgetUsd,
-    };
+    const { client, budgetUsd } = this.claude.current();
+    return { model: client ? new ClaudeLinkModel(client) : null, budgetUsd };
   }
 }

@@ -8,28 +8,33 @@
  */
 import { useId, useState, type ReactNode } from 'react';
 
+import { isBlank } from '@unlease/core/services/formChecks';
+
 import { type CollectionEmblem, type Emblem as EmblemKey } from '@unlease/design/emblems';
 import { t, tx } from '@unlease/core/i18n';
 import { asLineColor, nextLineColor, type LineColor } from '@unlease/design/colors';
 import { suggestionsFor, collectionEmblem, emblemOf, nextEmblem } from '@unlease/notes/models/collections';
-import { INBOX_ID, shownHint, shownTitle } from '@unlease/notes/models/entities';
+import { INBOX_ID, lineTitleTaken, shownHint, shownTitle } from '@unlease/notes/models/entities';
 import { meaningChanged, sortable } from '@unlease/notes/services/sorting';
 
 import { useLines } from '../../../app/hooks/useLines';
 import { createLine, updateNote } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectCanRead, useSettingsStore } from '../../../app/store/settings';
-import { selectSorting, useUiStore } from '../../../app/store/ui';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { Emblem } from '../../components/Emblem';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
-import { TextField } from '../../components/TextField';
+import { useCanRead } from '../../../app/store/prefs';
+import { selectSorting, useNotesUiStore } from '../../../app/store/notesUi';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
+import { TextField } from '@shared/ui/components/TextField';
+import { useForm } from '@shared/ui/components/useForm';
+import { useUnsaved } from '@shared/ui/components/useUnsaved';
+import { useReportDirty } from '../reportDirty';
 import { EmblemPicker } from './EmblemPicker';
 import { LineColorPicker } from './LineColorPicker';
 import styles from './lines.module.css';
-import { OutlinedBox } from '../../components/Outline';
+import { OutlinedBox } from '@shared/ui/components/Outline';
 import { fillLineOnSlip } from './sortingSlips';
 
 const HINT_LABEL = tx('Ce qui va dans cette collection');
@@ -51,31 +56,48 @@ function Preview({ emblem, color, title, hint }: { emblem: CollectionEmblem; col
   );
 }
 
+/** A group of choices: a fieldset whose legend is read out, not shown (the preview over them and the cut-outs and swatches themselves say what they choose). */
 function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className={styles.group}>
-      <p className="t-meta-strong">{label}</p>
+    <fieldset className={styles.group}>
+      <legend className="sr-only">{label}</legend>
       {children}
-    </div>
+    </fieldset>
   );
 }
 
-function NewLineForm({ titleId, onDismiss, onCreated }: { titleId: string; onDismiss: () => void; onCreated: (id: string) => void }) {
+/** A collection's name: given, and not another collection's (`except`, the one being edited). */
+const nameProblem = (title: string, lines: readonly { id: string; title: string }[], except: string | null = null): string | null =>
+  isBlank(title) ? t('Donnez un nom à la collection.') : lineTitleTaken(lines, title, except) ? t('Une collection porte déjà ce nom : choisissez-en un autre.') : null;
+
+interface FormProps {
+  readonly titleId: string;
+  /** Closes it, asking first when something was changed. */
+  readonly onCancel: () => void;
+  /** Closes it once saved. */
+  readonly onDone: () => void;
+  readonly onDirty: (dirty: boolean) => void;
+}
+
+function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProps & { onCreated: (id: string) => void }) {
   const lines = useLines();
   const [title, setTitle] = useState('');
   const [hint, setHint] = useState('');
   const [color, setColor] = useState<LineColor>(() => nextLineColor(lines.map(line => asLineColor(line.color))));
   const [emblem, setEmblem] = useState<EmblemKey>(() => nextEmblem(lines));
+  const [opened] = useState(() => ({ color, emblem }));
   const [fill, setFill] = useState(true);
-  const reading = useSettingsStore(selectCanRead);
+  const form = useForm({ title: nameProblem(title, lines) });
+  useReportDirty(!isBlank(title) || !isBlank(hint) || color !== opened.color || emblem !== opened.emblem, onDirty);
+  const reading = useCanRead();
   const inboxLinks = useLibraryStore(s => (s.linksByNote[INBOX_ID] ?? []).filter(id => s.links[id] && sortable(s.links[id]!)).length);
-  const sorting = useUiStore(selectSorting);
+  const sorting = useNotesUiStore(selectSorting);
   const offerFill = reading && inboxLinks > 0 && !sorting;
   const suggestions = suggestionsFor(lines);
 
   const create = (init: { id?: string; title: string; code?: string; hint: string; color: LineColor; emblem: EmblemKey }): void => {
     const id = createLine(init);
-    onDismiss();
+    onDone();
     onCreated(id);
     if (offerFill && fill) fillLineOnSlip(id);
   };
@@ -84,25 +106,19 @@ function NewLineForm({ titleId, onDismiss, onCreated }: { titleId: string; onDis
     <DialogFrame
       title={t('Nouvelle collection')}
       titleId={titleId}
-      onClose={onDismiss}
-      onSubmit={event => {
-        event.preventDefault();
-        if (title.trim()) create({ title, hint: hint.trim(), color, emblem });
-      }}
+      onClose={onCancel}
+      onSubmit={form.onSubmit(() => create({ title, hint: hint.trim(), color, emblem }))}
       foot={
         <>
-          <Button kind="text" onClick={onDismiss}>
+          <Button kind="text" onClick={onCancel}>
             {t('Annuler')}
           </Button>
-          <Button type="submit" icon="plus" disabled={!title.trim()}>
+          <Button type="submit" icon="plus">
             {t('Créer la collection')}
           </Button>
         </>
       }
     >
-      <p className={`${styles.purpose} t-body`}>
-        {t('Une collection rassemble des liens du même genre : vêtements, films, restaurants… Claude lit chaque lien que vous enregistrez et le range dans la collection qui lui correspond.')}
-      </p>
       {suggestions.length > 0 ? (
         <div className={styles.suggestions} role="group" aria-label={t('Collections suggérées')}>
           {suggestions.map(suggestion => (
@@ -120,8 +136,8 @@ function NewLineForm({ titleId, onDismiss, onCreated }: { titleId: string; onDis
         </div>
       ) : null}
       <Preview emblem={emblem} color={color} title={title.trim() || t('Nom de la collection')} hint={hint.trim() || t(HINT_PREVIEW)} />
-      <TextField label={t('Nom')} value={title} onChange={setTitle} placeholder={t('Ex. Cadeaux')} maxLength={60} autoFocus />
-      <TextField label={t(HINT_LABEL)} value={hint} onChange={setHint} placeholder={t('Ex. idées de cadeaux pour les proches')} multiline maxLength={500} help={t(HINT_HELP)} inputClassName={styles.hintInput} />
+      <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChange={setTitle} help={t('Ex. Cadeaux, Films à voir, Restaurants')} maxLength={60} autoFocus />
+      <TextField label={t(HINT_LABEL)} kind="prose" value={hint} onChange={setHint} multiline maxLength={500} help={t('Claude lit cette phrase pour choisir la bonne collection. Ex. idées de cadeaux pour les proches.')} inputClassName={styles.hintInput} />
       <Group label={t('Emblème')}>
         <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
       </Group>
@@ -145,14 +161,20 @@ function NewLineForm({ titleId, onDismiss, onCreated }: { titleId: string; onDis
 
 export function NewLineDialog({ open, onDismiss, onCreated }: { open: boolean; onDismiss: () => void; onCreated: (id: string) => void }) {
   const titleId = useId();
+  const [dirty, setDirty] = useState(false);
+  const unsaved = useUnsaved(dirty);
+  const cancel = unsaved.guard(onDismiss);
   return (
-    <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
-      <NewLineForm titleId={titleId} onDismiss={onDismiss} onCreated={onCreated} />
-    </Layer>
+    <>
+      <Layer open={open} onDismiss={cancel} labelledBy={titleId}>
+        <NewLineForm titleId={titleId} onCancel={cancel} onDone={onDismiss} onDirty={setDirty} onCreated={onCreated} />
+      </Layer>
+      {unsaved.dialog}
+    </>
   );
 }
 
-function EditLineForm({ id, titleId, onDismiss, onSaved }: { id: string; titleId: string; onDismiss: () => void; onSaved?: (meaningChanged: boolean) => void }) {
+function EditLineForm({ id, titleId, onCancel, onDone, onDirty, onSaved }: FormProps & { id: string; onSaved?: (meaningChanged: boolean) => void }) {
   const line = useLibraryStore(s => s.notes[id]);
   const [title, setTitle] = useState(line?.title ?? '');
   const [hint, setHint] = useState(line ? shownHint(line) : '');
@@ -160,39 +182,39 @@ function EditLineForm({ id, titleId, onDismiss, onSaved }: { id: string; titleId
   const [emblem, setEmblem] = useState<EmblemKey>(() => emblemOf(id, line?.emblem ?? null));
   // The form as it opened: only what the person changed is written, so an edit made elsewhere meanwhile stands.
   const [opened] = useState<Record<string, unknown>>(() => ({ title: line?.title ?? '', hint: line ? shownHint(line) : '', color: asLineColor(line?.color ?? null), emblem: emblemOf(id, line?.emblem ?? null) }));
-  if (!line) return null;
   const inbox = id === INBOX_ID;
+  const lines = useLines();
+  // A name it already had is never refused (two collections that came to share one keep it until renamed).
+  const form = useForm({ title: inbox ? null : title.trim() === String(opened.title).trim() ? nameProblem(title, [], id) : nameProblem(title, lines, id) });
+  useReportDirty(title !== opened.title || hint !== opened.hint || color !== opened.color || emblem !== opened.emblem, onDirty);
+  if (!line) return null;
   return (
     <DialogFrame
       title={t('Modifier la collection')}
       titleId={titleId}
-      onClose={onDismiss}
+      onClose={onCancel}
       foot={
         <>
-          <Button kind="text" onClick={onDismiss}>
+          <Button kind="text" onClick={onCancel}>
             {t('Annuler')}
           </Button>
-          <Button type="submit" disabled={!inbox && !title.trim()}>
-            {t('Enregistrer')}
-          </Button>
+          <Button type="submit">{t('Enregistrer')}</Button>
         </>
       }
-      onSubmit={event => {
-        event.preventDefault();
-        if (!inbox && !title.trim()) return;
-        const form: Record<string, unknown> = inbox ? { hint: hint.trim(), color } : { title: title.trim(), emblem, hint: hint.trim(), color };
-        const changed = Object.fromEntries(Object.entries(form).filter(([field, value]) => value !== opened[field]));
+      onSubmit={form.onSubmit(() => {
+        const values: Record<string, unknown> = inbox ? { hint: hint.trim(), color } : { title: title.trim(), emblem, hint: hint.trim(), color };
+        const changed = Object.fromEntries(Object.entries(values).filter(([field, value]) => value !== opened[field]));
         if (Object.keys(changed).length > 0) updateNote(id, changed);
-        onDismiss();
+        onDone();
         if (Object.keys(changed).length > 0) {
           const before = { title: String(opened.title), hint: String(opened.hint) };
           onSaved?.(!inbox && meaningChanged(before, { title: title.trim(), hint: hint.trim() }));
         }
-      }}
+      })}
     >
       <Preview emblem={inbox ? collectionEmblem(id, null) : emblem} color={color} title={(inbox ? shownTitle(line) : title.trim()) || t('Sans nom')} hint={hint.trim() || t(HINT_PREVIEW)} />
-      {!inbox ? <TextField label={t('Nom')} value={title} onChange={setTitle} maxLength={60} autoFocus /> : null}
-      <TextField label={t(HINT_LABEL)} value={hint} onChange={setHint} multiline maxLength={500} help={t(HINT_HELP)} inputClassName={styles.hintInput} />
+      {!inbox ? <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChange={setTitle} maxLength={60} autoFocus /> : null}
+      <TextField label={t(HINT_LABEL)} kind="prose" value={hint} onChange={setHint} multiline maxLength={500} help={t(HINT_HELP)} inputClassName={styles.hintInput} />
       {!inbox ? (
         <Group label={t('Emblème')}>
           <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
@@ -207,9 +229,15 @@ function EditLineForm({ id, titleId, onDismiss, onSaved }: { id: string; titleId
 
 export function EditLineDialog({ id, open, onDismiss, onSaved }: { id: string; open: boolean; onDismiss: () => void; onSaved?: (meaningChanged: boolean) => void }) {
   const titleId = useId();
+  const [dirty, setDirty] = useState(false);
+  const unsaved = useUnsaved(dirty);
+  const cancel = unsaved.guard(onDismiss);
   return (
-    <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
-      <EditLineForm id={id} titleId={titleId} onDismiss={onDismiss} onSaved={onSaved} />
-    </Layer>
+    <>
+      <Layer open={open} onDismiss={cancel} labelledBy={titleId}>
+        <EditLineForm id={id} titleId={titleId} onCancel={cancel} onDone={onDismiss} onDirty={setDirty} onSaved={onSaved} />
+      </Layer>
+      {unsaved.dialog}
+    </>
   );
 }

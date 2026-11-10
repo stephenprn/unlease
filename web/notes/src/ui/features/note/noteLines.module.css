@@ -19,3 +19,12 @@
 .drawing {
   width: 100%;
 }
+
+/* A person mentioned, by name, on the card's own line. */
+.mention {
+  font-weight: inherit;
+}
+
+.mention[data-gone] {
+  color: var(--ink-muted);
+}

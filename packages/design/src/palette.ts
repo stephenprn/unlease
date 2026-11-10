@@ -15,6 +15,11 @@ export interface Roles {
   readonly paper: string;
   /** Text fields: a step lighter than a card by day. */
   readonly field: string;
+  /**
+   * A text field's paper as a veil over whatever it lies on (`FIELD_VEIL`): on a card it reads as
+   * `field`, on a coloured ground it takes the ground's colour a step lighter, never a grey square.
+   */
+  readonly fieldVeil: string;
   /** An image well: a link's placeholder, a photo still loading. Pressed below the ground by day, raised at night. */
   readonly paperHigh: string;
   /** The slip system messages are written on: snackbar, transfer. Dark in both modes. */
@@ -69,11 +74,31 @@ export interface Roles {
   readonly shadow: string;
 }
 
+/**
+ * The text field's veil: the lightest cream over what it lies on, more of it by day, a breath of it
+ * at night. Over a card it is the card's field (`field`), over any ground a lighter patch of it.
+ */
+export const FIELD_VEIL: Record<Mode, { readonly color: string; readonly alpha: number }> = {
+  light: { color: '#FFFDF5', alpha: 0.55 },
+  dark: { color: '#F9F4ED', alpha: 0.06 },
+};
+
+const veil = (mode: Mode): string => {
+  const [r, g, b] = parseHex(FIELD_VEIL[mode].color);
+  return `rgba(${r}, ${g}, ${b}, ${FIELD_VEIL[mode].alpha})`;
+};
+
+/** A field's paper as it shows on `surface` (an opaque colour): the veil laid over it. */
+export function fieldOn(surface: string, mode: Mode): string {
+  return mix(surface, FIELD_VEIL[mode].color, FIELD_VEIL[mode].alpha);
+}
+
 export const ROLES: Record<Mode, Roles> = {
   light: {
     wall: '#EDE8D0',
     paper: '#F8F5E6',
     field: '#FBF9EE',
+    fieldVeil: veil('light'),
     // A step below the ground, so a well reads on the wall as well as on a card.
     paperHigh: '#DFD7C1',
     slip: '#2E2B25',
@@ -117,6 +142,7 @@ export const ROLES: Record<Mode, Roles> = {
     wall: '#1A1817',
     paper: '#34312E',
     field: '#3D3A37',
+    fieldVeil: veil('dark'),
     paperHigh: '#45423F',
     slip: '#44403D',
     slipHigh: '#595653',
@@ -406,4 +432,10 @@ export const GEOMETRY = {
   cardPadding: 14,
   /** Minimum touch target on Android. */
   hit: 48,
+  /**
+   * The clear ground between two controls whose press, hover or chosen state is a tint (rows of a
+   * list or a menu, the navigation's places): a tint never touches its neighbour's, nor a chosen
+   * row's fill. The web's `--row-gap`.
+   */
+  rowGap: 4,
 } as const;

@@ -1,0 +1,38 @@
+<resources>
+    <string name="import_calendar">Importer dans Agenda</string>
+
+    <string name="widget_schedule_label">Planning</string>
+    <string name="widget_schedule_description">Vos deux prochaines semaines, jour par jour.</string>
+    <string name="widget_month_label">Mois</string>
+    <string name="widget_month_description">Le mois en cours, les jours occupés marqués.</string>
+    <string name="widget_next_label">Prochain événement</string>
+    <string name="widget_next_description">Ce qui vient : son heure et son lieu.</string>
+    <string name="widget_countdown_label">Compte à rebours</string>
+    <string name="widget_countdown_description">Les jours qui restent avant l’événement de votre choix.</string>
+    <string name="widget_today_label">Aujourd’hui</string>
+    <string name="widget_today_description">Votre journée d’un coup d’œil : maintenant, ensuite, demain.</string>
+
+    <string name="widget_new_event">Nouvel événement</string>
+    <string name="widget_open_app">Ouvrir Agenda</string>
+    <string name="widget_today">Aujourd’hui</string>
+    <string name="widget_tomorrow">Demain</string>
+    <string name="widget_nothing">Rien de prévu</string>
+    <string name="widget_open_today">Ouvrir Aujourd’hui dans Agenda</string>
+    <string name="widget_nothing_today">Rien de prévu aujourd’hui</string>
+    <string name="widget_countdown_before">J-%1$d</string>
+    <string name="widget_countdown_ongoing">En cours</string>
+    <string name="widget_countdown_after">J+%1$d</string>
+
+    <string name="widget_waiting">Touchez pour afficher votre agenda ici.</string>
+    <string name="widget_choose_event">Touchez pour choisir l’événement attendu.</string>
+    <string name="widget_gone_event">Cet événement n’est plus dans l’agenda.</string>
+    <string name="widget_choose_other">En choisir un autre…</string>
+
+    <string name="widget_preview_schedule">Planning</string>
+    <string name="widget_preview_event">Dentiste</string>
+    <string name="widget_preview_time">9:00 – 10:00</string>
+    <string name="widget_preview_count">J-12</string>
+    <string name="widget_preview_date">jeu. 24 déc. · 9:00</string>
+    <string name="widget_preview_today">Lundi 9 novembre</string>
+    <string name="widget_preview_day">lun. 9 nov.</string>
+</resources>

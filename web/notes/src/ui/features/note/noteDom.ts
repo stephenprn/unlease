@@ -1,14 +1,78 @@
 /**
  * A note's lines in a contenteditable: one block per line (a heading carries its level in
- * `data-heading`), marked words as spans (`data-b`, `data-i`, `data-u`), an empty line holding a
- * `<br>` to stand on. The browser types into it; reading it back forgives what it adds on its own
+ * `data-heading`), marked words as spans (`data-b`, `data-i`, `data-u`), a mention of a person as a
+ * chip that is not typed into (`data-mention`, its name drawn from `data-name`, one invisible
+ * character inside so it counts one), an empty line holding a `<br>` to stand on. The browser types into it; reading it back forgives what it adds on its own
  * (its `<b>`, a stray `<br>`, text typed outside any line). Offsets are plain-text offsets, a line
  * break counting one, as `notes/services/noteBody` counts them.
  */
 import { isFormatted, NOTE_FLAGS, type HeadingLevel, type NoteLine } from '@unlease/notes/services/noteBody';
-import { normalizeRich, serializeRich, type Marks, type Run, type TextRun } from '@unlease/core/services/richText';
+import { normalizeRich, serializeRich, type Marks, type Run } from '@unlease/core/services/richText';
+import type { Ref } from '@unlease/core/refs';
+import { GLYPH_GRID, GLYPH_STROKE, GLYPHS } from '@unlease/design/glyphs';
+import { mentionName } from '@unlease/notes/services/noteMentions';
 
+import { nameOfMention } from '../../../app/mentions';
 import { linesLength } from './lineEdits';
+
+/** What a mention's chip holds: one character, so it counts one (as `noteBody` counts it), that shows nothing. */
+export const MENTION_CHAR = '\u2060';
+
+/** The reference a chip's `data-mention` names (`contact:<id>`). */
+export function parseMention(value: string | undefined): Ref | null {
+  const match = value ? /^([a-z]{1,20}):([A-Za-z0-9_-]{1,64})$/.exec(value) : null;
+  return match ? { type: match[1]!, id: match[2]! } : null;
+}
+
+/** A mention's name now, and whether its subject is gone. */
+function chipName(target: Ref): { readonly name: string; readonly gone: boolean } {
+  const name = nameOfMention(target);
+  return name === null ? { name: mentionName(target), gone: true } : { name, gone: false };
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+
+/** The person glyph, drawn in the chip (an SVG holds no text: the chip still counts one). */
+function chipGlyph(glyph: 'person' | 'calendar'): SVGSVGElement {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${GLYPH_GRID} ${GLYPH_GRID}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const { stroke, fill } = GLYPHS[glyph].line;
+  if (stroke) {
+    const path = document.createElementNS(SVG, 'path');
+    path.setAttribute('d', stroke);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'currentColor');
+    path.setAttribute('stroke-width', String(GLYPH_STROKE));
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.append(path);
+  }
+  if (fill) {
+    const path = document.createElementNS(SVG, 'path');
+    path.setAttribute('d', fill);
+    path.setAttribute('fill', 'currentColor');
+    path.setAttribute('fill-rule', 'evenodd');
+    svg.append(path);
+  }
+  return svg;
+}
+
+/** A mention's chip: the glyph, its one character, and its name (`data-name`, which the stylesheet draws after it). */
+function mentionElement(target: Ref): HTMLSpanElement {
+  const chip = document.createElement('span');
+  chip.contentEditable = 'false';
+  chip.dataset.mention = `${target.type}:${target.id}`;
+  const { name, gone } = chipName(target);
+  chip.dataset.name = name;
+  if (gone) chip.dataset.gone = '';
+  chip.setAttribute('role', 'link');
+  chip.setAttribute('aria-label', name);
+  chip.append(chipGlyph(target.type === 'event' ? 'calendar' : 'person'), document.createTextNode(MENTION_CHAR));
+  return chip;
+}
+
+const isChip = (node: Node): node is HTMLElement => node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).dataset?.mention !== undefined;
 
 type MutableMarks = { -readonly [K in keyof Marks]: Marks[K] };
 
@@ -28,7 +92,11 @@ export function lineElement(line: NoteLine): HTMLDivElement {
   const element = document.createElement('div');
   if (line.heading > 0) element.dataset.heading = String(line.heading);
   for (const run of line.runs) {
-    // A note holds no mention; one met all the same stands as its one character.
+    if (run.kind === 'mention') {
+      element.append(mentionElement(run.target));
+      continue;
+    }
+    // A date (Pages' alone) met all the same stands as its one character.
     const text = run.kind === 'text' ? run.text : '￼';
     const flags = run.kind === 'text' ? NOTE_FLAGS.filter(flag => run.marks[flag]) : [];
     if (flags.length === 0) {
@@ -62,6 +130,10 @@ function isCanonicalLine(node: Node): node is HTMLDivElement {
       if (child !== element.lastChild || (child as Element).attributes.length > 0) return false;
       continue;
     }
+    if (isChip(child)) {
+      if (!parseMention(child.dataset.mention) || child.textContent !== MENTION_CHAR) return false;
+      continue;
+    }
     if (name !== 'SPAN') return false;
     const span = child as HTMLSpanElement;
     if (span.attributes.length === 0) return false;
@@ -84,7 +156,10 @@ function readCanonicalLine(element: HTMLDivElement): NoteLine {
   const runs: Run[] = [];
   for (const child of element.childNodes) {
     if (isText(child)) runs.push({ kind: 'text', text: child.data, marks: {} });
-    else if (nameOf(child) === 'SPAN') {
+    else if (isChip(child)) {
+      const target = parseMention(child.dataset.mention);
+      if (target) runs.push({ kind: 'mention', target });
+    } else if (nameOf(child) === 'SPAN') {
       const marks: MutableMarks = {};
       for (const flag of NOTE_FLAGS) if ((child as HTMLElement).dataset[flag] !== undefined) marks[flag] = true;
       runs.push({ kind: 'text', text: child.textContent ?? '', marks });
@@ -94,12 +169,23 @@ function readCanonicalLine(element: HTMLDivElement): NoteLine {
   return { heading: (level === 1 || level === 2 || level === 3 ? level : 0) as HeadingLevel, runs: normalizeRich(runs) };
 }
 
-const lineKey = (line: NoteLine): string => `${line.heading}|${serializeRich(line.runs)}`;
+/** A line as drawn: its marks, and the names its mentions show now (a rename draws it again). */
+const lineKey = (line: NoteLine): string => {
+  const names = line.runs.flatMap(run => (run.kind === 'mention' ? [`${chipName(run.target).name}${chipName(run.target).gone ? '!' : ''}`] : []));
+  return `${line.heading}|${serializeRich(line.runs)}|${names.join('|')}`;
+};
+
+/** The key of a line drawn in the editable: its runs read back, and the names its chips show. */
+function drawnKey(node: HTMLDivElement): string {
+  const names = [...node.childNodes].filter(isChip).map(chip => `${chip.dataset.name ?? ''}${chip.dataset.gone !== undefined ? '!' : ''}`);
+  const line = readCanonicalLine(node);
+  return `${line.heading}|${serializeRich(line.runs)}|${names.join('|')}`;
+}
 
 /** Draws lines into the editable, keeping the lines already drawn as they should be (the caret stays in them). */
 export function renderLines(root: HTMLElement, lines: readonly NoteLine[]): void {
   const nodes = [...root.childNodes];
-  const keys = nodes.map(node => (isCanonicalLine(node) ? lineKey(readCanonicalLine(node)) : null));
+  const keys = nodes.map(node => (isCanonicalLine(node) ? drawnKey(node) : null));
   const wanted = lines.map(lineKey);
   let head = 0;
   while (head < nodes.length && head < wanted.length && keys[head] === wanted[head]) head += 1;
@@ -186,6 +272,12 @@ export function readLines(root: Node, pasted = false): NoteLine[] {
         continue;
       }
       if (!isElement(child)) continue;
+      if (child.dataset?.mention !== undefined) {
+        // A chip (ours, or one copied from a note or a page): a person stays a mention; anything else is left out.
+        const target = parseMention(child.dataset.mention);
+        if (target && (!pasted || target.type === 'contact')) take(heading).runs.push({ kind: 'mention', target });
+        continue;
+      }
       const name = nameOf(child);
       if (SKIPPED.has(name)) continue;
       if (name === 'BR') {
@@ -212,17 +304,21 @@ export function readLines(root: Node, pasted = false): NoteLine[] {
 
 /** A pasted line's words: the note's marks alone (a heading's own weight is the heading's), no spaces at its ends. */
 function pastedRuns(line: NoteLine): Run[] {
-  const runs: TextRun[] = [];
+  const runs: Run[] = [];
   for (const run of line.runs) {
+    if (run.kind === 'mention') {
+      runs.push(run);
+      continue;
+    }
     if (run.kind !== 'text') continue;
     const marks: MutableMarks = {};
     for (const flag of NOTE_FLAGS) if (run.marks[flag] && !(flag === 'b' && line.heading > 0)) marks[flag] = true;
     runs.push({ kind: 'text', text: run.text, marks });
   }
   const first = runs[0];
-  if (first) runs[0] = { ...first, text: first.text.replace(/^ +/, '') };
+  if (first?.kind === 'text') runs[0] = { ...first, text: first.text.replace(/^ +/, '') };
   const last = runs[runs.length - 1];
-  if (last) runs[runs.length - 1] = { ...last, text: last.text.replace(/ +$/, '') };
+  if (last?.kind === 'text') runs[runs.length - 1] = { ...last, text: last.text.replace(/ +$/, '') };
   return normalizeRich(runs);
 }
 
@@ -297,6 +393,28 @@ export function selectionOffsets(root: HTMLElement, loose = false): TextSelectio
   return { start: Math.min(anchor, focus), end: Math.max(anchor, focus), backward: focus < anchor };
 }
 
+/** The position `rest` characters into a line's children: a chip is one, never entered (the caret stands before or after it). */
+function positionIn(container: Node, rest: number): { readonly node: Node; readonly offset: number; readonly left: number } {
+  const children = container.childNodes;
+  let left = rest;
+  for (let index = 0; index < children.length; index += 1) {
+    const child = children[index]!;
+    if (isText(child)) {
+      if (left <= child.data.length) return { node: child, offset: left, left: -1 };
+      left -= child.data.length;
+    } else if (isChip(child)) {
+      if (left === 0) return { node: container, offset: index, left: -1 };
+      left -= 1;
+      if (left === 0) return { node: container, offset: index + 1, left: -1 };
+    } else if (nameOf(child) !== 'BR') {
+      const found = positionIn(child, left);
+      if (found.left < 0) return found;
+      left = found.left;
+    }
+  }
+  return { node: container, offset: children.length, left };
+}
+
 /** The DOM position of an offset: at a boundary between two runs, the end of the one before (its marks go on). */
 function positionAt(root: HTMLElement, target: number): { readonly node: Node; readonly offset: number } {
   const lines = root.childNodes;
@@ -305,13 +423,8 @@ function positionAt(root: HTMLElement, target: number): { readonly node: Node; r
     const line = lines[index]!;
     const length = textOf(line).length;
     if (left <= length || index === lines.length - 1) {
-      let rest = Math.min(left, length);
-      const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
-      for (let text = walker.nextNode() as Text | null; text; text = walker.nextNode() as Text | null) {
-        if (rest <= text.data.length) return { node: text, offset: rest };
-        rest -= text.data.length;
-      }
-      return { node: line, offset: 0 };
+      const found = positionIn(line, Math.min(left, length));
+      return found.left < 0 ? found : { node: line, offset: 0 };
     }
     left -= length + 1;
   }
@@ -336,4 +449,29 @@ export function setSelectionOffsets(root: HTMLElement, start: number, end: numbe
 export function caretOnRoot(root: HTMLElement): boolean {
   const selection = window.getSelection();
   return !!selection && selection.rangeCount > 0 && (selection.anchorNode === root || selection.focusNode === root);
+}
+
+// ── copying ───────────────────────────────────────────────────────────────
+
+const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** Lines as HTML for the clipboard: headings, marks, and each mention as a chip naming its person (`readLines` reads it back). */
+export function linesHtml(lines: readonly NoteLine[]): string {
+  return lines
+    .map(line => {
+      const words = line.runs
+        .map(run => {
+          if (run.kind === 'mention') return `<span data-mention="${escapeHtml(`${run.target.type}:${run.target.id}`)}">${escapeHtml(chipName(run.target).name)}</span>`;
+          if (run.kind !== 'text') return '';
+          let html = escapeHtml(run.text);
+          if (run.marks.b) html = `<b>${html}</b>`;
+          if (run.marks.i) html = `<i>${html}</i>`;
+          if (run.marks.u) html = `<u>${html}</u>`;
+          return html;
+        })
+        .join('');
+      const tag = line.heading > 0 ? `h${line.heading}` : 'div';
+      return `<${tag}>${words || '<br>'}</${tag}>`;
+    })
+    .join('');
 }

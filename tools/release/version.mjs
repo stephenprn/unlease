@@ -1,6 +1,6 @@
 /**
- * The repository's one version (SemVer), written everywhere it lives: the four package.json and
- * their lockfiles, and Carnet's APK (`versionName`, and `versionCode` computed from it so that every
+ * The repository's one version (SemVer), written everywhere it lives: every package.json and its
+ * lockfile, and each Android app (`versionName`, and `versionCode` computed from it so that every
  * release installs over the one before). From the repository root:
  *
  *   npm run bump -- 0.2.0             sets 0.2.0 everywhere and dates CHANGELOG.md's Unreleased as it
@@ -13,12 +13,14 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const PACKAGES = ['package.json', 'server/package.json', 'web/notes/package.json', 'mobile/notes/package.json'];
+/** The phone apps of the suite, each its own install and its own APK. */
+const PHONE_APPS = ['mobile/notes', 'mobile/pages', 'mobile/contacts', 'mobile/calendar'];
+const PACKAGES = ['package.json', 'server/package.json', 'web/package.json', ...PHONE_APPS.map(app => `${app}/package.json`)];
 const LOCKS = {
-  'package-lock.json': ['', 'server', 'web/notes'],
-  'mobile/notes/package-lock.json': [''],
+  'package-lock.json': ['', 'server', 'web'],
+  ...Object.fromEntries(PHONE_APPS.map(app => [`${app}/package-lock.json`, ['']])),
 };
-const GRADLE = 'mobile/notes/android/app/build.gradle';
+const GRADLES = PHONE_APPS.map(app => `${app}/android/app/build.gradle`);
 const CHANGELOG = 'CHANGELOG.md';
 const REPOSITORY = 'https://github.com/stephenprn/unlease';
 
@@ -56,9 +58,11 @@ function versionsFound() {
     found.push([`${path} (version)`, lock.version]);
     for (const entry of entries) found.push([`${path} (packages["${entry}"])`, lock.packages[entry]?.version]);
   }
-  const gradle = read(GRADLE);
-  found.push([`${GRADLE} (versionName)`, /versionName "([^"]+)"/.exec(gradle)?.[1]]);
-  found.push([`${GRADLE} (versionCode)`, /versionCode (\d+)/.exec(gradle)?.[1]]);
+  for (const path of GRADLES) {
+    const gradle = read(path);
+    found.push([`${path} (versionName)`, /versionName "([^"]+)"/.exec(gradle)?.[1]]);
+    found.push([`${path} (versionCode)`, /versionCode (\d+)/.exec(gradle)?.[1]]);
+  }
   return found;
 }
 
@@ -85,10 +89,12 @@ function setVersion(target) {
     for (const entry of entries) lock.packages[entry].version = version;
     writeJson(path, lock);
   }
-  const gradle = read(GRADLE)
-    .replace(/versionCode \d+/, `versionCode ${versionCode(target)}`)
-    .replace(/versionName "[^"]+"/, `versionName "${version}"`);
-  writeFileSync(GRADLE, gradle);
+  for (const path of GRADLES) {
+    const gradle = read(path)
+      .replace(/versionCode \d+/, `versionCode ${versionCode(target)}`)
+      .replace(/versionName "[^"]+"/, `versionName "${version}"`);
+    writeFileSync(path, gradle);
+  }
 }
 
 /** The changelog with Unreleased become the version, dated today, an empty Unreleased above it, and the compare links. */
@@ -135,7 +141,7 @@ if (args[0] === '--check') {
   const changelog = target.rc === undefined ? rolledChangelog(target.version) : null;
   setVersion(target);
   if (changelog !== null) writeFileSync(CHANGELOG, changelog);
-  console.log(`${target.version} everywhere (Carnet's versionCode ${versionCode(target)})${target.rc === undefined ? `, and ${CHANGELOG} dated` : ''}.`);
+  console.log(`${target.version} everywhere (the phone apps' versionCode ${versionCode(target)})${target.rc === undefined ? `, and ${CHANGELOG} dated` : ''}.`);
   console.log(`Next: review the changes, commit them ("chore: release v${target.version}"), then: git tag v${target.version} && git push origin main v${target.version}`);
 } else {
   fail('usage: npm run bump -- <version> | node tools/release/version.mjs --check <tag> | --notes <tag>');

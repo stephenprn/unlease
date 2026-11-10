@@ -2,12 +2,17 @@
  * A formatted body drawn as written, to be read: bold, italic and underlined words as they are, the
  * words a search matched in peach inside them (`<mark>`, its underline in the text's own ink). A card
  * sets every line in one flow at its own size, a heading as a bold line (`CardLines`), so its line
- * clamp counts the lines `layoutCard` counted.
+ * clamp counts the lines `layoutCard` counted. A person mentioned reads as their name now (as
+ * `layoutCard` measured it), in the second ink once gone.
  */
 import { Fragment, type ReactNode } from 'react';
 
 import { lineStarts, type NoteLine } from '@unlease/notes/services/noteBody';
+import { mentionName } from '@unlease/notes/services/noteMentions';
+import type { Ref } from '@unlease/core/refs';
 import type { Run } from '@unlease/core/services/richText';
+
+import { nameOfMention, useMentionedPeople } from '../../../app/mentions';
 
 import styles from './noteLines.module.css';
 
@@ -31,6 +36,18 @@ function marked(text: string, from: number, ranges: Ranges): ReactNode {
   return parts;
 }
 
+/** A mention as its person's name now (re-drawn at a rename), the whole name marked when a search matched it. */
+function MentionName({ target, matched }: { target: Ref; matched: boolean }) {
+  useMentionedPeople();
+  const name = nameOfMention(target);
+  const shown = name ?? mentionName(target);
+  return (
+    <span className={styles.mention} data-gone={name === null || undefined}>
+      {matched ? <mark>{shown}</mark> : shown}
+    </span>
+  );
+}
+
 /** A line's words in their marks; `from`: where the line starts in the text the ranges count in. */
 export function LineRuns({ runs, from = 0, ranges = [] }: { runs: readonly Run[]; from?: number; ranges?: Ranges }) {
   const starts: number[] = [];
@@ -42,7 +59,11 @@ export function LineRuns({ runs, from = 0, ranges = [] }: { runs: readonly Run[]
   return (
     <>
       {runs.map((run, index) => {
-        // A note holds no mention; one met all the same stands as its one character.
+        if (run.kind === 'mention') {
+          const at = starts[index]!;
+          return <MentionName key={index} target={run.target} matched={ranges.some(([start, end]) => start <= at && end > at)} />;
+        }
+        // A date (Pages' alone) met all the same stands as its one character.
         const content = marked(run.kind === 'text' ? run.text : '￼', starts[index]!, ranges);
         const marks = run.kind === 'text' ? run.marks : {};
         const className = [marks.b ? styles.b : '', marks.i ? styles.i : '', marks.u ? styles.u : ''].filter(Boolean).join(' ');

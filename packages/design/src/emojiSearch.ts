@@ -5,6 +5,8 @@
  * languages asked for, word by word, each word the start of a word of the emoji's name or keywords,
  * accents and case aside.
  */
+import { getLocale } from '@unlease/core/i18n';
+
 export type EmojiLanguage = 'fr' | 'en';
 
 export interface EmojiGroup {
@@ -121,9 +123,15 @@ export function searchEmoji(catalogue: EmojiCatalogue, query: string, languages:
   return found.slice(0, limit).map(({ at }) => catalogue.emojis[at]!);
 }
 
-/** The name an emoji goes by in the first language asked for (French, unless only English is). */
+/** The language an emoji's name is shown in: the interface's when it is one asked for, else the first asked for (French, unless only English is). */
+export function emojiNameLanguage(languages: readonly EmojiLanguage[]): EmojiLanguage {
+  const shown: EmojiLanguage = getLocale() === 'en' ? 'en' : 'fr';
+  return languages.includes(shown) ? shown : (languages[0] ?? 'fr');
+}
+
+/** The name an emoji goes by (`emojiNameLanguage`). */
 export function emojiName(emoji: Emoji, languages: readonly EmojiLanguage[]): string {
-  return emoji.name[languages[0] ?? 'fr'] || emoji.name.fr;
+  return emoji.name[emojiNameLanguage(languages)] || emoji.name.fr;
 }
 
 /** Whether a character is drawn as an emoji: by Unicode's property where the engine knows it, else by its block. */

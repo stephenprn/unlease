@@ -4,8 +4,9 @@
  * surely lays its line out: React Native 0.88 draws decorations by hand and crashes on one past a
  * cut text's last laid-out line, so none goes beyond the lines before the last one shown.
  */
-import { cardParagraphs, linesText, type NoteLine } from '@unlease/notes/services/noteBody';
-import { MENTION_CHAR, type Marks } from '@unlease/core/services/richText';
+import { cardParagraphs, type NoteLine } from '@unlease/notes/services/noteBody';
+import { mentionName } from '@unlease/notes/services/noteMentions';
+import { MENTION_CHAR, type Marks, type Run } from '@unlease/core/services/richText';
 import { matchRanges } from '@unlease/core/services/search';
 import { textReach } from '@unlease/design/textWrap';
 
@@ -25,10 +26,14 @@ export interface CardCut {
   readonly size: number;
 }
 
+/** A run's words on a card: a mention as its subject's name, as the wall measured it (`cardParagraphs`). */
+const runText = (run: Run): string => (run.kind === 'text' ? run.text : run.kind === 'mention' ? mentionName(run.target) : MENTION_CHAR);
+
 /** The pieces, a line break between lines as a plain string. */
 export function cardPieces(lines: readonly NoteLine[], query: string, cut: CardCut): (CardPiece | string)[] {
   const reach = textReach(cardParagraphs(lines), cut.width, cut.size, cut.lines - 1);
-  const matches = matchRanges(linesText(lines), query);
+  // A search finds a person by their name, as the card shows it.
+  const matches = matchRanges(lines.map(line => line.runs.map(runText).join('')).join('\n'), query);
   const points = [reach, ...matches.flat()];
   const out: (CardPiece | string)[] = [];
   let at = 0;
@@ -38,7 +43,7 @@ export function cardPieces(lines: readonly NoteLine[], query: string, cut: CardC
       at += 1;
     }
     for (const run of line.runs) {
-      const text = run.kind === 'text' ? run.text : MENTION_CHAR;
+      const text = runText(run);
       const marks: Marks = run.kind === 'text' ? run.marks : {};
       const cuts = [...new Set([0, text.length, ...points.filter(point => point > at && point < at + text.length).map(point => point - at)])].sort((a, b) => a - b);
       for (let k = 0; k + 1 < cuts.length; k += 1) {

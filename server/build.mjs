@@ -13,7 +13,7 @@ await build({
   format: 'esm',
   // sharp loads a native addon for the running platform, so it stays in node_modules.
   external: ['sharp'],
-  alias: { '@unlease/core': here('../packages/core/src'), '@unlease/design': here('../packages/design/src'), '@unlease/notes': here('../packages/notes/src') },
+  alias: { '@unlease/core': here('../packages/core/src'), '@unlease/design': here('../packages/design/src'), '@unlease/notes': here('../packages/notes/src'), '@unlease/contacts': here('../packages/contacts/src'), '@unlease/calendar': here('../packages/calendar/src'), '@unlease/pages': here('../packages/pages/src') },
   sourcemap: true,
   legalComments: 'none',
   logLevel: 'info',

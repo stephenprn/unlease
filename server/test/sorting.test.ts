@@ -99,15 +99,16 @@ describe('POST /api/sort, filing', () => {
     expect(body).toEqual({ moves: [{ link: 'l60', to: 'mode' }, { link: 'l121', to: 'films' }], incomplete: 'Tri refusé par Claude' });
   });
 
-  it('starts no batch once the month’s budget is spent', async () => {
+  it('starts no batch once the month’s budget is spent, or held by the batches in flight', async () => {
     server.settings.update({ budgetUsd: 0.02 });
     const links = Array.from({ length: 200 }, (_, index) => link(`l${index}`, `Lien ${index}`));
-    server.claude.reply(claudeMessage({ moves: [] }), claudeMessage({ moves: [] }), claudeMessage({ moves: [{ link: 1, to: 1 }] }));
+    server.claude.reply(claudeMessage({ moves: [{ link: 1, to: 1 }] }));
     const { status, body } = await postSort({ ...fileRequest, links });
 
+    // The first batch holds what it may cost, more than the budget: the two started beside it send nothing, and none follows it.
     expect(status).toBe(200);
-    expect(server.claude.requests).toHaveLength(3);
-    expect(body).toEqual({ moves: [{ link: 'l120', to: 'mode' }], incomplete: 'Budget mensuel atteint' });
+    expect(server.claude.requests).toHaveLength(1);
+    expect(body).toEqual({ moves: [{ link: 'l0', to: 'mode' }], incomplete: 'Budget mensuel atteint' });
   });
 
   it('bills each call to the month without counting it as a link read', async () => {

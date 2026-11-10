@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { noteFromRecord, noteFields, blockFields, blockFromRecord } from '@unlease/notes/sync/entities';
+import { noteFromRecord, noteFields } from '@unlease/notes/sync/entities';
 import { serializeStrokes } from '@unlease/notes/services/drawing';
 import { layoutLibrary, type Library } from '../src/apps/notes/files';
 import { libraryMarkdown } from '../src/apps/notes/markdown';
@@ -24,10 +24,6 @@ describe('a backup’s Markdown', () => {
       links: [],
       labels: [],
       attachments: [],
-      blocks: [
-        blockFromRecord({ type: 'block', id: 'p1', fields: blockFields({ parentId: null, position: 'a0', kind: 'page', text: 'Maison', createdAt: 0 }), clocks: {} }),
-        blockFromRecord({ type: 'block', id: 'd1', fields: blockFields({ parentId: 'p1', position: 'a0', kind: 'drawing', caption: 'Le salon', drawing, createdAt: 0 }), clocks: {} }),
-      ],
     };
     const files = libraryMarkdown(library, layoutLibrary(library, { kept: true }));
     const byPath = new Map(files.map(file => [file.path, file.text]));
@@ -39,8 +35,5 @@ describe('a backup’s Markdown', () => {
     const svg = [...byPath.entries()].find(([path]) => path.endsWith('Plan.svg'))![1];
     expect(svg).toMatch(/^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" width="1000" height="750"/);
     expect(svg).toContain('stroke="#2F5D8C"');
-    const page = [...byPath.entries()].find(([path]) => path.endsWith('Maison.md'))![1];
-    expect(page).toMatch(/!\[Le salon\]\(<\.\.\/\.\.\/Carnet\/Pages\/Maison\.dessin-1\.svg>\)/);
-    expect([...byPath.keys()].some(path => path.endsWith('Maison.dessin-1.svg'))).toBe(true);
   });
 });

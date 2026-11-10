@@ -203,6 +203,75 @@ describe('long polling', () => {
   });
 });
 
+describe('syncing some types', () => {
+  const NOTES = ['attachment', 'check', 'label', 'link', 'note'];
+
+  it('sends only the records of the types asked for, and moves the cursor past the others', async () => {
+    await postSync(server, {
+      node: 'phone1',
+      since: 0,
+      records: [rec('note', 'n1', { title: 'A' }, T0 - 5000), rec('block', 'b1', { kind: 'page', text: 'P' }, T0 - 5000), rec('check', 'c1', { noteId: 'n1', text: 'Pain' }, T0 - 5000), rec('block', 'b2', { kind: 'text', text: 'Q' }, T0 - 5000)],
+    });
+    const notes = await postSync(server, { node: 'web001', since: 0, types: NOTES });
+    expect(notes.body.records.map((r: SyncRecord) => r.id)).toEqual(['n1', 'c1']);
+    // Past the last block too: the next pull walks none of them again.
+    expect(notes.body).toMatchObject({ cursor: 4, more: false });
+    const pages = await postSync(server, { node: 'web002', since: 0, types: ['block'] });
+    expect(pages.body.records.map((r: SyncRecord) => r.id)).toEqual(['b1', 'b2']);
+    expect(pages.body.cursor).toBe(4);
+
+    // Only another type changed: nothing to send, and the cursor still moves on.
+    await postSync(server, { node: 'phone1', since: 4, records: [rec('block', 'b1', { text: 'P2' }, T0 - 1000)] });
+    expect((await postSync(server, { node: 'web001', since: 4, types: NOTES })).body).toMatchObject({ records: [], cursor: 5, more: false });
+    // Without a list, everything, as an older client asks.
+    expect((await postSync(server, { node: 'web003', since: 0 })).body.records).toHaveLength(4);
+    // A list it cannot read is refused.
+    expect((await postSync(server, { node: 'web001', since: 0, types: 'note' })).status).toBe(400);
+  });
+
+  it('pages at MAX_PULL among its own types, however many of the others lie in between', async () => {
+    const records: SyncRecord[] = [];
+    for (let i = 0; i < MAX_PULL + 2; i += 1) records.push(rec('note', `n${String(i).padStart(5, '0')}`, { title: `N${i}` }, T0 - 9000), rec('block', `b${String(i).padStart(5, '0')}`, { kind: 'text', text: `B${i}` }, T0 - 9000));
+    for (let start = 0; start < records.length; start += MAX_PUSH) server.sync.push(records.slice(start, start + MAX_PUSH));
+    const first = await postSync(server, { node: 'web001', since: 0, types: ['block'] });
+    expect(first.body.records).toHaveLength(MAX_PULL);
+    expect(first.body.records.every((r: SyncRecord) => r.type === 'block')).toBe(true);
+    expect(first.body.more).toBe(true);
+    expect(first.body.records.at(-1).id).toBe('b00999');
+    expect(first.body.cursor).toBe(server.records.get('block', 'b00999')!.seq);
+    const rest = await postSync(server, { node: 'web001', since: first.body.cursor, types: ['block'] });
+    expect(rest.body.records.map((r: SyncRecord) => r.id)).toEqual(['b01000', 'b01001']);
+    expect(rest.body).toMatchObject({ more: false, cursor: server.records.maxSeq() });
+  });
+
+  it('holds a long poll until a record of its types arrives, past changes to the others', async () => {
+    const started = Date.now();
+    const waiting = postSync(server, { node: 'web001', since: 0, records: [], wait: 10_000, types: ['block'] });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    await postSync(server, { node: 'phone1', since: 0, records: [rec('note', 'n1', { title: 'Hop' }, T0 - 100)] });
+    await new Promise(resolve => setTimeout(resolve, 100));
+    // Woken by the note, it went back to waiting.
+    expect(server.notifier.waiting).toBe(1);
+    await postSync(server, { node: 'phone1', since: 0, records: [rec('block', 'b1', { kind: 'page', text: 'P' }, T0 - 100)] });
+    const answer = await waiting;
+    expect(answer.body.records.map((r: SyncRecord) => r.id)).toEqual(['b1']);
+    expect(answer.body.cursor).toBe(2);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  it('answers a long poll empty after its wait, its cursor moved past the others', async () => {
+    const waiting = postSync(server, { node: 'web001', since: 0, records: [], wait: 300, types: ['block'] });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    await postSync(server, { node: 'phone1', since: 0, records: [rec('note', 'n1', { title: 'Hop' }, T0 - 100)] });
+    expect((await waiting).body).toMatchObject({ records: [], cursor: 1 });
+
+    const held = postSync(server, { node: 'web001', since: 1, wait: 10_000, types: ['block'] });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    server.notifier.close();
+    expect((await held).body.records).toEqual([]);
+  });
+});
+
 describe('server writes', () => {
   it('sort after the clocks they answer, even from a device whose clock runs ahead', async () => {
     const ahead = T0 + 2 * 3_600_000;
@@ -221,6 +290,13 @@ describe('server writes', () => {
     expect(server.sync.apply([{ type: 'note', id: 'n1', patch: () => ({ pinned: 'oui' }) }])).toEqual([]);
     expect(server.sync.apply([{ type: 'note', id: 'missing', patch: () => ({ title: 'x' }) }])).toEqual([]);
     expect(server.records.maxSeq()).toBe(1);
+  });
+
+  it('make a record when asked to, under the server’s clock', () => {
+    const [made] = server.sync.apply([{ type: 'note', id: 'new', create: true, patch: () => ({ title: 'Faite ici', pinned: 'oui' }) }]);
+    expect(made).toMatchObject({ type: 'note', id: 'new', fields: { title: 'Faite ici' }, seq: 1 });
+    expect(made!.clocks.title).toMatch(/srvtest01$/);
+    expect(made!.fields.pinned).toBeUndefined();
   });
 });
 

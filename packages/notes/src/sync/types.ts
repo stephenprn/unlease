@@ -4,14 +4,12 @@
  * is safe; renaming or removing one is a migration on every device.
  */
 import { LOCALES } from '@unlease/core/i18n';
-import { REF_TYPE_PATTERN } from '@unlease/core/refs';
 import {
   bool,
   defineRecordTypes,
   id,
   ids,
   int,
-  isObject,
   nullableId,
   nullableNumber,
   nullableOneOf,
@@ -19,25 +17,28 @@ import {
   nullableTime,
   oneOf,
   position,
-  smallJson,
+  signed,
   str,
   styleKey,
   time,
   type Check,
 } from '@unlease/core/sync/schema';
 import { isLineColor } from '@unlease/design/colors';
-import { BLOCK_FIELD_DEFAULTS, BLOCK_KINDS, TABLE_LIMITS, VIEW_LIMITS } from '../models/blocks';
 import { DRAWING_LIMITS } from '../models/drawing';
 import { INBOX_ID, LINK_FILERS, LINK_KINDS, NOTE_KINDS } from '../models/entities';
+import { TEMPLATE_LIMITS } from '../models/templates';
 import { mergeStrokes } from '../services/drawing';
+import { isTemplateFields } from '../services/templates';
 
 /** The longest text each typed field may hold. */
 export const TEXT_LIMITS = {
   note: { title: 1000, body: 200_000, drawing: DRAWING_LIMITS.chars },
   check: { text: 5000 },
   link: { comment: 5000 },
-  block: { text: 100_000, caption: 2000, drawing: DRAWING_LIMITS.chars },
 } as const;
+
+/** The most people one note or link may name. */
+export const PEOPLE_MAX = 20;
 
 const lineColor: Check = isLineColor;
 /** A collection's link modules: keys a newer client may add pass on too. */
@@ -54,33 +55,8 @@ const attributes: Check = value =>
       (entry as { label: string }).label.length <= 60 &&
       (entry as { value: string }).value.length <= 300,
   );
-const selectOption = (value: unknown): boolean =>
-  isObject(value) && id(value.id) && str(TABLE_LIMITS.name)(value.name) && styleKey(value.color) && value.color !== null;
-const tableColumn = (value: unknown): boolean =>
-  isObject(value) &&
-  id(value.id) &&
-  str(TABLE_LIMITS.name)(value.name) &&
-  styleKey(value.type) &&
-  value.type !== null &&
-  (value.unit === undefined || str(TABLE_LIMITS.unit)(value.unit)) &&
-  (value.width === undefined || int(40, 2000)(value.width)) &&
-  (value.options === undefined || (Array.isArray(value.options) && value.options.length <= TABLE_LIMITS.options && value.options.every(selectOption)));
-const tableColumns: Check = value =>
-  Array.isArray(value) && value.length <= TABLE_LIMITS.columns && value.every(tableColumn) && new Set(value.map(column => (column as { id: string }).id)).size === value.length && smallJson(100_000)(value);
-const cellValue = (value: unknown): boolean =>
-  value === null ||
-  typeof value === 'boolean' ||
-  (typeof value === 'number' && Number.isFinite(value)) ||
-  (typeof value === 'string' && value.length <= TABLE_LIMITS.cellText) ||
-  (Array.isArray(value) && value.length <= TABLE_LIMITS.options && value.every(id));
-const tableCells: Check = value => isObject(value) && Object.keys(value).length <= TABLE_LIMITS.columns * 2 && Object.entries(value).every(([key, cell]) => id(key) && cellValue(cell)) && smallJson(200_000)(value);
-const ratio: Check = value => typeof value === 'number' && Number.isFinite(value) && value >= 0.05 && value <= 20;
-const viewColumn = (value: unknown): boolean => isObject(value) && typeof value.key === 'string' && value.key.length > 0 && value.key.length <= VIEW_LIMITS.key && bool(value.shown);
-const viewColumns: Check = value =>
-  Array.isArray(value) && value.length <= VIEW_LIMITS.columns && value.every(viewColumn) && new Set(value.map(column => (column as { key: string }).key)).size === value.length && smallJson(20_000)(value);
-/** What a bookmark or an embed points at: any app's type (`@unlease/core/refs`), one a newer client added included. */
-const refType: Check = value => value === null || (typeof value === 'string' && REF_TYPE_PATTERN.test(value));
-
+/** A template's fields (`models/templates`): what `parseTemplateFields` reads, nothing it would cut. */
+const templateFields = signed(isTemplateFields, `templateFields:${TEMPLATE_LIMITS.fields}:${TEMPLATE_LIMITS.fieldName}:${TEMPLATE_LIMITS.hint}`);
 const typed = (limit: number) => ({ limit });
 const strokes = (limit: number) => ({ limit, merge: mergeStrokes });
 
@@ -105,11 +81,15 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       emblem: styleKey,
       hint: str(500),
       modules: moduleKeys,
+      /** A collection's template (`linkTemplate`, one of the person's own), its links read with it; null: each link's kind's. */
+      templateId: nullableId,
+      /** The people of Contacts it is about (`contact` ids), written only once one is picked. */
+      contactIds: ids(PEOPLE_MAX),
       createdAt: time,
       deletedAt: nullableTime,
     },
     merged: { title: typed(TEXT_LIMITS.note.title), body: typed(TEXT_LIMITS.note.body), drawing: strokes(TEXT_LIMITS.note.drawing) },
-    defaults: { pattern: null, emblem: null, reminderAt: null, hint: '' },
+    defaults: { pattern: null, emblem: null, reminderAt: null, hint: '', contactIds: [], templateId: null },
     seeded: [INBOX_ID],
   },
   check: {
@@ -139,6 +119,12 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       kind: oneOf(LINK_KINDS),
       price: nullableNumber,
       currency: nullableStr(3),
+      /** « Suivi des prix »: the price before its last change, as the server's watch read it; null until it changes. Written by the server. */
+      priceBefore: nullableNumber,
+      /** When the watch saw the price change. Written by the server. */
+      priceChangedAt: nullableTime,
+      /** When the watch last read the price (a page or Claude). Written by the server. */
+      priceCheckedAt: nullableTime,
       attributes,
       imageIds: ids(12),
       imageUrl: nullableStr(4000),
@@ -148,12 +134,18 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       position,
       error: nullableStr(500),
       analyzedAt: nullableTime,
+      /** The template version it was read with (`templateSignature`); null: the presets, before templates. Written by the server. */
+      readWith: nullableStr(40),
       lang: oneOf(LOCALES),
+      /** The page « Garder une copie » made of it, in Pages: written by the server, cleared when that page is purged. */
+      copy: nullableId,
+      /** The people of Contacts it is for (`contact` ids): picked on the link, or a gift idea's from Contacts. */
+      contactIds: ids(PEOPLE_MAX),
       createdAt: time,
       deletedAt: nullableTime,
     },
     merged: { comment: typed(TEXT_LIMITS.link.comment) },
-    defaults: { filedBy: null, done: false, doneAt: null, comment: '' },
+    defaults: { filedBy: null, done: false, doneAt: null, comment: '', copy: null, contactIds: [], priceBefore: null, priceChangedAt: null, priceCheckedAt: null, readWith: null },
   },
   label: {
     app: 'notes',
@@ -161,6 +153,21 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       name: str(60),
       color: lineColor,
       position,
+      createdAt: time,
+      deletedAt: nullableTime,
+    },
+  },
+  /**
+   * What Carnet reads from a link (`models/templates`): a kind's own changed by the person, kept under
+   * `template-<kind>` (deleted when set back: the preset reads again), or one of the person's own,
+   * named, that collections pick (`note.templateId`).
+   */
+  linkTemplate: {
+    app: 'notes',
+    fields: {
+      name: str(TEMPLATE_LIMITS.name),
+      kind: nullableOneOf(LINK_KINDS),
+      fields: templateFields,
       createdAt: time,
       deletedAt: nullableTime,
     },
@@ -179,50 +186,13 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       deletedAt: nullableTime,
     },
   },
-  block: {
-    app: 'notes',
-    fields: {
-      parentId: nullableId,
-      position,
-      kind: oneOf(BLOCK_KINDS),
-      text: str(TEXT_LIMITS.block.text),
-      caption: str(TEXT_LIMITS.block.caption),
-      drawing: str(TEXT_LIMITS.block.drawing),
-      checked: bool,
-      language: str(30),
-      icon: nullableStr(32),
-      color: styleKey,
-      columns: tableColumns,
-      cells: tableCells,
-      fileId: nullableId,
-      fileName: str(255),
-      mime: str(127),
-      bytes: int(0, 1024 * 1024 * 1024),
-      width: int(0, 100_000),
-      height: int(0, 100_000),
-      uploaded: bool,
-      url: nullableStr(4000),
-      targetType: refType,
-      targetId: nullableId,
-      view: styleKey,
-      viewColumns,
-      showDone: bool,
-      ratio,
-      private: bool,
-      trashedAt: nullableTime,
-      createdAt: time,
-      deletedAt: nullableTime,
-    },
-    merged: { text: typed(TEXT_LIMITS.block.text), caption: typed(TEXT_LIMITS.block.caption), drawing: strokes(TEXT_LIMITS.block.drawing) },
-    defaults: BLOCK_FIELD_DEFAULTS,
-  },
 });
 
 export type RecordType = keyof typeof NOTES_RECORD_TYPES;
 
 export const RECORD_TYPES = Object.keys(NOTES_RECORD_TYPES) as readonly RecordType[];
 
-/** One of Carnet's own types: a store may also hold another app's records, read for their mentions. */
+/** One of Carnet's own types: a store may also hold another app's records (a Pages client reads Carnet's). */
 export function isNotesType(value: string): value is RecordType {
   return Object.hasOwn(NOTES_RECORD_TYPES, value);
 }

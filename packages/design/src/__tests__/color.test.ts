@@ -1,4 +1,4 @@
-import { hexToHsv, hsvToHex, isHex, mixOklab, normalizeHex } from '../color';
+import { hexToHsv, hsvToHex, isHex, mixOklab, normalizeHex, oklabDistance } from '../color';
 import { contrast } from '../palette';
 
 describe('a typed colour', () => {
@@ -45,5 +45,14 @@ describe('a blend', () => {
   it('starts and ends on its two colours', () => {
     expect(contrast(mixOklab('#F6C1A6', '#C9B6F2', 0), '#F6C1A6')).toBeLessThan(1.01);
     expect(contrast(mixOklab('#F6C1A6', '#C9B6F2', 1), '#C9B6F2')).toBeLessThan(1.01);
+  });
+});
+
+describe('a distance', () => {
+  it('is none between a colour and itself, the same both ways, and grows as colours part', () => {
+    expect(oklabDistance('#6DBDB3', '#6DBDB3')).toBe(0);
+    expect(oklabDistance('#6DBDB3', '#9CC15F')).toBeCloseTo(oklabDistance('#9CC15F', '#6DBDB3'), 12);
+    expect(oklabDistance('#6DBDB3', '#5FB0A6')).toBeLessThan(oklabDistance('#6DBDB3', '#F2A7BC'));
+    expect(oklabDistance('#000000', '#FFFFFF')).toBeCloseTo(1, 3);
   });
 });

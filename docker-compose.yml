@@ -20,6 +20,12 @@ services:
     # Loopback only: the reverse proxy on this machine reaches it; change to "8080:8080" for one elsewhere.
     ports:
       - "127.0.0.1:8080:8080"
+    # Docker's own log files, rotated: three of 10 MB at most (`docker compose logs` reads them).
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   unlease-data:

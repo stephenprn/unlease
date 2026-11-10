@@ -1,83 +1,112 @@
 /**
- * Keep import on the phone: pick the Takeout zip, preview it, then write one batch of records.
- * Photos become this phone's local files, so the sync loop uploads them like any other.
+ * Keep import on the phone: pick the Takeout zip, preview it, ask what the notes made of links
+ * become, then write one batch of records. The parsing and the records are core's
+ * (`notes/services/keepImport`), shared with the web. Photos become this phone's local files, so
+ * the sync loop uploads them like any other; the export's other files are removed.
  */
 import { t } from '@unlease/core/i18n';
-import { nextLineColor, LINE_COLORS, type LineColor } from '@unlease/design/colors';
-import { keepPlanToRecords, planKeepImport, type KeepPlan } from '@unlease/notes/services/keepImport';
-import { saveLocalFile } from '@data/repositories/fileRepository';
-import { describeImage, pickKeepArchive, readText, removePath } from '@platform/media';
+import {
+  alreadyImported,
+  isKeepDataFile,
+  keepFileFinder,
+  keepPlanToRecords,
+  planKeepImport,
+  type KeepPlan,
+  type KeepReport,
+} from '@unlease/notes/services/keepImport';
+import { saveLocalFile } from '@shared/data/repositories/fileRepository';
+import { describeImage, pickKeepArchive, readText, removePath } from '@shared/platform/media';
 
-import { forgetLocalPaths } from './hooks/useImageSource';
+import { forgetLocalPaths } from '@shared/app/hooks/useImageSource';
 import { readingEnabled } from './store/actions';
-import { deviceNode, useLibraryStore, writeImported, writeLocal } from './store/libraryStore';
+import { deviceNode, getRecord, useLibraryStore, writeImported, writeLocal } from './store/libraryStore';
+import type { RecordType } from '@unlease/notes/sync/types';
 
 export interface PreparedImport {
   readonly plan: KeepPlan;
   readonly dir: string;
-  /** Archive image paths, keyed by the file name Keep's JSON uses. */
+  /** Where each of the export's photos was extracted, by its path in the zip. */
   readonly images: ReadonlyMap<string, string>;
+}
+
+/** What the person chose for the notes made of links. */
+export interface KeepChoices {
+  /** Notes of one address become links Claude files. */
+  readonly singleLinks: boolean;
+  /** The link lists (by `source`) that become collections. */
+  readonly collections: ReadonlySet<string>;
 }
 
 export type PrepareOutcome = { readonly status: 'ok'; readonly prepared: PreparedImport } | { readonly status: 'cancelled' } | { readonly status: 'error'; readonly message: string };
 
+const basename = (path: string): string => path.split('/').pop() ?? path;
+
 export async function prepareKeepImport(): Promise<PrepareOutcome> {
   const archive = await pickKeepArchive();
   if (archive.status === 'cancelled') return { status: 'cancelled' };
-  if (archive.status !== 'ok') return { status: 'error', message: archive.message ? t(archive.message) : t('Archive illisible') };
+  if (archive.status !== 'ok') return { status: 'error', message: archive.message ? t(archive.message) : t('Archive illisible : choisissez le fichier .zip téléchargé depuis Google Takeout.') };
   const files: { name: string; text: string }[] = [];
   const images = new Map<string, string>();
   for (const entry of archive.entries) {
-    const base = entry.name.split('/').pop() ?? entry.name;
-    if (base.toLowerCase().endsWith('.json')) files.push({ name: base, text: await readText(entry.path) });
-    else images.set(base, entry.path);
+    const base = basename(entry.name);
+    if (isKeepDataFile(base)) files.push({ name: base, text: await readText(entry.path) });
+    else images.set(entry.name, entry.path);
   }
-  if (files.length === 0) {
-    await removePath(archive.dir);
+  if (!files.some(file => /\.json$/i.test(file.name))) {
+    await discardKeepImport({ dir: archive.dir, images });
     return { status: 'error', message: t('Aucune note Keep dans cette archive. Exportez « Keep » depuis Google Takeout.') };
   }
   return { status: 'ok', prepared: { plan: planKeepImport(files), dir: archive.dir, images } };
 }
 
-export function linkOnlyCount(plan: KeepPlan): number {
-  return plan.notes.filter(note => note.onlyUrl).length;
+/** The extracted export, removed: an import cancelled leaves nothing behind. */
+export async function discardKeepImport(prepared: Pick<PreparedImport, 'dir' | 'images'>, keep: ReadonlySet<string> = new Set()): Promise<void> {
+  await removePath(prepared.dir);
+  for (const path of prepared.images.values()) if (!keep.has(path)) await removePath(path);
 }
 
-export async function runKeepImport(prepared: PreparedImport, convertLinks: boolean, now: number = Date.now()): Promise<{ notes: number; links: number; photos: number }> {
-  const state = useLibraryStore.getState();
-  const existingLabels = state.labelOrder.map(id => state.labels[id]).filter(l => !!l).map(l => ({ id: l!.id, name: l!.name }));
-  const used: (LineColor | null)[] = existingLabels.map(l => state.labels[l.id]?.color ?? null);
-  const labelColors: LineColor[] = [];
-  for (let i = 0; i < LINE_COLORS.length; i += 1) {
-    const color = nextLineColor([...used, ...labelColors]);
-    labelColors.push(color);
-  }
-  const first = state.noteOrder.map(id => state.notes[id]).find(n => n && n.kind !== 'links');
+/** Whether a record with this id is on this phone, live or deleted. */
+const known = (type: 'note' | 'link', id: string): boolean => getRecord(type as RecordType, id) !== undefined;
+
+/** Notes an earlier import (here or on another device, once synced) brought already. */
+export function alreadyHere(plan: KeepPlan): number {
+  return alreadyImported(plan, known);
+}
+
+export async function runKeepImport(prepared: PreparedImport, choices: KeepChoices, onProgress?: (done: number, total: number) => void, now: number = Date.now()): Promise<KeepReport> {
   const result = keepPlanToRecords(prepared.plan, {
     node: deviceNode(),
     now,
-    existingLabels,
-    labelColors,
-    firstPosition: first?.position ?? null,
-    convertLinks,
+    library: useLibraryStore.getState(),
+    known,
+    reading: readingEnabled(),
+    singleLinks: choices.singleLinks,
+    collections: choices.collections,
+    findFile: keepFileFinder(prepared.images.keys()),
   });
-  // A server that does not read links keeps them plain where they land, as `addLink` does.
-  const records = readingEnabled()
-    ? result.records
-    : result.records.map(record => (record.type === 'link' ? { ...record, fields: { ...record.fields, status: 'skipped', autoFile: false } } : record));
-  writeImported(records, now);
+  writeImported(result.records, now);
 
   let photos = 0;
-  for (const upload of result.uploads) {
-    const path = prepared.images.get(upload.filePath.split('/').pop() ?? upload.filePath);
-    if (!path) continue;
+  let missing = 0;
+  const kept = new Set<string>();
+  for (const [index, upload] of result.uploads.entries()) {
+    onProgress?.(index, result.uploads.length);
+    const path = prepared.images.get(upload.file);
+    if (!path) {
+      missing += 1;
+      continue;
+    }
     const described = await describeImage(path);
-    saveLocalFile({ id: upload.attachmentId, path, mime: upload.mime === 'image/jpg' ? 'image/jpeg' : upload.mime }, now);
+    saveLocalFile({ id: upload.attachmentId, path, mime: upload.mime }, now);
+    kept.add(path);
     if (described) {
       writeLocal([{ type: 'attachment', id: upload.attachmentId, patch: { width: described.width, height: described.height, bytes: described.bytes } }], now);
     }
     photos += 1;
   }
+  onProgress?.(result.uploads.length, result.uploads.length);
   forgetLocalPaths();
-  return { notes: result.noteCount, links: result.linkCount, photos };
+  // The JSON, and the photos no note took (the bin's, an earlier import's), are not kept.
+  await discardKeepImport(prepared, kept);
+  return { ...result.report, photos, missingPhotos: result.report.missingPhotos + missing };
 }

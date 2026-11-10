@@ -21,7 +21,7 @@ export const LinkOutputSchema = z.object({
     .describe('Only when the page sells the thing; the lowest current price for a range.'),
   attributes: z
     .array(z.object({ label: z.string(), value: z.string() }))
-    .describe('At most 6 short facts, in the message\'s language, chosen for the kind.'),
+    .describe('At most 6 short facts, in the message\'s language, chosen for the kind; the person\'s own fields instead when the message gives them (up to 8).'),
   imageIndex: z.number().nullable().describe('Index of the best image candidate, or null.'),
   listId: z.string().nullable().describe('The chosen list id when filing is asked for, else null.'),
   pageRead: z.boolean().describe('false only when the page could not be read and the answer comes from the URL alone.'),
@@ -104,7 +104,8 @@ function currencyCode(value: string): string | null {
   return SYMBOLS[trimmed] ?? null;
 }
 
-export function normalizeOutput(raw: RawOutput, candidateCount: number): LinkOutput {
+/** `attributeLimit`: six facts, as before templates, or as many as the person's fields asked (eight at most). */
+export function normalizeOutput(raw: RawOutput, candidateCount: number, attributeLimit = 6): LinkOutput {
   const amount = raw.price && Number.isFinite(raw.price.amount) && raw.price.amount >= 0 && raw.price.amount < 1e9 ? raw.price.amount : null;
   const currency = raw.price && amount !== null ? currencyCode(raw.price.currency) : null;
   const labels = new Set<string>();
@@ -115,7 +116,7 @@ export function normalizeOutput(raw: RawOutput, candidateCount: number): LinkOut
     if (!cleanLabel || !cleanValue || labels.has(cleanLabel.toLowerCase())) continue;
     labels.add(cleanLabel.toLowerCase());
     attributes.push({ label: cleanLabel, value: cleanValue });
-    if (attributes.length === 6) break;
+    if (attributes.length === attributeLimit) break;
   }
   const index = raw.imageIndex === null ? null : Math.round(raw.imageIndex);
   return {

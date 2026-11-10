@@ -1,7 +1,7 @@
 /**
  * Readable names for files, the same in the drive (Seafile) and in a backup archive: made safe for
  * every file system and unique among their siblings. Each app lays its own files out with them
- * (Carnet's: `apps/notes/files.ts`).
+ * (Carnet's: `apps/notes/files.ts`, Pages': `apps/pages/files.ts`).
  */
 const EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',

@@ -11,11 +11,11 @@ import { plural } from '@unlease/core/services/format';
 
 import { useLines } from '../../../app/hooks/useLines';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectCanRead, useSettingsStore } from '../../../app/store/settings';
-import { selectSorting, useUiStore } from '../../../app/store/ui';
-import { DialogFrame } from '../../components/Dialog';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
+import { useCanRead } from '../../../app/store/prefs';
+import { selectSorting, useNotesUiStore } from '../../../app/store/notesUi';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
 import styles from './lines.module.css';
 
 /** Where a deleted collection's links go: sorted by Claude, to one collection ("Non classé" included), or to the bin. */
@@ -41,8 +41,8 @@ export function DeleteLineDialog({ ids, open, onDismiss, onChoose, onPickLine }:
   const lines = useLines();
   const deleting = lines.filter(line => ids.includes(line.id) && line.id !== INBOX_ID);
   const count = useLibraryStore(s => ids.reduce((sum, id) => sum + (id !== INBOX_ID && s.notes[id]?.kind === 'links' ? (s.linksByNote[id]?.length ?? 0) : 0), 0));
-  const reading = useSettingsStore(selectCanRead);
-  const sorting = useUiStore(selectSorting);
+  const reading = useCanRead();
+  const sorting = useNotesUiStore(selectSorting);
   const others = lines.some(line => !ids.includes(line.id) && line.id !== INBOX_ID);
   const words = {
     title: deleting.length === 1 ? t('Supprimer {collection}', { collection: shownTitle(deleting[0]!) }) : t('Supprimer {count} collections', { count: deleting.length }),
@@ -65,7 +65,6 @@ export function DeleteLineDialog({ ids, open, onDismiss, onChoose, onPickLine }:
           <Choice
             icon="transfer"
             title={t('Les déplacer vers…')}
-            hint={t('Une autre collection')}
             onClick={() => {
               onDismiss();
               onPickLine();

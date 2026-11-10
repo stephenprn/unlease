@@ -2,12 +2,13 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { freshLibrary } from '../../test/library';
+import { freshLibrary } from '@test/library';
 import { addCheck, createNote, trashNotes } from '../../app/store/actions';
-import { acknowledge, getRecord, mergeRemote, useLibraryStore } from '../../app/store/library';
+import { acknowledge, getRecord, mergeRemote } from '@shared/app/store/records';
+import { useLibraryStore } from '../../app/store/library';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import { writeFields } from '@unlease/core/sync/record';
-import { useUiStore } from '../../app/store/ui';
+import { useUiStore } from '@shared/app/store/ui';
 import { NoteEditor } from '../features/note/NoteEditor';
 import { selectionOffsets, setSelectionOffsets } from '../features/note/noteDom';
 

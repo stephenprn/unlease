@@ -11,9 +11,9 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { SHAPES } from '@unlease/design/shapes';
 
 import { AppText, Icon, IconButton, Organic, Tappable } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 
 export interface StepperProps {
   /** Names the group: « Pour N personnes », « Saison ». */

@@ -28,15 +28,17 @@ import { bodyText, linesText, noteCardLines } from '@unlease/notes/services/note
 import { matchRanges } from '@unlease/core/services/search';
 import { formatPrice, formatReminder, plural, totalPrice } from '@unlease/core/services/format';
 
-import { useBlobUrl } from '../../../app/media/images';
+import { useBlobUrl } from '@shared/app/media/images';
 import { useLibraryStore, type LibraryState } from '../../../app/store/library';
-import { EmblemStone } from '../../components/Emblem';
-import { Highlight } from '../../components/Highlight';
-import { Icon } from '../../components/Icon';
-import { LabelMark, LabelTag } from '../../components/LabelMark';
-import { OutlineEdge, OutlineRing, PebbleEdge, outlineD, outlineVars } from '../../components/Outline';
-import { browserPath, isPlainClick, paths } from '../../router';
+import { EmblemStone } from '@shared/ui/components/Emblem';
+import { Highlight } from '@shared/ui/components/Highlight';
+import { Icon } from '@shared/ui/components/Icon';
+import { LabelMark, LabelTag } from '@shared/ui/components/LabelMark';
+import { OutlineEdge, OutlineRing, PebbleEdge, outlineD, outlineVars } from '@shared/ui/components/Outline';
+import { browserPath, isPlainClick } from '@shared/ui/router';
+import { paths } from '../../routes';
 import { DrawingPreview } from '../drawing/DrawingPreview';
+import { CardFaces } from '../people/PeopleChips';
 import { CardLines } from '../note/NoteLines';
 import styles from './board.module.css';
 import { useCardGestures } from './gestures';
@@ -72,7 +74,7 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
     useShallow(s => {
       const shape = shapeOf(s, id);
       const layout = shape ? layoutCard(shape, metrics) : null;
-      return { title: layout?.title ?? 0, body: layout?.body ?? 0 };
+      return { title: layout?.title ?? 0, body: layout?.body ?? 0, footer: shape?.hasFooter ?? false };
     }),
   );
   const gestures = useCardGestures({
@@ -148,7 +150,7 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
           {note.kind === 'checklist' ? <CardChecklist noteId={id} query={query} /> : null}
           {isLine ? <LineSummary noteId={id} metrics={metrics} /> : null}
         </div>
-        {note.labelIds.length > 0 || note.reminderAt !== null ? <CardFooter labelIds={note.labelIds} reminderAt={note.reminderAt} now={now} names={footerShowsLabelNames(metrics, note.reminderAt !== null)} /> : null}
+        {lines.footer ? <CardFooter labelIds={note.labelIds} reminderAt={note.reminderAt} contactIds={note.contactIds} now={now} names={footerShowsLabelNames(metrics, note.reminderAt !== null)} /> : null}
         {/* The hairline edge, and the selection ring, drawn above the photo, so a photo card shows them too. */}
         <OutlineEdge d={d} />
       </div>
@@ -250,15 +252,16 @@ const LineHead = memo(function LineHead({ noteId, query, lines }: { noteId: stri
 });
 
 const LineSummary = memo(function LineSummary({ noteId, metrics }: { noteId: string; metrics: WallMetrics }) {
-  const { thumbs, count, total } = useLibraryStore(
+  const { thumbs, count, done, total } = useLibraryStore(
     useShallow(s => {
-      const open = (s.linksByNote[noteId] ?? []).map(lid => s.links[lid]).filter(link => !!link && !link.done);
+      const links = (s.linksByNote[noteId] ?? []).map(lid => s.links[lid]).filter(link => !!link);
+      const open = links.filter(link => !link!.done);
       const images = open
         .filter(link => link!.imageIds.length > 0)
         .slice(0, THUMBS_PER_STRIP)
         .map(link => link!.imageIds[0]!);
       const sum = totalPrice(open.map(link => ({ price: link!.price, currency: link!.currency })));
-      return { thumbs: images.join(','), count: open.length, total: sum ? formatPrice(sum.amount, sum.currency) : '' };
+      return { thumbs: images.join(','), count: open.length, done: links.length - open.length, total: sum ? formatPrice(sum.amount, sum.currency) : '' };
     }),
   );
   const size = thumbSize(metrics);
@@ -271,7 +274,8 @@ const LineSummary = memo(function LineSummary({ noteId, metrics }: { noteId: str
           ))}
         </div>
       ) : null}
-      <p className="t-meta tabular">{total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}</p>
+      {/* What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading), as on the phone. */}
+      <p className="t-meta tabular">{count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}</p>
     </div>
   );
 });
@@ -286,8 +290,8 @@ const Thumb = memo(function Thumb({ blobId, size, index }: { blobId: string; siz
   );
 });
 
-/** A reminder and the labels; on a narrow card beside a reminder, the labels are their tags alone (named in the tooltip). */
-const CardFooter = memo(function CardFooter({ labelIds, reminderAt, now, names }: { labelIds: readonly string[]; reminderAt: number | null; now: number; names: boolean }) {
+/** A reminder, the labels and the people's faces; on a narrow card beside a reminder, the labels are their tags alone (named in the tooltip). */
+const CardFooter = memo(function CardFooter({ labelIds, reminderAt, contactIds, now, names }: { labelIds: readonly string[]; reminderAt: number | null; contactIds: readonly string[]; now: number; names: boolean }) {
   const labels = useLibraryStore(useShallow(s => labelIds.map(lid => s.labels[lid]).filter(label => !!label && label.deletedAt === null)));
   return (
     <div className={styles.footer}>
@@ -306,6 +310,7 @@ const CardFooter = memo(function CardFooter({ labelIds, reminderAt, now, names }
           </span>
         ),
       )}
+      <CardFaces ids={contactIds} named={reminderAt === null && labels.length === 0} />
     </div>
   );
 });

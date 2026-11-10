@@ -1,7 +1,8 @@
 /**
  * What a drawing is made with, in one strip: the pen, the marker, the highlighter and the eraser
- * (the one in hand on its filled pebble), the three sizes as dots of the tool's widths, the inks as
- * pebbles of the ink itself (the chosen one ringed in ink), then undo, redo and « Tout effacer ».
+ * (the one in hand on its filled pebble), then what the drawing lies on (« Fond », where its holder
+ * offers it), the three sizes as dots of the tool's widths, the inks as pebbles of the ink itself
+ * (the chosen one ringed in ink), then undo, redo and « Tout effacer ».
  * One row from 720px under a mouse; under a finger or on a phone-sized window two, the tools and the
  * actions over the sizes and inks, which scroll sideways when they run past the edge.
  */
@@ -12,12 +13,13 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { t, tc } from '@unlease/core/i18n';
 import { DRAWING_INKS, DRAWING_SIZES, DRAWING_SIZE_NAMES, DRAWING_TOOL_NAMES, type DrawingInk } from '@unlease/notes/models/drawing';
 
-import controls from '../../components/controls.module.css';
-import { IconButton } from '../../components/IconButton';
-import { PebbleEdge } from '../../components/Outline';
-import { isApple } from '../../dom';
-import { arrowKeys } from '../note/radioKeys';
-import { useHiddenSides } from '../pages/TableBlock';
+import controls from '@shared/ui/components/controls.module.css';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { PebbleEdge } from '@shared/ui/components/Outline';
+import { isApple } from '@shared/ui/dom';
+import { arrowKeys } from '@shared/ui/components/radioKeys';
+import { useHiddenSides } from '@shared/ui/components/hiddenSides';
+import { DrawingBackgroundButton, type DrawingBackgroundChoice } from './DrawingBackground';
 import styles from './drawing.module.css';
 import { chooseInk, chooseMode, chooseSize, DRAWING_MODES, usePen, type DrawingMode } from './pen';
 import { inkName, sizeDot } from './strokes';
@@ -31,12 +33,14 @@ export interface DrawingToolsProps {
   readonly onUndo: () => void;
   readonly onRedo: () => void;
   readonly onClear: () => void;
+  /** What the drawing lies on and its choices (« Fond »); left out, the tools offer none. */
+  readonly background?: DrawingBackgroundChoice;
   /** The button of the tool in hand (a dialog's first focus). */
   readonly chosenRef?: Ref<HTMLButtonElement>;
   readonly className?: string;
 }
 
-export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onClear, chosenRef, className }: DrawingToolsProps) {
+export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onClear, background, chosenRef, className }: DrawingToolsProps) {
   const { mode, tool, sizes, ink } = usePen();
   const palette = useRef<HTMLDivElement>(null);
   useHiddenSides(palette);
@@ -50,6 +54,12 @@ export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onCle
       </div>
       <span className={styles.divider} aria-hidden="true" />
       <div ref={palette} className={styles.palette}>
+        {background ? (
+          <>
+            <DrawingBackgroundButton value={background.value} onChange={background.onChange} />
+            <span className={styles.divider} aria-hidden="true" />
+          </>
+        ) : null}
         <div className={styles.sizes} role="group" aria-label={t('Épaisseur')}>
           {DRAWING_SIZES.map(size => {
             const name = t(DRAWING_SIZE_NAMES[size]);

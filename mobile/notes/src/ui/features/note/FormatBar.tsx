@@ -13,6 +13,8 @@ import { clearFormat, headingIn, noteRangeHas, setHeading, setNoteFlag, type Hea
 import type { FlagMark } from '@unlease/core/services/richText';
 
 import { IconButton } from '../../components';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import type { NoteBodyEditor, TextRange } from './useNoteBody';
 
 const FLAGS: readonly { readonly flag: FlagMark; readonly icon: GlyphName; readonly label: string }[] = [
@@ -34,6 +36,7 @@ export interface FormatBarProps {
 }
 
 export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
+  const styles = useThemedStyles(makeStyles);
   const heading = headingIn(lines, range.start, range.end);
   return (
     <ScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
@@ -48,7 +51,7 @@ export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
           onPress={() => onFormat((current, at) => setNoteFlag(current, at.start, at.end, flag, !noteRangeHas(current, at.start, at.end, flag)))}
         />
       ))}
-      <View style={styles.gap} />
+      <View style={styles.divider} />
       {HEADINGS.map(({ level, icon, label }, index) => (
         <IconButton
           key={level}
@@ -60,15 +63,16 @@ export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
           onPress={() => onFormat((current, at) => setHeading(current, at.start, at.end, headingIn(current, at.start, at.end) === level ? 0 : level))}
         />
       ))}
-      <View style={styles.gap} />
+      <View style={styles.divider} />
       <IconButton icon="eraser" label={t('Effacer la mise en forme')} shape={0} onPress={() => onFormat((current, at) => clearFormat(current, at.start, at.end))} />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  // Centred while it fits (seven targets and the gaps fill a 360 wide phone); narrower, it scrolls rather than shrinking a target.
-  row: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
-  // Marks, headings, and the way back to plain words, as three groups.
-  gap: { width: 8 },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    // Centred while it fits (seven targets and the dividers fill a 360 wide phone); narrower, it scrolls rather than shrinking a target.
+    row: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
+    // Marks, headings, and the way back to plain words, as three groups between hairline dividers (the web's).
+    divider: { width: 1, height: 20, marginHorizontal: 4, backgroundColor: theme.color.hairline },
+  });

@@ -21,7 +21,7 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
     val data = store.payload(id) ?: return WidgetMessage.waiting(context)
     if (data.optBoolean("gone")) return WidgetMessage.gone(context, id, KIND)
 
-    val views = RemoteViews(context.packageName, R.layout.widget_collection)
+    val views = widgetViews(context, R.layout.widget_collection)
     // Beside the stone (44) and its paddings, and the "+" (48): what is left for the name and its chevron.
     val titled = WidgetType.title(context, views, R.id.collection_title_image, R.id.collection_title, data.optString("title"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 152f, 1, R.color.wgen_ink)
     views.setViewVisibility(R.id.collection_chevron, if (titled) View.VISIBLE else View.GONE)
@@ -46,7 +46,7 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
   }
 
   private fun row(context: Context, link: JSONObject, pictures: MutableList<String>): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_collection_row).apply {
+      widgetViews(context, R.layout.widget_collection_row).apply {
         val reading = link.optBoolean("reading")
         setTextViewText(R.id.row_source, if (reading) context.getString(R.string.widget_reading) else link.optString("source"))
         setTextViewText(R.id.row_title, link.optString("title"))
@@ -66,7 +66,7 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
       }
 
   private fun more(context: Context, target: String, done: String): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_collection_more).apply {
+      widgetViews(context, R.layout.widget_collection_more).apply {
         setTextViewText(R.id.more_done, done)
         WidgetKit.route(context, this, R.id.more_open, "carnet://line/$target")
       }

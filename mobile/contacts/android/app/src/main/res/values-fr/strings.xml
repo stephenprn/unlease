@@ -1,0 +1,25 @@
+<resources>
+    <string name="import_contacts">Importer dans Contacts</string>
+    <string name="share_contact">Partager le contact</string>
+
+    <string name="widget_calls_label">Appels rapides</string>
+    <string name="widget_calls_description">Vos favoris, ou les contacts d’un libellé : un appui les appelle.</string>
+    <string name="widget_add_label">Nouveau contact</string>
+    <string name="widget_add_description">Créer un contact en un appui.</string>
+
+    <string name="widget_new_contact">Nouveau contact</string>
+    <string name="widget_calls_open">Ouvrir la liste</string>
+    <string name="widget_open_app">Ouvrir Contacts</string>
+    <string name="widget_calls_empty_favorites">Pas encore de favori : l’étoile d’un contact l’ajoute ici.</string>
+    <string name="widget_calls_empty_label">Aucun contact ne porte ce libellé.</string>
+
+    <string name="widget_waiting">Touchez pour afficher vos contacts ici.</string>
+    <string name="widget_choose_calls">Touchez pour choisir les contacts à afficher.</string>
+    <string name="widget_gone_label">Ce libellé n’existe plus.</string>
+    <string name="widget_choose_other">Choisir…</string>
+
+    <string name="widget_preview_favorites">Favoris</string>
+    <string name="widget_preview_lea">Léa</string>
+    <string name="widget_preview_paul">Paul</string>
+    <string name="widget_preview_mum">Maman</string>
+</resources>

@@ -8,16 +8,16 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { t, tx } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
-import { addedMessage } from '@unlease/notes/services/savedLinks';
+import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { extractUrls } from '@unlease/core/services/url';
-import { useAppLifecycle } from '@app/hooks/useAppLifecycle';
+import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
 import { leaveQuick, pointWidget } from '@app/widgets';
 import { clearQuickScrim, quickClipboard, type WidgetKind } from '@platform/widgets';
 
 import { SheetScrim, Snackbar, Tappable } from '../../components';
-import { duration } from '../../theme/motion';
+import { duration } from '@shared/ui/theme/motion';
 import { LinkCaptureSheet, type LinkTarget } from '../capture/CaptureSheet';
 import { MoveSheet } from '../lines/MoveSheet';
 import { LabelPickerSheet } from './LabelPickerSheet';
@@ -85,7 +85,7 @@ function QuickLink({ target }: { target: string }) {
     clearQuickScrim();
     const auto = into === 'auto';
     const message = addedMessage(placed, auto ? { into: null } : { into, announce: true }, useLibraryStore.getState().notes);
-    showSnack(message ?? (placed.length > 1 ? t('Liens gardés : Claude les range') : t('Lien gardé : Claude le range')), undefined, { tone: message ? 'info' : 'success' });
+    showSnack(message ?? (placed.length > 1 ? t('Liens gardés : Claude les range') : t('Lien gardé : Claude le range')), undefined, { tone: addedTone(placed) });
     setTimeout(() => leaveQuick(false), CONFIRM_MS);
   }, []);
 

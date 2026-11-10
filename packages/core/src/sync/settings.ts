@@ -5,8 +5,11 @@
  * `GET /api/settings` -> ServerSettings; `PUT` a SettingsPatch -> the same, or 400/502 { error }.
  */
 
-import { SUITE_NAME } from '../apps';
+import { isReadyApp, READY_APPS, SUITE_NAME, type AppId } from '../apps';
 import { localized, tx } from '../i18n';
+
+/** Where a Claude API key is made: linked from the key's field. */
+export const ANTHROPIC_CONSOLE = { url: 'https://console.anthropic.com/settings/keys', name: 'console.anthropic.com' } as const;
 
 /** The models the apps offer, cheapest last. */
 export const CLAUDE_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'] as const;
@@ -80,9 +83,25 @@ export const BACKUP_INTERVAL_MS: Record<Exclude<BackupRecurrence, 'off'>, number
   weekly: 7 * 24 * 3_600_000,
 };
 
-/** Snapshots kept on S3, the newest ones. */
+/** Days a snapshot stays on S3 (the newest one always does). */
 export const BACKUP_KEEP_DEFAULT = 30;
-export const BACKUP_KEEP_MAX = 365;
+export const BACKUP_KEEP_MAX = 3650;
+
+/**
+ * S3 storage classes the backups can be sent in, from the readiest to the coldest. Each provider
+ * offers some (`storageClassesFor`); the bucket tries the one chosen before it is kept.
+ */
+export const STORAGE_CLASSES = ['STANDARD', 'STANDARD_IA', 'ONEZONE_IA', 'GLACIER_IR', 'GLACIER', 'DEEP_ARCHIVE'] as const;
+export type StorageClass = (typeof STORAGE_CLASSES)[number];
+
+export function isStorageClass(value: unknown): value is StorageClass {
+  return typeof value === 'string' && (STORAGE_CLASSES as readonly string[]).includes(value);
+}
+
+/** Classes whose objects sleep: S3 brings one out (a restore request, hours) before it can be read. */
+export function isColdStorage(value: string | null | undefined): boolean {
+  return value === 'GLACIER' || value === 'DEEP_ARCHIVE';
+}
 
 export function isBackupRecurrence(value: unknown): value is BackupRecurrence {
   return typeof value === 'string' && (BACKUP_RECURRENCES as readonly string[]).includes(value);
@@ -92,6 +111,7 @@ export function isBackupRecurrence(value: unknown): value is BackupRecurrence {
 export const DRIVE_PROVIDERS = ['seafile'] as const;
 export type DriveProvider = (typeof DRIVE_PROVIDERS)[number];
 
+/** The folder a new drive takes, named after the suite: each app's files go in a folder of its own inside. */
 export const DRIVE_FOLDER_DEFAULT = `/${SUITE_NAME}`;
 
 export interface BackupSettings {
@@ -109,7 +129,10 @@ export interface BackupSettings {
   /** The secret key's last characters ("…k3Xq"). Never the key. */
   readonly secretHint: string | null;
   readonly recurrence: BackupRecurrence;
+  /** Days a snapshot stays on S3; the newest one always stays. */
   readonly keep: number;
+  /** The class what is sent from now on is stored in ("STANDARD", "GLACIER"…). */
+  readonly storageClass: StorageClass;
 }
 
 export interface DriveSettings {
@@ -117,7 +140,7 @@ export interface DriveSettings {
   readonly provider: DriveProvider | null;
   /** The drive's address ("https://drive.exemple.fr"); '' when not set. */
   readonly url: string;
-  /** The folder in the library that the server manages ("/Carnet"). */
+  /** The folder in the library that the server manages ("/carnet"). */
   readonly folder: string;
   /** The library's name, as the drive gave it. */
   readonly library: string | null;
@@ -149,7 +172,91 @@ export interface PagesAskSettings {
 
 export const PAGES_ASK_DEFAULTS: PagesAskSettings = { enabled: false, everywhere: true, web: true, reach: 'medium' };
 
+/**
+ * Agenda's settings on the server: the public holidays it fetches (from Nager.Date, a country and
+ * maybe one of its regions, ISO 3166), the secret address its own events are published at
+ * (iCalendar, for another calendar to subscribe to), and questions to Claude about the calendar.
+ */
+export interface CalendarSettings {
+  readonly holidays: {
+    /** `FR`, `GB`; null: none shown. */
+    readonly country: string | null;
+    /** `FR-67` (Alsace's own days), `GB-SCT`; null: the country's national days alone. */
+    readonly region: string | null;
+  };
+  /**
+   * The path of the published calendar (`/ical/<secret>.ics`, after the server's address), or null
+   * when it is not published. Read-only and renewed on demand: unlike a key, it is shown whole, since
+   * it is made to be pasted into another calendar.
+   */
+  readonly publishPath: string | null;
+  /** Questions about the calendar may be asked of Claude (off until turned on). */
+  readonly ask: boolean;
+}
+
+export const CALENDAR_DEFAULTS: CalendarSettings = { holidays: { country: null, region: null }, publishPath: null, ask: false };
+
+/** A country or a region code as Nager.Date writes them. */
+export const COUNTRY_PATTERN = /^[A-Z]{2}$/;
+export const REGION_PATTERN = /^[A-Z]{2}-[A-Z0-9]{1,3}$/;
+
+export interface CalendarPatch {
+  /** null: no holidays; the region must be the country's. */
+  readonly holidays?: { readonly country: string | null; readonly region?: string | null };
+  /** true publishes (keeping the address it had), false unpublishes, `renew` makes a new address (the old one stops working). */
+  readonly publish?: boolean | 'renew';
+  readonly ask?: boolean;
+}
+
+export function parseCalendarSettings(value: unknown): CalendarSettings {
+  const raw = (typeof value === 'object' && value !== null ? value : {}) as { holidays?: { country?: unknown; region?: unknown }; publishPath?: unknown; ask?: unknown };
+  const country = typeof raw.holidays?.country === 'string' && COUNTRY_PATTERN.test(raw.holidays.country) ? raw.holidays.country : null;
+  const region = country && typeof raw.holidays?.region === 'string' && REGION_PATTERN.test(raw.holidays.region) && raw.holidays.region.startsWith(`${country}-`) ? raw.holidays.region : null;
+  return {
+    holidays: { country, region },
+    publishPath: typeof raw.publishPath === 'string' && /^\/ical\/[A-Za-z0-9_-]{16,128}\.ics$/.test(raw.publishPath) ? raw.publishPath : null,
+    ask: raw.ask === true,
+  };
+}
+
+export function parseCalendarPatch(value: unknown): CalendarPatch | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const raw = value as { holidays?: unknown; publish?: unknown; ask?: unknown };
+  const out: { holidays?: CalendarPatch['holidays']; publish?: CalendarPatch['publish']; ask?: boolean } = {};
+  if (raw.holidays !== undefined) {
+    const h = raw.holidays as { country?: unknown; region?: unknown } | null;
+    if (typeof h !== 'object' || h === null) return null;
+    const country = h.country === null ? null : typeof h.country === 'string' && COUNTRY_PATTERN.test(h.country) ? h.country : undefined;
+    if (country === undefined) return null;
+    const region = h.region === undefined || h.region === null ? null : typeof h.region === 'string' && REGION_PATTERN.test(h.region) && country !== null && h.region.startsWith(`${country}-`) ? h.region : undefined;
+    if (region === undefined) return null;
+    out.holidays = { country, region };
+  }
+  if (raw.publish !== undefined) {
+    if (raw.publish !== true && raw.publish !== false && raw.publish !== 'renew') return null;
+    out.publish = raw.publish;
+  }
+  if (raw.ask !== undefined) {
+    if (typeof raw.ask !== 'boolean') return null;
+    out.ask = raw.ask;
+  }
+  return out;
+}
+
+/** Which apps the server runs. An app turned off keeps its data (it syncs and is backed up); its screens and its work stop. */
+export interface AppsSettings {
+  /** Ready apps only (`READY_APPS`), at least one, in the suite's order. */
+  readonly enabled: readonly AppId[];
+}
+
+/** The server's own first run: once done, a device that connects goes straight to its app. */
+export interface SetupSettings {
+  readonly done: boolean;
+}
+
 export interface ServerSettings {
+  readonly apps: AppsSettings;
+  readonly setup: SetupSettings;
   readonly analysis: {
     /** A key is configured: links are read. */
     readonly enabled: boolean;
@@ -161,6 +268,7 @@ export interface ServerSettings {
     readonly budgetUsd: number;
   };
   readonly pages: PagesAskSettings;
+  readonly calendar: CalendarSettings;
   readonly backup: BackupSettings;
   readonly drive: DriveSettings;
   readonly seerr: SeerrSettings;
@@ -184,7 +292,10 @@ export interface BackupPatch {
   readonly accessKeyId?: string;
   readonly secretAccessKey?: string;
   readonly recurrence?: BackupRecurrence;
+  /** Days. */
   readonly keep?: number;
+  /** Tried on the bucket (a small file sent in it) before it is kept. */
+  readonly storageClass?: StorageClass;
 }
 
 /** Changes to the drive, merged onto what is stored; a new address, token or folder is tried first. */
@@ -197,12 +308,18 @@ export interface DrivePatch {
 }
 
 export interface SettingsPatch {
+  /** The apps the server runs from now on (ready ones, at least one). */
+  readonly apps?: readonly AppId[];
+  /** The server's first run is over: every device that comes next skips it. */
+  readonly setupDone?: true;
   /** A new key, or null to remove the one set from the apps. */
   readonly anthropicApiKey?: string | null;
   readonly model?: ClaudeModel;
   readonly budgetUsd?: number;
   /** Questions about the pages: what changes, merged onto what is kept. */
   readonly pages?: Partial<PagesAskSettings>;
+  /** Agenda's: what changes, merged onto what is kept. */
+  readonly calendar?: CalendarPatch;
   /** null forgets the S3 settings (what is already on S3 stays there). */
   readonly backup?: BackupPatch | null;
   /** null turns the drive off: its files come back to the server first, and stay in the drive too. */
@@ -231,6 +348,7 @@ function parseBackup(value: unknown): BackupSettings {
     secretHint: hint(raw.secretHint),
     recurrence: isBackupRecurrence(raw.recurrence) ? raw.recurrence : 'off',
     keep: typeof keep === 'number' && Number.isInteger(keep) && keep >= 1 ? keep : BACKUP_KEEP_DEFAULT,
+    storageClass: isStorageClass(raw.storageClass) ? raw.storageClass : 'STANDARD',
   };
 }
 
@@ -261,11 +379,21 @@ function parseSeerr(value: unknown): SeerrSettings {
   return { url: text(raw.url), keyHint: hint(raw.keyHint) };
 }
 
+/** A list of apps as a server holds it: ready ones, once each, in the suite's order; null when none is left. */
+export function parseEnabledApps(value: unknown): AppId[] | null {
+  if (!Array.isArray(value)) return null;
+  const enabled = READY_APPS.filter(id => value.includes(id) && isReadyApp(id));
+  return enabled.length > 0 ? enabled : null;
+}
+
 export function parseServerSettings(body: unknown): ServerSettings | null {
-  const raw = body as { analysis?: Partial<ServerSettings['analysis']>; pages?: unknown; backup?: unknown; drive?: unknown; seerr?: unknown } | null;
+  const raw = body as { apps?: { enabled?: unknown }; setup?: { done?: unknown }; analysis?: Partial<ServerSettings['analysis']>; pages?: unknown; calendar?: unknown; backup?: unknown; drive?: unknown; seerr?: unknown } | null;
   const analysis = raw?.analysis;
   if (!analysis || typeof analysis.enabled !== 'boolean') return null;
   return {
+    // An older server runs Carnet alone, and was set up.
+    apps: { enabled: parseEnabledApps(raw.apps?.enabled) ?? ['notes'] },
+    setup: { done: raw.setup?.done !== false },
     analysis: {
       enabled: analysis.enabled,
       keySource: analysis.keySource === 'app' || analysis.keySource === 'env' ? analysis.keySource : null,
@@ -274,6 +402,7 @@ export function parseServerSettings(body: unknown): ServerSettings | null {
       budgetUsd: typeof analysis.budgetUsd === 'number' ? analysis.budgetUsd : 0,
     },
     pages: parsePagesAsk(raw.pages),
+    calendar: parseCalendarSettings(raw.calendar),
     backup: parseBackup(raw.backup),
     drive: parseDrive(raw.drive),
     seerr: parseSeerr(raw.seerr),

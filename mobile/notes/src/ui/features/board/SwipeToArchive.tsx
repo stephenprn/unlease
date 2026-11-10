@@ -7,9 +7,9 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { haptic } from '@platform/haptics';
+import { haptic } from '@shared/platform/haptics';
 
-import { duration, spatial, throwTo } from '../../theme/motion';
+import { duration, spatial, throwTo } from '@shared/ui/theme/motion';
 
 /** Past this share of the card's width, or flung, the card goes. */
 const THRESHOLD = 0.38;

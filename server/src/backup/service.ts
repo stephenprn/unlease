@@ -4,8 +4,9 @@
  * drive (Seafile) does not hold: files live in Seafile once it is set, the archive says where (what
  * S3 holds is listed each run, so a file deleted there is sent again, and one already there from
  * another server is not), then the archive to `sauvegardes/` (last, so a snapshot never names a
- * file S3 lacks), and keeps the newest `keep` snapshots it made (another server's, such as the
- * one a new server was restored from, are never deleted). A file leaves S3 once its blob is gone
+ * file S3 lacks), all in the storage class the apps chose, and keeps the snapshots it made for
+ * `keep` days, the newest always (another server's, such as the one a new server was restored
+ * from, are never deleted). A file leaves S3 once its blob is gone
  * and no snapshot kept names it. Runs on the schedule the apps set (a failed one is tried again
  * within the hour), or on demand; never while the server holds nothing (a new server about to be
  * restored would only push its backups out).
@@ -21,7 +22,7 @@ import { createGzip } from 'node:zlib';
 import { snapshotTime } from '@unlease/core/services/admin';
 import { plural } from '@unlease/core/services/format';
 import type { BackupRun, BackupSnapshot, BackupStatus } from '@unlease/core/sync/admin';
-import { BACKUP_INTERVAL_MS } from '@unlease/core/sync/settings';
+import { BACKUP_INTERVAL_MS, isColdStorage } from '@unlease/core/sync/settings';
 import { filesInUse } from '../apps/hooks';
 import type { ServerApp } from '../apps/types';
 import type { BlobFile, BlobStore } from '../blobs/store';
@@ -35,6 +36,7 @@ import { archiveName, SNAPSHOT_NAME, storedKey, writeArchive } from './archive';
 import { S3Client, S3Error, s3Problem } from './s3';
 
 const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
 const RUNS_KEPT = 100;
 const STOPPED = 'Interrompue : le serveur s’est arrêté';
 /** Said when the new snapshot does not sort last: nothing is deleted from S3 then. */
@@ -219,7 +221,7 @@ export class BackupService {
     const prefix = snapshotsPrefix(config);
     const objects = await s3Client(config, this.fetcher, this.options.s3RetryDelaysMs).list(prefix);
     return objects
-      .map(object => ({ name: object.key.slice(prefix.length), bytes: object.size, at: object.lastModified }))
+      .map(object => ({ name: object.key.slice(prefix.length), bytes: object.size, at: object.lastModified, cold: isColdStorage(object.storageClass) }))
       .filter(snapshot => SNAPSHOT_NAME.test(snapshot.name))
       .map(snapshot => ({ ...snapshot, at: snapshotTime(snapshot.name, snapshot.at) }))
       .sort((a, b) => b.at - a.at);
@@ -230,6 +232,19 @@ export class BackupService {
     const config = this.options.settings.backup();
     if (!config) throw new Error('no S3 settings');
     return s3Client(config, this.fetcher, this.options.s3RetryDelaysMs).get(`${snapshotsPrefix(config)}${name}`, signal);
+  }
+
+  /**
+   * Whether a snapshot can be downloaded now: one asleep in cold storage (Glacier) is asked out
+   * first, and can be fetched hours later (false).
+   */
+  async readyToDownload(name: string): Promise<boolean> {
+    const config = this.options.settings.backup();
+    if (!config) throw new Error('no S3 settings');
+    const client = s3Client(config, this.fetcher, this.options.s3RetryDelaysMs);
+    const key = `${snapshotsPrefix(config)}${name}`;
+    if (await client.readable(key)) return true;
+    return (await client.thaw(key)) === 'ready';
   }
 
   /** A full archive, files included, written as it is read: for a download. */
@@ -302,7 +317,7 @@ export class BackupService {
             this.putFile.run(blob.id, key, there, startedAt);
             continue;
           }
-          const size = await this.send(client, `${config.prefix}${key}`, file);
+          const size = await this.send(client, `${config.prefix}${key}`, file, config.storageClass);
           stillThere();
           this.putFile.run(blob.id, key, size, startedAt);
           sent += 1;
@@ -318,7 +333,7 @@ export class BackupService {
       });
 
       stillThere();
-      await client.put(`${snapshotsPrefix(config)}${name}`, await openAsBlob(archive), 'application/gzip', signal);
+      await client.put(`${snapshotsPrefix(config)}${name}`, await openAsBlob(archive), 'application/gzip', signal, config.storageClass);
       this.addSnapshot.run(name, startedAt);
       const pruned = await this.prune(client, config, name, filesInUse(apps, stored));
       const unread = skipped > 0 ? `${plural(skipped, 'fichier illisible', 'fichiers illisibles')}, absent${skipped > 1 ? 's' : ''} de cette sauvegarde` : null;
@@ -335,18 +350,18 @@ export class BackupService {
   }
 
   /** Sends one file and gives its size as sent. */
-  private async send(client: S3Client, key: string, file: BlobFile): Promise<number> {
+  private async send(client: S3Client, key: string, file: BlobFile, storageClass: string): Promise<number> {
     const mime = file.mime || 'application/octet-stream';
     if (file.path) {
       const body = await openAsBlob(file.path);
-      await client.put(key, body, mime, this.stopper.signal);
+      await client.put(key, body, mime, this.stopper.signal, storageClass);
       return body.size;
     }
     // In the drive: through a temporary file, since S3 wants the size before the bytes.
     const temporary = await toTempFile((await file.read(this.stopper.signal)).body, this.options.tmpDir);
     try {
       const body = await openAsBlob(temporary);
-      await client.put(key, body, mime, this.stopper.signal);
+      await client.put(key, body, mime, this.stopper.signal, storageClass);
       return body.size;
     } finally {
       await rm(temporary, { force: true });
@@ -354,10 +369,10 @@ export class BackupService {
   }
 
   /**
-   * Keeps the newest `keep` snapshots this server made, and the files any snapshot kept names
-   * (another server's included). Names sort by the time they were made: when one sorts after
-   * `made` (this run's), the server's clock is behind (a box without a battery-backed clock,
-   * booted before it got the time) and nothing is deleted (false).
+   * Keeps the snapshots this server made in the last `keep` days, its newest one whatever its
+   * age, and the files any snapshot kept names (another server's included). Names sort by the
+   * time they were made: when one sorts after `made` (this run's), the server's clock is behind (a
+   * box without a battery-backed clock, booted before it got the time) and nothing is deleted (false).
    */
   private async prune(client: S3Client, config: BackupConfig, made: string, referenced: ReadonlySet<string>): Promise<boolean> {
     const prefix = snapshotsPrefix(config);
@@ -368,15 +383,16 @@ export class BackupService {
     }
     const own = new Set((this.ownSnapshots.all() as unknown as { name: string }[]).map(row => row.name));
     const mine = snapshots.filter(object => own.has(object.key.slice(prefix.length)));
-    const extra = new Set(mine.slice(0, Math.max(0, mine.length - config.keep)));
+    const cutoff = this.now() - config.keep * DAY;
+    const extra = new Set(mine.slice(0, -1).filter(object => snapshotTime(object.key.slice(prefix.length), object.lastModified) < cutoff));
     for (const object of extra) {
       await client.delete(object.key);
       this.forgetSnapshot.run(object.key.slice(prefix.length));
     }
     const oldest = snapshots.find(object => !extra.has(object));
     if (!oldest) return true;
-    const cutoff = snapshotTime(oldest.key.slice(prefix.length), oldest.lastModified);
-    for (const row of this.staleFiles.all(cutoff) as unknown as { blob_id: string; key: string; here: number }[]) {
+    const oldestKept = snapshotTime(oldest.key.slice(prefix.length), oldest.lastModified);
+    for (const row of this.staleFiles.all(oldestKept) as unknown as { blob_id: string; key: string; here: number }[]) {
       // The drive holds it now: S3's older copy goes once no snapshot kept names it. Otherwise only
       // a blob gone that no live record points at (one not restored yet: S3's copy may be the last).
       const inDrive = row.here === 1 && this.options.drive?.pathOf(row.blob_id) != null;

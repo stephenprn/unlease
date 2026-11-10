@@ -1,9 +1,9 @@
-/** The shared packages' tests. Each program runs its own (web/notes and server with Vitest, mobile/notes with Jest). */
+/** The shared packages' tests. Each program runs its own (web and server with Vitest, each phone app with Jest). */
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vitest/config';
 
-const alias = ['core', 'design', 'notes'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`./packages/${name}/src`, import.meta.url)) }));
+const alias = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`./packages/${name}/src`, import.meta.url)) }));
 
 export default defineConfig({
   resolve: { alias },

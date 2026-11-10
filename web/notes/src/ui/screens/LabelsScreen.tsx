@@ -4,42 +4,58 @@
  * the notes. As on the phone, the rows lie on the wall under the field-paper
  * strip that makes a new one, and a name is renamed where it is written.
  */
-import { memo, useRef, useState } from 'react';
+import { memo, useId, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
+import { isBlank } from '@unlease/core/services/formChecks';
+import { fieldInput } from '@unlease/design/fields';
 import { labelNameTaken } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
 
 import { createLabel, deleteLabel, updateLabel } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
-import { showUndo, showWarning } from '../../app/store/ui';
-import { Icon } from '../components/Icon';
-import { IconButton } from '../components/IconButton';
-import { LabelTag } from '../components/LabelMark';
-import { Popover } from '../components/Popover';
+import { showUndo } from '@shared/app/store/ui';
+import controls from '@shared/ui/components/controls.module.css';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { LabelTag } from '@shared/ui/components/LabelMark';
+import { Popover } from '@shared/ui/components/Popover';
+import { useForm } from '@shared/ui/components/useForm';
+import { BoundInput, FieldProblem } from '../features/BoundInput';
 import { LineColorPicker } from '../features/lines/LineColorPicker';
 import editor from '../features/note/editor.module.css';
-import page from '../features/settings/settings.module.css';
-import { PageHead } from '../navigation/PageHead';
-import { Link, pathForView } from '../router';
-import { NARROW, useMedia } from '../useMedia';
+import page from '@shared/ui/features/settings/settings.module.css';
+import { PageHead } from '@shared/ui/navigation/PageHead';
+import { Link } from '@shared/ui/router';
+import { pathForView } from '../routes';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 
 
 const LabelRow = memo(function LabelRow({ id }: { id: string }) {
   const label = useLibraryStore(s => s.labels[id]);
+  const labels = useLibraryStore(s => s.labels);
   const uses = useLibraryStore(s => s.noteOrder.filter(nid => s.notes[nid]?.labelIds.includes(id) && s.notes[nid]?.trashedAt === null).length);
   const [draft, setDraft] = useState<string | null>(null);
+  // A rename refused once says why under the row, until the name is free (or Escape gives the old one back).
+  const [refused, setRefused] = useState(false);
   const [coloring, setColoring] = useState(false);
   const tag = useRef<HTMLButtonElement>(null);
   const narrow = useMedia(NARROW);
+  const problemId = useId();
   if (!label) return null;
-  const commit = (): void => {
-    const name = draft?.trim().slice(0, 60) ?? '';
-    if (name && name !== label.name) {
-      if (labelNameTaken(useLibraryStore.getState().labels, name, id)) showWarning(t('Ce label existe déjà'));
-      else updateLabel(id, { name });
+  const typed = draft?.trim().slice(0, 60) ?? '';
+  const taken = typed !== '' && typed !== label.name && labelNameTaken(labels, typed, id);
+  const problem = refused && taken ? t('Ce label existe déjà : choisissez un autre nom.') : null;
+  /** Renames to what is typed; a name another label wears is kept, said, and not saved. */
+  const commit = (): boolean => {
+    if (taken) {
+      setRefused(true);
+      return false;
     }
+    if (typed && typed !== label.name) updateLabel(id, { name: typed });
     setDraft(null);
+    setRefused(false);
+    return true;
   };
   return (
     <li className={page.labelRow}>
@@ -51,13 +67,21 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
         value={draft ?? label.name}
         maxLength={60}
         aria-label={t('Renommer {name}', { name: label.name })}
+        aria-invalid={problem ? true : undefined}
+        aria-describedby={problem ? problemId : undefined}
+        enterKeyHint="done"
+        autoCapitalize={NAME_INPUT.autoCapitalize}
         onChange={event => setDraft(event.target.value)}
-        onBlur={commit}
+        onBlur={() => void commit()}
         onKeyDown={event => {
-          if (event.key === 'Enter') event.currentTarget.blur();
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            if (commit()) event.currentTarget.blur();
+          }
           if (event.key === 'Escape' && draft !== null) {
             event.preventDefault();
             setDraft(null);
+            setRefused(false);
           }
         }}
       />
@@ -81,21 +105,31 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
           </div>
         </div>
       </Popover>
+      {problem ? (
+        <p id={problemId} className={[controls.error, page.labelRowProblem, 't-meta'].join(' ')}>
+          <Icon name="error" size={16} className={controls.errorGlyph} />
+          <span>{problem}</span>
+        </p>
+      ) : null}
     </li>
   );
 });
 
+const NAME_INPUT = fieldInput('text').web;
+
 export function LabelsScreen() {
   const order = useLibraryStore(s => s.labelOrder);
+  const labels = useLibraryStore(s => s.labels);
   const [name, setName] = useState('');
+  // A name already worn is said under the strip, what was typed kept.
+  const form = useForm({ name: !isBlank(name) && labelNameTaken(labels, name) ? t('Ce label existe déjà : choisissez un autre nom.') : null });
   const add = (): void => {
-    if (!name.trim()) return;
-    if (labelNameTaken(useLibraryStore.getState().labels, name)) {
-      showWarning(t('Ce label existe déjà'));
-      return;
-    }
-    createLabel(name);
-    setName('');
+    if (isBlank(name)) return;
+    void form.submit(() => {
+      createLabel(name);
+      setName('');
+      form.reset();
+    });
   };
   return (
     <div className={page.page}>
@@ -103,6 +137,8 @@ export function LabelsScreen() {
       <section className={page.labels}>
         <form
           className={page.labelNew}
+          data-invalid={form.error('name') ? '' : undefined}
+          noValidate
           onSubmit={event => {
             event.preventDefault();
             add();
@@ -112,9 +148,21 @@ export function LabelsScreen() {
           <span className={page.labelNewGlyph}>
             <Icon name="tag" size={24} />
           </span>
-          <input className={`${page.labelNewInput} t-body`} value={name} onChange={event => setName(event.target.value)} placeholder={t('Créer un label')} aria-label={t('Nom du nouveau label')} maxLength={60} />
+          <BoundInput
+            field={form.field('name')}
+            problemId="label-new-problem"
+            className={`${page.labelNewInput} t-body`}
+            value={name}
+            onChange={setName}
+            placeholder={t('Créer un label')}
+            aria-label={t('Nom du nouveau label')}
+            maxLength={60}
+            enterKeyHint="done"
+            autoCapitalize={NAME_INPUT.autoCapitalize}
+          />
           {name.trim() ? <IconButton icon="check" label={t('Créer')} onClick={add} /> : null}
         </form>
+        <FieldProblem field={form.field('name')} id="label-new-problem" className={page.labelNewProblem} />
         {order.length > 0 ? (
           <ul aria-label={t('Labels')}>
             {order.map(id => (

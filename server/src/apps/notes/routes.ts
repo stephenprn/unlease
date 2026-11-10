@@ -1,35 +1,37 @@
 /**
- * Carnet's routes, beside the platform's under `/api` and behind the same token: sorting links by
- * Claude, the link modules (promo codes, offers, a recipe, a copy kept as a page, ratings, a recap,
- * other outlets, a question), Seerr, questions about pages, and what Claude has cost this month.
+ * Carnet's routes, beside the platform's under `/api` and behind the same token, answered while
+ * Carnet is on: sorting links by Claude, the link modules (promo codes, offers, a recipe, ratings, a
+ * recap, other outlets, a question), « Essayer » on a template (`analysis/templateTry.ts`), Seerr, the
+ * notes that mention something (`mentions.ts`) and gift ideas kept from Contacts (`gifts.ts`). What Claude has cost is the suite's
+ * (`claude/routes.ts`). A copy kept as a page is Pages' (`../pages/copies.ts`).
  */
 import type { Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { parseAskRequest } from '@unlease/notes/sync/ask';
-import { parseCopyRequest } from '@unlease/notes/sync/copies';
 import { parseCouponRequest } from '@unlease/notes/sync/coupons';
 import { parseCoverageRequest } from '@unlease/notes/sync/coverage';
 import { parseOfferRequest } from '@unlease/notes/sync/offers';
-import { parsePagesAskRequest } from '@unlease/notes/sync/pagesAsk';
 import { parseRecipeRequest } from '@unlease/notes/sync/recipe';
 import { parseSeerrRequest } from '@unlease/notes/sync/seerr';
 import { parseSortRequest } from '@unlease/notes/sync/sorting';
+import { parseTemplateTryRequest, TEMPLATE_TRY_PATH } from '@unlease/notes/sync/templateTry';
 import { parseRatingsRequest, parseRecapRequest } from '@unlease/notes/sync/works';
+import { GIFTS_PATH, parseGiftLinkRequest } from '@unlease/core/sync/gifts';
+import { parseMentionsQuery, type MentionsResponse } from '@unlease/core/sync/mentions';
+import type { RecordStore } from '../../sync/records';
+import type { GiftMaker } from './gifts';
+import { notesMentioning } from './mentions';
 import type { SettingsStore } from '../../settings/store';
 import type { Env } from '../types';
-import type { PageCopier } from './analysis/copies';
-import type { PagesAsker } from './analysis/pagesAsk';
 import type { QuestionAsker } from './analysis/questions';
 import type { RecipeReader } from './analysis/recipe';
 import type { LinkSearches } from './analysis/searches';
 import type { LinkSorter } from './analysis/sorter';
-import { monthStart, type UsageStore } from './analysis/usage';
+import { TRY_WORDS, type TemplateTrier } from './analysis/templateTry';
 import { findInSeerr, seerrProblem } from './seerr';
 
 const MB = 1024 * 1024;
 const JSON_LIMIT = 1 * MB;
-/** A question about pages carries them: up to 400 000 characters, each up to three bytes, and their ids. */
-const PAGES_LIMIT = 4 * MB;
 /** A sorting request gives up before Cloudflare does (100 s), so the app hears why. */
 const SORT_DEADLINE_MS = 90_000;
 
@@ -39,17 +41,35 @@ export interface NotesServices {
   readonly sorter: LinkSorter;
   readonly searches: LinkSearches;
   readonly recipes: RecipeReader;
-  readonly copier: PageCopier;
   readonly questions: QuestionAsker;
-  readonly pagesAsker: PagesAsker;
-  readonly usage: UsageStore;
+  readonly templates: TemplateTrier;
   readonly settings: SettingsStore;
+  readonly records: RecordStore;
+  readonly gifts: GiftMaker;
   /** How Seerr is called (tests stand in for it). */
   readonly seerrFetch?: typeof fetch;
-  readonly now: () => number;
 }
 
 export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
+  app.get('/api/notes/mentions', c => {
+    const query = parseMentionsQuery(c.req.query('type'), c.req.query('ids'));
+    if (!query) return c.json({ error: 'Requête invalide' }, 400);
+    const answer: MentionsResponse = { places: notesMentioning(services.records, query.type, query.ids) };
+    return c.json(answer, 200, { 'Cache-Control': 'no-store' });
+  });
+
+  app.post(GIFTS_PATH, bodyLimit({ maxSize: 16 * 1024, onError: tooLarge }), async c => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: 'Requête invalide' }, 400);
+    }
+    const request = parseGiftLinkRequest(body);
+    if (!request) return c.json({ error: 'Idée de cadeau invalide' }, 400);
+    return c.json(services.gifts.add(request), 200, { 'Cache-Control': 'no-store' });
+  });
+
   app.post('/api/sort', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), async c => {
     let body: unknown;
     try {
@@ -79,16 +99,15 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
       if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);
       return c.json(outcome.answer as object, 200, { 'Cache-Control': 'no-store' });
     };
-  const { searches, recipes, copier, questions, pagesAsker, settings, usage, now } = services;
+  const { searches, recipes, questions, templates, settings } = services;
   app.post('/api/coupons', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCouponRequest, 'Demande de codes promo invalide', request => searches.coupons(request)));
   app.post('/api/offers', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseOfferRequest, 'Demande d’offres invalide', request => searches.offers(request)));
   app.post('/api/recipe', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecipeRequest, 'Demande d’ingrédients invalide', request => recipes.read(request)));
-  app.post('/api/copies', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCopyRequest, 'Demande de copie invalide', request => copier.copy(request)));
   app.post('/api/ratings', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRatingsRequest, 'Demande de notes invalide', request => searches.ratings(request)));
   app.post('/api/recap', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecapRequest, 'Demande de résumé invalide', request => searches.recap(request)));
   app.post('/api/coverage', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCoverageRequest, 'Demande d’autres regards invalide', request => searches.coverage(request)));
   app.post('/api/ask', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseAskRequest, 'Question invalide', request => questions.ask(request)));
-  app.post('/api/pages/ask', bodyLimit({ maxSize: PAGES_LIMIT, onError: tooLarge }), moduleRoute(parsePagesAskRequest, 'Question invalide', request => pagesAsker.ask(request)));
+  app.post(TEMPLATE_TRY_PATH, bodyLimit({ maxSize: 64 * 1024, onError: tooLarge }), moduleRoute(parseTemplateTryRequest, TRY_WORDS.invalid, request => templates.try(request)));
   app.post(
     '/api/seerr',
     bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }),
@@ -102,9 +121,5 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
       }
     }),
   );
-
-  app.get('/api/usage', c => {
-    const { model, budgetUsd } = settings.effective();
-    return c.json({ monthToDate: usage.totals(monthStart(now())), total: usage.totals(0), model, budgetUsd });
-  });
 }
+

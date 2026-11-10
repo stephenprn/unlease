@@ -10,7 +10,12 @@ import com.stephenprn.carnet.MainActivity
 /** Where a widget's taps go: a page of the app, the quick window, a website, or a tick. */
 internal object WidgetIntents {
   private const val IMMUTABLE = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-  /** A list's template takes each row's fill-in, so it must be mutable; it is explicit, so nothing else can fill it. */
+  /**
+   * A list's template takes each row's fill-in, so it must be mutable. It is explicit, so its target
+   * stays ours; but the launcher holding it may fill in data and extras of its own, so where it lands
+   * checks them: the tick receiver ticks only an item the widget shows (its id in the template's
+   * extras, which a fill-in cannot replace), the router opens only a page of the app or a website.
+   */
   private const val MUTABLE = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
   /** `carnet://…` in the app: the board answers it (RootNavigator's linking). */

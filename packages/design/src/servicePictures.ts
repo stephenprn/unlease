@@ -1,13 +1,14 @@
 /**
  * The pictures a service takes besides its stylesheet (`customCss.ts`), made from the appearance:
- * Seafile's logo and favicon (the mark in the primary, `markColors`) and its login page's background
+ * Seafile's logo and favicon (the drive's mark, a folder in the mark's hand, on its pebble in the
+ * primary, `markColors`) and its login page's background
  * (the ground by day, as Seafile shows that page to someone signed out, with its grain), at the sizes
  * Seafile's settings ask for. Drawn and encoded here, so both apps hand out the same files.
  */
 import { localized, tx } from '@unlease/core/i18n';
 import { markColors, resolveAppearance, type Appearance } from './appearance';
 import { jpegFile } from './jpeg';
-import { MARK_CARD, MARK_PEBBLE, MARK_VIEWBOX } from './mark';
+import { MARK_DRIVE, MARK_PEBBLE, MARK_VIEWBOX } from './mark';
 import { icoFile, pngFile } from './png';
 import { createRaster, drawGround, fillPath, type Pause, type Raster } from './raster';
 
@@ -47,13 +48,13 @@ const LOGIN = { width: 2400, height: 1600, quality: 92 } as const;
 /** The ground's grain at the screens' strength (`build_grain.py`), each grain two pixels square: Seafile shows the picture at about 0.6 of its size on a laptop, so a grain stays about one screen pixel, as in the apps. */
 const LOGIN_GRAIN = { sigma: 13, size: 2, seed: 1947 } as const;
 
-/** The mark on its pebble, `size` pixels square, on nothing. */
-function markRaster(size: number, primary: string): Raster {
+/** The drive's folder on the mark's pebble, `size` pixels square, on nothing: Seafile is a drive, not the notebook. */
+function driveRaster(size: number, primary: string): Raster {
   const raster = createRaster(size, size);
   const { tile, card } = markColors(primary);
   const place = { scale: size / MARK_VIEWBOX, x: 0, y: 0 };
   fillPath(raster, MARK_PEBBLE, place, tile);
-  fillPath(raster, MARK_CARD, place, card, 'evenodd');
+  fillPath(raster, MARK_DRIVE, place, card, 'evenodd');
   return raster;
 }
 
@@ -61,9 +62,9 @@ function markRaster(size: number, primary: string): Raster {
 export async function servicePicture(picture: ServicePicture, appearance: Appearance, pause?: Pause): Promise<PictureFile> {
   switch (picture) {
     case 'logo':
-      return { name: 'seafile-logo.png', mime: 'image/png', bytes: pngFile(markRaster(LOGO_SIZE, appearance.primary)) };
+      return { name: 'seafile-logo.png', mime: 'image/png', bytes: pngFile(driveRaster(LOGO_SIZE, appearance.primary)) };
     case 'favicon':
-      return { name: 'seafile-favicon.ico', mime: 'image/x-icon', bytes: icoFile(FAVICON_SIZES.map(size => ({ size, png: pngFile(markRaster(size, appearance.primary)) }))) };
+      return { name: 'seafile-favicon.ico', mime: 'image/x-icon', bytes: icoFile(FAVICON_SIZES.map(size => ({ size, png: pngFile(driveRaster(size, appearance.primary)) }))) };
     case 'login': {
       const raster = createRaster(LOGIN.width, LOGIN.height);
       await drawGround(raster, resolveAppearance(appearance, 'light').ground, appearance.grain ? LOGIN_GRAIN : null, pause);

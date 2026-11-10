@@ -1,25 +1,14 @@
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-
-const APP = __dirname;
+const { metroConfig } = require('../shared/config/index.cjs');
 
 /**
- * The shared packages live at the repository root, outside this app: Metro watches them too.
- * What their files import from outside them (Babel's helpers, once transformed) resolves from this
- * app's node_modules, never from the workspace above it, whose React is the web's.
+ * The suite's phone code (`mobile/shared`), the packages at the repository root and Contacts'
+ * projection (`@contacts-app/*`, `mobile/contacts/src`, to name the people a note mentions) live
+ * outside this app: Metro watches them too, and what their files import from outside them resolves
+ * from this app's node_modules, never from Contacts' or from the workspace above it, whose React is the web's.
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {
-  watchFolders: [path.resolve(APP, '../../packages')],
-  resolver: {
-    resolveRequest: (context, moduleName, platform) => {
-      const outside = !context.originModulePath.startsWith(APP + path.sep);
-      const bare = !moduleName.startsWith('.') && !path.isAbsolute(moduleName);
-      if (outside && bare) return context.resolveRequest({ ...context, originModulePath: path.join(APP, 'index.js') }, moduleName, platform);
-      return context.resolveRequest(context, moduleName, platform);
-    },
-  },
-};
-
-module.exports = mergeConfig(getDefaultConfig(APP), config);
+const shared = metroConfig(__dirname);
+module.exports = mergeConfig(getDefaultConfig(__dirname), { ...shared, watchFolders: [...shared.watchFolders, path.resolve(__dirname, '../contacts/src')] });

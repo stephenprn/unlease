@@ -5,6 +5,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -13,9 +14,9 @@ import { bodyText } from '@unlease/notes/services/noteBody';
 import { useSearch } from '@app/hooks/useBoard';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
-import { AppText, Icon, Sheet, SheetScroll, Tappable, TextField } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme } from '../../theme/ThemeProvider';
+import { AppText, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 /** Rows shown before a search narrows them. */
 const SHOWN = 80;
@@ -110,10 +111,11 @@ const NoteRow = memo(function NoteRowView({ id, current, onPress }: { id: string
 });
 
 const styles = StyleSheet.create({
-  search: { marginHorizontal: 8, marginBottom: 8 },
+  // The field and the empty line on the sheet's column, under its title.
+  search: { marginHorizontal: SHEET_INSET, marginBottom: 8 },
   body: { paddingBottom: 8 },
-  empty: { marginHorizontal: 8, marginTop: 8 },
+  empty: { marginHorizontal: SHEET_INSET, marginTop: 8 },
   // A list row's anatomy (`ListRow`), its lines cut to one each.
-  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
   text: { flex: 1, gap: 2 },
 });

@@ -4,9 +4,10 @@
  * link start it; the answer can go at the end of the link's own note. Nothing is kept on the server.
  * The web's `AskDialog`.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { MODULE_NAMES } from '@unlease/notes/models/modules';
@@ -15,22 +16,29 @@ import { siteDomain } from '@unlease/core/services/url';
 import { ASK_LIMITS } from '@unlease/notes/sync/ask';
 import { addToLinkNote, askAbout } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectModel, useSettingsStore } from '@app/store/settingsStore';
-import { showSnack } from '@app/store/uiStore';
+import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, Icon, Sheet, SheetScroll, SwitchMark, Tappable, TextField } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { formatUsd } from '../settings/money';
-import { ReadingTrack } from './ReadingTrack';
+import { AppText, Button, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable, TextField, useUnsaved } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { formatUsd } from '@shared/ui/features/settings/money';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { useModuleSearch } from './useModuleSearch';
 
 export function AskSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
+  // A question typed and not asked is asked about before the sheet closes on it.
+  const [dirty, setDirty] = useState(false);
+  const unsaved = useUnsaved(visible && dirty);
+  const cancel = unsaved.guard(onDismiss);
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={MODULE_NAMES.ask} tall>
-      <AskBody id={id} onDismiss={onDismiss} />
-    </Sheet>
+    <>
+      <Sheet visible={visible} onDismiss={cancel} title={MODULE_NAMES.ask} tall>
+        <AskBody id={id} onDismiss={onDismiss} onCancel={cancel} onDirty={setDirty} />
+      </Sheet>
+      {unsaved.dialog}
+    </>
   );
 }
 
@@ -40,7 +48,7 @@ const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impo
 const LIST_LINE = /^[-•]\s+/;
 
 /** Mounted with the sheet each time it opens: the form first, then the question, dropped when the sheet goes. */
-function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
+function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: () => void; onCancel: () => void; onDirty: (dirty: boolean) => void }) {
   const theme = useTheme();
   const model = useSettingsStore(selectModel);
   const styles = useThemedStyles(makeStyles);
@@ -51,6 +59,9 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
   // The form does not show while Claude answers, so what it holds is what was asked.
   const asked = question.trim();
   const { phase, search } = useModuleSearch((_fresh, signal) => askAbout(id, asked, web, signal), false);
+  const dirty = writing && asked.length > 0;
+  useEffect(() => onDirty(dirty), [dirty, onDirty]);
+  useEffect(() => () => onDirty(false), [onDirty]);
   if (!link) return null;
 
   const ask = () => {
@@ -64,8 +75,9 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
 
   if (writing) {
     return (
+      <>
       <SheetScroll contentContainerStyle={styles.body}>
-        <TextField label={t('Votre question')} value={question} onChangeText={setQuestion} placeholder={askSuggestions(link.kind)[0]} multiline maxLength={ASK_LIMITS.question} style={styles.question} />
+        <TextField label={t('Votre question')} kind="prose" value={question} onChangeText={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} style={styles.question} />
         <View role="group" accessibilityLabel={t('Questions pour commencer')} style={styles.suggestions}>
           {askSuggestions(link.kind).map(suggestion => (
             <Tappable key={suggestion} onPress={() => setQuestion(suggestion)} accessibilityLabel={suggestion} style={styles.suggestion}>
@@ -81,8 +93,12 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
           <SwitchMark checked={web} />
         </Tappable>
         <AppText variant="meta">{moduleCost('ask', model, formatUsd)}</AppText>
-        <Button label={t('Demander')} icon="sparkle" disabled={!asked} onPress={ask} style={styles.end} />
       </SheetScroll>
+      <FormFoot>
+        <Button kind="text" label={t('Annuler')} onPress={onCancel} />
+        <Button label={t('Demander')} icon="sparkle" disabled={!asked} onPress={ask} />
+      </FormFoot>
+      </>
     );
   }
 
@@ -98,16 +114,19 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     );
   }
   if (phase.kind === 'failed') {
+    // The actions at the sheet's foot, as the answer's and every module's.
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Claude n’a pas pu répondre : {reason}', { reason: phase.reason })}
-        </AppText>
-        <View style={styles.actions}>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu répondre : {reason}', { reason: phase.reason })}
+          </AppText>
+        </SheetScroll>
+        <FormFoot>
           <Button kind="text" label={t('Autre question')} onPress={another} />
           <Button label={t('Réessayer')} onPress={() => search(false)} />
-        </View>
-      </View>
+        </FormFoot>
+      </>
     );
   }
 
@@ -121,6 +140,7 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     onDismiss();
   };
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       <AppText variant="metaStrong">{asked}</AppText>
       <View style={styles.answer}>
@@ -165,30 +185,31 @@ function AskBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
           ))}
         </View>
       ) : null}
-      <View style={styles.actions}>
-        <Button kind="text" label={t('Autre question')} onPress={another} />
-        <Button kind="tonal" label={t('Ajouter à votre note')} icon="note" onPress={add} />
-      </View>
     </SheetScroll>
+    <FormFoot>
+      <Button kind="text" label={t('Autre question')} onPress={another} />
+      <Button kind="tonal" label={t('Ajouter à votre note')} icon="note" onPress={add} />
+    </FormFoot>
+    </>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-    waiting: { gap: 12, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
-    end: { alignSelf: 'flex-end' },
+    body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+    waiting: { gap: 12, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
     flex: { flex: 1 },
     question: { minHeight: 96, textAlignVertical: 'top' },
     suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     // A question to start from, as the new collection's suggestions are drawn: an edged chip on paper.
     suggestion: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderWidth: 1.5, borderColor: theme.color.outline, backgroundColor: theme.color.paper, ...corners(SHAPES.chip) },
-    check: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -8, paddingHorizontal: 8, ...corners(SHAPES.tab) },
+    // A list row's 6 and 10 out of the column: its words on it, its press reaching where a row's does.
+    check: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -10, paddingHorizontal: 10, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     answer: { gap: 12 },
     paragraph: { gap: 4 },
     item: { flexDirection: 'row', gap: 10, paddingLeft: 4 },
-    // In line with the rows' marks.
-    sourcesTitle: { paddingHorizontal: 10, paddingBottom: 4 },
-    source: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+    // On the sheet's column, with the title, the answer and the rows' marks.
+    sourcesTitle: { paddingBottom: 4 },
+    // A list row's: its mark on the column, its press 10 out of it.
+    source: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
   });

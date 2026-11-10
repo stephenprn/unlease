@@ -1,7 +1,7 @@
 import type { BetaMessage } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { LinkBrief } from '@unlease/notes/sync/brief';
-import { AUTH, claudeMessage, createTestServer, FakeFetcher, jpeg, T0, type TestServer } from './helpers';
+import { AUTH, claudeMessage, createTestServer, FakeFetcher, T0, type TestServer } from './helpers';
 
 const item: LinkBrief = { id: 'l1', url: 'https://komono.com/fr/products/winston-black', title: 'Montre Winston Black', site: 'Komono', kind: 'product', price: 79, currency: 'EUR', facts: [], summary: '' };
 
@@ -194,65 +194,5 @@ describe('POST /api/recipe', () => {
     expect(status).toBe(502);
     expect(body.error).toContain('404');
     expect(server.claude.requests).toHaveLength(0);
-  });
-});
-
-const ARTICLE = 'https://revue.example/villes-lentes';
-const PICTURE = 'https://revue.example/images/rue.jpg';
-const articlePage = `<!doctype html><html><head><title>Pourquoi les villes ralentissent | La Revue</title>
-<meta property="og:title" content="Pourquoi les villes ralentissent"><meta property="og:site_name" content="La Revue urbaine">
-<meta name="author" content="Claire Martin"><meta property="article:published_time" content="2026-10-14T08:00:00+02:00"></head><body>
-<nav><a href="/">Accueil</a> <a href="/sujets">Sujets</a></nav>
-<article>
-<h1>Pourquoi les villes ralentissent</h1>
-<div class="share-bar"><a href="https://social.example/share">Partager cet article sur les réseaux</a></div>
-<p>Il y a dix ans, ralentir une ville passait pour une <em>lubie</em>. Aujourd’hui, des dizaines de communes ont fait le pas.</p>
-<figure><img src="/images/rue.jpg" width="1200" height="800" alt=""><figcaption>Une rue scolaire à Lyon.</figcaption></figure>
-<h2>Ce qui a changé</h2>
-<p>Moins de bruit, moins d’accidents graves, et des rues où <strong>les enfants vont seuls</strong> à l’école. Voir <a href="/etude">l’étude complète</a>.</p>
-<ul><li>Zones à 30 km/h</li><li>Rues scolaires<ul><li>aux heures d’entrée</li></ul></li></ul>
-<blockquote><p>On a gagné du calme sans perdre de temps.</p></blockquote>
-<pre><code class="language-python">print("ok")</code></pre>
-<aside class="related"><p>À lire aussi : un autre article, très long, qui ne doit jamais apparaître dans la copie de celui-ci.</p></aside>
-</article>
-<footer><p>© La Revue urbaine, tous droits réservés, mentions légales et contact de la rédaction.</p></footer>
-</body></html>`;
-
-describe('POST /api/copies', () => {
-  it('answers the article as blocks, its picture kept as a file, without the page’s chrome', async () => {
-    server = createTestServer({ fetcher: new FakeFetcher({ [ARTICLE]: html(articlePage), [PICTURE]: { headers: { 'content-type': 'image/jpeg' }, body: await jpeg(1200, 800) } }) });
-    const { status, body } = await post('/api/copies', { link: { id: 'a1', url: ARTICLE }, lang: 'fr' });
-
-    expect(status).toBe(200);
-    expect(body).toMatchObject({ title: 'Pourquoi les villes ralentissent', site: 'La Revue urbaine', byline: 'Claire Martin', published: '2026-10-14' });
-    const drafts = body.drafts as { kind: string; text: string; language?: string; extra?: Record<string, unknown>; children?: { kind: string; text: string }[] }[];
-    expect(drafts.map(draft => draft.kind)).toEqual(['text', 'image', 'text', 'h2', 'text', 'bullet', 'bullet', 'callout', 'code']);
-    expect(drafts[0]!.text).toContain('{i:lubie}');
-    expect(drafts[2]!.text).toBe('{i:Une rue scolaire à Lyon.}');
-    expect(drafts[4]!.text).toContain('{b:les enfants vont seuls}');
-    expect(drafts[4]!.text).toContain('revue.example/etude');
-    expect(drafts[6]!.children).toEqual([{ kind: 'bullet', text: 'aux heures d’entrée' }]);
-    expect(drafts[8]).toMatchObject({ kind: 'code', text: 'print("ok")', language: 'python' });
-    const file = drafts[1]!.extra!;
-    expect(file).toMatchObject({ mime: 'image/webp', uploaded: true });
-    expect(server.blobs.get(file.fileId as string)).toMatchObject({ source: 'link' });
-    const words = JSON.stringify(drafts);
-    for (const chrome of ['Accueil', 'Partager', 'À lire aussi', 'mentions légales']) expect(words).not.toContain(chrome);
-  });
-
-  it('says so when the page cannot be read or holds no text', async () => {
-    server = createTestServer({ fetcher: new FakeFetcher({ [ARTICLE]: html('<!doctype html><html><head><title>Vide</title></head><body><nav>Menu</nav></body></html>') }) });
-    expect(await post('/api/copies', { link: { id: 'a1', url: ARTICLE }, lang: 'fr' })).toEqual({ status: 502, body: { error: 'Aucun texte à garder sur cette page' } });
-    expect((await post('/api/copies', { link: { id: 'a1', url: 'https://ailleurs.example/' }, lang: 'fr' })).status).toBe(502);
-    expect((await post('/api/copies', { link: { id: 'a1', url: 'pas une adresse' }, lang: 'fr' })).status).toBe(400);
-  });
-
-  it('keeps an article whatever the page’s own classes say of its layout, never its footer', async () => {
-    const paragraph = (n: number) => `<p>Paragraphe ${n} de l’article, assez long pour compter comme du texte, avec des virgules, et encore un peu.</p>`;
-    const page = `<!doctype html><html><head><title>Villes</title></head><body class="single right-sidebar"><form id="aspnetForm"><div class="content-sidebar-wrap"><main><article>${[1, 2, 3, 4].map(paragraph).join('')}</article></main><aside class="sidebar">${paragraph(9)}</aside></div></form><footer><div>${[7, 8, 9, 10, 11].map(paragraph).join('')}</div></footer></body></html>`;
-    server = createTestServer({ fetcher: new FakeFetcher({ [ARTICLE]: html(page) }) });
-    const { status, body } = await post('/api/copies', { link: { id: 'a1', url: ARTICLE }, lang: 'fr' });
-    expect(status).toBe(200);
-    expect(body.drafts.map((draft: { text: string }) => draft.text.slice(0, 12))).toEqual(['Paragraphe 1', 'Paragraphe 2', 'Paragraphe 3', 'Paragraphe 4']);
   });
 });

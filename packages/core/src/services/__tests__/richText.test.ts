@@ -4,6 +4,7 @@ import {
   inlineShortcut,
   insertRich,
   isRichEmpty,
+  markupFromPlain,
   markupToPlain,
   marksAt,
   MENTION_CHAR,
@@ -131,5 +132,22 @@ describe('mentions of any app', () => {
   it('still reads a date as a date, and leaves an ill-formed type as words', () => {
     expect(parseRich('{@date=2026-10-28}')[0]).toMatchObject({ kind: 'date', date: '2026-10-28' });
     expect(parseRich('{@Event=x}').some(run => run.kind === 'mention')).toBe(false);
+  });
+});
+
+describe('words from outside', () => {
+  it('read as the words they are, never as marks, links or mentions', () => {
+    const words = 'Voir {a=javascript\\:alert(1):ici}, {@page=abc} et {@date=2026-10-28} \\';
+    const markup = markupFromPlain(words);
+    expect(parseRich(markup)).toEqual([{ kind: 'text', text: words, marks: {} }]);
+    expect(markupFromPlain('')).toBe('');
+  });
+
+  it('fit their limit without cutting an escape', () => {
+    expect(markupFromPlain('abcdef', 4)).toBe('abcd');
+    const markup = markupFromPlain('ab{}{}', 5);
+    expect(markup.length).toBeLessThanOrEqual(5);
+    expect(markup).toBe('ab\\{');
+    expect(markupFromPlain('\\\\\\', 3)).toBe('\\\\');
   });
 });

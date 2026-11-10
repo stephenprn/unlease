@@ -1,88 +1,27 @@
 /**
- * Enforces the app's layering (docs/ARCHITECTURE.md). The shared packages it imports
- * (`@unlease/*`, at the repository root) are linted by the root config.
- * Flat config: ESLint 9 is the newest major `@react-native/eslint-config` accepts.
+ * Carnet's lint: the suite's phone rules and layering (`../shared/config/eslint.cjs`) over its own
+ * layers (`@app`, `@data`, `@ui`, `@platform`, and the shared ones), and Pages' code kept out: Pages
+ * is its own app (`unlease-pages://`), and only its contracts' types may be named here. Of Contacts it
+ * borrows its projection alone (`@contacts-app/app/store/contactsProjection`), to name the people a
+ * note mentions.
  */
-const reactNative = require('@react-native/eslint-config/flat');
-
-const SPECS_ARE_PRIVATE = {
-  group: ['**/specs/*'],
-  message: 'Import the adapter in @platform, not the TurboModule spec.',
-};
-
-const RN_TEXT_AND_TOUCH = {
-  name: 'react-native',
-  importNames: ['Text', 'TouchableOpacity', 'TouchableHighlight', 'TouchableWithoutFeedback', 'Switch'],
-  message: 'Use AppText, Tappable and Switch (or SwitchMark) from @ui/components.',
-};
-
-/** Case-sensitive on purpose: `carnet.sqlite` and `carnet://capture` are machine strings. */
-const BRAND_LITERAL = {
-  selector: 'Literal[value=/Carnet|Unlease/], TemplateElement[value.raw=/Carnet|Unlease/]',
-  message: 'Use APP_NAME from @unlease/notes/brand (or SUITE_NAME from @unlease/core/apps) rather than writing a name out.',
-};
-
-const restrict = (paths, patterns) => [
-  'error',
-  { paths, patterns: [...patterns, SPECS_ARE_PRIVATE] },
-];
+const { phoneLint } = require('../shared/config/eslint.cjs');
 
 module.exports = [
-  { ignores: ['node_modules/', 'android/', 'ios/', 'coverage/'] },
-  ...reactNative,
+  ...phoneLint({
+    appDir: __dirname,
+    layers: { app: ['@app', '@shared/app'], data: ['@data', '@shared/data'], ui: ['@ui', '@shared/ui'], platform: ['@platform', '@shared/platform'] },
+    forbidden: [
+      { group: ['@pages-app/*', '**/mobile/pages/**'], message: 'Pages is its own app: open it (`openInApp`), never import it.' },
+      { regex: '^@contacts-app/(?!app/store/contactsProjection$)', message: 'Contacts is its own app: borrow only its projection; open a contact there (`openInApp`).' },
+      { group: ['**/mobile/contacts/**'], message: 'Contacts\' projection is borrowed through `@contacts-app/*`.' },
+    ],
+  }),
   {
-    // RN's two Flow rules for .js call an API ESLint 9 removed, and there is no Flow here.
-    files: ['**/*.js'],
-    rules: { 'ft-flow/define-flow-type': 'off', 'ft-flow/use-flow-type': 'off' },
-  },
-  {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
     rules: {
-      'no-restricted-syntax': ['error', BRAND_LITERAL],
-      'no-restricted-imports': restrict([RN_TEXT_AND_TOUCH], []),
+      // Pages' package may lend its contracts' types (`CopyRequest`), never load: its record types are Pages'.
+      '@typescript-eslint/no-restricted-imports': ['error', { patterns: [{ group: ['@unlease/pages/*'], allowTypeImports: true, message: 'Only types from Pages\' package: loading it declares its record types in Carnet.' }] }],
     },
-  },
-  {
-    files: ['src/data/**/*.ts'],
-    rules: {
-      'no-restricted-imports': restrict(
-        [],
-        [
-          { group: ['react-native', 'react-native/*'], message: 'data has no UI concerns.' },
-          { group: ['@ui/*', '@app/*'], message: 'data may not depend on the layers above it.' },
-        ],
-      ),
-    },
-  },
-  {
-    // Through `src/app` only: `src/data` would put synchronous SQL on a render path.
-    files: ['src/ui/**/*.ts', 'src/ui/**/*.tsx'],
-    ignores: ['src/ui/**/__tests__/**'],
-    rules: {
-      'no-restricted-imports': restrict(
-        [RN_TEXT_AND_TOUCH],
-        [{ group: ['@data/*'], message: 'ui must go through @app: add a hook or a store action.' }],
-      ),
-    },
-  },
-  {
-    files: ['src/platform/**/*.ts'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        { patterns: [{ group: ['@ui/*', '@app/*', '@data/*'], message: 'platform adapters take arguments, not state.' }] },
-      ],
-    },
-  },
-  {
-    // AppText is the wrapper: the one place allowed to touch RN's Text.
-    files: ['src/ui/components/AppText.tsx'],
-    rules: { 'no-restricted-imports': 'off' },
-  },
-  {
-    files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx', '__mocks__/**', 'jest.setup.js'],
-    languageOptions: {
-      globals: { jest: 'readonly', describe: 'readonly', it: 'readonly', expect: 'readonly', beforeEach: 'readonly', afterEach: 'readonly', beforeAll: 'readonly', afterAll: 'readonly', require: 'readonly' },
-    },
-    rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },
 ];

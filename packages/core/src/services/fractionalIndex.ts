@@ -183,17 +183,52 @@ export interface Placed {
  * Keys for `count` items going at `index` among `siblings` (in `comparePositions` order, without
  * the items going). Nothing fits between two records two devices gave one key: the later ones,
  * tied with the record before the gap, take new keys after the items, in `moved`, to write in the
- * same batch.
+ * same batch. When the new keys would grow too long (`RESPACE_AT`), the siblings around the gap take
+ * short ones again, in `moved` too.
  */
 export function placeAt(siblings: readonly Placed[], index: number, count = 1): { positions: string[]; moved: Placed[] } {
   const before = index > 0 ? (siblings[index - 1]?.position ?? null) : null;
   let end = index;
   if (before !== null && isValidKey(before)) while (end < siblings.length && siblings[end]!.position <= before) end += 1;
   const keys = positionsBetween(before, siblings[end]?.position ?? null, count + end - index);
+  if (keys.some(key => key.length > RESPACE_AT)) return respaced(siblings, index, count);
   return {
     positions: keys.slice(0, count),
     moved: siblings.slice(index, end).map((sibling, k) => ({ id: sibling.id, position: keys[count + k]! })),
   };
+}
+
+/**
+ * A key longer than this is not written: the siblings around it are given short keys again in the
+ * same batch (`placeAt`). Inserting again and again at one place (always just above the same block)
+ * lengthens keys by a character every six or so, and the schema refuses one past 200.
+ */
+export const RESPACE_AT = 64;
+/** The keys bounding a respaced run are at most this long, so the new ones are short too. */
+const SHORT_KEY = 16;
+
+/**
+ * `placeAt` once the gap at `index` is too narrow: the run of siblings around it with long keys
+ * (out to the nearest short key on each side, or the list's ends) takes fresh keys spread between
+ * those bounds, the new items among them. The rewritten siblings come back in `moved`.
+ */
+function respaced(siblings: readonly Placed[], index: number, count: number): { positions: string[]; moved: Placed[] } {
+  const short = (sibling: Placed): boolean => sibling.position.length <= SHORT_KEY && isValidKey(sibling.position);
+  let from = index;
+  while (from > 0 && !short(siblings[from - 1]!)) from -= 1;
+  let to = index;
+  while (to < siblings.length && !short(siblings[to]!)) to += 1;
+  const keys = positionsBetween(from > 0 ? siblings[from - 1]!.position : null, to < siblings.length ? siblings[to]!.position : null, to - from + count);
+  const lead = index - from;
+  const moved: Placed[] = [];
+  siblings.slice(from, index).forEach((sibling, k) => {
+    if (keys[k] !== sibling.position) moved.push({ id: sibling.id, position: keys[k]! });
+  });
+  siblings.slice(index, to).forEach((sibling, k) => {
+    const key = keys[lead + count + k]!;
+    if (key !== sibling.position) moved.push({ id: sibling.id, position: key });
+  });
+  return { positions: keys.slice(lead, lead + count), moved };
 }
 
 /** Where an item goes among `siblings` to sit after `beforeId` (or before `afterId`); null ends mean the start and the end. */

@@ -9,13 +9,13 @@ import { memo, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 
-import { useBlobUrl } from '../../../app/media/images';
+import { useBlobUrl } from '@shared/app/media/images';
 import { removeAttachment } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { showUndo } from '../../../app/store/ui';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
+import { showUndo } from '@shared/app/store/ui';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
 import styles from './editor.module.css';
 
 function PhotoGridComponent({ noteId, editable }: { noteId: string; editable: boolean }) {

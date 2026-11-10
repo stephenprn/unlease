@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { PagesAskRequest } from '@unlease/notes/sync/pagesAsk';
+import type { PagesAskRequest } from '@unlease/pages/sync/pagesAsk';
 import { AUTH, claudeMessage, createTestServer, type TestServer } from './helpers';
 
 let server: TestServer;
@@ -31,10 +31,10 @@ const cited = claudeMessage('', {
     {
       type: 'text',
       text: 'Vous partez le 3 mai',
-      citations: [{ type: 'search_result_location', source: 'carnet-page:p1', title: 'Voyages › Lisbonne', cited_text: 'Départ le 3 mai, retour le 10.', search_result_index: 0, start_block_index: 1, end_block_index: 2 }],
+      citations: [{ type: 'search_result_location', source: 'page:p1', title: 'Voyages › Lisbonne', cited_text: 'Départ le 3 mai, retour le 10.', search_result_index: 0, start_block_index: 1, end_block_index: 2 }],
     },
-    { type: 'text', text: ' et revenez le 10, ', citations: [{ type: 'search_result_location', source: 'carnet-page:p1', title: 'Voyages › Lisbonne', cited_text: 'Départ le 3 mai, retour le 10.', search_result_index: 0, start_block_index: 1, end_block_index: 2 }] },
-    { type: 'text', text: 'depuis un hôtel près de l’Alfama.', citations: [{ type: 'search_result_location', source: 'carnet-page:p2', title: 'Hôtels', cited_text: 'Hôtel près de l’Alfama', search_result_index: 1, start_block_index: 0, end_block_index: 1 }] },
+    { type: 'text', text: ' et revenez le 10, ', citations: [{ type: 'search_result_location', source: 'page:p1', title: 'Voyages › Lisbonne', cited_text: 'Départ le 3 mai, retour le 10.', search_result_index: 0, start_block_index: 1, end_block_index: 2 }] },
+    { type: 'text', text: 'depuis un hôtel près de l’Alfama.', citations: [{ type: 'search_result_location', source: 'page:p2', title: 'Hôtels', cited_text: 'Hôtel près de l’Alfama', search_result_index: 1, start_block_index: 0, end_block_index: 1 }] },
   ],
 });
 
@@ -75,7 +75,7 @@ describe('POST /api/pages/ask', () => {
     const content = request.messages[0]!.content as any[];
     expect(content[0]).toEqual({
       type: 'search_result',
-      source: 'carnet-page:p1',
+      source: 'page:p1',
       title: 'Voyages › Lisbonne',
       content: [
         { type: 'text', text: '# Lisbonne' },

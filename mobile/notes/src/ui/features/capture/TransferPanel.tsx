@@ -27,14 +27,15 @@ import { asLineColor } from '@unlease/design/colors';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { moveLink } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectServer, useSettingsStore } from '@app/store/settingsStore';
-import { endTransfer, selectTransfers, showSnack, useUiStore } from '@app/store/uiStore';
+import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { showSnack } from '@shared/app/store/uiStore';
+import { endTransfer, selectTransfers, useCaptureStore } from '@app/store/captureStore';
 
 import { AnimatedOrganic, AppText, Emblem, Grain, Icon, IconButton, Organic, Tappable } from '../../components';
-import { accelerate, decelerate, duration, land, standard } from '../../theme/motion';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { accelerate, decelerate, duration, land, standard } from '@shared/ui/theme/motion';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import { MoveSheet } from '../lines/MoveSheet';
 import { navigate } from '../../navigation/navigationRef';
 
@@ -53,7 +54,7 @@ const DASHES = 12;
 export function TransferPanel() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
-  const transfers = useUiStore(selectTransfers);
+  const transfers = useCaptureStore(selectTransfers);
   const current = transfers[transfers.length - 1];
   // « Changer »: the sheet is the screen's, never squeezed into the slip's small host; the slip waits while it is open.
   const [movingId, setMovingId] = useState<string | null>(null);

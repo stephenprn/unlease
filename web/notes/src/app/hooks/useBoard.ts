@@ -13,6 +13,7 @@ import type { Note } from '@unlease/notes/models/entities';
 
 import { useLibraryStore, type LibraryState } from '../store/library';
 import { buildDocument } from '@unlease/notes/services/noteSearch';
+import { mentionsVersion } from '@unlease/notes/services/noteMentions';
 
 export type BoardView = 'notes' | 'reminders' | 'archive' | 'trash' | `label:${string}`;
 
@@ -77,11 +78,12 @@ export function useBoardSections(view: BoardView, now: number): BoardSections {
 }
 
 /** The search's documents, for the live notes and for the bin's, each kept until the library changes. */
-const cached: Record<'live' | 'bin', { revision: number; documents: SearchDocument[] }> = { live: { revision: -1, documents: [] }, bin: { revision: -1, documents: [] } };
+const cached: Record<'live' | 'bin', { revision: number; names: number; documents: SearchDocument[] }> = { live: { revision: -1, names: -1, documents: [] }, bin: { revision: -1, names: -1, documents: [] } };
 
 function documents(state: LibraryState, bin: boolean): SearchDocument[] {
   const cache = cached[bin ? 'bin' : 'live'];
-  if (state.revision === cache.revision) return cache.documents;
+  // The people a note names are found by their names now: a contact renamed starts the documents over too.
+  if (state.revision === cache.revision && mentionsVersion() === cache.names) return cache.documents;
   const docs: SearchDocument[] = [];
   for (const id of state.noteOrder) {
     const note = state.notes[id];
@@ -93,6 +95,7 @@ function documents(state: LibraryState, bin: boolean): SearchDocument[] {
     docs.push(buildDocument(note, checks, links, labels));
   }
   cache.revision = state.revision;
+  cache.names = mentionsVersion();
   cache.documents = docs;
   return docs;
 }

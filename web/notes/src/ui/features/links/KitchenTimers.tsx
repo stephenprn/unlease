@@ -11,9 +11,9 @@ import { formatCountdown } from '@unlease/notes/services/recipes';
 
 import { selectTimers, stopTimer, useKitchenStore, type KitchenTimer } from '../../../app/store/kitchen';
 import { useLibraryStore } from '../../../app/store/library';
-import { showWarning } from '../../../app/store/ui';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
+import { showWarning } from '@shared/app/store/ui';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
 import { chime, useSecond } from './kitchen';
 import styles from './links.module.css';
 

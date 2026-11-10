@@ -20,7 +20,11 @@ export const REF_TYPES = {
   note: { app: 'notes', record: 'note' },
   link: { app: 'notes', record: 'link' },
   /** A page: a `block` of kind `page`. */
-  page: { app: 'notes', record: 'block' },
+  page: { app: 'pages', record: 'block' },
+  /** A person of the address book. */
+  contact: { app: 'contacts', record: 'contact' },
+  /** An event of the calendar (a repeating one as a whole). */
+  event: { app: 'calendar', record: 'calendarEvent' },
 } as const satisfies Readonly<Record<string, RefTypeInfo>>;
 
 export type RefType = keyof typeof REF_TYPES;

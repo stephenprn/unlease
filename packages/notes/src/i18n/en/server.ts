@@ -22,6 +22,7 @@ export const EN_SERVER: Dictionary = {
   'Page protégée contre les robots': 'Page protected against robots',
   'Contenu illisible': 'Unreadable content',
   'Page inaccessible': 'Page unreachable',
+  'Page réservée aux abonnés': 'Page for subscribers only',
   'Requête refusée par l’API Claude': 'Request refused by the Claude API',
   'Page illisible': 'Unreadable page',
   'Erreur interne': 'Internal error',

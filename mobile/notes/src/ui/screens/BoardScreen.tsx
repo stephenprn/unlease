@@ -5,31 +5,33 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
+import { APP_WORDS } from '@unlease/core/appWords';
 import { t, tc, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
+import { searchSummary } from '@unlease/core/services/searchWords';
 import { collectionsWithLinks } from '@unlease/notes/services/sorting';
 import { INBOX_ID, INBOX_TITLE, TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
+import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { useBoardSections, useSearch, type BoardView } from '@app/hooks/useBoard';
-import { useMinute } from '@app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { pickInto } from '@app/media';
 import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setPinned, trashLines, trashNotes, addCheck } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { useTrashedPages } from '@app/hooks/usePages';
-import { createPage, emptyPagesBin } from '@app/store/pages';
-import { requestTitleFocus } from '@app/store/pagesUi';
-import { selectLayout, setLayout, useSettingsStore } from '@app/store/settingsStore';
-import { selectDrawerOpen, openCapture, setDrawerOpen, showSnack, useUiStore } from '@app/store/uiStore';
-import { requestSync } from '@app/sync/syncManager';
-import { haptic } from '@platform/haptics';
-import { readClipboard } from '@platform/intake';
+import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
+import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
+import { openCapture } from '@app/store/captureStore';
+import { requestSync } from '@shared/app/sync/syncManager';
+import { haptic } from '@shared/platform/haptics';
+import { readClipboard } from '@shared/platform/clipboard';
 import { extractUrls } from '@unlease/core/services/url';
 
-import { AppText, Button, Dialog, Ground, IconButton } from '../components';
+import { AppText, Button, Dialog, FAB_CLEARANCE, FabMenu, Ground, IconButton } from '../components';
 import { BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
 import { SelectionBar } from '../features/board/SelectionBar';
-import { BottomBar, BOTTOM_BAR_HEIGHT } from '../features/board/BottomBar';
+import { BulkLabelsSheet } from '../features/board/BulkLabelsSheet';
+import { BulkColorSheet, onlyCollections } from '../features/board/BulkColorSheet';
 import { EmptyBoard } from '../features/board/EmptyBoard';
 import { Wall } from '../features/board/Wall';
 import { useWallMetrics } from '../features/board/wallLayout';
@@ -37,11 +39,11 @@ import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineShe
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { NewLineSheet } from '../features/lines/NewLineSheet';
 import { sortDeletedLinksOnSlip } from '../features/lines/sortingSlips';
-import { DeletePageDialog, PagesBinSection } from '../features/pages/PagesBin';
+import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
 import { Drawer } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
-import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
-import type { Theme } from '../theme/theme';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
@@ -67,23 +69,20 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const [selection, setSelection] = useState<ReadonlySet<string>>(EMPTY_SELECTION);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  // A binned page to erase: its dialog lies at the root, over the whole screen.
-  const [pageToDelete, setPageToDelete] = useState<string | null>(null);
   const [newLineOpen, setNewLineOpen] = useState(false);
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
   // A selection holding collections with links: deleting asks where the links go first.
   const [deleteIds, setDeleteIds] = useState<readonly string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const drawerOpen = useUiStore(selectDrawerOpen);
-  const layout = useSettingsStore(selectLayout);
+  const layout = useLayoutStore(selectLayout);
   const columns = layout === 'wall' ? 2 : 1;
   const metrics = useWallMetrics(columns);
   const now = useMinute();
-  const { sections, total: notesTotal } = useBoardSections(view, now);
-  // The bin holds pages too: one Corbeille for both spaces.
-  const binnedPages = useTrashedPages().length;
-  const total = notesTotal + (view === 'trash' ? binnedPages : 0);
+  const { sections, total } = useBoardSections(view, now);
   const results = useSearch(query, view === 'trash');
   const searching = query.trim().length > 0;
   // Back ends a search before it leaves the app; only while the board is the screen shown, so it never takes a note's Back.
@@ -180,7 +179,11 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   }, [capture]);
 
   const selected = [...selection];
-  const clearSelection = useCallback(() => setSelection(EMPTY_SELECTION), []);
+  const clearSelection = useCallback(() => {
+    setSelection(EMPTY_SELECTION);
+    setLabelsOpen(false);
+    setColorOpen(false);
+  }, []);
   const selectionInk = theme.color.onActionContainer;
 
   // Keep's swipe: off the board into the archive, or out of the archive; the snackbar undoes it.
@@ -233,8 +236,6 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     navigation.setParams({ view: next });
   };
   const openLine = useCallback((id: string) => navigation.navigate('Line', { id }), [navigation]);
-  /** Over to the pages: their home takes the board's place, so Back still leaves the app. */
-  const toPages = () => navigation.dispatch(StackActions.replace('Pages'));
   const newLine = useCallback(() => setNewLineOpen(true), []);
   // A pull asks for a sync, on the wall and on an empty view alike.
   const refresh = () => {
@@ -250,23 +251,39 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
       {view === 'notes' && !searching ? <LineChips onOpenLine={openLine} onNewLine={newLine} selecting={selection.size > 0} /> : null}
       {title && !searching ? (
         <View style={styles.viewTitle}>
-          <AppText variant="title" accessibilityRole="header">
+          {/* A long label's name wraps rather than pushing what follows it off the screen. */}
+          <AppText variant="title" accessibilityRole="header" style={styles.viewTitleText}>
             {title}
           </AppText>
           {view === 'trash' && total > 0 ? (
-            <Button kind="text" label={t('Vider la corbeille')} onPress={() => setConfirmEmpty(true)} />
+            // Small beside the title, so the title stands where every view's does.
+            <Button kind="text" small icon="broom" label={t('Vider la corbeille')} onPress={() => setConfirmEmpty(true)} />
           ) : null}
         </View>
       ) : null}
-      {view === 'trash' && !searching ? (
-        <AppText variant="meta" style={styles.notice}>
-          {t('Les notes et les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
+      {/* Said once, under the title, while the bin holds something: empty, its empty state says how long notes stay. */}
+      {view === 'trash' && !searching && total > 0 ? (
+        <AppText variant="meta" style={styles.underTitle}>
+          {t('Les notes de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
         </AppText>
       ) : null}
-      {view === 'trash' && !searching ? <PagesBinSection notesFollow={notesTotal > 0} onDelete={setPageToDelete} /> : null}
+      {/* The settings the words name, above the notes, in the search of every note (a view's searches its own). */}
+      {searching && view === 'notes' ? (
+        <SettingsMatches
+          query={query}
+          own={NOTES_SETTINGS_PLACES}
+          onOpen={place => (place.area === 'admin' ? navigation.navigate('Admin', place.section ? { section: place.section } : undefined) : navigation.navigate('Settings', place.section ? { section: place.section } : undefined))}
+        />
+      ) : null}
       {searching ? (
         <AppText variant="meta" style={styles.notice}>
-          {results.length === 0 ? t('Aucun résultat') : plural(results.length, 'résultat')}
+          {searchSummary(query, results.length, view === 'notes' ? settingsFound(query, NOTES_SETTINGS_PLACES) : 0)}
+        </AppText>
+      ) : null}
+      {/* As in every app: under nothing found, what the search looks through, close under the count it explains. */}
+      {searching && results.length === 0 ? (
+        <AppText variant="meta" style={styles.noticeMore}>
+          {APP_WORDS.notes.searchHint}
         </AppText>
       ) : null}
     </View>
@@ -279,15 +296,16 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         query={query}
         onQuery={setQuery}
         onMenu={() => setDrawerOpen(true)}
+        localText={t('Pas de serveur : les notes restent sur ce téléphone.')}
         layout={layout}
         onToggleLayout={() => setLayout(layout === 'wall' ? 'list' : 'wall')}
-        placeholder={title ? t('Rechercher ({view})', { view: title.toLowerCase() }) : t('Rechercher dans vos notes')}
+        placeholder={title ? t('Rechercher dans « {view} »', { view: title }) : APP_WORDS.notes.search}
         focusKey={searchFocus}
-        onServer={() => navigation.navigate('Admin')}
+        onServer={() => navigation.navigate('Admin', { section: 'server' })}
       />
 
       {total === 0 && !searching ? (
-        <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? BOTTOM_BAR_HEIGHT + insets.bottom : insets.bottom} refreshing={refreshing} onRefresh={refresh} />
+        <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshing={refreshing} onRefresh={refresh} />
       ) : (
         <Wall
           sections={shown}
@@ -298,7 +316,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           onPress={onPress}
           onLongPress={onLongPress}
           header={intro}
-          footerSpace={(showCapture ? BOTTOM_BAR_HEIGHT : 16) + insets.bottom + 72}
+          footerSpace={(showCapture ? FAB_CLEARANCE : 16) + insets.bottom + 24}
           onSwipe={swipeable ? onSwipe : undefined}
           canSwipe={canSwipe}
           refreshing={refreshing}
@@ -306,9 +324,17 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         />
       )}
 
-      {showCapture && selection.size === 0 ? (
-        <BottomBar onChecklist={newChecklist} onDrawing={newDrawing} onPhoto={() => newPhotoNote('gallery')} onLink={newLink} onNote={newNote} />
-      ) : null}
+      <FabMenu
+        visible={showCapture && selection.size === 0}
+        label={t('Créer')}
+        actions={[
+          { icon: 'note', label: t('Note'), onPress: newNote },
+          { icon: 'checklist', label: t('Liste'), onPress: newChecklist },
+          { icon: 'draw', label: t('Dessin'), onPress: newDrawing },
+          { icon: 'image', label: t('Photo'), onPress: () => newPhotoNote('gallery') },
+          { icon: 'link', label: t('Lien'), onPress: newLink },
+        ]}
+      />
 
       {selection.size > 0 ? (
         <SelectionBar count={selection.size} onClose={clearSelection}>
@@ -330,6 +356,8 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
                   showSnack(allPinned ? byCount(t('Retirée des épinglées'), t('Retirées des épinglées')) : byCount(t('Note épinglée'), t('Notes épinglées')), { label: tc('undo', 'Annuler'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
                 }}
               />
+              <IconButton icon="palette" label={onlyCollections(selected) ? t('Couleur') : t('Couleur et papier')} color={selectionInk} shape={0} onPress={() => setColorOpen(true)} />
+              <IconButton icon="tag" label={t('Labels')} color={selectionInk} shape={3} onPress={() => setLabelsOpen(true)} />
               <IconButton
                 icon={view === 'archive' ? 'unarchive' : 'archive'}
                 label={view === 'archive' ? t('Désarchiver') : t('Archiver')}
@@ -349,7 +377,6 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
 
       <Drawer
         open={drawerOpen}
-        space="notes"
         current={view}
         onClose={() => setDrawerOpen(false)}
         onView={go}
@@ -359,19 +386,10 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         onLabels={() => navigation.navigate('Labels')}
         onSettings={() => navigation.navigate('Settings')}
         onAdmin={() => navigation.navigate('Admin')}
-        onPages={toPages}
-        onPage={id => {
-          toPages();
-          navigation.navigate('Page', { id });
-        }}
-        onNewPage={() => {
-          const id = createPage();
-          requestTitleFocus(id);
-          toPages();
-          navigation.navigate('Page', { id });
-        }}
       />
 
+      <BulkLabelsSheet visible={labelsOpen} ids={selected} onDismiss={() => setLabelsOpen(false)} />
+      <BulkColorSheet visible={colorOpen} ids={selected} onDismiss={() => setColorOpen(false)} />
       <NewLineSheet visible={newLineOpen} onDismiss={() => setNewLineOpen(false)} onCreated={id => navigation.navigate('Line', { id })} />
       <DeleteLineSheet ids={deleteIds} visible={deleteOpen} onDismiss={() => setDeleteOpen(false)} onChoose={removeSelected} onPickLine={() => setPicking(true)} />
       <MoveSheet visible={picking} currentLineId={null} exclude={deleteIds} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => removeSelected({ kind: 'move', to: target })} />
@@ -379,17 +397,14 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
       <Dialog
         visible={confirmEmpty}
         title={t('Vider la corbeille ?')}
-        message={t('Toutes les notes et les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
+        message={t('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
         confirmLabel={t('Vider')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const notes = emptyTrash();
-          const pages = emptyPagesBin();
-          const notesGone = plural(notes, 'note supprimée', 'notes supprimées');
-          const pagesGone = plural(pages, 'page supprimée', 'pages supprimées');
-          showSnack(notes > 0 && pages > 0 ? t('{notes} et {pages} définitivement', { notes: notesGone, pages: pagesGone }) : t('{deleted} définitivement', { deleted: pages > 0 ? pagesGone : notesGone }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} définitivement', { deleted: plural(notes, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
         }}
       />
       <Dialog
@@ -409,7 +424,6 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           showSnack(t('{deleted} définitivement', { deleted: plural(binned.length, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
         }}
       />
-      <DeletePageDialog id={pageToDelete} onClose={() => setPageToDelete(null)} />
     </View>
   );
 }
@@ -417,6 +431,11 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
-    viewTitle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, minHeight: 56 },
+    viewTitle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, minHeight: 56 },
+    viewTitleText: { flexShrink: 1 },
     notice: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
+    // The search's second line, under its count: one block, not two notices.
+    noticeMore: { paddingHorizontal: 16, paddingBottom: 8, marginTop: -4 },
+    // A line that belongs to the title above it: closer to it than to the cards under it.
+    underTitle: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 8 },
   });

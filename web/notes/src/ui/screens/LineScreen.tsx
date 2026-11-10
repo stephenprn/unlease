@@ -1,7 +1,10 @@
 /**
  * One collection: its head, a field to add a link straight into it, the links to do, then the
  * ones done, stamped, at the foot under "Déjà faits". One list, as on the phone, so a link
- * stamped (or put back) files itself there rather than leaving one list for another.
+ * stamped (or put back) files itself there rather than leaving one list for another. Over the
+ * rows, the order and the filter this browser keeps for the collection (`lineView`), and « Tout
+ * lire » while Claude could read links kept unread here, else « Tout relire » for the links read with
+ * another version of the collection's « Modèle de fiche ».
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -9,49 +12,83 @@ import { useShallow } from 'zustand/react/shallow';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { t, tx } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
-import { formatPrice, plural, totalPrice } from '@unlease/core/services/format';
+import { formatPrice, formatUsd, plural, totalPrice } from '@unlease/core/services/format';
+import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
+import { arrangeLine, DEFAULT_LINE_VIEW, type LineView } from '@unlease/notes/services/lineView';
 import { sortable } from '@unlease/notes/services/sorting';
-import { addedMessage } from '@unlease/notes/services/savedLinks';
+import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { extractUrls } from '@unlease/core/services/url';
-import { INBOX_ID, INBOX_TITLE, shownHint, shownTitle } from '@unlease/notes/models/entities';
+import { isBlank } from '@unlease/core/services/formChecks';
+import { INBOX_ID, INBOX_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
+import { collectionTemplate, linksReadBefore } from '@unlease/notes/services/templates';
 
-import { lineLinkIds, useLines } from '../../app/hooks/useLines';
-import { useMinute } from '../../app/hooks/useMinute';
-import { addLinks, restoreNotes, setPinned, trashLines, trashNotes } from '../../app/store/actions';
+import { useLines } from '../../app/hooks/useLines';
+import { useMinute } from '@shared/app/hooks/useMinute';
+import { addLinks, readLinks, restoreNotes, setPinned, trashLines, trashNotes } from '../../app/store/actions';
 import { useLibraryStore, type LibraryState } from '../../app/store/library';
-import { selectCanRead, useSettingsStore } from '../../app/store/settings';
-import { addedTone, selectSorting, showError, showSnack, showUndo, useUiStore } from '../../app/store/ui';
+import { useCanRead } from '../../app/store/prefs';
+import { setLineView, useLineView } from '../../app/store/lineViews';
+import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { showError, showSnack, showUndo } from '@shared/app/store/ui';
+import { useForm } from '@shared/ui/components/useForm';
+import { BoundInput, FieldProblem } from '../features/BoundInput';
+import { selectSorting, useNotesUiStore } from '../../app/store/notesUi';
 import { openLink } from '../commands';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { IconButton } from '../components/IconButton';
-import { Menu } from '../components/Menu';
+import { Button } from '@shared/ui/components/Button';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Menu } from '@shared/ui/components/Menu';
 import { CollectionHeader } from '../features/lines/CollectionHeader';
+import { FilteredEmpty, LineRefine, ReadAllBanner } from '../features/lines/LineRefine';
 import { DeleteLineDialog, type LinksFate } from '../features/lines/DeleteLineDialog';
 import { EditLineDialog } from '../features/lines/LineDialogs';
 import { ModulesDialog } from '../features/lines/ModulesDialog';
+import { TemplatePickerDialog } from '../features/templates/TemplatePickerDialog';
 import styles from '../features/lines/lines.module.css';
-import { OutlinedBox } from '../components/Outline';
+import { OutlinedBox } from '@shared/ui/components/Outline';
 import { MoveDialog } from '../features/lines/MoveDialog';
 import { ReviewDialog } from '../features/lines/ReviewDialog';
 import { sortDeletedLinksOnSlip, sortInboxOnSlip } from '../features/lines/sortingSlips';
 import { LinkRow } from '../features/links/LinkRow';
 import { useFilingMotion } from '../features/links/useFilingMotion';
-import { navigate, paths } from '../router';
-import { NotFound } from './NotFound';
+import { navigate } from '@shared/ui/router';
+import { paths } from '../routes';
+import { NotFound } from '@shared/ui/screens/NotFound';
 
 const canPaste = (): boolean => typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function';
+
+/** The collection's live links, in its own order. */
+const linksOf = (s: LibraryState, id: string): LinkItem[] => (s.linksByNote[id] ?? []).flatMap(lid => (s.links[lid] ? [s.links[lid]!] : []));
+
+/** How the rows lie with this view: when it changes, they move (`useFilingMotion`). */
+const orderOf = (s: LibraryState, id: string, view: LineView): string => {
+  const shown = arrangeLine(linksOf(s, id), view);
+  return `${shown.open.map(link => link.id).join(',')}|${shown.done.map(link => link.id).join(',')}`;
+};
 
 export function LineScreen({ id }: { id: string }) {
   const line = useLibraryStore(s => s.notes[id]);
   const now = useMinute();
-  const { open, done, total } = useLibraryStore(
+  const view = useLineView(id);
+  const { open, done, total, toDo, all, unread, failed, priceDrop, priced, skipped } = useLibraryStore(
     useShallow(s => {
-      const ids = lineLinkIds(s, id);
-      const sum = totalPrice(ids.open.map(lid => ({ price: s.links[lid]!.price, currency: s.links[lid]!.currency })));
-      return { open: ids.open.join(','), done: ids.done.join(','), total: sum ? formatPrice(sum.amount, sum.currency) : '' };
+      const links = linksOf(s, id);
+      const shown = arrangeLine(links, view);
+      // The head counts what is left to do whatever the filter.
+      const left = links.filter(link => !link.done);
+      const sum = totalPrice(left);
+      return {
+        open: shown.open.map(link => link.id).join(','),
+        done: shown.done.map(link => link.id).join(','),
+        total: sum ? formatPrice(sum.amount, sum.currency) : '',
+        toDo: left.length,
+        ...shown.counts,
+        priced: shown.priced,
+        skipped: links.filter(link => link.status === 'skipped').length,
+      };
     }),
   );
+  const model = useServerSettingsStore(selectServerSettings)?.analysis.model ?? 'claude-opus-5-5';
   // What Claude may sort here: in "Non classé", not what the person put there themselves.
   const sortableCount = useLibraryStore(
     s =>
@@ -60,13 +97,23 @@ export function LineScreen({ id }: { id: string }) {
         return !!link && sortable(link) && (id !== INBOX_ID || link.filedBy !== 'person');
       }).length,
   );
-  const reading = useSettingsStore(selectCanRead);
-  const sorting = useUiStore(selectSorting);
+  const reading = useCanRead();
+  // Its links read with another version of its « Modèle de fiche » than the one it has now.
+  const stale = useLibraryStore(
+    useShallow(s => {
+      const template = id === INBOX_ID ? null : collectionTemplate(s.linkTemplates, s.notes[id]);
+      return template ? linksReadBefore(template, linksOf(s, id), s.notes, s.linkTemplates).map(link => link.id) : [];
+    }),
+  );
+  const sorting = useNotesUiStore(selectSorting);
   const otherLines = useLines().some(other => other.id !== id && other.id !== INBOX_ID);
   const [url, setUrl] = useState('');
+  // Words with no link in them are said under the strip, what was typed kept.
+  const form = useForm({ url: !isBlank(url) && extractUrls(url).length === 0 ? t('Aucun lien ici : collez une adresse, comme https://example.org/page.') : null });
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [modules, setModules] = useState(false);
+  const [template, setTemplate] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [picking, setPicking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -74,10 +121,7 @@ export function LineScreen({ id }: { id: string }) {
   const list = useRef<HTMLUListElement>(null);
   const openIds = useMemo(() => (open ? open.split(',') : []), [open]);
   const doneIds = useMemo(() => (done ? done.split(',') : []), [done]);
-  const order = useCallback((s: LibraryState) => {
-    const ids = lineLinkIds(s, id);
-    return `${ids.open.join(',')}|${ids.done.join(',')}`;
-  }, [id]);
+  const order = useCallback((s: LibraryState) => orderOf(s, id, view), [id, view]);
   useFilingMotion(list, order);
 
   if (!line || line.deletedAt !== null || line.kind !== 'links') return <NotFound what={t('Cette collection n’existe plus.')} />;
@@ -88,13 +132,16 @@ export function LineScreen({ id }: { id: string }) {
   const add = (text: string): void => {
     const found = extractUrls(text);
     if (found.length === 0) {
-      showError(t('Ce n’est pas un lien'));
+      // Pasted words with no link: shown in the strip with the problem under it.
+      if (text !== url) setUrl(text);
+      form.fail('url', t('Aucun lien ici : collez une adresse, comme https://example.org/page.'));
       return;
     }
     const placed = addLinks(found, { noteId: id });
     const message = addedMessage(placed, { into: id, here: true }, useLibraryStore.getState().notes);
     if (message) showSnack(message, undefined, { tone: addedTone(placed) });
     setUrl('');
+    form.reset();
   };
   const paste = async (): Promise<void> => {
     try {
@@ -104,8 +151,27 @@ export function LineScreen({ id }: { id: string }) {
     }
   };
 
-  const summary = total ? t('{links} · total {total}', { links: plural(openIds.length, 'lien'), total }) : plural(openIds.length, 'lien');
+  // What is left to do. With none, it says nothing: the empty panel, or « Déjà faits · n », says it (never « 0 lien » over them), as on the phone.
+  const summary = toDo === 0 ? '' : total ? t('{links} · total {total}', { links: plural(toDo, 'lien'), total }) : plural(toDo, 'lien');
   const canReview = !inbox && reading && sortableCount > 0;
+  const filtered = view.filter !== 'all';
+  // Claude could read some links here now: those kept unread while the filter shows them, or those that failed under their own filter.
+  const retrying = view.filter === 'failed';
+  const toRead = !reading || trashed ? 0 : retrying ? failed : view.filter === 'all' || view.filter === 'unread' ? skipped : 0;
+  const readAll = (): void => {
+    const links = linksOf(useLibraryStore.getState(), id).filter(link => (retrying ? link.status === 'failed' : link.status === 'skipped'));
+    const sent = readLinks(links.map(link => link.id));
+    // No « Annuler »: the server starts reading at once, and a reading begun is spent.
+    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+  };
+  const cost = formatUsd(toRead * CLAUDE_COST_PER_LINK[model]);
+  // Never with the unread well: reading what was never read comes first.
+  const toReread = !reading || trashed || toRead >= 2 ? 0 : stale.length;
+  const rereadCost = formatUsd(toReread * CLAUDE_COST_PER_LINK[model]);
+  const rereadAll = (): void => {
+    const sent = readLinks(stale);
+    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+  };
 
   /** The collection goes to the bin; its links where the person said. */
   const remove = (fate: LinksFate): void => {
@@ -161,22 +227,30 @@ export function LineScreen({ id }: { id: string }) {
             </Button>
           </OutlinedBox>
         ) : (
+        <>
         <form
           className={styles.add}
+          data-invalid={form.error('url') ? '' : undefined}
+          noValidate
           onSubmit={event => {
             event.preventDefault();
             add(url);
           }}
         >
           <Icon name="link" size={20} />
-          <input
+          <BoundInput
+            field={form.field('url')}
+            problemId="line-add-problem"
             className={styles.addInput}
             value={url}
-            onChange={event => setUrl(event.target.value)}
+            onChange={setUrl}
             placeholder={t('Ajouter un lien à {collection}', { collection: shownTitle(line) })}
             aria-label={t('Ajouter un lien à {collection}', { collection: shownTitle(line) })}
             inputMode="url"
+            enterKeyHint="done"
             autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
             spellCheck={false}
           />
           {url.trim() ? (
@@ -185,15 +259,41 @@ export function LineScreen({ id }: { id: string }) {
             <IconButton icon="copy" label={t('Coller le lien copié')} onClick={() => void paste()} />
           ) : null}
         </form>
+        <FieldProblem field={form.field('url')} id="line-add-problem" className={styles.addProblem} />
+        </>
         )}
 
-        {openIds.length === 0 && doneIds.length === 0 ? (
+        {all === 0 ? (
           <OutlinedBox kind="panel" className={`${styles.empty} t-body`}>
             {inbox
               ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
               : t('Aucun lien pour l’instant. Collez une adresse ici, ou n’importe où sur cette page : Claude y rangera aussi ceux qui lui correspondent.')}
           </OutlinedBox>
         ) : null}
+        {toRead >= 2 ? (
+          <ReadAllBanner
+            text={
+              retrying
+                ? t('{links} · environ {cost} pour tout relire', { links: plural(toRead, 'lecture impossible', 'lectures impossibles'), cost })
+                : t('{links} · environ {cost} pour tout lire', { links: plural(toRead, 'lien gardé sans lecture', 'liens gardés sans lecture'), cost })
+            }
+            action={retrying ? t('Tout réessayer') : t('Tout lire')}
+            onRead={readAll}
+          />
+        ) : toReread > 0 ? (
+          <ReadAllBanner
+            text={
+              toReread === 1
+                ? t('{links} · environ {cost} pour le relire', { links: plural(1, 'lien lu avec une autre version', 'liens lus avec une autre version'), cost: rereadCost })
+                : t('{links} · environ {cost} pour les relire', { links: plural(toReread, 'lien lu avec une autre version', 'liens lus avec une autre version'), cost: rereadCost })
+            }
+            action={toReread === 1 ? t('Relire') : t('Tout relire')}
+            onRead={rereadAll}
+          />
+        ) : null}
+        {/* Only where there is something to order or pick: never over a single link, unless this browser keeps a view for it. */}
+        {all >= 2 || filtered || view.sort !== DEFAULT_LINE_VIEW.sort ? <LineRefine view={view} counts={{ all, unread, failed, priceDrop }} priced={priced} onChange={next => setLineView(id, next)} /> : null}
+        {all > 0 && rows.length === 0 ? <FilteredEmpty filter={view.filter} collection={shownTitle(line)} onClear={() => setLineView(id, { ...view, filter: 'all' })} /> : null}
         {rows.length > 0 ? (
           <ul ref={list} className={styles.list} aria-label={t('Liens de {collection}', { collection: shownTitle(line) })}>
             {rows}
@@ -209,6 +309,8 @@ export function LineScreen({ id }: { id: string }) {
         items={[
           { label: t('Modifier la collection'), icon: 'edit', onSelect: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onSelect: () => setModules(true) },
+          // What Claude notes on its links: « Non classé » reads each link by its kind.
+          ...(inbox ? [] : [{ label: t('Modèle de fiche'), icon: 'rows' as const, onSelect: () => setTemplate(true) }]),
           ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onSelect: () => setReviewing(true) }] : []),
           ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onSelect: sortInboxOnSlip }] : []),
           {
@@ -228,7 +330,7 @@ export function LineScreen({ id }: { id: string }) {
                   danger: true,
                   separatorBefore: true,
                   onSelect: () => {
-                    if (openIds.length + doneIds.length > 0) {
+                    if (all > 0) {
                       setDeleting(true);
                       return;
                     }
@@ -250,6 +352,7 @@ export function LineScreen({ id }: { id: string }) {
       />
       <ReviewDialog id={id} open={reviewing} onDismiss={() => setReviewing(false)} />
       <ModulesDialog id={id} open={modules} onDismiss={() => setModules(false)} />
+      <TemplatePickerDialog lineId={id} open={template} onDismiss={() => setTemplate(false)} />
       <DeleteLineDialog ids={[id]} open={deleting} onDismiss={() => setDeleting(false)} onChoose={remove} onPickLine={() => setPicking(true)} />
       <MoveDialog open={picking} currentLineId={null} exclude={[id]} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
     </div>

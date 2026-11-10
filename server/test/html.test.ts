@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { withoutSiteSuffix } from '../src/apps/notes/analysis/analyzer';
 import { buildDigest } from '../src/apps/notes/analysis/digest';
-import { decodeHtml, fetchedImages, parsePage } from '../src/apps/notes/analysis/html';
-import { formatDuration, parsePriceValue } from '../src/apps/notes/analysis/jsonld';
-import type { LinkRead } from '../src/apps/notes/analysis/reader';
-import { imageCandidates } from '../src/apps/notes/analysis/reader';
+import { decodeHtml, fetchedImages, parsePage } from '../src/reading/html';
+import { formatDuration, parsePriceValue } from '../src/reading/jsonld';
+import type { LinkRead } from '../src/reading/reader';
+import { imageCandidates } from '../src/reading/reader';
 import { fixture } from './helpers';
 
 const SHOP_URL = 'https://www.maison-lucette.fr/fr/femme/vestes/veste-jean-oversize-delavee-p4512.html';

@@ -260,6 +260,22 @@ export function richFromPlain(value: string): Run[] {
   return normalizeRich([text(value)]);
 }
 
+/**
+ * Words from outside (a calendar one subscribes to, a file imported, what Claude read) as markup:
+ * plain text whose `\`, `{` and `}` are escaped, so nothing in it reads as a mark, a link or a
+ * mention; cut to at most `limit` characters of markup, never inside an escape.
+ */
+export function markupFromPlain(value: string, limit: number = Number.POSITIVE_INFINITY): string {
+  let plain = value.length > limit ? value.slice(0, limit) : value;
+  let markup = serializeRich(richFromPlain(plain));
+  // Each character takes one or two in markup: dropping half the excess at a time keeps the most that fits.
+  while (markup.length > limit) {
+    plain = plain.slice(0, plain.length - Math.ceil((markup.length - limit) / 2));
+    markup = serializeRich(richFromPlain(plain));
+  }
+  return markup;
+}
+
 const runLength = (run: Run): number => (run.kind === 'text' ? run.text.length : 1);
 
 export function richLength(runs: readonly Run[]): number {

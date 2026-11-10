@@ -10,6 +10,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Keyframe, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { linkShop } from '@unlease/notes/services/modules';
@@ -18,20 +19,20 @@ import type { RecipeStep } from '@unlease/notes/sync/recipe';
 import { readRecipe } from '@app/modules';
 import { startTimer, useKitchenStore } from '@app/store/kitchen';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
 import { keepScreenOn } from '@platform/screen';
 
 import { AppText, Button, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
 import { KitchenTimers } from '../features/links/KitchenTimers';
-import { ReadingTrack } from '../features/links/ReadingTrack';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { servingsLine, ServingsStepper, useServings } from '../features/links/Servings';
 import { useModuleSearch } from '../features/links/useModuleSearch';
 import type { ScreenProps } from '../navigation/types';
-import { decelerate, duration } from '../theme/motion';
-import { corners } from '../theme/shape';
-import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
-import type { Theme } from '../theme/theme';
-import { fontFamily } from '../theme/typography';
+import { decelerate, duration } from '@shared/ui/theme/motion';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { fontFamily } from '@shared/ui/theme/typography';
 
 type Part = 'ingredients' | 'steps';
 
@@ -42,8 +43,8 @@ const STEP_ON = stepIn(24);
 const STEP_BACK = stepIn(-24);
 /** A swipe this long turns the step. */
 const SWIPE = 64;
-/** A step read from arm's length: the body's family, larger. */
-const STEP_TYPE = { fontSize: 22, lineHeight: 32 } as const;
+/** A step read from arm's length: the body's family, larger (21 on 32 on a phone; the web's 24 on 36). */
+const STEP_TYPE = { fontSize: 21, lineHeight: 32 } as const;
 
 const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
 
@@ -92,7 +93,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
   if (!link) {
     return (
       <View style={styles.screen}>
-        <TopBar onBack={() => navigation.goBack()} />
+        <TopBar closes onBack={() => navigation.goBack()} />
       </View>
     );
   }
@@ -183,7 +184,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={link.title || linkShop(link)} onBack={() => navigation.goBack()} actions={<IconButton icon="external" label={t('Ouvrir la recette')} onPress={() => open(link.url)} />} />
+      <TopBar title={link.title || linkShop(link)} closes onBack={() => navigation.goBack()} actions={<IconButton icon="external" label={t('Ouvrir la recette')} onPress={() => open(link.url)} />} />
       <View style={styles.fill}>{body()}</View>
       {stepping || timing ? (
         <View style={[styles.foot, { paddingBottom: insets.bottom + 12 }]}>
@@ -260,10 +261,11 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.paper },
     fill: { flex: 1 },
-    waiting: { gap: 16, paddingHorizontal: 20, paddingTop: 16, alignItems: 'flex-start' },
+    // On the screen's margin, as the link's page.
+    waiting: { gap: 16, paddingHorizontal: 16, paddingTop: 16, alignItems: 'flex-start' },
     // Its label lines up with the words above.
     retry: { marginLeft: -14 },
-    scroll: { flexGrow: 1, gap: 16, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 },
+    scroll: { flexGrow: 1, gap: 16, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
     // The whole room under the parts takes the swipe, not only the words.
     stepArea: { flexGrow: 1 },
     step: { gap: 16 },
@@ -272,9 +274,10 @@ const makeStyles = (theme: Theme) =>
     timers: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     // In line with the rows' marks.
     servings: { paddingBottom: 4 },
-    ingredient: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+    // A list row's: the box 16 in, the words at 56.
+    ingredient: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     notice: { gap: 12, alignItems: 'flex-start', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: theme.color.paperHigh },
-    foot: { gap: 10, paddingHorizontal: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.color.hairline },
+    foot: { gap: 10, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.color.hairline },
     turns: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     next: { flex: 1 },
   });

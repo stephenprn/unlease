@@ -1,8 +1,8 @@
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import { planKeepImport } from '@unlease/notes/services/keepImport';
 import { formatHlc } from '@unlease/core/sync/hlc';
-import { closeDatabase, openDatabase } from '@data/db/database';
-import { countPending, loadAllRecords } from '@data/repositories/recordRepository';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
+import { countPending, loadAllRecords } from '@shared/data/repositories/recordRepository';
 
 import { runKeepImport } from '../../keepImport';
 import {
@@ -31,7 +31,7 @@ import {
   updateLink,
 } from '../actions';
 import { getRecord, loadLibrary, mergeRemote, resetLibrary, useLibraryStore } from '../libraryStore';
-import { useSettingsStore } from '../settingsStore';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
 
 const state = () => useLibraryStore.getState();
 
@@ -220,14 +220,37 @@ describe('duplicates and links', () => {
   });
 
   it('keeps imported links plain when reading is off, as a saved one', async () => {
-    const note = (url: string) => ({ name: `${url.length}.json`, text: JSON.stringify({ isTrashed: false, title: '', textContent: url, userEditedTimestampUsec: 1_700_000_000_000_000, createdTimestampUsec: 1_690_000_000_000_000 }) });
+    const note = (url: string) => ({ name: `${url.length}.json`, text: JSON.stringify({ isTrashed: false, title: '', textContent: url, userEditedTimestampUsec: 1_700_000_000_000_000, createdTimestampUsec: 1_690_000_000_000_000 + url.length }) });
     const imported = () => Object.values(state().links).filter(link => link.url.startsWith('https://keep.example/'));
+    const choices = { singleLinks: true, collections: new Set<string>() };
     useSettingsStore.setState({ reading: false });
-    await runKeepImport({ plan: planKeepImport([note('https://keep.example/a')]), dir: '/tmp/keep', images: new Map() }, true);
+    await runKeepImport({ plan: planKeepImport([note('https://keep.example/a')]), dir: '/tmp/keep', images: new Map() }, choices);
     expect(imported()).toEqual([expect.objectContaining({ status: 'skipped', autoFile: false, noteId: INBOX_ID })]);
     useSettingsStore.setState({ reading: true });
-    await runKeepImport({ plan: planKeepImport([note('https://keep.example/bb')]), dir: '/tmp/keep', images: new Map() }, true);
+    await runKeepImport({ plan: planKeepImport([note('https://keep.example/bb')]), dir: '/tmp/keep', images: new Map() }, choices);
     expect(imported().find(link => link.url.endsWith('/bb'))).toMatchObject({ status: 'pending', autoFile: true });
+  });
+
+  it('makes a Keep list of links a collection, once however many times it is imported', async () => {
+    const plan = () =>
+      planKeepImport([
+        {
+          name: 'Films.json',
+          text: JSON.stringify({ title: 'Films', textContent: 'Dune https://keep.example/dune\nhttps://keep.example/alien', createdTimestampUsec: 1_690_000_000_777_000, userEditedTimestampUsec: 1_700_000_000_000_000, color: 'RED' }),
+        },
+      ]);
+    const choices = { singleLinks: true, collections: new Set(['Films.json']) };
+    const first = await runKeepImport({ plan: plan(), dir: '/tmp/keep', images: new Map() }, choices);
+    expect(first).toMatchObject({ collections: 1, links: 2 });
+    const films = Object.values(state().notes).find(note => note.title === 'Films')!;
+    expect(films).toMatchObject({ kind: 'links', color: 'red' });
+    expect((state().linksByNote[films.id] ?? []).map(id => [state().links[id]?.url, state().links[id]?.comment])).toEqual([
+      ['https://keep.example/dune', 'Dune'],
+      ['https://keep.example/alien', ''],
+    ]);
+    const again = await runKeepImport({ plan: plan(), dir: '/tmp/keep', images: new Map() }, choices);
+    expect(again).toMatchObject({ collections: 0, links: 0, already: 1 });
+    expect(Object.values(state().notes).filter(note => note.title === 'Films')).toHaveLength(1);
   });
 
   it('keeps links plain without a server, whatever was last heard', () => {

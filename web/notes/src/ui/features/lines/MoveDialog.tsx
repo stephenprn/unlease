@@ -10,10 +10,10 @@ import { asLineColor } from '@unlease/design/colors';
 import { shownHint, shownTitle } from '@unlease/notes/models/entities';
 
 import { useLines } from '../../../app/hooks/useLines';
-import { DialogFrame } from '../../components/Dialog';
-import { Emblem } from '../../components/Emblem';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
 import styles from './lines.module.css';
 
 /** `exclude`: collections not offered (those being deleted). */

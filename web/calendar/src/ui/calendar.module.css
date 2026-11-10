@@ -1,0 +1,2131 @@
+/*
+ * Agenda's screens: Google Agenda's views (a day, three days, a week on the hours' grid; a month;
+ * a year; the planning) on Unlease's paper. The grid lies on a panel; an event is a soft chip in its
+ * colour's wash with its pigment's edge; today's number lies on the pebble (the chosen place).
+ */
+
+/* ── a screen ─────────────────────────────────────────────────────────── */
+
+.screen {
+  max-width: 1080px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.narrowScreen {
+  max-width: 760px;
+}
+
+.lead {
+  max-width: 62ch;
+  margin: -8px 0 0;
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 0;
+  padding-left: 4px;
+}
+
+.sectionCount {
+  color: var(--ink-muted);
+}
+
+.panel {
+  position: relative;
+  isolation: isolate;
+  padding: 6px;
+  background: var(--paper);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.simpleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 10px;
+  /* A row touching its panel's top or foot takes the panel's own curve there (`--row-outer`, `OutlinedBox`). */
+  border-radius: var(--row-top, var(--cut-tab)) var(--row-top, var(--cut-tab)) var(--row-foot, var(--cut-tab)) var(--row-foot, var(--cut-tab));
+  color: inherit;
+  text-decoration: none;
+}
+
+.panel > .list > li:first-child {
+  --row-top: var(--row-outer);
+}
+
+.panel > .list > li:last-child {
+  --row-foot: var(--row-outer);
+}
+
+@media (hover: hover) {
+  .simpleRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.rowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rowText > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A place mentioning the event: its words on the event's own column (its title's, its details'). */
+.placeRow {
+  gap: 16px;
+}
+
+/* A place's mark (a page's emoji, or the glyph) in the glyphs' slot (24), so every row's words start on one column. */
+.placeMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  font-size: 20px;
+  color: var(--ink-muted);
+}
+
+.rowTools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* ── the views: their bar and their frame ──────────────────────────────── */
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: calc(100vh - var(--header-height, 64px));
+  padding: 4px var(--screen-side) 12px;
+  min-height: 420px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+}
+
+.toolbarStart {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+/* A button of the bar (42), as tall as the period's arrows and the views' track beside it. */
+.todayButton {
+  margin-right: 8px;
+}
+
+/* « Aujourd'hui » as an icon on a phone-sized window, where the bar is short of room. */
+.todayIcon {
+  display: none;
+}
+
+/* The arrow back is the arrow forward, turned. */
+.stepBack {
+  display: inline-flex;
+  transform: scaleX(-1);
+}
+
+.toolbarTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbarEnd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* The six views side by side, on a track a little lower than a form's. */
+.viewSwitch {
+  width: 564px;
+  margin-left: 4px;
+}
+
+.viewSwitch [role='radio'] {
+  min-height: 36px;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.frame {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* ── the days' heads ───────────────────────────────────────────────────── */
+
+.heads {
+  display: grid;
+  grid-template-columns: var(--gutter, 56px) repeat(var(--days), minmax(0, 1fr));
+  border-bottom: 1px solid var(--hairline);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.headDay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 4px;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Today's number lies on the pebble, in the primary. */
+.headDay[data-today] {
+  color: var(--on-action);
+  --pebble-fill: var(--action);
+}
+
+.weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.weekNumber {
+  align-self: end;
+  padding: 0 0 8px;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ── the all-day strip ─────────────────────────────────────────────────── */
+
+.allDay {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter, 56px) minmax(0, 1fr);
+  min-height: 28px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.allDayLabel {
+  align-self: center;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.bars {
+  position: relative;
+  min-height: calc(var(--lanes, 1) * 24px + 4px);
+}
+
+.bar {
+  position: absolute;
+  height: 22px;
+  margin: 3px 2px 0;
+}
+
+/* ── the hours' grid ───────────────────────────────────────────────────── */
+
+.scroller {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.grid {
+  --hour: 48px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter, 56px) repeat(var(--days), minmax(0, 1fr));
+  height: calc(24 * var(--hour));
+}
+
+.hours {
+  position: relative;
+}
+
+.hourLabel {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.column {
+  position: relative;
+  border-left: 1px solid var(--hairline);
+  background-image: linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
+  background-size: 100% var(--hour);
+  touch-action: pan-y;
+  cursor: cell;
+}
+
+.column[data-weekend] {
+  background-color: color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+
+.now {
+  position: absolute;
+  left: -5px;
+  right: 0;
+  z-index: 3;
+  height: 2px;
+  background: var(--danger);
+  pointer-events: none;
+}
+
+.now::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--danger);
+}
+
+/* An event's room: its top on its time, a little short of its end and of the column's lines, so two events never touch. */
+.box {
+  position: absolute;
+  z-index: 2;
+  padding: 0 2px 2px;
+}
+
+.ghost {
+  position: absolute;
+  z-index: 4;
+  left: 2px;
+  right: 2px;
+  padding: 2px 6px;
+  border-radius: var(--cut-small);
+  background: color-mix(in srgb, var(--action) 26%, var(--paper));
+  border-left: 3px solid var(--action);
+  color: var(--ink);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+/* ── an event's chip ───────────────────────────────────────────────────── */
+
+/* Its colour's wash, its pigment's edge; the primary when it wears none. */
+.chip {
+  --chip-fill: var(--fill, var(--action));
+  --chip-wash: var(--tint, color-mix(in srgb, var(--action) 18%, var(--paper)));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 1px 6px;
+  border: 0;
+  border-left: 3px solid var(--chip-fill);
+  border-radius: var(--cut-small);
+  background: var(--chip-wash);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.chip[data-dragging] {
+  opacity: 0.55;
+}
+
+.chip[data-layer] {
+  border-left-style: dotted;
+}
+
+.chip[data-done] {
+  opacity: 0.6;
+}
+
+.chipTitle {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipMeta {
+  overflow: hidden;
+  color: var(--ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A box with room for its title over several lines: it wraps there, cut by whole lines. */
+.chipTitle[data-wrap] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* A short box (under half an hour): its title, then its time, on one line. */
+.chip[data-short] {
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Short of room, the time gives way whole (it wraps out of sight), before the title is cut. */
+.chipOneLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 4px;
+  min-width: 0;
+  height: 1.25em;
+  overflow: hidden;
+}
+
+.chipOneLine .chipTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.chipOneLine .chipMeta {
+  flex: none;
+}
+
+@media (hover: hover) {
+  .chip:not(.chipDot):hover {
+    background: color-mix(in srgb, var(--chip-fill) 12%, var(--chip-wash));
+  }
+}
+
+/* A one-line chip: the time before the title. */
+.chipLine {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  white-space: nowrap;
+}
+
+.chipLine .chipTitle {
+  flex: 1;
+}
+
+/* A timed event in the month: a dot of its colour, not a bar. */
+.chipDot {
+  border-left: 0;
+  background: transparent;
+}
+
+.chipDot::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--chip-fill);
+}
+
+@media (hover: hover) {
+  .chipDot:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+/* ── the month ─────────────────────────────────────────────────────────── */
+
+.monthHeads {
+  display: grid;
+  grid-template-columns: repeat(var(--days, 7), minmax(0, 1fr));
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.monthHeads > * {
+  padding: 8px 0 6px;
+}
+
+.month {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-auto-rows: minmax(96px, 1fr);
+  overflow-y: auto;
+}
+
+.week {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--days, 7), minmax(0, 1fr));
+  border-bottom: 1px solid var(--hairline);
+}
+
+.monthWeek {
+  position: absolute;
+  top: 9px;
+  left: 6px;
+  color: var(--ink-muted);
+  font-size: 0.6875rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.cell {
+  min-width: 0;
+  padding: 4px 2px 2px;
+  border-left: 1px solid var(--hairline);
+  cursor: cell;
+}
+
+.cell:first-child {
+  border-left: 0;
+}
+
+.cell[data-outside] {
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+
+.cell[data-over] {
+  background: color-mix(in srgb, var(--action) 14%, transparent);
+}
+
+.cellDay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  margin: 0 auto 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cellHead {
+  display: flex;
+  justify-content: center;
+}
+
+.cell[data-outside] .cellDay {
+  color: var(--ink-muted);
+}
+
+.cellDay[data-today] {
+  color: var(--on-action);
+  --pebble-fill: var(--action);
+}
+
+.weekBars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 32px;
+  pointer-events: none;
+}
+
+.weekBars > * {
+  pointer-events: auto;
+}
+
+/* A month's lanes are 22 apart: each chip a little lower, so they never touch; 1 further in off the cells' lines. */
+.weekBars .bar {
+  height: 20px;
+  margin-top: 1px;
+  padding: 0 1px;
+}
+
+.weekBars .chipLine {
+  height: 20px;
+}
+
+.more {
+  position: absolute;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .more:hover {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+}
+
+/* ── the year ──────────────────────────────────────────────────────────── */
+
+.year {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px 24px;
+  padding: 12px;
+}
+
+/* ── a small month (the navigation's, the year's) ──────────────────────── */
+
+.mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.miniHead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.miniTitle {
+  flex: 1;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  text-align: center;
+}
+
+.miniWeekday {
+  color: var(--ink-muted);
+  font-size: 0.6875rem;
+  line-height: 24px;
+}
+
+.miniDay {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  outline-offset: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.miniDay[data-outside] {
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+/* Its hover, the day shown and today lie on its pebble, a little inside the cell, so neighbours never touch. */
+.miniDay::before {
+  inset: 3px;
+}
+
+.miniDay[data-busy]::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--action);
+}
+
+.miniDay[data-shown] {
+  --pebble-fill: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.miniDay[data-today] {
+  color: var(--on-action);
+  --pebble-fill: var(--action);
+}
+
+@media (hover: hover) {
+  .miniDay:not([data-today], [data-shown]):hover {
+    --pebble-fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  .miniDay[data-shown]:hover {
+    --pebble-fill: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+  }
+}
+
+.miniDay:not([data-today], [data-shown]):active {
+  --pebble-fill: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.navLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.navMini {
+  padding: 4px 10px 12px;
+}
+
+/* ── the planning, the search, the bin ─────────────────────────────────── */
+
+.schedule {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px 24px;
+}
+
+.scheduleDay {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.scheduleDate {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ink-muted);
+}
+
+/* The day's number on its first event's line (36), its month and weekday on its baseline. */
+.scheduleDate > strong {
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 36px;
+}
+
+.scheduleDate[data-today] > strong {
+  color: var(--action);
+}
+
+.scheduleItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scheduleItem {
+  display: grid;
+  grid-template-columns: 14px 140px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .scheduleItem:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+/* A dot of the event's colour: a circle, as every dot (never the squircle the browser gives the rest). */
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--fill, var(--action));
+}
+
+.moreLater {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── an event: its popover and its page ────────────────────────────────── */
+
+.anchor {
+  position: fixed;
+  pointer-events: none;
+}
+
+.peek {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 12px;
+}
+
+.peekTools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+/* Its colour's dot centred in the details' glyph slot (24), its title on their words' column. */
+.peekTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 0 8px;
+}
+
+.peekTitle .swatch {
+  flex: none;
+  margin: 8px 6px 0;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 16px;
+  padding: 6px 8px;
+}
+
+.detail > svg {
+  margin-top: 1px;
+  color: var(--ink-muted);
+}
+
+/* A detail that starts with chips (people, files: 36): its glyph centred on them. */
+.detail[data-chips] > svg {
+  margin-top: 8px;
+}
+
+.detailText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A button closing a detail's words (« Choisir un fichier »): a breath above it. */
+.detailButton {
+  padding-top: 8px;
+}
+
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 8px 0;
+}
+
+.description {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.mention {
+  padding: 0 4px;
+  border-radius: var(--cut-detail);
+  background: color-mix(in srgb, var(--action) 14%, transparent);
+  color: var(--link);
+  text-decoration: none;
+}
+
+.mention[data-gone] {
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 4px 0;
+}
+
+.heroText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.heroTitle {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.heroTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Its colour on its own pebble (identity: the event's label or its own). */
+.heroSwatch {
+  flex: none;
+  width: 30px;
+  height: 28px;
+  margin-top: 6px;
+  background: var(--fill, var(--action));
+}
+
+.heroWhen {
+  margin: 6px 0 0;
+}
+
+.heroNotes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 2px 0 0;
+  color: var(--ink-muted);
+}
+
+.heroNear {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The page's actions: « Modifier » first, « Supprimer » at the far end. */
+.eventActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 0 50px;
+}
+
+.eventActionsEnd {
+  margin-left: auto;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weatherLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* A place: its words in link ink, a menu of where it opens. */
+.placeButton {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  max-width: calc(100% + 16px);
+  min-height: 32px;
+  margin: -4px -8px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--link);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.placeButton > svg {
+  flex: none;
+}
+
+/* Its tint runs past its words: the line under it keeps clear of it. */
+.placeButton:not(:last-child),
+.linkRow:not(:last-child) {
+  margin-bottom: 2px;
+}
+
+@media (hover: hover) {
+  .placeButton:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.placeButton:active {
+  background: color-mix(in srgb, var(--link) 12%, transparent);
+}
+
+/* A link on one line: its site in link ink, the rest of its address faint and cut. */
+.linkRow {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  max-width: calc(100% + 16px);
+  min-height: 32px;
+  margin: -4px -8px;
+  padding: 4px 8px;
+  border-radius: var(--cut-tab);
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.linkHost {
+  flex: none;
+  color: var(--link);
+  font-weight: 600;
+}
+
+.linkRest {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkRow > svg {
+  flex: none;
+}
+
+@media (hover: hover) {
+  .linkRow:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+/* The people an event is with: a face and a name, on a chip. */
+.people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 3px 12px 3px 4px;
+  border-radius: var(--cut-chip);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+li.person {
+  padding-right: 2px;
+}
+
+.person[data-gone] {
+  padding-left: 10px;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  a.person:hover {
+    background: color-mix(in srgb, var(--ink) 5%, var(--field));
+  }
+}
+
+.personName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A face: their photo on the pebble, or their initials on their own wash in the frame's corner. */
+.face {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: min(var(--cut-small), 30%);
+  background: var(--tint, var(--paper-high));
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.face[data-pebble] {
+  border-radius: 0;
+}
+
+.face img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* An event's labels as the form ticks them: chips of their wash from the glyphs' edge, each its tag then its name. */
+.wornLabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.wornLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 0 14px 0 12px;
+  border-radius: var(--cut-chip);
+  background: var(--tint);
+  color: var(--ink);
+}
+
+.wornLabel > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--outline);
+  border-radius: var(--cut-chip);
+  background: var(--field);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.file > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── the form ──────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formSheet {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--paper);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.formRow > svg {
+  /* Centred on a field's first line (52 high). */
+  margin-top: 15px;
+  color: var(--ink-muted);
+}
+
+/* Centred on chips (40), a file (36), the swatches (34) or a small button (32) where the row starts with them. */
+.formRow[data-first='chips'] > svg {
+  margin-top: 9px;
+}
+
+.formRow[data-first='file'] > svg {
+  margin-top: 7px;
+}
+
+.formRow[data-first='swatches'] > svg {
+  margin-top: 6px;
+}
+
+.formRow[data-first='small'] > svg {
+  margin-top: 5px;
+}
+
+/* A row whose fields take its whole width, one under the other. */
+.formFieldsWide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.anchorSpan {
+  display: inline-flex;
+}
+
+/* When: the days and the hours on one line, then the day's switch and the zone. */
+.whenLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.whenGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whenDash {
+  color: var(--ink-muted);
+}
+
+.whenOptions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.zoneLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+/* A row that is its switch: the mark, then its words; the whole row presses. */
+.switchRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  margin-left: -8px;
+  padding: 0 12px 0 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .switchRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.switchRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* The form's own fields: the suite's field (its edge inside, matcha on focus), a little lower. */
+/* Agenda's day, time and choice fields: the shared field's paper, edge, height and radius (`controls.module.css` `.input`). */
+.fieldButton,
+.fieldInput {
+  min-height: 52px;
+  /* The shared field's 18 and its 1.5 edge: every field's words start on one line. */
+  padding: 0 19.5px;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: var(--field-veil);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.fieldInput {
+  width: 100%;
+}
+
+.fieldInput::placeholder {
+  color: var(--ink-faint);
+}
+
+.fieldButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fieldButton > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldButton > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  .fieldButton:hover:not(:disabled),
+  .fieldInput:hover:not(:focus) {
+    box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  }
+}
+
+.fieldButton:disabled {
+  cursor: default;
+  color: var(--ink-muted);
+}
+
+.fieldButton[aria-expanded='true'],
+.fieldButton:focus-visible,
+.fieldInput:focus {
+  box-shadow: inset 0 0 0 2px var(--focus);
+  outline: none;
+}
+
+.fieldInput[data-invalid],
+.fieldButton[data-invalid],
+.fieldInput[data-invalid]:hover,
+.fieldButton[data-invalid]:hover {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+.timeField {
+  width: 96px;
+}
+
+.timeField .fieldInput {
+  text-align: center;
+}
+
+/* A list floating under a field (`Floating`): times, people. */
+.floatList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  max-height: 288px;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.timeOption {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--cut-tab);
+  cursor: pointer;
+}
+
+.timeOption[data-active] {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.timeOption[aria-selected='true'] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+  font-weight: 600;
+}
+
+.timeLength {
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.timeOption[aria-selected='true'] .timeLength {
+  color: inherit;
+}
+
+.datePop {
+  padding: 12px 10px;
+}
+
+/* A menu row's room for its tick, on the rows not chosen. */
+.menuBlank {
+  display: inline-block;
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
+.peoplePicker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comboBox {
+  min-width: 0;
+}
+
+.comboOption {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 10px;
+  border-radius: var(--cut-tab);
+  cursor: pointer;
+}
+
+.comboOption[data-active] {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.comboText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.comboText > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comboText > .t-meta,
+.comboText > :last-child:not(:first-child) {
+  color: var(--ink-muted);
+}
+
+/* Colours as pebbles of painted paper, the chosen ringed in ink and ticked; « its labels' » drawn by its edge. */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Where one line cannot hold them, full rows run edge to edge (15 in fives, 14 in sevens), never one left alone on a last row. */
+@media (max-width: 719px) {
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 32px);
+    justify-content: space-between;
+    row-gap: 8px;
+  }
+
+  .swatches[data-count='14'] {
+    grid-template-columns: repeat(7, 32px);
+  }
+}
+
+.colorPebble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  margin: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--on);
+  --pebble-fill: var(--fill);
+  --edge-color: transparent;
+  --edge-width: 3px;
+  cursor: pointer;
+}
+
+.colorPebble[data-none] {
+  color: var(--ink-muted);
+  --pebble-fill: var(--field);
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+}
+
+@media (hover: hover) {
+  .colorPebble:hover {
+    --pebble-fill: color-mix(in srgb, var(--fill, var(--field)) 92%, var(--ink));
+  }
+}
+
+.colorPebble:active {
+  --pebble-fill: color-mix(in srgb, var(--fill, var(--field)) 86%, var(--ink));
+}
+
+.colorPebble[aria-checked='true'] {
+  color: var(--on, var(--ink));
+  --edge-color: var(--ink);
+  --edge-width: 3px;
+}
+
+.formFields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.titleInput {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 4px 0 36px;
+  border: 0;
+  border-bottom: 1.5px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.titleInput::placeholder {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.quick .titleInput {
+  padding-left: 4px;
+}
+
+.titleInput:focus-visible {
+  border-bottom-color: var(--focus);
+  outline: none;
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--outline);
+  border-radius: var(--cut-chip);
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.pick[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--outline);
+  border-radius: var(--cut-menu);
+  background: var(--paper);
+}
+
+.suggestion {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion[aria-selected='true'],
+.suggestion:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.formFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* « ⌘ + Entrée », under a pointer on a wide window: on a narrow one it would push the buttons onto lines of their own. */
+.formHint {
+  align-self: center;
+  margin-right: auto;
+  color: var(--ink-muted);
+}
+
+@media (pointer: coarse), (max-width: 719px) {
+  .formHint {
+    display: none;
+  }
+}
+
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  min-width: 300px;
+}
+
+.quickAdd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quickInput {
+  width: 240px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--outline);
+  border-radius: var(--cut-search);
+  background: var(--field-veil);
+  color: var(--ink);
+  font: inherit;
+}
+
+/* Narrower, it still holds its whole placeholder; the search strip beside it gives the room. */
+@media (max-width: 1100px) {
+  .quickInput {
+    width: 200px;
+  }
+}
+
+/* ── the scope's choice, the ask panel ─────────────────────────────────── */
+
+.answer {
+  margin: 0;
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+
+/* Claude's panel fills its side sheet (a whole page on a phone-sized window). */
+.askFrame {
+  --frame-width: 100%;
+  height: 100%;
+}
+
+/* Its conversation takes the room between the head and the field, which stays at the foot. */
+.askFrame > :nth-child(2) {
+  flex: 1 1 auto;
+}
+
+.askHead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.askHead > p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.starters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--row-gap);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The question: the person's own words, at the right, on the field's tone. */
+.question {
+  align-self: flex-end;
+  max-width: 85%;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--cut-tab);
+  background: var(--field);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  white-space: pre-wrap;
+}
+
+.askWaiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.askError {
+  margin: 0;
+  color: var(--danger);
+}
+
+/* The question's field at the foot: one line growing to five, its send pebble beside it. */
+.askComposer {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.askField {
+  flex: 1;
+  min-height: 44px;
+  max-height: calc(5 * 1.45em + 22px);
+  padding: 11px 12px;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: var(--field-veil);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+  resize: none;
+  field-sizing: content;
+}
+
+.askField:focus {
+  box-shadow: inset 0 0 0 2px var(--focus);
+  outline: none;
+}
+
+.gift {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--cut-panel);
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+@media (max-width: 719px) {
+  .heads[data-many] .weather {
+    display: none;
+  }
+  .todayButton {
+    display: none;
+  }
+  .todayIcon {
+    display: inline-flex;
+  }
+  .toolbar {
+    gap: 2px;
+    min-height: 48px;
+  }
+  .eventActions {
+    padding-left: 0;
+  }
+  /* The period's title on its own line over the bar's tools. */
+  .toolbar {
+    flex-wrap: wrap;
+  }
+  .toolbarStart {
+    display: contents;
+  }
+  .toolbarTitle {
+    order: -1;
+    flex-basis: 100%;
+    margin: 0 4px;
+    font-size: 1.25rem;
+  }
+  .toolbarEnd {
+    margin-left: auto;
+  }
+  /* A column a few dozen pixels wide: the chip's words take what there is. */
+  .chip {
+    padding: 1px 3px;
+    font-size: 0.75rem;
+  }
+  /* The start's day and hour, then the end's, each on its line. */
+  .whenLine {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .whenDash {
+    display: none;
+  }
+  .whenGroup[data-end] {
+    flex-direction: row-reverse;
+  }
+  .titleInput {
+    padding-left: 4px;
+  }
+  .calendar {
+    padding: 4px 8px 8px;
+  }
+  .scheduleDay {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .scheduleItem {
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+  .scheduleItem > :nth-child(2) {
+    display: none;
+  }
+  .grid,
+  .heads,
+  .allDay {
+    --gutter: 44px;
+  }
+}
+
+/* ── the custom repeat (`RepeatDialog`) ─────────────────────────────────── */
+
+.repeatForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* « Tous les [2] [semaines] », « Après [10] occurrences »: a count's field as wide as three digits. */
+.repeatEvery {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.repeatCount {
+  flex: none;
+  width: 96px;
+}
+
+.repeatUnit {
+  flex: 1;
+}
+
+.repeatWord {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+.repeatEnds {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repeatEnds > :global(.t-meta-strong) {
+  margin-left: 4px;
+}
+
+.repeatSummary {
+  margin: 0;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* A form's line in a dialog's foot: a line of its own, above the buttons. */
+.footMessage {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+
+/* A new label: its field, and « Créer » level with the field itself (not its label). */
+.newLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.newLabelField {
+  flex: 1;
+}
+
+.newLabelButton {
+  /* Level with the field itself, under its label's line (18 and its 6 gap), and as tall (52), so the two share their edges. */
+  min-height: 52px;
+  margin-top: calc(18px + 6px);
+}
+
+/*
+ * A label or a calendar on its panel (« Libellés », « Autres agendas »): its line (its switch, its name,
+ * its tools, each centred on the 52 field even when a problem shows under it), what it says, its colours.
+ */
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px 14px;
+}
+
+.itemHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px 12px;
+}
+
+.itemName {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 360px;
+}
+
+/* A part of the line as tall as the field, its content centred on it. */
+.itemLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 52px;
+}
+
+/* A label's count of events, in a slot wide enough for « 99 événements », so every name's field is as wide as the others. */
+.itemCount {
+  display: inline-block;
+  min-width: 96px;
+  text-align: end;
+}
+
+.itemNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemAddress {
+  overflow-wrap: anywhere;
+}
+
+/* A calendar shown or hidden (« Mes événements », a subscription, what another app brings): a small stone of its pigment, filled and ticked while it shows, its edge alone while hidden. Labels keep their tag. */
+.calendarCheck {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 20px;
+  color: var(--on);
+  --pebble-fill: transparent;
+  --edge-color: var(--fill);
+  --edge-width: 2px;
+}
+
+.calendarCheck[data-checked] {
+  --pebble-fill: var(--fill);
+}
+
+.calendarCheck > svg:last-child {
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.calendarCheck[data-checked] > svg:last-child {
+  opacity: 1;
+}
+
+/*
+ * A calendar's row in the navigation: its menu (« Afficher uniquement celui-ci », « Tout afficher »)
+ * at its end under a hovering pointer or the keyboard's focus (always under a finger), laid over the
+ * end of its name on the row's own ground so the name keeps its width, as Pages' tree.
+ */
+.calendarRow {
+  position: relative;
+  --row-ground: var(--wall);
+}
+
+@media (hover: hover) {
+  .calendarRow:hover {
+    --row-ground: color-mix(in srgb, var(--ink) 6%, var(--wall));
+  }
+}
+
+.navMoreSlot {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: flex;
+  padding-left: 14px;
+  background: linear-gradient(to right, transparent, var(--row-ground) 14px);
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 -50%;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.calendarRow:is(:hover, :focus-within) .navMoreSlot,
+.navMoreSlot:has([aria-expanded='true']) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.navMore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .navMore:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.navMore:active,
+.navMore[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+
+/* A finger has no hover: the menu stays at the row's end, a finger's size. */
+@media (hover: none) {
+  .navMoreSlot {
+    position: static;
+    padding-left: 0;
+    background: none;
+    opacity: 1;
+    pointer-events: auto;
+    translate: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .navMore {
+    width: 40px;
+    height: 40px;
+  }
+}

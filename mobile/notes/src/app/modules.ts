@@ -1,19 +1,17 @@
 /**
  * The link modules' calls (`notes/models/modules`): promo codes, offers elsewhere, ratings, a series'
  * recap and other outlets (Claude on the web), a recipe's ingredients and method, an article kept as
- * a page, a question to Claude, the film in Seerr. Asked from a link's sheet; only the copy writes
- * on its own, through the page actions (the shopping list writes from its sheet, `addToChecklist`,
- * and an answer goes in the link's note when the person adds it). The
+ * a page in Pages (the server makes it, and sets the link's `copy`), a question to Claude, the film in
+ * Seerr. Asked from a link's sheet; nothing writes on its own (the shopping list writes from its
+ * sheet, `addToChecklist`, and an answer goes in the link's note when the person adds it). The
  * web's `web/notes/src/app/modules.ts` is a port of it. Each throws `SyncError` with the interface's words
  * when it cannot be done.
  */
 import { getLocale, t } from '@unlease/core/i18n';
 import type { LinkItem } from '@unlease/notes/models/entities';
 import { couponRequest } from '@unlease/notes/services/coupons';
-import { formatIsoDay } from '@unlease/core/services/format';
 import { linkBrief } from '@unlease/notes/services/modules';
 import { offerRequest } from '@unlease/notes/services/offers';
-import { richFromPlain, serializeRich, setFlag } from '@unlease/core/services/richText';
 import type { AskResponse } from '@unlease/notes/sync/ask';
 import type { CouponResponse } from '@unlease/notes/sync/coupons';
 import type { CoverageResponse } from '@unlease/notes/sync/coverage';
@@ -25,9 +23,11 @@ import type { RatingsResponse, RecapResponse } from '@unlease/notes/sync/works';
 
 import { useLibraryStore } from './store/libraryStore';
 import { saveTypedText } from './store/actions';
-import { createPageFrom } from './store/pages';
-import { useSettingsStore, type ServerConfig } from './store/settingsStore';
-import { askQuestion, fetchRecipe, findInSeerr, requestCopy, searchCoupons, searchCoverage, searchOffers, searchRatings, searchRecap, SyncError } from './sync/transport';
+import { useSettingsStore, type ServerConfig } from '@shared/app/store/settingsStore';
+import { eventFromLink } from '@app/sync/transport';
+import { deviceZone, instantToWall } from '@unlease/calendar/services/time';
+import type { EventProposal } from '@unlease/calendar/sync/routes';
+import { askQuestion, fetchRecipe, findInSeerr, requestCopy, searchCoupons, searchCoverage, searchOffers, searchRatings, searchRecap, SyncError } from '@app/sync/transport';
 
 function server(): ServerConfig {
   const config = useSettingsStore.getState().server;
@@ -117,7 +117,11 @@ const copying = new Map<string, Promise<string>>();
 /** The copy of this link being made, if one is. */
 export const runningCopy = (linkId: string): Promise<string> | null => copying.get(linkId) ?? null;
 
-/** "Garder une copie": the article as a new page, the link's card first, then who wrote it and when. Returns the page. */
+/**
+ * "Garder une copie": the server reads the article and makes it a page in Pages (`POST
+ * /api/pages/copies`), titled as the link's row shows it; the link's `copy` points at the page once
+ * that change syncs. Returns the page.
+ */
 export function keepCopy(linkId: string): Promise<string> {
   const running = copying.get(linkId);
   if (running) return running;
@@ -128,9 +132,30 @@ export function keepCopy(linkId: string): Promise<string> {
 
 async function makeCopy(linkId: string): Promise<string> {
   const link = linkOf(linkId);
-  const copy = await requestCopy(server(), { link: { id: link.id, url: link.url }, lang: getLocale() });
-  const credit = [copy.byline, copy.published ? formatIsoDay(copy.published) : ''].filter(Boolean).join(' · ');
-  const lead = credit ? [{ kind: 'text' as const, text: serializeRich(setFlag(richFromPlain(credit), 0, credit.length, 'i', true)) }] : [];
-  // The link's own title first: the page's carries its site's name (« … | Auto Plus »), or is only the domain.
-  return createPageFrom({ title: link.title || copy.title, cite: { type: 'link', id: link.id }, drafts: [...lead, ...copy.drafts] });
+  // The link's own title: the article's carries its site's name (« … | Auto Plus »), or is only the domain.
+  const made = await requestCopy(server(), { link: { id: link.id, url: link.url }, lang: getLocale(), ...(link.title ? { title: link.title } : {}) });
+  return made.pageId;
+}
+
+/** A proposal as the query of Agenda's new event (`unlease-agenda://new?…`, the web's `/agenda/new?…`): its form opens filled, the link mentioned. */
+export function proposalQuery(proposal: EventProposal, linkId: string | null): string {
+  const pairs: [string, string][] = [['title', proposal.title], ['start', proposal.start], ['end', proposal.end]];
+  if (proposal.timeZone) pairs.push(['tz', proposal.timeZone]);
+  if (proposal.place) pairs.push(['place', proposal.place]);
+  if (proposal.url) pairs.push(['url', proposal.url]);
+  if (proposal.description) pairs.push(['notes', proposal.description]);
+  if (linkId) pairs.push(['link', linkId]);
+  return pairs.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+}
+
+/**
+ * « Ajouter à l’agenda »: Claude reads the link's date, hours and place on the server; the answer is
+ * the query of Agenda's new event filled with it. Nothing is written before the person saves it there.
+ */
+export async function agendaQuery(linkId: string, signal?: AbortSignal): Promise<string> {
+  const link = linkOf(linkId);
+  const now = Date.now();
+  const { proposal } = await eventFromLink(server(), { linkId: link.id, lang: getLocale(), now: instantToWall(now, ''), timeZone: deviceZone() }, signal);
+  if (!proposal) throw new SyncError('protocol', t('Aucune date trouvée dans ce lien.'));
+  return proposalQuery(proposal, link.id);
 }

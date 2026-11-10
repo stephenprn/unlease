@@ -8,7 +8,7 @@ import { shownHint, shownTitle } from '@unlease/notes/models/entities';
 import { useLines } from '@app/hooks/useLines';
 
 import { Emblem, Icon, ListRow, Sheet, SheetScroll } from '../../components';
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 /** `exclude`: collections not offered (those being deleted). */
 export function MoveSheet({ visible, currentLineId, onDismiss, onPick, title = t('Changer de collection'), exclude = [] }: { visible: boolean; currentLineId: string | null; onDismiss: () => void; onPick: (lineId: string) => void; title?: string; exclude?: readonly string[] }) {

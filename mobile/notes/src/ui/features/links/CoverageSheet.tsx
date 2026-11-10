@@ -4,7 +4,7 @@
  * half a day. The web's `CoverageDialog`.
  */
 import React from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { MODULE_NAMES } from '@unlease/notes/models/modules';
@@ -12,12 +12,12 @@ import { formatClock, formatDay, formatIsoDay } from '@unlease/core/services/for
 import type { CoverageOutlet } from '@unlease/notes/sync/coverage';
 import { findCoverage } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
 
-import { AppText, Button, IconButton, Organic, Sheet, SheetScroll } from '../../components';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { ReadingTrack } from './ReadingTrack';
+import { AppText, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
+import { openPage as open, SearchFoot } from './SearchFoot';
 import { useModuleSearch } from './useModuleSearch';
 
 export function CoverageSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
@@ -27,8 +27,6 @@ export function CoverageSheet({ id, visible, onDismiss }: { id: string; visible:
     </Sheet>
   );
 }
-
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
 
 /** Mounted with the sheet each time it opens: it asks then (and again on demand), and drops the question when the sheet goes. */
 function CoverageBody({ id }: { id: string }) {
@@ -51,15 +49,14 @@ function CoverageBody({ id }: { id: string }) {
   }
   if (phase.kind === 'failed') {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
-        </AppText>
-        <View style={styles.actions}>
-          <Button kind="text" label={t('Réessayer')} onPress={() => search(false)} />
-          <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-        </View>
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+          </AppText>
+        </SheetScroll>
+        <SearchFoot failed url={link.url} onSearch={search} />
+      </>
     );
   }
   const { story, outlets, note, searchedAt } = phase.answer;
@@ -67,6 +64,7 @@ function CoverageBody({ id }: { id: string }) {
   // A row without an article keeps the place of its button, so the texts stay in one column.
   const linked = outlets.some(outlet => outlet.url);
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       {story ? <AppText variant="bodyStrong">{story}</AppText> : null}
       {outlets.length === 0 ? (
@@ -80,15 +78,13 @@ function CoverageBody({ id }: { id: string }) {
       )}
       {note ? <AppText variant="body">{note}</AppText> : null}
       <AppText variant="meta">{t('Trouvé sur le web par Claude le {day} à {time}.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}</AppText>
-      <View style={styles.actions}>
-        <Button kind="text" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
-        <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-      </View>
     </SheetScroll>
+    <SearchFoot failed={false} url={link.url} onSearch={search} />
+    </>
   );
 }
 
-/** One outlet: its name and day, its title, how it tells the story and what it adds; its article from its end. */
+/** One outlet: its name and day, its title, how it tells the story (meta strong) and what it adds (meta); its article from its end. */
 function OutletRow({ outlet, first, slot }: { outlet: CoverageOutlet; first: boolean; slot: boolean }) {
   const styles = useThemedStyles(makeStyles);
   const url = outlet.url;
@@ -102,19 +98,18 @@ function OutletRow({ outlet, first, slot }: { outlet: CoverageOutlet; first: boo
           {outlet.date ? <AppText variant="meta">{formatIsoDay(outlet.date)}</AppText> : null}
         </View>
         {outlet.title ? <AppText variant="body">{outlet.title}</AppText> : null}
-        <AppText variant="meta">{outlet.angle}</AppText>
-        {outlet.adds ? <AppText variant="body">{outlet.adds}</AppText> : null}
+        <AppText variant="metaStrong">{outlet.angle}</AppText>
+        {outlet.adds ? <AppText variant="meta">{outlet.adds}</AppText> : null}
       </View>
-      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} onPress={() => open(url)} /> : slot ? <View style={styles.noPage} /> : null}
+      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
     </View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-    waiting: { gap: 12, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
+    body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+    waiting: { gap: 12, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
     // The outlets: a well in its own outline, ruled by paper, as the offers are.
     well: { backgroundColor: theme.color.paperHigh, overflow: 'hidden' },
     outlet: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingHorizontal: 16, paddingVertical: 12 },
@@ -123,6 +118,8 @@ const makeStyles = (theme: Theme) =>
     outletText: { flex: 1, gap: 2 },
     outletHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
     outletName: { flexShrink: 1 },
+    // Centred on the row's first line (body strong's 23), the outlet's name.
+    page: { marginTop: -8 },
     // An icon button's 48.
     noPage: { width: 48 },
   });

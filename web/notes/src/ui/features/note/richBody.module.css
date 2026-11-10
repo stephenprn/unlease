@@ -46,6 +46,39 @@
   text-underline-offset: 3px;
 }
 
+/* A person mentioned: a quiet chip on the line's own pitch (no height of its own), the person glyph then the name. */
+.body [data-mention] {
+  white-space: nowrap;
+  padding: 0 4px 0 3px;
+  border-radius: var(--cut-detail);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  cursor: pointer;
+}
+
+.body [data-mention] > svg {
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 3px;
+  vertical-align: -0.1em;
+  color: var(--ink-muted);
+}
+
+.body [data-mention]::after {
+  content: attr(data-name);
+}
+
+/* Gone (deleted for good): what it was, in the second ink. */
+.body [data-mention][data-gone] {
+  color: var(--ink-muted);
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .body [data-mention]:not([data-gone]):hover {
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+}
+
 /* « Note » while nothing is written, where the first line's words will be. */
 .body[data-empty]::before {
   content: attr(data-placeholder);

@@ -11,22 +11,12 @@
  * The promo-code search sends no format: web search always cites its sources,
  * and citations cannot be combined with one. Its JSON is read from the text.
  *
- * Thinking is left unset (Opus 5.5 always thinks; sending `disabled` or a
- * budget is a 400): `effort` is the cost control. Refusals get the
- * server-side fallback where the model offers one.
+ * The calls go through the suite's Claude client (`claude/client.ts`: retries, the tool loop, the
+ * costs, the tools); the prompts, formats and answers here are Carnet's.
  */
 import type { Locale } from '@unlease/core/i18n';
-import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
-import type {
-  BetaContentBlock,
-  BetaContentBlockParam,
-  BetaMessage,
-  BetaMessageParam,
-  BetaTextBlock,
-  BetaToolUnion,
-  MessageCreateParamsNonStreaming,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages';
+import type { BetaContentBlock, BetaContentBlockParam, BetaTextBlock, MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { z } from 'zod';
 import { INBOX_TITLE, LINK_KINDS } from '@unlease/notes/models/entities';
 import type { AskSource } from '@unlease/notes/sync/ask';
@@ -35,23 +25,18 @@ import { parseCouponLists, type Coupon, type CouponTip } from '@unlease/notes/sy
 import { parseCoverageLists, type CoverageResponse } from '@unlease/notes/sync/coverage';
 import { parseRatingsLists, parseRecapLists, type RatingsResponse, type RecapResponse } from '@unlease/notes/sync/works';
 import { parseOfferLists, type Offer, type OfferMarket, type PriceRange } from '@unlease/notes/sync/offers';
-import { PAGES_ASK_LIMITS, type AskPage, type PagesAnswerPart, type PagesAskResponse, type PagesAskTurn, type PagesCitation } from '@unlease/notes/sync/pagesAsk';
 import { parseIngredients, parseSteps, RECIPE_LIMITS, type RecipeStep } from '@unlease/notes/sync/recipe';
 import type { SortLink, SortTarget, SortTask } from '@unlease/notes/sync/sorting';
 import type { Effort } from '../../../config';
-import { log } from '../../../log';
+import { FALLBACK_BETA, LANGUAGE_NAMES, ModelError, MODULE_MAX_TOKENS, QUESTION_SEARCHES, supportsServerFallback, webFetchTool, webSearchTool, type ClaudeClient } from '../../../claude/client';
+import type { BudgetHold, CallUsage } from '../../../claude/usage';
+import { promptFieldLines } from '@unlease/notes/services/templates';
 import type { RoutingList } from './lists';
+import { attributeLimit, NO_TEMPLATES, type TemplateAsk } from './templates';
 import { INGREDIENTS_OUTPUT_JSON_SCHEMA, IngredientsOutputSchema, LinkOutputSchema, normalizeOutput, SORT_OUTPUT_JSON_SCHEMA, SortOutputSchema, type LinkOutput, type SortOutput } from './output';
-import { costUsd, WEB_SEARCH_USD, type TokenCounts } from './pricing';
-import { ASK_PROMPT, COUPONS_PROMPT, COVERAGE_PROMPT, INGREDIENTS_PROMPT, OFFERS_PROMPT, PAGES_PROMPT, RATINGS_PROMPT, RECAP_PROMPT, SORT_PROMPT, SYSTEM_PROMPT } from './prompt';
-import type { CallUsage } from './usage';
+import { ASK_PROMPT, COUPONS_PROMPT, COVERAGE_PROMPT, INGREDIENTS_PROMPT, OFFERS_PROMPT, RATINGS_PROMPT, RECAP_PROMPT, SORT_PROMPT, SYSTEM_PROMPT } from './prompt';
 
 const MAX_TOKENS = 8000;
-const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
-const MAX_CONTINUATIONS = 2;
-const WEB_FETCH_CONTENT_TOKENS = 8000;
-/** A module's web search: enough to try the shop, a deal community and a comparison or resale site, and read two pages. */
-const MODULE_SEARCHES = 5;
 const MODULE_FETCHES = 2;
 
 /**
@@ -70,18 +55,6 @@ function responseSchema(): Record<string, unknown> {
 const RESPONSE_FORMAT = { type: 'json_schema' as const, schema: responseSchema() };
 const SORT_FORMAT = { type: 'json_schema' as const, schema: SORT_OUTPUT_JSON_SCHEMA };
 
-/** The one SDK method used, so tests can stand in for the API. */
-export interface MessagesApi {
-  create(params: MessageCreateParamsNonStreaming, options?: { signal?: AbortSignal }): Promise<BetaMessage>;
-}
-
-export function anthropicMessages(apiKey: string): MessagesApi {
-  // No SDK retries: `ClaudeLinkModel` retries once itself, so the worst case stays bounded and visible.
-  // An explicit authToken keeps a stray ANTHROPIC_AUTH_TOKEN in the environment from being sent too.
-  const client = new Anthropic({ apiKey, authToken: null, maxRetries: 0, timeout: 180_000 });
-  return { create: (params, options) => client.beta.messages.create(params, options) };
-}
-
 export interface DescribeRequest {
   readonly url: string;
   readonly digest: string;
@@ -94,6 +67,8 @@ export interface DescribeRequest {
   /** A direct image link, attached so Claude can see it. */
   readonly image: { readonly mediaType: 'image/webp'; readonly data: string } | null;
   readonly imageCount: number;
+  /** The person's own fields, when they differ from the prompt's presets (none: the presets). */
+  readonly templates?: TemplateAsk;
 }
 
 export interface Description {
@@ -101,16 +76,6 @@ export interface Description {
   readonly usage: CallUsage;
   /** The page as web_fetch returned it (and where it read it), when Claude had to read it itself. */
   readonly fetched: { readonly url: string; readonly text: string } | null;
-}
-
-/** A failed call, with a French message for the link card and whatever the call cost. */
-export class ModelError extends Error {
-  constructor(
-    message: string,
-    readonly usage: CallUsage | null,
-  ) {
-    super(message);
-  }
 }
 
 /** Links to sort and the collections, numbered from 1 in the message; "Non classé" is 0 in a review. */
@@ -200,22 +165,12 @@ export interface QuestionAnswer {
   readonly usage: CallUsage;
 }
 
-/** A question about the person's pages, the conversation before it, and whether the web may be searched. */
-export interface PagesRequest {
-  readonly pages: readonly AskPage[];
-  readonly question: string;
-  readonly history: readonly PagesAskTurn[];
-  readonly web: boolean;
-  readonly lang: Locale;
-}
-
-export interface PagesAnswer {
-  readonly answer: PagesAskResponse;
-  readonly usage: CallUsage;
-}
+export { ModelError };
 
 export interface LinkModel {
   readonly model: string;
+  /** The same model, its requests held against the budget by `hold` (`UsageStore.hold`). */
+  holding(hold: BudgetHold): LinkModel;
   describe(request: DescribeRequest, signal: AbortSignal): Promise<Description>;
   sort(batch: SortBatch, signal: AbortSignal): Promise<SortAnswer>;
   findCoupons(search: ModuleSearch, signal: AbortSignal): Promise<CouponAnswer>;
@@ -225,30 +180,23 @@ export interface LinkModel {
   writeRecap(search: RecapSearch, signal: AbortSignal): Promise<RecapAnswer>;
   findCoverage(search: ModuleSearch, signal: AbortSignal): Promise<CoverageAnswer>;
   answerQuestion(request: QuestionRequest, signal: AbortSignal): Promise<QuestionAnswer>;
-  answerPages(request: PagesRequest, signal: AbortSignal): Promise<PagesAnswer>;
 }
 
-/** Models that accept `fallbacks: "default"`; Haiku has no server-side fallback. */
-export function supportsServerFallback(model: string): boolean {
-  return ['claude-opus-5', 'claude-sonnet-5-5', 'claude-fable-5-1'].some(prefix => model.startsWith(prefix));
+/** A field as a list carries it in <lists>: its line without the dash. */
+const fieldEntries = (fields: Parameters<typeof promptFieldLines>[0]): string[] => promptFieldLines(fields).map(line => line.slice(2));
+
+/** The person's fields, when they differ from the presets: the collection's own, or the kinds they changed. Fixed words around the person's own. */
+function templateText({ fields, kinds }: TemplateAsk): string | null {
+  if (fields) {
+    if (fields.length === 0) return 'This link\'s collection reads its links with the person\'s own fields, and asks for none: answer an empty attributes list.';
+    return `This link's collection reads its links with the person's own fields. Fill exactly these fields as the attributes, in this order, instead of the kind's list:\n<fields>\n${promptFieldLines(fields).join('\n')}\n</fields>`;
+  }
+  if (kinds.length === 0) return null;
+  const rows = kinds.map(({ kind, fields: own }) => (own.length === 0 ? `${kind}: no fields (an empty attributes list)` : `${kind}:\n${promptFieldLines(own).join('\n')}`));
+  return `The person's own fields for these kinds replace the lists above; fill exactly these when the link is of one of them:\n<kinds>\n${rows.join('\n')}\n</kinds>`;
 }
 
-function webFetchTool(model: string, maxUses = 1): BetaToolUnion {
-  // The dynamic-filtering version needs an Opus or Sonnet model; Haiku keeps the basic one.
-  return model.startsWith('claude-haiku')
-    ? { type: 'web_fetch_20250910', name: 'web_fetch', max_uses: maxUses, max_content_tokens: WEB_FETCH_CONTENT_TOKENS }
-    : { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: maxUses, max_content_tokens: WEB_FETCH_CONTENT_TOKENS };
-}
-
-function webSearchTool(model: string, maxUses = MODULE_SEARCHES): BetaToolUnion {
-  return model.startsWith('claude-haiku')
-    ? { type: 'web_search_20250305', name: 'web_search', max_uses: maxUses }
-    : { type: 'web_search_20260209', name: 'web_search', max_uses: maxUses };
-}
-
-const LANGUAGE_NAMES: Record<Locale, string> = { fr: 'French', en: 'English' };
-
-function userText({ url, digest, lists, webFetch, lang }: DescribeRequest): string {
+function userText({ url, digest, lists, webFetch, lang, templates = NO_TEMPLATES }: DescribeRequest): string {
   const parts: string[] = [`Language: ${LANGUAGE_NAMES[lang]}.`];
   if (lists) {
     parts.push('Describe this link and file it: choose the list it belongs in, or answer listId null when none is a clear fit.');
@@ -258,12 +206,16 @@ function userText({ url, digest, lists, webFetch, lang }: DescribeRequest): stri
         title: list.title,
         ...(list.hint ? { description: list.hint } : {}),
         ...(list.examples.length > 0 ? { examples: list.examples } : {}),
+        ...(list.fields ? { fields: fieldEntries(list.fields) } : {}),
       }),
     );
     parts.push(`<lists>\n${rows.join('\n')}\n</lists>`);
+    if (lists.some(list => list.fields)) parts.push('A list with fields reads its links with them: when you file the link into one, its attributes are exactly those fields, each named as written.');
   } else {
     parts.push('Describe this link. Filing is not asked for: answer listId null.');
   }
+  const own = templateText(templates);
+  if (own) parts.push(own);
   if (webFetch) {
     parts.push(
       `The server could not read this page (${webFetch.reason}). Fetch ${url} once with web_fetch and answer from what it returns. If it cannot be read either, answer from the URL alone and set pageRead to false.`,
@@ -359,9 +311,6 @@ function aboutText({ link, lang, today }: ModuleSearch, more: readonly string[] 
   return [`Language: ${LANGUAGE_NAMES[lang]}.`, `Today: ${today}.`, ...more, `<item>\n${item}\n</item>`].join('\n\n');
 }
 
-/** Searches, filtering code and the answer all come out of one budget: twice a reading's. */
-const MODULE_MAX_TOKENS = 16_000;
-
 /** A module's web search: no structured format, as web search always cites its sources and citations cannot go with one. */
 function buildSearchRequest(prompt: string, text: string, model: string, effort: Effort): MessageCreateParamsNonStreaming {
   return {
@@ -396,9 +345,6 @@ export function buildCoverageRequest(search: ModuleSearch, model: string, effort
   return buildSearchRequest(COVERAGE_PROMPT, aboutText(search), model, effort);
 }
 
-/** A question's searches: a few, for what the page does not say. */
-const QUESTION_SEARCHES = 3;
-
 export function buildQuestionRequest({ link, question, lang, web, page, gone }: QuestionRequest, model: string, effort: Effort): MessageCreateParamsNonStreaming {
   const about = JSON.stringify({
     url: link.url,
@@ -424,85 +370,6 @@ export function buildQuestionRequest({ link, question, lang, web, page, gone }: 
     ...(tools.length > 0 ? { tools } : {}),
     ...(supportsServerFallback(model) ? { betas: [FALLBACK_BETA], fallbacks: 'default' as const } : {}),
   };
-}
-
-/** What a page with nothing in it reads as: a search result needs words. */
-const EMPTY_PAGE = '(empty page)';
-
-/**
- * A question about pages: each page a search result whose text blocks are its blocks, so Claude
- * cites the very blocks an answer rests on; the earlier turns before it. The pages are cached: a
- * follow-up within minutes reads them at a tenth of the price.
- */
-export function buildPagesRequest({ pages, question, history, web, lang }: PagesRequest, model: string, effort: Effort): MessageCreateParamsNonStreaming {
-  const results: BetaContentBlockParam[] = pages.map((page, index) => ({
-    type: 'search_result' as const,
-    source: `carnet-page:${page.id}`,
-    title: page.path,
-    content: (page.blocks.length > 0 ? page.blocks.map(block => block.text) : [EMPTY_PAGE]).map(text => ({ type: 'text' as const, text })),
-    citations: { enabled: true },
-    ...(index === pages.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}),
-  }));
-  const asked = (text: string): string => `<question>\n${text}\n</question>`;
-  const questions = [...history.map(turn => turn.question), question];
-  const last = questions.length - 1;
-  // The web is the current question's choice: said with it, after what is cached.
-  const said = (at: number, text: string): string => (at === last ? `Web: ${web ? 'yes' : 'no'}.\n${text}` : text);
-  const messages: BetaMessageParam[] = [{ role: 'user', content: [...results, { type: 'text', text: said(0, `Language: ${LANGUAGE_NAMES[lang]}.\n${asked(questions[0]!)}`) }] }];
-  history.forEach((turn, index) => {
-    messages.push({ role: 'assistant', content: [{ type: 'text', text: turn.answer }] });
-    messages.push({ role: 'user', content: [{ type: 'text', text: said(index + 1, asked(questions[index + 1]!)) }] });
-  });
-  return {
-    model,
-    max_tokens: MODULE_MAX_TOKENS,
-    system: [{ type: 'text', text: PAGES_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages,
-    output_config: { effort },
-    ...(web ? { tools: [webSearchTool(model, QUESTION_SEARCHES)] } : {}),
-    ...(supportsServerFallback(model) ? { betas: [FALLBACK_BETA], fallbacks: 'default' as const } : {}),
-  };
-}
-
-/** Claude's answer as the apps show it: its pieces with the blocks each rests on, and the web pages it read. */
-export function pagesAnswer(content: readonly BetaContentBlock[], pages: readonly AskPage[]): PagesAskResponse {
-  // After its last search: what it wrote before one more look is not the answer.
-  let start = 0;
-  content.forEach((block, index) => {
-    if (block.type !== 'text' && block.type !== 'thinking' && block.type !== 'redacted_thinking') start = index + 1;
-  });
-  const citations: PagesCitation[] = [];
-  const known = new Map<string, number>();
-  const parts: PagesAnswerPart[] = [];
-  const seen = new Set<string>();
-  const sources: AskSource[] = [];
-  for (const block of content.slice(start)) {
-    if (block.type !== 'text') continue;
-    const cites: number[] = [];
-    for (const citation of block.citations ?? []) {
-      if (citation.type === 'web_search_result_location') {
-        const url = webAddress(citation.url);
-        if (url && !seen.has(url) && sources.length < PAGES_ASK_LIMITS.sources) {
-          seen.add(url);
-          sources.push({ title: cleanText(citation.title ?? '', 200) || url, url });
-        }
-        continue;
-      }
-      if (citation.type !== 'search_result_location') continue;
-      const page = pages[citation.search_result_index];
-      const blockIds = page ? page.blocks.slice(citation.start_block_index, citation.end_block_index).map(cited => cited.id) : [];
-      if (!page || blockIds.length === 0) continue;
-      const key = `${page.id}:${blockIds.join(',')}`;
-      let at = known.get(key);
-      if (at === undefined && citations.length < PAGES_ASK_LIMITS.citations) {
-        at = citations.push({ pageId: page.id, blockIds, quote: cleanText(citation.cited_text, PAGES_ASK_LIMITS.quote) }) - 1;
-        known.set(key, at);
-      }
-      if (at !== undefined && !cites.includes(at)) cites.push(at);
-    }
-    if (block.text) parts.push({ text: block.text, cites });
-  }
-  return { parts, citations, sources };
 }
 
 /** The pages Claude's answer cites from its searches, each once, the link's own left out. */
@@ -537,48 +404,6 @@ export function buildIngredientsRequest({ url, digest, lang, webFetch }: Ingredi
     ...(webFetch ? { tools: [webFetchTool(model)] } : {}),
     ...(supportsServerFallback(model) ? { betas: [FALLBACK_BETA], fallbacks: 'default' as const } : {}),
   };
-}
-
-const ZERO: TokenCounts = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
-
-function addUsage(total: CallUsage, message: BetaMessage, requested: string): CallUsage {
-  const add = (sum: CallUsage, counts: TokenCounts, model: string): CallUsage => ({
-    model: sum.model,
-    inputTokens: sum.inputTokens + counts.inputTokens,
-    outputTokens: sum.outputTokens + counts.outputTokens,
-    cacheReadTokens: sum.cacheReadTokens + counts.cacheReadTokens,
-    cacheWriteTokens: sum.cacheWriteTokens + counts.cacheWriteTokens,
-    costUsd: sum.costUsd + costUsd(model, counts),
-  });
-  const served = message.model || requested;
-  const usage = message.usage;
-  const iterations = usage.iterations ?? [];
-  // Searches bill on top of their tokens.
-  let next = { ...total, model: served, costUsd: total.costUsd + (usage.server_tool_use?.web_search_requests ?? 0) * WEB_SEARCH_USD };
-  if (iterations.some(entry => entry.type === 'fallback_message')) {
-    // After a refusal fallback the top-level usage covers only the last attempt; each attempt bills at its own model's rates.
-    for (const entry of iterations) {
-      if (entry.type !== 'message' && entry.type !== 'fallback_message') continue;
-      const counts = {
-        inputTokens: entry.input_tokens,
-        outputTokens: entry.output_tokens,
-        cacheReadTokens: entry.cache_read_input_tokens ?? 0,
-        cacheWriteTokens: entry.cache_creation_input_tokens ?? 0,
-      };
-      next = add(next, counts, entry.model ?? requested);
-    }
-    return next;
-  }
-  return add(
-    next,
-    {
-      inputTokens: usage.input_tokens,
-      outputTokens: usage.output_tokens,
-      cacheReadTokens: usage.cache_read_input_tokens ?? 0,
-      cacheWriteTokens: usage.cache_creation_input_tokens ?? 0,
-    },
-    served,
-  );
 }
 
 function parseAnswer<T>(content: readonly BetaContentBlock[], schema: z.ZodType<T>): T | null {
@@ -647,74 +472,20 @@ function fetchedPage(content: readonly BetaContentBlock[]): Description['fetched
   return null;
 }
 
-function isRetryable(error: unknown): boolean {
-  if (error instanceof Anthropic.APIUserAbortError || error instanceof Anthropic.APIConnectionTimeoutError) return false;
-  return (
-    error instanceof Anthropic.RateLimitError || error instanceof Anthropic.InternalServerError || error instanceof Anthropic.APIConnectionError
-  );
-}
-
-/** Most specific first: the timeout and connection errors are themselves `APIError`s. */
-function frenchMessage(error: unknown): string {
-  if (error instanceof Anthropic.APIConnectionTimeoutError) return 'Délai dépassé (Claude)';
-  if (error instanceof Anthropic.APIConnectionError) return 'API Claude injoignable';
-  if (error instanceof Anthropic.RateLimitError) return 'Limite de l’API Claude atteinte';
-  if (error instanceof Anthropic.AuthenticationError) return 'Clé API refusée';
-  if (error instanceof Anthropic.PermissionDeniedError) return 'Accès à l’API Claude refusé';
-  if (error instanceof Anthropic.NotFoundError) return 'Modèle Claude introuvable';
-  if (error instanceof Anthropic.InternalServerError) return error.status === 529 ? 'Claude est surchargé' : 'Erreur du service Claude';
-  if (error instanceof Anthropic.APIError) {
-    if (error.type === 'billing_error' || error.status === 402) return 'Crédit API épuisé';
-    return `Requête refusée par l’API Claude (${error.status ?? '?'})`;
-  }
-  return 'Erreur de l’analyse';
-}
-
-function retryDelayMs(error: unknown): number {
-  const header = error instanceof Anthropic.APIError ? error.headers?.get('retry-after') : null;
-  const seconds = header ? Number(header) : Number.NaN;
-  return Number.isFinite(seconds) && seconds >= 0 ? Math.min(seconds * 1000, 20_000) : 2_000;
-}
-
-function wait(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise(resolve => {
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      { once: true },
-    );
-  });
-}
-
-/** A turn's last message, what the whole turn cost, and every block it wrote. */
-interface Turn {
-  readonly message: BetaMessage;
-  readonly usage: CallUsage;
-  readonly content: BetaContentBlock[];
-}
-
-export interface ClaudeLinkModelOptions {
-  readonly model: string;
-  readonly effort: Effort;
-  readonly sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
-}
-
+/** Carnet's calls, made through the suite's client. */
 export class ClaudeLinkModel implements LinkModel {
-  constructor(
-    private readonly api: MessagesApi,
-    private readonly options: ClaudeLinkModelOptions,
-  ) {}
+  constructor(private readonly client: ClaudeClient) {}
 
   get model(): string {
-    return this.options.model;
+    return this.client.model;
+  }
+
+  holding(hold: BudgetHold): LinkModel {
+    return new ClaudeLinkModel(this.client.holding(hold));
   }
 
   async describe(request: DescribeRequest, signal: AbortSignal): Promise<Description> {
-    const { message, usage, content } = await this.converse(buildRequest(request, this.options.model, this.options.effort), signal);
+    const { message, usage, content } = await this.client.converse(buildRequest(request, this.client.model, this.client.effort), signal);
 
     // Checked before reading any content: a refusal carries none, or a partial answer.
     if (message.stop_reason === 'refusal') throw new ModelError('Analyse refusée par Claude', usage);
@@ -722,17 +493,16 @@ export class ClaudeLinkModel implements LinkModel {
     if (message.stop_reason === 'pause_turn') throw new ModelError('Analyse trop longue', usage);
     const raw = parseAnswer(message.content, LinkOutputSchema);
     if (!raw) throw new ModelError('Réponse de Claude illisible', usage);
-    const output = normalizeOutput(raw, request.imageCount);
+    const asked = request.templates ?? NO_TEMPLATES;
+    const counts = [...(asked.fields ? [asked.fields.length] : []), ...asked.kinds.map(kind => kind.fields.length), ...(request.lists ?? []).map(list => list.fields?.length ?? 0)];
+    const output = normalizeOutput(raw, request.imageCount, attributeLimit(counts));
     const fetched = webFetchOutcome(content);
     const pageRead = request.webFetch === null || fetched === 'read' || (fetched === 'unknown' && output.pageRead);
     return { output: { ...output, pageRead }, usage, fetched: fetchedPage(content) };
   }
 
   async sort(batch: SortBatch, signal: AbortSignal): Promise<SortAnswer> {
-    const requested = this.options.model;
-    const empty: CallUsage = { model: requested, ...ZERO, costUsd: 0 };
-    const message = await this.send(buildSortRequest(batch, requested, this.options.effort), signal, empty);
-    const usage = addUsage(empty, message, requested);
+    const { message, usage } = await this.client.once(buildSortRequest(batch, this.client.model, this.client.effort), signal);
     if (message.stop_reason === 'refusal') throw new ModelError('Tri refusé par Claude', usage);
     if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
     const answer = parseAnswer(message.content, SortOutputSchema);
@@ -741,35 +511,35 @@ export class ClaudeLinkModel implements LinkModel {
   }
 
   async findCoupons(search: ModuleSearch, signal: AbortSignal): Promise<CouponAnswer> {
-    const { answer, usage } = await this.searchWeb(buildCouponRequest(search, this.options.model, this.options.effort), 'coupons', signal);
+    const { answer, usage } = await this.searchWeb(buildCouponRequest(search, this.client.model, this.client.effort), 'coupons', signal);
     return { ...parseCouponLists(answer.coupons, answer.tips), usage };
   }
 
   async findOffers(search: OfferSearch, signal: AbortSignal): Promise<OfferAnswer> {
-    const { answer, usage } = await this.searchWeb(buildOfferRequest(search, this.options.model, this.options.effort), 'offers', signal);
+    const { answer, usage } = await this.searchWeb(buildOfferRequest(search, this.client.model, this.client.effort), 'offers', signal);
     // A usual second-hand price means nothing for new offers.
     return { ...parseOfferLists(answer.offers, search.market === 'used' ? answer.range : null, answer.note), usage };
   }
 
   async findRatings(search: ModuleSearch, signal: AbortSignal): Promise<RatingsAnswer> {
-    const { answer, usage } = await this.searchWeb(buildRatingsRequest(search, this.options.model, this.options.effort), 'ratings', signal);
+    const { answer, usage } = await this.searchWeb(buildRatingsRequest(search, this.client.model, this.client.effort), 'ratings', signal);
     return { ...parseRatingsLists(answer.work, answer.ratings), usage };
   }
 
   async writeRecap(search: RecapSearch, signal: AbortSignal): Promise<RecapAnswer> {
-    const { answer, usage } = await this.searchWeb(buildRecapRequest(search, this.options.model, this.options.effort), 'characters', signal);
+    const { answer, usage } = await this.searchWeb(buildRecapRequest(search, this.client.model, this.client.effort), 'characters', signal);
     const recap = parseRecapLists(answer.recap, answer.characters, answer.stop);
     if (!recap.recap) throw new ModelError('Réponse de Claude illisible', usage);
     return { ...recap, usage };
   }
 
   async findCoverage(search: ModuleSearch, signal: AbortSignal): Promise<CoverageAnswer> {
-    const { answer, usage } = await this.searchWeb(buildCoverageRequest(search, this.options.model, this.options.effort), 'outlets', signal);
+    const { answer, usage } = await this.searchWeb(buildCoverageRequest(search, this.client.model, this.client.effort), 'outlets', signal);
     return { ...parseCoverageLists(answer.story, answer.outlets, answer.note), usage };
   }
 
   async answerQuestion(request: QuestionRequest, signal: AbortSignal): Promise<QuestionAnswer> {
-    const { message, usage, content } = await this.within(buildQuestionRequest(request, this.options.model, this.options.effort), signal);
+    const { message, usage, content } = await this.client.within(buildQuestionRequest(request, this.client.model, this.client.effort), signal);
     if (message.stop_reason === 'refusal') throw new ModelError('Question refusée par Claude', usage);
     if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
     if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
@@ -778,18 +548,8 @@ export class ClaudeLinkModel implements LinkModel {
     return { answer, sources: citedSources(content, request.link.url), usage };
   }
 
-  async answerPages(request: PagesRequest, signal: AbortSignal): Promise<PagesAnswer> {
-    const { message, usage, content } = await this.within(buildPagesRequest(request, this.options.model, this.options.effort), signal);
-    if (message.stop_reason === 'refusal') throw new ModelError('Question refusée par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-    if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
-    const answer = pagesAnswer(content, request.pages);
-    if (!answer.parts.some(part => part.text.trim())) throw new ModelError('Réponse de Claude illisible', usage);
-    return { answer, usage };
-  }
-
   async listIngredients(request: IngredientsRequest, signal: AbortSignal): Promise<IngredientsAnswer> {
-    const { message, usage } = await this.within(buildIngredientsRequest(request, this.options.model, this.options.effort), signal);
+    const { message, usage } = await this.client.within(buildIngredientsRequest(request, this.client.model, this.client.effort), signal);
     if (message.stop_reason === 'refusal') throw new ModelError('Lecture refusée par Claude', usage);
     if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
     if (message.stop_reason === 'pause_turn') throw new ModelError('Analyse trop longue', usage);
@@ -800,7 +560,7 @@ export class ClaudeLinkModel implements LinkModel {
 
   /** A module's web search, its JSON read from Claude's words: after its last search, else all of them (it may have answered before one more look). */
   private async searchWeb(params: MessageCreateParamsNonStreaming, list: string, signal: AbortSignal): Promise<{ answer: Record<string, unknown>; usage: CallUsage }> {
-    const { message, usage, content } = await this.within(params, signal);
+    const { message, usage, content } = await this.client.within(params, signal);
     if (message.stop_reason === 'refusal') throw new ModelError('Recherche refusée par Claude', usage);
     if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
     if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
@@ -809,53 +569,5 @@ export class ClaudeLinkModel implements LinkModel {
     return { answer, usage };
   }
 
-  /** A module's turn under its deadline: cut off, what the parts already answered cost goes with the error, for the budget. */
-  private async within(params: MessageCreateParamsNonStreaming, signal: AbortSignal): Promise<Turn> {
-    let spent: CallUsage = { model: this.options.model, ...ZERO, costUsd: 0 };
-    try {
-      return await this.converse(params, signal, usage => (spent = usage));
-    } catch (error) {
-      if (signal.aborted) throw new ModelError('Claude a mis trop de temps', spent);
-      throw error;
-    }
-  }
 
-  /** One turn, its server-tool loop resumed while it pauses: the last message, what it cost (told to `onUsage` as each part answers), and every block of the turn. */
-  private async converse(first: MessageCreateParamsNonStreaming, signal: AbortSignal, onUsage?: (usage: CallUsage) => void): Promise<Turn> {
-    const requested = this.options.model;
-    let params = first;
-    let usage: CallUsage = { model: requested, ...ZERO, costUsd: 0 };
-    const content: BetaContentBlock[] = [];
-
-    let message = await this.send(params, signal, usage);
-    usage = addUsage(usage, message, requested);
-    onUsage?.(usage);
-    content.push(...message.content);
-    for (let round = 0; message.stop_reason === 'pause_turn' && round < MAX_CONTINUATIONS; round += 1) {
-      // A server-tool loop paused: hand its turn back and the API resumes where it stopped.
-      params = { ...params, messages: [...params.messages, { role: 'assistant', content: message.content as BetaContentBlockParam[] }] };
-      message = await this.send(params, signal, usage);
-      usage = addUsage(usage, message, requested);
-      onUsage?.(usage);
-      content.push(...message.content);
-    }
-    return { message, usage, content };
-  }
-
-  private async send(params: MessageCreateParamsNonStreaming, signal: AbortSignal, usage: CallUsage): Promise<BetaMessage> {
-    try {
-      return await this.api.create(params, { signal });
-    } catch (error) {
-      if (signal.aborted || error instanceof Anthropic.APIUserAbortError) throw error;
-      if (!isRetryable(error)) throw new ModelError(frenchMessage(error), usage);
-      log.warn('Claude call failed, retrying once', { error: frenchMessage(error) });
-      await (this.options.sleep ?? wait)(retryDelayMs(error), signal);
-      try {
-        return await this.api.create(params, { signal });
-      } catch (second) {
-        if (signal.aborted || second instanceof Anthropic.APIUserAbortError) throw second;
-        throw new ModelError(frenchMessage(second), usage);
-      }
-    }
-  }
 }

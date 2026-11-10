@@ -1,5 +1,5 @@
 /**
- * Bases: for a typed field edited on this device and not yet acknowledged, the value and clock
+ * Bases: for a typed field (or a merged list) edited on this device and not yet acknowledged, the value and clock
  * it held when the editing began. They let a concurrent edit of the same text be merged
  * (`textMerge`) instead of one side overwriting the other: by the server when the push arrives,
  * and by the device when the other edit arrives first. A base is the shape of a record holding
@@ -7,9 +7,7 @@
  */
 import { GENESIS_HLC, type Hlc } from './hlc';
 import type { Fields, SyncRecord } from './record';
-import { isMergedTextField, mergeField } from './textMerge';
-
-const asText = (value: unknown): string => (typeof value === 'string' ? value : '');
+import { isMergeable, isMergedTextField, mergeableValue, mergeValues, sameMerged } from './textMerge';
 
 /** After a local write of `patch` over `before`: typed fields edited for the first time since the last acknowledgement get a base. */
 export function baseAfterWrite(base: SyncRecord | undefined, before: SyncRecord | undefined, patch: Fields): SyncRecord | undefined {
@@ -21,7 +19,7 @@ export function baseAfterWrite(base: SyncRecord | undefined, before: SyncRecord 
     if (!isMergedTextField(before.type, field) || (base && Object.hasOwn(base.clocks, field))) continue;
     fields ??= { ...base?.fields };
     clocks ??= { ...base?.clocks };
-    fields[field] = asText(before.fields[field]);
+    fields[field] = mergeableValue(before.type, field, before.fields[field]);
     clocks[field] = Object.hasOwn(before.clocks, field) ? before.clocks[field]! : GENESIS_HLC;
   }
   if (!fields || !clocks) return base;
@@ -42,7 +40,7 @@ export function baseAfterAck(base: SyncRecord, current: SyncRecord, sent: SyncRe
       delete fields[field];
       delete clocks[field];
     } else if (sentClock > clocks[field]!) {
-      fields[field] = asText(sent.fields[field]);
+      fields[field] = mergeableValue(base.type, field, sent.fields[field]);
       clocks[field] = sentClock;
     }
   }
@@ -71,15 +69,15 @@ export function resolveTypedText(local: SyncRecord, incoming: SyncRecord, base: 
     if (theirClock === undefined || theirClock === local.clocks[field] || theirClock <= baseClock || isOwn(theirClock)) continue;
     const theirs = incoming.fields[field];
     const ours = local.fields[field];
-    if (typeof theirs !== 'string' || typeof ours !== 'string') continue;
+    if (!isMergeable(local.type, field, theirs) || !isMergeable(local.type, field, ours)) continue;
     fields ??= { ...base.fields };
     clocks ??= { ...base.clocks };
     fields[field] = theirs;
     clocks[field] = theirClock;
-    if (theirs === ours) continue;
+    if (sameMerged(theirs, ours)) continue;
     const ourClock = local.clocks[field];
-    const merged = mergeField(local.type, field, asText(base.fields[field]), ours, theirs, ourClock !== undefined && ourClock < theirClock);
-    if (merged !== kept.fields[field]) (patch ??= {})[field] = merged;
+    const merged = mergeValues(local.type, field, base.fields[field], ours, theirs, ourClock !== undefined && ourClock < theirClock);
+    if (!sameMerged(merged, kept.fields[field])) (patch ??= {})[field] = merged;
   }
   return { patch, base: fields && clocks ? { type: base.type, id: base.id, fields, clocks } : base };
 }

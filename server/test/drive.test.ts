@@ -64,9 +64,9 @@ describe('the drive holds the files', () => {
 
   it('files a note’s photos and a page’s files under their titles, through the address it was given', async () => {
     const { target, photo, pdf } = await linked();
-    expect(target.seafile.files()).toEqual([photoPath('Courses'), '/Unlease/Carnet/Pages/Projet/Plan.pdf']);
+    expect(target.seafile.files()).toEqual([photoPath('Courses'), '/Unlease/Pages/Projet/Plan.pdf']);
     expect(target.seafile.file(photoPath('Courses'))?.equals(photo)).toBe(true);
-    expect(target.seafile.file('/Unlease/Carnet/Pages/Projet/Plan.pdf')?.equals(pdf)).toBe(true);
+    expect(target.seafile.file('/Unlease/Pages/Projet/Plan.pdf')?.equals(pdf)).toBe(true);
     // Seafile's links name its public address; the upload went to the one configured.
     expect(target.seafile.log).toContain('POST seafile.lan:8000/seafhttp/upload-api/tok');
     expect(target.drive.status()).toMatchObject({ files: 2, waiting: 0, error: null });
@@ -97,7 +97,7 @@ describe('the drive holds the files', () => {
     const { target } = await linked();
     await target.blobs.remove(PHOTO);
     await target.drive.run();
-    expect(target.seafile.files()).toEqual(['/Unlease/Carnet/Pages/Projet/Plan.pdf']);
+    expect(target.seafile.files()).toEqual(['/Unlease/Pages/Projet/Plan.pdf']);
     expect(target.seafile.dirs()).not.toContain('/Unlease/Carnet/Notes/Courses');
   });
 

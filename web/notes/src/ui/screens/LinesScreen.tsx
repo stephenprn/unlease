@@ -13,17 +13,18 @@ import { formatPrice, plural, totalPrice } from '@unlease/core/services/format';
 import { INBOX_ID, shownHint, shownTitle } from '@unlease/notes/models/entities';
 
 import { useLines } from '../../app/hooks/useLines';
-import { useBlobUrl } from '../../app/media/images';
+import { useBlobUrl } from '@shared/app/media/images';
 import { useLibraryStore } from '../../app/store/library';
-import { setNewLineOpen } from '../../app/store/ui';
-import { EmblemStone } from '../components/Emblem';
-import { Icon } from '../components/Icon';
-import { OutlineEdge } from '../components/Outline';
+import { setNewLineOpen } from '../../app/store/notesUi';
+import { EmblemStone } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { OutlineEdge } from '@shared/ui/components/Outline';
 import styles from '../features/lines/lines.module.css';
 import { TileSlot } from '../features/lines/TileSlot';
-import { PageHead } from '../navigation/PageHead';
-import { Link, paths } from '../router';
-import { NARROW, useMedia } from '../useMedia';
+import { PageHead } from '@shared/ui/navigation/PageHead';
+import { Link } from '@shared/ui/router';
+import { paths } from '../routes';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 
 const GLIMPSE = 3;
 
@@ -39,12 +40,13 @@ const Glimpse = memo(function Glimpse({ blobId, index }: { blobId: string; index
 
 const Tile = memo(function Tile({ id }: { id: string }) {
   const line = useLibraryStore(s => s.notes[id]);
-  const { count, total, images } = useLibraryStore(
+  const { count, done, total, images } = useLibraryStore(
     useShallow(s => {
-      const open = (s.linksByNote[id] ?? []).map(lid => s.links[lid]).filter(link => !!link && !link.done);
+      const links = (s.linksByNote[id] ?? []).map(lid => s.links[lid]).filter(link => !!link);
+      const open = links.filter(link => !link!.done);
       const sum = totalPrice(open.map(link => ({ price: link!.price, currency: link!.currency })));
       const kept = open.map(link => link!.imageIds[0]).filter((blobId): blobId is string => !!blobId);
-      return { count: open.length, total: sum ? formatPrice(sum.amount, sum.currency) : '', images: kept.slice(0, GLIMPSE).join(',') };
+      return { count: open.length, done: links.length - open.length, total: sum ? formatPrice(sum.amount, sum.currency) : '', images: kept.slice(0, GLIMPSE).join(',') };
     }),
   );
   if (!line) return null;
@@ -66,7 +68,8 @@ const Tile = memo(function Tile({ id }: { id: string }) {
               ))}
             </span>
           ) : null}
-          <span className={`${styles.tileCount} t-meta-strong tabular`}>{[plural(count, 'lien'), total].filter(Boolean).join(' · ')}</span>
+          {/* What is left to do; all of it done, it says so rather than « 0 lien », as on the phone. */}
+          <span className={`${styles.tileCount} t-meta-strong tabular`}>{count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : [plural(count, 'lien'), total].filter(Boolean).join(' · ')}</span>
           <OutlineEdge d={d} />
         </Link>
       )}

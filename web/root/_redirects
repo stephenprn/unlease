@@ -1,0 +1,6 @@
+# Cloudflare Pages: each app's places are its page (its router reads the address); the site's root is Carnet.
+/        /notes   302
+/notes/* /notes/index.html 200
+/pages/* /pages/index.html 200
+/contacts/* /contacts/index.html 200
+/agenda/* /agenda/index.html 200

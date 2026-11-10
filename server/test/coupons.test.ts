@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LinkBrief } from '@unlease/notes/sync/brief';
 import { parseCouponRequest } from '@unlease/notes/sync/coupons';
 import { LinkSearches } from '../src/apps/notes/analysis/searches';
-import type { MessagesApi } from '../src/apps/notes/analysis/model';
+import type { MessagesApi } from '../src/claude/client';
 import { LinkModelProvider } from '../src/apps/notes/analysis/provider';
+import { ClaudeProvider } from '../src/claude/provider';
+import { analysedBefore, cachedReading } from '../src/apps/notes/analysis/usage';
 import { AUTH, claudeMessage, createTestServer, FakeClaude, T0, type TestServer } from './helpers';
 
 const item: LinkBrief = {
@@ -126,7 +128,7 @@ describe('POST /api/coupons', () => {
 
   it('joins a search already running for the same address instead of paying twice', async () => {
     const claude = new FakeClaude().reply(searchMessage(found));
-    const provider = new LinkModelProvider(server.settings, { effort: 'low', createApi: () => claude, sleep: async () => {} });
+    const provider = new LinkModelProvider(new ClaudeProvider(server.settings, { effort: 'low', createApi: () => claude, sleep: async () => {} }));
     const finder = new LinkSearches({ usage: server.usage, analysis: () => provider.current(), now: server.now });
     const request = parseCouponRequest(ask())!;
 
@@ -204,8 +206,8 @@ describe('POST /api/coupons', () => {
   it('never passes a kept search off as a reading of the page', async () => {
     server.claude.reply(searchMessage(found));
     await post(ask());
-    expect(server.usage.cached(PAGE, 0, 'fr')).toBeNull();
-    expect(server.usage.analysedBefore('l1')).toBe(false);
+    expect(cachedReading(server.usage, PAGE, 0, 'fr')).toBeNull();
+    expect(analysedBefore(server.usage, 'l1')).toBe(false);
   });
 });
 
@@ -259,7 +261,7 @@ describe('POST /api/coupons, refusals', () => {
         return new Promise((_resolve, reject) => options?.signal?.addEventListener('abort', () => reject(new Anthropic.APIUserAbortError())));
       },
     };
-    const provider = new LinkModelProvider(server.settings, { effort: 'low', createApi: () => api, sleep: async () => {} });
+    const provider = new LinkModelProvider(new ClaudeProvider(server.settings, { effort: 'low', createApi: () => api, sleep: async () => {} }));
     const finder = new LinkSearches({ usage: server.usage, analysis: () => provider.current(), now: server.now, deadlineMs: 50 });
 
     expect(await finder.coupons(parseCouponRequest(ask())!)).toEqual({ ok: false, status: 502, error: 'Claude a mis trop de temps' });

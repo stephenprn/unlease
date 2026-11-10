@@ -5,8 +5,8 @@ import { StyleSheet, View } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import type { LinkKind } from '@unlease/notes/models/entities';
 
-import { useTheme } from '../theme/ThemeProvider';
-import { AppText } from './AppText';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { AppText } from '@shared/ui/components/AppText';
 
 export function stampWord(kind: LinkKind): string {
   switch (kind) {

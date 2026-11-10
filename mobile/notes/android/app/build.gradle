@@ -78,6 +78,16 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.stephenprn.carnet"
+    // The suite's shared Kotlin and resources (mobile/shared/android: the organic view, haptics,
+    // connectivity, media, the clipboard, SuiteLink), compiled into every app of the suite; and the
+    // reminders kept on time (src/reminders), into the apps that ring.
+    sourceSets {
+        main {
+            java.srcDirs += "${rootDir}/../../shared/android/src/main/java"
+            java.srcDirs += "${rootDir}/../../shared/android/src/reminders/java"
+            res.srcDirs += "${rootDir}/../../shared/android/src/main/res"
+        }
+    }
     defaultConfig {
         applicationId "com.stephenprn.carnet"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -110,6 +120,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // The reminders' refresh with the app closed (src/reminders); Notifee's own version.
+    implementation("androidx.work:work-runtime:2.8.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -126,16 +138,22 @@ dependencies {
 // and the keystore it points at lives outside the working tree, so no `git add -A` can
 // sweep it in. GitHub releases write that file from repository secrets.
 //
-// Without that file the build still configures: release falls back to the debug
-// keystore, so a fresh checkout can `assembleDebug` and `assembleRelease` for
-// sideloading with no setup at all. Only `bundleRelease` insists, because an AAB signed
-// with the universally-known debug key is not a thing Play will accept, and finding
-// that out from the Console is worse than finding it out here.
+// Without that file the build still configures (Android Studio syncs, `assembleDebug`
+// and `run-android` work), but a release build stops before any task runs: React
+// Native's debug keystore ships in every project, so an APK signed with it is one anyone
+// can sign an "update" for. `-PallowDebugSigning` lets a checkout with no key build a
+// release APK signed with the debug key anyway, to try it on one's own phone, and says
+// so; never hand such an APK to anyone. Bundles refuse even then: Play rejects an AAB
+// signed with the debug key, and finding that out from the Console is worse than here.
+// CI passes the flag only on a hand-run without secrets; a release fails without them
+// and checks each APK's certificate (.github/workflows/android.yml).
 // ---------------------------------------------------------------------------
 
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 def hasUploadKey = keystorePropertiesFile.exists()
+/** `-PallowDebugSigning` (or `=true`): a release APK signed with the debug key, to try it. */
+def allowDebugSigning = findProperty("allowDebugSigning")?.toString()?.trim()?.toLowerCase() in ["", "true"]
 
 if (hasUploadKey) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
@@ -179,21 +197,40 @@ android {
     }
     buildTypes {
         release {
-            // The upload key when there is one, the debug key otherwise, so a checkout
-            // with no keystore.properties still produces an installable APK.
+            // The upload key when there is one. Otherwise the debug key, which the guard
+            // below lets through only with -PallowDebugSigning.
             signingConfig hasUploadKey ? signingConfigs.upload : signingConfigs.debug
         }
     }
 }
 
-// Refuse at configuration time rather than from a task hook: `bundleRelease` is the
-// last task in its own chain, so failing there would already have built and
-// debug-signed the bundle before saying so.
-if (!hasUploadKey &&
-    gradle.startParameter.taskNames.any { it.toLowerCase().endsWith("bundlerelease") }) {
-    throw new GradleException(
-        "bundleRelease needs the upload key: android/keystore.properties is absent, so this " +
-        "bundle would be signed with the debug key and Play would reject it outright. " +
-        "Copy android/keystore.properties.example to android/keystore.properties and fill it in."
+// Refuse once the task graph is known, before any task runs, rather than from a task
+// hook (failing in `packageRelease` or `bundleRelease` would already have built and
+// debug-signed what it refuses). The graph, not the command line's task names, so that
+// every road to a release package is covered: `assembleRelease`, `:app:installRelease`,
+// `build`, an abbreviation such as `aR`.
+gradle.taskGraph.whenReady { graph ->
+    if (hasUploadKey) return
+    def wanted = { String name -> graph.hasTask("${project.path}:${name}") }
+    if (wanted("bundleRelease") || wanted("signReleaseBundle")) {
+        throw new GradleException(
+            "bundleRelease needs the upload key: android/keystore.properties is absent, so this " +
+            "bundle would be signed with the debug key and Play would reject it outright " +
+            "(-PallowDebugSigning does not apply to bundles). " +
+            "Copy android/keystore.properties.example to android/keystore.properties and fill it in."
+        )
+    }
+    if (!wanted("packageRelease")) return
+    if (!allowDebugSigning) {
+        throw new GradleException(
+            "This release APK would be signed with React Native's public debug key: " +
+            "android/keystore.properties is absent. Copy android/keystore.properties.example to " +
+            "android/keystore.properties and fill it in (docs/RELEASING.md), or pass " +
+            "-PallowDebugSigning to build one signed with the debug key, only to try it yourself."
+        )
+    }
+    logger.warn(
+        "-PallowDebugSigning: this release APK is signed with React Native's public debug key. " +
+        "Try it on your own phone, never hand it to anyone: anyone can sign an update with that key."
     )
 }

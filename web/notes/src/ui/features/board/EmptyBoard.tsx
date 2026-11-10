@@ -6,12 +6,13 @@
 import { memo } from 'react';
 
 import { APP_NAME } from '@unlease/notes/brand';
+import { TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
 import type { CollageScene } from '@unlease/design/collage';
 import { t, tx } from '@unlease/core/i18n';
 
 import type { BoardView } from '../../../app/hooks/useBoard';
-import { EmptyState } from '../../components/EmptyState';
-import { NARROW, useMedia } from '../../useMedia';
+import { EmptyState } from '@shared/ui/components/EmptyState';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 
 type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'label';
 
@@ -27,7 +28,7 @@ const COPY: Record<Kind, { title: string; body: string }> = {
   archive: { title: tx('Rien aux archives'), body: tx('Archivez une note pour la retirer du tableau sans la supprimer.') },
   trash: {
     title: tx('La corbeille est vide'),
-    body: tx('Les notes supprimées y restent sept jours, le temps de changer d’avis.'),
+    body: tx('Les notes supprimées y restent {days} jours, le temps de changer d’avis.'),
   },
   label: { title: tx('Aucune note avec ce label'), body: tx('Ajoutez ce label à une note depuis l’éditeur, ou créez-en une ici.') },
 };
@@ -55,7 +56,7 @@ function EmptyBoardComponent({ view }: { view: BoardView }) {
   const narrow = useMedia(NARROW);
   const kind: Kind = view.startsWith('label:') ? 'label' : (view as Kind);
   const copy = (narrow ? NARROW_COPY[kind] : undefined) ?? COPY[kind];
-  return <EmptyState scene={SCENE[kind]} title={t(copy.title)} text={t(copy.body, { app: APP_NAME })} keys={view === 'notes' && !narrow ? NOTE_KEYS.map(item => ({ ...item, label: t(item.label) })) : undefined} />;
+  return <EmptyState scene={SCENE[kind]} title={t(copy.title)} text={t(copy.body, { app: APP_NAME, days: TRASH_RETENTION_DAYS })} keys={view === 'notes' && !narrow ? NOTE_KEYS.map(item => ({ ...item, label: t(item.label) })) : undefined} />;
 }
 
 export const EmptyBoard = memo(EmptyBoardComponent);

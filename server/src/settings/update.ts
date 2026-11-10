@@ -1,19 +1,19 @@
 /**
- * `PUT /api/settings`. Every field is checked first; then what connects to
+ * `PUT /api/settings`. Every field is checked first (the apps the server runs among them: ready ones,
+ * at least one; the first run's end, for good); then what connects to
  * something is tried with it: a new Claude key against Anthropic (a free call,
  * listing models), new S3 settings on the bucket (listed, a small file written
- * and deleted), a new drive on its library (with read and write rights, its
+ * in the storage class chosen and deleted), a new drive on its library (with read and write rights, its
  * folder made if missing), Seerr at its address (and its key, when one comes).
  * Only when all of it holds is anything stored. Keys, secrets and tokens never
  * reach a log.
  */
-import { SUITE_SLUG } from '@unlease/core/apps';
+import { isReadyApp, SUITE_SLUG, type AppId } from '@unlease/core/apps';
 import Anthropic from '@anthropic-ai/sdk';
-import { BACKUP_KEEP_MAX, DRIVE_FOLDER_DEFAULT, isBackupRecurrence, isClaudeModel, isPagesReach, type PagesAskSettings } from '@unlease/core/sync/settings';
+import { BACKUP_KEEP_MAX, DRIVE_FOLDER_DEFAULT, isBackupRecurrence, isClaudeModel, isPagesReach, isStorageClass, parseCalendarPatch, parseEnabledApps, type PagesAskSettings } from '@unlease/core/sync/settings';
 import { s3Problem, S3Client, S3Error } from '../backup/s3';
 import { SeafileClient, SeafileError, seafileProblem } from '../drive/seafile';
-import { SeerrClient, SeerrError, seerrProblem } from '../apps/notes/seerr';
-import type { BackupConfig, DriveConfig, SeerrConfig, SettingsChanges, SettingsStore } from './store';
+import type { BackupConfig, CalendarChanges, DriveConfig, HolidaysConfig, SeerrConfig, SettingsChanges, SettingsStore } from './store';
 
 /** One free request authenticated with `apiKey`; tests stand in for it. */
 export type ListModels = (apiKey: string) => Promise<unknown>;
@@ -38,7 +38,7 @@ export type SettingsOutcome =
   | { readonly ok: true }
   | { readonly ok: false; readonly status: 400 | 502; readonly error: string };
 
-type Refusal = Extract<SettingsOutcome, { ok: false }>;
+export type Refusal = Extract<SettingsOutcome, { ok: false }>;
 
 /** Tries a bucket with its keys: null when it answers. */
 export type CheckS3 = (config: BackupConfig) => Promise<Refusal | null>;
@@ -46,17 +46,21 @@ export type CheckS3 = (config: BackupConfig) => Promise<Refusal | null>;
 /** Tries a drive: the library its token opens, once its folder is there. */
 export type CheckDrive = (drive: Pick<DriveConfig, 'url' | 'token' | 'folder'>) => Promise<{ readonly ok: true; readonly repoId: string; readonly library: string } | Refusal>;
 
-/** Tries Seerr: null when its address answers as Seerr and its key, if any, opens it. */
+/** Tries Seerr: null when its address answers as Seerr and its key, if any, opens it. Carnet's module brings it (`apps/notes/seerr.ts`). */
 export type CheckSeerr = (config: SeerrConfig) => Promise<Refusal | null>;
+
+/** Tries a country's holidays (and its region) at Nager.Date: null when they are there. Agenda's module brings it (`apps/calendar/holidays.ts`). */
+export type CheckHolidays = (holidays: HolidaysConfig) => Promise<Refusal | null>;
 
 export interface SettingsChecks {
   readonly listModels: ListModels;
   readonly checkS3: CheckS3;
   readonly checkDrive: CheckDrive;
   readonly checkSeerr: CheckSeerr;
+  readonly checkHolidays: CheckHolidays;
 }
 
-/** What the check writes and deletes under the prefix: backups need to list, write and delete. */
+/** What the check writes (in the class backups will use) and deletes under the prefix: backups need to list, write and delete. */
 export const S3_PROBE = `.${SUITE_SLUG}-essai`;
 
 export const checkS3Bucket = async (config: BackupConfig, fetcher: typeof fetch = fetch): Promise<Refusal | null> => {
@@ -64,7 +68,7 @@ export const checkS3Bucket = async (config: BackupConfig, fetcher: typeof fetch 
   const client = new S3Client(config, fetcher, undefined, []);
   try {
     await client.list(config.prefix, 1);
-    await client.put(`${config.prefix}${S3_PROBE}`, Buffer.from('essai'), 'text/plain');
+    await client.put(`${config.prefix}${S3_PROBE}`, Buffer.from('essai'), 'text/plain', undefined, config.storageClass);
     await client.delete(`${config.prefix}${S3_PROBE}`);
     return null;
   } catch (error) {
@@ -85,22 +89,14 @@ export const checkSeafile = async (drive: Pick<DriveConfig, 'url' | 'token' | 'f
   }
 };
 
-export const checkSeerrServer = async (config: SeerrConfig, fetcher: typeof fetch = fetch): Promise<Refusal | null> => {
-  const client = new SeerrClient(config.url, config.apiKey, fetcher);
-  try {
-    await client.status();
-    if (config.apiKey) await client.me();
-    return null;
-  } catch (error) {
-    return refuse(error instanceof SeerrError && error.status !== 0 ? 400 : 502, seerrProblem(error));
-  }
-};
-
 export const defaultChecks: SettingsChecks = {
   listModels: anthropicListModels,
   checkS3: config => checkS3Bucket(config),
   checkDrive: drive => checkSeafile(drive),
-  checkSeerr: config => checkSeerrServer(config),
+  // Without Carnet's module (which tries Seerr itself, `registry.ts`), nothing answers as Seerr.
+  checkSeerr: async () => refuse(502, 'Seerr injoignable'),
+  // Without Agenda's module, nothing reaches Nager.Date.
+  checkHolidays: async () => refuse(502, 'Nager.Date injoignable'),
 };
 
 const BUDGET_MAX_USD = 10_000;
@@ -112,7 +108,7 @@ const BUCKET_SHAPE = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
 const REGION_SHAPE = /^[a-z0-9-]{2,40}$/;
 const PREFIX_SHAPE = /^[A-Za-z0-9!_.*'()/-]{0,200}$/;
 
-const refuse = (status: 400 | 502, error: string): Refusal => ({ ok: false, status, error });
+export const refuse = (status: 400 | 502, error: string): Refusal => ({ ok: false, status, error });
 
 /** An http(s) address without query or fragment, its trailing slash dropped; null when it is not one. */
 function address(value: unknown): string | null {
@@ -150,6 +146,17 @@ export async function applySettingsPatch(store: SettingsStore, body: unknown, ch
   const patch = body;
   const changes: SettingsChanges = {};
 
+  // The apps the server runs: ready ones only, at least one; nothing to try.
+  let apps: AppId[] | undefined;
+  if (patch.apps !== undefined) {
+    if (!Array.isArray(patch.apps)) return refuse(400, 'Requête invalide');
+    if (!patch.apps.every(isReadyApp)) return refuse(400, 'Application inconnue ou pas encore disponible');
+    const enabled = parseEnabledApps(patch.apps);
+    if (!enabled) return refuse(400, 'Gardez au moins une application');
+    apps = enabled;
+  }
+  if (patch.setupDone !== undefined && patch.setupDone !== true) return refuse(400, 'Requête invalide');
+
   if (patch.model !== undefined) {
     if (!isClaudeModel(patch.model)) return refuse(400, 'Modèle inconnu');
     changes.model = patch.model;
@@ -177,6 +184,14 @@ export async function applySettingsPatch(store: SettingsStore, body: unknown, ch
       next.reach = raw.reach;
     }
     pages = next;
+  }
+  // Agenda's: the holidays' country tried at Nager.Date when it changes; the rest is switches.
+  let calendar: CalendarChanges | undefined;
+  if (patch.calendar !== undefined) {
+    const parsed = parseCalendarPatch(patch.calendar);
+    if (!parsed) return refuse(400, 'Requête invalide');
+    const { holidays, ...rest } = parsed;
+    calendar = { ...rest, ...(holidays ? { holidays: { country: holidays.country, region: holidays.region ?? null } } : {}) };
   }
   let newKey: string | null = null;
   if (patch.anthropicApiKey === null) {
@@ -231,13 +246,18 @@ export async function applySettingsPatch(store: SettingsStore, body: unknown, ch
       next.recurrence = raw.recurrence;
     }
     if (raw.keep !== undefined) {
-      if (!Number.isInteger(raw.keep) || (raw.keep as number) < 1 || (raw.keep as number) > BACKUP_KEEP_MAX) return refuse(400, 'Nombre de sauvegardes invalide');
+      if (!Number.isInteger(raw.keep) || (raw.keep as number) < 1 || (raw.keep as number) > BACKUP_KEEP_MAX) return refuse(400, 'Durée de conservation invalide');
       next.keep = raw.keep as number;
     }
+    if (raw.storageClass !== undefined) {
+      if (!isStorageClass(raw.storageClass)) return refuse(400, 'Classe de stockage inconnue');
+      next.storageClass = raw.storageClass;
+    }
     const stored = store.backup();
-    const connection = (['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secretAccessKey'] as const).some(name => next[name] !== undefined);
+    // The class too: the bucket must take it before anything is sent in it.
+    const connection = (['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secretAccessKey', 'storageClass'] as const).some(name => next[name] !== undefined);
     if (connection) {
-      const merged: BackupConfig = { endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretAccessKey: '', recurrence: 'off', keep: 30, ...stored, ...next };
+      const merged: BackupConfig = { endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretAccessKey: '', recurrence: 'off', keep: 30, storageClass: 'STANDARD', ...stored, ...next };
       if (!merged.secretAccessKey) return refuse(400, 'Clé secrète manquante');
       if (!merged.endpoint || !merged.region || !merged.bucket || !merged.accessKeyId) return refuse(400, 'Renseignez l’adresse du service, la région, le bucket et la clé d’accès');
       backupToTry = merged;
@@ -324,6 +344,13 @@ export async function applySettingsPatch(store: SettingsStore, body: unknown, ch
     const refusal = await checks.checkSeerr(seerr);
     if (refusal) return refusal;
   }
+  if (calendar?.holidays?.country) {
+    const before = store.holidays();
+    if (before.country !== calendar.holidays.country || before.region !== calendar.holidays.region) {
+      const refusal = await checks.checkHolidays(calendar.holidays);
+      if (refusal) return refusal;
+    }
+  }
   if (driveToTry && drive) {
     const found = await checks.checkDrive(driveToTry);
     if (!found.ok) return found;
@@ -335,7 +362,10 @@ export async function applySettingsPatch(store: SettingsStore, body: unknown, ch
   }
 
   store.update(changes);
+  if (apps !== undefined) store.updateApps(apps);
+  if (patch.setupDone === true) store.markSetupDone();
   if (pages !== undefined) store.updatePages(pages);
+  if (calendar !== undefined) store.updateCalendar(calendar);
   if (backup !== undefined) store.updateBackup(backup);
   if (seerr !== undefined) store.updateSeerr(seerr);
   if (drive === null) {

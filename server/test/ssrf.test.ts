@@ -2,8 +2,8 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { isPublicAddress } from '../src/apps/notes/analysis/address';
-import { createFetcher, FetchError, type Transport, type TransportRequest } from '../src/apps/notes/analysis/fetcher';
+import { isPublicAddress } from '../src/reading/address';
+import { createFetcher, FetchError, type Transport, type TransportRequest } from '../src/reading/fetcher';
 
 const PUBLIC_A = '93.184.215.14';
 const PUBLIC_B = '151.101.1.140';

@@ -2,7 +2,9 @@
 <!-- A widget with nothing to draw yet, or whose collection, label or note is gone: the mark, one line,
      and what a tap does. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/message_root"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wgen_panel_ground"

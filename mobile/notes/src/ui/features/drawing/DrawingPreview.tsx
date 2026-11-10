@@ -9,7 +9,7 @@ import Svg from 'react-native-svg';
 
 import { DRAWING_WIDTH } from '@unlease/notes/models/drawing';
 
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { inkPalette, strokesOf } from './drawingModel';
 import { StrokePath } from './StrokePath';
 

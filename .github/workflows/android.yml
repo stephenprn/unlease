@@ -1,60 +1,131 @@
-# Carnet's Android APK, every ABI in one file, with its SHA-256:
-#   by hand (Actions > Android > Run workflow)  -> a workflow artifact, to try a branch
-#   a release (release.yml, after the checks)   -> attached to the release as carnet-vX.Y.Z.apk
+# The suite's Android apps, one APK each (Carnet, Pages, Contacts, Agenda), every ABI in one file, with its SHA-256:
+#   by hand (Actions > Android > Run workflow)  -> workflow artifacts, to try a branch
+#   a release (release.yml, after the checks)   -> attached to the release as carnet-vX.Y.Z.apk, pages-vX.Y.Z.apk, contacts-vX.Y.Z.apk, agenda-vX.Y.Z.apk
 #
-# Signing: set four repository secrets and the APK is signed with your upload key:
+# All are signed with the same key: they share a connection on the phone (a signature permission).
+#
+# Signing: four repository secrets hold the upload key:
 #   ANDROID_KEYSTORE_BASE64   base64 of the .jks file (base64 -i upload.jks | pbcopy)
 #   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
-# Without them it is signed with the public debug key: fine to try, but anyone could sign an
-# update with that key, so a release meant for others should carry a real one.
+# A release (`release: true`, release.yml) fails without them, then checks each APK's certificate:
+# never a debug key, and the one the repository variable ANDROID_SIGNING_CERT_SHA256 names when it
+# is set (docs/RELEASING.md). A hand-run without them builds with -PallowDebugSigning, says so,
+# and its APKs carry React Native's public debug key: to try only, since anyone can sign an
+# update with that key.
 name: Android
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Sign and check as a release does (fails without the upload key)
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      release:
+        description: A release's APKs (the upload key required, each certificate checked)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   apk:
+    name: ${{ matrix.name }} APK
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { app: notes, name: Carnet, file: carnet }
+          - { app: pages, name: Pages, file: pages }
+          - { app: contacts, name: Contacts, file: contacts }
+          - { app: calendar, name: Agenda, file: agenda }
     defaults:
       run:
-        working-directory: mobile/notes
+        working-directory: mobile/${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: mobile/notes/package-lock.json
+          cache-dependency-path: mobile/${{ matrix.app }}/package-lock.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
-      - uses: android-actions/setup-android@v4
+      # A third party's action runs on the same runner as the upload key: pinned to a commit, not a tag that can move.
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - run: npm ci
       - name: Upload key
+        id: key
         env:
+          RELEASE: ${{ inputs.release }}
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE" ]; then echo "::warning::No upload key in the secrets: the APK is signed with the debug key."; exit 0; fi
+          if [ -z "$KEYSTORE" ]; then
+            if [ "$RELEASE" = true ]; then
+              echo "::error::No upload key in the secrets (ANDROID_KEYSTORE_BASE64 and the three others): a release is never signed with the public debug key (docs/RELEASING.md, Signing the APKs)."
+              exit 1
+            fi
+            echo "::warning::No upload key in the secrets: this APK is signed with React Native's public debug key, to try only. Never hand it to anyone."
+            echo "gradle-flags=-PallowDebugSigning" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/upload.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
       - name: Build
-        working-directory: mobile/notes/android
-        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64 --no-daemon
+        working-directory: mobile/${{ matrix.app }}/android
+        env:
+          # Empty with the upload key; -PallowDebugSigning only on a hand-run without it (the build refuses otherwise).
+          SIGNING: ${{ steps.key.outputs.gradle-flags }}
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64 ${SIGNING:+"$SIGNING"} --no-daemon
+      - name: Signing certificate
+        env:
+          RELEASE: ${{ inputs.release }}
+          EXPECTED: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+          # The SHA-256 of React Native's debug certificate (android/app/debug.keystore, the same in every
+          # React Native project: `keytool -list -v -keystore android/app/debug.keystore -storepass android`).
+          DEBUG_CERT: fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+        run: |
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          apksigner=$(find "$sdk/build-tools" -maxdepth 2 -name apksigner -type f | sort -V | tail -n 1)
+          if [ -z "$apksigner" ]; then echo "::error::No apksigner under $sdk/build-tools."; exit 1; fi
+          if ! certs=$("$apksigner" verify --print-certs "$apk"); then echo "::error::$apk does not verify."; exit 1; fi
+          echo "$certs"
+          digests=$(printf '%s\n' "$certs" | sed -n 's/.*certificate SHA-256 digest: *//p' | tr 'A-F' 'a-f' | tr -d ': \r' | sort -u)
+          if [ "$(printf '%s\n' "$digests" | grep -c .)" -ne 1 ]; then echo "::error::$apk should carry one signing certificate: $digests"; exit 1; fi
+          digest="$digests"
+          echo "Signing certificate SHA-256: $digest"
+          if [ "$RELEASE" != true ]; then exit 0; fi
+          if [ "$digest" = "$DEBUG_CERT" ] || printf '%s\n' "$certs" | grep -Eq 'certificate DN: (.*, )?CN=Android Debug(,|$)'; then
+            echo "::error::$apk is signed with a debug key, which anyone holds: a release is never published so."
+            exit 1
+          fi
+          expected=$(printf '%s' "$EXPECTED" | tr 'A-F' 'a-f' | tr -d ': \r\n')
+          if [ -z "$expected" ]; then
+            echo "::warning::The repository variable ANDROID_SIGNING_CERT_SHA256 is not set, so only the debug key is ruled out. Set it to $digest if that is your upload key (docs/RELEASING.md)."
+          elif ! printf '%s' "$expected" | grep -Eqx '[0-9a-f]{64}'; then
+            echo "::error::The repository variable ANDROID_SIGNING_CERT_SHA256 is not a SHA-256 (64 hexadecimal digits, colons allowed)."
+            exit 1
+          elif [ "$digest" != "$expected" ]; then
+            echo "::error::$apk is signed with the certificate $digest, not the upload key ANDROID_SIGNING_CERT_SHA256 names ($expected)."
+            exit 1
+          fi
       - name: Name the APK
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk "carnet-${GITHUB_REF_NAME//\//-}.apk"
-          sha256sum carnet-*.apk
+          cp android/app/build/outputs/apk/release/app-release.apk "${{ matrix.file }}-${GITHUB_REF_NAME//\//-}.apk"
+          sha256sum ${{ matrix.file }}-*.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: carnet-apk
-          path: mobile/notes/carnet-*.apk
+          name: ${{ matrix.file }}-apk
+          path: mobile/${{ matrix.app }}/${{ matrix.file }}-*.apk
           if-no-files-found: error

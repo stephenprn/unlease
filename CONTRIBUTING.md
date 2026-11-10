@@ -9,22 +9,23 @@ Thank you for helping. Issues and pull requests are welcome in English or French
 
 ## Set up
 
-Node 24, plus Java 17 and the Android SDK for the phone app.
+Node 24, plus Java 17 and the Android SDK for the phone apps.
 
 ```bash
 npm install                                    # the root workspace: the shared packages' tools, the web apps, the server
 cp server/.env.example server/.env             # set UNLEASE_TOKEN and UNLEASE_DATA_DIR=./data
 (cd mobile/notes && npm install)               # Carnet for Android: its own install (React Native pins its own React, ESLint, Jest, Babel)
+(cd mobile/pages && npm install)               # Pages for Android: the same, on the same shared layer (mobile/shared)
 ```
 
-- Carnet on the web: `npm run dev -w web/notes`, then http://localhost:5173. `/?demo` runs it against a fake server inside the page (no server, no key, nothing spent).
+- The web apps: `npm run dev -w web`, then http://localhost:5173/notes (Carnet) and /pages (Pages). `?demo` runs them against a fake server inside the page (no server, no key, nothing spent).
 - Server: `npm run dev -w server`.
-- Carnet for Android: `npm start` (Metro) and `npm run android` in `mobile/notes`, on a device or emulator.
+- An Android app: `npm start` (Metro) and `npm run android` in `mobile/notes` or `mobile/pages`, on a device or emulator ([mobile/README.md](mobile/README.md)).
 
 ## Where things go
 
-- `packages/core`: what every app shares (sync, ids, references, rich text, i18n, formatting, search). `packages/design`: the design system's data. `packages/<app>`: an app's domain, shared by its phone, its web and its part of the server.
-- `mobile/<app>`, `web/<app>`: an app's clients. `server/src/apps/<app>`: its part of the server; the rest of `server/src` is the platform, the same for every app.
+- `packages/core`: what every app shares (sync, ids, references, rich text, i18n, formatting, search, the apps' registry, the setup). `packages/design`: the design system's data. `packages/<app>`: an app's domain (`notes` for Carnet, `pages` for Pages), shared by its phone app, its web app and its part of the server.
+- `web/shared`: the shell every web app shares (setup, Réglages, the Administration, storage, sync, components); `web/<app>`: an app's web app (its page, entry and screens). `mobile/shared`: what every phone app shares; `mobile/<app>`: an app's APK. `server/src/apps/<app>`: its part of the server; the rest of `server/src` is the platform, the same for every app.
 
 ## Checks
 
@@ -32,17 +33,18 @@ Each part has one command that runs its typecheck, lint and tests; CI runs them 
 
 ```bash
 npm run verify                                 # shared packages
-npm run verify -w web/notes
+npm run verify -w web
 npm run verify -w server
 (cd mobile/notes && LANG=fr_FR.UTF-8 npm run verify)
+(cd mobile/pages && LANG=fr_FR.UTF-8 npm run verify)
 node tools/i18n/check.mjs
 ```
 
 ## A few rules that bite
 
-- `packages/` is compiled into the phone, the web and the server: no dependency, no React, React Native, Node or DOM API there, and `core` and `design` know no app (lint enforces both).
-- Every sentence the interface shows goes through `t()` from `@unlease/core/i18n`, French as the key, with its English in its package's dictionary (Carnet's: `packages/notes/src/i18n/en/`; `node tools/i18n/check.mjs` lists what is missing).
-- A synced field is added to its record type's declaration (Carnet's: `packages/notes/src/sync/types.ts`) and to `packages/notes/src/sync/entities.ts`; ship the server before the apps.
+- `packages/` is compiled into the phone, the web and the server: no dependency, no React, React Native, Node or DOM API there, and `core` and `design` know no app, Carnet's package never imports Pages' (lint enforces all three).
+- Every sentence the interface shows goes through `t()` from `@unlease/core/i18n`, French as the key, with its English in its package's dictionary (Carnet's: `packages/notes/src/i18n/en/`, Pages': `packages/pages/src/i18n/en/`, the shell's: `packages/core/src/i18n/en/`; `node tools/i18n/check.mjs` lists what is missing, `--move` files a sentence where every code using it can count on it).
+- A synced field is added to its record type's declaration (`packages/<app>/src/sync/types.ts`) and to that package's `sync/entities.ts`; ship the server before the apps.
 - New records get `createId()` (a UUIDv7); a mention or an embed points at a type and an id (`packages/core/src/refs.ts`).
 - Generated files (icons, widget resources, textures, the emoji catalogue, fonts) are rebuilt with their scripts in `tools/`, never edited by hand.
 - Keep a change to what it is about: no unrelated reformatting or refactoring in the same pull request.

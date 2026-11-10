@@ -14,10 +14,11 @@ import { plural } from '@unlease/core/services/format';
 
 import { useLines } from '../../../app/hooks/useLines';
 import { useLibraryStore } from '../../../app/store/library';
-import { setNewLineOpen } from '../../../app/store/ui';
-import { EmblemStone } from '../../components/Emblem';
-import { Icon } from '../../components/Icon';
-import { Link, paths } from '../../router';
+import { setNewLineOpen } from '../../../app/store/notesUi';
+import { EmblemStone } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { Link } from '@shared/ui/router';
+import { paths } from '../../routes';
 import styles from './board.module.css';
 
 const CollectionChip = memo(function CollectionChip({ id }: { id: string }) {

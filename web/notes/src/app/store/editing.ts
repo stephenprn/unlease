@@ -1,15 +1,18 @@
 /**
  * Checklist gestures a keyboard makes possible: splitting an item at the
  * caret, merging it into the one above, pasting several lines. Each is one
- * `writeLocal` batch, so one gesture is one clock, as every phone action is;
- * the positions come from the same fractional keys the phone's `addCheck`
- * uses, so the order syncs the same way.
+ * `writeLocal` batch (through `write`, which the note editor's history hears),
+ * so one gesture is one clock, as every phone action is; the positions come
+ * from the same fractional keys the phone's `addCheck` uses, so the order
+ * syncs the same way.
  */
 import { placeAt } from '@unlease/core/services/fractionalIndex';
 import { createId } from '@unlease/core/services/ids';
 import { checkFields } from '@unlease/notes/sync/entities';
 
-import { useLibraryStore, writeLocal, type LocalChange } from './library';
+import type { LocalChange } from '@shared/app/store/records';
+import { write } from './writes';
+import { useLibraryStore } from './library';
 
 const state = () => useLibraryStore.getState();
 
@@ -40,7 +43,7 @@ export function splitCheck(id: string, text: string, caret: number, now: number 
   if (!item) return null;
   const newId = createId(now);
   const placed = placeAfterCheck(item.noteId, id);
-  writeLocal(
+  write(
     [
       { type: 'check', id, patch: { text: text.slice(0, caret) } },
       {
@@ -67,7 +70,7 @@ export function splitCheck(id: string, text: string, caret: number, now: number 
 export function mergeIntoPrevious(previousId: string, id: string, text: string, now: number = Date.now()): number {
   const previous = state().checks[previousId];
   if (!previous) return 0;
-  writeLocal(
+  write(
     [
       { type: 'check', id: previousId, patch: { text: previous.text + text } },
       { type: 'check', id, patch: { deletedAt: now } },
@@ -88,7 +91,7 @@ export function pasteLines(id: string, text: string, start: number, end: number,
   const before = text.slice(0, start);
   const after = text.slice(end);
   if (lines.length === 1) {
-    writeLocal([{ type: 'check', id, patch: { text: `${before}${lines[0]}${after}` } }], now);
+    write([{ type: 'check', id, patch: { text: `${before}${lines[0]}${after}` } }], now);
     return [];
   }
   const rest = lines.slice(1);
@@ -113,7 +116,7 @@ export function pasteLines(id: string, text: string, start: number, end: number,
     });
   });
   changes.push(...placed.changes);
-  writeLocal(changes, now);
+  write(changes, now);
   return ids;
 }
 

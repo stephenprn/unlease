@@ -19,8 +19,9 @@ import { t } from '@unlease/core/i18n';
 
 import type { BoardSection } from '../../../app/hooks/useBoard';
 import { setArchived } from '../../../app/store/actions';
+import { useMentionedPeople } from '../../../app/mentions';
 import { useLibraryStore } from '../../../app/store/library';
-import { showUndo } from '../../../app/store/ui';
+import { showUndo } from '@shared/app/store/ui';
 import styles from './board.module.css';
 import { CAN_ANIMATE, fadeOut, LEAVE, motionTokens, reducedMotion, settleIn, slide } from './motion';
 import { NoteCard } from './NoteCard';
@@ -79,7 +80,10 @@ function WallComponent({ sections, layout, query, selection, now, onOpen, onSele
   const geometry = useMemo(() => wallGeometry(available, layout), [available, layout]);
   // The layout reads the whole library (titles, checklists, photos), so it follows all of it.
   const library = useLibraryStore();
-  const wall = useMemo(() => layoutWall(sections, library, geometry), [sections, library, geometry]);
+  // The people a note mentions are drawn by their names: a rename measures the cards again.
+  const people = useMentionedPeople();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `people` is read through `noteMentions` by the cards' words.
+  const wall = useMemo(() => layoutWall(sections, library, geometry), [sections, library, geometry, people]);
   const cardCount = useMemo(() => wall.items.filter(item => item.kind === 'card').length, [wall]);
   const order = useMemo(() => sections.flatMap(section => section.ids), [sections]);
   const windowed = cardCount > WINDOW_FROM;

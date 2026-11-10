@@ -9,11 +9,12 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { EMBLEMS, EMBLEM_NAMES, type Emblem as EmblemKey } from '@unlease/design/emblems';
 import type { LineColor } from '@unlease/design/colors';
+import { t } from '@unlease/core/i18n';
 
 import { AnimatedOrganic, Emblem, Tappable } from '../../components';
-import { useChosen } from '../../components/useChosen';
-import { useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { useChosen } from '@shared/ui/components/useChosen';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 
 /** The slant of a chosen cut-out, as its page's head wears it. */
 const SLANT = -8;
@@ -33,10 +34,11 @@ const EmblemCell = memo(function EmblemCell({ emblem, turn, selected, color, onC
   );
 });
 
+/** Named for TalkBack only: the cut-outs say what they are, and the form's preview wears the one chosen. */
 function EmblemPickerComponent({ value, color, onChange }: { value: EmblemKey; color: LineColor | null; onChange: (emblem: EmblemKey) => void }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.grid} accessibilityRole="radiogroup">
+    <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={t('Emblème')}>
       {EMBLEMS.map((emblem, index) => (
         <EmblemCell key={emblem} emblem={emblem} turn={index} selected={emblem === value} color={color} onChange={onChange} />
       ))}

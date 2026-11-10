@@ -1,0 +1,45 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // No `baseUrl`: TypeScript 6 makes it a hard error, so the paths are
+    // relative to this file instead. The same aliases are in babel.config.js
+    // and jest.config.js (through ../shared/config); the shared packages live at the repository root.
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@data/*": ["./src/data/*"],
+      "@ui/*": ["./src/ui/*"],
+      "@platform/*": ["./src/platform/*"],
+      // The projections borrowed from the apps Agenda shows: leaves only (babel.config.js).
+      "@carnet/*": ["../notes/src/*"],
+      "@contacts-app/*": ["../contacts/src/*"],
+      "@pages-app/*": ["../pages/src/*"],
+      "@shared/*": ["../shared/src/*"],
+      "@unlease/core/*": ["../../packages/core/src/*"],
+      "@unlease/design/*": ["../../packages/design/src/*"],
+      "@unlease/notes/*": ["../../packages/notes/src/*"],
+      "@unlease/contacts/*": ["../../packages/contacts/src/*"],
+      "@unlease/calendar/*": ["../../packages/calendar/src/*"],
+      "@unlease/pages/*": ["../../packages/pages/src/*"],
+      // The shared code (../shared) has no install: what it imports resolves to this app's copies,
+      // never to the web's React at the repository root (the files TypeScript finds for this app's own).
+      "react": ["./node_modules/@types/react/index.d.ts"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-native": ["./node_modules/react-native/types_generated/index.d.ts"],
+      "react-native-reanimated": ["./node_modules/react-native-reanimated/lib/typescript/index.d.ts"],
+      "react-native-gesture-handler": ["./node_modules/react-native-gesture-handler/lib/typescript/index.d.ts"],
+      "react-native-safe-area-context": ["./node_modules/react-native-safe-area-context/lib/typescript/src/index.d.ts"],
+      "react-native-svg": ["./node_modules/react-native-svg/lib/typescript/index.d.ts"],
+      "@react-navigation/native": ["./node_modules/@react-navigation/native/lib/typescript/src/index.d.ts"],
+      "@op-engineering/op-sqlite": ["./node_modules/@op-engineering/op-sqlite/lib/typescript/src/index.d.ts"],
+      "zustand": ["./node_modules/zustand/index.d.ts"],
+      "zustand/*": ["./node_modules/zustand/*"]
+    }
+  },
+  "include": ["App.tsx", "index.js", "__mocks__/**/*.ts", "src/**/*.ts", "src/**/*.tsx", "../shared/src/**/*.ts", "../shared/src/**/*.tsx", "../shared/specs/**/*.ts", "../shared/__mocks__/**/*.ts", "../shared/__mocks__/**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}

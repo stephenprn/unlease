@@ -1,7 +1,9 @@
 import { INBOX_ID, type LinkItem, type Note } from '../../models/entities';
-import { linkFromRecord, noteFromRecord } from '../../sync/entities';
+import type { LinkTemplate } from '../../models/templates';
+import { linkFields, linkFromRecord, noteFromRecord } from '../../sync/entities';
 import type { Fields } from '@unlease/core/sync/record';
-import { addedMessage, planLinks, readingFrom, savedAddresses } from '../savedLinks';
+import { addedMessage, addedTone, cappedMessage, capSharedUrls, MAX_SHARED_URLS, planLinks, readingFrom, savedAddresses } from '../savedLinks';
+import { kindTemplateId } from '../templates';
 
 const line = (id: string, fields: Fields = {}): Note => noteFromRecord({ type: 'note', id, fields: { kind: 'links', title: id, ...fields }, clocks: {} });
 const link = (id: string, fields: Fields = {}): LinkItem =>
@@ -69,6 +71,26 @@ describe('planLinks', () => {
   it('plans an address once, however often it was pasted', () => {
     expect(planLinks(['https://exemple.fr/neuf', 'https://exemple.fr/neuf?utm_source=x'], 'films', saved).map(plan => plan.url)).toEqual(['https://exemple.fr/neuf']);
   });
+
+  it('copies a reading only between collections that read with the same template, with the version it was read with', () => {
+    const vin: LinkTemplate = { id: 't-vin', name: 'Vin', kind: null, fields: [{ id: 'domaine', name: 'Domaine', type: 'text', hint: '' }], createdAt: 1, deletedAt: null };
+    const recipe: LinkTemplate = { id: kindTemplateId('recipe'), name: '', kind: 'recipe', fields: [], createdAt: 1, deletedAt: null };
+    const shelves = { ...notes, vins: line('vins', { templateId: vin.id }), caves: line('caves', { templateId: vin.id }), ancien: line('ancien', { templateId: 'deleted' }), autre: line('autre', { templateId: recipe.id }) };
+    const templating = { templates: { [vin.id]: vin, [recipe.id]: recipe }, notes: shelves };
+    const read = savedAddresses(byId([link('margaux', { ...READ, url: 'https://exemple.fr/margaux', noteId: 'vins', readWith: 'tvin' }), link('cleo', { ...READ, url: 'https://exemple.fr/cleo' })]), shelves);
+
+    expect(planLinks(['https://exemple.fr/margaux'], 'caves', read, templating)[0]!.reading).toEqual({ ...READ, error: null, readWith: 'tvin' });
+    // « Films » reads by kind, « Vins » with its template: the page is read again.
+    expect(planLinks(['https://exemple.fr/margaux'], 'films', read, templating)[0]).toMatchObject({ existing: null, savedIn: ['vins'], reading: null });
+    expect(planLinks(['https://exemple.fr/cleo'], 'vins', read, templating)[0]!.reading).toBeNull();
+    // By kind on both sides: « Non classé », a template deleted, a kind's own picked by mistake.
+    for (const into of [INBOX_ID, 'ancien', 'autre', 'series']) expect(planLinks(['https://exemple.fr/cleo'], into, read, templating)[0]!.reading, into).toEqual({ ...READ, error: null });
+    // Without the templates, as before them.
+    expect(planLinks(['https://exemple.fr/margaux'], 'films', read)[0]!.reading).toMatchObject({ title: READ.title, readWith: 'tvin' });
+    // A copy carries its version into the link it makes.
+    expect(linkFields({ ...linkFromRecord({ type: 'link', id: 'x', fields: {}, clocks: {} }), readWith: 'tvin' }).readWith).toBe('tvin');
+    expect(linkFields(linkFromRecord({ type: 'link', id: 'x', fields: {}, clocks: {} }))).not.toHaveProperty('readWith');
+  });
 });
 
 describe('addedMessage', () => {
@@ -106,5 +128,24 @@ describe('addedMessage', () => {
     // Reading off: new links stay in "Non classé", and the slip says so.
     expect(addedMessage([fresh, saved], { into: INBOX_ID, announce: true }, notes)).toBe('1\u00a0lien ajouté à Non classé · 1\u00a0lien déjà dans Séries');
     expect(addedMessage([{ ...saved, savedIn: [INBOX_ID] }], { into: INBOX_ID, announce: true }, notes)).toBe('Ce lien est déjà dans Non classé');
+  });
+});
+
+describe('addedTone', () => {
+  it('says links added as done, and links all saved already as news', () => {
+    expect(addedTone([{ existing: null }])).toBe('success');
+    expect(addedTone([{ existing: 'x' }, { existing: null }])).toBe('success');
+    expect(addedTone([{ existing: 'x' }])).toBe('info');
+    expect(addedTone([{ existing: 'x' }, { existing: 'y' }])).toBe('info');
+  });
+});
+
+describe('a share cut short', () => {
+  it('keeps the first twenty addresses and counts the others', () => {
+    const urls = Array.from({ length: 25 }, (_, index) => `https://exemple.fr/${index}`);
+    expect(MAX_SHARED_URLS).toBe(20);
+    expect(capSharedUrls(urls)).toEqual({ urls: urls.slice(0, 20), more: 5 });
+    expect(capSharedUrls(urls.slice(0, 3))).toEqual({ urls: urls.slice(0, 3), more: 0 });
+    expect(cappedMessage(5)).toBe('20 liens gardés sur les 25 partagés');
   });
 });

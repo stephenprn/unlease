@@ -9,7 +9,7 @@ import { memo } from 'react';
 import { t } from '@unlease/core/i18n';
 import type { LinkKind } from '@unlease/notes/models/entities';
 
-import styles from './marks.module.css';
+import styles from '@shared/ui/components/marks.module.css';
 
 export function stampWord(kind: LinkKind): string {
   switch (kind) {

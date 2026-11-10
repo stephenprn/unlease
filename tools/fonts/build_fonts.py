@@ -11,8 +11,9 @@ from fontTools.varLib.instancer import instantiateVariableFont
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "tools/fonts/source/Signika[GRAD,wght].ttf"
-APP_OUT = ROOT / "mobile/notes/assets/fonts"
-WEB_OUT = ROOT / "web/notes/public/fonts"
+# Every phone app of the suite links these (react-native.config.js, `npx react-native-asset`).
+APP_OUT = ROOT / "mobile/shared/assets/fonts"
+WEB_OUT = ROOT / "web/public/fonts"
 # The home-screen widgets' titles, set by the app (WidgetType.kt) from font resources, the night grade under font-night.
 WIDGET_OUT = ROOT / "mobile/notes/android/app/src/main/res"
 WIDGET_WEIGHTS = ("Regular", "SemiBold")
@@ -61,6 +62,38 @@ def rename(font: TTFont, family: str, style: str) -> None:
     font["head"].macStyle = 0
 
 
+# Signika has no italic. Browsers slant it themselves (14 degrees); Android, finding no italic file,
+# would set the words in the system's italic instead. So each file gets a slanted twin, at the same
+# angle, its advances untouched (cards are sized from them): React Native picks `<family>_italic.ttf`.
+SLANT = 0.25  # tan(14 degrees), the browsers' synthetic oblique
+
+
+def slant(font: TTFont) -> None:
+    """Skew every outline about the baseline (composites drawn whole), and say the face is italic."""
+    from fontTools.pens.transformPen import TransformPen
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+
+    glyph_set = font.getGlyphSet()
+    glyf = font["glyf"]
+    hmtx = font["hmtx"]
+    drawn = {}
+    for name in font.getGlyphOrder():
+        pen = TTGlyphPen(glyph_set)
+        glyph_set[name].draw(TransformPen(pen, (1, 0, SLANT, 1, 0, 0)))
+        drawn[name] = pen.glyph()
+    for name, glyph in drawn.items():
+        glyph.recalcBounds(glyf)
+        glyf[name] = glyph
+        advance, _ = hmtx[name]
+        hmtx[name] = (advance, getattr(glyph, "xMin", 0))
+    font["post"].italicAngle = -14.0
+    font["hhea"].caretSlopeRise = 4
+    font["hhea"].caretSlopeRun = 1
+    font["OS/2"].fsSelection = (font["OS/2"].fsSelection & ~0b1000000) | 0b1
+    font["head"].macStyle |= 0b10
+    font["name"].setName("Italic", 2, 3, 1, 0x409)
+
+
 def build_app() -> None:
     APP_OUT.mkdir(parents=True, exist_ok=True)
     for family, grade in GRADES.items():
@@ -70,6 +103,10 @@ def build_app() -> None:
             subset(instance)
             rename(instance, family, style)
             path = APP_OUT / f"{family}-{style}.ttf"
+            instance.save(path)
+            print(f"{path.relative_to(ROOT)}  {path.stat().st_size // 1024} KB")
+            slant(instance)
+            path = APP_OUT / f"{family}-{style}_italic.ttf"
             instance.save(path)
             print(f"{path.relative_to(ROOT)}  {path.stat().st_size // 1024} KB")
 

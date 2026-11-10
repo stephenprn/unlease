@@ -9,11 +9,11 @@ import { foldText } from '@unlease/core/services/search';
 
 import { createLabel } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { Icon } from '../../components/Icon';
-import { LabelCheck } from '../../components/LabelMark';
-import { Popover } from '../../components/Popover';
-import inputs from '../../components/controls.module.css';
-import { NARROW, useMedia } from '../../useMedia';
+import { Icon } from '@shared/ui/components/Icon';
+import { LabelCheck } from '@shared/ui/components/LabelMark';
+import { Popover } from '@shared/ui/components/Popover';
+import inputs from '@shared/ui/components/controls.module.css';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from './editor.module.css';
 
 export interface LabelPickerProps {
@@ -42,7 +42,8 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
   };
   return (
     <div ref={holder} className={styles.picker} tabIndex={-1}>
-      <h2 className={`${styles.pickerTitle} ${narrow ? 't-title' : 't-label'}`}>{t('Labels')}</h2>
+      {/* A sheet on a phone says what it holds; by its button, the field (« Chercher ou créer un label ») does. */}
+      {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Labels')}</h2> : null}
       <input
         ref={field}
         data-autofocus={narrow ? undefined : true}

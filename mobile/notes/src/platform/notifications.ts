@@ -2,19 +2,25 @@
  * Reminders through Notifee, armed on the phone itself: they must fire with no network.
  * One trigger per note, keyed by the note id, so re-arming is idempotent. The cook mode's timers
  * ring the same way, on their own channel, keyed by the timer's id.
- * Exact alarms need the user's grant on Android 14; without it the alarm is inexact.
+ * Exact alarms, so a reminder rings on the minute: granted at install from Android 13
+ * (USE_EXACT_ALARM, AndroidManifest.xml), asked on Android 12, where without the grant they are
+ * inexact (Android may hold one up to an hour). A reminder says it is one (CATEGORY_REMINDER) and a
+ * timer an alarm (CATEGORY_ALARM): « Ne pas déranger » lets each through as it is set to.
  */
 import notifee, {
   AlarmType,
+  AndroidCategory,
   AndroidImportance,
   AndroidNotificationSetting,
   AuthorizationStatus,
   EventType,
   TriggerType,
   type Event,
+  type Notification,
 } from '@notifee/react-native';
 
 import { t } from '@unlease/core/i18n';
+import { launchActivity } from '@shared/platform/launcherIcon';
 
 const CHANNEL = 'reminders';
 export const ACTION_DONE = 'done';
@@ -47,6 +53,12 @@ export async function openExactAlarmSettings(): Promise<void> {
   await notifee.openAlarmPermissionSettings();
 }
 
+/** A maker's own battery settings (Samsung's sleeping apps, Xiaomi's autostart…), when Notifee knows this phone's page; null elsewhere (a Pixel). */
+export async function makerBatterySettings(): Promise<(() => void) | null> {
+  const info = await notifee.getPowerManagerInfo();
+  return info.activity ? () => void notifee.openPowerManagerSettings().catch(() => undefined) : null;
+}
+
 export interface ReminderNotification {
   readonly noteId: string;
   readonly at: number;
@@ -54,31 +66,42 @@ export interface ReminderNotification {
   readonly body: string;
 }
 
-export async function arm(reminder: ReminderNotification): Promise<void> {
+function reminderNotification(reminder: ReminderNotification, channelId: string): Notification {
+  return {
+    id: reminder.noteId,
+    title: reminder.title,
+    body: reminder.body,
+    data: { noteId: reminder.noteId },
+    android: {
+      channelId,
+      category: AndroidCategory.REMINDER,
+      // Android 7's heads-up (from 8, the channel's importance says it).
+      importance: AndroidImportance.HIGH,
+      smallIcon: 'ic_stat_carnet',
+      pressAction: { id: 'default', launchActivity: launchActivity() },
+      actions: [
+        { title: t('Fait'), pressAction: { id: ACTION_DONE } },
+        { title: t('Dans 1 h'), pressAction: { id: ACTION_SNOOZE } },
+      ],
+    },
+  };
+}
+
+/** Armed for its moment, exactly when Android allows it; `exact` is what `canScheduleExact` answered. */
+export async function arm(reminder: ReminderNotification, exact: boolean): Promise<void> {
   const channelId = await ensureChannel();
-  const exact = await canScheduleExact().catch(() => false);
-  await notifee.createTriggerNotification(
-    {
-      id: reminder.noteId,
-      title: reminder.title,
-      body: reminder.body,
-      data: { noteId: reminder.noteId },
-      android: {
-        channelId,
-        smallIcon: 'ic_stat_carnet',
-        pressAction: { id: 'default', launchActivity: 'default' },
-        actions: [
-          { title: t('Fait'), pressAction: { id: ACTION_DONE } },
-          { title: t('Dans 1 h'), pressAction: { id: ACTION_SNOOZE } },
-        ],
-      },
-    },
-    {
-      type: TriggerType.TIMESTAMP,
-      timestamp: reminder.at,
-      alarmManager: { type: exact ? AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE : AlarmType.SET_AND_ALLOW_WHILE_IDLE },
-    },
-  );
+  await notifee.createTriggerNotification(reminderNotification(reminder, channelId), {
+    type: TriggerType.TIMESTAMP,
+    timestamp: reminder.at,
+    alarmManager: { type: exact ? AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE : AlarmType.SET_AND_ALLOW_WHILE_IDLE },
+  });
+}
+
+/** Rung at once: its moment went by unarmed (set on another device and synced after it, the phone off). */
+export async function ringNow(reminder: ReminderNotification): Promise<void> {
+  const channelId = await ensureChannel();
+  await notifee.cancelTriggerNotification(reminder.noteId).catch(() => undefined);
+  await notifee.displayNotification(reminderNotification(reminder, channelId));
 }
 
 export async function disarm(noteId: string): Promise<void> {
@@ -109,7 +132,7 @@ export interface TimerAlarm {
 }
 
 /** Pressing it brings the app back; shown a second time (the app rang it first), it stays quiet. */
-function timerNotification(alarm: TimerAlarm, channelId: string) {
+function timerNotification(alarm: TimerAlarm, channelId: string): Notification {
   return {
     id: alarm.id,
     title: t('Minuteur terminé'),
@@ -117,14 +140,21 @@ function timerNotification(alarm: TimerAlarm, channelId: string) {
     data: { timerId: alarm.id },
     android: {
       channelId,
+      // An alarm: « Ne pas déranger » lets it ring even set to alarms only.
+      category: AndroidCategory.ALARM,
+      importance: AndroidImportance.HIGH,
       smallIcon: 'ic_stat_carnet',
       onlyAlertOnce: true,
-      pressAction: { id: 'default', launchActivity: 'default' },
+      pressAction: { id: 'default', launchActivity: launchActivity() },
     },
   };
 }
 
-/** A kitchen timer's ring, heard with the phone locked or the app away. */
+/**
+ * A kitchen timer's ring, heard with the phone locked or the app away: an alarm clock's alarm
+ * (`setAlarmClock`), the one Android never holds back, Doze left before it and a battery set to
+ * « Restreinte » letting it through; the status bar shows the clock while it runs, as a timer.
+ */
 export async function scheduleTimerAlarm(alarm: TimerAlarm): Promise<void> {
   // Notifee refuses a moment already past (a short timer that waited on the permission's question).
   if (alarm.endsAt <= Date.now() + 1000) return;
@@ -133,7 +163,7 @@ export async function scheduleTimerAlarm(alarm: TimerAlarm): Promise<void> {
   await notifee.createTriggerNotification(timerNotification(alarm, channelId), {
     type: TriggerType.TIMESTAMP,
     timestamp: alarm.endsAt,
-    alarmManager: { type: exact ? AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE : AlarmType.SET_AND_ALLOW_WHILE_IDLE },
+    alarmManager: { type: exact ? AlarmType.SET_ALARM_CLOCK : AlarmType.SET_AND_ALLOW_WHILE_IDLE },
   });
 }
 

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { GENESIS_HLC, hlcWall, parseHlc } from '@unlease/core/sync/hlc';
 import { INBOX_ID } from '@unlease/notes/models/entities';
 
-import { freshLibrary } from '../../../test/library';
+import { freshLibrary } from '@test/library';
 import {
   addCheck,
   addLink,
@@ -31,8 +31,10 @@ import {
   updateNote,
 } from '../actions';
 import { mergeIntoPrevious, pasteLines, splitCheck } from '../editing';
-import { acknowledge, countPending, getRecord, mergeRemote, pendingRecords, receiveFromTab, useLibraryStore, writeLocal } from '../library';
-import { setReading, setServer } from '../settings';
+import { useLibraryStore } from '../library';
+import { acknowledge, countPending, getRecord, mergeRemote, pendingRecords, receiveFromTab, writeLocal } from '@shared/app/store/records';
+import { setServer } from '@shared/app/store/settings';
+import { setReading } from '../prefs';
 
 // Ahead of the wall clock: seeding "Non classé" ticks at the real time, and a clock never runs back.
 const T0 = Date.now() + 3_600_000;

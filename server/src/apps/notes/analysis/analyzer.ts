@@ -4,6 +4,8 @@
  * Read the page, ask Claude what it is (and which list it belongs in when the
  * link came through the quick input), keep its images, then write everything
  * back as one server edit, so every device sees the finished card at once.
+ * Its facts are the fields of the template it is read with (its collection's,
+ * else its kind's, `analysis/templates.ts`), whose version it keeps (`readWith`).
  * Whatever fails, the link ends up in a settled state with a short French
  * reason and whatever was learned on the way; it is never left pending,
  * except at shutdown, when the next start picks it up again. With no Claude key
@@ -11,6 +13,7 @@
  */
 import type { Locale } from '@unlease/core/i18n';
 import { INBOX_ID, type LinkKind } from '@unlease/notes/models/entities';
+import type { Templates } from '@unlease/notes/services/templates';
 import { foldText } from '@unlease/core/services/search';
 import { displayHost, isHttpUrl, normalizeUrl } from '@unlease/core/services/url';
 import { linkFromRecord } from '@unlease/notes/sync/entities';
@@ -22,15 +25,17 @@ import type { RecordStore, StoredRecord } from '../../../sync/records';
 import type { SyncService } from '../../../sync/service';
 import { isPendingLink } from './pending';
 import { buildDigest } from './digest';
-import type { Fetcher } from './fetcher';
-import { fetchedImages, type ImageCandidate } from './html';
-import { keepImages } from './keep-images';
+import type { Fetcher } from '../../../reading/fetcher';
+import { fetchedImages, type ImageCandidate } from '../../../reading/html';
+import { distinctKept, keepImages } from '../../../reading/keep-images';
 import { routeCached, routingLists } from './lists';
 import { ModelError, type Description } from './model';
 import { clipText } from './output';
 import type { AnalysisContext } from './provider';
-import { imageCandidates, isReadable, readLink, type LinkRead } from './reader';
-import { monthStart, type CachedAnalysis, type CallUsage, type UsageStore } from './usage';
+import { imageCandidates, isReadable, readLink, type LinkRead } from '../../../reading/reader';
+import type { CallUsage, UsageStore } from '../../../claude/usage';
+import { analysedBefore, cachedReading, READ_TASK, type CachedAnalysis } from './usage';
+import { readWithSource, sourceFor, storedTemplates, templateAsk, templatedAttributes } from './templates';
 
 const DAY = 86_400_000;
 const CACHE_DAYS = 30;
@@ -55,6 +60,8 @@ interface Job {
   readonly autoFile: boolean;
   /** The language Claude writes in: the one the link asks for. */
   readonly lang: Locale;
+  /** Its collection at the start: the template it is read with, unless Claude files it. */
+  readonly noteId: string;
   readonly started: number;
   /** `noteId`'s clock at the start: if it moved since, the person filed the link themselves. */
   readonly noteClock: string | undefined;
@@ -112,11 +119,12 @@ export class LinkAnalyzer {
       url: normalizeUrl(link.url),
       autoFile: link.autoFile,
       lang: link.lang,
+      noteId: link.noteId,
       started: this.now(),
       noteClock: record.clocks.noteId,
     };
     try {
-      await this.run(job, this.options.usage.analysedBefore(id), signal);
+      await this.run(job, analysedBefore(this.options.usage, id), signal);
     } catch (error) {
       if (signal.aborted) return;
       log.error('link analysis crashed', { id, error });
@@ -130,9 +138,12 @@ export class LinkAnalyzer {
     if (!model) return this.skip(job);
     if (!isHttpUrl(job.url)) return this.fail(job, 'Adresse invalide', {}, null);
 
-    // The same product shared twice costs one call. A re-analysis asks for fresh eyes.
+    const templates = storedTemplates(this.options.records);
+    // The same product shared twice costs one call, when it was read with the template this link would be read with. A re-analysis asks for fresh eyes.
     if (!reanalysis) {
-      const cached = usage.cached(job.url, this.now() - CACHE_DAYS * DAY, job.lang);
+      const lists = job.autoFile ? routingLists(this.options.records) : null;
+      const fits = (reading: CachedAnalysis): boolean => (reading.readWith ?? 'preset') === this.reading(job, templates, reading.kind, lists ? routeCached(lists, reading) : null).readWith;
+      const cached = cachedReading(usage, job.url, this.now() - CACHE_DAYS * DAY, job.lang, fits);
       if (cached) return this.fromCache(job, cached, signal);
     }
 
@@ -148,75 +159,84 @@ export class LinkAnalyzer {
     };
 
     if (read.fatal) return failWith(read.error ?? 'Page inaccessible');
-    if (usage.costSince(monthStart(this.now())) >= budgetUsd) return failWith('Budget mensuel atteint');
-
-    const lists = job.autoFile ? routingLists(this.options.records) : null;
-    const image = read.image ? await processLinkImage(read.image.data) : null;
-    let description: Description;
+    const hold = usage.hold(budgetUsd);
+    if (!hold) return failWith('Budget mensuel atteint');
     try {
-      description = await model.describe(
-        {
-          url: job.url,
-          digest: buildDigest({ read, candidates, imageSize: image }),
-          lists,
-          lang: job.lang,
-          webFetch: isReadable(read) ? null : { reason: read.error ?? 'page illisible' },
-          image: image ? { mediaType: 'image/webp', data: image.data.toString('base64') } : null,
-          imageCount: candidates.length,
-        },
-        signal,
-      );
-    } catch (error) {
-      if (signal.aborted) return;
-      if (error instanceof ModelError) return failWith(error.message, {}, error.usage);
-      throw error;
-    }
-    const { output } = description;
-    if (!output.pageRead) {
-      // web_fetch could not read it either: keep what Claude made of the URL, but say it failed.
-      return failWith(read.error ?? 'Page illisible', { title: learned.title || output.title, kind: output.kind, ...(output.site ? { siteName: output.site } : {}) }, description.usage);
-    }
+      const lists = job.autoFile ? routingLists(this.options.records, templates) : null;
+      const image = read.image ? await processLinkImage(read.image.data) : null;
+      let description: Description;
+      try {
+        description = await model.holding(hold).describe(
+          {
+            url: job.url,
+            digest: buildDigest({ read, candidates, imageSize: image }),
+            lists,
+            lang: job.lang,
+            webFetch: isReadable(read) ? null : { reason: read.error ?? 'page illisible' },
+            image: image ? { mediaType: 'image/webp', data: image.data.toString('base64') } : null,
+            imageCount: candidates.length,
+            templates: templateAsk(this.options.records, templates, job.noteId, job.autoFile),
+          },
+          signal,
+        );
+      } catch (error) {
+        if (signal.aborted) return;
+        if (error instanceof ModelError) return failWith(error.message, {}, error.usage);
+        throw error;
+      }
+      const { output } = description;
+      if (!output.pageRead) {
+        // web_fetch could not read it either: keep what Claude made of the URL, but say it failed.
+        return failWith(read.error ?? 'Page illisible', { title: learned.title || output.title, kind: output.kind, ...(output.site ? { siteName: output.site } : {}) }, description.usage);
+      }
 
-    // A page only Claude could read shows its pictures through what web_fetch returned, best guess (og:image) first.
-    const pictures = description.fetched ? fetchedImages(description.fetched.text, description.fetched.url) : candidates;
-    const first = description.fetched ? (pictures.length > 0 ? 0 : null) : output.imageIndex;
-    const kept = await keepImages({
-      candidates: pictures.map(c => c.url),
-      first,
-      referer: read.finalUrl,
-      fetcher,
-      blobs,
-      signal,
-      prefetched,
-    });
-    if (signal.aborted) return;
-    const result: CachedAnalysis = {
-      title: output.title,
-      summary: output.summary,
-      kind: output.kind,
-      price: output.price,
-      currency: output.currency,
-      attributes: output.attributes,
-      siteName: clipText(output.site || siteNameOf(read), 200),
-      imageUrl: first === null ? null : (pictures[first]?.url ?? null),
-      imageUrls: kept.urls,
-      imageIds: kept.ids,
-      listId: lists?.find(list => list.id === output.listId)?.id ?? null,
-      listTitle: lists?.find(list => list.id === output.listId)?.title ?? null,
-      lang: job.lang,
-    };
-    this.writeReady(job, result, output.listId);
-    usage.record({
-      linkId: job.id,
-      url: job.url,
-      usage: description.usage,
-      ok: true,
-      cached: false,
-      error: null,
-      durationMs: this.now() - job.started,
-      result,
-    });
-    log.info('link analysed', { id: job.id, kind: result.kind, model: description.usage.model, costUsd: Number(description.usage.costUsd.toFixed(5)) });
+      // A page only Claude could read shows its pictures through what web_fetch returned, best guess (og:image) first.
+      const pictures = description.fetched ? fetchedImages(description.fetched.text, description.fetched.url) : candidates;
+      const first = description.fetched ? (pictures.length > 0 ? 0 : null) : output.imageIndex;
+      const kept = await keepImages({
+        candidates: pictures.map(c => c.url),
+        first,
+        referer: read.finalUrl,
+        fetcher,
+        blobs,
+        signal,
+        prefetched,
+      });
+      if (signal.aborted) return;
+      const list = lists?.find(each => each.id === output.listId) ?? null;
+      // Its facts are the fields of the template it was read with: its collection's, the list Claude filed it in, else its kind's.
+      const { fields, readWith } = this.reading(job, templates, output.kind, list?.id ?? null);
+      const result: CachedAnalysis = {
+        title: output.title,
+        summary: output.summary,
+        kind: output.kind,
+        price: output.price,
+        currency: output.currency,
+        attributes: templatedAttributes(output.attributes, fields, output.kind),
+        siteName: clipText(output.site || siteNameOf(read), 200),
+        imageUrl: first === null ? null : (pictures[first]?.url ?? null),
+        imageUrls: kept.urls,
+        imageIds: kept.ids,
+        listId: list?.id ?? null,
+        listTitle: list?.title ?? null,
+        lang: job.lang,
+        readWith,
+      };
+      this.writeReady(job, result, output.listId);
+      usage.record(READ_TASK, {
+        linkId: job.id,
+        url: job.url,
+        usage: description.usage,
+        ok: true,
+        cached: false,
+        error: null,
+        durationMs: this.now() - job.started,
+        result,
+      });
+      log.info('link analysed', { id: job.id, kind: result.kind, model: description.usage.model, costUsd: Number(description.usage.costUsd.toFixed(5)) });
+    } finally {
+      hold.release();
+    }
   }
 
   private async fromCache(job: Job, cached: CachedAnalysis, signal: AbortSignal): Promise<void> {
@@ -227,10 +247,14 @@ export class LinkAnalyzer {
       const kept = await keepImages({ candidates: cached.imageUrls, first: cached.imageUrls.length > 0 ? 0 : null, referer: job.url, fetcher, blobs, signal });
       if (signal.aborted) return;
       imageIds = kept.ids;
+    } else {
+      // A reading kept before copies of one picture were told apart: each picture once.
+      imageIds = await distinctKept(imageIds, blobs, signal);
+      if (signal.aborted) return;
     }
     const listId = job.autoFile ? routeCached(routingLists(this.options.records), cached) : null;
     this.writeReady(job, { ...cached, imageIds }, listId);
-    this.options.usage.record({
+    this.options.usage.record(READ_TASK, {
       linkId: job.id,
       url: job.url,
       usage: null,
@@ -241,6 +265,12 @@ export class LinkAnalyzer {
       result: null,
     });
     log.info('link analysis reused', { id: job.id });
+  }
+
+  /** The template a link of this kind is read with (its collection's, or the list it is filed in, else its kind's): its fields (null: the preset) and its version. */
+  private reading(job: Job, templates: Templates, kind: LinkKind, listId: string | null): ReturnType<typeof readWithSource> {
+    const noteId = job.autoFile ? (listId ?? INBOX_ID) : job.noteId;
+    return readWithSource(sourceFor(this.options.records, templates, noteId, kind));
   }
 
   /** Reading is off: the link stays a plain link, in the inbox if the server was to file it. */
@@ -270,6 +300,7 @@ export class LinkAnalyzer {
         status: 'ready',
         error: null,
         analyzedAt: now,
+        readWith: result.readWith ?? 'preset',
       };
       this.file(job, current, patch, listId);
       return patch;
@@ -289,7 +320,7 @@ export class LinkAnalyzer {
       this.file(job, current, patch, null);
       return patch;
     });
-    this.options.usage.record({
+    this.options.usage.record(READ_TASK, {
       linkId: job.id,
       url: job.url,
       usage: cost,

@@ -207,6 +207,26 @@ export function isHttpUrl(value: string): boolean {
   return parsed !== null && (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.includes('.');
 }
 
+/**
+ * What a link may open, as it is given to a browser or a phone: the web, mail and telephone; a bare
+ * « site.fr/… » as https; the app's own paths (`/pages/…`). Null for anything else: `javascript:`,
+ * `data:`, another app's scheme, `//elsewhere`. A link's address comes from words people paste, a
+ * calendar they subscribe to, a file they import, so every link drawn goes through it (`safeHref`).
+ */
+export function safeLink(href: string): string | null {
+  // A browser drops tabs and line breaks from an address before reading it (`java\tscript:`), so they go first.
+  const value = href.replace(/[\t\n\r]/g, '').trim();
+  if (/^(?:https?:|mailto:|tel:)/i.test(value)) return value;
+  if (/^\/(?![/\\])/.test(value)) return value;
+  if (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(value)) return `https://${value}`;
+  return null;
+}
+
+/** A link's `href`: its address when it may be opened (`safeLink`), else nowhere (`#`). */
+export function safeHref(href: string): string {
+  return safeLink(href) ?? '#';
+}
+
 interface ParsedUrl {
   protocol: string;
   hostname: string;

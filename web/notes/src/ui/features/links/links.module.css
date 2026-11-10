@@ -11,7 +11,8 @@
   gap: 14px;
   min-height: 115px;
   margin: 0 6px;
-  padding: 10px 16px 10px 10px;
+  /* As far in from its end as from its start: the page's button ends in the add strip's button column. */
+  padding: 10px;
   /* For its link's focus ring; its veil takes the row's organic outline. */
   border-radius: var(--cut-panel);
 }
@@ -27,21 +28,28 @@
   transition: background-color var(--duration-short) var(--ease-standard);
 }
 
-/* Rules start where the text does, as on the phone, so the pictures read as one column. */
+/* Rules start where the text does, as on the phone, so the pictures read as one column, and end at the add strip's edge (the row reaches 6 past it for its veil). */
 .row + .row::before {
   content: '';
   position: absolute;
   top: 0;
   left: 100px;
-  right: 0;
+  right: 6px;
   height: 1px;
   background: var(--hairline);
+  transition: opacity var(--duration-short) var(--ease-standard);
 }
 
 /* A veil of ink inside the row's own cut, under the pointer (a finger leaves none behind): the image well keeps its step below it. */
 @media (hover: hover) {
   .row:hover::after {
     background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+
+  /* The rules on either side of it step aside, so the veil never runs into a line. */
+  .row:hover::before,
+  .row:hover + .row::before {
+    opacity: 0;
   }
 }
 
@@ -204,17 +212,51 @@
   color: var(--ink-muted);
 }
 
+/* How far the price moved, just before it: a drop in the ok ink, a rise quieter, in the second ink (a done link's either way). */
+.priceChange {
+  flex: none;
+  margin-right: -4px;
+  white-space: nowrap;
+  color: var(--ok);
+}
+
+.priceChange svg {
+  margin-right: 1px;
+  vertical-align: -2px;
+}
+
+.priceChange[data-direction='up'],
+.row[data-done] .priceChange {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
 .facts {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* The person glyph before the people a link is for, on the text's line. */
+.factsMark {
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
 .reading {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   height: 18px;
+}
+
+/* On one line beside the cut, however narrow the row: the line ends in an ellipsis rather than wrap out of its 18px. */
+.readingText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* As on the phone: the danger glyph, the reason on one line in the second ink, "Réessayer" after it. */
@@ -321,7 +363,7 @@
 @media (min-width: 720px) {
   .row {
     min-height: 86px;
-    padding: 8px 16px 8px 10px;
+    padding: 8px 10px;
   }
 
   .row + .row::before {
@@ -355,7 +397,8 @@
   .trailing {
     position: absolute;
     top: 50%;
-    right: 8px;
+    /* The page's button in the add strip's button column. */
+    right: 10px;
     min-width: 0;
     transform: translateY(-50%);
   }
@@ -443,6 +486,14 @@
   .page {
     background: var(--paper);
   }
+}
+
+/* A link opens as a note does: a dialog over its collection, as wide as the note editor (a page of its own on a phone-sized window). */
+.dialog {
+  width: min(680px, 100%);
+  height: auto;
+  max-height: min(860px, calc(100vh - 96px));
+  overflow: hidden;
 }
 
 .panelHead {
@@ -771,6 +822,10 @@ textarea.noteInput {
   .galleryItem {
     --frame-height: min(360px, 44vh);
   }
+  /* The phone's top bar: Back and the menu in the slots every top bar keeps (4 in). */
+  .panelHead {
+    padding-inline: 4px;
+  }
   .detailBody {
     padding: 16px 16px 32px;
   }
@@ -846,7 +901,8 @@ textarea.noteInput {
 }
 
 .couponSource a,
-.couponTips a {
+/* A plain link in the words (a tip's page, a source), never a button drawn as a link (the resale sites' tonal ones keep their ink). */
+.couponTips a:not([class]) {
   color: var(--link);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -909,6 +965,17 @@ textarea.noteInput {
   color: var(--ok);
 }
 
+/* Its page, from the row's end: centred on the row's first line (the shop, the site, the outlet: 23 high), not on its top. */
+.offerEnd {
+  margin-top: calc(11.5px - 22px);
+}
+
+@media (pointer: coarse) {
+  .offerEnd {
+    margin-top: calc(11.5px - 24px);
+  }
+}
+
 /* An offer without a page keeps its button's room. */
 .offerSpace {
   flex: none;
@@ -925,7 +992,7 @@ textarea.noteInput {
 .choices {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--row-gap);
 }
 
 .choice {
@@ -1006,6 +1073,16 @@ textarea.noteInput {
 
 .stepper[data-bar] .stepperValue {
   min-width: 6.5em;
+}
+
+/* Its two ends as tall as the bar, under a finger too (a compact icon button grows to 40 there, and the row's small buttons would stretch to it): their tint keeps clear of its edges. */
+.stepper[data-bar] > button {
+  width: 32px;
+  height: 32px;
+}
+
+.stepper[data-bar] > button::before {
+  inset: 3px;
 }
 
 /* A rating against its scale: a thin track, filled to its share. */
@@ -1238,6 +1315,8 @@ textarea.noteInput {
 /* On a phone the cook mode is a whole page: the step's buttons stand at its foot, in the thumb's reach. */
 @media (max-width: 719px) {
   .cookFrame {
+    /* The whole page's width (as the drawing's), not the cookbook's 48px short of it, which left a band on its right. */
+    --frame-width: auto;
     height: 100%;
   }
   .cookFrame[data-foot] > :last-child {

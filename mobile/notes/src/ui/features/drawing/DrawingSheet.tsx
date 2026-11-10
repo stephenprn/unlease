@@ -2,7 +2,8 @@
  * A drawing note's sheet on its screen, under the title: the canvas fills what the screen leaves
  * (it never scrolls the note: two fingers scroll the drawing itself), the tools at its foot above
  * the note's own bar, aside while the title is typed. Nothing waits to be saved: every stroke is
- * kept as it is let go, so the screen's own check for an empty note sees it.
+ * kept as it is let go, so the screen's own check for an empty note sees it. Its background is the
+ * note's colour, from « Couleur et papier » in the note's bar.
  */
 import type React from 'react';
 import { useCallback } from 'react';
@@ -11,7 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { saveTypedText } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { useKeyboardVisible } from '../../components/useKeyboardVisible';
+import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { DrawingCanvas } from './DrawingCanvas';
 import { DrawingTools } from './DrawingTools';
 import { useDrawingEditor } from './useDrawingEditor';

@@ -19,10 +19,16 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 // App-local TurboModules are not node modules: a root __mocks__ entry is not picked up.
-jest.mock('./specs/NativeIntake', () => require('./__mocks__/NativeIntake'));
-jest.mock('./specs/NativeMedia', () => require('./__mocks__/NativeMedia'));
-jest.mock('./specs/NativeHaptics', () => require('./__mocks__/NativeHaptics'));
-jest.mock('./specs/OrganicViewNativeComponent', () => require('./__mocks__/OrganicViewNativeComponent'));
+jest.mock('../shared/specs/NativeIntake', () => require('../shared/__mocks__/NativeIntake'));
+jest.mock('../shared/specs/NativeMedia', () => require('../shared/__mocks__/NativeMedia'));
+jest.mock('../shared/specs/NativeHaptics', () => require('../shared/__mocks__/NativeHaptics'));
+jest.mock('../shared/specs/NativeTextFields', () => require('../shared/__mocks__/NativeTextFields'));
+jest.mock('../shared/specs/NativeUnleaseClipboard', () => require('../shared/__mocks__/NativeUnleaseClipboard'));
+jest.mock('../shared/specs/NativeMapApps', () => require('../shared/__mocks__/NativeMapApps'));
+jest.mock('../shared/specs/NativeSuiteLink', () => require('../shared/__mocks__/NativeSuiteLink'));
+jest.mock('../shared/specs/NativeLauncherIcon', () => require('../shared/__mocks__/NativeLauncherIcon'));
+jest.mock('../shared/specs/NativeReminders', () => require('../shared/__mocks__/NativeReminders'));
+jest.mock('../shared/specs/OrganicViewNativeComponent', () => require('../shared/__mocks__/OrganicViewNativeComponent'));
 
 jest.mock('react-native-screens', () => {
   const actual = jest.requireActual('react-native-screens');

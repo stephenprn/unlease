@@ -1,7 +1,9 @@
 /**
  * A text note's body, typed in place: one native field drawing the note's lines with their headings
- * and marks (`NoteRuns`), every line on the editor's 26 pitch so a ruled paper stays in step. What
- * it holds and saves is `useNoteBody`'s; this draws it and hands the field's events back.
+ * and marks (`NoteRuns`), every line on the editor's 26 pitch so a ruled paper stays in step (the
+ * field itself has no line height: its lines take theirs from their words, so typing after a line
+ * break never lays the lines above out wrong). What it holds and saves is `useNoteBody`'s; this
+ * draws it and hands the field's events back.
  */
 import React, { useEffect, useRef } from 'react';
 import { TextInput, type StyleProp, type TextStyle } from 'react-native';
@@ -9,9 +11,9 @@ import { TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 
-import { useTheme } from '../../theme/ThemeProvider';
-import { variantStyle } from '../../theme/typography';
-import { NoteRuns } from './noteText';
+import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { NoteRuns, noteFieldStyle } from './noteText';
 import type { NoteBodyEditor } from './useNoteBody';
 
 export interface RichBodyProps {
@@ -24,6 +26,8 @@ export interface RichBodyProps {
 export function RichBody({ editor, editable, autoFocus, style }: RichBodyProps) {
   const theme = useTheme();
   const { input, takeSelection } = editor;
+  // The body grows with its lines, which stay still as one is added.
+  const growing = useGrowingInput();
   const shown = useRef(editor.text);
   shown.current = editor.text;
 
@@ -40,7 +44,10 @@ export function RichBody({ editor, editable, autoFocus, style }: RichBodyProps) 
 
   return (
     <TextInput
-      ref={input}
+      ref={node => {
+        input.current = node;
+        growing.attach(node);
+      }}
       onChangeText={editor.onChangeText}
       onSelectionChange={event => editor.onSelectionChange(event.nativeEvent.selection)}
       onKeyPress={event => editor.onKeyPress(event.nativeEvent.key)}
@@ -55,11 +62,11 @@ export function RichBody({ editor, editable, autoFocus, style }: RichBodyProps) 
       multiline
       autoFocus={autoFocus}
       textAlignVertical="top"
-      style={[variantStyle(theme, 'editorBody'), style]}
+      style={[noteFieldStyle(theme), style]}
       maxLength={TEXT_LIMITS.note.body}
       accessibilityLabel={t('Texte de la note')}
     >
-      <NoteRuns lines={editor.lines} place="editor" />
+      <NoteRuns lines={editor.lines} place="editor" names={editor.names} />
     </TextInput>
   );
 }

@@ -1,7 +1,7 @@
 /** Small scissors working along a dashed cut line: a link's "being read" state. Still under reduced motion. */
 import { memo, type CSSProperties } from 'react';
 
-import { Icon } from '../../components/Icon';
+import { Icon } from '@shared/ui/components/Icon';
 import styles from './links.module.css';
 
 const SCISSORS = 14;

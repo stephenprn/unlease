@@ -1,12 +1,12 @@
 /**
- * Dev only: push the made-up demo (web/notes/src/dev/demoData.ts), images included, into a server.
+ * Dev only: push the made-up demo (web/demo/demoData.ts), images included, into a server.
  *   UNLEASE_URL=http://localhost:8787 UNLEASE_TOKEN=… \
- *     npx tsx --tsconfig web/notes/tsconfig.app.json tools/demo/seed-server.ts
+ *     npx tsx --tsconfig web/tsconfig.app.json tools/demo/seed-server.ts
  */
 import sharp from 'sharp';
 
-import { buildDemoRecords, DEMO_IMAGE_IDS } from '../../web/notes/src/dev/demoData';
-import { demoImage } from '../../web/notes/src/dev/demoImages';
+import { buildDemoRecords, DEMO_IMAGE_IDS } from '../../web/demo/demoData';
+import { demoImage } from '../../web/demo/demoImages';
 
 const url = process.env.UNLEASE_URL ?? 'http://localhost:8787';
 const token = process.env.UNLEASE_TOKEN ?? '';

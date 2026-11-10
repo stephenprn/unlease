@@ -21,7 +21,10 @@
     "paths": {
       "@unlease/core/*": ["../packages/core/src/*"],
       "@unlease/design/*": ["../packages/design/src/*"],
-      "@unlease/notes/*": ["../packages/notes/src/*"]
+      "@unlease/notes/*": ["../packages/notes/src/*"],
+      "@unlease/contacts/*": ["../packages/contacts/src/*"],
+      "@unlease/calendar/*": ["../packages/calendar/src/*"],
+      "@unlease/pages/*": ["../packages/pages/src/*"]
     }
   },
   "include": ["src", "test", "vitest.config.ts"]

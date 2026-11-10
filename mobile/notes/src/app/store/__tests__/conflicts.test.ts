@@ -1,15 +1,15 @@
 import { formatHlc, hlcWall } from '@unlease/core/sync/hlc';
 import { writeFields, type SyncRecord } from '@unlease/core/sync/record';
-import { closeDatabase, openDatabase } from '@data/db/database';
-import { countPending, loadAllRecords } from '@data/repositories/recordRepository';
-import { readSyncState } from '@data/repositories/stateRepository';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
+import { countPending, loadAllRecords } from '@shared/data/repositories/recordRepository';
+import { readSyncState } from '@shared/data/repositories/stateRepository';
 
 import { clockNote } from '@unlease/core/services/format';
 import { checkFields } from '@unlease/notes/sync/entities';
 
 import { addCheck, createNote, ensureInbox, moveCheck, pasteChecks, saveTypedText, splitCheck, updateNote } from '../actions';
 import { acknowledge, basesFor, deviceTime, getRecord, loadLibrary, markAllPending, mergeRemote, observeServerTime, resetLibrary, useLibraryStore, writeLocal } from '../libraryStore';
-import { useSyncStore } from '../syncStore';
+import { useSyncStore } from '@shared/app/store/syncStore';
 
 const state = () => useLibraryStore.getState();
 const web = (record: SyncRecord, patch: Record<string, unknown>, wall: number): SyncRecord => writeFields(record, patch, formatHlc(wall, 0, 'web001'));

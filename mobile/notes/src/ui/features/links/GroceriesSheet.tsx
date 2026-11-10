@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { GlyphName } from '@unlease/design/glyphs';
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { shownTitle, type Note } from '@unlease/notes/models/entities';
@@ -18,13 +19,13 @@ import type { RecipeResponse } from '@unlease/notes/sync/recipe';
 import { readRecipe } from '@app/modules';
 import { addToChecklist } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, Icon, Sheet, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { navigate } from '../../navigation/navigationRef';
-import { corners } from '../../theme/shape';
-import { useTheme } from '../../theme/ThemeProvider';
-import { ReadingTrack } from './ReadingTrack';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { servingsLine, useServings } from './Servings';
 
 type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly reason: string } | { readonly kind: 'ready'; readonly answer: RecipeResponse };
@@ -90,20 +91,23 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
   }
   if (phase.kind === 'failed') {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Les ingrédients n’ont pas pu être lus : {reason}', { reason: phase.reason })}
-        </AppText>
-        <Button
-          kind="text"
-          label={t('Réessayer')}
-          onPress={() => {
-            setPhase({ kind: 'asking' });
-            setAttempt(value => value + 1);
-          }}
-          style={styles.end}
-        />
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Les ingrédients n’ont pas pu être lus : {reason}', { reason: phase.reason })}
+          </AppText>
+        </SheetScroll>
+        <FormFoot>
+          <Button
+            kind="text"
+            label={t('Réessayer')}
+            onPress={() => {
+              setPhase({ kind: 'asking' });
+              setAttempt(value => value + 1);
+            }}
+          />
+        </FormFoot>
+      </>
     );
   }
 
@@ -126,6 +130,7 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
   };
 
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       {servings ? <AppText variant="meta">{servings}</AppText> : null}
       <View>
@@ -142,8 +147,12 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
           <TargetRow key={list.id} icon="checklist" title={listTitle(list)} chosen={picked?.id === list.id} onPress={() => setTarget(list.id)} />
         ))}
       </View>
-      <Button label={ticked.length > 0 ? t('Ajouter {items}', { items: plural(ticked.length, 'ingrédient') }) : t('Ajouter')} icon="basket" disabled={ticked.length === 0} onPress={add} style={styles.end} />
     </SheetScroll>
+    <FormFoot>
+      <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
+      <Button label={ticked.length > 0 ? t('Ajouter {items}', { items: plural(ticked.length, 'ingrédient') }) : t('Ajouter')} icon="basket" disabled={ticked.length === 0} onPress={add} />
+    </FormFoot>
+    </>
   );
 }
 
@@ -182,12 +191,12 @@ function TargetRow({ icon, title, detail, chosen, onPress }: { icon: GlyphName; 
 }
 
 const styles = StyleSheet.create({
-  body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-  waiting: { gap: 16, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-  end: { alignSelf: 'flex-end' },
-  // In line with the rows' marks.
-  section: { paddingHorizontal: 10, paddingBottom: 4 },
-  row: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+  body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+  waiting: { gap: 16, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
+  // On the sheet's column, with the rows' marks.
+  section: { paddingBottom: 4 },
+  // A list row's: its mark on the column, its press 10 out of it.
+  row: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
   target: { minHeight: 56 },
   rowText: { flex: 1, gap: 2 },
 });

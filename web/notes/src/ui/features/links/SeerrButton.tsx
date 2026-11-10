@@ -8,11 +8,11 @@ import { SEERR_STATUS_WORDS } from '@unlease/notes/services/works';
 import type { SeerrResponse } from '@unlease/notes/sync/seerr';
 
 import { lookUpSeerr } from '../../../app/modules';
-import { selectSeerrUrl, useSettingsStore } from '../../../app/store/settings';
-import { Button } from '../../components/Button';
+import { useSeerrUrl } from '../../../app/store/prefs';
+import { Button } from '@shared/ui/components/Button';
 
 export function SeerrButton({ link }: { link: LinkItem }) {
-  const base = useSettingsStore(selectSeerrUrl);
+  const base = useSeerrUrl();
   // An answer is the search's that made it: once a reading renames the title, the old one no longer shows.
   const asked = `${link.id}\n${link.title}`;
   const [answered, setAnswered] = useState<{ readonly asked: string; readonly answer: SeerrResponse } | null>(null);

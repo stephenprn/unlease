@@ -11,5 +11,4 @@ export const EN_PHONE_DRAWING: Dictionary = {
   'Dessin vide': 'Empty drawing',
   'Modifier le dessin': 'Edit the drawing',
   'Ce dessin n’existe plus.': 'This drawing no longer exists.',
-  'Ce dessin est plein : il ne peut rien garder de plus.': 'This drawing is full: it can’t hold anything more.',
 };

@@ -1,7 +1,5 @@
 package com.stephenprn.carnet.intake
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.view.WindowManager
@@ -10,13 +8,13 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
-import com.stephenprn.carnet.specs.NativeIntakeSpec
+import com.stephenprn.unlease.specs.NativeIntakeSpec
 import java.lang.ref.WeakReference
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Shares, the clipboard and the keep-screen-on flag. A share is parked in [pending] until
+ * Shares and the keep-screen-on flag (the clipboard is the suite's: `com.stephenprn.unlease.clipboard`). A share is parked in [pending] until
  * JavaScript takes it, and also emitted as `onShare` when the module is alive: JavaScript dedupes by id.
  */
 class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIntakeSpec(reactContext) {
@@ -32,41 +30,6 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
 
   override fun takePendingShare(promise: Promise) {
     promise.resolve(toMap(pending.getAndSet(null)))
-  }
-
-  override fun readClipboardText(promise: Promise) {
-    val activity = reactContext.currentActivity
-    if (activity == null) {
-      promise.resolve("")
-      return
-    }
-    // Android only lets the focused app read the clipboard, from its UI thread.
-    activity.runOnUiThread {
-      val text =
-          try {
-            val clipboard = reactContext.getSystemService(ClipboardManager::class.java)
-            clipboard?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(reactContext)?.toString() ?: ""
-          } catch (_: SecurityException) {
-            ""
-          }
-      promise.resolve(text)
-    }
-  }
-
-  override fun writeClipboardText(text: String, promise: Promise) {
-    val write = {
-      val copied =
-          try {
-            val clipboard = reactContext.getSystemService(ClipboardManager::class.java)
-            clipboard?.setPrimaryClip(ClipData.newPlainText("text", text))
-            clipboard != null
-          } catch (_: SecurityException) {
-            false
-          }
-      promise.resolve(copied)
-    }
-    val activity = reactContext.currentActivity
-    if (activity != null) activity.runOnUiThread { write() } else write()
   }
 
   override fun setKeepScreenOn(on: Boolean) {

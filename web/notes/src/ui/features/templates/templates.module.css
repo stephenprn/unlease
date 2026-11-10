@@ -1,0 +1,630 @@
+/*
+ * « Modèles de fiche »: the list (Réglages' sheets and rows), and a template's editor: its fields as
+ * rows of the form's own fields (a grip, the name, the type, what to put in it, ⋮), stacked on a
+ * narrow sheet; « Essayer » beside them on a wide window, under them otherwise.
+ */
+
+/* ── the list ─────────────────────────────────────────────────────────────── */
+
+/* The title and the line under it, read together: the page's 30 gap stays between the sections. */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lead {
+  max-width: 62ch;
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* A row's second line: one line, the end cut when the names run long. */
+.rowMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowName {
+  overflow-wrap: anywhere;
+}
+
+.chevron {
+  color: var(--ink-muted);
+}
+
+/* « Nouveau modèle »: an action, in link ink, as the app's other « new » rows. */
+.newRow,
+.newRow > svg {
+  color: var(--link);
+}
+
+@media (hover: hover) {
+  .newRow.newRow:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.newRow.newRow:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+/* Fifty already: the row keeps its place, quiet, and says why. */
+.newRow[aria-disabled='true'],
+.newRow[aria-disabled='true'] > svg {
+  color: var(--ink-muted);
+  cursor: default;
+}
+
+/* ── the editor ───────────────────────────────────────────────────────────── */
+
+.editor {
+  container: template-editor / inline-size;
+  max-width: 1160px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* A kind's: what it reads, and « Rétablir l'original » at the line's end while it is changed. */
+.kindLead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 0 4px;
+}
+
+/* Under the page's own title (wide), read with it; under the top bar it keeps the page's gap. */
+.kindLeadUnderTitle {
+  margin-top: -14px;
+}
+
+.kindLead > p {
+  flex: 1 1 280px;
+  max-width: 62ch;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* Its words on the line's own edges, at the end of the line or on one of their own. */
+.kindLead > button {
+  margin-inline: -14px;
+}
+
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  min-width: 0;
+}
+
+.side {
+  min-width: 0;
+}
+
+/* From a window wide enough for both: « Essayer » beside the fields, staying in view as they scroll. */
+@container template-editor (min-width: 980px) {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+    gap: 32px;
+  }
+
+  .side {
+    position: sticky;
+    top: calc(var(--header-height, 64px) + 16px);
+  }
+
+  /* Over the fields' column, so « Rétablir l'original » ends where they do. */
+  .kindLead {
+    max-width: calc(100% - 340px - 32px);
+  }
+}
+
+/* The person's own: its name, then where it reads, as one block. */
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nameBlock > p {
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* The re-reading well sits in the column's flow: no collection page's top margin here. */
+.well > * {
+  margin-top: 0;
+}
+
+/* ── the fields ───────────────────────────────────────────────────────────── */
+
+.fieldsBox {
+  container: template-fields / inline-size;
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldsHead,
+.field {
+  --field-columns: 28px minmax(0, 1fr) 176px minmax(0, 1.5fr) 44px;
+  display: grid;
+  grid-template-columns: var(--field-columns);
+  grid-template-areas: 'grip name type hint more';
+  column-gap: 8px;
+}
+
+/* The columns' names, once over the rows (each row's fields keep theirs for screen readers). */
+.fieldsHead {
+  padding: 10px 12px 2px;
+  color: var(--ink-muted);
+}
+
+.fieldsHead > :nth-child(1) {
+  grid-area: name;
+  padding-left: 4px;
+}
+
+.fieldsHead > :nth-child(2) {
+  grid-area: type;
+  padding-left: 4px;
+}
+
+.fieldsHead > :nth-child(3) {
+  grid-area: hint;
+  padding-left: 4px;
+}
+
+.fields {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 4px 6px;
+  list-style: none;
+}
+
+.field {
+  position: relative;
+  align-items: start;
+  row-gap: 8px;
+  padding: 6px;
+  border-radius: var(--cut-tab);
+  background: var(--paper);
+}
+
+.field[data-dragging],
+.field[data-settling] {
+  z-index: 2;
+  box-shadow: var(--lift-raised);
+}
+
+.fieldName {
+  grid-area: name;
+}
+
+.fieldType {
+  grid-area: type;
+}
+
+.fieldHint {
+  grid-area: hint;
+}
+
+.fieldMore {
+  grid-area: more;
+  margin-top: 4px;
+}
+
+/* What to put in it: a field's height until it wraps, then as tall as its words (200 at most). */
+.hintInput.hintInput {
+  min-height: 52px;
+  max-height: 168px;
+}
+
+@supports not (field-sizing: content) {
+  .hintInput.hintInput {
+    height: 52px;
+  }
+}
+
+/* The grip: its whole height takes the hand, the keyboard's arrows move the field too. */
+.grip {
+  grid-area: grip;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    color var(--duration-short) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .grip:hover {
+    color: var(--ink-muted);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.grip:focus-visible {
+  color: var(--ink);
+  outline-offset: -2px;
+}
+
+.field[data-dragging] .grip {
+  color: var(--ink);
+  cursor: grabbing;
+}
+
+/* Where the field let go would land: a matcha line between the rows. */
+.dropLine {
+  position: absolute;
+  z-index: 3;
+  left: 40px;
+  right: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--focus);
+  pointer-events: none;
+}
+
+/* On a narrow sheet each field stacks: its name and its type on a line, what to put in it under them. */
+@container template-fields (max-width: 599px) {
+  .fieldsHead {
+    display: none;
+  }
+
+  .field {
+    --field-columns: 24px minmax(0, 1fr) minmax(0, 152px) 40px;
+    grid-template-areas:
+      'grip name type more'
+      '. hint hint hint';
+    column-gap: 6px;
+    padding: 8px 2px 10px;
+  }
+
+  .fieldMore {
+    margin-top: 6px;
+  }
+
+  .grip {
+    width: 24px;
+  }
+
+  /* Short fields: their words keep the room their paddings gave up. */
+  .fieldName input {
+    padding-inline: 14px;
+  }
+
+  .fieldType button {
+    gap: 8px;
+    padding-left: 12px;
+    padding-right: 10px;
+  }
+
+  .fields {
+    gap: 0;
+  }
+
+  .field + .field::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 30px;
+    right: 6px;
+    height: 1px;
+    background: var(--hairline);
+  }
+
+  .dropLine {
+    left: 30px;
+  }
+}
+
+/* No field: what Claude still reads, in the sheet's own words. */
+.empty {
+  padding: 14px 16px 6px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* « Ajouter un champ »: a row of the sheet in link ink, its plus on the grips' column. */
+.add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 12px);
+  min-height: 48px;
+  margin: 0 6px;
+  padding: 0 12px 0 14px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--link);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .add:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.add:active {
+  background: color-mix(in srgb, var(--link) 10%, transparent);
+}
+
+.add:focus-visible {
+  outline-offset: -2px;
+}
+
+/* « Champs courants »: a wrap of small chips, each a field in one press. */
+.common {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 16px 12px;
+}
+
+.common > h3 {
+  color: var(--ink-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  box-shadow: inset 0 0 0 1px var(--outline);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 18px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.chip > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.chip:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (pointer: coarse) {
+  .chip {
+    min-height: 40px;
+  }
+}
+
+/* Eight fields: no more room, said once where « Ajouter un champ » stood. */
+.full {
+  padding: 12px 16px 8px;
+  color: var(--ink-muted);
+}
+
+/* ── « Essayer » ──────────────────────────────────────────────────────────── */
+
+.try {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 16px 16px;
+}
+
+.try > p {
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* The button under the address, its height a field's: it reads what is chosen above it. */
+.tryAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.tryProblem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--danger);
+  text-wrap: pretty;
+}
+
+.tryProblem > svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.tryOffline {
+  color: var(--ink-muted);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: result-in var(--duration-medium) var(--ease-decelerate);
+}
+
+.resultTitle {
+  overflow-wrap: anywhere;
+}
+
+/* Nothing found for it: a dash in the faint ink. */
+.none {
+  color: var(--ink-faint);
+}
+
+.resultMeta {
+  color: var(--ink-muted);
+}
+
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result {
+    animation: none;
+  }
+}
+
+/* ── a collection's « Modèle de fiche » ────────────────────────────────────── */
+
+.pickRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.pickRow + .pickRow {
+  margin-top: var(--row-gap);
+}
+
+@media (hover: hover) {
+  .pickRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.pickRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.pickRow:focus-visible {
+  outline-offset: -2px;
+}
+
+.pickRow > svg {
+  flex: none;
+}
+
+/* The chosen one: the matcha wash and its edge, its tick in matcha (the app's pickers). */
+.pickRow[aria-checked='true'] {
+  background: var(--action-container);
+  box-shadow: inset 0 0 0 1.5px var(--focus);
+  color: var(--on-action-container);
+}
+
+.pickRow[aria-checked='true'] .pickMeta {
+  color: var(--on-action-container);
+}
+
+.pickTick {
+  color: var(--focus);
+}
+
+.pickRow[aria-checked='true'] .pickTick {
+  color: var(--on-action-container);
+}
+
+.pickText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pickName {
+  overflow-wrap: anywhere;
+}
+
+.pickMeta {
+  color: var(--ink-muted);
+}
+
+.pickLink,
+.pickLink > svg {
+  color: var(--link);
+}
+
+@media (hover: hover) {
+  .pickLink.pickLink:hover {
+    background: color-mix(in srgb, var(--link) 6%, transparent);
+  }
+}
+
+.pickRule {
+  height: 1px;
+  margin: 8px 10px;
+  background: var(--hairline);
+}
+
+/* ── a link's page ────────────────────────────────────────────────────────── */
+
+/* Read with an older version of its template: one quiet line, and « Relire ». */
+.stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-top: -8px;
+  color: var(--ink-muted);
+}
+
+/* « Relire » close to the words it answers. */
+.stale > button {
+  margin-left: -6px;
+}

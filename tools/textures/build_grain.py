@@ -1,17 +1,18 @@
 """
-Writes mobile/notes/assets/textures/grain.png and web/notes/public/grain.png: the paper's tooth, a 256 px tile of
+Writes mobile/shared/assets/textures/grain.png and web/public/grain.png: the paper's tooth, a 256 px tile of
 two-sided speckle (some grains darken, some lighten) on transparency. Both apps lay it over paper
 at the theme's grain opacity.
 
-Also writes the home-screen widgets' tile, android/.../res/drawable-<density>/wgen_grain_tile.png: the
+Also writes the home-screen widgets' tile (in each app with widgets: Carnet's, Contacts'),
+android/.../res/drawable-<density>/wgen_grain_tile.png: the
 same paper grain scaled to 200 dp per density, as the phone's Grain lays it; each widget drawable
 sets its strength (tools/widgets/build_widget_resources.mjs).
 
-and android/.../res/drawable-nodpi/wgen_ground_grain_tile.png and mobile/notes/assets/textures/ground-grain.png: the
+and android/.../res/drawable-nodpi/wgen_ground_grain_tile.png and mobile/shared/assets/textures/ground-grain.png: the
 web's film grain below, each of its pixels two by two, for the widgets' ground and the phone's (laid one
 file pixel to one device pixel, src/ui/components/Grain.tsx).
 
-Also writes web/notes/public/ground-grain.png: the ground's film grain, a 256 px tile where every pixel
+Also writes web/public/ground-grain.png: the ground's film grain, a 256 px tile where every pixel
 darkens or lightens a little, so the ground's two tones read as one grainy gradient. Its strength
 is in the file (it is laid at full opacity, as one more background layer over the ground's
 gradient, in both themes), at its own size so no scaling blurs it.
@@ -114,11 +115,15 @@ def scaled(rows, size):
     return out
 
 
+# The phone apps whose widgets lay the grain (tools/widgets/build_widget_resources.mjs).
+WIDGET_APPS = ('notes', 'contacts')
+
+
 def widget_tiles():
     rows = grain_rows()
     for bucket, scale in WIDGET_DENSITIES.items():
         size = round(WIDGET_TILE_DP * scale)
-        write((f'mobile/notes/android/app/src/main/res/drawable-{bucket}/wgen_grain_tile.png',), png(size, size, scaled(rows, size)))
+        write(tuple(f'mobile/{app}/android/app/src/main/res/drawable-{bucket}/wgen_grain_tile.png' for app in WIDGET_APPS), png(size, size, scaled(rows, size)))
 
 
 def ground_grain():
@@ -134,7 +139,7 @@ def widget_ground_tile():
         for x in range(SIZE):
             doubled += row[x * 4:x * 4 + 4] * 2
         out += [doubled, list(doubled)]
-    write(('mobile/notes/android/app/src/main/res/drawable-nodpi/wgen_ground_grain_tile.png', 'mobile/notes/assets/textures/ground-grain.png'), png(SIZE * 2, SIZE * 2, out))
+    write((*(f'mobile/{app}/android/app/src/main/res/drawable-nodpi/wgen_ground_grain_tile.png' for app in WIDGET_APPS), 'mobile/shared/assets/textures/ground-grain.png'), png(SIZE * 2, SIZE * 2, out))
 
 
 def ground_grain_rows():
@@ -160,7 +165,7 @@ def write(paths, data):
 
 
 if __name__ == '__main__':
-    write(('mobile/notes/assets/textures/grain.png', 'web/notes/public/grain.png'), grain())
-    write(('web/notes/public/ground-grain.png',), ground_grain())
+    write(('mobile/shared/assets/textures/grain.png', 'web/public/grain.png'), grain())
+    write(('web/public/ground-grain.png',), ground_grain())
     widget_tiles()
     widget_ground_tile()

@@ -5,34 +5,18 @@ import { formatHlc, hlcWall } from '@unlease/core/sync/hlc';
 import type { SyncRequest } from '@unlease/core/sync/protocol';
 import { writeFields, type SyncRecord } from '@unlease/core/sync/record';
 
-import { freshLibrary } from '../../../test/library';
-import { openDatabase } from '../../db/database';
-import { configureSync, onBeforePause, pauseSync, startSync, stopSync } from '../../sync/loop';
-import { createTransport, SyncError } from '../../sync/transport';
+import { freshLibrary } from '@test/library';
+import { openDatabase } from '@shared/app/db/database';
+import { configureSync, onBeforePause, pauseSync, startSync, stopSync } from '@shared/app/sync/loop';
+import { createTransport, SyncError } from '@shared/app/sync/transport';
 import { checkFields } from '@unlease/notes/sync/entities';
 
 import { addCheck, createNote, moveCheck, saveTypedText, updateNote } from '../actions';
 import { splitCheck } from '../editing';
-import {
-  acknowledge,
-  basesFor,
-  countPending,
-  deviceTime,
-  flushLibrary,
-  getRecord,
-  loadLibrary,
-  markAllPending,
-  mergeRemote,
-  observeServerTime,
-  pendingRecords,
-  readEpoch,
-  receiveFromTab,
-  resetLibrary,
-  useLibraryStore,
-  writeEpoch,
-} from '../library';
-import { setServer } from '../settings';
-import { useSyncStore } from '../syncStatus';
+import { useLibraryStore } from '../library';
+import { acknowledge, basesFor, countPending, deviceTime, flushLibrary, getRecord, loadLibrary, markAllPending, mergeRemote, observeServerTime, pendingRecords, readEpoch, receiveFromTab, resetLibrary, writeEpoch } from '@shared/app/store/records';
+import { setServer } from '@shared/app/store/settings';
+import { useSyncStore } from '@shared/app/store/syncStatus';
 
 const state = () => useLibraryStore.getState();
 let later = 0;

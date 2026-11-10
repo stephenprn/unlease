@@ -3,9 +3,10 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { INBOX_ID, LINK_KINDS } from '@unlease/notes/models/entities';
 import { formatHlc, parseHlc } from '@unlease/core/sync/hlc';
-import { FetchError } from '../src/apps/notes/analysis/fetcher';
+import { FetchError } from '../src/reading/fetcher';
 import { buildRequest, ClaudeLinkModel } from '../src/apps/notes/analysis/model';
-import { BROWSER_USER_AGENT, PREVIEW_USER_AGENT } from '../src/apps/notes/analysis/reader';
+import { ClaudeClient } from '../src/claude/client';
+import { BROWSER_USER_AGENT, PREVIEW_USER_AGENT } from '../src/reading/reader';
 import {
   AUTH,
   analysisOf,
@@ -308,7 +309,7 @@ describe('reading difficult pages', () => {
     await queue.idle();
 
     expect(claude.requests[0]!.tools).toEqual([{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 8000 }]);
-    expect(claude.userText()).toContain('The server could not read this page (Page inaccessible (403))');
+    expect(claude.userText()).toContain('The server could not read this page (Page protégée contre les robots (403))');
     expect(linkFields(server, 'l1')).toMatchObject({ status: 'ready', title: 'Veste en jean oversize délavée', price: 49.99 });
   });
 
@@ -491,7 +492,7 @@ describe('when the analysis fails', () => {
 
     expect(linkFields(server, 'l1')).toMatchObject({
       status: 'failed',
-      error: 'Page inaccessible (403)',
+      error: 'Page protégée contre les robots (403)',
       title: 'Veste en jean oversize délavée (Maison Lucette)',
       kind: 'product',
       siteName: 'Maison Lucette',
@@ -509,13 +510,13 @@ describe('when the analysis fails', () => {
     const { queue } = analysisOf(server, { fetcher: new FakeFetcher(shopRoutes), claude, budget: 1 });
     // Last month's spending does not count against this month.
     server.time.value = Date.UTC(2026, 8, 20);
-    server.usage.record({ linkId: 'x', url: 'https://a.fr/', usage: { model: 'claude-opus-5-5', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 5 }, ok: true, cached: false, error: null, durationMs: 1, result: null });
+    server.usage.record('read', { linkId: 'x', url: 'https://a.fr/', usage: { model: 'claude-opus-5-5', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 5 }, ok: true, cached: false, error: null, durationMs: 1, result: null });
     server.time.value = T0;
     server.sync.push([pendingLink('l1', SHOP, T0 - 1000)]);
     await queue.idle();
     expect(linkFields(server, 'l1').status).toBe('ready');
 
-    server.usage.record({ linkId: 'y', url: 'https://b.fr/', usage: { model: 'claude-opus-5-5', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 1.2 }, ok: true, cached: false, error: null, durationMs: 1, result: null });
+    server.usage.record('read', { linkId: 'y', url: 'https://b.fr/', usage: { model: 'claude-opus-5-5', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 1.2 }, ok: true, cached: false, error: null, durationMs: 1, result: null });
     server.sync.push([pendingLink('l2', `${SHOP}?couleur=noir`, T0 - 900)]);
     await queue.idle();
     expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Budget mensuel atteint', title: 'Veste en jean oversize délavée' });
@@ -716,7 +717,7 @@ describe('the Claude request', () => {
         },
       }),
     );
-    const model = new ClaudeLinkModel(claude, { model: 'claude-opus-5-5', effort: 'low' });
+    const model = new ClaudeLinkModel(new ClaudeClient(claude, { model: 'claude-opus-5-5', effort: 'low' }));
     const { usage } = await model.describe({ ...describeRequest, webFetch: null }, new AbortController().signal);
     expect(usage.model).toBe('claude-opus-5');
     expect(usage.costUsd).toBeCloseTo((2000 * 4) / 1e6 + (2000 * 5 + 300 * 25) / 1e6, 10);
@@ -728,7 +729,7 @@ describe('the Claude request', () => {
       content: [{ type: 'server_tool_use', id: 'srvtoolu_9', name: 'web_fetch', input: { url: SHOP } }],
     });
     const claude = new FakeClaude().reply(paused, claudeMessage(shopAnswer));
-    const model = new ClaudeLinkModel(claude, { model: 'claude-opus-5-5', effort: 'low' });
+    const model = new ClaudeLinkModel(new ClaudeClient(claude, { model: 'claude-opus-5-5', effort: 'low' }));
     const { output } = await model.describe({ ...describeRequest, webFetch: null }, new AbortController().signal);
     expect(output.title).toBe('Veste en jean oversize délavée');
     expect(claude.requests[1]!.messages).toHaveLength(2);
@@ -748,7 +749,7 @@ describe('the Claude request', () => {
         imageIndex: 7,
       }),
     );
-    const model = new ClaudeLinkModel(claude, { model: 'claude-opus-5-5', effort: 'low' });
+    const model = new ClaudeLinkModel(new ClaudeClient(claude, { model: 'claude-opus-5-5', effort: 'low' }));
     const { output } = await model.describe({ ...describeRequest, webFetch: null, imageCount: 2 }, new AbortController().signal);
     expect(output.summary.length).toBeLessThanOrEqual(240);
     expect(output.summary.endsWith('…')).toBe(true);
@@ -761,7 +762,7 @@ describe('the Claude request', () => {
 
   it('fails cleanly on an answer that is not the schema', async () => {
     const claude = new FakeClaude().reply(claudeMessage('{"title": 3}'));
-    const model = new ClaudeLinkModel(claude, { model: 'claude-opus-5-5', effort: 'low' });
+    const model = new ClaudeLinkModel(new ClaudeClient(claude, { model: 'claude-opus-5-5', effort: 'low' }));
     await expect(model.describe({ ...describeRequest, webFetch: null }, new AbortController().signal)).rejects.toThrow('Réponse de Claude illisible');
   });
 });

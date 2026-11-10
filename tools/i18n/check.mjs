@@ -9,17 +9,28 @@
  *   node tools/i18n/check.mjs                    missing English, then entries no code uses
  *   node tools/i18n/check.mjs --unwrapped <path>  French-looking text left outside t() under <path>
  */
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 /** Each package's dictionary (a file, or a folder of parts). */
-const DICTIONARIES = { core: 'packages/core/src/i18n/en', design: 'packages/design/src/i18n/en.ts', notes: 'packages/notes/src/i18n/en' };
-/** What each tree translates, and the dictionaries it may count on. */
+const DICTIONARIES = { core: 'packages/core/src/i18n/en', design: 'packages/design/src/i18n/en.ts', notes: 'packages/notes/src/i18n/en', contacts: 'packages/contacts/src/i18n/en', calendar: 'packages/calendar/src/i18n/en', pages: 'packages/pages/src/i18n/en' };
+/** Where `--move` puts a sentence it moves into a package's dictionary. */
+const HOMES = { core: 'packages/core/src/i18n/en/shell.ts', design: 'packages/design/src/i18n/en.ts', notes: 'packages/notes/src/i18n/en/shared.ts', contacts: 'packages/contacts/src/i18n/en/shared.ts', calendar: 'packages/calendar/src/i18n/en/shared.ts', pages: 'packages/pages/src/i18n/en/shared.ts' };
+/**
+ * What each tree translates, and the dictionaries it may count on. The shell (the web apps'
+ * shared shell, the phones' shared code) serves every app, so it counts on no app's dictionary; Agenda
+ * shows contacts' birthdays and Carnet's reminders, so it counts on Carnet's and Contacts'; Pages
+ * shows Carnet's collections and mentions contacts and events, so it counts on theirs and Agenda's.
+ */
 const GROUPS = [
   { sources: ['packages/core/src'], uses: ['core'] },
   { sources: ['packages/design/src'], uses: ['core', 'design'] },
+  { sources: ['web/shared/src', 'mobile/shared/src'], uses: ['core', 'design'] },
   { sources: ['packages/notes/src', 'mobile/notes/src', 'web/notes/src'], uses: ['core', 'design', 'notes'] },
+  { sources: ['packages/contacts/src', 'mobile/contacts/src', 'web/contacts/src'], uses: ['core', 'design', 'contacts'] },
+  { sources: ['packages/calendar/src', 'mobile/calendar/src', 'web/calendar/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar'] },
+  { sources: ['packages/pages/src', 'mobile/pages/src', 'web/pages/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'] },
 ];
 const SOURCES = GROUPS.flatMap(group => group.sources);
 const SKIP = /(__tests__|node_modules|\/i18n\/en\/|\/i18n\/en\.ts$|\.d\.ts$|emojiCatalogue)/;
@@ -183,6 +194,8 @@ if (args[0] === '--unwrapped') {
 const dictionaries = Object.fromEntries(Object.entries(DICTIONARIES).map(([owner, path]) => [owner, existsSync(path) ? dictionary(path) : new Map()]));
 const allKeys = new Map(Object.values(dictionaries).flatMap(keys => [...keys]));
 const used = new Map();
+/** The groups each sentence is translated in. */
+const usedBy = new Map();
 const missing = [];
 for (const group of GROUPS) {
   for (const source of group.sources) {
@@ -191,6 +204,8 @@ for (const group of GROUPS) {
       for (const { text, line } of usedIn(file)) {
         const where = `${relative(ROOT, file)}:${line}`;
         if (!used.has(text)) used.set(text, where);
+        if (!usedBy.has(text)) usedBy.set(text, new Set());
+        usedBy.get(text).add(group);
         if (group.uses.some(owner => dictionaries[owner].has(text))) continue;
         const elsewhere = allKeys.get(text);
         missing.push({ text, where, note: elsewhere ? ` (only in ${elsewhere}: move it to ${group.uses.map(owner => DICTIONARIES[owner]).join(' or ')})` : '' });
@@ -200,6 +215,59 @@ for (const group of GROUPS) {
 }
 const seen = new Set();
 const reported = missing.filter(entry => (seen.has(entry.text) ? false : (seen.add(entry.text), true)));
+
+/** An entry's whole text in its file (its key, its value, its comma), from the start of its line. */
+function entrySpan(source, key) {
+  const entry = /^[ \t]*(['"])/gm;
+  for (let match = entry.exec(source); match; match = entry.exec(source)) {
+    const found = readLiteral(source, match.index + match[0].length - 1);
+    if (found.value !== key) continue;
+    let at = found.end;
+    const colon = /^\s*:\s*/.exec(source.slice(at));
+    if (!colon) continue;
+    at += colon[0].length;
+    const value = readLiteral(source, at);
+    if (value.value === null) return null;
+    at = value.end;
+    if (source[at] === ',') at += 1;
+    if (source[at] === '\n') at += 1;
+    return { start: match.index, end: at };
+  }
+  return null;
+}
+
+if (args.includes('--move')) {
+  const order = ['core', 'design', 'notes', 'pages'];
+  const only = args.slice(args.indexOf('--move') + 1).filter(arg => !arg.startsWith('--'));
+  let moved = 0;
+  for (const entry of reported) {
+    if (only.length > 0 && !only.some(prefix => entry.where.startsWith(prefix))) continue;
+    const from = allKeys.get(entry.text);
+    if (!from) continue;
+    const groups = [...(usedBy.get(entry.text) ?? [])];
+    const common = order.filter(owner => groups.every(group => group.uses.includes(owner)));
+    // The design system's dictionary holds its own words only.
+    const owner = [...common].reverse().find(each => each !== 'design' || groups.every(group => group.sources.includes('packages/design/src')));
+    if (!owner) continue;
+    const home = HOMES[owner];
+    if (!existsSync(home)) {
+      console.log(`no ${home}: create it (an empty part registered in its index) and run again`);
+      continue;
+    }
+    const source = readFileSync(join(ROOT, from), 'utf8');
+    const span = entrySpan(source, entry.text);
+    if (!span) continue;
+    const text = source.slice(span.start, span.end).replace(/^[ \t]*/, '  ');
+    writeFileSync(join(ROOT, from), source.slice(0, span.start) + source.slice(span.end));
+    const target = readFileSync(home, 'utf8');
+    const close = target.lastIndexOf('};');
+    writeFileSync(home, `${target.slice(0, close)}${text.endsWith('\n') ? text : `${text}\n`}${target.slice(close)}`);
+    moved += 1;
+    console.log(`moved    ${JSON.stringify(entry.text)}  ${from} -> ${home}`);
+  }
+  console.log(`\n${moved} moved: run the check again.`);
+  process.exit(0);
+}
 const unused = [...allKeys.keys()].filter(text => !used.has(text));
 for (const { text, where, note } of reported) console.log(`missing  ${where}  ${JSON.stringify(text)}${note}`);
 if (args.includes('--unused')) for (const text of unused) console.log(`unused   ${allKeys.get(text)}  ${JSON.stringify(text)}`);

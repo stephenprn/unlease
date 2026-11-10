@@ -6,6 +6,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
@@ -13,12 +14,13 @@ import { MODULE_DESCRIPTIONS, MODULE_FITS, MODULE_GROUPS, MODULE_ICONS, MODULE_N
 import { lineModules, moduleCost, moduleMissing, withModule } from '@unlease/notes/services/modules';
 import { setLineModules } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectCanRead, selectModel, selectSeerr, selectServer, useSettingsStore } from '@app/store/settingsStore';
+import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useModuleAbilities } from '@app/hooks/useModuleAbilities';
 
-import { AppText, Icon, Sheet, SheetScroll, SwitchMark, Tappable } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme } from '../../theme/ThemeProvider';
-import { formatUsd } from '../settings/money';
+import { AppText, Icon, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { formatUsd } from '@shared/ui/features/settings/money';
 
 export function ModulesSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
   return (
@@ -31,13 +33,10 @@ export function ModulesSheet({ id, visible, onDismiss }: { id: string; visible: 
 function ModulesBody({ id }: { id: string }) {
   const theme = useTheme();
   const line = useLibraryStore(s => s.notes[id]);
-  const server = useSettingsStore(selectServer);
-  const reading = useSettingsStore(selectCanRead);
-  const seerr = useSettingsStore(selectSeerr);
+  const can = useModuleAbilities();
   const model = useSettingsStore(selectModel);
   if (!line) return null;
   const on = lineModules(line);
-  const can = { server: server !== null, reading, seerr };
   const turn = (module: LinkModule, value: boolean) => setLineModules(line.id, withModule(line, module, value));
 
   return (
@@ -85,11 +84,11 @@ function ModulesBody({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   list: { paddingBottom: 16 },
-  lead: { paddingHorizontal: 8, paddingBottom: 4 },
+  lead: { paddingHorizontal: SHEET_INSET, paddingBottom: 4 },
   // In line with what the rows hold.
   section: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   // A list row's (inset 6, its press inside the sheet), its glyph by the name.
-  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 10, ...corners(SHAPES.tab) },
+  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 10, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
   glyph: { alignSelf: 'flex-start' },
   text: { flex: 1, gap: 2 },
   facts: { marginTop: 2 },

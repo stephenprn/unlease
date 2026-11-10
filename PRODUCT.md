@@ -10,13 +10,15 @@ android
 
 - **Android app:** pinned by the maintainer: the same stack as their habit tracker Bonsai, every package at its current version. Bare React Native CLI (never Expo), TypeScript strict, op-sqlite, zustand, React Navigation, Reanimated + worklets, gesture-handler, react-native-svg, Notifee, safe-area-context, screens. Five layers with ESLint-enforced boundaries, with one sanctioned deviation from the maintainer's house structure: this app talks to the network (sync + link analysis), so the release build keeps `INTERNET`.
 - **Web app:** React + Vite + TypeScript single-page app, served by the server itself (or any static host).
-- **Backend:** a small TypeScript (Node) service with SQLite, one for the whole suite (each app adds its module). One published Docker image runs it and serves the web apps; anyone's infrastructure runs it the same way (`docs/SELF-HOSTING.md`). The maintainer's own deployment lives in their separate infrastructure repository.
+- **Backend:** a small TypeScript (Node) service with SQLite, one for the whole suite (each app adds its module). One published Docker image runs it and serves each app's web app; anyone's infrastructure runs it the same way (`docs/SELF-HOSTING.md`). The maintainer's own deployment lives in their separate infrastructure repository.
 
 ## Users
 
 People who run their own server and want Keep (and a little of Notion) without Google: first the maintainer, a French speaker using it every day on an Android phone and in a desktop browser; then anyone self-hosting it, in French or English. One person (or one household) per server, sharing one token. Open source (MIT); the APK comes from GitHub releases, never from a store.
 
 ## Product Purpose
+
+Unlease replaces Google's apps one at a time, as a suite the owner installs on their server and picks apps from: one setup, one look, shared settings (Claude, backups, files) and data each app can show of the others'. **Carnet** replaces Google Keep, **Pages** (its pages, an app of its own since the suite took shape) Google Docs and Notion for the owner's own knowledge, **Contacts** Google Contacts (people, their numbers, addresses and birthdays, imported from Google, mentioned in pages), **Agenda** Google Calendar (events, repeats and reminders, subscriptions and holidays, the birthdays, reminders and dates the other apps hold). Each has its own APK and its own part of the one web app.
 
 Carnet replaces Google Keep. It must be faster to scan and to find things in than Keep, look like something worth opening, and understand links: every URL saved is read by Claude, which extracts what matters (title, price when it is something to buy, category, key facts) and the page's images are saved on the server, so a list stays useful after the page disappears. Links shared from any app land in the right list on their own.
 
@@ -29,7 +31,7 @@ Keep with a reader, self-hosted. Its URL lists read, summarize and file what you
 ## Operating Context
 
 - **Phone:** quick capture on the go; links shared from the browser, shopping and social apps through the Android share sheet; a home-screen widget for capture; reminders as notifications. Must work offline and sync when the network returns.
-- **Computer:** the web app in a desktop browser for longer writing, organizing, and the one-time Google Keep import (Takeout export).
+- **Computer:** the web apps in a desktop browser for longer writing, organizing, and the one-time Google Keep import (Takeout export).
 - **Sync and analysis:** one container on the person's own machine (a home server, a NAS, a small VPS), reached over HTTPS through whatever they already use (a reverse proxy, a tunnel). The maintainer's runs on a Proxmox homelab behind a Cloudflare Tunnel. Link analysis runs on the server, so the Claude API key never ships in a client.
 - **Budget:** link analysis spends the person's own Claude API credits under a monthly budget they set, so every call must be lean.
 

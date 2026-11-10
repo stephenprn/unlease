@@ -20,14 +20,16 @@ import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 
 import { moveLink } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectServer, useSettingsStore } from '../../../app/store/settings';
-import { endTransfer, selectTransfers, showSnack, useUiStore } from '../../../app/store/ui';
-import { Emblem } from '../../components/Emblem';
-import { PebbleEdge } from '../../components/Outline';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
-import { overlayRoot } from '../../components/layers';
-import { navigate, paths } from '../../router';
+import { selectServer, useSettingsStore } from '@shared/app/store/settings';
+import { showSnack } from '@shared/app/store/ui';
+import { endTransfer, selectTransfers, useNotesUiStore } from '../../../app/store/notesUi';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { PebbleEdge } from '@shared/ui/components/Outline';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { overlayRoot } from '@shared/ui/components/layers';
+import { navigate } from '@shared/ui/router';
+import { paths } from '../../routes';
 import { MoveDialog } from '../lines/MoveDialog';
 import styles from './capture.module.css';
 
@@ -56,7 +58,7 @@ function useReducedMotion(): boolean {
 }
 
 export function TransferPanel() {
-  const transfers = useUiStore(selectTransfers);
+  const transfers = useNotesUiStore(selectTransfers);
   const current = transfers[transfers.length - 1];
   if (!current) return null;
   return createPortal(

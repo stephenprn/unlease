@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    alias: ['core', 'design', 'notes'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`../packages/${name}/src`, import.meta.url)) })),
+    alias: ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`../packages/${name}/src`, import.meta.url)) })),
   },
   test: {
     include: ['test/**/*.test.ts'],

@@ -17,7 +17,7 @@ import {
 
 import { setChecks } from './store/actions';
 import { useLibraryStore } from './store/libraryStore';
-import { selectCanRead, useSettingsStore } from './store/settingsStore';
+import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
 import { widgetPayload } from './widgetPayloads';
 
 /** Registered in index.js; the native side asks for the same names. */
@@ -73,7 +73,7 @@ async function publishOnce(): Promise<void> {
     send(widget.id, JSON.stringify(widgetPayload(widget.kind, widget.target, state, now)));
   }
   const settings = useSettingsStore.getState();
-  const shared = JSON.stringify({ reading: selectCanRead(settings), server: settings.server ? { url: settings.server.url, token: settings.server.token } : null });
+  const shared = JSON.stringify({ reading: selectCanRead(settings), server: settings.server ? { url: settings.server.url, token: settings.server.token } : null, locale: settings.locale });
   if (shared !== sharedSent) {
     sharedSent = shared;
     shareWithWidgets(shared);

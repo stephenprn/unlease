@@ -7,7 +7,7 @@
   min-height: 54px;
   padding: 0 4px 0 14px;
   border-radius: var(--cut-field);
-  background: var(--field);
+  background: var(--field-veil);
   box-shadow: inset 0 0 0 1.5px var(--edge);
   transition: box-shadow var(--duration-short) var(--ease-standard);
 }
@@ -20,6 +20,16 @@
 
 .field:focus-within {
   box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+/* What it holds is no link: the danger edge, focused or not, and the problem under it. */
+.field[data-invalid],
+.field[data-invalid]:focus-within {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+.problem {
+  margin: 8px 4px 0;
 }
 
 .field > svg {

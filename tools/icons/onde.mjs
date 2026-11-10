@@ -2,7 +2,7 @@
  * Onde: Carnet's own icons, drawn here as data on a 24 grid. One even line (GLYPH_STROKE) with round
  * ends; every straight line takes one soft wave, every frame swells a little like a cushion, large
  * circles breathe, dots follow the wave. Letters stay typographic. `build_glyphs.mjs` writes them to
- * packages/design/src/glyphs.ts as a line form (stroked path, filled path) and, for the eleven glyphs a
+ * packages/design/src/glyphs.ts as a line form (stroked path, filled path) and, for the twelve glyphs a
  * control shows selected, a solid form.
  */
 
@@ -262,6 +262,14 @@ const dots = list => Path.of(...list.map(([x, y, r = 1.5]) => circle(x, y, r)));
 const form = (stroke, fill = null) => ({ stroke: stroke ? S(...[].concat(stroke)).toString() : null, fill: fill ? S(...[].concat(fill)).toString() : null });
 
 // Shapes shared by several glyphs.
+/** A five-pointed star, its points rounded: a favourite. */
+const STAR = soft(
+  Array.from({ length: 10 }, (_, i) => {
+    const a = (-90 + i * 36) * (Math.PI / 180), r = i % 2 ? 4.4 : 9.2;
+    return [12 + r * Math.cos(a), 12.8 + r * Math.sin(a)];
+  }),
+  { r: 1.1 },
+);
 const MENU = [wave(4, 6.5, 20, 6.5, 0.75), wave(4, 12, 20, 12, 0.75), wave(4, 17.5, 14.6, 17.5, 0.75)];
 const BELL_WIDE = 'M4.2 16.8C5.6 16.6 6.2 15.6 6.2 14.2V11.4C6.2 7.8 8.7 5 12 5C15.3 5 17.8 7.8 17.8 11.4V14.2C17.8 15.6 18.4 16.6 19.8 16.8';
 const BELL_RIM = wave(4.2, 16.8, 19.8, 16.8, 0.55);
@@ -389,6 +397,8 @@ export const ICONS = {
   },
   // A die showing three: colours drawn at random.
   dice: { line: form(pillow(3.8, 3.8, 16.4, 16.4, 4.2, 0.5), dots([[8.3, 8.3, 1.5], [12, 12, 1.5], [15.7, 15.7, 1.5]])) },
+  // The suite's apps (the launcher at the header's end): nine dots, each a breath off its grid.
+  apps: { line: form(null, dots([[5.4, 5.6, 1.9], [12, 5.2, 1.9], [18.6, 5.6, 1.9], [5.2, 12, 1.9], [12, 12, 1.9], [18.8, 12, 1.9], [5.4, 18.4, 1.9], [12, 18.8, 1.9], [18.6, 18.4, 1.9]])) },
   grid: { line: form([pillow(3.8, 3.8, 7.2, 7.2, 1.8, 0.25), pillow(13, 3.8, 7.2, 7.2, 1.8, 0.25), pillow(3.8, 13, 7.2, 7.2, 1.8, 0.25), pillow(13, 13, 7.2, 7.2, 1.8, 0.25)]) },
   rows: { line: form([pillow(4, 4.6, 16, 5.6, 2.2, 0.45), pillow(4, 13.8, 16, 5.6, 2.2, 0.45)]) },
   sun: {
@@ -408,6 +418,10 @@ export const ICONS = {
   clock: { line: form([CIRCLE, 'M12 7.6V11.6C12 11.9 12.1 12.1 12.4 12.3L15.4 14.2']) },
   calendar: {
     line: form([pillow(3.6, 5, 16.8, 15.4, 3, 0.4), line(8, 3, 8, 6.6), line(16, 3, 16, 6.6), wave(3.8, 9.6, 20.2, 9.6, 0.4)], dots([[8.4, 13.4, 1.15], [12, 13.4, 1.15], [15.6, 13.4, 1.15], [8.4, 16.8, 1.15], [12, 16.8, 1.15]])),
+  },
+  // « Aujourd'hui »: the calendar's page holding one day, a large dot where the month has five.
+  today: {
+    line: form([pillow(3.6, 5, 16.8, 15.4, 3, 0.4), line(8, 3, 8, 6.6), line(16, 3, 16, 6.6), wave(3.8, 9.6, 20.2, 9.6, 0.4)], dots([[12, 15, 2.6]])),
   },
   mapPin: { line: form(['M12 21.2C12 21.2 4.8 15 4.8 9.6C4.8 5.6 8 2.6 12 2.6C16 2.6 19.2 5.6 19.2 9.6C19.2 15 12 21.2 12 21.2Z', circle(12, 9.6, 2.6)]) },
   bag: { line: form([pillow(3.8, 6.8, 16.4, 13.8, 3, 0.4), 'M8.6 9.8V7.2C8.6 5.2 10.1 3.6 12 3.6C13.9 3.6 15.4 5.2 15.4 7.2V9.8']) },
@@ -462,6 +476,11 @@ export const ICONS = {
   basket: { line: form([soft([[3.2, 10.4], [20.8, 10.4], [18.6, 19.8], [5.4, 19.8]], { r: 1.2, swell: 0.3 }), 'M6.4 10.4C6.8 6.8 9.2 4.8 12 4.8C14.8 4.8 17.2 6.8 17.6 10.4', line(9.6, 13.6, 10, 16.6), line(14.4, 13.6, 14, 16.6)]) },
   gamepad: { line: form(['M7.2 7.4H16.8C19.2 7.4 20.6 9 21 11.4L21.7 15.8C22 17.6 20.8 19 19.2 19C18.2 19 17.4 18.4 16.9 17.5L16.1 16H7.9L7.1 17.5C6.6 18.4 5.8 19 4.8 19C3.2 19 2 17.6 2.3 15.8L3 11.4C3.4 9 4.8 7.4 7.2 7.4Z', line(6.2, 11.8, 9.8, 11.8), line(8, 10, 8, 13.6)], dots([[15.6, 10.8, 1.15], [17.6, 12.8, 1.15]])) },
   pot: { line: form([pillow(4.2, 10.4, 15.6, 9.4, 3.2, 0.4), wave(2.6, 10.4, 21.4, 10.4, 0.4), bow(9.6, 7.4, 9.6, 3.6, 0.45), bow(14.4, 7.4, 14.4, 3.6, 0.45)]) },
+  // One person (a contact), and one with a plus (a new contact).
+  person: { line: form([circle(12, 8, 3.6), 'M4.8 20C4.8 15.8 8 13.2 12 13.2C16 13.2 19.2 15.8 19.2 20']) },
+  personPlus: { line: form([circle(9.4, 8.2, 3.3), 'M3.2 19.8C3.2 15.9 5.9 13.4 9.4 13.4C12.9 13.4 15.6 15.9 15.6 19.8', line(18.8, 8.2, 18.8, 14.2), line(15.8, 11.2, 21.8, 11.2)]) },
+  // A birthday: a cake, its icing, a candle and its flame.
+  cake: { line: form([pillow(3.8, 11.8, 16.4, 8.6, 2.4, 0.35), wave(4.2, 15.4, 19.8, 15.4, 0.45), line(12, 11.4, 12, 8.2)], 'M12 3.4C13.4 4.8 13.6 6 12 6.9C10.4 6 10.6 4.8 12 3.4Z') },
   people: { line: form([circle(9, 8, 3.1), 'M3.4 19.6C3.4 15.9 5.8 13.6 9 13.6C12.2 13.6 14.6 15.9 14.6 19.6', circle(16.4, 8.8, 2.5), 'M15.8 13.8C18.6 13.6 20.6 15.8 20.6 19.2']) },
   rewind: { line: form([soft([[11.6, 6.2], [11.6, 17.8], [3.4, 12]], { r: 1.1, swell: 0.2 }), soft([[20.6, 6.2], [20.6, 17.8], [12.4, 12]], { r: 1.1, swell: 0.2 })]) },
   bubble: { line: form([soft([[3.2, 4.6], [20.8, 4.6], [20.8, 16.2], [11.6, 16.2], [6.8, 20.2], [7.6, 16.2], [3.2, 16.2]], { r: 0.9, swell: 0.25 }), wave(7.4, 9, 16.6, 9, 0.3), wave(7.4, 12.2, 13.4, 12.2, 0.3)]) },
@@ -484,17 +503,7 @@ export const ICONS = {
   stamp: { line: form([circle(12, 6.2, 3.2), 'M10.2 8.8C10.6 9.8 10.6 11 10.2 12.4', 'M13.8 8.8C13.4 9.8 13.4 11 13.8 12.4', pillow(4.4, 12.4, 15.2, 4.8, 1.8, 0.3), wave(5.6, 20.2, 18.4, 20.2, 0.35)]) },
   sort: { line: form([wave(7.6, 4, 7.6, 19.2, 0.4), head(7.6, 19.6, 90), wave(16.4, 20, 16.4, 4.8, 0.4), head(16.4, 4.4, -90)]) },
   list: { line: form([wave(9.4, 6.6, 20.4, 6.6, 0.5), wave(9.4, 12, 20.4, 12, 0.5), wave(9.4, 17.4, 20.4, 17.4, 0.5)], dots([[5, 6.6, 1.45], [5, 12, 1.45], [5, 17.4, 1.45]])) },
-  star: {
-    line: form(
-      soft(
-        Array.from({ length: 10 }, (_, i) => {
-          const a = (-90 + i * 36) * (Math.PI / 180), r = i % 2 ? 4.4 : 9.2;
-          return [12 + r * Math.cos(a), 12.8 + r * Math.sin(a)];
-        }),
-        { r: 1.1 },
-      ),
-    ),
-  },
+  star: { line: form(STAR), solid: form(null, STAR) },
   inbox: { line: form([pillow(3.6, 4.4, 16.8, 15.6, 2.8, 0.35), 'M3.8 13.6H8C8.6 15.2 10.2 16.4 12 16.4C13.8 16.4 15.4 15.2 16 13.6H20.2']) },
   broom: {
     line: form([wave(20.6, 3.4, 13.4, 10.6, 0.35), 'M13.6 10.4C11.4 8.6 8.4 9 6.8 11L3.6 15C5.4 17.6 8.2 19.6 11.2 20.6L14.4 17C16.2 15 16 12.2 13.6 10.4Z', line(7.4, 16.4, 9.2, 14.2), line(10.6, 18.6, 12.1, 16.2)]),
@@ -619,5 +628,5 @@ export const ICONS = {
   },
 };
 
-/** The eleven glyphs a selected control shows filled. */
-export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pin', 'undo', 'info', 'sparkle', 'page'];
+/** The twelve glyphs a selected control shows filled (a favourite's star among them). */
+export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pin', 'undo', 'info', 'sparkle', 'page', 'star'];

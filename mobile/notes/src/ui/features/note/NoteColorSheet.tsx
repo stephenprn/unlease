@@ -4,6 +4,10 @@
  * behind the sheet as you pick. Each group fills the sheet's width in full rows (15 colours in
  * fives, 8 gradients and 8 papers in fours). A named swatch presses inside its own pebble, never as
  * a box around it and its name. The chosen ring fades in and the check pebble settles.
+ *
+ * Opened for several notes (the board's selection), it shows the colour and the paper they share,
+ * or none chosen where they differ (undefined), and a line under the title where notes and
+ * collections are mixed (a collection wears a pigment only).
  */
 import React, { memo } from 'react';
 import { StyleSheet } from 'react-native';
@@ -22,23 +26,26 @@ import {
   type NotePattern,
 } from '@unlease/design/colors';
 
-import { Sheet, SheetScroll } from '../../components';
-import { Swatch, SwatchGroup as Group, swatchCells, swatchTurn as turnIn } from '../../components/Swatch';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
+import { AppText, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { Swatch, SwatchGroup as Group, swatchCells, swatchTurn as turnIn } from '@shared/ui/components/Swatch';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 
 export interface NoteColorSheetProps {
   readonly visible: boolean;
-  readonly color: NoteColor | null;
-  readonly pattern: NotePattern | null;
+  /** Undefined: the notes it is opened for differ, none is chosen. */
+  readonly color: NoteColor | null | undefined;
+  readonly pattern: NotePattern | null | undefined;
   readonly onDismiss: () => void;
   readonly onColor: (color: NoteColor | null) => void;
   readonly onPattern: (pattern: NotePattern | null) => void;
+  /** A line under the title (what a mixed selection takes). */
+  readonly note?: string;
 }
 
 /** The paper tile is small: its ruled lines sit closer than a note's. */
 const TILE_RULE = { pitch: 11, offset: 14 };
 
-function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, onPattern }: NoteColorSheetProps) {
+function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, onPattern, note }: NoteColorSheetProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   // The colours carry no name under them: the chosen one is named beside the group's title.
@@ -46,6 +53,11 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={t('Couleur et papier')} tall>
       <SheetScroll contentContainerStyle={styles.body}>
+        {note ? (
+          <AppText variant="meta" color={theme.color.inkMuted} style={styles.note}>
+            {note}
+          </AppText>
+        ) : null}
         <Group title={t('Couleur')} chosen={colorName}>
           <Swatch
             label={t('Sans couleur')}
@@ -99,7 +111,7 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
                 name={name}
                 selected={key === pattern}
                 turn={turnIn(index + 1, 4)}
-                paint={{ ...noteBackdrop(theme.mode, color, key, TILE_RULE), borderWidth: 1, borderColor: theme.color.hairline }}
+                paint={{ ...noteBackdrop(theme.mode, color ?? null, key, TILE_RULE), borderWidth: 1, borderColor: theme.color.hairline }}
                 ring="focus"
                 cell={styles.quarter}
                 onPress={() => onPattern(key)}
@@ -114,7 +126,10 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
 
 const makeStyles = () =>
   StyleSheet.create({
-    body: { gap: 20, paddingHorizontal: 8, paddingBottom: 16 },
+    // The groups' heads on the sheet's column, under its title.
+    body: { gap: 20, paddingHorizontal: SHEET_INSET, paddingBottom: 16 },
+    // What the title says goes on in it: close under it, apart from the groups.
+    note: { marginTop: -6 },
     fifth: swatchCells.fifth,
     quarter: swatchCells.quarter,
   });

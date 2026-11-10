@@ -1,21 +1,18 @@
 /**
  * Drawing on the phone, in the real app: a stroke drawn on a note is kept as it is let go; the
  * eraser and « Tout effacer » take strokes away and undo brings them back; the docked tools pick an
- * ink and a size; the card shows the drawing; a page's drawing block opens its own screen, where what
- * is drawn goes into the page's undo too.
+ * ink, a size and the note's colour under it (« Fond »); the card shows the drawing (a page's drawing block is Pages': mobile/pages).
  */
 import React from 'react';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
 import { parseDrawing } from '@unlease/notes/services/drawing';
-import { closeDatabase, openDatabase } from '@data/db/database';
-import { writePreference } from '@data/repositories/stateRepository';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
+import { writePreference } from '@shared/data/repositories/stateRepository';
 import { resetBootstrap } from '@app/bootstrap';
 import { createNote, trashNotes } from '@app/store/actions';
 import { resetLibrary, useLibraryStore } from '@app/store/libraryStore';
-import { canUndo } from '@app/store/pageHistory';
-import { createPage, insertBlock } from '@app/store/pages';
 import { AppProviders } from '@app/providers/AppProviders';
 import { navigationRef } from '@ui/navigation/navigationRef';
 import type { RootStackParamList } from '@ui/navigation/types';
@@ -168,6 +165,17 @@ describe('a drawing note', () => {
     expect(pen).toMatchObject({ tool: 'pen', size: 1, ink: 'red' });
   });
 
+  it('offers no « Fond » of its own: it lies on the note’s colour, from « Couleur et papier »', async () => {
+    const tree = await boot();
+    let id = '';
+    await act(async () => {
+      id = createNote({ kind: 'drawing' });
+    });
+    await go('Note', { id });
+    await layOut(tree);
+    expect(labelled(tree, 'Fond : Papier')).toHaveLength(0);
+  });
+
   it('shows on its card, and in the bin it is read, never drawn on', async () => {
     const tree = await boot();
     let id = '';
@@ -189,33 +197,5 @@ describe('a drawing note', () => {
     expect(labelled(tree, 'Tout effacer')).toHaveLength(0);
     await stroke([[500, 500], [600, 600], [600, 600]]);
     expect(noteDrawing(id)).toHaveLength(1);
-  });
-});
-
-describe('a page’s drawing', () => {
-  it('invites a press, opens on its own screen, keeps what is drawn there in the page’s undo, and shows it in the page', async () => {
-    const tree = await boot();
-    let page = '';
-    let block = '';
-    await act(async () => {
-      page = createPage({ title: 'Croquis' });
-      block = insertBlock(page, page, 0, { kind: 'drawing' });
-    });
-    await go('Page', { id: page });
-    await press(tree, 'Touchez pour dessiner');
-    await act(async () => {
-      jest.advanceTimersByTime(400);
-    });
-    await layOut(tree);
-    expect(labelled(tree, 'Stylo').length).toBeGreaterThan(0);
-    await stroke([[100, 100], [500, 400], [500, 400]]);
-    expect(parseDrawing(useLibraryStore.getState().blocks[block]!.drawing)).toHaveLength(1);
-    expect(canUndo(page)).toBe(true);
-
-    await act(async () => {
-      navigationRef.goBack();
-      jest.advanceTimersByTime(400);
-    });
-    expect(labelled(tree, 'Modifier le dessin').length).toBeGreaterThan(0);
   });
 });

@@ -7,8 +7,8 @@ import { memo, useRef, type ReactNode } from 'react';
 
 import { t } from '@unlease/core/i18n';
 
-import { IconButton } from '../../components/IconButton';
-import { Icon } from '../../components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Icon } from '@shared/ui/components/Icon';
 import styles from './board.module.css';
 
 export interface ComposerStripProps {

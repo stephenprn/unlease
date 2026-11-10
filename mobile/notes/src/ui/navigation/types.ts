@@ -1,5 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import type { LinkKind } from '@unlease/notes/models/entities';
+
 import type { BoardView } from '@app/hooks/useBoard';
 
 export type RootStackParamList = {
@@ -12,20 +14,23 @@ export type RootStackParamList = {
   /** `reminder`: open the reminder sheet at once (a note started from the Rappels view). */
   Note: { id: string; focus?: 'title' | 'body' | 'check'; reminder?: boolean };
   Line: { id: string };
-  /** The pages' home: the other space, beside the notes' board. */
-  Pages: undefined;
-  /** `block`: opened at that block (a source Claude cited), scrolled to and lit a moment. */
-  Page: { id: string; block?: string };
   Link: { id: string };
   /** A recipe link's cook mode ("En cuisine"). */
   Cooking: { id: string };
-  /** A page's drawing block, drawn on the whole screen. */
-  Drawing: { page: string; block: string };
   Lines: undefined;
   Labels: undefined;
-  Settings: undefined;
-  Admin: undefined;
+  /** Réglages, or one of its sections, landed on from a search (`appearance`, `ground`, `data`…). */
+  Settings: { readonly section?: string } | undefined;
+  /** The Administration's home, or one of its sections (`server`, `reading`, `seerr`…). */
+  Admin: { readonly section?: string } | undefined;
   Import: undefined;
+  /** « Modèles de fiche »: what Claude reads on each kind of link, and the person's own templates. */
+  Templates: undefined;
+  /**
+   * A template's editor: a kind's (`kind`), one of the person's own (`id`), or a new one (neither);
+   * `collection`: a new one made from that collection's menu, chosen for it once saved.
+   */
+  Template: { readonly id?: string; readonly kind?: LinkKind; readonly collection?: string } | undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

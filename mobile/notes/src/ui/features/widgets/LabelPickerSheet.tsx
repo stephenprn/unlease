@@ -4,11 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
+import { labelKey } from '@unlease/notes/models/entities';
 import { createLabel } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Button, Icon, LabelTag, ListRow, Sheet, SheetScroll, TextField } from '../../components';
-import { useTheme } from '../../theme/ThemeProvider';
+import { AppText, Icon, LabelTag, ListRow, NewItemField, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 export interface LabelPickerSheetProps {
   readonly visible: boolean;
@@ -43,7 +44,9 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
     const trimmed = name.trim();
     if (!trimmed) return;
     setName('');
-    pick(createLabel(trimmed));
+    // A name already worn picks that label rather than making a twin.
+    const worn = Object.values(labels).find(label => !!label && label.deletedAt === null && labelKey(label.name) === labelKey(trimmed));
+    pick(worn ? worn.id : createLabel(trimmed));
   };
 
   return (
@@ -64,7 +67,7 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
               supporting={plural(counts.get(id) ?? 0, 'note')}
               leading={
                 <View style={styles.tag}>
-                  <LabelTag color={label.color} size={26} />
+                  <LabelTag color={label.color} size={24} />
                 </View>
               }
               trailing={id === current ? <Icon name="check" size={22} color={theme.color.focus} /> : undefined}
@@ -72,12 +75,8 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
             />
           );
         })}
-        <View style={styles.create}>
-          <View style={styles.flex}>
-            <TextField value={name} onChangeText={setName} placeholder={t('Nouveau label')} returnKeyType="done" onSubmitEditing={create} maxLength={60} accessibilityLabel={t('Nom du nouveau label')} />
-          </View>
-          <Button kind="tonal" label={t('Créer')} icon="plus" disabled={!name.trim()} onPress={create} />
-        </View>
+        {/* On the rows' columns, its ✓ inside it: the field and its action one height. */}
+        <NewItemField value={name} onChangeText={setName} onSubmit={create} placeholder={t('Nouveau label')} accessibilityLabel={t('Nom du nouveau label')} submitLabel={t('Créer')} maxLength={60} icon="tag" style={styles.create} />
       </SheetScroll>
     </Sheet>
   );
@@ -85,8 +84,9 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
 
 const styles = StyleSheet.create({
   body: { paddingBottom: 8 },
-  empty: { marginHorizontal: 8, marginBottom: 8 },
-  tag: { width: 34, alignItems: 'center' },
-  create: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, marginHorizontal: 8 },
-  flex: { flex: 1 },
+  // On the sheet's column, under its title.
+  empty: { marginHorizontal: SHEET_INSET, marginBottom: 8 },
+  // The tag in the rows' 24 slot, so the names start on the rows' words.
+  tag: { width: 24, alignItems: 'center' },
+  create: { marginTop: 8 },
 });

@@ -5,10 +5,62 @@
  */
 import { recordTypeSpec } from './schema';
 
-/** The fields merged instead of overwritten: those a type declares `merged` (long text the person types, drawings stroke by stroke). */
+/** The fields merged instead of overwritten: those a type declares `merged` (long text the person types, drawings stroke by stroke, lists merged as sets). */
 export function isMergedTextField(type: string, field: string): boolean {
   const merged = recordTypeSpec(type)?.merged;
   return merged !== undefined && Object.hasOwn(merged, field);
+}
+
+/** A merged field kept as a list of strings, merged as a set (`MergedField.set`). */
+export function isMergedSetField(type: string, field: string): boolean {
+  const merged = recordTypeSpec(type)?.merged;
+  return merged !== undefined && Object.hasOwn(merged, field) && merged[field]?.set === true;
+}
+
+const isList = (value: unknown): value is string[] => Array.isArray(value) && value.every(entry => typeof entry === 'string');
+
+/** A value a merged field can be merged from: a text, or a list of strings for a set. */
+export function isMergeable(type: string, field: string, value: unknown): boolean {
+  return isMergedSetField(type, field) ? isList(value) : typeof value === 'string';
+}
+
+/** A merged field's value as a base keeps it: the text (empty when there was none), or the list (a copy). */
+export function mergeableValue(type: string, field: string, value: unknown): string | string[] {
+  if (isMergedSetField(type, field)) return isList(value) ? [...value] : [];
+  return typeof value === 'string' ? value : '';
+}
+
+/** Two values of a field, alike (lists compared entry by entry). */
+export function sameMerged(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  return a.every((entry, at) => entry === b[at]);
+}
+
+/**
+ * Two versions of a list from a common `base`, as sets: an entry both keep stays, an entry either
+ * side added comes in, an entry either side removed goes. Sorted, so whoever merges writes the
+ * same list. Past `limit` entries the newer side is kept whole (`oursFirst`: ours is the older).
+ */
+export function mergeSets(base: readonly string[], ours: readonly string[], theirs: readonly string[], oursFirst: boolean, limit = Infinity): string[] {
+  const before = new Set(base);
+  const mine = new Set(ours);
+  const other = new Set(theirs);
+  const out = new Set<string>();
+  for (const entry of [...ours, ...theirs]) {
+    if (!before.has(entry) || (mine.has(entry) && other.has(entry))) out.add(entry);
+  }
+  const merged = [...out].sort();
+  return merged.length > limit ? [...(oursFirst ? theirs : ours)] : merged;
+}
+
+/** `mergeField` for any merged field: a text word by word (or its type's own merge), a set entry by entry. */
+export function mergeValues(type: string, field: string, base: unknown, ours: unknown, theirs: unknown, oursFirst: boolean): string | string[] {
+  if (isMergedSetField(type, field)) {
+    const limit = recordTypeSpec(type)?.merged?.[field]?.limit ?? Infinity;
+    return mergeSets(mergeableValue(type, field, base) as string[], mergeableValue(type, field, ours) as string[], mergeableValue(type, field, theirs) as string[], oursFirst, limit);
+  }
+  return mergeField(type, field, mergeableValue(type, field, base) as string, mergeableValue(type, field, ours) as string, mergeableValue(type, field, theirs) as string, oursFirst);
 }
 
 /** Words: whitespace runs, runs of anything else but ASCII punctuation (words, accents, emoji), single punctuation marks. */

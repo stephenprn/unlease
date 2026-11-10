@@ -10,10 +10,10 @@
 server/dist
 server/data
 server/.env
-web/*/dist
-web/*/dist-demo
-web/*/test-results
-web/*/test-output
+web/dist
+web/dist-demo
+web/test-results
+web/test-output
 **/__tests__
 **/*.test.ts
 **/*.test.tsx

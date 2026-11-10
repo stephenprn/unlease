@@ -36,6 +36,7 @@ export class RecordStore {
   private readonly bump: StatementSync;
   private readonly current: StatementSync;
   private readonly after: StatementSync;
+  private readonly afterOfTypes: StatementSync;
   private readonly byType: StatementSync;
   private readonly everything: StatementSync;
   private readonly someLive: StatementSync;
@@ -49,6 +50,8 @@ export class RecordStore {
     this.bump = db.prepare("UPDATE meta SET value = value + 1 WHERE key = 'seq' RETURNING value");
     this.current = db.prepare("SELECT value FROM meta WHERE key = 'seq'");
     this.after = db.prepare('SELECT type, id, fields, clocks, seq FROM records WHERE seq > ? ORDER BY seq LIMIT ?');
+    // Walks the sequence's index as `after` does, skipping the other types: one statement whatever the list.
+    this.afterOfTypes = db.prepare('SELECT type, id, fields, clocks, seq FROM records WHERE seq > ? AND type IN (SELECT value FROM json_each(?)) ORDER BY seq LIMIT ?');
     this.byType = db.prepare('SELECT type, id, fields, clocks, seq FROM records WHERE type = ?');
     this.everything = db.prepare('SELECT type, id, fields, clocks, seq FROM records ORDER BY seq');
     this.someLive = db.prepare(`SELECT type, id FROM records WHERE json_extract(fields, '$.deletedAt') IS NULL LIMIT ?`);
@@ -71,8 +74,10 @@ export class RecordStore {
     return seq;
   }
 
-  since(since: number, limit: number): StoredRecord[] {
-    return (this.after.all(since, limit) as unknown as Row[]).map(fromRow);
+  /** Records stored after `since`, in order, at most `limit`; only those of `types` when given. */
+  since(since: number, limit: number, types?: readonly string[]): StoredRecord[] {
+    const rows = types ? this.afterOfTypes.all(since, JSON.stringify(types), limit) : this.after.all(since, limit);
+    return (rows as unknown as Row[]).map(fromRow);
   }
 
   ofType(type: string): StoredRecord[] {

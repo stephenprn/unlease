@@ -238,6 +238,10 @@ describe('Seerr', () => {
     server.close();
     server = createTestServer({ seerrFetch: (async () => new Response('<html>', { status: 200, headers: { 'content-type': 'text/html' } })) as typeof fetch });
     expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'Cette adresse ne répond pas comme un serveur Seerr' } });
+    // Another service refusing the status Seerr gives anyone: not Seerr, never « Clé API refusée » (no key was sent).
+    server.close();
+    server = createTestServer({ seerrFetch: (async () => Response.json({ error: 'Jeton manquant' }, { status: 401 })) as typeof fetch });
+    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'Cette adresse ne répond pas comme un serveur Seerr' } });
   });
 
   it('finds the film in Seerr with its key, its year telling namesakes apart, else gives Seerr’s search', async () => {

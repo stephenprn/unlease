@@ -1,5 +1,5 @@
 /** English for the server’s own messages the apps show (sync, files, settings, backups, Claude’s answers). Keys are the French exactly as written in `t()` / `tx()`, single-quoted, one per line. */
-import { SUITE_NAME, SUITE_SLUG } from '../../apps';
+import { APPS, READY_APPS, SUITE_NAME, SUITE_SLUG } from '../../apps';
 import type { Dictionary } from '..';
 
 export const EN_SERVER: Dictionary = {
@@ -16,8 +16,13 @@ export const EN_SERVER: Dictionary = {
   'Sauvegarde inconnue': 'Unknown backup',
   'Archive trop grosse pour être envoyée d’ici : restaurez-la depuis le web ou depuis S3': 'Archive too big to send from here: restore it from the web or from S3',
   'Archive vide': 'Empty archive',
+  // The routes of an app turned off in the Administration.
+  ...Object.fromEntries(READY_APPS.map(id => [`${APPS[id].name} n’est pas activé sur ce serveur`, `${APPS[id].name} is not turned on on this server`])),
+  'Ce lien n’est pas encore arrivé sur le serveur : réessayez dans un instant': 'This link has not reached the server yet: try again in a moment',
 
   // Settings and their checks
+  'Application inconnue ou pas encore disponible': 'Unknown app, or not available yet',
+  'Gardez au moins une application': 'Keep at least one app',
   'Ce jeton est en lecture seule : il faut la lecture et l’écriture': 'This token is read-only: it needs read and write access',
   'Cette adresse ne répond pas comme un serveur Seafile': 'This address does not answer like a Seafile server',
   'Modèle inconnu': 'Unknown model',
@@ -30,7 +35,8 @@ export const EN_SERVER: Dictionary = {
   'Clé d’accès invalide': 'Invalid access key',
   'Clé secrète invalide': 'Invalid secret key',
   'Fréquence inconnue': 'Unknown frequency',
-  'Nombre de sauvegardes invalide': 'Invalid number of backups',
+  'Durée de conservation invalide': 'Invalid number of days to keep',
+  'Classe de stockage inconnue': 'Unknown storage class',
   'Clé secrète manquante': 'Secret key missing',
   'Renseignez l’adresse du service, la région, le bucket et la clé d’accès': 'Fill in the service address, the region, the bucket and the access key',
   'Renseignez d’abord le stockage S3': 'Set up the S3 storage first',
@@ -46,6 +52,8 @@ export const EN_SERVER: Dictionary = {
   // S3
   'Stockage S3 injoignable': 'S3 storage unreachable',
   'Bucket introuvable': 'Bucket not found',
+  'Ce stockage ne propose pas cette classe': 'This storage does not offer this class',
+  'Cette sauvegarde est dans Glacier : sa sortie est demandée, réessayez dans quelques heures': 'This backup is in Glacier: it has been asked out, try again in a few hours',
   'Clés refusées par S3': 'Keys refused by S3',
   'Mauvaise région pour ce bucket': 'Wrong region for this bucket',
   'Accès refusé par S3 : vérifiez les droits de la clé': 'Access denied by S3: check the key’s permissions',

@@ -1,7 +1,8 @@
 /**
  * A drawing note's sheet in its editor: the canvas edge to edge under the title, on the note's wash
  * and paper, and its tools docked at the sheet's foot above the editor's own bar, where they stay
- * while a tall drawing scrolls under them. Each stroke is saved as it is drawn or erased.
+ * while a tall drawing scrolls under them. Each stroke is saved as it is drawn or erased. Its
+ * background is the note's colour, from « Couleur et papier » in the editor's bar.
  */
 import { useCallback } from 'react';
 

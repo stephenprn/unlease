@@ -24,11 +24,12 @@ import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { addCheck, deleteCheck, moveCheck, saveTypedText, toggleCheck } from '../../../app/store/actions';
 import { mergeIntoPrevious, pasteLines, splitCheck, splitPastedLines } from '../../../app/store/editing';
 import { useLibraryStore } from '../../../app/store/library';
-import { showUndo } from '../../../app/store/ui';
-import { onBeforePause } from '../../../app/sync/loop';
-import { Checkbox } from '../../components/Checkbox';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
+import { useNoteHistoryContext } from '../../../app/hooks/useNoteHistory';
+import { showUndo } from '@shared/app/store/ui';
+import { onBeforePause } from '@shared/app/sync/loop';
+import { Checkbox } from '@shared/ui/components/Checkbox';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
 import styles from './editor.module.css';
 import { useAutoGrow } from './useAutoGrow';
 import { useKeptCaret } from './useKeptCaret';
@@ -379,6 +380,17 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
       }),
     [save],
   );
+  // The note's « Annuler » and « Rétablir »: a key tells it of typing, and what is typed is saved before a step is taken.
+  const history = useNoteHistoryContext();
+  const keystroke = history?.keystroke;
+  const onFlush = history?.onFlush;
+  useEffect(
+    () =>
+      onFlush?.(() => {
+        if (from.current !== null && field.current) save(field.current.value.replace(/\r?\n/g, ' '));
+      }),
+    [onFlush, save],
+  );
 
   const setRef = useCallback(
     (element: HTMLTextAreaElement | null) => {
@@ -440,6 +452,7 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
         aria-label={t('Texte de l’élément')}
         onChange={event => {
           const text = event.target.value.replace(/\r?\n/g, ' ');
+          keystroke?.();
           // The ref, not the rendered draft: a keystroke can come before the render that follows a save.
           if (from.current === null) from.current = useLibraryStore.getState().checks[id]?.text ?? '';
           setDraft(text);

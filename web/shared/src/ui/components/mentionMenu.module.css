@@ -1,0 +1,109 @@
+/* « @ »'s menu by the caret (`MentionMenu`): the menu's paper (Floating), rows as Pages' « / » and « @ » menus draw them. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - 16px));
+  max-height: min(400px, 56vh);
+  padding: 6px;
+}
+
+/* Its rows a little apart, so the one chosen never runs into the next. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* A kind's head: 12 above it and 4 under it, the list's gap counted. */
+.section {
+  padding: calc(12px - var(--row-gap)) 10px 0;
+  color: var(--ink-muted);
+}
+
+.section:first-child {
+  padding-top: 6px;
+}
+
+/* One line a row: the glyph, the name, then what tells it apart in the second ink. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row[data-active] {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+@media (pointer: coarse) {
+  .row {
+    min-height: 44px;
+  }
+}
+
+.icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-muted);
+}
+
+.row[data-active] .icon {
+  color: var(--ink);
+}
+
+/* A page's emoji in the glyph's place, as wide. */
+.emoji {
+  flex: none;
+  width: 20px;
+  font-size: 18px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.text {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--ink-muted);
+}

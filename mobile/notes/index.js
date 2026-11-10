@@ -15,6 +15,7 @@ import { handleBackgroundEvent } from './src/app/backgroundEvents';
 import { QuickProviders } from './src/app/providers/QuickProviders';
 import { QUICK_WINDOW, WIDGET_TASK } from './src/app/widgets';
 import { runWidgetTask } from './src/app/widgetTask';
+import { runRemindersTask } from './src/app/remindersTask';
 
 // The design system's and Carnet's English, for every root below.
 addNotesEnglish();
@@ -26,3 +27,5 @@ AppRegistry.registerComponent(appName, () => App);
 // The quick window over the home screen, and a tick on a note widget written with the app closed.
 AppRegistry.registerComponent(QUICK_WINDOW, () => QuickProviders);
 AppRegistry.registerHeadlessTask(WIDGET_TASK, () => runWidgetTask);
+// The reminders seen to with the app closed (mobile/shared/android/src/reminders, RemindersRefresh).
+AppRegistry.registerHeadlessTask('remindersTask', () => runRemindersTask);

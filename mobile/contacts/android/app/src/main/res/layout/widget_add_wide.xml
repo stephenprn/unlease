@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nouveau contact, wider: a strip that says it, and the capture pebble at its end. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/add_strip"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/wgen_bar_field"
+        android:contentDescription="@string/widget_new_contact"
+        android:foreground="@drawable/wgen_fg_strip">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="6dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wgen_g_person_plus" />
+
+            <!-- In Signika (WidgetType); the text view is its plain twin, and what the picker's preview shows. -->
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/add_hint_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/add_hint"
+                    style="@style/WidgetText.Hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1"
+                    android:text="@string/widget_new_contact" />
+            </FrameLayout>
+
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="40dp"
+                android:background="@drawable/wgen_capture_1"
+                android:duplicateParentState="true"
+                android:importantForAccessibility="no"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/wgen_g_plus_on_leaf" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

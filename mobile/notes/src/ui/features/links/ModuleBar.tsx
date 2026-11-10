@@ -3,22 +3,27 @@
  * under its title, each only where it fits the link and works here. Most open a sheet, which the
  * screen mounts at its root (`ModuleSheets`); "En cuisine" opens the cook mode, "Y aller" Google
  * Maps, "SensCritique" its search, "Seerr" the title in it (with its state when Seerr says);
- * "Garder une copie" makes a page (then "Voir la copie" opens it); "Pour N personnes" is a stepper
- * in the bar itself. The web's `ModuleBar`.
+ * "Garder une copie" has the server make a page in Pages (then "Voir la copie" opens it, in Pages
+ * when it is installed, else on the web); "Ajouter à l’agenda" has Claude read its date and opens
+ * Agenda's new event with it (Agenda's app, else its web app); "Pour N personnes" is a stepper in the bar itself. The
+ * web's `ModuleBar`.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Keyboard, Linking, StyleSheet, View } from 'react-native';
 
+import { APPS } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
 import type { LinkItem } from '@unlease/notes/models/entities';
 import { MODULE_ICONS, MODULE_NAMES, type LinkModule } from '@unlease/notes/models/modules';
-import { copyOf, directionsUrl, linkModules, seerrSearchUrl, sensCritiqueUrl } from '@unlease/notes/services/modules';
+import { directionsUrl, linkModules, seerrSearchUrl, sensCritiqueUrl } from '@unlease/notes/services/modules';
 import { SEERR_STATUS_WORDS } from '@unlease/notes/services/works';
 import type { SeerrResponse } from '@unlease/notes/sync/seerr';
-import { keepCopy, lookUpSeerr, runningCopy } from '@app/modules';
+import { agendaQuery, keepCopy, lookUpSeerr, runningCopy } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectCanRead, selectSeerr, selectSeerrUrl, selectServer, useSettingsStore } from '@app/store/settingsStore';
-import { showSnack } from '@app/store/uiStore';
+import { selectSeerrUrl, useSettingsStore } from '@shared/app/store/settingsStore';
+import { newEventPlace, openInApp, pagePlace } from '@shared/app/openApp';
+import { useModuleAbilities } from '@app/hooks/useModuleAbilities';
+import { showSnack } from '@shared/app/store/uiStore';
 
 import { Button } from '../../components';
 import { navigate } from '../../navigation/navigationRef';
@@ -42,15 +47,14 @@ const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impo
 export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetModule) => void }) {
   const link = useLibraryStore(s => s.links[id]);
   const line = useLibraryStore(s => (link ? s.notes[link.noteId] : undefined));
-  const blocks = useLibraryStore(s => s.blocks);
-  const blocksByParent = useLibraryStore(s => s.blocksByParent);
-  const server = useSettingsStore(selectServer);
-  const reading = useSettingsStore(selectCanRead);
-  const seerr = useSettingsStore(selectSeerr);
+  const can = useModuleAbilities();
   const [copying, setCopying] = useState(() => runningCopy(id) !== null);
-  const modules = link ? linkModules(link, line, { server: server !== null, reading, seerr }) : [];
-  const archive = modules.includes('archive');
-  const copy = useMemo(() => (archive ? copyOf(id, blocks, blocksByParent) : null), [archive, id, blocks, blocksByParent]);
+  const [dating, setDating] = useState(false);
+  // The page made a moment ago, until the link's `copy` syncs back.
+  const [made, setMade] = useState<string | null>(null);
+  // « Suivi des prix » is no button: it speaks under the price (`PriceWatch`).
+  const modules = link ? linkModules(link, line, can).filter(module => module !== 'pricewatch') : [];
+  const copy = link?.copy ?? made;
   // Opened again while its copy is being made: busy until that copy is done (a press joins it).
   useEffect(() => {
     const running = runningCopy(id);
@@ -67,13 +71,27 @@ export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetMo
     setCopying(true);
     keepCopy(id)
       .then(
-        page => showSnack(t('Copie gardée dans Pages'), { label: t('Ouvrir'), run: () => navigate('Page', { id: page }) }, { tone: 'success' }),
+        page => {
+          setMade(page);
+          showSnack(t('Copie gardée dans {app}', { app: APPS.pages.name }), { label: t('Ouvrir'), run: () => void openInApp('pages', pagePlace(page)) }, { tone: 'success' });
+        },
         (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('erreur inconnue'), undefined, { tone: 'error' }),
       )
       .finally(() => setCopying(false));
   };
 
+  const toAgenda = () => {
+    setDating(true);
+    agendaQuery(id)
+      .then(
+        query => void openInApp('calendar', newEventPlace(query)),
+        (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('erreur inconnue'), undefined, { tone: 'error' }),
+      )
+      .finally(() => setDating(false));
+  };
+
   const button = (module: LinkModule) => {
+    if (module === 'pricewatch') return null;
     const label = MODULE_NAMES[module];
     const icon = MODULE_ICONS[module];
     if (module === 'servings') return <ServingsStepper key={module} id={id} inBar />;
@@ -82,9 +100,10 @@ export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetMo
       const url = module === 'directions' ? directionsUrl(link) : sensCritiqueUrl(link);
       return url ? <Button key={module} kind="tonal" small label={label} icon={icon} onPress={() => open(url)} /> : null;
     }
+    if (module === 'agenda') return <Button key={module} kind="tonal" small label={label} icon={icon} busy={dating} onPress={toAgenda} />;
     if (module === 'archive') {
       return copy ? (
-        <Button key={module} kind="tonal" small label={t('Voir la copie')} icon="page" onPress={() => navigate('Page', { id: copy })} />
+        <Button key={module} kind="tonal" small label={t('Voir la copie')} icon="page" onPress={() => void openInApp('pages', pagePlace(copy))} />
       ) : (
         <Button key={module} kind="tonal" small label={label} icon={icon} busy={copying} onPress={keep} />
       );

@@ -19,19 +19,22 @@ import { shownTitle } from '@unlease/notes/models/entities';
 import { cardBody, cardInnerWidth, COLLECTION_CARD, drawingCardHeight, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { bodyText, noteCardLines } from '@unlease/notes/services/noteBody';
+import { mentionsVersion } from '@unlease/notes/services/noteMentions';
 import { formatPrice, formatReminder, plural, totalPrice } from '@unlease/core/services/format';
 import { matchRanges } from '@unlease/core/services/search';
-import { useBlobSource } from '@app/hooks/useImageSource';
+import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
 import { AnimatedOrganic, AppText, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
-import { decelerate, duration, listPressDelay, standard } from '../../theme/motion';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { decelerate, duration, listPressDelay, standard } from '@shared/ui/theme/motion';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import { DrawingPreview } from '../drawing/DrawingPreview';
 import { CardNoteText } from '../note/noteText';
 import { shapeOf } from './wallLayout';
+import { CardFaces } from '../people/PeopleChips';
+import { peopleNames } from '@unlease/notes/services/noteMentions';
 
 /** Picked: the ring is laid on and the tick pebble is pinned over the corner; let go, both lift off. */
 const RING_IN = FadeIn.duration(duration.short).easing(standard);
@@ -74,13 +77,25 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
     useShallow(s => {
       const shape = shapeOf(s, id);
       const layout = shape ? layoutCard(shape, metrics) : null;
-      return { title: layout?.title ?? 0, body: layout?.body ?? 0 };
+      return { title: layout?.title ?? 0, body: layout?.body ?? 0, footer: shape?.hasFooter ?? false };
     }),
   );
   // Read out with the card (TalkBack reads its label alone), so a footer showing only the tags loses no name.
   const labelNames = useLibraryStore(
     useShallow(s => (s.notes[id]?.labelIds ?? []).map(lid => s.labels[lid]).flatMap(label => (label && label.deletedAt === null ? [label.name] : []))),
   );
+  // The people it names, read out with the card as its faces show them.
+  const people = useLibraryStore(useShallow(s => peopleNames(s.notes[id]?.contactIds ?? [])));
+  // A formatted body mentioning people draws again when they change (a rename): only those cards follow Contacts' records.
+  useLibraryStore(s => {
+    const own = s.notes[id];
+    return own?.rich && own.body.includes('{@') ? s.people.contacts : null;
+  });
+  // And when the events it mentions change.
+  useLibraryStore(s => {
+    const own = s.notes[id];
+    return own?.rich && own.body.includes('{@event=') ? s.agenda.events : null;
+  });
   // The card's outline, the same for every card: every layer is drawn in it (`Organic`).
   const outline = 'card';
   if (!note) return null;
@@ -108,7 +123,7 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
           unstable_pressDelay={listPressDelay}
           onPress={() => onPress(id)}
           onLongPress={() => onLongPress(id)}
-          accessibilityLabel={labelNames.length > 0 ? `${named}, ${labelNames.length > 1 ? 'labels' : 'label'} ${labelNames.join(', ')}` : named}
+          accessibilityLabel={[named, labelNames.length > 0 ? `${labelNames.length > 1 ? 'labels' : 'label'} ${labelNames.join(', ')}` : '', people.length > 0 ? t('Personnes : {names}', { names: people.join(', ') }) : ''].filter(Boolean).join(', ')}
           accessibilityState={{ selected }}
         >
           {!collection ? <CardPhoto noteId={id} width={width} height={photo} /> : null}
@@ -122,17 +137,17 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
               </AppText>
             ) : null}
             {lines.body > 0 && formatted && formatted.length > 0 ? (
-              <CardNoteText lines={formatted} cut={lines.body} query={query} width={cardInnerWidth(metrics)} size={metrics.fontSize} />
+              <CardNoteText lines={formatted} cut={lines.body} query={query} width={cardInnerWidth(metrics)} size={metrics.fontSize} names={mentionsVersion()} />
             ) : lines.body > 0 && body ? (
               <AppText variant="cardBody" numberOfLines={lines.body} textBreakStrategy="simple" highlight={matchRanges(body, query)}>
                 {body}
               </AppText>
             ) : null}
-            {note.kind === 'checklist' ? <CardChecklist noteId={id} row={metrics.checkRow} /> : null}
+            {note.kind === 'checklist' ? <CardChecklist noteId={id} row={metrics.checkRow} query={query} /> : null}
             {collection ? <LineSummary noteId={id} metrics={metrics} /> : null}
           </View>
-          {note.labelIds.length > 0 || note.reminderAt !== null ? (
-            <CardFooter labelIds={note.labelIds} reminderAt={note.reminderAt} height={metrics.footer} names={footerShowsLabelNames(metrics, note.reminderAt !== null)} />
+          {lines.footer ? (
+            <CardFooter labelIds={note.labelIds} reminderAt={note.reminderAt} contactIds={note.contactIds} height={metrics.footer} names={footerShowsLabelNames(metrics, note.reminderAt !== null)} />
           ) : null}
         </Tappable>
       </Organic>
@@ -169,8 +184,8 @@ const CardPhoto = memo(function CardPhotoView({ noteId, width, height }: { noteI
   );
 });
 
-/** `row` is the wall's own row height, so the list takes exactly the room it was given. */
-const CardChecklist = memo(function CardChecklistView({ noteId, row }: { noteId: string; row: number }) {
+/** `row` is the wall's own row height, so the list takes exactly the room it was given; a search's words lie on peach in its items too, as on the web. */
+const CardChecklist = memo(function CardChecklistView({ noteId, row, query }: { noteId: string; row: number; query: string }) {
   const theme = useTheme();
   const { open, checked } = useLibraryStore(
     useShallow(s => {
@@ -192,7 +207,7 @@ const CardChecklist = memo(function CardChecklistView({ noteId, row }: { noteId:
       {rows.map((text, index) => (
         <View key={index} style={[checklistStyles.row, { height: row }]}>
           <Icon name="box" size={16} color={theme.color.inkMuted} />
-          <AppText variant="cardBody" numberOfLines={1} style={checklistStyles.text}>
+          <AppText variant="cardBody" numberOfLines={1} style={checklistStyles.text} highlight={matchRanges(text, query)}>
             {text}
           </AppText>
         </View>
@@ -224,13 +239,13 @@ const LineHeader = memo(function LineHeaderView({ noteId, title, lines, query }:
 
 const LineSummary = memo(function LineSummaryView({ noteId, metrics }: { noteId: string; metrics: WallMetrics }) {
   const theme = useTheme();
-  const { thumbs, count, total } = useLibraryStore(
+  const { thumbs, count, done, total } = useLibraryStore(
     useShallow(s => {
       const ids = s.linksByNote[noteId] ?? [];
       const open = ids.map(lid => s.links[lid]).filter(link => !!link && !link.done);
       const images = open.filter(link => link!.imageIds.length > 0).slice(0, THUMBS_PER_STRIP).map(link => link!.imageIds[0]!);
       const sum = totalPrice(open.map(link => ({ price: link!.price, currency: link!.currency })));
-      return { thumbs: images.join(','), count: open.length, total: sum ? formatPrice(sum.amount, sum.currency) : '' };
+      return { thumbs: images.join(','), count: open.length, done: ids.filter(lid => s.links[lid]?.done).length, total: sum ? formatPrice(sum.amount, sum.currency) : '' };
     }),
   );
   const size = thumbSize(metrics);
@@ -243,8 +258,9 @@ const LineSummary = memo(function LineSummaryView({ noteId, metrics }: { noteId:
           ))}
         </View>
       ) : null}
+      {/* What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading). */}
       <AppText variant="meta" numberOfLines={1} color={theme.color.inkMuted}>
-        {total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}
+        {count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}
       </AppText>
     </View>
   );
@@ -262,7 +278,7 @@ const Thumb = memo(function ThumbView({ blobId, size, index }: { blobId: string;
 });
 
 /** `names`: false on a narrow card with a reminder, where a name would be cut to a letter: the tags stand alone. */
-const CardFooter = memo(function CardFooterView({ labelIds, reminderAt, height, names }: { labelIds: readonly string[]; reminderAt: number | null; height: number; names: boolean }) {
+const CardFooter = memo(function CardFooterView({ labelIds, reminderAt, contactIds, height, names }: { labelIds: readonly string[]; reminderAt: number | null; contactIds: readonly string[]; height: number; names: boolean }) {
   const theme = useTheme();
   const labels = useLibraryStore(useShallow(s => labelIds.map(lid => s.labels[lid]).filter(l => !!l && l.deletedAt === null)));
   return (
@@ -278,6 +294,7 @@ const CardFooter = memo(function CardFooterView({ labelIds, reminderAt, height, 
       {labels.slice(0, 3).map(label =>
         names ? <LabelMark key={label!.id} name={label!.name} color={label!.color} /> : <LabelTag key={label!.id} color={label!.color} />,
       )}
+      <CardFaces ids={contactIds} named={reminderAt === null && labels.length === 0} />
     </View>
   );
 });

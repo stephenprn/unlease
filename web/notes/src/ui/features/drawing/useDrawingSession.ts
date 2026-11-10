@@ -10,8 +10,8 @@ import { t } from '@unlease/core/i18n';
 import { DRAWING_LIMITS, type Stroke } from '@unlease/notes/models/drawing';
 import { serializeStrokes } from '@unlease/notes/services/drawing';
 
-import { showWarning } from '../../../app/store/ui';
-import { isEditable } from '../../dom';
+import { showWarning } from '@shared/app/store/ui';
+import { isEditable } from '@shared/ui/dom';
 import { changeStrokes, idsOf, rememberStrokes, strokesOf, textWithStroke, type DrawingStep } from './strokes';
 
 /** How many gestures the session can take back. */

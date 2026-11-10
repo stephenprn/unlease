@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Classer un lien: the app's add-link strip, a field on the home screen; a tap opens the field itself. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 

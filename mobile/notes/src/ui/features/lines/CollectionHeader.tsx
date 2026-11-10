@@ -14,7 +14,7 @@ import { t } from '@unlease/core/i18n';
 import type { LineColor } from '@unlease/design/colors';
 
 import { AppText, EmblemStone, IconButton } from '../../components';
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 export interface CollectionHeaderProps {
   readonly title: string;
@@ -97,9 +97,11 @@ function CollectionHeaderComponent({ title, emblem, color, id, hint, meta, onBac
 const styles = StyleSheet.create({
   head: { overflow: 'hidden', paddingBottom: 8 },
   ghost: { position: 'absolute', transform: [{ rotate: '-12deg' }] },
-  bar: { height: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
+  // The top bar's own 64 (`TopBar`), so Back stays put from the Collections to here and on to a link.
+  bar: { height: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   flex: { flex: 1 },
-  sign: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, paddingHorizontal: 20, paddingTop: 4 },
+  // The stone centred over the rows' frames (16 to 92), the words from 106, where the rows' text starts.
+  sign: { flexDirection: 'row', alignItems: 'flex-start', gap: 18, paddingHorizontal: 20 },
   mark: { marginTop: 0 },
   text: { flex: 1, gap: 4 },
   meta: { marginTop: 6 },

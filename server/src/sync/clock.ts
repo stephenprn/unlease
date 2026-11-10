@@ -3,7 +3,7 @@
  * bin purges). It observes every clock it is sent, so a server write always
  * sorts after the edit it answers, even when a device's wall clock runs ahead.
  */
-import { createClock, observe, randomNodeId, tick, type ClockState, type Hlc } from '@unlease/core/sync/hlc';
+import { createClock, formatHlc, MAX_COUNTER, observe, parseHlc, randomNodeId, tick, type ClockState, type Hlc } from '@unlease/core/sync/hlc';
 import type { SyncRecord } from '@unlease/core/sync/record';
 import { readMeta, writeMeta, type Database } from '../db/database';
 
@@ -31,6 +31,28 @@ export class ServerClock {
 
   tick(): Hlc {
     return tick(this.state, this.now());
+  }
+
+  /**
+   * The clock of a server write over fields that carry `over`: a fresh tick, and never at or below
+   * any of them. The tick alone can be: a clock the server refused to follow (`observe` ignores one
+   * a day past its own date, and this server's date may be the wrong one) would outrank the write on
+   * every device that holds it, while the server keeps the write: they would never agree again.
+   * `atLeast` (a time other devices vouch for) raises this one stamp, never the clock itself.
+   */
+  stampOver(over: Iterable<Hlc | undefined>, atLeast = 0): Hlc {
+    let stamp = tick(this.state, this.now());
+    const parsed = parseHlc(stamp)!;
+    if (parsed.wall < atLeast) stamp = formatHlc(Math.floor(atLeast), 0, this.state.node);
+    for (const clock of over) if (clock !== undefined && clock >= stamp) stamp = this.after(clock);
+    return stamp;
+  }
+
+  /** The smallest clock of this server's after `clock`. */
+  private after(clock: Hlc): Hlc {
+    const parsed = parseHlc(clock);
+    if (!parsed) return clock;
+    return parsed.counter < MAX_COUNTER ? formatHlc(parsed.wall, parsed.counter + 1, this.state.node) : formatHlc(parsed.wall + 1, 0, this.state.node);
   }
 }
 

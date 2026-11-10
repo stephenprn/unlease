@@ -8,7 +8,7 @@ import { LINE_COLORS } from '@unlease/design/colors';
 import { DRAWING_MIN_HEIGHT, HIGHLIGHTER_OPACITY, STROKE_WIDTHS, type DrawingInk, type DrawingSize, type DrawingTool, type Stroke } from '@unlease/notes/models/drawing';
 import { parseDrawing, serializeStrokes, strokeLine, strokePath, strokesAlong, strokeWidth, withStroke } from '@unlease/notes/services/drawing';
 
-import type { Theme } from '../../theme/theme';
+import type { Theme } from '@shared/ui/theme/theme';
 
 const NO_STROKES: readonly Stroke[] = [];
 

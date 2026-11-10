@@ -38,8 +38,8 @@ const SIZES: Point[] = [
 
 describe('shapes', () => {
   it('gives each role one shape from the scale, the same at every size', () => {
-    // The scale, and the one shape derived from it: a segment, concentric 4 inside its track.
-    const scale = new Set<number>([...Object.values(RADII), concentric(RADII.bar, 4), 0]);
+    // The scale, and the shapes derived from it: a segment, concentric 4 inside its track; a settings group's first and last rows, concentric 6 inside it.
+    const scale = new Set<number>([...Object.values(RADII), concentric(RADII.bar, 4), concentric(RADII.panel, 6), 0]);
     for (const corners of Object.values(SHAPES)) for (const value of corners) if (typeof value === 'number') expect(scale.has(value)).toBe(true);
     // Every container's four corners are the same, but where it stands on a screen edge.
     expect(new Set(SHAPES.card).size).toBe(1);
@@ -49,6 +49,9 @@ describe('shapes', () => {
 
   it('nests shapes concentrically', () => {
     expect(concentric(RADII.menu, 6)).toBe(RADII.row);
+    // A group's first row: its top corners the group's less the 6 it sits in, its bottom ones a row's.
+    expect(SHAPES.panelRowFirst).toEqual([concentric(RADII.panel, 6), concentric(RADII.panel, 6), RADII.row, RADII.row]);
+    expect(SHAPES.panelRowLast).toEqual([RADII.row, RADII.row, concentric(RADII.panel, 6), concentric(RADII.panel, 6)]);
     expect(concentric(RADII.bar, 4)).toBeGreaterThanOrEqual(RADII.small);
     expect(concentric(12, 14)).toBe(0);
     expect(concentric(12, 14, 4)).toBe(4);

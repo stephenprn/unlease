@@ -4,8 +4,9 @@
  * without the bearer token: the ticket, random and short-lived, is the key).
  */
 import { randomBytes } from 'node:crypto';
-import type { StatementSync } from 'node:sqlite';
 import type { AdminStatus } from '@unlease/core/sync/admin';
+import { countsOf } from './apps/hooks';
+import type { ServerApp } from './apps/types';
 import type { BackupService } from './backup/service';
 import type { RestoreService } from './backup/restore';
 import type { BlobStore } from './blobs/store';
@@ -18,6 +19,8 @@ export type DownloadTarget = { readonly kind: 'snapshot'; readonly name: string 
 
 export interface AdministrationOptions {
   readonly db: Database;
+  /** The apps whose records it counts, on or off. */
+  readonly apps: readonly ServerApp[];
   readonly blobs: BlobStore;
   readonly backups: BackupService;
   readonly drive: DriveSync;
@@ -34,7 +37,6 @@ export class Administration {
   readonly restore: RestoreService;
   readonly tmpDir: string;
   private readonly now: () => number;
-  private readonly counts: StatementSync;
   private readonly tickets = new Map<string, { readonly target: DownloadTarget; readonly until: number }>();
 
   constructor(private readonly options: AdministrationOptions) {
@@ -43,19 +45,13 @@ export class Administration {
     this.restore = options.restore;
     this.tmpDir = options.tmpDir;
     this.now = options.now ?? Date.now;
-    this.counts = options.db.prepare(
-      `SELECT
-         SUM(type = 'note' AND COALESCE(json_extract(fields, '$.kind'), 'text') != 'links') AS notes,
-         SUM(type = 'block' AND json_extract(fields, '$.kind') = 'page') AS pages
-       FROM records WHERE type IN ('note', 'block') AND json_extract(fields, '$.deletedAt') IS NULL`,
-    );
   }
 
   status(): AdminStatus {
-    const counts = this.counts.get() as { notes: number | null; pages: number | null };
+    const counts = countsOf(this.options.apps);
     const files = this.options.blobs.totals();
     return {
-      server: { version: this.options.version, notes: Number(counts.notes ?? 0), pages: Number(counts.pages ?? 0), files: files.count, fileBytes: files.bytes },
+      server: { version: this.options.version, notes: counts.notes, pages: counts.pages, contacts: counts.contacts, events: counts.events, files: files.count, fileBytes: files.bytes },
       backup: this.backups.status(),
       drive: this.drive.status(),
       restore: this.restore.status(),

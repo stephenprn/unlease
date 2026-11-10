@@ -1,19 +1,25 @@
 /** Reminder: three quick choices, else a day (next two weeks) and a quarter-hour time. */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
 import { getLocale, t } from '@unlease/core/i18n';
 import { formatDay, formatReminder, weekdayNames } from '@unlease/core/services/format';
 
-import { AppText, Button, ListRow, Sheet, SheetScroll, Tappable } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme } from '../../theme/ThemeProvider';
+import { AppText, Button, FormMessage, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 /** habits-garden's chips: neighbouring days, hours and minutes never share a shape. */
 const CUTS = [corners(SHAPES.chip)];
 /** A day holds two lines: a calm sheet, not a pebble. */
 const DAY_CUTS = [corners(SHAPES.field)];
+/** Between two chips. */
+const GAP = 8;
+/** An hour's chip at its narrowest: as many as fit go in a row, then widen to fill it. */
+const HOUR_CELL = 56;
+/** The sheet's own sides (8 each) and this view's (`SHEET_INSET` each): the column, 24 from either edge. */
+const SHEET_SIDES = 2 * (8 + SHEET_INSET);
 
 /** A weekday cut short: "lun.", "Mon". */
 function shortDay(day: number): string {
@@ -51,14 +57,18 @@ export interface ReminderSheetProps {
 
 export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSheetProps) {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const now = useMemo(() => Date.now(), [visible]); // eslint-disable-line react-hooks/exhaustive-deps
   const [custom, setCustom] = useState(false);
   const [day, setDay] = useState(0);
   const [time, setTime] = useState<[number, number]>([9, 0]);
+  // Pressed on a moment gone: said as a problem, not by a button that cannot be pressed.
+  const [tried, setTried] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
     setCustom(false);
+    setTried(false);
     const base = current ? new Date(current) : new Date(now + 3600_000);
     setDay(Math.max(0, Math.round((new Date(base).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 86_400_000)));
     // To the nearest quarter, the hour carried: 18:53 opens on 19:00, never 18:00.
@@ -75,6 +85,11 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
   const chosenDay = days[day] ?? days[0]!;
   const chosen = at(chosenDay, time[0], time[1]);
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
+  // The hours fill the sheet's width in full columns, so the grid ends where the minutes' row does.
+  const room = width - SHEET_SIDES;
+  const columns = Math.max(4, Math.floor((room + GAP) / (HOUR_CELL + GAP)));
+  // Whole dp: a fraction rounded up on the screen's pixels would wrap the row's last hour.
+  const cell = Math.floor((room - GAP * (columns - 1)) / columns);
 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={t('Rappel')} tall={custom}>
@@ -108,8 +123,8 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
         </View>
       ) : (
         <SheetScroll contentContainerStyle={styles.custom}>
-          <AppText variant="metaStrong">{t('Jour')}</AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days}>
+          {/* The chips say what they are (« lun. 10 », « 9 h », « :15 »): no word over them; TalkBack hears each group's name. */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Jour')}>
             {days.map((date, index) => {
               const selected = index === day;
               return (
@@ -130,43 +145,57 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
               );
             })}
           </ScrollView>
-          <AppText variant="metaStrong">{t('Heure')}</AppText>
-          <View style={styles.grid}>
-            {hours.map(hour => {
-              const selected = hour === time[0];
-              return (
-                <Tappable
-                  key={hour}
-                  onPress={() => setTime([hour, time[1]])}
-                  accessibilityState={{ selected }}
-                  style={[styles.cell, CUTS[hour % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
-                >
-                  <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour} h', { hour })}</AppText>
-                </Tappable>
-              );
-            })}
-          </View>
-          <View style={styles.minutes}>
-            {[0, 15, 30, 45].map(minute => {
-              const selected = minute === time[1];
-              return (
-                <Tappable
-                  key={minute}
-                  onPress={() => setTime([time[0], minute])}
-                  accessibilityState={{ selected }}
-                  style={[styles.minute, CUTS[(minute / 15 + 1) % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
-                >
-                  <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{`:${String(minute).padStart(2, '0')}`}</AppText>
-                </Tappable>
-              );
-            })}
+          <View style={styles.time} accessibilityLabel={t('Heure')}>
+            <View style={styles.grid}>
+              {hours.map(hour => {
+                const selected = hour === time[0];
+                return (
+                  <Tappable
+                    key={hour}
+                    onPress={() => setTime([hour, time[1]])}
+                    accessibilityState={{ selected }}
+                    style={[styles.cell, { width: cell }, CUTS[hour % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
+                  >
+                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour} h', { hour })}</AppText>
+                  </Tappable>
+                );
+              })}
+            </View>
+            <View style={styles.minutes}>
+              {[0, 15, 30, 45].map(minute => {
+                const selected = minute === time[1];
+                return (
+                  <Tappable
+                    key={minute}
+                    onPress={() => setTime([time[0], minute])}
+                    accessibilityState={{ selected }}
+                    style={[styles.minute, CUTS[(minute / 15 + 1) % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
+                  >
+                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{`:${String(minute).padStart(2, '0')}`}</AppText>
+                  </Tappable>
+                );
+              })}
+            </View>
           </View>
           <View style={styles.footer}>
-            <AppText variant="bodyStrong">{formatReminder(chosen, now)}</AppText>
+            {/* The moment chosen, read in words; once a moment gone was sent, the problem in its place (the web's line). */}
+            <View style={styles.when}>
+              {chosen > now ? (
+                <AppText variant="bodyStrong">{formatReminder(chosen, now)}</AppText>
+              ) : tried ? (
+                <FormMessage message={t('Ce moment est passé : choisissez un moment à venir.')} />
+              ) : (
+                <AppText variant="meta">{t('Choisissez un moment à venir')}</AppText>
+              )}
+            </View>
+            {/* Never disabled to say why: pressed on a moment gone, it says so. */}
             <Button
               label={t('Enregistrer')}
-              disabled={chosen <= now}
               onPress={() => {
+                if (chosen <= now) {
+                  setTried(true);
+                  return;
+                }
                 onSet(chosen);
                 onDismiss();
               }}
@@ -179,12 +208,15 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
 }
 
 const styles = StyleSheet.create({
-  custom: { gap: 12, paddingHorizontal: 8, paddingBottom: 8 },
-  days: { gap: 8 },
+  // The day, then the time (its hours and minutes one group), then the moment and « Enregistrer ».
+  custom: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+  days: { gap: GAP },
   day: { width: 56, height: 64, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  cell: { width: 64, height: 48, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  minutes: { flexDirection: 'row', gap: 8 },
+  time: { gap: GAP },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
+  cell: { height: 48, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  minutes: { flexDirection: 'row', gap: GAP },
   minute: { flex: 1, height: 48, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  when: { flex: 1 },
 });

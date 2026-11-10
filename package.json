@@ -10,7 +10,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "web/*",
+    "web",
     "server"
   ],
   "scripts": {

@@ -45,6 +45,12 @@ export function formatPrice(amount: number, currency: string | null): string {
   return symbol ? `${number}${NBSP}${symbol}` : number;
 }
 
+/** Dollars as Claude's costs are shown on both clients: "1,42 $", and three decimals below a cent ("0,001 $" a link with Haiku); "$1.42" in English. */
+export function formatUsd(value: number): string {
+  const digits = value > 0 && value < 0.01 ? 3 : 2;
+  return english() ? `$${value.toFixed(digits)}` : `${value.toFixed(digits).replace('.', ',')} $`;
+}
+
 /** A number as the language writes it: « 1 234,5 », « −0,25 » (English « 1,234.5 »); at most `decimals` places, trailing zeros dropped. */
 export function formatNumber(value: number, decimals = 6): string {
   const raw = Math.abs(value).toFixed(decimals);

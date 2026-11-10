@@ -1,0 +1,47 @@
+<resources>
+    <!-- APPS.calendar.name (packages/core/src/apps.ts). -->
+    <string name="app_name">Agenda</string>
+    <!-- The share sheet's line for a calendar file. -->
+    <string name="import_calendar">Import into Agenda</string>
+
+    <!-- The widgets, as the launcher's picker lists them. -->
+    <string name="widget_schedule_label">Schedule</string>
+    <string name="widget_schedule_description">Your next two weeks, day by day.</string>
+    <string name="widget_month_label">Month</string>
+    <string name="widget_month_description">This month, the days with something marked.</string>
+    <string name="widget_next_label">Next event</string>
+    <string name="widget_next_description">What comes next: its time and place.</string>
+    <string name="widget_countdown_label">Countdown</string>
+    <string name="widget_countdown_description">The days left until an event you choose.</string>
+    <string name="widget_today_label">Today</string>
+    <string name="widget_today_description">Your day at a glance: now, next, and tomorrow.</string>
+
+    <!-- What the widgets say. -->
+    <string name="widget_new_event">New event</string>
+    <string name="widget_open_app">Open Agenda</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_tomorrow">Tomorrow</string>
+    <string name="widget_nothing">Nothing planned</string>
+    <string name="widget_open_today">Open Today in Agenda</string>
+    <string name="widget_nothing_today">Nothing planned today</string>
+    <!-- A countdown: the days left (D-12, D-1), on the day (Today), the later days of a longer one, the days since. -->
+    <string name="widget_countdown_before">D-%1$d</string>
+    <string name="widget_countdown_ongoing">Happening now</string>
+    <string name="widget_countdown_after">D+%1$d</string>
+
+    <!-- A widget with nothing to show yet. -->
+    <string name="widget_waiting">Tap to show your calendar here.</string>
+    <!-- A countdown with no event chosen, or whose event is gone. -->
+    <string name="widget_choose_event">Tap to choose the event to count down to.</string>
+    <string name="widget_gone_event">This event is no longer in your calendar.</string>
+    <string name="widget_choose_other">Choose another…</string>
+
+    <!-- The picker's sample content. -->
+    <string name="widget_preview_schedule">Schedule</string>
+    <string name="widget_preview_event">Dentist</string>
+    <string name="widget_preview_time">9:00 – 10:00</string>
+    <string name="widget_preview_count">D-12</string>
+    <string name="widget_preview_date">Thu 24 Dec · 9:00</string>
+    <string name="widget_preview_today">Monday 9 November</string>
+    <string name="widget_preview_day">Mon 9 Nov</string>
+</resources>

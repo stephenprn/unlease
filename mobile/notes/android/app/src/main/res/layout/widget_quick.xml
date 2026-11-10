@@ -2,6 +2,9 @@
 <!-- Actions rapides, one row: the app's bottom bar (the ground's foot, its grain) as a 56 strip, the height of the link strip, centred in its
      cell; the capture pebble at its right. The narrower sizes hide the rarer actions (CaptureWidgetProvider). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 

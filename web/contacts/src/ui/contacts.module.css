@@ -1,0 +1,1316 @@
+/*
+ * Contacts' screens: Google Contacts' places (the list, a contact, its form, the birthdays, the
+ * import, the bin) on Unlease's paper. A person's face (their photo, or their initials on the wash
+ * of their stone) lies on the pebble; lists lie on a panel; actions are soft sheets.
+ */
+
+/* ── a screen ─────────────────────────────────────────────────────────── */
+
+.screen {
+  max-width: 1080px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.narrowScreen {
+  max-width: 760px;
+}
+
+.lead {
+  max-width: 62ch;
+  margin: -8px 0 0;
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 0;
+  padding-left: 4px;
+}
+
+.sectionCount {
+  color: var(--ink-muted);
+}
+
+/* ── the face: a photo on the pebble, or initials on a tile ────────────── */
+
+/* Initials are text: they lie on a sheet in the frame's continuous corner, never on the pebble. */
+.avatar {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--tint, var(--paper-high));
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+  /* Capped at 0.3 of the side (`CORNER_CAP`), so a small face stays a sheet. */
+  border-radius: min(var(--cut-frame), 30%);
+}
+
+/* A photo is a picture glimpsed: it takes the pebble (its clip), not the tile's corner. */
+.avatar[data-pebble] {
+  border-radius: 0;
+}
+
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── the list ─────────────────────────────────────────────────────────── */
+
+.listHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 12px;
+}
+
+.count {
+  padding: 0 4px;
+  color: var(--ink-muted);
+}
+
+.table {
+  --row-inset: 6px;
+  position: relative;
+  isolation: isolate;
+  padding: var(--row-inset);
+  background: var(--paper);
+}
+
+/*
+ * A row's corners are a tab's; a row touching the panel's top or foot takes the panel's own curve
+ * there (`--row-outer`, from the outline as drawn: `OutlinedBox`), so its hover, its press and its
+ * pick never cut a tighter corner inside the panel's.
+ */
+.row,
+.simpleRow {
+  border-radius: var(--row-top, var(--cut-tab)) var(--row-top, var(--cut-tab)) var(--row-foot, var(--cut-tab)) var(--row-foot, var(--cut-tab));
+}
+
+.table > .group:first-child > li:first-child {
+  --row-top: var(--row-outer);
+}
+
+.table > .group:nth-last-child(1 of :not(svg)) > li:last-child {
+  --row-foot: var(--row-outer);
+}
+
+.columns,
+.row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1.5fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) 96px;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.columns {
+  min-height: 40px;
+  padding: 0 10px;
+  color: var(--ink-muted);
+}
+
+.columns > :first-child {
+  grid-column: 2;
+}
+
+/* Its rows a little apart, so one under the pointer never runs into a picked one. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A letter's heading, as on the phone: the letter in the primary (over the type class's ink), then a fine rule fading toward the row's end. */
+/*
+ * A letter heading its people (DESIGN: labelStrong in the primary, then a rule fading toward the end),
+ * as the phone's; pinned under the header while its people scroll, on the panel's paper.
+ */
+h3.letter {
+  position: sticky;
+  top: var(--header-height, 64px);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 8px 10px 0;
+  background: var(--paper);
+  color: var(--action);
+  font-weight: 600;
+}
+
+/* The letter in a slot at least 12 wide (as the phone's), so every rule starts at the same place. */
+.letterName {
+  min-width: 12px;
+}
+
+h3.letter::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--action) 45%, transparent), transparent);
+}
+
+.row {
+  position: relative;
+  min-height: 56px;
+  padding: 4px 10px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row[data-picked] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+/* The face, or the box that picks the row: the box under a pointer, and always while a pick is on. */
+.pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: inherit;
+}
+
+.pickBox {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.row[data-picking] .pick > .pickBox,
+.row[data-picked] .pick > .pickBox {
+  display: inline-flex;
+}
+
+.row[data-picking] .pick > :not(.pickBox),
+.row[data-picked] .pick > :not(.pickBox) {
+  visibility: hidden;
+}
+
+@media (hover: hover) {
+  .row:hover .pick > .pickBox,
+  .pick:focus-visible > .pickBox {
+    display: inline-flex;
+  }
+  .row:hover .pick > :not(.pickBox),
+  .pick:focus-visible > :not(.pickBox) {
+    visibility: hidden;
+  }
+}
+
+/* The link covers the name and the three columns after it. */
+.rowLink {
+  grid-column: 2 / 6;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 48px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--cut-small);
+}
+
+.rowLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.row > .pick,
+.row > .rowEnd {
+  z-index: 1;
+}
+
+.cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sub {
+  display: none;
+  color: var(--ink-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rowEnd {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* A favourite's star in the list: solid, in ink, with no matcha behind it (a column of matcha pebbles would shout). */
+.rowEnd > .listStar[aria-pressed='true'] {
+  --pebble-fill: transparent;
+  color: var(--ink);
+}
+
+@media (hover: hover) {
+  .rowEnd > .listStar[aria-pressed='true']:hover {
+    --pebble-fill: color-mix(in srgb, currentColor 6%, transparent);
+  }
+}
+
+/* The star shows on a favourite, and under a pointer on the others. */
+.rowEnd > .quiet {
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row:hover .rowEnd > .quiet,
+  .rowEnd > .quiet:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* Narrower: a phone's rows, the face, the name and a line under it. */
+@media (max-width: 899px) {
+  .columns {
+    display: none;
+  }
+  .row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+  .rowLink {
+    grid-column: 2;
+    display: flex;
+  }
+  .rowLink > .cell,
+  .rowLink > .chips {
+    display: none;
+  }
+  .sub {
+    display: block;
+  }
+  .table {
+    --row-inset: 4px;
+  }
+  /* The column heads hidden, the first row touches the panel's top. */
+  .table > .columns:first-child + .group > li:first-child {
+    --row-top: var(--row-outer);
+  }
+}
+
+@media (hover: none) {
+  .rowEnd > .quiet {
+    display: none;
+  }
+}
+
+/* ── a contact ────────────────────────────────────────────────────────── */
+
+/* A part of the page: its head over its panel (or its cards), 8 apart; the parts 16 apart (`.screen`). */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Who they are, with what is done to the card at its end: the star, « Modifier », the menu. */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 24px;
+  padding: 8px 4px 4px;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.heroName {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.heroWork {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.heroLabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 6px;
+}
+
+.heroTools {
+  align-self: start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* On a phone-sized window, the face over the words, centred; the tools in the head's top right, as the phone's top bar holds them. */
+/* In the phone-sized window's top bar, at its end beside Back. */
+.barTools {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 719px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding-top: 4px;
+    text-align: center;
+  }
+  .heroText {
+    align-items: center;
+  }
+  .heroLabels {
+    justify-content: center;
+  }
+  .heroTools {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    gap: 0;
+  }
+}
+
+/* The ways to reach them: a glyph on its pebble, its name under it, as Google's row under the name; one row, never wrapping. */
+.actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 88px);
+  justify-content: start;
+  gap: 4px;
+  padding: 4px 0 8px;
+}
+
+@media (max-width: 719px) {
+  .actions {
+    justify-content: center;
+  }
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actionName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionStone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 52px;
+  --pebble-fill: var(--action-container);
+  color: var(--on-action-container);
+}
+
+@media (hover: hover) {
+  .action:not([aria-disabled]):hover .actionStone {
+    --pebble-fill: color-mix(in srgb, var(--action-container) 88%, var(--on-action-container));
+  }
+}
+
+.action:not([aria-disabled]):active .actionStone,
+.action[aria-expanded='true'] .actionStone {
+  --pebble-fill: color-mix(in srgb, var(--action-container) 80%, var(--on-action-container));
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.action[aria-disabled='true'] {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.action[aria-disabled='true'] .actionStone {
+  --pebble-fill: var(--paper-high);
+  color: var(--ink-faint);
+}
+
+/* A panel of details: lines 6 in, none pressed as a whole (their values and tools are what acts). */
+.details {
+  position: relative;
+  isolation: isolate;
+  padding: 6px;
+  background: var(--paper);
+}
+
+.detail {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  min-height: 60px;
+  padding: 8px 6px 8px 14px;
+}
+
+/* Lines apart by a hairline under the words, from the text's edge (the glyphs stand clear of it). */
+.detail + .detail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 54px;
+  right: 8px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.detail > svg {
+  align-self: start;
+  margin-top: 2px;
+  color: var(--ink-muted);
+}
+
+.detailText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.out {
+  align-self: flex-start;
+  color: var(--link);
+  text-decoration: none;
+  border-radius: var(--cut-detail);
+}
+
+@media (hover: hover) {
+  .out:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.out:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.detailMeta {
+  color: var(--ink-muted);
+}
+
+.detailTools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Tools that say again what the line holds (« Copier »): there under a pointer once the line is, always under a finger. */
+@media (hover: hover) and (pointer: fine) {
+  .detail .quiet {
+    opacity: 0;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+  .detail:hover .quiet,
+  .detail:focus-within .quiet {
+    opacity: 1;
+  }
+}
+
+.noteText {
+  white-space: pre-wrap;
+}
+
+/* A notice heading the page (the bin, an empty card): its glyph, its words, its action. */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 8px 8px 8px 18px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.notice > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.notice > span {
+  flex: 1;
+}
+
+/* An address on its card: its little plan in a frame beside its lines, the two maps it opens in under them. */
+.placeCard {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 144px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 18px;
+  row-gap: 4px;
+  padding: 12px;
+  background: var(--paper);
+}
+
+.planFrame {
+  grid-row: 1 / 3;
+  align-self: stretch;
+  min-height: 108px;
+  background: var(--paper-high);
+}
+
+.planDrawing {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.planGround {
+  fill: var(--paper-high);
+}
+
+.planStreet {
+  fill: none;
+  stroke: var(--paper);
+  stroke-linecap: round;
+}
+
+.planWater {
+  fill: none;
+  stroke: var(--line-sky-tint);
+  stroke-linecap: round;
+}
+
+.planPark {
+  fill: var(--line-green-tint);
+  stroke: var(--line-green-tint);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+
+.planPin {
+  fill: var(--line-red);
+}
+
+.planPinHole {
+  fill: var(--paper);
+}
+
+.placeText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.placeLines {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+.placeRest {
+  color: var(--ink-muted);
+}
+
+.placeTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.placeTools > :last-child {
+  margin-left: auto;
+}
+
+/* On a phone-sized window, a smaller plan beside the lines, the maps under both. */
+@media (max-width: 719px) {
+  .placeCard {
+    grid-template-columns: 96px minmax(0, 1fr);
+    column-gap: 14px;
+    padding: 10px;
+  }
+  .planFrame {
+    grid-row: 1;
+    min-height: 88px;
+  }
+  .placeTools {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── the form ─────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The photo: the face is its button (a camera on its pebble at its foot), a photo dropped anywhere on the head taking its place. */
+.formHead {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 4px;
+  border-radius: var(--cut-panel);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.formHead[data-over] {
+  background: color-mix(in srgb, var(--focus) 12%, transparent);
+}
+
+.photoButton {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-frame);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.photoButton:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.photoBadge {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 35px;
+  --pebble-fill: var(--action);
+  color: var(--on-action);
+}
+
+@media (hover: hover) {
+  .photoButton:hover .photoBadge {
+    --pebble-fill: color-mix(in srgb, var(--action) 90%, var(--ink));
+  }
+}
+
+/* Under a finger the face stands alone, centred as the contact's page shows it. */
+@media (max-width: 719px) {
+  .formHead:not(:has(.photoHint)) {
+    justify-content: center;
+  }
+}
+
+.photoHint {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.fieldset {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 20px 20px;
+  border: 0;
+  background: var(--paper);
+}
+
+/* A panel with no head of its own (the identity, led by the photo): its fields as far from its top as from its foot. */
+.fieldsetBare {
+  padding-top: 20px;
+}
+
+.fieldsetHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+  color: var(--ink-muted);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* A number or an e-mail: its field, its kind, the button that takes it away. */
+/* The row's parts line up on the field's top, so a problem said under the number or the address moves nothing beside it. */
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 168px 44px;
+  align-items: start;
+  gap: 8px 10px;
+}
+
+/* The × centred on the field's 52. */
+.entryRemove {
+  margin-top: 4px;
+}
+
+.entryCustom {
+  grid-column: 1 / 3;
+}
+
+/* A number: its calling code before its field. */
+.phoneEntry {
+  grid-template-columns: 96px minmax(0, 1fr) 168px 44px;
+  grid-template-areas:
+    'code number kind remove'
+    'custom custom custom .';
+}
+
+.phoneEntry > .codeButton {
+  grid-area: code;
+}
+
+.phoneEntry > .entryNumber {
+  grid-area: number;
+}
+
+.phoneEntry > .kindButton:not(.codeButton) {
+  grid-area: kind;
+}
+
+.phoneEntry > .entryRemove {
+  grid-area: remove;
+}
+
+.phoneEntry > .entryCustom {
+  grid-area: custom;
+}
+
+/* An address: its kind and its × on a line, then its parts, the first one found as it is typed. */
+.address {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+
+.fieldsetHead + .address {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.addressWide {
+  grid-column: 1 / -1;
+}
+
+.addressHead {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr) 44px;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+@media (max-width: 719px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* An e-mail keeps the line's width (an address is long), its kind under it, as a number's. */
+  .entry {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    column-gap: 6px;
+  }
+  .entry:not(.phoneEntry) > .kindButton,
+  .entry:not(.phoneEntry) > .entryCustom {
+    grid-column: 1;
+  }
+  .entry:not(.phoneEntry) > .entryRemove {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .addressHead {
+    grid-template-columns: 108px minmax(0, 1fr) 44px;
+    column-gap: 6px;
+  }
+  .addressHead > .kindButton {
+    padding: 0 8px 0 12px;
+  }
+  /* Too narrow for four: the code and the number on a line, the kind under them. */
+  .phoneEntry {
+    grid-template-columns: 84px minmax(0, 1fr) 44px;
+    grid-template-areas:
+      'code number remove'
+      'kind kind .'
+      'custom custom .';
+  }
+  .fieldset {
+    padding: 14px 14px 16px;
+  }
+}
+
+/* A kind: drawn as a field (its edge, its paper), its menu under it. */
+.kindButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 12px 0 16px;
+  border: 0;
+  border-radius: var(--cut-field);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  background: var(--field-veil);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.kindButton > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  .kindButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--field-veil));
+  }
+}
+
+.kindButton:focus-visible,
+.kindButton[aria-expanded='true'] {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.kindName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kindTick {
+  flex: none;
+  color: var(--focus);
+}
+
+.kindBlank {
+  flex: none;
+  width: 22px;
+}
+
+/* A row that is the switch itself: its words, then the switch. */
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  margin: 4px -10px -6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .switchRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.switchRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.switchRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.switchText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switchText > :last-child {
+  color: var(--ink-muted);
+}
+
+/* A birthday is short: its field says so. */
+.birthdayField {
+  max-width: 280px;
+}
+
+/* ── the birthdays ────────────────────────────────────────────────────── */
+
+.when {
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+
+.when[data-soon] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.simpleRow {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 56px;
+  padding: 4px 10px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  a.simpleRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+a.simpleRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* ── the colours of a label ───────────────────────────────────────────── */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+
+.swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on);
+  --pebble-fill: var(--fill);
+  --edge-color: transparent;
+  --edge-width: 3px;
+}
+
+@media (hover: hover) {
+  .swatch:hover {
+    --pebble-fill: color-mix(in srgb, var(--fill) 92%, var(--ink));
+  }
+}
+
+.swatch:active {
+  --pebble-fill: color-mix(in srgb, var(--fill) 86%, var(--ink));
+}
+
+.swatch[aria-checked='true'] {
+  --edge-color: var(--ink);
+}
+
+/* ── the import ───────────────────────────────────────────────────────── */
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Réglages ─────────────────────────────────────────────────────────── */
+
+.settingsField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+/* ── the duplicates ───────────────────────────────────────────────────── */
+
+.twins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 4px 6px;
+  list-style: none;
+}
+
+.twin {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--cut-frame);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+/* The one kept: ringed in matcha, as what is chosen. */
+.twin[data-kept] {
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.twinText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.twinName {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.twinName:hover {
+  text-decoration: underline;
+}
+
+.twinKept {
+  margin-top: 4px;
+  color: var(--focus);
+}
+
+.groupTools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 6px 6px;
+}
+
+/* ── « Mentionné dans » ───────────────────────────────────────────────── */
+
+/* A place's row on the contact's page: its glyph and its words on the details' columns (20 and 60 in from the panel). */
+.placeRow {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  column-gap: 16px;
+  padding-left: 14px;
+}
+
+.placeMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  color: var(--ink-muted);
+  font-size: 20px;
+}
+
+/* The favourites as the phone's row of faces: each face over its first name, the row scrolling sideways when long. */
+.faces {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+/* The face in a slot of its full height, so a photo (on the pebble, a little shorter) keeps its name on the others' line. */
+.face {
+  display: grid;
+  grid-template-rows: 56px auto;
+  place-items: center;
+  gap: 6px;
+  width: 76px;
+  padding: 6px 0;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.faceName {
+  max-width: 72px;
+  overflow: hidden;
+  color: var(--ink);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The week's birthdays in one line leading to them all: the cake in the primary, the first one, how many more. */
+.birthdayLine {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.birthdayLine > svg:first-child {
+  flex: none;
+  color: var(--action);
+}
+
+.birthdayLine > svg:last-child {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.birthdayText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.birthdayText > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .face:hover,
+  .birthdayLine:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.face:active,
+.birthdayLine:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* ── « Souhaiter »: a birthday's wish (the contact's page, today's birthdays) ── */
+
+/* The notice on their day: the cake in the primary, the day over the age, the button at its end. */
+.wishNotice > svg {
+  color: var(--action);
+}
+
+.wishText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.notice > .wishEnd,
+.wishRow > .wishEnd {
+  flex: none;
+}
+
+/* A birthday’s row with « Souhaiter » beside it, out of the row’s own hover and press, ending on the rows’ text column (16 from the panel’s edge). */
+.wishRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wishRow > .simpleRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.wishRow > .wishEnd {
+  margin-right: 10px;
+}

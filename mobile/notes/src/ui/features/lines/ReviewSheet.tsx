@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t, tc } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
@@ -15,12 +16,12 @@ import { displayHost } from '@unlease/core/services/url';
 import type { SortMove } from '@unlease/notes/sync/sorting';
 import { applyReview, reviewLine } from '@app/sorting';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, Emblem, Icon, Sheet, SheetScroll, Tappable } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme } from '../../theme/ThemeProvider';
-import { ReadingTrack } from '../links/ReadingTrack';
+import { AppText, Button, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 
 type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly reason: string } | { readonly kind: 'ready'; readonly moves: readonly SortMove[]; readonly incomplete: string | null };
 
@@ -87,26 +88,38 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
   }
   // Nothing to move but part of it unread is no all-clear: it says so, as a failure does.
   const failure = phase.kind === 'failed' ? phase.reason : phase.moves.length === 0 ? phase.incomplete : null;
+  // Their one action at the sheet's foot, as when there are links to move (and every sheet's).
   if (failure !== null) {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger}>
-          {t('Claude n’a pas pu relire la collection : {reason}', { reason: t(failure) })}
-        </AppText>
-        <Button kind="text" label={t('Réessayer')} onPress={retry} style={styles.end} />
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu relire la collection : {reason}', { reason: t(failure) })}
+          </AppText>
+        </SheetScroll>
+        <FormFoot>
+          <Button kind="text" label={t('Réessayer')} onPress={retry} />
+        </FormFoot>
+      </>
     );
   }
   if (phase.kind !== 'ready') return null;
   if (phase.moves.length === 0) {
     return (
-      <View style={styles.body}>
-        <AppText variant="body">{t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })}</AppText>
-        <Button kind="text" label={t('Fermer')} onPress={onDismiss} style={styles.end} />
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" accessibilityLiveRegion="polite">
+            {t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })}
+          </AppText>
+        </SheetScroll>
+        <FormFoot>
+          <Button kind="text" label={t('Fermer')} onPress={onDismiss} />
+        </FormFoot>
+      </>
     );
   }
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       <AppText variant="body" color={theme.color.inkMuted}>
         {t('Claude propose d’en sortir {links} de {collection}. Décochez ceux qui y restent.', { links: plural(phase.moves.length, 'lien'), collection: shownTitle(line) })}
@@ -121,8 +134,12 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
           <MoveRow key={move.link} move={move} kept={kept.has(move.link)} onToggle={() => toggle(move.link)} />
         ))}
       </View>
-      <Button label={kept.size > 0 ? t('Déplacer {links}', { links: plural(kept.size, 'lien') }) : t('Déplacer')} disabled={kept.size === 0} onPress={apply} style={styles.end} />
     </SheetScroll>
+    <FormFoot>
+      <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
+      <Button label={kept.size > 0 ? t('Déplacer {links}', { links: plural(kept.size, 'lien') }) : t('Déplacer')} disabled={kept.size === 0} onPress={apply} />
+    </FormFoot>
+    </>
   );
 }
 
@@ -151,9 +168,9 @@ function MoveRow({ move, kept, onToggle }: { move: SortMove; kept: boolean; onTo
 }
 
 const styles = StyleSheet.create({
-  body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-  waiting: { gap: 16, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-  end: { alignSelf: 'flex-end' },
-  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+  body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+  waiting: { gap: 16, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
+  // A list row's: its box on the sheet's column, with the words above, its press 10 out of it.
+  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
   rowText: { flex: 1, gap: 2 },
 });

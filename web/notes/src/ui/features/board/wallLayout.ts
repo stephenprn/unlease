@@ -10,6 +10,7 @@
  */
 import { GEOMETRY } from '@unlease/design/palette';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { peopleNames } from '@unlease/notes/services/noteMentions';
 import { cardBody, MAX_CHECK_ROWS, layoutCard, packWall, type CardShape, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { linesText, noteCardLines, noteCardParagraphs } from '@unlease/notes/services/noteBody';
@@ -21,8 +22,8 @@ import type { LibraryState } from '../../../app/store/library';
 export const SECTION_HEIGHT = 40;
 /** Room above an untitled first row (the phone's page margin). */
 export const WALL_TOP = 12;
-/** The list layout's single column. */
-export const LIST_WIDTH = 640;
+/** The list layout's single column: as wide as the composer above it (`.composer`'s 600), so the two share both edges. */
+export const LIST_WIDTH = 600;
 
 export interface WallGeometry {
   readonly metrics: WallMetrics;
@@ -85,7 +86,8 @@ export function shapeOf(state: LibraryState, id: string): CardShape | null {
     hasCheckedSummary: checks.length > open,
     hasPhoto: note.kind !== 'links' && (state.attachmentsByNote[id]?.length ?? 0) > 0,
     hasThumbs: note.kind === 'links' && links.some(lid => (state.links[lid]?.imageIds.length ?? 0) > 0 && !state.links[lid]?.done),
-    hasFooter: note.labelIds.length > 0 || note.reminderAt !== null,
+    // The people it names are faces at its foot, beside its reminder and labels: those this device can name.
+    hasFooter: note.labelIds.length > 0 || note.reminderAt !== null || peopleNames(note.contactIds).length > 0,
   };
 }
 

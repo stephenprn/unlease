@@ -9,6 +9,13 @@ import { CLAUDE_MODELS, isClaudeModel, type ClaudeModel } from '@unlease/core/sy
 export const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 export type Effort = (typeof EFFORTS)[number];
 
+/** The headers a reverse proxy may name the client's address in, one of which `UNLEASE_TRUSTED_PROXY_HEADER` may name. */
+export const PROXY_HEADERS = ['cf-connecting-ip', 'x-real-ip', 'x-forwarded-for'] as const;
+export type ProxyHeader = (typeof PROXY_HEADERS)[number];
+
+/** A token shorter than this is warned about at start (`openssl rand -hex 32` makes 64 characters). */
+export const STRONG_TOKEN_LENGTH = 32;
+
 export interface Config {
   readonly token: string;
   readonly anthropicApiKey: string | null;
@@ -21,7 +28,16 @@ export interface Config {
   readonly claudeEffort: Effort;
   readonly monthlyBudgetUsd: number;
   readonly analysisConcurrency: number;
+  /** Photon's address, for the places offered as they are typed; null turns that search off. */
+  readonly placesUrl: string | null;
+  /**
+   * The header the reverse proxy in front names the client's address in, trusted for the brake on
+   * wrong tokens; null (the default) takes the connection's own address, which a client cannot forge.
+   */
+  readonly trustedProxyHeader: ProxyHeader | null;
 }
+
+export const DEFAULT_PLACES_URL = 'https://photon.komoot.io';
 
 export class ConfigError extends Error {}
 
@@ -62,6 +78,21 @@ function origins(raw: string | undefined): string[] {
     });
 }
 
+/** What to say at start about a token too short to stand up to guessing, or null. Never refused: a running server keeps starting. */
+export function weakTokenWarning(token: string): string | null {
+  if (token.length >= STRONG_TOKEN_LENGTH) return null;
+  return `UNLEASE_TOKEN has ${token.length} characters: use at least ${STRONG_TOKEN_LENGTH} random ones (\`openssl rand -hex 32\` makes 64), then give the new token to every device`;
+}
+
+function proxyHeader(raw: string | undefined): ProxyHeader | null {
+  if (raw === undefined) return null;
+  const name = raw.toLowerCase();
+  if (!(PROXY_HEADERS as readonly string[]).includes(name)) {
+    throw new ConfigError(`UNLEASE_TRUSTED_PROXY_HEADER must be empty or one of ${PROXY_HEADERS.join(', ')}: the header your reverse proxy sets to the client's address (got "${raw}")`);
+  }
+  return name as ProxyHeader;
+}
+
 export function loadConfig(env: Env): Config {
   const token = read(env, 'UNLEASE_TOKEN');
   if (!token) {
@@ -82,6 +113,17 @@ export function loadConfig(env: Env): Config {
   if (!Number.isFinite(budget) || budget < 0) {
     throw new ConfigError(`UNLEASE_MONTHLY_BUDGET_USD must be a number of dollars, 0 or more (got "${budgetRaw}")`);
   }
+  const placesRaw = read(env, 'UNLEASE_PLACES_URL') ?? DEFAULT_PLACES_URL;
+  let placesUrl: string | null = null;
+  if (placesRaw !== 'off') {
+    try {
+      const url = new URL(placesRaw);
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('protocol');
+      placesUrl = url.toString().replace(/\/+$/, '');
+    } catch {
+      throw new ConfigError(`UNLEASE_PLACES_URL must be a Photon server's address, such as ${DEFAULT_PLACES_URL}, or off (got "${placesRaw}")`);
+    }
+  }
   return {
     token,
     anthropicApiKey: read(env, 'ANTHROPIC_API_KEY') ?? null,
@@ -93,5 +135,7 @@ export function loadConfig(env: Env): Config {
     claudeEffort: effort as Effort,
     monthlyBudgetUsd: budget,
     analysisConcurrency: integer(env, 'UNLEASE_ANALYSIS_CONCURRENCY', 2, 1, 16),
+    placesUrl,
+    trustedProxyHeader: proxyHeader(read(env, 'UNLEASE_TRUSTED_PROXY_HEADER')),
   };
 }

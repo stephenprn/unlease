@@ -3,4 +3,10 @@ import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_PHONE_RICH_NOTES: Dictionary = {
   'Effacer la mise en forme': 'Clear formatting',
+
+  // Mentioning a person (Contacts' records) in a note
+  'Mentionner quelqu’un': 'Mention someone',
+  'Rechercher un contact': 'Search contacts',
+  'Aucun contact ne correspond': 'No contact matches',
+  'Ouvrir {name} dans {app}': 'Open {name} in {app}',
 };

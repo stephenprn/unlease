@@ -7,6 +7,7 @@ import { PixelRatio, useWindowDimensions } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { peopleNames } from '@unlease/notes/services/noteMentions';
 import { cardBody, MAX_CHECK_ROWS, layoutCard, packWall, type CardShape, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { linesText, noteCardLines, noteCardParagraphs } from '@unlease/notes/services/noteBody';
@@ -57,7 +58,8 @@ export function shapeOf(state: LibraryState, id: string): CardShape | null {
     hasCheckedSummary: checks.length > open,
     hasPhoto: note.kind !== 'links' && (state.attachmentsByNote[id]?.length ?? 0) > 0,
     hasThumbs: note.kind === 'links' && links.some(lid => (state.links[lid]?.imageIds.length ?? 0) > 0 && !state.links[lid]?.done),
-    hasFooter: note.labelIds.length > 0 || note.reminderAt !== null,
+    // The people it names are faces at its foot, beside its reminder and labels: those this device can name.
+    hasFooter: note.labelIds.length > 0 || note.reminderAt !== null || peopleNames(note.contactIds).length > 0,
   };
 }
 

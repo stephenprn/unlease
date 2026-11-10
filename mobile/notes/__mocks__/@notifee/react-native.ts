@@ -4,15 +4,22 @@
 export const state = {
   armed: new Map<string, { title: string; timestamp: number }>(),
   cancelled: [] as string[],
+  /** Shown at once (`displayNotification`), by id. */
+  shown: [] as string[],
+  /** The alarm type each trigger was armed with, by id. */
+  alarmTypes: new Map<string, number>(),
 };
 
 export function __reset(): void {
   state.armed.clear();
   state.cancelled = [];
+  state.shown = [];
+  state.alarmTypes.clear();
 }
 
 export enum AndroidImportance { DEFAULT = 3, HIGH = 4 }
-export enum AlarmType { SET = 0, SET_AND_ALLOW_WHILE_IDLE = 1, SET_EXACT = 2, SET_EXACT_AND_ALLOW_WHILE_IDLE = 3 }
+export enum AlarmType { SET = 0, SET_AND_ALLOW_WHILE_IDLE = 1, SET_EXACT = 2, SET_EXACT_AND_ALLOW_WHILE_IDLE = 3, SET_ALARM_CLOCK = 4 }
+export enum AndroidCategory { ALARM = 'alarm', EVENT = 'event', REMINDER = 'reminder' }
 export enum TriggerType { TIMESTAMP = 0 }
 export enum EventType { DISMISSED = 0, PRESS = 1, ACTION_PRESS = 2 }
 export enum AuthorizationStatus { DENIED = 0, AUTHORIZED = 1 }
@@ -23,7 +30,8 @@ const notifee = {
   requestPermission: async () => ({ authorizationStatus: AuthorizationStatus.AUTHORIZED }),
   getNotificationSettings: async () => ({ android: { alarm: AndroidNotificationSetting.ENABLED } }),
   openAlarmPermissionSettings: async () => {},
-  createTriggerNotification: async (notification: { id: string; title: string }, trigger: { timestamp: number }) => {
+  createTriggerNotification: async (notification: { id: string; title: string }, trigger: { timestamp: number; alarmManager?: { type?: number } }) => {
+    state.alarmTypes.set(notification.id, trigger.alarmManager?.type ?? -1);
     state.armed.set(notification.id, { title: notification.title, timestamp: trigger.timestamp });
     return notification.id;
   },
@@ -32,7 +40,12 @@ const notifee = {
     state.cancelled.push(id);
   },
   cancelDisplayedNotification: async () => {},
-  displayNotification: async (notification: { id: string }) => notification.id,
+  displayNotification: async (notification: { id: string }) => {
+    state.shown.push(notification.id);
+    return notification.id;
+  },
+  getPowerManagerInfo: async () => ({ activity: null }),
+  openPowerManagerSettings: async () => {},
   onForegroundEvent: () => () => {},
   onBackgroundEvent: () => {},
   getInitialNotification: async () => null,

@@ -78,6 +78,8 @@ export interface RestoreReport {
   readonly missingFiles: number;
   /** Files the backup keeps in a drive (Seafile) this server is not linked to: they come back once it is, and the restore run again. */
   readonly needDrive: number;
+  /** Files S3 keeps cold (Glacier): their way out is asked, and they come back when the restore is run again, hours later. */
+  readonly coldFiles: number;
 }
 
 export interface RestoreStatus {
@@ -86,6 +88,8 @@ export interface RestoreStatus {
   readonly finishedAt: number | null;
   readonly error: string | null;
   readonly report: RestoreReport | null;
+  /** The snapshot asked for sleeps in cold storage (Glacier): S3 is bringing it out, the restore is to be run again in a few hours. */
+  readonly thawing: boolean;
 }
 
 export interface AdminStatus {
@@ -93,6 +97,10 @@ export interface AdminStatus {
     readonly version: string;
     readonly notes: number;
     readonly pages: number;
+    /** Contacts' people, live ones (0 from a server older than Contacts). */
+    readonly contacts: number;
+    /** Agenda's own events, live ones (0 from a server older than Agenda; subscriptions' and holidays' left out). */
+    readonly events: number;
     /** Photos and files the server knows, wherever their bytes are. */
     readonly files: number;
     readonly fileBytes: number;
@@ -106,6 +114,8 @@ export interface BackupSnapshot {
   readonly name: string;
   readonly at: number;
   readonly bytes: number;
+  /** Kept in cold storage (Glacier): S3 brings it out, in hours, before it can be read. */
+  readonly cold: boolean;
 }
 
 export interface BackupList {
@@ -140,7 +150,7 @@ function parseRun(value: unknown): BackupRun | null {
 
 function parseReport(value: unknown): RestoreReport | null {
   if (!isObject(value) || !isRestoreMode(value.mode)) return null;
-  return { mode: value.mode, source: words(value.source) ?? '', records: num(value.records), files: num(value.files), missingFiles: num(value.missingFiles), needDrive: num(value.needDrive) };
+  return { mode: value.mode, source: words(value.source) ?? '', records: num(value.records), files: num(value.files), missingFiles: num(value.missingFiles), needDrive: num(value.needDrive), coldFiles: num(value.coldFiles) };
 }
 
 export function parseAdminStatus(body: unknown): AdminStatus | null {
@@ -150,7 +160,7 @@ export function parseAdminStatus(body: unknown): AdminStatus | null {
   const drive = isObject(body.drive) ? body.drive : {};
   const restore = isObject(body.restore) ? body.restore : {};
   return {
-    server: { version: words(server.version) ?? '', notes: num(server.notes), pages: num(server.pages), files: num(server.files), fileBytes: num(server.fileBytes) },
+    server: { version: words(server.version) ?? '', notes: num(server.notes), pages: num(server.pages), contacts: num(server.contacts), events: num(server.events), files: num(server.files), fileBytes: num(server.fileBytes) },
     backup: { running: backup.running === true, last: parseRun(backup.last), lastSuccessAt: time(backup.lastSuccessAt), nextAt: time(backup.nextAt) },
     drive: {
       running: drive.running === true,
@@ -166,6 +176,7 @@ export function parseAdminStatus(body: unknown): AdminStatus | null {
       finishedAt: time(restore.finishedAt),
       error: words(restore.error),
       report: parseReport(restore.report),
+      thawing: restore.thawing === true,
     },
   };
 }
@@ -173,7 +184,7 @@ export function parseAdminStatus(body: unknown): AdminStatus | null {
 export function parseBackupList(body: unknown): BackupList | null {
   if (!isObject(body) || !Array.isArray(body.snapshots)) return null;
   const snapshots = body.snapshots.flatMap((entry): BackupSnapshot[] =>
-    isObject(entry) && typeof entry.name === 'string' && entry.name ? [{ name: entry.name, at: num(entry.at), bytes: num(entry.bytes) }] : [],
+    isObject(entry) && typeof entry.name === 'string' && entry.name ? [{ name: entry.name, at: num(entry.at), bytes: num(entry.bytes), cold: entry.cold === true }] : [],
   );
   return { snapshots };
 }

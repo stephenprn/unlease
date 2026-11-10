@@ -22,6 +22,11 @@ describe('a recipe for another number', () => {
     expect(unit('4 à 6 personnes')).toBeNull();
     expect(unit('6 parts')).toBeNull();
     expect(unit('6')).toBeNull();
+    // « Makes 12 » counts pancakes, not people: twelve pieces, never twelve guests.
+    expect(unit('Makes 12')).toBe('pièces');
+    expect(unit('Donne 20')).toBe('pièces');
+    expect(unit('Makes 12 pancakes')).toBe('pancakes');
+    expect(unit('Serves 4')).toBeNull();
     expect(servingsWords(15, 20 / 15, 'crêpes')).toMatch(/^20\scrêpes$/);
     expect(servingsWords(15, 1 / 15, 'crêpes')).toMatch(/^1\scrêpe$/);
     expect(servingsWords(1, 2, 'gâteau')).toMatch(/^2\sgâteaux$/);

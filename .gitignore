@@ -86,14 +86,14 @@ keystore.properties
 
 # Unlease: the server's local secrets and data, the web builds, review captures.
 # The web apps' build tooling is source: kept, despite the Xcode and Android `build/` above.
-!web/*/build/
+!web/build/
 server/.env
 server/data/
 server/dist/
-web/*/dist/
-web/*/dist-demo/
-web/*/test-output/
-web/*/*.tsbuildinfo
+web/dist/
+web/dist-demo/
+web/test-output/
+web/*.tsbuildinfo
 .impeccable/review/
 .impeccable/build/
 # Docker Compose's local secrets.

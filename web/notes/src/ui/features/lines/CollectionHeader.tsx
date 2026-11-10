@@ -9,7 +9,7 @@ import { memo, type ReactNode } from 'react';
 import type { CollectionEmblem } from '@unlease/design/emblems';
 import type { LineColor } from '@unlease/design/colors';
 
-import { Emblem, EmblemStone } from '../../components/Emblem';
+import { Emblem, EmblemStone } from '@shared/ui/components/Emblem';
 import styles from './lines.module.css';
 
 export interface CollectionHeaderProps {

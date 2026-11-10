@@ -7,6 +7,7 @@ import {
   groundPaint,
   groundReads,
   isDefaultAppearance,
+  launcherPalette,
   markColors,
   PALETTE_COLORS,
   paletteOf,
@@ -21,7 +22,7 @@ import {
   type GroundChoice,
 } from '../appearance';
 import { isHex } from '../color';
-import { contrast, groundGradient, GROUNDS, MARK_COLORS, ROLES, toOklch, type Mode, type Roles } from '../palette';
+import { contrast, fieldOn, groundGradient, GROUNDS, MARK_COLORS, ROLES, toOklch, type Mode, type Roles } from '../palette';
 
 const MODES: readonly Mode[] = ['light', 'dark'];
 
@@ -46,6 +47,15 @@ function expectReadable(roles: Roles, ground: readonly string[], label: string):
     check(`focus on ${surface}`, contrast(roles.focus, surface), 3);
     check(`action on ${surface}`, contrast(roles.action, surface), 3);
     check(`link on ${surface}`, contrast(roles.link, surface), 4.5);
+  }
+  // A text field lies on the ground too, its veil over it: what is typed, its hint, its edge and its focus still read.
+  const mode: Mode = roles.wall === ROLES.dark.wall ? 'dark' : 'light';
+  for (const surface of ground) {
+    const field = fieldOn(surface, mode);
+    check(`ink on a field on ${surface}`, contrast(roles.ink, field), 7);
+    check(`hint on a field on ${surface}`, contrast(roles.inkFaint, field), 4.5);
+    check(`edge of a field on ${surface}`, contrast(roles.edge, field), 3);
+    check(`focus on a field on ${surface}`, contrast(roles.focus, field), 3);
   }
   check('onLeaf', contrast(roles.onLeaf, roles.leaf), 4.5);
   check('onAction', contrast(roles.onAction, roles.action), 4.5);
@@ -239,6 +249,24 @@ describe('the mark', () => {
 
   it('keeps a primary the card already stands off as it is', () => {
     expect(markColors('#1E3A5F').tile).toBe('#1E3A5F');
+  });
+});
+
+describe('the launcher’s icon', () => {
+  it('is a palette’s own for its primary, Carnet’s by default', () => {
+    for (const key of PALETTES) expect(launcherPalette(PALETTE_COLORS[key].primary)).toBe(key);
+    expect(launcherPalette(DEFAULT_APPEARANCE.primary)).toBe('carnet');
+    expect(launcherPalette(PALETTE_COLORS.sarcelle.primary.toLowerCase())).toBe('sarcelle');
+  });
+
+  it('is the nearest palette’s for a primary picked precisely, Carnet’s for none', () => {
+    // A deeper teal, a slate grey-blue, a pink: what the eye would match them with.
+    expect(launcherPalette('#2E8C80')).toBe('sarcelle');
+    expect(launcherPalette('#8A9BAA')).toBe('ardoise');
+    expect(launcherPalette('#E88FA8')).toBe('pivoine');
+    expect(launcherPalette('#F0D060')).toBe('mimosa');
+    expect(launcherPalette('not a colour')).toBe('carnet');
+    for (const primary of colours(100, 29)) expect(PALETTES).toContain(launcherPalette(primary));
   });
 });
 

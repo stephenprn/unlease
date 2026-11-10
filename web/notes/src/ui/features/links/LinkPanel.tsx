@@ -1,9 +1,10 @@
 /**
  * A link, read: its kept images in cut frames, what it is, what it costs, the facts Claude pulled
- * from the page, and the owner's own note about it. A side sheet over its collection, so the list
- * stays in view; its foot holds the two things done here (stamp it, open the page), and the
- * collection in its head is where the link is moved. A link nothing can read says why, with the
- * way on. Under the title, the modules its collection picked (promo codes, the way there...).
+ * from the page, and the owner's own note about it. A dialog over its collection, as a note opens
+ * (a page of its own on a phone-sized window); its foot holds the two things done here (stamp it,
+ * open the page), and the collection in its head is where the link is moved. A link nothing can
+ * read says why, with the way on. Under the title, the modules its collection picked (promo codes,
+ * the way there...).
  */
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
@@ -14,30 +15,38 @@ import { asLineColor } from '@unlease/design/colors';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { formatDay, formatPrice } from '@unlease/core/services/format';
 import { LINK_KIND_NAMES, shownTitle } from '@unlease/notes/models/entities';
+import { linkTemplateSource, readingSignature } from '@unlease/notes/services/templates';
+import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 
-import { useMinute } from '../../../app/hooks/useMinute';
-import { useBlobUrl } from '../../../app/media/images';
+import { useMinute } from '@shared/app/hooks/useMinute';
+import { useBlobUrl } from '@shared/app/media/images';
 import { deleteLink, moveLink, reanalyzeLink, saveTypedText } from '../../../app/store/actions';
-import { onBeforePause } from '../../../app/sync/loop';
+import { onBeforePause } from '@shared/app/sync/loop';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectCanRead, selectServer, useSettingsStore } from '../../../app/store/settings';
-import { showError, showSnack, showUndo } from '../../../app/store/ui';
-import { Button } from '../../components/Button';
-import { Emblem } from '../../components/Emblem';
-import { Icon } from '../../components/Icon';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
-import { Menu } from '../../components/Menu';
+import { templatePart } from '../../../app/templates';
+import templateStyles from '../templates/templates.module.css';
+import { paths } from '../../routes';
+import { selectServer, useSettingsStore } from '@shared/app/store/settings';
+import { useCanRead } from '../../../app/store/prefs';
+import { showError, showSnack, showUndo } from '@shared/app/store/ui';
+import { Button } from '@shared/ui/components/Button';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
+import { Menu } from '@shared/ui/components/Menu';
 import { Stamp, stampWord } from '../../components/Stamp';
-import { TextField } from '../../components/TextField';
-import { navigate, paths } from '../../router';
-import { NARROW, useMedia } from '../../useMedia';
+import { TextField } from '@shared/ui/components/TextField';
+import { adminPath, navigate } from '@shared/ui/router';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { MoveDialog } from '../lines/MoveDialog';
+import { PeopleField } from '../people/PeopleField';
 import { KIND_ICONS } from './kindIcon';
 import { ModuleBar } from './ModuleBar';
+import { PriceWatch } from './PriceWatch';
 import { toggleDone } from './LinkRow';
 import styles from './links.module.css';
-import { OutlinedBox, useOutline } from '../../components/Outline';
+import { OutlinedBox, useOutline } from '@shared/ui/components/Outline';
 import { ReadingTrack } from './ReadingTrack';
 
 /** The facts' well: a panel's outline. */
@@ -47,7 +56,7 @@ const SAVE_DELAY_MS = 400;
  * A kept picture in its frame, the frame cut to the picture's own proportion once it loads (4:5
  * until then), so a picture always fills it: no well showing beside a portrait or above a landscape.
  */
-function GalleryFrame({ src, remote = false }: { src: string | null; remote?: boolean }) {
+function GalleryFrame({ src, remote = false, onError }: { src: string | null; remote?: boolean; onError?: () => void }) {
   const [ratio, setRatio] = useState<number | null>(null);
   // Its own outline for life, at whatever proportion the picture gives it.
   const { ref, vars } = useOutline<HTMLDivElement>('frame');
@@ -59,6 +68,7 @@ function GalleryFrame({ src, remote = false }: { src: string | null; remote?: bo
           alt=""
           draggable={false}
           referrerPolicy={remote ? 'no-referrer' : undefined}
+          onError={onError}
           onLoad={event => {
             const { naturalWidth, naturalHeight } = event.currentTarget;
             if (naturalWidth > 0 && naturalHeight > 0) setRatio(naturalWidth / naturalHeight);
@@ -69,14 +79,14 @@ function GalleryFrame({ src, remote = false }: { src: string | null; remote?: bo
   );
 }
 
-function GalleryImage({ blobId, fallback }: { blobId: string; fallback: string | null }) {
+function GalleryImage({ blobId, fallback, onLost }: { blobId: string; fallback: string | null; onLost?: () => void }) {
   const url = useBlobUrl(blobId, 'display');
-  // Until the kept copy is here, or if it cannot come (offline): the first frame shows the page's own picture, as the row does.
-  return <GalleryFrame src={url ?? fallback} remote={!url} />;
+  // Until the kept copy is here, or if it cannot come (offline): the first frame shows the page's own picture, as the row does; that one failing too, the picture is lost.
+  return <GalleryFrame src={url ?? fallback} remote={!url} onError={url ? undefined : onLost} />;
 }
 
 /** The kept pictures, side by side; with more than one, dots under them say which is in view (the phone's gallery). */
-function Gallery({ blobIds, fallback }: { blobIds: readonly string[]; fallback: string | null }) {
+function Gallery({ blobIds, fallback, onLost }: { blobIds: readonly string[]; fallback: string | null; onLost: () => void }) {
   const strip = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(0);
   const many = blobIds.length > 1;
@@ -101,7 +111,7 @@ function Gallery({ blobIds, fallback }: { blobIds: readonly string[]; fallback: 
       {/* Focusable, so the arrow keys scroll it too. */}
       <div ref={strip} className={styles.gallery} data-many={many || undefined} role="group" aria-label={t('Images de la page')} tabIndex={many ? 0 : undefined} onScroll={many ? follow : undefined}>
         {blobIds.map((blobId, index) => (
-          <GalleryImage key={blobId} blobId={blobId} fallback={index === 0 ? fallback : null} />
+          <GalleryImage key={blobId} blobId={blobId} fallback={index === 0 ? fallback : null} onLost={blobIds.length === 1 ? onLost : undefined} />
         ))}
       </div>
       {many ? (
@@ -125,7 +135,19 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   // Under 720px the link is a whole page, as on the phone: Back leaves it; wider, the side sheet closes.
   const narrow = useMedia(NARROW);
   const leave = narrow ? ({ icon: 'back', label: t('Retour') } as const) : ({ icon: 'close', label: t('Fermer') } as const);
-  const reading = useSettingsStore(selectCanRead);
+  const reading = useCanRead();
+  // The template it is read with (« Modifier la fiche »): its collection's, else its kind's; a link of no kind has none.
+  const template = useLibraryStore(s => {
+    const shown = s.links[id];
+    if (!shown) return null;
+    const source = linkTemplateSource(s.linkTemplates, shown, s.notes);
+    return source.from === 'collection' ? templatePart(source.template) : source.kind === 'other' ? null : templatePart({ id: '', kind: source.kind });
+  });
+  // Read with another version of that template than the one it has now (never read with one: the presets').
+  const readBefore = useLibraryStore(s => {
+    const shown = s.links[id];
+    return !!shown && shown.status === 'ready' && (shown.readWith ?? 'preset') !== readingSignature(linkTemplateSource(s.linkTemplates, shown, s.notes));
+  });
   // The facts' well, in its own outline.
   const { ref: factsRef, vars: factsVars } = useOutline<HTMLDListElement>('panel');
   const server = useSettingsStore(selectServer);
@@ -135,6 +157,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const heading = useRef<HTMLHeadingElement>(null);
   const [menu, setMenu] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [lostPicture, setLostPicture] = useState<string | null>(null);
   const [comment, setComment] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typed = useRef<string | null>(null);
@@ -165,7 +188,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
 
   if (!link || link.deletedAt !== null) {
     return (
-      <Layer open={!closing} onDismiss={onClose} kind="side" label={t('Lien introuvable')} routed panelClassName={styles.page}>
+      <Layer open={!closing} onDismiss={onClose} label={t('Lien introuvable')} routed>
         <div className={styles.panelHead}>
           <IconButton icon={leave.icon} label={leave.label} onClick={onClose} />
         </div>
@@ -180,7 +203,10 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const meta = [link.title || link.kind !== 'other' ? LINK_KIND_NAMES[link.kind] : null, source].filter(Boolean).join(' · ');
   // The kept pictures are the server's copies: without a server the page's own picture stands in, as on the row.
   const kept = server ? link.imageIds : [];
-  const pictured = kept.length > 0 || !!link.imageUrl;
+  // A lone picture that would not load at all (its copy nor the page's own) leaves no empty frame: the panel goes without.
+  const pictures = `${kept.join(',')}|${link.imageUrl ?? ''}`;
+  const pictureLost = lostPicture === pictures;
+  const pictured = (kept.length > 0 || !!link.imageUrl) && !pictureLost;
   const value = comment ?? link.comment;
   const unread = link.status === 'skipped' || (link.status === 'pending' && !reading);
   const failed = link.status === 'failed';
@@ -199,7 +225,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
     setComment(null);
   };
   // With a server, what is missing is the key: straight to that section.
-  const toAdmin = (): void => navigate(server ? `${paths.admin}#reading` : `${paths.admin}#server`);
+  const toAdmin = (): void => navigate(adminPath(server ? 'reading' : 'server'));
 
   const head = (
     <div className={styles.heading}>
@@ -215,11 +241,13 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
           {doneAt !== null ? <Stamp kind={link.kind} date={formatDay(doneAt, now)} /> : null}
         </div>
       ) : null}
+      {/* « Suivi des prix », under the price, while its collection watches. */}
+      <PriceWatch id={id} underPrice={link.price !== null || doneAt !== null} />
     </div>
   );
 
   return (
-    <Layer open={!closing} onDismiss={onClose} kind="side" labelledBy={titleId} full routed initialFocus={heading} panelClassName={styles.page}>
+    <Layer open={!closing} onDismiss={onClose} labelledBy={titleId} full routed initialFocus={heading} panelClassName={styles.dialog}>
       <div className={styles.panelHead}>
         <IconButton icon={leave.icon} label={leave.label} onClick={onClose} shortcut={t('Échap')} />
         {line ? (
@@ -233,11 +261,11 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
         <IconButton ref={more} icon="more" label={t('Plus d’actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
       </div>
       <div className={styles.panelScroll}>
-        {kept.length > 0 ? (
-          <Gallery blobIds={kept} fallback={link.imageUrl} />
+        {pictureLost ? null : kept.length > 0 ? (
+          <Gallery blobIds={kept} fallback={link.imageUrl} onLost={() => setLostPicture(pictures)} />
         ) : link.imageUrl ? (
           <div className={styles.gallery}>
-            <GalleryFrame src={link.imageUrl} remote />
+            <GalleryFrame src={link.imageUrl} remote onError={() => setLostPicture(pictures)} />
           </div>
         ) : null}
 
@@ -290,7 +318,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
             </OutlinedBox>
           ) : null}
 
-          {link.summary || link.attributes.length > 0 ? (
+          {link.summary || link.attributes.length > 0 || (reading && readBefore) ? (
             <div className={styles.about}>
               {link.summary ? <p className={`${styles.summary} t-body`}>{link.summary}</p> : null}
               {link.attributes.length > 0 ? (
@@ -303,14 +331,25 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
                   ))}
                 </dl>
               ) : null}
+              {/* Read with another version of its template: under the facts, the way to read it again. */}
+              {reading && readBefore ? (
+                <p className={`${templateStyles.stale} t-meta`}>
+                  <span>{t('Lu avec une version précédente de la fiche.')}</span>
+                  <Button kind="text" small onClick={() => reanalyzeLink(id)}>
+                    {t('Relire')}
+                  </Button>
+                </p>
+              ) : null}
             </div>
           ) : null}
+
+          <PeopleField type="link" id={id} ids={link.contactIds} />
 
           <TextField
             label={t('Votre note')}
             value={value}
             multiline
-            maxLength={5000}
+            maxLength={TEXT_LIMITS.link.comment}
             placeholder={t('Pour qui, pourquoi, quand…')}
             inputClassName={styles.noteInput}
             onChange={text => {
@@ -370,6 +409,8 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
             : []),
           // Reading again only means something when the server reads links.
           ...(reading ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
+          // What Claude notes on it: the template it is read with.
+          ...(template ? [{ label: t('Modifier la fiche'), icon: 'rows' as const, onSelect: () => navigate(paths.template(template)) }] : []),
           {
             label: t('Supprimer'),
             icon: 'trash',

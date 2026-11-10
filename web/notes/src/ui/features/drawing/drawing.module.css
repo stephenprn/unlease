@@ -1,6 +1,7 @@
 /*
- * Drawings: strokes on an SVG in drawing units (a thousandth of the sheet's width). No paper of their
- * own: they lie on a note's wash and paper, a card, a page's ground or a frame.
+ * Drawings: strokes on an SVG in drawing units (a thousandth of the sheet's width). A note's lie on
+ * its wash and paper; a page's on its own background (« Fond »: the paper or a wash), or on the
+ * page's ground in its frame.
  */
 
 /* Every stroke: a line with round ends and joins, in the writing ink unless it names a pigment (`data-line`). */
@@ -181,6 +182,52 @@
   transform: scaleX(-1);
 }
 
+/* « Fond »: the palette's glyph on a pebble of the drawing's background, edged as its swatch is; none, the icon button's own. */
+.tools .backgroundButton {
+  --edge-color: transparent;
+  --edge-width: 1.5px;
+}
+
+.tools .backgroundButton[data-sheet] {
+  --pebble-fill: var(--paper);
+  --edge-color: var(--edge);
+}
+
+.tools .backgroundButton[data-line] {
+  --pebble-fill: var(--tint);
+  --edge-color: var(--fill);
+}
+
+@media (hover: hover) {
+  .tools .backgroundButton[data-sheet]:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, var(--paper) 92%, var(--ink));
+  }
+  .tools .backgroundButton[data-line]:not(:disabled):hover {
+    --pebble-fill: color-mix(in srgb, var(--tint) 92%, var(--ink));
+  }
+}
+
+.tools .backgroundButton[data-sheet]:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, var(--paper) 86%, var(--ink));
+}
+
+.tools .backgroundButton[data-line]:not(:disabled):active {
+  --pebble-fill: color-mix(in srgb, var(--tint) 86%, var(--ink));
+}
+
+.backgroundPicker {
+  padding: 8px 6px 6px;
+}
+
+.backgroundPicker .backgroundFours {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* « Sans fond »: nothing under the drawing, its edge alone, struck through. */
+.backgroundSwatch[data-none] {
+  --pebble-fill: transparent;
+}
+
 /* A size: a dot of the tool's width, on the icon buttons' pebble. */
 .tools .size {
   width: 40px;
@@ -269,6 +316,10 @@
 
 /* From 720px under a mouse, the strip's compact sizes: it holds one row across the note's dialog. */
 @media (min-width: 720px) and (pointer: fine) {
+  /* The first tool's glyph on the words' edge, as the bar's first glyph under it. */
+  .dock {
+    padding-inline: 14px;
+  }
   .tools .tool {
     width: 36px;
     height: 36px;
@@ -337,6 +388,17 @@
   transition: background-color var(--duration-short) var(--ease-standard);
 }
 
+/* Its own background (« Fond », `data-sheet`): the plain paper or a pigment's wash (`data-line`), grained as a note's sheet (`paper`). */
+.blockFrame[data-sheet],
+.dialogCanvas[data-sheet] {
+  background-color: var(--sheet, var(--paper));
+}
+
+.blockFrame[data-line],
+.dialogCanvas[data-line] {
+  --sheet: var(--tint);
+}
+
 /* Nothing drawn yet: a quiet invitation on the well, as an empty media block. */
 .blockEmpty {
   position: relative;
@@ -369,6 +431,17 @@
 
 button.blockFrame:active {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* On a background of its own, the press darkens that background rather than veiling it. */
+@media (hover: hover) {
+  button.blockFrame[data-sheet]:hover {
+    background-color: color-mix(in srgb, var(--sheet, var(--paper)) 94%, var(--ink));
+  }
+}
+
+button.blockFrame[data-sheet]:active {
+  background-color: color-mix(in srgb, var(--sheet, var(--paper)) 90%, var(--ink));
 }
 
 button.blockEmpty:active {

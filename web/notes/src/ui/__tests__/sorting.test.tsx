@@ -5,17 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import type { SortMove, SortRequest } from '@unlease/notes/sync/sorting';
 
-import { freshLibrary } from '../../test/library';
+import { freshLibrary } from '@test/library';
 import { addLink, createLine, createNote, moveLink, updateLink } from '../../app/store/actions';
 import { toggleSelected } from '../../app/store/board';
 import { useLibraryStore } from '../../app/store/library';
-import { setOnboarded, setServer } from '../../app/store/settings';
-import { useUiStore } from '../../app/store/ui';
-import { stopSync } from '../../app/sync/loop';
-import { App } from '../App';
+import { setOnboarded, setServer } from '@shared/app/store/settings';
+import { useUiStore } from '@shared/app/store/ui';
+import { stopSync } from '@shared/app/sync/loop';
+import { App } from '@shared/ui/App';
 import { NewLineDialog } from '../features/lines/LineDialogs';
-import { initHistory } from '../router';
+import { initHistory } from '@shared/ui/router';
 import { LineScreen } from '../screens/LineScreen';
+import { useNotesUiStore } from '@notes/app/store/notesUi';
 
 const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const state = () => useLibraryStore.getState();
@@ -251,7 +252,7 @@ describe('one sort at a time', () => {
     await user.keyboard('{Escape}');
     answer(json({ moves: [] }));
     await waitFor(() => expect(snack()?.message).toBe('Rien dans Non classé ne va clairement dans une collection'));
-    expect(useUiStore.getState().sorting).toBe(false);
+    expect(useNotesUiStore.getState().sorting).toBe(false);
   });
 });
 

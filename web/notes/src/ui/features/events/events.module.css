@@ -1,0 +1,60 @@
+/* « Dans l’agenda »: the events that mention a page, a note or a person. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.head {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Its glyph on the text's edge, under the head: the row's tint reaches 8 past it on each side. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 -8px;
+  padding: 6px 8px;
+  border-radius: var(--cut-row);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.row[data-past] {
+  color: var(--ink-muted);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}

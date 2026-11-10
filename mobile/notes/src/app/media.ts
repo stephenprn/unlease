@@ -1,12 +1,12 @@
 /** Photos into notes: kept on this phone's disk until the sync loop uploads them. */
 import { t } from '@unlease/core/i18n';
 import { createId } from '@unlease/core/services/ids';
-import { saveLocalFile } from '@data/repositories/fileRepository';
-import { capturePhoto, describeImage, pickImages, type MediaFile } from '@platform/media';
+import { saveLocalFile } from '@shared/data/repositories/fileRepository';
+import { capturePhoto, describeImage, pickImages, type MediaFile } from '@shared/platform/media';
 
-import { forgetLocalPaths } from './hooks/useImageSource';
+import { forgetLocalPaths } from '@shared/app/hooks/useImageSource';
 import { addAttachment } from './store/actions';
-import { requestSync } from './sync/syncManager';
+import { requestSync } from '@shared/app/sync/syncManager';
 
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/avif']);
 

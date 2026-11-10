@@ -5,7 +5,7 @@
  * costs nothing. The web's `CouponsDialog`.
  */
 import React, { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
@@ -15,14 +15,15 @@ import { formatClock, formatDay } from '@unlease/core/services/format';
 import type { Coupon, CouponResponse } from '@unlease/notes/sync/coupons';
 import { findCoupons } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
-import { copyText } from '@platform/intake';
+import { showSnack } from '@shared/app/store/uiStore';
+import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, IconButton, Organic, Sheet, SheetScroll } from '../../components';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { ReadingTrack } from './ReadingTrack';
+import { AppText, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
+import { openPage as open, SearchFoot } from './SearchFoot';
 
 type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly reason: string } | { readonly kind: 'ready'; readonly answer: CouponResponse };
 
@@ -33,8 +34,6 @@ export function CouponsSheet({ id, visible, onDismiss }: { id: string; visible: 
     </Sheet>
   );
 }
-
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
 
 /** Mounted with the sheet each time it opens: it asks then (and again on demand), and drops the question when the sheet goes. */
 function CouponsBody({ id }: { id: string }) {
@@ -78,20 +77,20 @@ function CouponsBody({ id }: { id: string }) {
   }
   if (phase.kind === 'failed') {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Claude n’a pas pu chercher de codes : {reason}', { reason: phase.reason })}
-        </AppText>
-        <View style={styles.actions}>
-          <Button kind="text" label={t('Réessayer')} onPress={() => search(false)} />
-          <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-        </View>
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu chercher de codes : {reason}', { reason: phase.reason })}
+          </AppText>
+        </SheetScroll>
+        <SearchFoot failed url={link.url} onSearch={search} />
+      </>
     );
   }
   const { coupons, tips, searchedAt } = phase.answer;
   const now = Date.now();
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       {coupons.length === 0 ? (
         <AppText variant="body">{t('Aucun code en cours trouvé pour {shop}.', { shop })}</AppText>
@@ -125,11 +124,9 @@ function CouponsBody({ id }: { id: string }) {
       <AppText variant="meta">
         {t('Trouvé sur le web par Claude le {day} à {time}. Un code peut ne plus marcher au moment de payer.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
       </AppText>
-      <View style={styles.actions}>
-        <Button kind="text" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
-        <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-      </View>
     </SheetScroll>
+    <SearchFoot failed={false} url={link.url} onSearch={search} />
+    </>
   );
 }
 
@@ -168,16 +165,15 @@ function CouponRow({ coupon, price, first, now }: { coupon: Coupon; price: strin
           </AppText>
         ) : null}
       </View>
-      <IconButton icon="copy" label={t('Copier le code {code}', { code: coupon.code })} onPress={copy} />
+      <IconButton icon="copy" label={t('Copier le code {code}', { code: coupon.code })} onPress={copy} style={styles.copy} />
     </View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-    waiting: { gap: 12, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
+    body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+    waiting: { gap: 12, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
     // The codes: a well in its own outline, ruled by paper, as the link's facts are.
     well: { backgroundColor: theme.color.paperHigh, overflow: 'hidden' },
     coupon: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingLeft: 16, paddingRight: 4, paddingVertical: 12 },
@@ -187,4 +183,6 @@ const makeStyles = (theme: Theme) =>
     codeChip: { marginBottom: 6, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: theme.color.paper, ...corners(SHAPES.detail) },
     code: { fontFamily: 'monospace', fontSize: 15, lineHeight: 22, letterSpacing: 0.6, color: theme.color.ink },
     tips: { gap: 6 },
+    // Centred on the code it copies (its chip 26 high), not on the row's top.
+    copy: { marginTop: -7 },
   });

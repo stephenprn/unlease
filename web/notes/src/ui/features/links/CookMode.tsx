@@ -14,16 +14,16 @@ import { scaleIngredient, stepTimers } from '@unlease/notes/services/recipes';
 import { readRecipe } from '../../../app/modules';
 import { selectFactor, selectTimers, startTimer, useKitchenStore } from '../../../app/store/kitchen';
 import { useLibraryStore } from '../../../app/store/library';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
-import { Segmented } from '../../components/Segmented';
-import { NARROW, useMedia } from '../../useMedia';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
+import { Segmented } from '@shared/ui/components/Segmented';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { primeChime, useSecond, useWakeLock } from './kitchen';
 import { TimerPill } from './KitchenTimers';
 import { ReadingTrack } from './ReadingTrack';
-import { ServingsStepper, servingsLine } from './ServingsStepper';
+import { ServingsStepper } from './ServingsStepper';
 import { useModuleSearch } from './useModuleSearch';
 import styles from './links.module.css';
 
@@ -140,7 +140,7 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
     );
   }
 
-  const { ingredients, servings } = phase.answer;
+  const { ingredients } = phase.answer;
   const listed = ingredients.length > 0;
   const step = steps[Math.min(index, Math.max(0, count - 1))];
   const toggle = (row: number): void =>
@@ -153,14 +153,13 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
     primeChime();
     startTimer(id, t('Étape {n}', { n: index + 1 }), seconds);
   };
-  const line = servingsLine(link, factor, servings);
 
   const ingredientList = (
     <section className={styles.cookIngredients} aria-labelledby={`${titleId}-ingredients`}>
-      <h3 id={`${titleId}-ingredients`} className="t-section">
+      {/* Under the segmented switch on a phone, « Ingrédients » is the segment chosen: said, not shown again. How many the quantities are for, the stepper over the list says. */}
+      <h3 id={`${titleId}-ingredients`} className={narrow && count > 0 ? 'sr-only' : 't-section'}>
         {t('Ingrédients')}
       </h3>
-      {line ? <p className="t-meta">{line}</p> : null}
       <ul className={styles.choices}>
         {ingredients.map((ingredient, row) => {
           const done = ticked.has(row);

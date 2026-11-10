@@ -6,24 +6,35 @@ import sharp from 'sharp';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import type { Fields, SyncRecord } from '@unlease/core/sync/record';
 import { type RecordType } from '@unlease/notes/sync/types';
+import { type PagesRecordType } from '@unlease/pages/sync/types';
+import { type ContactsRecordType } from '@unlease/contacts/sync/types';
+import { type CalendarRecordType } from '@unlease/calendar/sync/types';
 import { LinkAnalyzer } from '../src/apps/notes/analysis/analyzer';
-import type { Fetcher, FetchOptions, FetchResult } from '../src/apps/notes/analysis/fetcher';
-import type { MessagesApi } from '../src/apps/notes/analysis/model';
+import type { Fetcher, FetchOptions, FetchResult } from '../src/reading/fetcher';
+import type { MessagesApi } from '../src/claude/client';
 import { pendingIn } from '../src/apps/notes/analysis/pending';
 import { LinkModelProvider } from '../src/apps/notes/analysis/provider';
+import { ClaudeProvider } from '../src/claude/provider';
 import { AnalysisQueue } from '../src/apps/notes/analysis/queue';
-import type { UsageStore } from '../src/apps/notes/analysis/usage';
-import { createNotesApp, NOTES_PUSH_RULES, type NotesApp } from '../src/apps/notes';
+import type { UsageStore } from '../src/claude/usage';
+import type { NotesApp } from '../src/apps/notes';
+import { checkSeerrServer } from '../src/apps/notes/seerr';
+import type { PagesApp } from '../src/apps/pages';
+import type { ContactsApp } from '../src/apps/contacts';
+import type { CalendarApp } from '../src/apps/calendar';
+import { createApps, PUSH_REPAIRS, PUSH_RULES } from '../src/apps/registry';
+import { AppRunner } from '../src/apps/runner';
 import type { ServerApp } from '../src/apps/types';
 import { Administration } from '../src/admin';
 import { createApp } from '../src/app';
+import type { ProxyHeader } from '../src/config';
 import { RestoreService } from '../src/backup/restore';
 import { BackupService } from '../src/backup/service';
 import { BlobStore } from '../src/blobs/store';
 import { openDatabase, type Database } from '../src/db/database';
 import { DriveSync } from '../src/drive/sync';
 import { SettingsStore } from '../src/settings/store';
-import { checkS3Bucket, checkSeafile, checkSeerrServer, type ListModels } from '../src/settings/update';
+import { checkS3Bucket, checkSeafile, type ListModels } from '../src/settings/update';
 import { ServerClock } from '../src/sync/clock';
 import { ChangeNotifier } from '../src/sync/notifier';
 import { RecordStore } from '../src/sync/records';
@@ -50,9 +61,14 @@ export interface TestServer {
   readonly blobs: BlobStore;
   readonly usage: UsageStore;
   readonly settings: SettingsStore;
-  /** Carnet's part of the server, and the apps this test server runs (Carnet alone). */
+  /** Carnet's, Pages' and Contacts' parts of the server, and every app (the registry's, as main.ts makes them). */
   readonly notes: NotesApp;
+  readonly pages: PagesApp;
+  readonly contacts: ContactsApp;
+  readonly calendar: CalendarApp;
   readonly apps: readonly ServerApp[];
+  /** Which apps run: not started (tests drive the link reading through `analysisOf`) unless a test starts it. */
+  readonly runner: AppRunner;
   /** What `POST /api/sort` and the link modules ask. */
   readonly claude: FakeClaude;
   /** The pages the recipe and copy modules read. */
@@ -81,16 +97,22 @@ export interface TestServerOptions {
   readonly fetcher?: Fetcher;
   /** Seerr as the server reaches it (unreachable by default). */
   readonly seerrFetch?: typeof fetch;
+  /** Push services as the server reaches them, for the web's reminders. */
+  readonly pushFetch?: typeof fetch;
+  /** The places' geocoder (Photon) stood in for; without it the search is off. */
+  readonly placesFetch?: typeof fetch;
+  /** `UNLEASE_TRUSTED_PROXY_HEADER`: none by default, the connection's address. */
+  readonly trustedProxyHeader?: ProxyHeader;
 }
 
 export function createTestServer(options: TestServerOptions = {}): TestServer {
-  const dir = mkdtempSync(join(tmpdir(), 'carnet-test-'));
+  const dir = mkdtempSync(join(tmpdir(), 'unlease-test-'));
   const time = { value: T0 };
   const now = () => time.value;
   const db = openDatabase(join(dir, 'carnet.sqlite'));
   const records = new RecordStore(db);
   const notifier = new ChangeNotifier();
-  const sync = new SyncService({ db, records, clock: new ServerClock('srvtest01', now), notifier, rules: NOTES_PUSH_RULES, now });
+  const sync = new SyncService({ db, records, clock: new ServerClock('srvtest01', now), notifier, rules: PUSH_RULES, repairs: PUSH_REPAIRS, now });
   const blobs = new BlobStore(db, join(dir, 'blobs'), now);
   const settings = new SettingsStore(db, {
     apiKey: options.envApiKey === undefined ? ENV_KEY : options.envApiKey,
@@ -100,28 +122,30 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
   const claude = new FakeClaude();
   const fetcher = options.fetcher ?? new FakeFetcher({});
   const seerrFetch: typeof fetch = options.seerrFetch ?? (() => Promise.reject(new TypeError('fetch failed')));
-  const provider = new LinkModelProvider(settings, { effort: 'low', createApi: () => claude, sleep: async () => {} });
+  const provider = new ClaudeProvider(settings, { effort: 'low', createApi: () => claude, sleep: async () => {} });
   const s3 = new FakeS3('carnet-test', now);
   const seafile = new FakeSeafile();
   const tmpDir = join(dir, 'tmp');
   mkdirSync(tmpDir, { recursive: true });
-  // Carnet, as main.ts makes it, with Claude, the pages it reads and Seerr stood in for; its link reading is `analysisOf`'s.
-  const notes = createNotesApp({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, provider, fetcher, seerrFetch, now });
-  const apps = [notes];
-  const usage = notes.usage;
+  settings.settleSetup(!records.holdsNothing());
+  // The apps, as main.ts makes them, with Claude, the pages they read and Seerr stood in for; Carnet's link reading is `analysisOf`'s.
+  const suite = createApps({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, claude: provider, fetcher, seerrFetch, now, ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}), ...(options.placesFetch ? { placesFetch: options.placesFetch, placesUrl: 'https://photon.example.org' } : {}) });
+  const { apps, notes, pages, contacts, calendar, usage } = suite;
+  const runner = new AppRunner(apps, settings, sync);
   const drive = new DriveSync({ db, records, blobs, settings, apps, fetcher: seafile.fetch, now });
   blobs.useRemote(drive);
   const backups = new BackupService({ db, records, blobs, settings, sync, tmpDir, version: 'test', fetcher: s3.fetch, s3RetryDelaysMs: [], drive, apps, now });
   const restore = new RestoreService({ sync, records, blobs, settings, tmpDir, fetcher: s3.fetch, s3RetryDelaysMs: [], drive, now, onFiles: () => drive.kick(), exclusive: work => backups.exclusive(work) });
-  const admin = new Administration({ db, blobs, backups, drive, restore, tmpDir, version: 'test', now });
+  const admin = new Administration({ db, apps, blobs, backups, drive, restore, tmpDir, version: 'test', now });
   const app = createApp({
-    config: { token: TOKEN, corsOrigins: options.corsOrigins ?? ['https://carnet.example.fr'], webDir: options.webDir ?? null },
+    config: { token: TOKEN, corsOrigins: options.corsOrigins ?? ['https://carnet.example.fr'], webDir: options.webDir ?? null, trustedProxyHeader: options.trustedProxyHeader ?? null },
     sync,
     blobs,
     settings,
     apps,
+    routes: suite.routes,
     listModels: options.listModels ?? (async () => ({ data: [] })),
-    checks: { checkS3: config => checkS3Bucket(config, s3.fetch), checkDrive: target => checkSeafile(target, seafile.fetch), checkSeerr: config => checkSeerrServer(config, seerrFetch) },
+    checks: { checkS3: config => checkS3Bucket(config, s3.fetch), checkDrive: target => checkSeafile(target, seafile.fetch), checkSeerr: config => checkSeerrServer(config, seerrFetch), checkHolidays: suite.checks.checkHolidays! },
     admin,
     now,
   });
@@ -135,7 +159,11 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     usage,
     settings,
     notes,
+    pages,
+    contacts,
+    calendar,
     apps,
+    runner,
     claude,
     fetcher,
     s3,
@@ -148,6 +176,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     time,
     now,
     close() {
+      void runner.stop();
       drive.stop();
       backups.stop();
       notifier.close();
@@ -158,7 +187,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
 }
 
 /** A record as a device would push it: every field written at one clock. */
-export function rec(type: RecordType, id: string, fields: Fields, wall: number, node = 'phone1', counter = 0): SyncRecord {
+export function rec(type: RecordType | PagesRecordType | ContactsRecordType | CalendarRecordType, id: string, fields: Fields, wall: number, node = 'phone1', counter = 0): SyncRecord {
   const clock = formatHlc(wall, counter, node);
   return { type, id, fields, clocks: Object.fromEntries(Object.keys(fields).map(field => [field, clock])) };
 }
@@ -289,7 +318,7 @@ const wired = new WeakMap<TestServer, () => void>();
 export function analysisOf(server: TestServer, options: { fetcher: Fetcher; claude?: FakeClaude; budget?: number }) {
   if (options.budget !== undefined) server.settings.update({ budgetUsd: options.budget });
   const claude = options.claude ?? new FakeClaude();
-  const provider = new LinkModelProvider(server.settings, { effort: 'low', createApi: () => claude, sleep: async () => {} });
+  const provider = new LinkModelProvider(new ClaudeProvider(server.settings, { effort: 'low', createApi: () => claude, sleep: async () => {} }));
   let queue: AnalysisQueue | null = null;
   const analyzer = new LinkAnalyzer({
     sync: server.sync,

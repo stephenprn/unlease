@@ -10,6 +10,8 @@ import type { LinkBrief } from '@unlease/notes/sync/brief';
 import type { SeerrResponse, SeerrStatus } from '@unlease/notes/sync/seerr';
 import { seerrPageUrl, seerrQuery, seerrSearchUrl } from '@unlease/notes/services/modules';
 import { foldText } from '@unlease/core/services/search';
+import type { SeerrConfig } from '../../settings/store';
+import { refuse, type Refusal } from '../../settings/update';
 
 export class SeerrError extends Error {
   constructor(
@@ -85,7 +87,14 @@ export class SeerrClient {
 
   /** Answers without a key, and is asked without it: throws unless the address is Seerr's. */
   async status(): Promise<void> {
-    const body = await this.get('status', undefined, false);
+    let body: unknown;
+    try {
+      body = await this.get('status', undefined, false);
+    } catch (error) {
+      // Seerr's status answers anyone: a refusal there is another service's, never a key refused (none was sent).
+      if (error instanceof SeerrError && (error.status === 401 || error.status === 403)) throw new SeerrError(NOT_SEERR, 'not seerr');
+      throw error;
+    }
     if (typeof body !== 'object' || body === null || typeof (body as { version?: unknown }).version !== 'string') throw new SeerrError(NOT_SEERR, 'not seerr');
   }
 
@@ -146,3 +155,15 @@ export async function findInSeerr(config: { readonly url: string; readonly apiKe
   if (!found) return { url: search, status: null, title: '' };
   return { url: seerrPageUrl(config.url, found.mediaType, found.id), status: found.status, title: found.year ? `${found.title} (${found.year})` : found.title };
 }
+
+/** The Administration's check of Seerr (`SettingsChecks.checkSeerr`): its address answers as Seerr, and its key, when one comes, opens it. */
+export const checkSeerrServer = async (config: SeerrConfig, fetcher: typeof fetch = fetch): Promise<Refusal | null> => {
+  const client = new SeerrClient(config.url, config.apiKey, fetcher);
+  try {
+    await client.status();
+    if (config.apiKey) await client.me();
+    return null;
+  } catch (error) {
+    return refuse(error instanceof SeerrError && error.status !== 0 ? 400 : 502, seerrProblem(error));
+  }
+};

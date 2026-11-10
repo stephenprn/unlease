@@ -1,5 +1,5 @@
-# The web demo on GitHub Pages: Carnet in the browser with made-up notes and pages, and a fake server inside the
-# page (web/notes/src/dev). Nothing leaves the browser, and every load starts afresh.
+# The web demo on GitHub Pages: Carnet's, Pages', Contacts' and Agenda's web apps in the browser with made-up notes, pages, people and events, and a
+# fake server inside each page (web/demo). Nothing leaves the browser, and every load starts afresh.
 #   a release (release.yml, once it is published) -> the demo of that release
 #   by hand (Actions > Pages > Run workflow)      -> the demo of the chosen branch
 # Once: Settings > Pages > Source: GitHub Actions, and the `github-pages` environment must allow the `v*` tags.
@@ -31,12 +31,12 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
       - run: npm ci
-      # Under the site's sub-path (/unlease on <owner>.github.io); a host's unknown path gets 404.html, the app, which reads the path.
-      - run: npm run build:demo -w web/notes -- --base "${{ steps.pages.outputs.base_path }}/"
-      - run: cp web/notes/dist-demo/index.html web/notes/dist-demo/404.html
+      # Under the site's sub-path (/unlease on <owner>.github.io): each app under its own (/unlease/notes/, /unlease/pages/, /unlease/contacts/, /unlease/agenda/);
+      # a host's unknown path gets 404.html, which sends an app's address to its app's page (scripts/build.mjs).
+      - run: npm run build:demo -w web -- --base "${{ steps.pages.outputs.base_path }}/"
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web/notes/dist-demo
+          path: web/dist-demo
 
   deploy:
     name: Publish

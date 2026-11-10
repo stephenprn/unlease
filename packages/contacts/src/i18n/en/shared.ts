@@ -1,0 +1,46 @@
+/** English for Contacts' package (its models and services) and for the words both its apps show. Keys are the French exactly as written in `t()` / `tx()`, single-quoted, one per line. */
+import type { Dictionary } from '@unlease/core/i18n';
+
+export const EN_SHARED: Dictionary = {
+  'Plus d’actions': 'More actions',
+  'Sans nom': 'No name',
+  'Mobile': 'Mobile',
+  'Domicile': 'Home',
+  'Travail': 'Work',
+  'Principal': 'Main',
+  'Autre': 'Other',
+  'Personnel': 'Personal',
+  'Demain': 'Tomorrow',
+  'Dans {days}': 'In {days}',
+  'an': 'year',
+  'ans': 'years',
+  'Anniversaire de {name}': '{name}’s birthday',
+  'Anniversaire d’{name}': '{name}’s birthday',
+  'Vus ensemble': 'Seen together',
+  'À propos': 'About',
+  'Complément': 'Address line 2',
+  'Bâtiment, étage, code…': 'Building, floor, door code…',
+  'Un numéro et une rue, un lieu, une ville…': 'A number and a street, a place, a town…',
+  'Choisir une adresse proposée remplit le code postal, la ville et le pays.': 'Picking a suggested address fills in the postcode, the town and the country.',
+  // Where a person is mentioned: a note or a link naming them among its people (both clients' `MentionedIn`)
+  'Associé': 'Linked',
+  'Lien sans titre': 'Untitled link',
+  // A contact's form, on both clients (`services/checks.ts`)
+  'Une adresse e-mail complète, comme nom@exemple.fr.': 'A full e-mail address, such as name@example.com.',
+  'Une date comme 27/03/1990, ou 27/03 sans l’année.': 'A date such as 27/03/1990, or 27/03 without the year.',
+  'Une date comme 03/27/1990, ou 03/27 sans l’année.': 'A date such as 03/27/1990, or 03/27 without the year.',
+  'MM/JJ/AAAA': 'MM/DD/YYYY',
+  'JJ/MM/AAAA': 'DD/MM/YYYY',
+  'JJ/MM/AAAA, année facultative': 'DD/MM/YYYY, year optional',
+  'MM/JJ/AAAA, année facultative': 'MM/DD/YYYY, year optional',
+  'Donnez-lui au moins un nom, un numéro ou une adresse e-mail.': 'Give them at least a name, a number or an e-mail address.',
+  // « Indicatif par défaut » in both clients' Réglages, a number's code in their contact forms
+  'Indicatif par défaut': 'Default country code',
+  'Aucun : les numéros sont écrits avec leur +': 'None: numbers are written with their +',
+  'Un numéro écrit sans indicatif (06 12 34 56 78) prend celui-ci : la fiche du contact l’affiche et l’appelle avec, WhatsApp aussi, et un nouveau numéro le propose.': 'A number written without a country code (06 12 34 56 78) takes this one: the contact’s page shows it and calls it with it, as WhatsApp does, and a new number starts with it.',
+  'Aucun indicatif': 'No country code',
+  'Aucun : le numéro tel qu’il est écrit': 'None: the number as it is written',
+  'Les contacts supprimés y restent {days} jours, le temps de changer d’avis.': 'Deleted contacts stay there for {days} days, time enough to change your mind.',
+  'Un fichier exporté de Google Contacts (.vcf ou .csv)': 'A file exported from Google Contacts (.vcf or .csv)',
+  'Libellés de {name}': '{name}’s labels',
+};

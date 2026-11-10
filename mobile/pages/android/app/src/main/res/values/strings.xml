@@ -1,0 +1,4 @@
+<resources>
+    <!-- APPS.pages.name (packages/core/src/apps.ts). -->
+    <string name="app_name">Pages</string>
+</resources>

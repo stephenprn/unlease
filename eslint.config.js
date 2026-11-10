@@ -2,7 +2,11 @@
  * Lint for the shared packages (`packages/`); each program lints its own code with its own config.
  * The packages compile into the phone, the web and the server, so they import no third-party
  * module, no platform and no framework, and they keep their order:
- * core <- design <- each app's package (notes).
+ * core <- design <- each app's package, in the order their reads give (notes, contacts <- calendar
+ * <- pages: Agenda shows contacts' birthdays and Carnet's reminders; Pages shows Carnet's
+ * collections, notes and links, and mentions contacts and events; Carnet and Contacts import no other
+ * app's package). A new app's package slots in after those it reads; an app below names what it
+ * mentions of one above through what its program hands it (`notes/services/noteMentions`).
  */
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
@@ -42,12 +46,15 @@ export default defineConfig(
       'no-irregular-whitespace': ['error', { skipStrings: true, skipTemplates: true }],
     },
   },
-  { files: ['packages/core/src/**/*.ts'], rules: { 'no-restricted-imports': layer('design', 'notes') } },
-  { files: ['packages/design/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes') } },
-  { files: ['packages/notes/src/**/*.ts'], rules: { 'no-restricted-imports': layer() } },
+  { files: ['packages/core/src/**/*.ts'], rules: { 'no-restricted-imports': layer('design', 'notes', 'contacts', 'calendar', 'pages') } },
+  { files: ['packages/design/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'contacts', 'calendar', 'pages') } },
+  { files: ['packages/notes/src/**/*.ts'], rules: { 'no-restricted-imports': layer('contacts', 'calendar', 'pages') } },
+  { files: ['packages/contacts/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'calendar', 'pages') } },
+  { files: ['packages/calendar/src/**/*.ts'], rules: { 'no-restricted-imports': layer('pages') } },
+  { files: ['packages/pages/src/**/*.ts'], rules: { 'no-restricted-imports': layer() } },
   {
     // Where the names are written out, once.
-    files: ['packages/core/src/apps.ts', 'packages/notes/src/brand.ts'],
+    files: ['packages/core/src/apps.ts', 'packages/core/src/appWords.ts', 'packages/notes/src/brand.ts', 'packages/contacts/src/brand.ts', 'packages/calendar/src/brand.ts', 'packages/pages/src/brand.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
   {

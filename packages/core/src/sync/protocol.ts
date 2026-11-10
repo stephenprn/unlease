@@ -2,8 +2,9 @@
  * The sync wire format: one `POST /api/sync` pushes changed records and pulls everything
  * above the device's cursor. `seq` is the server's own counter, never a record clock.
  */
+import { REF_TYPE_PATTERN } from '../refs';
 import { sanitizeRecord, type SyncRecord } from './record';
-import { isMergedTextField } from './textMerge';
+import { isMergeable, isMergedTextField } from './textMerge';
 
 export const API_VERSION = 1;
 export const MAX_PUSH = 400;
@@ -32,6 +33,11 @@ export interface SyncRequest {
   readonly run?: string;
   /** This device's time as it sends (corrected when it knows itself behind): a witness the server weighs other devices' clocks against. */
   readonly time?: number;
+  /**
+   * The record types this device holds (its apps' and those they read, `syncedTypes`): the server
+   * sends only those. Absent: every type. A device that changes its list pulls again from 0.
+   */
+  readonly types?: readonly string[];
 }
 
 export interface SyncResponse {
@@ -76,7 +82,7 @@ export function parseSyncRequest(body: unknown): ParsedRequest {
   if (typeof body !== 'object' || body === null) {
     return { request: null, error: 'body must be a JSON object', rejectedFields: 0 };
   }
-  const raw = body as { node?: unknown; since?: unknown; records?: unknown; wait?: unknown; bases?: unknown; epoch?: unknown; head?: unknown; run?: unknown; time?: unknown };
+  const raw = body as { node?: unknown; since?: unknown; records?: unknown; wait?: unknown; bases?: unknown; epoch?: unknown; head?: unknown; run?: unknown; time?: unknown; types?: unknown };
   if (typeof raw.node !== 'string' || !/^[a-z0-9]{4,16}$/.test(raw.node)) {
     return { request: null, error: 'node is missing or malformed', rejectedFields: 0 };
   }
@@ -103,6 +109,8 @@ export function parseSyncRequest(body: unknown): ParsedRequest {
   const epoch = isEpoch(raw.epoch) ? raw.epoch : undefined;
   const mark = isEpoch(raw.run) && isSequence(raw.head) ? { head: raw.head, run: raw.run } : undefined;
   const time = typeof raw.time === 'number' && Number.isFinite(raw.time) && raw.time > 0 ? raw.time : undefined;
+  const types = parseTypes(raw.types);
+  if (types === null) return { request: null, error: 'types must be a list of record types', rejectedFields: 0 };
   return {
     request: {
       node: raw.node,
@@ -113,10 +121,22 @@ export function parseSyncRequest(body: unknown): ParsedRequest {
       ...(epoch ? { epoch } : {}),
       ...(mark ?? {}),
       ...(time !== undefined ? { time } : {}),
+      ...(types !== undefined ? { types } : {}),
     },
     error: null,
     rejectedFields,
   };
+}
+
+/** The longest list of types a request may name. */
+export const MAX_SYNC_TYPES = 64;
+
+/** A request's `types`: undefined when absent, null when malformed. */
+function parseTypes(value: unknown): readonly string[] | undefined | null {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length > MAX_SYNC_TYPES) return null;
+  const types = value.filter((type): type is string => typeof type === 'string' && REF_TYPE_PATTERN.test(type));
+  return types.length === value.length ? [...new Set(types)] : null;
 }
 
 /** Bases for typed text fields of records in this push; anything else is ignored. */
@@ -130,7 +150,7 @@ function parseBases(value: unknown, records: readonly SyncRecord[]): SyncRecord[
     const fields: Record<string, unknown> = {};
     const clocks: Record<string, string> = {};
     for (const [field, clock] of Object.entries(record.clocks)) {
-      if (!isMergedTextField(record.type, field) || typeof record.fields[field] !== 'string') continue;
+      if (!isMergedTextField(record.type, field) || !isMergeable(record.type, field, record.fields[field])) continue;
       fields[field] = record.fields[field];
       clocks[field] = clock;
     }

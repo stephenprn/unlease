@@ -7,7 +7,8 @@ export type Hlc = string;
 
 const WALL_WIDTH = 9;
 const COUNTER_WIDTH = 4;
-const MAX_COUNTER = 36 ** COUNTER_WIDTH - 1;
+/** The highest counter within one millisecond. */
+export const MAX_COUNTER = 36 ** COUNTER_WIDTH - 1;
 /** A remote clock this far ahead of our wall time is refused rather than adopted. */
 export const MAX_DRIFT_MS = 24 * 60 * 60 * 1000;
 

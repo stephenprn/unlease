@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import com.stephenprn.carnet.media.ImageImporter
+import com.stephenprn.unlease.media.ImageImporter
 import java.util.UUID
 
 /** As JavaScript receives it: images already copied into app storage. */

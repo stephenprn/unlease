@@ -8,13 +8,16 @@ import { normalizeUrl } from '@unlease/core/services/url';
 import { parseRich, richToPlain } from '@unlease/core/services/richText';
 import type { AskRequest, AskResponse } from '@unlease/notes/sync/ask';
 import { log } from '../../../log';
-import { extractArticle } from './article';
-import type { Fetcher } from './fetcher';
-import { ModelError } from './model';
+import { extractArticle } from '../../../reading/article';
+import type { Fetcher } from '../../../reading/fetcher';
+import { ModelError, type LinkModel } from './model';
 import type { AnalysisContext } from './provider';
-import { readLink, type LinkRead } from './reader';
-import { BUDGET_SPENT, NO_KEY, withCutOffCall, type ModuleOutcome } from './searches';
-import { monthStart, type UsageStore } from './usage';
+import { readLink, type LinkRead } from '../../../reading/reader';
+import { BUDGET_SPENT, withCutOffCall, type ModuleOutcome } from '../../../claude/outcome';
+import { BudgetSpentError } from '../../../claude/client';
+import type { CallUsage, UsageStore } from '../../../claude/usage';
+import { NO_KEY } from './searches';
+import type { ModuleTask } from './usage';
 
 /** The read and Claude share it, within the apps' wait (100 s). */
 const DEADLINE_MS = 85_000;
@@ -58,13 +61,23 @@ export class QuestionAsker {
     const { usage } = this.options;
     const { model, budgetUsd } = this.options.analysis();
     if (!model) return { ok: false, status: 409, error: NO_KEY };
-    if (usage.costSince(monthStart(this.now())) >= budgetUsd) return { ok: false, status: 409, error: BUDGET_SPENT };
+    const hold = usage.hold(budgetUsd);
+    if (!hold) return { ok: false, status: 409, error: BUDGET_SPENT };
+    try {
+      return await this.asked(request, model.holding(hold));
+    } finally {
+      hold.release();
+    }
+  }
+
+  private async asked(request: AskRequest, model: LinkModel): Promise<ModuleOutcome<AskResponse>> {
+    const { usage } = this.options;
     const started = this.now();
     const url = normalizeUrl(request.link.url);
     const deadline = AbortSignal.timeout(DEADLINE_MS);
     const read = await readLink(request.link.url, this.options.fetcher, AbortSignal.any([deadline, AbortSignal.timeout(READ_DEADLINE_MS)]));
-    const record = (ok: boolean, error: string | null, spent: Parameters<UsageStore['recordModule']>[1]['usage']) =>
-      usage.recordModule('ask', { linkId: request.link.id, url, usage: spent, ok, error, durationMs: this.now() - started, result: null });
+    const record = (ok: boolean, error: string | null, spent: CallUsage | null) =>
+      usage.record('ask' satisfies ModuleTask, { linkId: request.link.id, url, usage: spent, ok, error, durationMs: this.now() - started, result: null });
     const page = pageWords(read);
     const gone = !page && read.fatal ? (read.error ?? 'La page n’a pas pu être lue') : null;
     // A page gone for good, and no web to turn to: Claude would be paid to say so.
@@ -79,7 +92,7 @@ export class QuestionAsker {
       const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la question';
       const spent = error instanceof ModelError ? error.usage : null;
       record(false, message, deadline.aborted && request.web ? withCutOffCall(spent, model.model) : spent);
-      return { ok: false, status: 502, error: message };
+      return { ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message };
     }
   }
 }

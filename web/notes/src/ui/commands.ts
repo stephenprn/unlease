@@ -4,7 +4,7 @@
  * the store and the router each time.
  */
 import { t } from '@unlease/core/i18n';
-import { addedMessage } from '@unlease/notes/services/savedLinks';
+import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { extractUrls } from '@unlease/core/services/url';
 import { INBOX_ID } from '@unlease/notes/models/entities';
 
@@ -12,14 +12,16 @@ import { classifyText } from '../app/capture';
 import { attachFiles } from '../app/media/attach';
 import { addCheck, addLinks, createNote, deleteForever } from '../app/store/actions';
 import { useLibraryStore } from '../app/store/library';
-import { addedTone, openCapture, setEditorFocus, showError, showSnack } from '../app/store/ui';
-import { getLocation, navigate, parseRoute, paths } from './router';
+import { showError, showSnack } from '@shared/app/store/ui';
+import { openCapture, setEditorFocus } from '../app/store/notesUi';
+import { getLocation, navigate, parseRoute } from '@shared/ui/router';
+import { paths } from './routes';
 
 /** The page under whatever is open: what an overlay opened now should sit on. */
 export function currentPage(): string {
   const here = getLocation();
   const route = parseRoute(here.path);
-  if (route.name === 'note' || route.name === 'link') return here.state.background ?? '/';
+  if (route.name === 'note' || route.name === 'link') return here.state.background ?? paths.board;
   return `${here.path}${here.search}`;
 }
 

@@ -2,6 +2,9 @@
 <!-- Actions rapides, two rows or more: the board's search strip on top, then the actions named, the
      capture pebble last. A label sits under a pebble, never on it. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wgen_panel_ground"
@@ -86,6 +89,7 @@
                     android:src="@drawable/wgen_g_checklist" />
 
                 <TextView
+                    android:id="@+id/w_short_checklist"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -112,6 +116,7 @@
                     android:src="@drawable/wgen_g_image" />
 
                 <TextView
+                    android:id="@+id/w_short_photo"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -138,6 +143,7 @@
                     android:src="@drawable/wgen_g_camera" />
 
                 <TextView
+                    android:id="@+id/w_short_camera"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -164,6 +170,7 @@
                     android:src="@drawable/wgen_g_link" />
 
                 <TextView
+                    android:id="@+id/w_short_link"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -190,6 +197,7 @@
                     android:src="@drawable/wgen_g_bell_plus" />
 
                 <TextView
+                    android:id="@+id/w_short_reminder"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -224,6 +232,7 @@
                     android:src="@drawable/wgen_g_plus_on_leaf" />
 
                 <TextView
+                    android:id="@+id/w_short_note"
                     style="@style/WidgetText.LabelSmall"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

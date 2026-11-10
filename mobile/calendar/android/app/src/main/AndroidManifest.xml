@@ -1,0 +1,352 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Sync, the weather and the subscriptions need the owner's server, so the release build keeps INTERNET. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- To hear the network come back, so sync resumes at once. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- The events' reminders (Notifee), asked the first time an event has one; RECEIVE_BOOT_COMPLETED
+         lets Notifee arm them again after a restart, and the reminders' refresh run (RefreshReceiver).
+         A meeting's reminder rings on the minute: exact alarms. From Android 13 a calendar holds
+         USE_EXACT_ALARM, granted at install and never taken back (since Android 14 SCHEDULE_EXACT_ALARM
+         is refused by default, and an inexact alarm may come up to an hour late); Android 12 asks for
+         SCHEDULE_EXACT_ALARM. Sideloaded, never on Play, whose policy keeps USE_EXACT_ALARM to calendars
+         and alarm clocks anyway. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" tools:node="replace" />
+    <!-- Réglages' « Notifications à l'heure » asks Android to leave the app out of the battery's
+         optimization only when the person chooses to (RemindersModule). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Declared by Notifee for features this app never uses. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" tools:node="remove" />
+    <uses-permission android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS" tools:node="remove" />
+
+    <!-- The suite's link between its apps on one phone (mobile/shared, SuiteLink): only an app signed
+         by the same key holds this permission, so only the suite's own apps read each other's
+         connection (the token is a secret). Every app of the suite declares it the same way. -->
+    <permission
+        android:name="com.stephenprn.unlease.permission.SUITE"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.stephenprn.unlease.permission.SUITE" />
+
+    <!-- Picker and camera are reached by intent: no storage or camera permission is held. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <!-- The phone's maps apps (geo:, MapApps: a place opens in the one chosen, or they are offered), a birthday's call and message, WhatsApp. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <!-- The suite's apps, seen from this one: their providers (SuiteLink) and their links
+             (carnet://note/<id>, unlease-pages://page/<id>, unlease-contacts://contact/<id>). -->
+        <package android:name="com.stephenprn.carnet" />
+        <package android:name="com.stephenprn.pages" />
+        <package android:name="com.stephenprn.contacts" />
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+    </queries>
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:fullBackupContent="@xml/backup_rules"
+      android:dataExtractionRules="@xml/data_extraction_rules"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|locale|layoutDirection"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:exported="true">
+        <!-- Opened from the launcher through its entries below (one per palette's icon), never directly:
+             every other way in stays here. -->
+
+        <!-- A calendar file shared to the app or opened with it (an invitation, a ticket, Google's
+             export): it opens the import, the file already read (IntakeModule). -->
+        <intent-filter android:label="@string/import_calendar">
+            <action android:name="android.intent.action.SEND" />
+            <action android:name="android.intent.action.SEND_MULTIPLE" />
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/calendar" />
+            <data android:mimeType="text/x-vcalendar" />
+            <data android:mimeType="application/ics" />
+        </intent-filter>
+
+        <!-- unlease-agenda://event/<id>, new?…, birthday/<id>, day/<day> (APPS.calendar.scheme), its home with no path: custom scheme, no host. -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="unlease-agenda" />
+        </intent-filter>
+      </activity>
+
+      <!-- The launcher's entries: the app's icon in each palette's primary (tools/icons/build_android_drawables.mjs),
+           the one for the person's primary turned on when the app leaves the screen
+           (mobile/shared/src/app/launcherIcon.ts). -->
+      <!-- GENERATED by tools/icons/build_android_drawables.mjs, do not edit: the launcher entries -->
+      <activity-alias
+        android:name=".LauncherCarnet"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="carnet" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherSarcelle"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_sarcelle"
+        android:roundIcon="@mipmap/ic_launcher_sarcelle"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="sarcelle" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherMyrtille"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_myrtille"
+        android:roundIcon="@mipmap/ic_launcher_myrtille"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="myrtille" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherGlycine"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_glycine"
+        android:roundIcon="@mipmap/ic_launcher_glycine"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="glycine" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherPivoine"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_pivoine"
+        android:roundIcon="@mipmap/ic_launcher_pivoine"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="pivoine" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherMimosa"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_mimosa"
+        android:roundIcon="@mipmap/ic_launcher_mimosa"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mimosa" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherArdoise"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_ardoise"
+        android:roundIcon="@mipmap/ic_launcher_ardoise"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="ardoise" />
+      </activity-alias>
+      <activity-alias
+        android:name=".LauncherMousse"
+        android:targetActivity=".MainActivity"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher_mousse"
+        android:roundIcon="@mipmap/ic_launcher_mousse"
+        android:enabled="false"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mousse" />
+      </activity-alias>
+      <!-- GENERATED: end of the launcher entries -->
+
+      <!-- The home-screen widgets (android/.../widget, docs/ARCHITECTURE.md). The providers are exported
+           because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->
+
+      <receiver
+        android:name=".widget.ScheduleWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_schedule_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_schedule_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.MonthWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_month_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_month_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.NextWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_next_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_next_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.CountdownWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_countdown_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_countdown_info" />
+      </receiver>
+
+      <receiver
+        android:name=".widget.TodayWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_today_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_today_info" />
+      </receiver>
+
+      <!-- The quick window over the home screen: « Compte à rebours » pointed at its event. Exported for
+           the launcher's configuration step; its own task, gone once left, never in Recents. -->
+      <activity
+        android:name=".widget.QuickActivity"
+        android:theme="@style/QuickTheme"
+        android:exported="true"
+        android:label="@string/app_name"
+        android:taskAffinity="${applicationId}.quick"
+        android:excludeFromRecents="true"
+        android:noHistory="true"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|locale|layoutDirection"
+        android:windowSoftInputMode="adjustResize">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+        </intent-filter>
+      </activity>
+
+      <!-- Sends a widget list's tap on: an event in the app, or a note or page in its own app; it never shows. -->
+      <activity
+        android:name=".widget.WidgetRouterActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
+
+      <!-- Lets the system camera app write one photo into files/photos, and a calendar file leave
+           from cache/shared; not exported. -->
+      <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.files"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/agenda_file_paths" />
+      </provider>
+
+      <!-- What this app hands its siblings of the suite (server, token, appearance), to them alone. -->
+      <provider
+        android:name="com.stephenprn.unlease.suitelink.SuiteProvider"
+        android:authorities="${applicationId}.suite"
+        android:exported="true"
+        android:readPermission="com.stephenprn.unlease.permission.SUITE" />
+
+      <!-- The reminders seen to after the system's changes (mobile/shared/android/src/reminders): each a
+           protected broadcast only Android sends, so not exported. -->
+      <receiver android:name="com.stephenprn.unlease.reminders.RefreshReceiver" android:exported="false">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+          <action android:name="android.intent.action.TIME_SET" />
+          <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+          <action android:name="android.intent.action.LOCALE_CHANGED" />
+          <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+        </intent-filter>
+      </receiver>
+
+      <service android:name="app.notifee.core.ForegroundService" tools:node="remove" />
+      <!-- Notifee declares the activity a notification's tap goes through exported, with no permission:
+           any app could start it with extras of its choosing, handed to the app as a press on one of
+           its notifications. Only the app's own notifications go through it, by PendingIntents, which
+           start a component that is not exported as well. -->
+      <activity
+        android:name="app.notifee.core.NotificationReceiverActivity"
+        android:exported="false"
+        tools:replace="android:exported" />
+    </application>
+</manifest>

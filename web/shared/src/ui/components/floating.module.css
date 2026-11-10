@@ -1,0 +1,44 @@
+/* A panel floating over the page beside what it acts on (a format bar): its own outline, a firm edge, the paper's grain. */
+.floatingStage {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  filter: var(--drop-float);
+}
+
+/* Its own outline (`data-outline`), a firm edge along it in the outline ink. */
+.floating {
+  --edge-color: var(--outline);
+  position: fixed;
+  isolation: isolate;
+  background: var(--paper);
+  color: var(--ink);
+  pointer-events: auto;
+  animation: float-in 200ms var(--ease-decelerate);
+}
+
+.floating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating {
+    animation-name: fade-in;
+  }
+}

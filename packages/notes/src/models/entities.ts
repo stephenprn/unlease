@@ -38,6 +38,10 @@ export interface Note {
   readonly hint: string;
   /** A collection's link modules (`notes/models/modules`), in no order; null until picked: the defaults. */
   readonly modules: readonly string[] | null;
+  /** A collection's template (`notes/models/templates`, one of the person's own), its links read with it; null or absent: each link's kind's. */
+  readonly templateId?: string | null;
+  /** The people of Contacts it is about or for (a gift's, a call's), as they were picked; none for most notes. */
+  readonly contactIds: readonly string[];
   readonly createdAt: number;
   readonly deletedAt: number | null;
   /** The newest field clock's time. */
@@ -122,6 +126,12 @@ export interface LinkItem {
   readonly price: number | null;
   /** ISO 4217, e.g. `EUR`. */
   readonly currency: string | null;
+  /** « Suivi des prix » (written by the server's watch): the price before its last change, null until it changes. */
+  readonly priceBefore: number | null;
+  /** When the watch saw the price change. */
+  readonly priceChangedAt: number | null;
+  /** When the watch last read the price. */
+  readonly priceCheckedAt: number | null;
   readonly attributes: readonly LinkAttribute[];
   /** Blob ids of the images the server kept, best first. */
   readonly imageIds: readonly string[];
@@ -134,8 +144,14 @@ export interface LinkItem {
   readonly position: string;
   readonly error: string | null;
   readonly analyzedAt: number | null;
+  /** The version of the template it was read with (`templateSignature`, written by the server); null or absent: read with the presets, before templates. */
+  readonly readWith?: string | null;
   /** The language Claude writes its reading in: the interface's on the device that saved it, or asked to read it again. */
   readonly lang: Locale;
+  /** The page « Garder une copie » made of it, in Pages (written by the server); null without one. */
+  readonly copy: string | null;
+  /** The people of Contacts it is for or about (a gift idea's, set by Contacts' « Idée cadeau » too); none for most links. */
+  readonly contactIds: readonly string[];
   readonly createdAt: number;
   readonly deletedAt: number | null;
 }
@@ -150,12 +166,22 @@ export interface Label {
 }
 
 /** A label's name as two names compare: case and accents aside. */
-const labelKey = (name: string): string => name.trim().normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+export const labelKey = (name: string): string => name.trim().normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 /** Whether another live label already wears this name: two « Courses » would read as one on a card. */
 export function labelNameTaken(labels: Readonly<Record<string, Label | undefined>>, name: string, except: string | null = null): boolean {
   const key = labelKey(name);
   return Object.values(labels).some(label => !!label && label.id !== except && label.deletedAt === null && labelKey(label.name) === key);
+}
+
+/**
+ * Whether another collection already goes by this title (« Non classé » as shown, too): two « À lire »
+ * read as one in the navigation, and Claude files a link by a collection's title.
+ */
+export function lineTitleTaken(lines: Iterable<{ readonly id: string; readonly title: string }>, title: string, except: string | null = null): boolean {
+  const key = labelKey(title);
+  for (const line of lines) if (line.id !== except && (labelKey(line.title) === key || labelKey(shownTitle(line)) === key)) return true;
+  return false;
 }
 
 /** A photo in a note. The bytes live on the server as a blob with the same id. */

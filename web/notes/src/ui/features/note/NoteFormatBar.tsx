@@ -14,10 +14,10 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { t, tx } from '@unlease/core/i18n';
 import { HEADING_LEVELS, type HeadingLevel } from '@unlease/notes/services/noteBody';
 
-import { IconButton } from '../../components/IconButton';
-import { overlayRoot } from '../../components/layers';
-import { isApple } from '../../dom';
-import { Floating } from '../pages/Floating';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { overlayRoot } from '@shared/ui/components/layers';
+import { isApple } from '@shared/ui/dom';
+import { Floating } from '@shared/ui/components/Floating';
 import type { NoteFlag, SelectionState } from './bodyEditor';
 import styles from './richBody.module.css';
 

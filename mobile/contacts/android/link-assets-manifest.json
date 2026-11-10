@@ -1,0 +1,69 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "../shared/assets/fonts/Signika-Bold_italic.ttf",
+      "sha1": "2217a6395739ce4e96c34b9695ae5863d1a493e8"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-Bold.ttf",
+      "sha1": "00f755985f63126de3539ec7282ab1052c0c6226"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-Medium_italic.ttf",
+      "sha1": "b9ffa02dfba57180559120c44f043abe61330b07"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-Medium.ttf",
+      "sha1": "72febe831c0199842dddc405b544166161b549cf"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-Regular_italic.ttf",
+      "sha1": "6957079c122bad5700701906385f698bd3a5e5af"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-Regular.ttf",
+      "sha1": "5c20c038b7aa9a1dd13d6ec9bd4533823bf8a08c"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-SemiBold_italic.ttf",
+      "sha1": "b4371ed37057217f5c949bb7308dd3b448ae69f5"
+    },
+    {
+      "path": "../shared/assets/fonts/Signika-SemiBold.ttf",
+      "sha1": "b103baf3205266f57decc8bf3c5926de50aa57f4"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Bold_italic.ttf",
+      "sha1": "bee251b2f14f9633ca94cf878b7c9075df859dd9"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Bold.ttf",
+      "sha1": "0f7fb748f4357a3167081d3af95c25aaee0d9bfd"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Medium_italic.ttf",
+      "sha1": "33b2dfd517b9e7db8ab26f1e498a3ab38496dc3f"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Medium.ttf",
+      "sha1": "3517a67b3b84d07b3309a89e330d3865ee40e5ce"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Regular_italic.ttf",
+      "sha1": "c743bb309352d5114b67b42e2c0c9cd675f72479"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-Regular.ttf",
+      "sha1": "a88c95a8db72a78fa44e475713d7534e1aaf5fbf"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-SemiBold_italic.ttf",
+      "sha1": "32db1a069077281c1549b26b75ae2f1c98233de5"
+    },
+    {
+      "path": "../shared/assets/fonts/SignikaNight-SemiBold.ttf",
+      "sha1": "0e4c4da7288747d5b3a015943a9e021567261a37"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
  * The home-screen widgets via the Widgets TurboModule. A missing module (tests, or JavaScript
  * reloaded against an older native build) does nothing: no widget, nothing ticked.
  */
-import NativeWidgets from '../../specs/NativeWidgets';
+import NativeWidgets from '../../../shared/specs/NativeWidgets';
 
 /** The widgets that show notes. */
 export type WidgetKind = 'collection' | 'label' | 'note';

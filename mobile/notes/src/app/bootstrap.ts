@@ -1,25 +1,43 @@
 /** Everything true before the first screen renders. Synchronous: op-sqlite opens over JSI. */
-import { openDatabase } from '@data/db/database';
-import { databaseDirectory } from '@platform/storage';
+import { APPS } from '@unlease/core/apps';
+import { openDatabase } from '@shared/data/db/database';
+import { loadSettings } from '@shared/app/store/settingsStore';
+import { startLauncherIcon } from '@shared/app/launcherIcon';
+import { startSuiteLink } from '@shared/app/suiteLink';
+import { databaseDirectory } from '@shared/platform/storage';
 
 import { ensureInbox } from './store/actions';
+import { loadLayout } from './store/layoutStore';
+import { loadLineViews } from './store/lineViewStore';
 import { loadLibrary } from './store/libraryStore';
-import { loadPagesUi } from './store/pagesUi';
-import { loadSettings } from './store/settingsStore';
+import { startMentionNames } from './mentionNames';
+import { startPhotoUploads } from './sync/photoUploads';
 import { startWidgets } from './widgets';
 
-export type BootResult = { readonly ok: true } | { readonly ok: false; readonly message: string };
+export type { BootResult } from '@shared/ui/AppShell';
+import type { BootResult } from '@shared/ui/AppShell';
+
+/** Frozen once a device holds data: renaming orphans it. */
+export const DATABASE_NAME = `${APPS.notes.slug}.sqlite`;
 
 let booted = false;
 
 export function bootstrap(): BootResult {
   if (booted) return { ok: true };
   try {
-    openDatabase({ snapshotDirectory: databaseDirectory() });
+    openDatabase({ name: DATABASE_NAME, snapshotDirectory: databaseDirectory() });
     loadSettings();
-    loadPagesUi();
+    loadLayout();
+    loadLineViews();
     loadLibrary();
+    // The people formatted notes mention are named from Contacts' records, from here on.
+    startMentionNames();
     ensureInbox();
+    startPhotoUploads();
+    // The suite's other apps on this phone read this one's connection and appearance.
+    startSuiteLink();
+    // The launcher's icon in this app's primary, switched once the app has left the screen.
+    startLauncherIcon();
     // The home-screen widgets follow the library from here, wherever JavaScript runs.
     startWidgets();
     booted = true;

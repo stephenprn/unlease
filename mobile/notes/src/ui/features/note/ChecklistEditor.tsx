@@ -10,21 +10,24 @@ import Animated, { Easing, FadeIn, FadeOut, LayoutAnimationConfig, LinearTransit
 import { useShallow } from 'zustand/react/shallow';
 
 import { noteBackdrop } from '@unlease/design/backgrounds';
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { addCheck, deleteCheck, mergeIntoPrevious, moveCheck, pasteChecks, saveTypedText, splitCheck, toggleCheck } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
-import { haptic } from '@platform/haptics';
+import { useNoteHistoryContext } from '@app/hooks/useNoteHistory';
+import { showSnack } from '@shared/app/store/uiStore';
+import { haptic } from '@shared/platform/haptics';
 
 import { AnimatedOrganic, AppText, Checkbox, Grain, Icon, IconButton, Organic, Tappable } from '../../components';
-import { decelerate, duration, spatial, standard } from '../../theme/motion';
-import { corners } from '../../theme/shape';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { variantStyle } from '../../theme/typography';
+import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
+import { decelerate, duration, spatial, standard } from '@shared/ui/theme/motion';
+import { corners } from '@shared/ui/theme/shape';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { variantStyle } from '@shared/ui/theme/typography';
 
 type InputRef = React.ComponentRef<typeof TextInput>;
 
@@ -35,6 +38,8 @@ const ROW_IN = FadeIn.duration(duration.medium).easing(decelerate);
 const ROW_IN_LATE = FadeIn.duration(duration.medium).easing(decelerate).delay(duration.short);
 /** Out of the way before the next item slides into its place: a quick fade that starts at once. */
 const ROW_OUT = FadeOut.duration(100).easing(Easing.out(Easing.quad));
+/** Two Enters closer than this are one press echoed (a hardware key submits on its press and again in the next item). */
+const SPLIT_ECHO_MS = 150;
 
 /** An item to focus once its input exists, and where its caret goes. */
 interface Focus {
@@ -120,8 +125,15 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
     [noteId],
   );
 
-  /** Enter: the caret starts the new item. */
+  /**
+   * Enter: the caret starts the new item. A hardware Enter (a keyboard, adb) submits twice, on its
+   * press and in the item it moved to: a second Enter sooner than a hand can press one is that echo.
+   */
+  const lastSplit = useRef(0);
   const split = useCallback((id: string, text: string, caret: number) => {
+    const now = Date.now();
+    if (now - lastSplit.current < SPLIT_ECHO_MS) return;
+    lastSplit.current = now;
     const next = splitCheck(id, text, caret);
     if (next) pendingFocus.current = { id: next, caret: 0 };
   }, []);
@@ -254,7 +266,7 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
               <View style={styles.addIcon}>
                 <Icon name="plus" size={20} color={theme.color.inkMuted} />
               </View>
-              <AppText variant="body" color={theme.color.inkMuted}>
+              <AppText variant="body" color={theme.color.inkMuted} style={styles.columnText}>
                 {t('Élément de liste')}
               </AppText>
             </Tappable>
@@ -263,8 +275,14 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
         {doneIds.length > 0 ? (
           <Animated.View layout={ROW_MOVE} entering={ROW_IN_LATE} exiting={ROW_OUT} style={styles.doneSection}>
             <Tappable onPress={() => setShowDone(value => !value)} accessibilityLabel={showDone ? t('Masquer les éléments cochés') : t('Afficher les éléments cochés')} style={styles.doneHeader}>
-              <Chevron open={showDone} color={theme.color.inkMuted} />
-              <AppText variant="metaStrong">{plural(doneIds.length, 'élément coché', 'éléments cochés')}</AppText>
+              {/* The chevron in the boxes' column, the count on the items' words. */}
+              <View style={styles.gripSpace} />
+              <View style={styles.addIcon}>
+                <Chevron open={showDone} color={theme.color.inkMuted} />
+              </View>
+              <AppText variant="metaStrong" style={styles.columnText}>
+                {plural(doneIds.length, 'élément coché', 'éléments cochés')}
+              </AppText>
             </Tappable>
             {showDone
               ? doneIds.map(id => (
@@ -317,6 +335,8 @@ interface CheckRowProps {
 }
 
 const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, onMergeUp, onEmptyBackspace, onPasteLines, onDrag, onDrop, onHold, rowY, settleFrom, raised }: CheckRowProps) {
+  // A long item wraps onto more lines, which stay still as one is added.
+  const growing = useGrowingInput();
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const item = useLibraryStore(s => s.checks[id]);
@@ -329,6 +349,10 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
     requestAnimationFrame(() => toggleCheck(id));
   }, [id]);
   const lastSaved = useRef(item?.text ?? '');
+  // The note editor's « Annuler » and « Rétablir »: a key tells it of typing, and a step taken back shows even in the item being typed in.
+  const history = useNoteHistoryContext();
+  const replays = history?.replays ?? 0;
+  const seenReplays = useRef(replays);
   /** The caret as the field last reported it; the native side reports only a change from 0, 0. */
   const selection = useRef({ start: 0, end: 0 });
   const offset = useSharedValue(settleFrom);
@@ -338,13 +362,15 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
     if (settleFrom !== 0) offset.value = withSpring(0, spatial);
   }, [settleFrom, offset]);
 
-  // Follow edits that arrive from another device, unless this row is being typed in.
+  // Follow edits that arrive from another device, unless this row is being typed in; a step undone or redone shows at once.
   useEffect(() => {
-    if (!focused && item && item.text !== lastSaved.current) {
+    const replayed = seenReplays.current !== replays;
+    seenReplays.current = replays;
+    if ((!focused || replayed) && item && item.text !== lastSaved.current) {
       lastSaved.current = item.text;
       setDraft(item.text);
     }
-  }, [item, focused]);
+  }, [item, focused, replays]);
 
   const save = useCallback(
     (text: string) => {
@@ -406,9 +432,14 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
       ) : (
         <View style={styles.gripSpace} />
       )}
-      <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Cocher {item}', { item: item.text }) : t('Cocher l’élément')} disabled={!editable} />
+      <View style={styles.box}>
+        <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Cocher {item}', { item: item.text }) : t('Cocher l’élément')} disabled={!editable} />
+      </View>
       <TextInput
-        ref={ref => register(id, ref)}
+        ref={ref => {
+          register(id, ref);
+          growing.attach(ref);
+        }}
         value={draft}
         editable={editable}
         multiline
@@ -428,6 +459,7 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
             }
             text = text.replace(/\n/g, '');
           }
+          history?.keystroke();
           setDraft(text);
           save(text);
         }}
@@ -465,7 +497,9 @@ const DoneRow = memo(function DoneRowView({ id, editable }: { id: string; editab
   return (
     <View style={styles.row}>
       <View style={styles.gripSpace} />
-      <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} />
+      <View style={styles.box}>
+        <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} />
+      </View>
       <AppText variant="editorBody" color={theme.color.inkMuted} style={styles.doneText}>
         {item.text}
       </AppText>
@@ -479,15 +513,20 @@ const makeStyles = (theme: Theme) =>
     row: { flexDirection: 'row', alignItems: 'flex-start', minHeight: 48 },
     grip: { width: 28, height: 48, alignItems: 'center', justifyContent: 'center' },
     gripSpace: { width: 28 },
+    // The box's 44 target in the row's 48, centred on the item's first line (11 + 26 / 2), as the grip and the × are.
+    box: { paddingVertical: 2 },
     input: { flex: 1, paddingTop: 11, paddingBottom: 11, paddingHorizontal: 4, color: theme.color.ink },
     trailing: { width: 48 },
-    addRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48 },
+    // The add row's and the ticked group's press lie 2 in from their row's top and foot: the rows keep their pitch (a ruled paper's), the press keeps clear of the items next to it.
+    addRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48 - GEOMETRY.rowGap, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     addIcon: { width: 44, alignItems: 'center' },
+    // On the items' words: the box's 44, then the field's own 4.
+    columnText: { paddingHorizontal: 4 },
     indicator: { position: 'absolute', left: 28, right: 12, height: 2, borderRadius: 1 },
     above: { zIndex: 1 },
     grain: { ...corners(SHAPES.tab), overflow: 'hidden' },
     doneSection: { marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline, paddingTop: 4 },
-    doneHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingLeft: 8 },
+    doneHeader: { flexDirection: 'row', alignItems: 'center', minHeight: 48 - GEOMETRY.rowGap, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     doneText: { flex: 1, paddingTop: 11, paddingBottom: 11, paddingHorizontal: 4, textDecorationLine: 'line-through' },
   });
 

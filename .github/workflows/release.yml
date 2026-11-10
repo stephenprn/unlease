@@ -1,8 +1,9 @@
 # A release, from its version tag (vX.Y.Z, or vX.Y.Z-rc.N for a release candidate): docs/RELEASING.md.
 #   1. the tag must match every version in the repository and the changelog (tools/release/version.mjs --check);
 #   2. the checks run on the tagged commit (ci.yml);
-#   3. the image is published (image.yml) and Carnet's APK built (android.yml);
-#   4. the GitHub release is made from CHANGELOG.md, with the APK, a docker-compose.yml and an example.env
+#   3. the image is published (image.yml) and each phone app's APK built with the upload key, its certificate
+#      checked (android.yml: never the debug key, ANDROID_SIGNING_CERT_SHA256 when set);
+#   4. the GitHub release is made from CHANGELOG.md, with the APKs, a docker-compose.yml and an example.env
 #      pinned to this version, and SHA256SUMS. A release candidate is a prerelease;
 #   5. the web demo on GitHub Pages moves to this release (pages.yml), a release candidate's excepted.
 name: Release
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Tag and versions agree
+    name: Tag and versions agree, upload key present
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +29,20 @@ jobs:
         with:
           node-version: 24
       - run: node tools/release/version.mjs --check "$GITHUB_REF_NAME"
+      # Before anything is published (the image included): android.yml refuses a release without them too.
+      - name: The upload key's secrets
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for name in KEYSTORE STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::A secret of the upload key is missing (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD): a release is never signed with the public debug key (docs/RELEASING.md, Signing the APKs)."
+              exit 1
+            fi
+          done
 
   checks:
     needs: verify
@@ -45,6 +60,8 @@ jobs:
   apk:
     needs: checks
     uses: ./.github/workflows/android.yml
+    with:
+      release: true
     secrets: inherit
 
   publish:
@@ -60,7 +77,8 @@ jobs:
           node-version: 24
       - uses: actions/download-artifact@v4
         with:
-          name: carnet-apk
+          pattern: '*-apk'
+          merge-multiple: true
           path: dist
       - name: Install files pinned to this version, checksums, notes
         env:
@@ -78,11 +96,12 @@ jobs:
           ## Install or upgrade
 
           - **Server:** \`${IMAGE}:${VERSION}\` (amd64, arm64). A new server: download \`docker-compose.yml\` and \`example.env\` below, as [docs/SELF-HOSTING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/SELF-HOSTING.md) shows. An upgrade: set \`UNLEASE_VERSION=${VERSION}\` in \`.env\`, server first ([docs/UPGRADING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/UPGRADING.md)).
-          - **Carnet for Android:** \`carnet-${GITHUB_REF_NAME}.apk\` below, once the server runs this version.
+          - **Android:** \`carnet-${GITHUB_REF_NAME}.apk\` (Carnet), \`pages-${GITHUB_REF_NAME}.apk\` (Pages), \`contacts-${GITHUB_REF_NAME}.apk\` (Contacts) and \`agenda-${GITHUB_REF_NAME}.apk\` (Agenda) below, once the server runs this version. Install the ones whose apps your server runs; each one installed after the first reuses its connection.
           - **Checksums:** \`SHA256SUMS\` (\`sha256sum -c SHA256SUMS\`).
           EOF
+      # A third party's action holding `contents: write`: pinned to a commit, not a tag that can move.
       - id: release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           name: Unlease ${{ github.ref_name }}
           body_path: notes.md

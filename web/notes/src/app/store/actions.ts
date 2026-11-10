@@ -16,40 +16,51 @@ import { createId } from '@unlease/core/services/ids';
 import { planLinks, savedAddresses, type LinkPlan } from '@unlease/notes/services/savedLinks';
 import { normalizeUrl } from '@unlease/core/services/url';
 import { asLineColor, nextLineColor, type LineColor, type NoteColor, type NotePattern } from '@unlease/design/colors';
-import { INBOX_HINT, INBOX_ID, INBOX_TITLE, type LinkFiler, type NoteKind } from '@unlease/notes/models/entities';
+import { INBOX_HINT, INBOX_ID, INBOX_TITLE, type LinkFiler, type LinkKind, type NoteKind } from '@unlease/notes/models/entities';
+import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
+import { kindTemplateId, presetFields, sameFields } from '@unlease/notes/services/templates';
 import { GENESIS_HLC } from '@unlease/core/sync/hlc';
-import { attachmentFields, checkFields, labelFields, linkFields, noteFields } from '@unlease/notes/sync/entities';
+import { attachmentFields, checkFields, labelFields, linkFields, linkTemplateFields, noteFields } from '@unlease/notes/sync/entities';
 import type { Fields } from '@unlease/core/sync/record';
 import type { SortMove } from '@unlease/notes/sync/sorting';
 import { mergeField } from '@unlease/core/sync/textMerge';
 import { isDrawingEmpty, noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { bodyFromText, bodyText, carryMarks, fitLines, isFormatted, linesText, noteLines, serializeLines, type NoteLine } from '@unlease/notes/services/noteBody';
-import { TEXT_LIMITS } from '@unlease/notes/sync/types';
+import { PEOPLE_MAX, TEXT_LIMITS } from '@unlease/notes/sync/types';
+import { replayPatch, type Direction, type EditStep } from '@unlease/notes/services/editHistory';
+import { finishChanges, type Finish } from '@unlease/notes/services/finishes';
 
 import { checkSiblings } from './editing';
-import { getRecord, mergeRemote, useLibraryStore, writeLocal, type LibraryState, type LocalChange } from './library';
-import { selectCanRead, useSettingsStore } from './settings';
+import { getRecord, mergeRemote, writeLocal, type LocalChange } from '@shared/app/store/records';
+import { write } from './writes';
+import { useLibraryStore, type LibraryState } from './library';
+import { canRead } from './prefs';
 import { nextEmblem } from '@unlease/notes/models/collections';
 
 export type Undo = () => void;
 
 const state = () => useLibraryStore.getState();
 
-/** Restore exactly these fields of these records to what they were. */
-function undoFor(changes: readonly LocalChange[]): Undo {
-  const previous: LocalChange[] = changes.map(change => {
+/** What these fields of these records hold now: the batch that puts them back. */
+function previousOf(changes: readonly LocalChange[]): LocalChange[] {
+  return changes.map(change => {
     const record = getRecord(change.type, change.id);
     const patch: Fields = {};
     for (const field of Object.keys(change.patch)) patch[field] = record?.fields[field] ?? null;
     return { type: change.type, id: change.id, patch };
   });
-  return () => writeLocal(previous);
+}
+
+/** Restore exactly these fields of these records to what they were. */
+function undoFor(changes: readonly LocalChange[]): Undo {
+  const previous = previousOf(changes);
+  return () => write(previous);
 }
 
 /** Write and hand back the way to take it back. */
 export function writeWithUndo(changes: LocalChange[]): Undo {
   const undo = undoFor(changes);
-  writeLocal(changes);
+  write(changes);
   return undo;
 }
 
@@ -113,7 +124,7 @@ export interface NewNote {
 
 export function createNote(init: NewNote, now: number = Date.now()): string {
   const id = init.id ?? createId(now);
-  writeLocal([
+  write([
     {
       type: 'note',
       id,
@@ -152,7 +163,7 @@ export function saveTypedText(type: 'note' | 'check' | 'link' | 'block', id: str
   const value = record.fields[field];
   const stored = typeof value === 'string' ? value : '';
   const next = since === null || stored === since || stored === typed ? typed : mergeField(type, field, since, typed, stored, false);
-  if (next !== stored) writeLocal([{ type, id, patch: { [field]: next } }]);
+  if (next !== stored) write([{ type, id, patch: { [field]: next } }]);
   return next;
 }
 
@@ -172,12 +183,12 @@ export function saveNoteLines(noteId: string, since: string | null, lines: reado
   if (note.rich || !isFormatted(kept)) return saveTypedText('note', noteId, 'body', since, note.rich ? serializeLines(kept) : linesText(kept));
   // Formatted for the first time over an edit from elsewhere: the words merged, then the marks carried onto their own words.
   const body = since === null || stored === since ? serializeLines(kept) : serializeLines(carryMarks(kept, noteLines(mergeField('note', 'body', since, linesText(kept), stored, false), false)));
-  writeLocal([{ type: 'note', id: noteId, patch: { body, rich: true } }]);
+  write([{ type: 'note', id: noteId, patch: { body, rich: true } }]);
   return body;
 }
 
 export function updateNote(id: string, patch: Fields): void {
-  writeLocal([{ type: 'note', id, patch }]);
+  write([{ type: 'note', id, patch }]);
 }
 
 export function setPinned(id: string, pinned: boolean): Undo {
@@ -190,16 +201,41 @@ export function setArchived(id: string, archived: boolean): Undo {
 }
 
 export function setColor(id: string, color: NoteColor | null): void {
-  writeLocal([{ type: 'note', id, patch: { color } }]);
+  write([{ type: 'note', id, patch: { color } }]);
 }
 
 /** The paper under a note's colour: dots, grid, lines, or plain. */
 export function setPattern(id: string, pattern: NotePattern | null): void {
-  writeLocal([{ type: 'note', id, patch: { pattern } }]);
+  write([{ type: 'note', id, patch: { pattern } }]);
+}
+
+/**
+ * A colour or a paper for the picked notes (the board's selection), as one batch: each takes it,
+ * a collection a pigment only (`notes/services/finishes`). Returns the undo, how many changed, and
+ * how many collections kept their own.
+ */
+export function setFinish(ids: readonly string[], finish: Finish): { readonly undo: Undo; readonly changed: number; readonly kept: number } {
+  const { notes } = state();
+  const picked = ids.flatMap(id => (notes[id] && notes[id]!.deletedAt === null ? [notes[id]!] : []));
+  const { changes, kept } = finishChanges(picked, finish);
+  const undo = changes.length > 0 ? writeWithUndo(changes.map(change => ({ type: 'note' as const, id: change.id, patch: { ...change.patch } }))) : () => {};
+  return { undo, changed: changes.length, kept };
+}
+
+/**
+ * A step of the note editor's history (`notes/services/editHistory`) taken back or done again: its
+ * old values (or its new ones) written under a fresh clock as one batch, typed text merged with what
+ * came from elsewhere since, as `saveTypedText` merges it. False when it had nothing left to write.
+ */
+export function replayEditStep(step: EditStep, direction: Direction, now: number = Date.now()): boolean {
+  const changes = replayPatch(step, direction, (type, id) => getRecord(type, id)?.fields, now);
+  if (changes.length === 0) return false;
+  write(changes, now, true);
+  return true;
 }
 
 export function setLabels(id: string, labelIds: readonly string[]): void {
-  writeLocal([{ type: 'note', id, patch: { labelIds: [...labelIds] } }]);
+  write([{ type: 'note', id, patch: { labelIds: [...labelIds] } }]);
 }
 
 /** One label put on every one of these notes, or taken off every one: one batch, one undo. */
@@ -216,6 +252,11 @@ export function setLabelOn(ids: readonly string[], labelId: string, on: boolean)
 
 export function setReminder(id: string, at: number | null): Undo {
   return writeWithUndo([{ type: 'note', id, patch: { reminderAt: at } }]);
+}
+
+/** The people of Contacts a note or a link names (`contactIds`), each once, as picked: one batch, one undo. */
+export function setPeople(type: 'note' | 'link', id: string, contactIds: readonly string[]): Undo {
+  return writeWithUndo([{ type, id, patch: { contactIds: [...new Set(contactIds)].slice(0, PEOPLE_MAX) } }]);
 }
 
 export function trashNotes(ids: readonly string[], now: number = Date.now()): Undo {
@@ -240,7 +281,7 @@ export function deleteForever(ids: readonly string[], now: number = Date.now()):
     for (const child of attachmentsByNote[id] ?? [])
       changes.push({ type: 'attachment', id: child, patch: { deletedAt: now } });
   }
-  writeLocal(changes, now);
+  write(changes, now);
 }
 
 export function emptyTrash(now: number = Date.now()): number {
@@ -272,7 +313,7 @@ export function duplicateNote(id: string, now: number = Date.now()): string | nu
     if (!item) continue;
     changes.push({ type: 'check', id: createId(now), patch: checkFields({ ...item, noteId: copy, createdAt: now }) });
   }
-  writeLocal(changes, now);
+  write(changes, now);
   return copy;
 }
 
@@ -290,7 +331,7 @@ export function canDuplicate(noteId: string, typed: { readonly title?: string; r
 
 /** A collection's link modules (`notes/models/modules`): the keys it keeps, a newer client's included. */
 export function setLineModules(id: string, modules: readonly string[]): void {
-  writeLocal([{ type: 'note', id, patch: { modules: [...modules] } }]);
+  write([{ type: 'note', id, patch: { modules: [...modules] } }]);
 }
 
 /** Lines added to a checklist in one gesture ("Liste de courses"): after its open items, or as a new checklist named `title` when `noteId` is null. Returns the list. */
@@ -310,7 +351,7 @@ export function addToChecklist(noteId: string | null, title: string, texts: read
   const ids = texts.map(() => createId(now));
   ids.forEach((id, k) => changes.push({ type: 'check', id, patch: checkFields({ noteId: target, text: texts[k]!, checked: false, position: positions[k]!, indent: 0, createdAt: now, deletedAt: null }) }));
   changes.push(...moved.map(item => ({ type: 'check' as const, id: item.id, patch: { position: item.position } })));
-  writeLocal(changes, now);
+  write(changes, now);
   return target;
 }
 
@@ -324,7 +365,7 @@ export function addCheck(noteId: string, text: string, afterId: string | null = 
   const { positions, moved } = placeAt(siblings, anchor === null ? 0 : siblings.findIndex(item => item.id === anchor) + 1);
   const id = createId(now);
   const indent = afterId ? checks[afterId]?.indent ?? 0 : 0;
-  writeLocal(
+  write(
     [
       {
         type: 'check',
@@ -339,12 +380,12 @@ export function addCheck(noteId: string, text: string, afterId: string | null = 
 }
 
 export function updateCheck(id: string, patch: Fields): void {
-  writeLocal([{ type: 'check', id, patch }]);
+  write([{ type: 'check', id, patch }]);
 }
 
 export function toggleCheck(id: string): void {
   const item = state().checks[id];
-  if (item) writeLocal([{ type: 'check', id, patch: { checked: !item.checked } }]);
+  if (item) write([{ type: 'check', id, patch: { checked: !item.checked } }]);
 }
 
 export function deleteCheck(id: string, now: number = Date.now()): Undo {
@@ -357,7 +398,7 @@ export function moveCheck(id: string, beforeId: string | null, afterId: string |
   if (!item) return;
   const siblings = checkSiblings(item.noteId, id);
   const { positions, moved } = placeAt(siblings, indexBetween(siblings, beforeId, afterId));
-  writeLocal([
+  write([
     { type: 'check', id, patch: { position: positions[0]! } },
     ...moved.map(other => ({ type: 'check' as const, id: other.id, patch: { position: other.position } })),
   ]);
@@ -412,7 +453,7 @@ export function createLine(init: NewLine, now: number = Date.now()): string {
 
 /** False without a server, or when the server said it has no key: unknown (null) counts as on. */
 export function readingEnabled(): boolean {
-  return selectCanRead(useSettingsStore.getState());
+  return canRead();
 }
 
 export interface AddLinkOptions {
@@ -434,13 +475,14 @@ export function addLinks(urls: readonly string[], options: AddLinkOptions = {}, 
   const noteId = options.noteId ?? INBOX_ID;
   const autoFile = options.autoFile ?? false;
   const reading = readingEnabled();
-  const { links, notes, linksByNote } = state();
-  const plans = planLinks(urls, autoFile ? null : noteId, savedAddresses(links, notes));
+  const { links, notes, linksByNote, linkTemplates } = state();
+  // A reading is copied only from a collection that reads with the same template.
+  const plans = planLinks(urls, autoFile ? null : noteId, savedAddresses(links, notes), { templates: linkTemplates, notes });
   const fresh = plans.filter(plan => plan.existing === null);
   const first = linksByNote[noteId]?.[0];
   const positions = positionsBetween(null, first ? links[first]?.position ?? null : null, fresh.length);
   const placed = plans.map(plan => ({ ...plan, id: plan.existing ?? createId(now) }));
-  writeLocal(
+  write(
     placed
       .filter(plan => plan.existing === null)
       .map((plan, index) => ({
@@ -471,6 +513,7 @@ export function addLinks(urls: readonly string[], options: AddLinkOptions = {}, 
           position: positions[index]!,
           createdAt: now,
           deletedAt: null,
+          copy: null,
         }),
       })),
     now,
@@ -484,7 +527,7 @@ export function addLink(url: string, options: AddLinkOptions = {}, now: number =
 }
 
 export function updateLink(id: string, patch: Fields): void {
-  writeLocal([{ type: 'link', id, patch }]);
+  write([{ type: 'link', id, patch }]);
 }
 
 /** Done is a stamp: the link stays, punched, at the foot of its line. */
@@ -555,15 +598,23 @@ export function trashLines(ids: readonly string[], linksTo: string | null, now: 
 
 /** Read again, in the interface's language now. */
 export function reanalyzeLink(id: string): void {
-  writeLocal([{ type: 'link', id, patch: { status: 'pending', error: null, lang: getLocale() } }]);
+  write([{ type: 'link', id, patch: { status: 'pending', error: null, lang: getLocale() } }]);
 }
 
 /** After a key is set: read every link that was kept plain while reading was off. */
 export function readSkippedLinks(): number {
   const { links } = state();
   const skipped = Object.values(links).filter(link => link.status === 'skipped' && link.deletedAt === null);
-  writeLocal(skipped.map(link => ({ type: 'link' as const, id: link.id, patch: { status: 'pending', error: null, lang: getLocale() } })));
+  write(skipped.map(link => ({ type: 'link' as const, id: link.id, patch: { status: 'pending', error: null, lang: getLocale() } })));
   return skipped.length;
+}
+
+/** A collection's « Tout lire » (its links kept unread) or « Tout réessayer » (those that failed): one batch, in the interface's language now. */
+export function readLinks(ids: readonly string[]): number {
+  const { links } = state();
+  const live = ids.filter(id => links[id] && links[id]!.deletedAt === null);
+  if (live.length > 0) write(live.map(id => ({ type: 'link' as const, id, patch: { status: 'pending', error: null, lang: getLocale() } })));
+  return live.length;
 }
 
 /** Live links whose address still carries trackers (saved before a rule knew them). */
@@ -584,13 +635,85 @@ export function deleteLink(id: string, now: number = Date.now()): Undo {
   return writeWithUndo([{ type: 'link', id, patch: { deletedAt: now } }]);
 }
 
+// ── link templates (« Modèles de fiche ») ──────────────────────────────────
+
+/** A template as the editor holds it, saved whole. */
+export interface TemplateDraft {
+  /** One of the person's own being changed; null for a new one. A kind's is always kept under its kind's fixed id. */
+  readonly id: string | null;
+  readonly name: string;
+  /** The kind it is the template of; null for one of the person's own. */
+  readonly kind: LinkKind | null;
+  readonly fields: readonly TemplateField[];
+}
+
+/** The fields as the sync keeps them: their words trimmed and cut to their limits, the unnamed ones left out, eight at most. */
+function keptFields(fields: readonly TemplateField[]): TemplateField[] {
+  return fields
+    .map(field => ({ id: field.id, name: field.name.trim().slice(0, TEMPLATE_LIMITS.fieldName), type: field.type, hint: field.hint.trim().slice(0, TEMPLATE_LIMITS.hint) }))
+    .filter(field => field.name !== '')
+    .slice(0, TEMPLATE_LIMITS.fields);
+}
+
+/**
+ * « Enregistrer »: the template whole, as one batch (`linkTemplateFields`). A kind's changed template
+ * is kept under the kind's fixed id (`kindTemplateId`), so two devices write one record; saved back to
+ * what its preset says, it is deleted and the preset reads again. A new one of the person's own made
+ * from a collection's picker is chosen for it in the same batch (`forCollection`). The undo deletes a
+ * template it made, or puts the old one back.
+ */
+export function saveTemplate(draft: TemplateDraft, options: { readonly forCollection?: string } = {}, now: number = Date.now()): { readonly id: string; readonly undo: Undo } {
+  const id = draft.kind !== null ? kindTemplateId(draft.kind) : (draft.id ?? createId(now));
+  const fields = keptFields(draft.fields);
+  const existing = state().linkTemplates[id];
+  if (draft.kind !== null && sameFields(fields, presetFields(draft.kind))) {
+    return { id, undo: existing && existing.deletedAt === null ? resetKindTemplate(draft.kind, now) : () => {} };
+  }
+  const changes: LocalChange[] = [
+    {
+      type: 'linkTemplate',
+      id,
+      patch: linkTemplateFields({ name: draft.kind !== null ? '' : draft.name.trim().slice(0, TEMPLATE_LIMITS.name), kind: draft.kind, fields, createdAt: existing?.createdAt ?? now, deletedAt: null }),
+    },
+  ];
+  const collection = options.forCollection;
+  if (draft.kind === null && collection && collection !== INBOX_ID && state().notes[collection]?.kind === 'links') changes.push({ type: 'note', id: collection, patch: { templateId: id } });
+  if (getRecord('linkTemplate', id)) return { id, undo: writeWithUndo(changes) };
+  // A new one: taken back, it goes (a record that never was has no fields to write back), and the collection reads as before.
+  const previous = previousOf(changes.slice(1));
+  write(changes, now);
+  return { id, undo: () => write([{ type: 'linkTemplate', id, patch: { deletedAt: Date.now() } }, ...previous]) };
+}
+
+/** « Rétablir l’original »: the kind's changed template deleted, its preset reads again. */
+export function resetKindTemplate(kind: LinkKind, now: number = Date.now()): Undo {
+  const id = kindTemplateId(kind);
+  const template = state().linkTemplates[id];
+  if (!template || template.deletedAt !== null) return () => {};
+  return writeWithUndo([{ type: 'linkTemplate', id, patch: { deletedAt: now } }]);
+}
+
+/** « Supprimer le modèle »: the collections that chose it keep its id and read by kind again (`collectionTemplate` finds it gone). */
+export function deleteTemplate(id: string, now: number = Date.now()): Undo {
+  const template = state().linkTemplates[id];
+  if (!template || template.deletedAt !== null) return () => {};
+  return writeWithUndo([{ type: 'linkTemplate', id, patch: { deletedAt: now } }]);
+}
+
+/** A collection's « Modèle de fiche »: one of the person's own, or null (« Selon le type de lien »). « Non classé » never takes one. */
+export function setCollectionTemplate(lineId: string, templateId: string | null): Undo {
+  const line = state().notes[lineId];
+  if (lineId === INBOX_ID || !line || line.kind !== 'links' || (line.templateId ?? null) === templateId) return () => {};
+  return writeWithUndo([{ type: 'note', id: lineId, patch: { templateId } }]);
+}
+
 // ── labels ─────────────────────────────────────────────────────────────────
 
 export function createLabel(name: string, now: number = Date.now()): string {
   const { labels, labelOrder } = state();
   const last = labelOrder[labelOrder.length - 1];
   const id = createId(now);
-  writeLocal([
+  write([
     {
       type: 'label',
       id,
@@ -607,7 +730,7 @@ export function createLabel(name: string, now: number = Date.now()): string {
 }
 
 export function updateLabel(id: string, patch: Fields): void {
-  writeLocal([{ type: 'label', id, patch }]);
+  write([{ type: 'label', id, patch }]);
 }
 
 /** Removes the label and takes it off every note that wore it. */
@@ -633,7 +756,7 @@ export function addAttachment(
   const { attachments, attachmentsByNote } = state();
   const ids = attachmentsByNote[noteId] ?? [];
   const last = ids[ids.length - 1];
-  writeLocal([
+  write([
     {
       type: 'attachment',
       id: file.id,
@@ -653,7 +776,7 @@ export function addAttachment(
 }
 
 export function markAttachmentUploaded(id: string): void {
-  writeLocal([{ type: 'attachment', id, patch: { uploaded: true } }]);
+  write([{ type: 'attachment', id, patch: { uploaded: true } }]);
 }
 
 export function removeAttachment(id: string, now: number = Date.now()): Undo {
@@ -677,7 +800,7 @@ export function convertToChecklist(noteId: string, now: number = Date.now()): vo
       patch: checkFields({ noteId, text: text.slice(0, 5000), checked: false, position, indent: 0, createdAt: now, deletedAt: null }),
     });
   }
-  writeLocal(changes, now);
+  write(changes, now);
 }
 
 /** Checklist to text: items become lines; checked ones are kept, unmarked. */
@@ -694,7 +817,7 @@ export function convertToText(noteId: string, now: number = Date.now()): void {
   // A note formatted before it became a list keeps its form: its lines come back as text in it.
   const changes: LocalChange[] = [{ type: 'note', id: noteId, patch: { kind: 'text', body: bodyFromText(body, note.rich) } }];
   for (const id of ids) changes.push({ type: 'check', id, patch: { deletedAt: now } });
-  writeLocal(changes, now);
+  write(changes, now);
 }
 
 /** True when leaving the note should discard it, as Keep discards an empty note. */

@@ -7,15 +7,27 @@
  * every device.
  */
 import type { AppId } from '../apps';
+import { hashHex } from '../services/hash';
 
 export type Check = (value: unknown) => boolean;
 
-/** A long text the person types, merged instead of overwritten when two devices change it at once (`textMerge`). */
+/**
+ * A field merged instead of overwritten when two devices change it at once (`textMerge`): a long
+ * text the person types (word by word), or a list of strings merged as a set (`set`).
+ */
 export interface MergedField {
-  /** The longest it may hold: a local write is cut to it, and a merge that would pass it keeps the newer text whole. */
+  /**
+   * The longest it may hold (characters; entries for a set): a local write of text is cut to it,
+   * and a merge that would pass it keeps the newer version whole.
+   */
   readonly limit: number;
   /** How two edits combine when not word by word (a drawing, stroke by stroke); words by default. */
   readonly merge?: (base: string, ours: string, theirs: string, oursFirst: boolean) => string;
+  /**
+   * A list of strings rather than a text (an event's days taken out): what either side added stays,
+   * what either side removed goes. A client or server that does not merge it keeps the later list.
+   */
+  readonly set?: true;
 }
 
 export interface RecordTypeSpec {
@@ -52,61 +64,59 @@ export function isRecordType(value: unknown): value is string {
   return typeof value === 'string' && TYPES.has(value);
 }
 
+/** The record types the loaded packages declare for these apps: what a client showing them syncs (`SyncRequest.types`). */
+export function typesOfApps(apps: readonly AppId[]): string[] {
+  return [...TYPES].filter(([, spec]) => apps.includes(spec.app)).map(([type]) => type).sort();
+}
+
+/** The app a record type belongs to, once its package loaded. */
+export function appOfType(type: string): AppId | undefined {
+  return TYPES.get(type)?.app;
+}
+
 /** The records every device seeds, of every type the loaded apps declare. */
 export function seededRecords(): readonly { readonly type: string; readonly id: string }[] {
   return [...TYPES].flatMap(([type, spec]) => (spec.seeded ?? []).map(id => ({ type, id })));
 }
 
+/** A check with what it accepts in words (`sig`), so a schema's fingerprint changes when a newer build widens it. */
+export type SignedCheck = Check & { readonly sig?: string };
+
+/** `check`, carrying its description for `schemaFingerprint`. */
+export function signed(check: Check, sig: string): SignedCheck {
+  return Object.assign(check, { sig });
+}
+
 /** The checks app packages declare their fields with. */
-export const str =
-  (max: number): Check =>
-  value =>
-    typeof value === 'string' && value.length <= max;
-export const nullableStr =
-  (max: number): Check =>
-  value =>
-    value === null || (typeof value === 'string' && value.length <= max);
-export const bool: Check = value => typeof value === 'boolean';
-export const time: Check = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-export const nullableTime: Check = value => value === null || time(value);
-export const nullableNumber: Check = value =>
-  value === null || (typeof value === 'number' && Number.isFinite(value));
-export const oneOf =
-  (values: readonly string[]): Check =>
-  value =>
-    typeof value === 'string' && values.includes(value);
-export const nullableOneOf =
-  (values: readonly string[]): Check =>
-  value =>
-    value === null || oneOf(values)(value);
+export const str = (max: number): Check => signed(value => typeof value === 'string' && value.length <= max, `str:${max}`);
+export const nullableStr = (max: number): Check => signed(value => value === null || (typeof value === 'string' && value.length <= max), `str?:${max}`);
+export const bool: Check = signed(value => typeof value === 'boolean', 'bool');
+export const time: Check = signed(value => typeof value === 'number' && Number.isFinite(value) && value >= 0, 'time');
+export const nullableTime: Check = signed(value => value === null || time(value), 'time?');
+export const nullableNumber: Check = signed(value => value === null || (typeof value === 'number' && Number.isFinite(value)), 'number?');
+export const oneOf = (values: readonly string[]): Check => signed(value => typeof value === 'string' && values.includes(value), `oneOf:${[...values].sort().join('|')}`);
+export const nullableOneOf = (values: readonly string[]): Check => signed(value => value === null || oneOf(values)(value), `oneOf?:${[...values].sort().join('|')}`);
 /** A record's id: a UUID (`services/ids`), or one of the fixed ids seeded records share on every device. */
-export const id: Check = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value);
-export const nullableId: Check = value => value === null || id(value);
-export const ids =
-  (max: number): Check =>
-  value =>
-    Array.isArray(value) && value.length <= max && value.every(id);
-export const int =
-  (min: number, max: number): Check =>
-  value =>
-    Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+export const id: Check = signed(value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value), 'id');
+export const nullableId: Check = signed(value => value === null || id(value), 'id?');
+export const ids = (max: number): Check => signed(value => Array.isArray(value) && value.length <= max && value.every(id), `ids:${max}`);
+export const int = (min: number, max: number): Check => signed(value => Number.isInteger(value) && (value as number) >= min && (value as number) <= max, `int:${min}:${max}`);
 /** Any key a newer client may add, so a peer passes it on; unknown keys draw as a default. */
-export const styleKey: Check = value => value === null || (typeof value === 'string' && /^[a-z]{1,20}$/.test(value));
+export const styleKey: Check = signed(value => value === null || (typeof value === 'string' && /^[a-z]{1,20}$/.test(value)), 'styleKey');
 /** A fractional index (`services/fractionalIndex`). */
-export const position: Check = value => typeof value === 'string' && /^[0-9A-Za-z]{1,200}$/.test(value);
+export const position: Check = signed(value => typeof value === 'string' && /^[0-9A-Za-z]{1,200}$/.test(value), 'position:200');
 
 export const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Keys a newer client may add inside a field's JSON are passed on; only the known ones are checked, and the whole is bounded. */
-export const smallJson =
-  (max: number): Check =>
-  value => {
+export const smallJson = (max: number): Check =>
+  signed(value => {
     try {
       return JSON.stringify(value).length <= max;
     } catch {
       return false;
     }
-  };
+  }, `json:${max}`);
 
 export function isValidId(value: unknown): value is string {
   return id(value);
@@ -120,10 +130,10 @@ export function isValidField(type: string, field: string, value: unknown): boole
   return check !== undefined && check(value);
 }
 
-/** The longest a merged text field may hold, or undefined for any other field. */
+/** The longest a merged text field may hold, or undefined for any other field (a merged set's limit counts entries). */
 export function textLimit(type: string, field: string): number | undefined {
   const merged = TYPES.get(type)?.merged;
-  return merged && Object.hasOwn(merged, field) ? merged[field]?.limit : undefined;
+  return merged && Object.hasOwn(merged, field) && !merged[field]?.set ? merged[field]?.limit : undefined;
 }
 
 /**
@@ -135,4 +145,27 @@ export function fitField(type: string, field: string, value: unknown): unknown {
   const limit = textLimit(type, field);
   if (limit !== undefined && typeof value === 'string') return value.slice(0, limit);
   return undefined;
+}
+
+/**
+ * What a build knows of these record types, as one short value: each type's fields with what their
+ * checks accept (`sig`; an app's own check counts by name only) and how they merge. A device keeps
+ * it beside its cursor: a newer build that knows a field, or a value, the older one dropped from what
+ * it pulled (`sanitizeRecord`) pulls everything again, so nothing it dropped stays missing.
+ */
+export function schemaFingerprint(types: readonly string[]): string {
+  const parts: string[] = [];
+  for (const type of [...new Set(types)].sort()) {
+    const spec = TYPES.get(type);
+    if (!spec) continue;
+    const fields = Object.keys(spec.fields)
+      .sort()
+      .map(field => {
+        const merged = spec.merged && Object.hasOwn(spec.merged, field) ? spec.merged[field] : undefined;
+        const how = merged ? `~${merged.set ? 'set' : 'text'}:${merged.limit}` : '';
+        return `${field}=${(spec.fields[field] as SignedCheck).sig ?? '?'}${how}`;
+      });
+    parts.push(`${type}{${fields.join(',')}}`);
+  }
+  return hashHex(parts.join(';')).slice(0, 16);
 }

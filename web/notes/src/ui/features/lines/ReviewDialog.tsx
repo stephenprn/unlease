@@ -15,12 +15,12 @@ import type { SortMove } from '@unlease/notes/sync/sorting';
 
 import { applyReview, reviewLine } from '../../../app/sorting';
 import { useLibraryStore } from '../../../app/store/library';
-import { showUndo } from '../../../app/store/ui';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { Emblem } from '../../components/Emblem';
-import { Icon } from '../../components/Icon';
-import { Layer } from '../../components/Layer';
+import { showUndo } from '@shared/app/store/ui';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Emblem } from '@shared/ui/components/Emblem';
+import { Icon } from '@shared/ui/components/Icon';
+import { Layer } from '@shared/ui/components/Layer';
 import { ReadingTrack } from '../links/ReadingTrack';
 import styles from './lines.module.css';
 

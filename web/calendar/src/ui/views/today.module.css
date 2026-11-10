@@ -1,0 +1,232 @@
+/*
+ * « Aujourd'hui »: a calm list on the view's sheet, in a reading column. List rows (DESIGN.md): 56
+ * high, 6 in from the column's edges, 4 apart; the mark in a 24 slot 16 in, the words at 56; their
+ * tint in the row radius, 6% under a pointer, 10% pressed.
+ */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 0 32px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  box-sizing: border-box;
+  width: calc(100% - 12px);
+  min-height: 56px;
+  margin: 0 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background-color: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row:active {
+  background-color: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+/* What is over lies back: its mark at 0.55, its words in the second ink (a link done reads the same). */
+.slot[data-over] {
+  opacity: 0.55;
+}
+
+/* An event's calendar, by its colour: the small stone the navigation's checkbox is. */
+.stone {
+  display: block;
+  width: 18px;
+  height: 16px;
+  background: var(--fill, var(--action));
+}
+
+/* A layer's glyph in its pigment's ink (a birthday's, a reminder's, a page's day). */
+.glyph {
+  display: inline-flex;
+  color: var(--text, var(--ink-muted));
+}
+
+.emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.title[data-over] {
+  color: var(--ink-muted);
+}
+
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A reminder come and still set: still to do. */
+.time[data-due] {
+  color: var(--danger);
+}
+
+/* What runs now and what comes next: how long, in the link's ink. */
+.state {
+  color: var(--link);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The now line, as the time grid draws it: a red line from a dot in the marks' column. */
+.now {
+  position: relative;
+  height: 10px;
+  margin: 0 6px;
+}
+
+.now::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 22px;
+  right: 0;
+  height: 2px;
+  background: var(--danger);
+}
+
+.now::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 17px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--danger);
+}
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 6px 16px 8px;
+  color: var(--ink-muted);
+}
+
+.place {
+  color: var(--ink-muted);
+}
+
+/* An empty day: one kind line, and the way to fill it. */
+.emptyDay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 16px 12px;
+}
+
+.emptyDay > p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+/* The text button keeps its own padding: its words on the column's. */
+.emptyDay > :last-child {
+  margin-left: -20px;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+/* A group's head: more room above than below, on the marks' column. */
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 4px;
+  padding: 0 16px;
+}
+
+.more {
+  padding: 2px 6px 0;
+}
+
+.moreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: var(--cut-tab);
+  color: var(--link);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .moreLink:hover {
+    background-color: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.moreLink:active {
+  background-color: color-mix(in srgb, var(--link) 12%, transparent);
+}

@@ -1,13 +1,13 @@
 import { INBOX_ID } from '@unlease/notes/models/entities';
-import { closeDatabase, openDatabase } from '@data/db/database';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
 
 import { applyReview, fillLine, reviewLine, sortInbox, sortIntoLines } from '../sorting';
 import { addLink, createLine, createNote, ensureInbox, moveLink, trashLines, updateLink } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore } from '../store/libraryStore';
-import { useSettingsStore } from '../store/settingsStore';
-import { sortLinks, SyncError } from '../sync/transport';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
+import { sortLinks, SyncError } from '@app/sync/transport';
 
-jest.mock('../sync/transport', () => ({ ...jest.requireActual('../sync/transport'), sortLinks: jest.fn() }));
+jest.mock('@app/sync/transport', () => ({ ...jest.requireActual('@app/sync/transport'), sortLinks: jest.fn() }));
 
 const sortCall = sortLinks as jest.MockedFunction<typeof sortLinks>;
 const state = () => useLibraryStore.getState();

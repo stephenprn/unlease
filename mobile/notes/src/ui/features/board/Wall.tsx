@@ -11,8 +11,8 @@ import type { BoardSections } from '@app/hooks/useBoard';
 import { useLibraryStore } from '@app/store/libraryStore';
 
 import { AppText } from '../../components';
-import { accelerate, decelerate, duration, standard } from '../../theme/motion';
-import { useTheme } from '../../theme/ThemeProvider';
+import { accelerate, decelerate, duration, standard } from '@shared/ui/theme/motion';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { NoteCard } from './NoteCard';
 import { SwipeToArchive } from './SwipeToArchive';
 import { layoutWall, PAGE_PADDING, SECTION_HEIGHT } from './wallLayout';

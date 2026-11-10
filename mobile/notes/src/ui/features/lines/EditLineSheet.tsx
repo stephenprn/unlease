@@ -2,20 +2,23 @@
  * Edit a collection. "Non classé" keeps its name, place and tray: only its colour and sentence change.
  * `onSaved` hears whether the name or sentence changed more than a typo: its links may be worth checking.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { type Emblem as EmblemKey } from '@unlease/design/emblems';
 import { t } from '@unlease/core/i18n';
-import { INBOX_ID, shownHint, shownTitle } from '@unlease/notes/models/entities';
+import { isBlank } from '@unlease/core/services/formChecks';
+import { INBOX_ID, lineTitleTaken, shownHint, shownTitle } from '@unlease/notes/models/entities';
 import { asLineColor, type LineColor } from '@unlease/design/colors';
 import { meaningChanged } from '@unlease/notes/services/sorting';
+import { useLines } from '@app/hooks/useLines';
 import { updateNote } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Button, Emblem, Sheet, SheetScroll, TextField } from '../../components';
+import { Button, FormFoot, Sheet, SHEET_INSET, SheetScroll, TextField, useForm, useUnsaved } from '../../components';
+import { CollectionPreview } from './CollectionPreview';
 import { EmblemPicker } from './EmblemPicker';
-import { LineColorPicker } from './LineColorPicker';
+import { LineColorPicker } from '@shared/ui/components/LineColorPicker';
 import { collectionEmblem, emblemOf } from '@unlease/notes/models/collections';
 
 export function EditLineSheet({ id, visible, onDismiss, onSaved }: { id: string; visible: boolean; onDismiss: () => void; onSaved?: (meaningChanged: boolean) => void }) {
@@ -25,68 +28,74 @@ export function EditLineSheet({ id, visible, onDismiss, onSaved }: { id: string;
   const [color, setColor] = useState<LineColor | null>(null);
   const [emblem, setEmblem] = useState<EmblemKey>('feuille');
   /** The form as it opened: only what the person changed is written, so an edit made elsewhere meanwhile stands. */
-  const opened = useRef<Record<string, unknown>>({});
+  const [opened, setOpened] = useState<Record<string, unknown>>({});
   useEffect(() => {
     if (!visible || !line) return;
     setTitle(line.title);
     setHint(shownHint(line));
     setColor(asLineColor(line.color));
     setEmblem(emblemOf(line.id, line.emblem));
-    opened.current = { title: line.title, hint: shownHint(line), color: asLineColor(line.color), emblem: emblemOf(line.id, line.emblem) };
+    setOpened({ title: line.title, hint: shownHint(line), color: asLineColor(line.color), emblem: emblemOf(line.id, line.emblem) });
     // Reset only when the sheet opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-  if (!line) return null;
   const inbox = id === INBOX_ID;
+  const lines = useLines();
+  // A name it already had is never refused (two collections that came to share one keep it until renamed).
+  const renamedTo = !inbox && 'title' in opened && title.trim() !== String(opened.title).trim();
+  const titleProblem = inbox ? null : isBlank(title) ? t('Donnez un nom à la collection.') : renamedTo && lineTitleTaken(lines, title, id) ? t('Une collection porte déjà ce nom : choisissez-en un autre.') : null;
+  const form = useForm({ title: titleProblem }, { order: inbox ? ['hint'] : ['title', 'hint'] });
+  const dirty = visible && 'title' in opened && (title !== opened.title || hint !== opened.hint || color !== opened.color || emblem !== opened.emblem);
+  const unsaved = useUnsaved(dirty);
+  const cancel = unsaved.guard(onDismiss);
+  if (!line) return null;
+  const save = () => {
+    const values: Record<string, unknown> = inbox ? { hint: hint.trim(), color } : { title: title.trim(), emblem, hint: hint.trim(), color };
+    const changed = Object.fromEntries(Object.entries(values).filter(([field, value]) => value !== opened[field]));
+    if (Object.keys(changed).length > 0) updateNote(id, changed);
+    onDismiss();
+    if (Object.keys(changed).length > 0) {
+      const before = { title: String(opened.title), hint: String(opened.hint) };
+      onSaved?.(!inbox && meaningChanged(before, { title: title.trim(), hint: hint.trim() }));
+    }
+  };
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Modifier la collection')} tall>
+    <>
+    <Sheet visible={visible} onDismiss={cancel} title={t('Modifier la collection')} tall>
       <SheetScroll contentContainerStyle={styles.body}>
-        <View style={styles.preview}>
-          <Emblem emblem={inbox ? collectionEmblem(id, null) : emblem} color={color} size={56} />
-          <AppText variant="bodyStrong" style={styles.flex} numberOfLines={1}>
-            {(inbox ? shownTitle(line) : title) || t('Sans nom')}
-          </AppText>
-        </View>
-        {!inbox ? <TextField label={t('Nom')} value={title} onChangeText={setTitle} maxLength={60} /> : null}
+        <CollectionPreview
+          emblem={inbox ? collectionEmblem(id, null) : emblem}
+          color={color}
+          title={(inbox ? shownTitle(line) : title.trim()) || t('Sans nom')}
+          hint={hint.trim() || t('Une phrase sur ce qu’elle contient aide Claude à y ranger les bons liens.')}
+        />
+        {!inbox ? <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChangeText={setTitle} maxLength={60} /> : null}
         <TextField
           label={t('Ce qui va dans cette collection')}
+          kind="prose"
+          field={form.field('hint')}
           value={hint}
           onChangeText={setHint}
           multiline
           maxLength={500}
           help={t('Claude lit cette phrase pour choisir la bonne collection.')}
         />
-        {!inbox ? (
-          <>
-            <AppText variant="metaStrong">{t('Emblème')}</AppText>
-            <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
-          </>
-        ) : null}
-        <AppText variant="metaStrong">{t('Couleur')}</AppText>
-        <LineColorPicker value={color} onChange={next => next && setColor(next)} />
-        <Button
-          label={t('Enregistrer')}
-          disabled={!inbox && !title.trim()}
-          style={styles.submit}
-          onPress={() => {
-            const form: Record<string, unknown> = inbox ? { hint: hint.trim(), color } : { title: title.trim(), emblem, hint: hint.trim(), color };
-            const changed = Object.fromEntries(Object.entries(form).filter(([field, value]) => value !== opened.current[field]));
-            if (Object.keys(changed).length > 0) updateNote(id, changed);
-            onDismiss();
-            if (Object.keys(changed).length > 0) {
-              const before = { title: String(opened.current.title), hint: String(opened.current.hint) };
-              onSaved?.(!inbox && meaningChanged(before, { title: title.trim(), hint: hint.trim() }));
-            }
-          }}
-        />
+        {/* The cut-outs and the swatches say what they are, and the preview above wears them: no word over them, but for TalkBack. */}
+        {!inbox ? <EmblemPicker value={emblem} color={color} onChange={setEmblem} /> : null}
+        <View accessibilityRole="radiogroup" accessibilityLabel={t('Couleur')}>
+          <LineColorPicker value={color} onChange={next => next && setColor(next)} />
+        </View>
       </SheetScroll>
+      <FormFoot message={form.message}>
+        <Button kind="text" label={t('Annuler')} onPress={cancel} />
+        <Button label={t('Enregistrer')} onPress={() => void form.submit(save)} />
+      </FormFoot>
     </Sheet>
+    {unsaved.dialog}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-  preview: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  flex: { flex: 1 },
-  submit: { alignSelf: 'flex-end' },
+  body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
 });

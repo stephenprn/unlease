@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The picker's preview of « Appels rapides »: sample faces. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:clipToOutline="true" android:outlineProvider="bounds" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_panel_ground" android:foreground="@drawable/wgen_panel_edge">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="16dp" android:paddingTop="6dp" android:paddingEnd="14dp">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/wgen_g_star" />
+            <TextView style="@style/WidgetText.Title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:layout_weight="1" android:maxLines="1" android:text="@string/widget_preview_favorites" />
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/wgen_g_chevron_right_ink_muted" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_horizontal" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="8dp">
+            <LinearLayout android:layout_width="76dp" android:layout_height="88dp" android:gravity="center_horizontal" android:orientation="vertical" android:paddingTop="8dp">
+                <FrameLayout android:layout_width="48dp" android:layout_height="48dp">
+                    <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/wgen_face" android:tint="@color/wgen_pigment_blue" />
+                    <TextView style="@style/WidgetText.Title" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="LM" android:textColor="@color/wgen_on_blue" />
+                </FrameLayout>
+                <TextView style="@style/WidgetText.LabelSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="@string/widget_preview_lea" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="76dp" android:layout_height="88dp" android:gravity="center_horizontal" android:orientation="vertical" android:paddingTop="8dp">
+                <FrameLayout android:layout_width="48dp" android:layout_height="48dp">
+                    <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/wgen_face" android:tint="@color/wgen_pigment_orange" />
+                    <TextView style="@style/WidgetText.Title" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="PD" android:textColor="@color/wgen_on_orange" />
+                </FrameLayout>
+                <TextView style="@style/WidgetText.LabelSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="@string/widget_preview_paul" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="76dp" android:layout_height="88dp" android:gravity="center_horizontal" android:orientation="vertical" android:paddingTop="8dp">
+                <FrameLayout android:layout_width="48dp" android:layout_height="48dp">
+                    <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/wgen_face" android:tint="@color/wgen_pigment_green" />
+                    <TextView style="@style/WidgetText.Title" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="M" android:textColor="@color/wgen_on_green" />
+                </FrameLayout>
+                <TextView style="@style/WidgetText.LabelSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="@string/widget_preview_mum" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

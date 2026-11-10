@@ -1,0 +1,118 @@
+/*
+ * The app's brand on the wall (its mark and its name, a link to its home), the launcher (the
+ * suite's apps as tiles, each its mark over its name; the announced ones greyed), and the mark of an app only announced (its glyph on a grey pebble).
+ */
+.mark {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink-muted);
+}
+
+.mark > * {
+  grid-area: 1 / 1;
+}
+
+.markStone {
+  width: 100%;
+  height: 100%;
+  background: var(--track);
+}
+
+.mark svg {
+  position: relative;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 22px;
+  text-decoration: none;
+}
+
+.brand[data-large] {
+  font-size: inherit;
+}
+
+@media (hover: hover) {
+  .brand:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.brand:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.soonHead {
+  margin: 8px 12px 2px;
+  color: var(--ink-muted);
+}
+
+/*
+ * The launcher: the suite's web apps as tiles, each its mark over its name, up to three to a row,
+ * the popover as wide as its rows (`--columns`: the longer row's count), never wider than the window.
+ */
+.launcher {
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  /* The menu's 6, so each tile's corner is concentric with the paper's. */
+  padding: 6px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 3), 100px);
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 92px;
+  padding: 12px 4px 10px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+}
+
+.tileName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.tile[aria-current='true'] {
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+}
+
+@media (hover: hover) {
+  a.tile:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+a.tile:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.tile[aria-disabled='true'] {
+  color: var(--ink-muted);
+}

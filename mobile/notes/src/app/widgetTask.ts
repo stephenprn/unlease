@@ -3,7 +3,7 @@
  * app open or not: the tick is written as the editor would, the widgets are drawn again, the change sent.
  */
 import { bootstrap } from './bootstrap';
-import { flushNow } from './sync/syncManager';
+import { flushNow } from '@shared/app/sync/syncManager';
 import { applyWidgetTicks, publishWidgets } from './widgets';
 
 /** The task has 8 s: sending gets what is left, and anything not sent goes the next time the app runs. */

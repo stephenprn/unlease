@@ -5,7 +5,7 @@
  * Nothing is written; the server keeps the answer a few hours. The web's `OffersDialog`.
  */
 import React, { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { getLocale, t } from '@unlease/core/i18n';
 import type { LinkItem } from '@unlease/notes/models/entities';
@@ -16,12 +16,12 @@ import { offerDetails, offerGap, rangeText } from '@unlease/notes/services/offer
 import type { Offer, OfferMarket, OfferResponse } from '@unlease/notes/sync/offers';
 import { findOffers } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
 
-import { AppText, Button, IconButton, Organic, Sheet, SheetScroll } from '../../components';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
-import { ReadingTrack } from './ReadingTrack';
+import { AppText, Button, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
+import { openPage as open, SearchFoot } from './SearchFoot';
 
 type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly reason: string } | { readonly kind: 'ready'; readonly answer: OfferResponse };
 
@@ -32,8 +32,6 @@ export function OffersSheet({ id, market, visible, onDismiss }: { id: string; ma
     </Sheet>
   );
 }
-
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
 
 /** Mounted with the sheet each time it opens: it asks then (and again on demand), and drops the question when the sheet goes. */
 function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
@@ -92,16 +90,15 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
     ) : null;
   if (phase.kind === 'failed') {
     return (
-      <View style={styles.body}>
-        <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-          {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
-        </AppText>
-        {siteSearches}
-        <View style={styles.actions}>
-          <Button kind="text" label={t('Réessayer')} onPress={() => search(false)} />
-          <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-        </View>
-      </View>
+      <>
+        <SheetScroll contentContainerStyle={styles.body}>
+          <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
+            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+          </AppText>
+          {siteSearches}
+        </SheetScroll>
+        <SearchFoot failed url={link.url} onSearch={search} />
+      </>
     );
   }
   const { offers, range, note, searchedAt } = phase.answer;
@@ -109,6 +106,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
   // A row without a page keeps the place of its button, so the prices stay in one column.
   const linked = offers.some(offer => offer.url);
   return (
+    <>
     <SheetScroll contentContainerStyle={styles.body}>
       {market === 'used' && range ? <AppText variant="bodyStrong">{rangeText(range)}</AppText> : null}
       {offers.length === 0 ? (
@@ -125,11 +123,9 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
       <AppText variant="meta">
         {t('Trouvé sur le web par Claude le {day} à {time}. Les prix changent vite, vérifiez-les sur le site.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
       </AppText>
-      <View style={styles.actions}>
-        <Button kind="text" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
-        <Button label={t('Ouvrir la page')} icon="external" onPress={() => open(link.url)} />
-      </View>
     </SheetScroll>
+    <SearchFoot failed={false} url={link.url} onSearch={search} />
+    </>
   );
 }
 
@@ -157,16 +153,15 @@ function OfferRow({ offer, market, link, first, slot }: { offer: Offer; market: 
         ) : null}
         {details ? <AppText variant="meta">{details}</AppText> : null}
       </View>
-      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} onPress={() => open(url)} /> : slot ? <View style={styles.noPage} /> : null}
+      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
     </View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    body: { gap: 16, paddingHorizontal: 8, paddingBottom: 8 },
-    waiting: { gap: 12, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
+    body: { gap: 16, paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
+    waiting: { gap: 12, paddingHorizontal: SHEET_INSET, paddingTop: 8, paddingBottom: 24, alignItems: 'flex-start' },
     // The offers: a well in its own outline, ruled by paper, as the promo codes are.
     well: { backgroundColor: theme.color.paperHigh, overflow: 'hidden' },
     offer: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingHorizontal: 16, paddingVertical: 12 },
@@ -175,6 +170,8 @@ const makeStyles = (theme: Theme) =>
     offerText: { flex: 1, gap: 2 },
     offerHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
     shop: { flexShrink: 1 },
+    // Centred on the row's first line (body strong's 23), the shop and its price.
+    page: { marginTop: -8 },
     // An icon button's 48.
     noPage: { width: 48 },
     sites: { gap: 8 },

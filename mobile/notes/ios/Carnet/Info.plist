@@ -75,12 +75,20 @@
 	<false/>
 	<key>UIAppFonts</key>
 	<array>
+		<string>Signika-Medium_italic.ttf</string>
 		<string>Signika-Medium.ttf</string>
+		<string>Signika-Regular_italic.ttf</string>
+		<string>SignikaNight-Regular_italic.ttf</string>
 		<string>SignikaNight-SemiBold.ttf</string>
 		<string>Signika-Regular.ttf</string>
+		<string>Signika-SemiBold_italic.ttf</string>
+		<string>SignikaNight-Medium_italic.ttf</string>
 		<string>SignikaNight-Medium.ttf</string>
 		<string>SignikaNight-Bold.ttf</string>
 		<string>Signika-SemiBold.ttf</string>
+		<string>SignikaNight-SemiBold_italic.ttf</string>
+		<string>Signika-Bold_italic.ttf</string>
+		<string>SignikaNight-Bold_italic.ttf</string>
 		<string>Signika-Bold.ttf</string>
 		<string>SignikaNight-Regular.ttf</string>
 	</array>

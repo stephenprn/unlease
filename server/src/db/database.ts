@@ -160,6 +160,18 @@ const MIGRATIONS: readonly string[] = [
   CREATE INDEX analyses_by_url ON analyses (url, created_at);
   CREATE INDEX analyses_by_time ON analyses (created_at);
   `,
+  // Where the server's recent versions of typed text came from (MergeLineage), kept across a restart:
+  // a device whose answer was lost resends from an older base, and merging from it would repeat its words.
+  `
+  CREATE TABLE lineage (
+    id INTEGER PRIMARY KEY,
+    key TEXT NOT NULL,
+    clock TEXT NOT NULL,
+    versions TEXT NOT NULL,
+    chars INTEGER NOT NULL,
+    UNIQUE (key, clock)
+  ) STRICT;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

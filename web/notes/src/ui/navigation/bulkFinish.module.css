@@ -1,0 +1,40 @@
+/* The picked notes' colour and paper: the note editor's own picker, in the selection bar's popover. */
+
+.picker {
+  padding: 8px;
+}
+
+/* On a phone-sized window it is a sheet: its title heads it, 12 above what it holds. */
+.title {
+  padding: 0 0 12px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+@media (max-width: 719px) {
+  .body {
+    padding-top: 0;
+  }
+}
+
+/* What a collection takes, on the groups' column (the picker's 4 and its heading's 2). */
+.note {
+  max-width: 44ch;
+  padding: 0 6px;
+  color: var(--ink-muted);
+}
+
+/* Collections alone: their fourteen swatches in two full rows of seven, a little closer than in their own sheet. */
+.lines {
+  padding-inline: 0;
+}
+
+.lines [role='radiogroup'] {
+  gap: 6px;
+  justify-content: center;
+}

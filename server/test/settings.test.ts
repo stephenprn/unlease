@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseServerSettings, type ServerSettings } from '@unlease/core/sync/settings';
 import { LinkModelProvider } from '../src/apps/notes/analysis/provider';
+import { ClaudeProvider } from '../src/claude/provider';
 import { setLogLevel } from '../src/log';
 import { SettingsStore } from '../src/settings/store';
 import type { ListModels } from '../src/settings/update';
@@ -252,13 +253,13 @@ describe('the analysis reads the settings for every link', () => {
   it('builds the Claude client once per key, and again when the key changes', () => {
     const target = server({ envApiKey: null });
     const built: string[] = [];
-    const provider = new LinkModelProvider(target.settings, {
+    const provider = new LinkModelProvider(new ClaudeProvider(target.settings, {
       effort: 'low',
       createApi: apiKey => {
         built.push(apiKey);
         return new FakeClaude();
       },
-    });
+    }));
     expect(provider.current().model).toBeNull();
     target.settings.update({ apiKey: 'sk-ant-first-key-1111' });
     expect(provider.current().model?.model).toBe('claude-opus-5-5');

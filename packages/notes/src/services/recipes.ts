@@ -31,9 +31,18 @@ const PEOPLE_WORDS = new Set(['personne', 'personnes', 'pers', 'convive', 'convi
 /** Words after the count that say nothing of what is counted: « 24 cookies environ », « 12 crêpes de 20 cm ». */
 const UNIT_STOPS = new Set(['environ', 'about', 'approx', 'approximately', 'de', 'd', 'du', 'des', 'of', 'pour', 'for', 'a', 'to', 'ou', 'or', 'et', 'and']);
 
-/** What a recipe counts when it is not people, as its reading wrote it: « crêpes » in « 15 crêpes »; null for « 4 personnes », « 6 » or « 4 à 6 ». */
+/** Words before the count that say it is what the recipe makes, not whom it feeds: « Makes 12 », « Donne 20 ». */
+const YIELD_WORDS = new Set(['makes', 'make', 'yields', 'yield', 'donne', 'fait']);
+
+/**
+ * What a recipe counts when it is not people, as its reading wrote it: « crêpes » in « 15 crêpes »;
+ * « pièces » for « Makes 12 », which counts what it makes without naming it; null for « 4 personnes »,
+ * « 6 » or « 4 à 6 ».
+ */
 export function servingsUnit(attributes: readonly LinkAttribute[]): string | null {
   const fact = servingsFact(attributes);
+  const before = fact ? fact.value.slice(0, Math.max(0, fact.value.search(/\d/))) : '';
+  const makes = before.split(/[\s:]+/).some(word => YIELD_WORDS.has(foldText(word)));
   const after = fact ? /\d+(?:\s*(?:-|\u2013|à|a|to)\s*\d+)?\s*(.*)$/su.exec(fact.value)?.[1] ?? '' : '';
   const words: string[] = [];
   // Only the words right after the count: « 1 gâteau (8 parts) » counts gâteaux.
@@ -44,7 +53,8 @@ export function servingsUnit(attributes: readonly LinkAttribute[]): string | nul
     words.push(word);
   }
   const unit = words.join(' ');
-  return unit && unit.length <= 24 && !PEOPLE_WORDS.has(foldText(words[0]!)) ? unit : null;
+  if (unit && unit.length <= 24) return PEOPLE_WORDS.has(foldText(words[0]!)) ? null : unit;
+  return makes ? t('pièces') : null;
 }
 
 /** A count of `unit` as written for `written` of them: « 1 crêpe » from « 15 crêpes », « 2 gâteaux » from « 1 gâteau ». */

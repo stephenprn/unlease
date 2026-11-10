@@ -1,0 +1,124 @@
+/*
+ * The Administration's home and pages: under the title a line that says what it is (a section's
+ * « how it works »), then its sheets. On the home each section is a row of its group's sheet: its
+ * glyph, its title, its state in one line beside its dot, and the way to its page.
+ */
+/* As wide as the sheets under it: the page's column sets its measure. */
+.lead {
+  margin: 0;
+  /* In line with the page's title (`pageHead`, 4 in). */
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* Wide, it sits close under the page's title; on a phone-sized window the title is the top bar's. */
+@media (min-width: 720px) {
+  .lead {
+    margin-top: -14px;
+  }
+}
+
+/* Its rows 6 in from every edge of the sheet (their outer corners concentric with it), a little apart. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: calc(100% - 12px);
+  min-height: 64px;
+  margin: 0 6px;
+  padding: 8px 10px;
+  border-radius: var(--cut-tab);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+/* The first and last rows of the sheet: their outer corners concentric with its own, as drawn at its size (`--outline-radius`). */
+.rows {
+  --row-outer: max(0px, calc((var(--outline-radius, 22px) - 6px) * var(--corner-scale)));
+}
+
+.rows > li:first-child > .row {
+  border-radius: var(--row-outer) var(--row-outer) var(--cut-tab) var(--cut-tab);
+}
+
+.rows > li:last-child > .row {
+  border-radius: var(--cut-tab) var(--cut-tab) var(--row-outer) var(--row-outer);
+}
+
+.rows > li:only-child > .row {
+  border-radius: var(--row-outer);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.row:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* Inside the clipped sheet, the ring is drawn on the row's own cut. */
+.row:focus-visible {
+  outline-offset: -2px;
+}
+
+.row > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--cut-small);
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+  color: var(--ink);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink-muted);
+}
+
+.stateText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dot);
+}

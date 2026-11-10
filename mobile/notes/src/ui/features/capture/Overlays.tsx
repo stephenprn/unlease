@@ -2,16 +2,17 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
-import { addedMessage } from '@unlease/notes/services/savedLinks';
+import { addedMessage, addedTone, cappedMessage } from '@unlease/notes/services/savedLinks';
 import { receiveShare } from '@app/intake';
-import { useAppLifecycle } from '@app/hooks/useAppLifecycle';
+import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
 import { useReminders } from '@app/hooks/useReminders';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack, startTransfer } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
+import { startTransfer } from '@app/store/captureStore';
 import { onShare, takePendingShare, type Share } from '@platform/intake';
 
 import { navigate, navigationRef } from '../../navigation/navigationRef';
-import { ServicesCssSheet } from '../appearance/ServicesCssSheet';
+import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
 import { KitchenAlarms } from '../links/KitchenTimers';
 import { CaptureSheet } from './CaptureSheet';
 import { TransferPanel } from './TransferPanel';
@@ -28,7 +29,9 @@ export function Overlays(): React.ReactElement {
       if (result.reading) added.forEach(link => startTransfer(link.id, added.length === 1 ? link.cleaned : 0));
       // Read, the new links travel on the transfer panel; the slip tells what was saved already.
       const message = addedMessage(result.links, result.reading ? { into: null } : { into: INBOX_ID, announce: true }, useLibraryStore.getState().notes);
-      if (message) showSnack(message);
+      // A share offering more links than one share takes says what was left out first.
+      if (result.more > 0) showSnack([cappedMessage(result.more), message].filter(Boolean).join(' · '), undefined, { tone: 'warning' });
+      else if (message) showSnack(message, undefined, { tone: addedTone(result.links) });
     }
     if (result.kind === 'note') navigate('Note', { id: result.id });
   }, []);

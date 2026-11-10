@@ -1,38 +1,39 @@
 /**
  * The board: every view of the notes (all notes, reminders, a label, the
  * archive, the bin) is the same wall over a different selection, as on the
- * phone. Search replaces the wall with its results, best first, matches marked.
+ * phone. Search replaces the wall with its results, best first, matches marked,
+ * the other apps' results (Pages') first. Its bin holds the notes; the pages
+ * have a bin of their own.
  */
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react';
 
 import { t } from '@unlease/core/i18n';
+import { searchSummary } from '@unlease/core/services/searchWords';
+import { APP_WORDS } from '@unlease/core/appWords';
 import { plural } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
 
 import { useBoardSections, useSearch, type BoardView } from '../../app/hooks/useBoard';
-import { useTrashedPages } from '../../app/hooks/usePages';
-import { usePageSearch } from '../../app/hooks/usePageSearch';
-import { useMinute } from '../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { emptyTrash } from '../../app/store/actions';
-import { emptyPagesBin } from '../../app/store/pages';
-import { addToSelection, selectQuery, selectSelection, toggleSelected, useBoardStore } from '../../app/store/board';
+import { addToSelection, selectSelection, toggleSelected, useBoardStore } from '../../app/store/board';
+import { useQuery } from '@shared/app/store/search';
 import { useLibraryStore } from '../../app/store/library';
-import { selectLayout, useSettingsStore } from '../../app/store/settings';
-import { showSnack } from '../../app/store/ui';
+import { useLayout } from '../../app/store/prefs';
+import { showSnack } from '@shared/app/store/ui';
 import { newChecklist, newDrawing, newNote, newPhotoNote, openNote } from '../commands';
-import { Button } from '../components/Button';
-import { Confirm } from '../components/Dialog';
-import { LabelTag } from '../components/LabelMark';
+import { Button } from '@shared/ui/components/Button';
+import { Confirm } from '@shared/ui/components/Dialog';
+import { LabelTag } from '@shared/ui/components/LabelMark';
 import styles from '../features/board/board.module.css';
 import { CollectionChips } from '../features/board/CollectionChips';
 import { Composer } from '../features/board/Composer';
 import { EmptyBoard } from '../features/board/EmptyBoard';
-import { PageResults } from '../features/board/PageResults';
-import { PagesBinSection } from '../features/pages/PagesBin';
 import { Wall } from '../features/board/Wall';
-import { SyncNotice } from '../navigation/Header';
-import { DOCKED, NARROW, useMedia } from '../useMedia';
-import screens from './screens.module.css';
+import { SyncNotice } from '@shared/ui/navigation/Header';
+import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
+import { DOCKED, NARROW, useMedia } from '@shared/ui/useMedia';
+import screens from '@shared/ui/screens/screens.module.css';
 
 function viewTitle(view: BoardView, labelName: string | undefined): string {
   if (view === 'reminders') return t('Rappels');
@@ -43,20 +44,17 @@ function viewTitle(view: BoardView, labelName: string | undefined): string {
 }
 
 export function BoardScreen({ view }: { view: BoardView }) {
-  const query = useBoardStore(selectQuery);
+  const query = useQuery();
   const selection = useBoardStore(selectSelection);
-  const layout = useSettingsStore(selectLayout);
+  const layout = useLayout();
   const label = useLibraryStore(s => (view.startsWith('label:') ? s.labels[view.slice(6)] : undefined));
   const now = useMinute();
   const { sections, total } = useBoardSections(view, now);
   const results = useSearch(query, view === 'trash');
-  const pageHits = usePageSearch(query);
   const searching = query.trim().length > 0;
-  const found = results.length + pageHits.length;
+  const found = results.length;
   const [confirmEmpty, setConfirmEmpty] = useState(false);
-  // One bin: the pages thrown away wait here with the notes.
-  const binnedPages = useTrashedPages().length;
-  const inBin = view === 'trash' ? total + binnedPages : total;
+  const inBin = total;
   const anchor = useRef<string | null>(null);
 
   const docked = useMedia(DOCKED);
@@ -97,7 +95,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
             {title}
           </h1>
           {view === 'trash' && inBin > 0 ? (
-            <Button kind="text" icon="trash" onClick={() => setConfirmEmpty(true)}>
+            <Button kind="text" icon="broom" onClick={() => setConfirmEmpty(true)}>
               {t('Vider la corbeille')}
             </Button>
           ) : null}
@@ -105,19 +103,18 @@ export function BoardScreen({ view }: { view: BoardView }) {
       ) : null}
       {/* The docked navigation lists the collections; without it, they head the board, scrolling with it. */}
       {view === 'notes' && !searching && !docked ? <CollectionChips resting={selection.size > 0} /> : null}
-      {view === 'trash' && !searching ? <p className={`${styles.notice} t-meta`}>{t('Les notes et les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
-      {view === 'trash' && !searching ? <PagesBinSection embedded /> : null}
-      {view === 'trash' && !searching && binnedPages > 0 && total > 0 ? <h2 className={`${styles.resultsHead} t-section`}>{t('Notes · {count}', { count: total })}</h2> : null}
+      {/* How long things stay, while it holds something (empty, its empty state says it). */}
+      {view === 'trash' && !searching && inBin > 0 ? <p className={`${styles.notice} t-meta`}>{t('Les notes de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       {showComposer ? <Composer onNote={newNote} onChecklist={newChecklist} onDrawing={newDrawing} onPhotos={files => void newPhotoNote(files)} /> : null}
+      {/* As on the phone: the settings the words name, above the notes, in the search of every note (a view's searches its own). */}
+      {searching && view === 'notes' ? <SettingsMatches query={query} /> : null}
       {searching ? (
-        // As on the phone: the count, a line of meta over the results; the pages first, then the notes.
+        // As on the phone: the count, a line of meta over the results.
         <h1 className={`${screens.resultCount} t-meta`} aria-live="polite">
-          {found === 0 ? t('Aucun résultat pour « {query} »', { query: query.trim() }) : plural(found, 'résultat')}
+          {searchSummary(query, found, view === 'notes' ? settingsFound(query) : 0)}
         </h1>
       ) : null}
-      {searching && found === 0 ? <p className={`${screens.resultHint} t-meta`}>{t('Les notes, les listes, les liens des collections et les pages sont cherchés, mot à mot, sans tenir compte des accents.')}</p> : null}
-      {searching ? <PageResults hits={pageHits} query={query} /> : null}
-      {searching && pageHits.length > 0 && results.length > 0 ? <h2 className={`${styles.resultsHead} t-section`}>{t('Notes')}</h2> : null}
+      {searching && found === 0 ? <p className={`${screens.resultHint} t-meta`}>{APP_WORDS.notes.searchHint}</p> : null}
       {inBin === 0 && !searching ? (
         <EmptyBoard view={view} />
       ) : shown.some(section => section.ids.length > 0) ? (
@@ -126,17 +123,15 @@ export function BoardScreen({ view }: { view: BoardView }) {
       <Confirm
         open={confirmEmpty}
         title={t('Vider la corbeille ?')}
-        message={t('Les notes et les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
+        message={t('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
         confirmLabel={t('Vider')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const notes = emptyTrash();
-          const pages = emptyPagesBin();
-          const count = notes > 0 ? plural(notes, 'note') : plural(pages, 'page');
-          const said = notes > 0 && pages > 0 ? t('{notes} et {pages} supprimées définitivement', { notes: plural(notes, 'note'), pages: plural(pages, 'page') }) : notes + pages > 1 ? t('{count} supprimées définitivement', { count }) : notes + pages === 1 ? t('{count} supprimée définitivement', { count }) : '';
-          showSnack(said || t('La corbeille était déjà vide'), undefined, { tone: said ? 'success' : 'info' });
+          if (notes > 0) showSnack(t('{deleted} définitivement', { deleted: plural(notes, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
+          else showSnack(t('La corbeille était déjà vide'));
         }}
       />
     </div>

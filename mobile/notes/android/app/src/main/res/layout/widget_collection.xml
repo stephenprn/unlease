@@ -2,6 +2,9 @@
 <!-- Collection: a piece of the collection's page on its slab. The head is the selector (its emblem on
      its stone, its name, a chevron); "+" adds a link to it without opening the app. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wgen_panel_ground"
@@ -148,6 +151,7 @@
                 android:visibility="gone">
 
                 <TextView
+                    android:id="@+id/w_collection_empty"
                     style="@style/WidgetText.Meta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -171,6 +175,7 @@
                         android:src="@drawable/wgen_g_plus_link" />
 
                     <TextView
+                        android:id="@+id/w_collection_add"
                         style="@style/WidgetText.Action"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

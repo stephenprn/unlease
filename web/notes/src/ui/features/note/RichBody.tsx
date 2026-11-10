@@ -1,20 +1,29 @@
 /**
- * A text note's body, typed in place (`BodyEditor`): plain until a word is marked or a line made a
- * heading, then formatted for good (`saveNoteLines`). Selecting words brings up the formatting bar.
- * The note editor holds it, and so does a note embedded in a page.
+ * A text note's body, typed in place (`BodyEditor`): plain until a word is marked, a line made a
+ * heading or a person mentioned, then formatted for good (`saveNoteLines`). Selecting words brings
+ * up the formatting bar; « @ » the people of Contacts to mention (`MentionPicker`), each mention
+ * opening its person in Contacts. The note editor holds it, and so does a note embedded in a page;
+ * in the editor its undo is the note's own (`NoteHistoryContext`), elsewhere its own.
  */
-import { memo, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react';
+import { memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type MouseEvent, type Ref } from 'react';
 
 import { cutNotice } from '@unlease/core/services/format';
 import { linesText } from '@unlease/notes/services/noteBody';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 
+import type { Ref as Target } from '@unlease/core/refs';
+
+import { mentionPath, useMentionedPeople } from '../../../app/mentions';
+import { useNoteHistoryContext } from '../../../app/hooks/useNoteHistory';
 import { saveNoteLines } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { showWarning } from '../../../app/store/ui';
-import { onBeforePause } from '../../../app/sync/loop';
-import { useMedia } from '../../useMedia';
+import { showWarning } from '@shared/app/store/ui';
+import { onBeforePause } from '@shared/app/sync/loop';
+import { useMedia } from '@shared/ui/useMedia';
+import { browserPath } from '@shared/ui/router';
 import { BodyEditor, type SelectionState } from './bodyEditor';
+import { MentionPicker, type MentionPickerHandle } from './MentionPicker';
+import { parseMention } from './noteDom';
 import { FINGER, NoteFormatBar, selectionPlace, type BarPlace } from './NoteFormatBar';
 import styles from './richBody.module.css';
 
@@ -54,9 +63,15 @@ function RichBodyComponent({ noteId, editable, className, placeholder, label, ha
   const editor = useRef<BodyEditor | null>(null);
   const [bar, setBar] = useState<Bar | null>(null);
   const finger = useMedia(FINGER);
+  const [mention, setMention] = useState<{ readonly query: string; readonly anchor: DOMRect } | null>(null);
+  const picker = useRef<MentionPickerHandle>(null);
+  const people = useMentionedPeople();
   const textRef = useRef(onText);
+  const noteHistory = useNoteHistoryContext();
+  const historyRef = useRef(noteHistory);
   useLayoutEffect(() => {
     textRef.current = onText;
+    historyRef.current = noteHistory;
   });
 
   useLayoutEffect(() => {
@@ -75,6 +90,9 @@ function RichBodyComponent({ noteId, editable, className, placeholder, label, ha
       },
       selected: state => setBar(state ? { state, place: selectionPlace(element) } : null),
       cut: () => showWarning(cutNotice('Texte', TEXT_LIMITS.note.body)),
+      mention: query => setMention(query === null ? null : { query, anchor: caretRect(element) }),
+      mentionKey: key => picker.current?.key(key) ?? false,
+      history: () => (historyRef.current?.enabled ? historyRef.current : null),
     });
     editor.current = made;
     return () => {
@@ -83,14 +101,22 @@ function RichBodyComponent({ noteId, editable, className, placeholder, label, ha
     };
   }, [noteId, takesPictures]);
 
-  // The stored text, drawn when it changes from elsewhere (never over what is being typed).
+  // The stored text, drawn when it changes from elsewhere (never over what is being typed), and after a step of the note's history.
+  const replays = noteHistory?.replays ?? 0;
   useLayoutEffect(() => {
     if (!still) editor.current?.stored(body, rich);
-  }, [noteId, body, rich, still]);
+  }, [noteId, body, rich, still, replays]);
 
   useEffect(() => {
     editor.current?.setEditable(editable);
   }, [noteId, editable]);
+
+  // A person renamed (or merged, or deleted) in Contacts: the mentions show their name now.
+  useEffect(() => {
+    editor.current?.refreshMentions();
+  }, [people]);
+
+  const pick = useCallback((target: Target) => editor.current?.insertMention(target), []);
 
   useImperativeHandle(handle, () => ({ flush: () => editor.current?.flush(), focus: at => editor.current?.focus(at) }), []);
   useImperativeHandle(inputRef, () => root.current!, []);
@@ -136,7 +162,9 @@ function RichBodyComponent({ noteId, editable, className, placeholder, label, ha
         aria-placeholder={placeholder}
         data-placeholder={placeholder}
         spellCheck
+        onClick={openMention}
       />
+      {mention && editable ? <MentionPicker ref={picker} query={mention.query} anchor={mention.anchor} onPick={pick} /> : null}
       {bar && editable ? (
         <NoteFormatBar
           state={bar.state}
@@ -149,6 +177,25 @@ function RichBodyComponent({ noteId, editable, className, placeholder, label, ha
       ) : null}
     </>
   );
+}
+
+/** Where the caret stands, for the picker; the text's own box where the browser cannot say. */
+function caretRect(root: HTMLElement): DOMRect {
+  const selection = window.getSelection();
+  const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+  const rect = range && typeof range.getBoundingClientRect === 'function' ? range.getBoundingClientRect() : null;
+  return rect && (rect.width > 0 || rect.height > 0) ? rect : root.getBoundingClientRect();
+}
+
+/** A press on a mention opens its person, in Contacts' web app, in a new tab. */
+function openMention(event: MouseEvent<HTMLDivElement>): void {
+  const chip = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-mention]') : null;
+  if (!chip || chip.dataset.gone !== undefined) return;
+  const target = parseMention(chip.dataset.mention);
+  const path = target ? mentionPath(target) : null;
+  if (!path) return;
+  event.preventDefault();
+  window.open(browserPath(path), '_blank', 'noopener');
 }
 
 export const RichBody = memo(RichBodyComponent);

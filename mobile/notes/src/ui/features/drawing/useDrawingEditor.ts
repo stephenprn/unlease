@@ -13,8 +13,8 @@ import { runOnUI, useSharedValue, type SharedValue } from 'react-native-reanimat
 import { t } from '@unlease/core/i18n';
 import { DRAWING_LIMITS, type DrawingInk, type DrawingSize, type DrawingTool, type Stroke } from '@unlease/notes/models/drawing';
 import { finishStroke, newStrokeId, parseDrawing, withoutStrokes } from '@unlease/notes/services/drawing';
-import { showSnack } from '@app/store/uiStore';
-import { haptic } from '@platform/haptics';
+import { showSnack } from '@shared/app/store/uiStore';
+import { haptic } from '@shared/platform/haptics';
 
 import { appendStroke, applyStep, insertStrokes, lastChoice, rememberChoice, reuseStrokes, strokesAlong, strokesOf, withPen, withTool, type DrawingStep, type ToolChoice } from './drawingModel';
 
@@ -145,7 +145,7 @@ export function useDrawingEditor({ stored, read, save, editable }: DrawingEditor
     (typed: string, next?: readonly Stroke[]): boolean => {
       busy.current = false;
       if (typed.length > DRAWING_LIMITS.chars) {
-        showSnack(t('Ce dessin est plein : il ne peut rien garder de plus.'), undefined, { tone: 'warning' });
+        showSnack(t('Ce dessin est plein : effacez des traits pour en ajouter d’autres.'), undefined, { tone: 'warning' });
         return false;
       }
       const kept = io.current.save(data.current, typed);

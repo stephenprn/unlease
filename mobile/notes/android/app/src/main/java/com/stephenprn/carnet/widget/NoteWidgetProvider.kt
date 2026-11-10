@@ -26,7 +26,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
     if (data.optBoolean("gone")) return WidgetMessage.gone(context, id, KIND)
 
     val list = data.optBoolean("list")
-    val views = RemoteViews(context.packageName, R.layout.widget_note)
+    val views = widgetViews(context, R.layout.widget_note)
     val title = data.optString("title")
     // Its paddings and the edit glyph (20) aside; an untitled note says what it is, in the second ink.
     WidgetType.title(
@@ -41,7 +41,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
         if (title.isEmpty()) R.color.wgen_ink_muted else R.color.wgen_ink,
     )
     val wash = data.optString("wash").takeIf { it.isNotEmpty() && it != "null" }
-    WidgetKit.wash(views, R.id.note_root, wash)
+    WidgetKit.wash(views, android.R.id.background, wash)
     WidgetKit.wash(views, R.id.note_fade, wash)
     views.setOnClickPendingIntent(R.id.note_open, WidgetIntents.open(context, "carnet://note/$target"))
     views.setTextViewText(R.id.note_empty, context.getString(if (list) R.string.widget_note_empty_list else R.string.widget_note_empty_text))
@@ -61,7 +61,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
     if (done.isNotEmpty()) {
       rows +=
           WidgetKit.key("done:${data.optString("id")}") to
-              RemoteViews(context.packageName, R.layout.widget_note_done).apply {
+              widgetViews(context, R.layout.widget_note_done).apply {
                 setTextViewText(R.id.done_count, context.resources.getQuantityString(R.plurals.widget_checked, done.size, done.size))
               }
       rows += done.map { WidgetKit.key(it.optString("id")) to check(context, id, it, true) }
@@ -70,7 +70,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
   }
 
   private fun check(context: Context, widgetId: Int, item: JSONObject, checked: Boolean): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_note_check).apply {
+      widgetViews(context, R.layout.widget_note_check).apply {
         val text = item.optString("text")
         if (checked) {
           // Done: struck through in the second ink, its box ticked, as the editor shows it.
@@ -94,7 +94,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
     val lines = data.optJSONArray("lines") ?: return emptyList()
     return (0 until lines.length()).map { index ->
       WidgetKit.key("$target:$index") to
-          RemoteViews(context.packageName, R.layout.widget_note_line).apply {
+          widgetViews(context, R.layout.widget_note_line).apply {
             setTextViewText(R.id.line, lines.optString(index))
             WidgetKit.route(context, this, R.id.line, "carnet://note/$target")
           }
@@ -106,6 +106,13 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
 
   companion object {
     private const val KIND = "note"
+
+    /** True when widget `widgetId` shows item `checkId` now: a tick names nothing else (`WidgetTickReceiver`). */
+    internal fun shows(context: Context, widgetId: Int, checkId: String): Boolean {
+      if (checkId.isEmpty()) return false
+      val items = WidgetStore(context).payload(widgetId)?.optJSONArray("items") ?: return false
+      return (0 until items.length()).any { items.optJSONObject(it)?.optString("id") == checkId }
+    }
 
     /** A tick drawn at once on every widget showing that item, before the app has written it. */
     internal fun tickLocally(context: Context, checkId: String, checked: Boolean) {

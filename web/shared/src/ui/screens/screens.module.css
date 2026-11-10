@@ -1,0 +1,418 @@
+/* The first-run screen and the board's search count: paper pinned to the wall, as everywhere else. */
+
+/* The board while searching: how many notes answer, a line of meta over them (the phone's notice). */
+.resultCount {
+  padding: 12px 4px 8px;
+}
+
+.resultHint {
+  max-width: 62ch;
+  padding: 0 4px;
+  color: var(--ink-muted);
+}
+
+/* First run: the mark, a collage, and the form on its own sheet. */
+.setup {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 16px 48px;
+}
+
+/* The interface's language, named in itself, out of the way at the top right. */
+.setupLanguage {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.setupColumn {
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.setupBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+/* The mark and the collage settle in as the page opens: a short drop, upright all the way (an arrival never swings). */
+.setupMark,
+.setupArt {
+  display: flex;
+  animation: pinned var(--duration-long) var(--ease-decelerate) both;
+}
+
+.setupArt {
+  animation-delay: 90ms;
+}
+
+@keyframes pinned {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setupMark,
+  .setupArt {
+    animation-name: fade-in;
+  }
+}
+
+.tagline {
+  max-width: 320px;
+  color: var(--ink-muted);
+}
+
+/* The form's wrapper casts its lift along its outline; the form is clipped to it. */
+.setupLift {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.setupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  clip-path: var(--outline-clip, none);
+}
+
+/* Keeping the notes here: the quieter way, and what it leaves open. */
+.setupLocal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.setupAfter {
+  max-width: 340px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.setupAfter a {
+  color: var(--link);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+/* The welcome's server when it serves the page: its address said, not asked. */
+.setupServed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--cut-field);
+  background: var(--field-veil);
+  color: var(--ink);
+}
+
+.setupServed > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+/* « Vos applications »: one card per app, its pebble, its words, its tick; the announced ones quieter. */
+.setupApps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setupApp {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 18px 18px 16px;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  box-shadow: var(--lift-card);
+}
+
+.setupApp > svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* A box like every other: ink when open, the second ink ticked, never matcha (the phone's too). */
+.setupApp[aria-checked='true'] > svg {
+  color: var(--ink-muted);
+}
+
+.setupApp[data-soon] {
+  cursor: default;
+  color: var(--ink-muted);
+  box-shadow: none;
+  background: transparent;
+  outline: 1px dashed var(--outline);
+  outline-offset: -1px;
+}
+
+.setupApp[aria-disabled='true']:not([data-soon]) {
+  cursor: default;
+}
+
+.setupAppText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setupAppName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.setupAppName > .t-meta {
+  color: var(--ink-muted);
+}
+
+/* "Votre serveur": one row per setting, its dot on its title's line. */
+.setupTasks {
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.setupTaskDot {
+  align-self: flex-start;
+  margin-top: 7px;
+}
+
+/* Without S3, the way to add it, under the line that says so. */
+.setupRestoreS3 {
+  padding: 0 16px 8px 38px;
+}
+
+.setupRestoreMessage {
+  padding: 4px 16px 8px;
+}
+
+/* The setup's next steps: the Administration's sheets on the setup's column, one step at a time. */
+.setupFlow {
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/*
+ * The setup's head: who it is and how far along on one line, then the way through as stones on a
+ * thread across the column, the step open a leaf on its matcha stone, those done ticked, those
+ * ahead a bare edge. Pebbles mark state only: the steps' names sit under them.
+ */
+.setupHead {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 8px 4px 4px;
+}
+
+.setupHeadBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.setupHeadProgress {
+  margin-left: auto;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.setupTrail {
+  --stone: 30px;
+  display: grid;
+  grid-template-columns: repeat(var(--steps, 3), minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setupTrail li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+/* The thread from the stone before, stopping short of both: walked in matcha, ahead in the edge's ink. */
+.setupTrail li + li::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--stone) / 2 - 1px);
+  right: calc(50% + var(--stone) / 2 + 8px);
+  left: calc(-50% + var(--stone) / 2 + 8px);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--edge);
+}
+
+.setupTrail li:is([data-state='done'], [data-state='here']) + li:is([data-state='done'], [data-state='here'])::before {
+  background: var(--focus);
+}
+
+.setupTrail li[data-state='here'] {
+  color: var(--ink);
+}
+
+.setupTrail li[data-state='here'] .setupStone {
+  --edge-color: var(--focus);
+  --edge-width: 2px;
+}
+
+.setupTrail li[data-state='ahead'] {
+  color: var(--ink-faint);
+}
+
+.setupStone {
+  position: relative;
+  display: flex;
+  width: var(--stone);
+  height: var(--stone);
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+}
+
+.setupStoneFill {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.setupTrail li[data-state='done'] .setupStoneFill {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+.setupTrail li[data-state='here'] .setupStoneFill {
+  background: var(--action-container);
+  animation: stone-set var(--duration-long) var(--ease-decelerate) both;
+}
+
+.setupStoneLeaf {
+  width: 13px;
+  height: 13px;
+  background: var(--leaf);
+}
+
+@keyframes stone-set {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setupTrail li[data-state='here'] .setupStoneFill {
+    animation-name: fade-in;
+  }
+}
+
+/* A narrow column: the line above keeps the name, the progress drops under it. */
+@media (max-width: 420px) {
+  .setupHeadBrand {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .setupHeadProgress {
+    flex-basis: 100%;
+    margin-left: 38px;
+  }
+}
+
+.setupIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.setupIntro h1:focus {
+  outline: none;
+}
+
+/* The title, and a row's "how it works" pebble at its end (the bubble's pointer stands under it). */
+.setupIntroTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.setupIntro > p {
+  max-width: 62ch;
+  color: var(--ink-muted);
+}
+
+/* Back on the left, on on the right; under 720px the column ends on them, thumbs' reach. */
+.setupNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 16px;
+}
+
+/* Back to Carnet's own colours and ground, under the appearance step's two sections. */
+.setupReset {
+  align-self: center;
+}
+
+/* The app turned off on the server: its mark, what happened and the way out, centred on the wall (the phone's AppOffScreen). */
+.appOff {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.appOff p {
+  margin: 0;
+  color: var(--ink-muted);
+}

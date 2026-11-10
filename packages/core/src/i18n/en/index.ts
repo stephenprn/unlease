@@ -5,5 +5,8 @@
  */
 import { EN_CORE } from './core';
 import { EN_SERVER } from './server';
+import { EN_SUITE } from './suite';
+import { EN_SHELL } from './shell';
+import { EN_SETTINGS_SEARCH } from './settingsSearch';
 
-export const CORE_ENGLISH = { ...EN_SERVER, ...EN_CORE };
+export const CORE_ENGLISH = { ...EN_SERVER, ...EN_CORE, ...EN_SUITE, ...EN_SHELL, ...EN_SETTINGS_SEARCH };

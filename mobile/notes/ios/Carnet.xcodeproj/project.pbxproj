@@ -12,14 +12,22 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		761780EF2CA45674006654EF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EE2CA45674006654EF /* SceneDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		93284450DD6A401BBADDB57C /* Signika-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8EF085F853984EE89E3B8044 /* Signika-Medium.ttf */; };
-		9100269434FA424F870D7056 /* SignikaNight-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5CB1ED76315645E89415A10D /* SignikaNight-SemiBold.ttf */; };
-		783900B10F7E418099D4E4FC /* Signika-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 61B93685E93045EA9D346D19 /* Signika-Regular.ttf */; };
-		077238A661674412AF885B0A /* SignikaNight-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 894BEE0FF8C84F7FA8C34831 /* SignikaNight-Medium.ttf */; };
-		B508D7B842154F6F84D067BB /* SignikaNight-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A67BCAF224FD4DB9918E1BA0 /* SignikaNight-Bold.ttf */; };
-		5AFD00643ABF4BAAA84EFFB1 /* Signika-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 76F71F88C4DA4691A1464763 /* Signika-SemiBold.ttf */; };
-		4257EDAF6E68449E8DF7746C /* Signika-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AAB82B7F02D24159AB034207 /* Signika-Bold.ttf */; };
-		42C6B716800F4D5780011BEC /* SignikaNight-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D0EA3E4334DA46CE917B7CCC /* SignikaNight-Regular.ttf */; };
+		888C66F015E94C2B9DACD94F /* Signika-Medium_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8709754659A640CDAB808682 /* Signika-Medium_italic.ttf */; };
+		75A0C3CE7275409A861FD452 /* Signika-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A149D77BCDFB47AD89CB8C3C /* Signika-Medium.ttf */; };
+		38DE81A17F0040F0A93EB647 /* Signika-Regular_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 763492FD9712462EBEFEE9FE /* Signika-Regular_italic.ttf */; };
+		0DA1E6B7FEE24959ACAF0334 /* SignikaNight-Regular_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D60DEB6B31EA4DE48AA4E78C /* SignikaNight-Regular_italic.ttf */; };
+		107AC986EDE34BBD8097EB3C /* SignikaNight-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF4FC75ACA9C4ABF8F32426E /* SignikaNight-SemiBold.ttf */; };
+		7EAF927AD4D6412D8DB74BD6 /* Signika-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 445A829A24A34142A80564A5 /* Signika-Regular.ttf */; };
+		528916A466444370A1BB8F55 /* Signika-SemiBold_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 314FAC6781DC46808324042D /* Signika-SemiBold_italic.ttf */; };
+		AE7D8480DA164B3B8C436299 /* SignikaNight-Medium_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E6AD389B28F24AC8A9D8BF4B /* SignikaNight-Medium_italic.ttf */; };
+		BB0291D537DA479CBA7CF70A /* SignikaNight-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 26D67688E712465D9733EC35 /* SignikaNight-Medium.ttf */; };
+		2F2F56E107FD4B85B167923F /* SignikaNight-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 50609C022D1B4499BC6841FD /* SignikaNight-Bold.ttf */; };
+		076CC5A371A64E2DB03F5ADD /* Signika-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A36C61B64EA8468A98662664 /* Signika-SemiBold.ttf */; };
+		09C7E148589442D4A5BB74FA /* SignikaNight-SemiBold_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 315FF13716F7419389F974A5 /* SignikaNight-SemiBold_italic.ttf */; };
+		11B98AD8DB384933959157DB /* Signika-Bold_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 67FFCB11785D49E0BB4DEEDF /* Signika-Bold_italic.ttf */; };
+		0006A200F52543D998E900BA /* SignikaNight-Bold_italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7130D235829F4FC9B80901F8 /* SignikaNight-Bold_italic.ttf */; };
+		F200E7232C9D49BC88D5A660 /* Signika-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5D90F1A9643C494090D5DB39 /* Signika-Bold.ttf */; };
+		D9F1FAA1FF444441A7BFF024 /* SignikaNight-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D4CAA9ED57B840E780203385 /* SignikaNight-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,14 +42,22 @@
 		761780EE2CA45674006654EF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = Carnet/SceneDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Carnet/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		8EF085F853984EE89E3B8044 /* Signika-Medium.ttf */ = {isa = PBXFileReference; name = "Signika-Medium.ttf"; path = "../assets/fonts/Signika-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		5CB1ED76315645E89415A10D /* SignikaNight-SemiBold.ttf */ = {isa = PBXFileReference; name = "SignikaNight-SemiBold.ttf"; path = "../assets/fonts/SignikaNight-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		61B93685E93045EA9D346D19 /* Signika-Regular.ttf */ = {isa = PBXFileReference; name = "Signika-Regular.ttf"; path = "../assets/fonts/Signika-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		894BEE0FF8C84F7FA8C34831 /* SignikaNight-Medium.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Medium.ttf"; path = "../assets/fonts/SignikaNight-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		A67BCAF224FD4DB9918E1BA0 /* SignikaNight-Bold.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Bold.ttf"; path = "../assets/fonts/SignikaNight-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		76F71F88C4DA4691A1464763 /* Signika-SemiBold.ttf */ = {isa = PBXFileReference; name = "Signika-SemiBold.ttf"; path = "../assets/fonts/Signika-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		AAB82B7F02D24159AB034207 /* Signika-Bold.ttf */ = {isa = PBXFileReference; name = "Signika-Bold.ttf"; path = "../assets/fonts/Signika-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		D0EA3E4334DA46CE917B7CCC /* SignikaNight-Regular.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Regular.ttf"; path = "../assets/fonts/SignikaNight-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		8709754659A640CDAB808682 /* Signika-Medium_italic.ttf */ = {isa = PBXFileReference; name = "Signika-Medium_italic.ttf"; path = "../../shared/assets/fonts/Signika-Medium_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A149D77BCDFB47AD89CB8C3C /* Signika-Medium.ttf */ = {isa = PBXFileReference; name = "Signika-Medium.ttf"; path = "../../shared/assets/fonts/Signika-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		763492FD9712462EBEFEE9FE /* Signika-Regular_italic.ttf */ = {isa = PBXFileReference; name = "Signika-Regular_italic.ttf"; path = "../../shared/assets/fonts/Signika-Regular_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D60DEB6B31EA4DE48AA4E78C /* SignikaNight-Regular_italic.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Regular_italic.ttf"; path = "../../shared/assets/fonts/SignikaNight-Regular_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		AF4FC75ACA9C4ABF8F32426E /* SignikaNight-SemiBold.ttf */ = {isa = PBXFileReference; name = "SignikaNight-SemiBold.ttf"; path = "../../shared/assets/fonts/SignikaNight-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		445A829A24A34142A80564A5 /* Signika-Regular.ttf */ = {isa = PBXFileReference; name = "Signika-Regular.ttf"; path = "../../shared/assets/fonts/Signika-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		314FAC6781DC46808324042D /* Signika-SemiBold_italic.ttf */ = {isa = PBXFileReference; name = "Signika-SemiBold_italic.ttf"; path = "../../shared/assets/fonts/Signika-SemiBold_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E6AD389B28F24AC8A9D8BF4B /* SignikaNight-Medium_italic.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Medium_italic.ttf"; path = "../../shared/assets/fonts/SignikaNight-Medium_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		26D67688E712465D9733EC35 /* SignikaNight-Medium.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Medium.ttf"; path = "../../shared/assets/fonts/SignikaNight-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		50609C022D1B4499BC6841FD /* SignikaNight-Bold.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Bold.ttf"; path = "../../shared/assets/fonts/SignikaNight-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A36C61B64EA8468A98662664 /* Signika-SemiBold.ttf */ = {isa = PBXFileReference; name = "Signika-SemiBold.ttf"; path = "../../shared/assets/fonts/Signika-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		315FF13716F7419389F974A5 /* SignikaNight-SemiBold_italic.ttf */ = {isa = PBXFileReference; name = "SignikaNight-SemiBold_italic.ttf"; path = "../../shared/assets/fonts/SignikaNight-SemiBold_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		67FFCB11785D49E0BB4DEEDF /* Signika-Bold_italic.ttf */ = {isa = PBXFileReference; name = "Signika-Bold_italic.ttf"; path = "../../shared/assets/fonts/Signika-Bold_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		7130D235829F4FC9B80901F8 /* SignikaNight-Bold_italic.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Bold_italic.ttf"; path = "../../shared/assets/fonts/SignikaNight-Bold_italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		5D90F1A9643C494090D5DB39 /* Signika-Bold.ttf */ = {isa = PBXFileReference; name = "Signika-Bold.ttf"; path = "../../shared/assets/fonts/Signika-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D4CAA9ED57B840E780203385 /* SignikaNight-Regular.ttf */ = {isa = PBXFileReference; name = "SignikaNight-Regular.ttf"; path = "../../shared/assets/fonts/SignikaNight-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,14 +136,22 @@
 		811ED18412084A83B27C0551 /* Resources */ = {
 			isa = "PBXGroup";
 			children = (
-				8EF085F853984EE89E3B8044 /* Signika-Medium.ttf */,
-				5CB1ED76315645E89415A10D /* SignikaNight-SemiBold.ttf */,
-				61B93685E93045EA9D346D19 /* Signika-Regular.ttf */,
-				894BEE0FF8C84F7FA8C34831 /* SignikaNight-Medium.ttf */,
-				A67BCAF224FD4DB9918E1BA0 /* SignikaNight-Bold.ttf */,
-				76F71F88C4DA4691A1464763 /* Signika-SemiBold.ttf */,
-				AAB82B7F02D24159AB034207 /* Signika-Bold.ttf */,
-				D0EA3E4334DA46CE917B7CCC /* SignikaNight-Regular.ttf */,
+				8709754659A640CDAB808682 /* Signika-Medium_italic.ttf */,
+				A149D77BCDFB47AD89CB8C3C /* Signika-Medium.ttf */,
+				763492FD9712462EBEFEE9FE /* Signika-Regular_italic.ttf */,
+				D60DEB6B31EA4DE48AA4E78C /* SignikaNight-Regular_italic.ttf */,
+				AF4FC75ACA9C4ABF8F32426E /* SignikaNight-SemiBold.ttf */,
+				445A829A24A34142A80564A5 /* Signika-Regular.ttf */,
+				314FAC6781DC46808324042D /* Signika-SemiBold_italic.ttf */,
+				E6AD389B28F24AC8A9D8BF4B /* SignikaNight-Medium_italic.ttf */,
+				26D67688E712465D9733EC35 /* SignikaNight-Medium.ttf */,
+				50609C022D1B4499BC6841FD /* SignikaNight-Bold.ttf */,
+				A36C61B64EA8468A98662664 /* Signika-SemiBold.ttf */,
+				315FF13716F7419389F974A5 /* SignikaNight-SemiBold_italic.ttf */,
+				67FFCB11785D49E0BB4DEEDF /* Signika-Bold_italic.ttf */,
+				7130D235829F4FC9B80901F8 /* SignikaNight-Bold_italic.ttf */,
+				5D90F1A9643C494090D5DB39 /* Signika-Bold.ttf */,
+				D4CAA9ED57B840E780203385 /* SignikaNight-Regular.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -195,14 +219,22 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				93284450DD6A401BBADDB57C /* Signika-Medium.ttf in Resources */,
-				9100269434FA424F870D7056 /* SignikaNight-SemiBold.ttf in Resources */,
-				783900B10F7E418099D4E4FC /* Signika-Regular.ttf in Resources */,
-				077238A661674412AF885B0A /* SignikaNight-Medium.ttf in Resources */,
-				B508D7B842154F6F84D067BB /* SignikaNight-Bold.ttf in Resources */,
-				5AFD00643ABF4BAAA84EFFB1 /* Signika-SemiBold.ttf in Resources */,
-				4257EDAF6E68449E8DF7746C /* Signika-Bold.ttf in Resources */,
-				42C6B716800F4D5780011BEC /* SignikaNight-Regular.ttf in Resources */,
+				888C66F015E94C2B9DACD94F /* Signika-Medium_italic.ttf in Resources */,
+				75A0C3CE7275409A861FD452 /* Signika-Medium.ttf in Resources */,
+				38DE81A17F0040F0A93EB647 /* Signika-Regular_italic.ttf in Resources */,
+				0DA1E6B7FEE24959ACAF0334 /* SignikaNight-Regular_italic.ttf in Resources */,
+				107AC986EDE34BBD8097EB3C /* SignikaNight-SemiBold.ttf in Resources */,
+				7EAF927AD4D6412D8DB74BD6 /* Signika-Regular.ttf in Resources */,
+				528916A466444370A1BB8F55 /* Signika-SemiBold_italic.ttf in Resources */,
+				AE7D8480DA164B3B8C436299 /* SignikaNight-Medium_italic.ttf in Resources */,
+				BB0291D537DA479CBA7CF70A /* SignikaNight-Medium.ttf in Resources */,
+				2F2F56E107FD4B85B167923F /* SignikaNight-Bold.ttf in Resources */,
+				076CC5A371A64E2DB03F5ADD /* Signika-SemiBold.ttf in Resources */,
+				09C7E148589442D4A5BB74FA /* SignikaNight-SemiBold_italic.ttf in Resources */,
+				11B98AD8DB384933959157DB /* Signika-Bold_italic.ttf in Resources */,
+				0006A200F52543D998E900BA /* SignikaNight-Bold_italic.ttf in Resources */,
+				F200E7232C9D49BC88D5A660 /* Signika-Bold.ttf in Resources */,
+				D9F1FAA1FF444441A7BFF024 /* SignikaNight-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -75,6 +75,11 @@ export function tc(context: string, french: string, params?: Params): string {
   return params ? fill(english, params) : english;
 }
 
+/** A French sentence's English, whatever the interface's language (a search that understands both: `settingsSearch`); the French itself when the dictionary lacks it. */
+export function inEnglish(french: string): string {
+  return EN[french] ?? french;
+}
+
 /** A French sentence kept in a constant, translated where it is shown (`t(constant)`): marks it for the dictionary's check. */
 export const tx = <T extends string>(french: T): T => french;
 
@@ -86,4 +91,14 @@ export function localized<K extends string>(names: Readonly<Record<K, string>>):
     Object.defineProperty(out, key, { enumerable: true, get: () => (contextual ? tc(contextual[2]!, contextual[1]!) : t(names[key])) });
   }
   return out;
+}
+
+/**
+ * A translated sentence cut around a `{slot}` left unfilled, for the interface to put something of
+ * its own there (a link): the sentence « Créée sur {site}. » cut around `site` -> ['Créée sur ', '.'].
+ */
+export function around(text: string, slot: string): readonly [string, string] {
+  const mark = `{${slot}}`;
+  const at = text.indexOf(mark);
+  return at < 0 ? [text, ''] : [text.slice(0, at), text.slice(at + mark.length)];
 }

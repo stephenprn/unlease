@@ -11,13 +11,14 @@ import { plural } from '@unlease/core/services/format';
 import { trashLines } from '../../../app/store/actions';
 import { clearSelection } from '../../../app/store/board';
 import { useLibraryStore } from '../../../app/store/library';
-import { closeDeleteLines, selectDeleteLines, showUndo, useUiStore } from '../../../app/store/ui';
+import { showUndo } from '@shared/app/store/ui';
+import { closeDeleteLines, selectDeleteLines, useNotesUiStore } from '../../../app/store/notesUi';
 import { DeleteLineDialog, type LinksFate } from './DeleteLineDialog';
 import { MoveDialog } from './MoveDialog';
 import { sortDeletedLinksOnSlip } from './sortingSlips';
 
 export function GlobalDeleteLines() {
-  const { ids, open } = useUiStore(selectDeleteLines);
+  const { ids, open } = useNotesUiStore(selectDeleteLines);
   const [picking, setPicking] = useState(false);
   /** The notes go to the bin; the links of their collections where the person said. */
   const remove = (fate: LinksFate): void => {

@@ -12,14 +12,16 @@ import { ASK_LIMITS, type AskResponse } from '@unlease/notes/sync/ask';
 
 import { addToLinkNote, askAbout } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectServerSettings, useServerSettingsStore } from '../../../app/store/serverSettings';
-import { showSnack, showWarning } from '../../../app/store/ui';
-import { Button } from '../../components/Button';
-import { SwitchMark } from '../../components/Checkbox';
-import { DialogFrame } from '../../components/Dialog';
-import { Layer } from '../../components/Layer';
-import { TextField } from '../../components/TextField';
-import { formatUsd } from '../../money';
+import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { showSnack, showWarning } from '@shared/app/store/ui';
+import { Button } from '@shared/ui/components/Button';
+import { SwitchMark } from '@shared/ui/components/Checkbox';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Layer } from '@shared/ui/components/Layer';
+import { TextField } from '@shared/ui/components/TextField';
+import { useUnsaved } from '@shared/ui/components/useUnsaved';
+import { useReportDirty } from '../reportDirty';
+import { formatUsd } from '@shared/ui/money';
 import { ReadingTrack } from './ReadingTrack';
 import styles from './links.module.css';
 
@@ -31,10 +33,17 @@ type Phase =
 
 export function AskDialog({ id, open, onDismiss }: { id: string; open: boolean; onDismiss: () => void }) {
   const titleId = useId();
+  // A question typed and not asked is asked about before the dialog closes on it.
+  const [dirty, setDirty] = useState(false);
+  const unsaved = useUnsaved(dirty);
+  const cancel = unsaved.guard(onDismiss);
   return (
-    <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
-      <AskBody id={id} titleId={titleId} onDismiss={onDismiss} />
-    </Layer>
+    <>
+      <Layer open={open} onDismiss={cancel} labelledBy={titleId}>
+        <AskBody id={id} titleId={titleId} onDismiss={onDismiss} onCancel={cancel} onDirty={setDirty} />
+      </Layer>
+      {unsaved.dialog}
+    </>
   );
 }
 
@@ -80,13 +89,14 @@ function AnswerText({ text }: { text: string }) {
   );
 }
 
-function AskBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDismiss: () => void }) {
+function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; titleId: string; onDismiss: () => void; onCancel: () => void; onDirty: (dirty: boolean) => void }) {
   const link = useLibraryStore(s => s.links[id]);
   const model = useServerSettingsStore(selectServerSettings)?.analysis.model ?? 'claude-opus-5-5';
   const [question, setQuestion] = useState('');
   const [web, setWeb] = useState(false);
   const [phase, setPhase] = useState<Phase>({ kind: 'form' });
   const [controller, setController] = useState<AbortController | null>(null);
+  useReportDirty(phase.kind === 'form' && question.trim().length > 0, onDirty);
   if (!link) return null;
   const asked = question.trim();
 
@@ -119,7 +129,7 @@ function AskBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDi
       <DialogFrame
         title={MODULE_NAMES.ask}
         titleId={titleId}
-        onClose={close}
+        onClose={onCancel}
         className={styles.couponsFrame}
         onSubmit={event => {
           event.preventDefault();
@@ -127,7 +137,7 @@ function AskBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDi
         }}
         foot={
           <>
-            <Button kind="text" onClick={close}>
+            <Button kind="text" onClick={onCancel}>
               {t('Annuler')}
             </Button>
             <Button type="submit" icon="sparkle" disabled={!asked}>
@@ -136,7 +146,7 @@ function AskBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDi
           </>
         }
       >
-        <TextField label={t('Votre question')} value={question} onChange={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} placeholder={askSuggestions(link.kind)[0]} />
+        <TextField label={t('Votre question')} kind="prose" value={question} onChange={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} />
         <div className={styles.moduleBar} aria-label={t('Questions pour commencer')} role="group">
           {askSuggestions(link.kind).map(suggestion => (
             <Button key={suggestion} kind="text" small onClick={() => setQuestion(suggestion)}>

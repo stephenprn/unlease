@@ -4,7 +4,8 @@
  * pebble painted as the note will be (a paper over the note's own colour). Each group is a grid
  * that fills the picker's width in full rows; the colour's name, which its pebble does not carry,
  * stands at the end of its heading. The chosen colour takes a ring of ink, the chosen finish one of
- * matcha, both the picker's leaf check. Radio groups: arrows move.
+ * matcha, both the picker's leaf check. Radio groups: arrows move. Opened for several notes (the
+ * board's selection), it shows what they share, or none chosen where they differ (undefined).
  */
 import { memo, type CSSProperties } from 'react';
 
@@ -26,10 +27,10 @@ import {
   type NotePattern,
 } from '@unlease/design/colors';
 
-import { Icon } from '../../components/Icon';
-import { PebbleEdge } from '../../components/Outline';
+import { Icon } from '@shared/ui/components/Icon';
+import { PebbleEdge } from '@shared/ui/components/Outline';
 import styles from './finishPicker.module.css';
-import { arrowKeys } from './radioKeys';
+import { arrowKeys } from '@shared/ui/components/radioKeys';
 
 /** A swatch's ruled lines sit closer than a note's: three or four rules across the pebble. */
 const SWATCH_RULE = { '--pitch': '12px', backgroundPosition: '0 4px' } as CSSProperties;
@@ -55,21 +56,31 @@ function Heading({ title, chosen }: { title: string; chosen?: string }) {
   );
 }
 
-function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: { color: NoteColor | null; pattern: NotePattern | null; onColor: (color: NoteColor | null) => void; onPattern: (pattern: NotePattern | null) => void }) {
-  // A note wears a pigment, a gradient or neither: at most one swatch of the two groups is chosen.
+export interface NoteFinishPickerProps {
+  /** Undefined: the notes it is opened for differ, none is chosen. */
+  readonly color: NoteColor | null | undefined;
+  readonly pattern: NotePattern | null | undefined;
+  readonly onColor: (color: NoteColor | null) => void;
+  readonly onPattern: (pattern: NotePattern | null) => void;
+}
+
+function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: NoteFinishPickerProps) {
+  // A note wears a pigment, a gradient or neither: at most one swatch of the two groups is chosen (none, where several notes differ).
+  const mixed = color === undefined;
   const pigment: LineColor | null = isLineColor(color) ? color : null;
   const gradient: NoteGradient | null = isNoteGradient(color) ? color : null;
   const onColorKeys = arrowKeys(COLORS, pigment, onColor, option => option ?? 'none');
   const onGradientKeys = arrowKeys<NoteGradient | null>(NOTE_GRADIENTS, gradient, next => next && onColor(next), option => option ?? '');
-  const onPaperKeys = arrowKeys(PAPERS, pattern, onPattern, option => option ?? 'plain');
+  const paper = pattern ?? null;
+  const onPaperKeys = arrowKeys(PAPERS, paper, onPattern, option => option ?? 'plain');
   const focusableGradient = gradient ?? NOTE_GRADIENTS[0];
   return (
     <div className={styles.finishes}>
       <section className={styles.group}>
-        <Heading title={t('Couleur')} chosen={gradient ? undefined : pigment ? LINE_COLOR_NAMES[pigment] : t('Sans couleur')} />
+        <Heading title={t('Couleur')} chosen={gradient || mixed ? undefined : pigment ? LINE_COLOR_NAMES[pigment] : t('Sans couleur')} />
         <div className={`${styles.grid} ${styles.colors}`} role="radiogroup" aria-label={t('Couleur de la note')} onKeyDown={onColorKeys}>
           {COLORS.map((key, index) => {
-            const chosen = gradient === null && key === pigment;
+            const chosen = !mixed && gradient === null && key === pigment;
             const name = key ? LINE_COLOR_NAMES[key] : t('Sans couleur');
             return (
               <button
@@ -128,7 +139,7 @@ function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: { col
               role="radio"
               aria-checked={key === pattern}
               data-key={key ?? 'plain'}
-              tabIndex={key === pattern ? 0 : -1}
+              tabIndex={key === paper ? 0 : -1}
               className={styles.option}
               onClick={() => onPattern(key)}
             >

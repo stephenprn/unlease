@@ -10,14 +10,14 @@ import { MODULE_NAMES } from '@unlease/notes/models/modules';
 import { formatClock, formatDay, formatIsoDay } from '@unlease/core/services/format';
 import type { CoverageOutlet } from '@unlease/notes/sync/coverage';
 
-import { useMinute } from '../../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { findCoverage } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
-import { useOutline } from '../../components/Outline';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
+import { useOutline } from '@shared/ui/components/Outline';
 import { ReadingTrack } from './ReadingTrack';
 import { useModuleSearch } from './useModuleSearch';
 import styles from './links.module.css';
@@ -45,7 +45,7 @@ function OutletRow({ outlet, index }: { outlet: CoverageOutlet; index: number })
         <p className="t-meta-strong">{outlet.angle}</p>
         {outlet.adds ? <p className="t-meta">{outlet.adds}</p> : null}
       </div>
-      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }

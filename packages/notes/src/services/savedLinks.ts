@@ -1,15 +1,24 @@
 /**
  * An address is saved once per collection. Adding one the collection already holds adds nothing;
  * adding one another collection holds adds it with that link's reading, so the page is not read
- * twice. Filed by Claude, an address any collection holds is not added: it would land beside itself.
+ * twice, when both collections read their links with the same template (`services/templates`: the
+ * same template of the person's own, or both by kind); otherwise it is read with its own. Filed by
+ * Claude, an address any collection holds is not added: it would land beside itself.
  */
 import { t } from '@unlease/core/i18n';
 import { INBOX_ID, INBOX_TITLE, shownTitle, type LinkItem, type Note } from '../models/entities';
 import { plural } from '@unlease/core/services/format';
 import { cleanUrl } from '@unlease/core/services/url';
+import { collectionTemplate, type Templates } from './templates';
 
-/** What a link's reading wrote: a new link at the same address copies it. */
-export type LinkReading = Pick<LinkItem, 'status' | 'title' | 'summary' | 'siteName' | 'kind' | 'price' | 'currency' | 'attributes' | 'imageIds' | 'imageUrl' | 'error' | 'analyzedAt'>;
+/** What a link's reading wrote: a new link at the same address copies it, with the template version it was read with (`readWith`), when it has one. */
+export type LinkReading = Pick<LinkItem, 'status' | 'title' | 'summary' | 'siteName' | 'kind' | 'price' | 'currency' | 'attributes' | 'imageIds' | 'imageUrl' | 'error' | 'analyzedAt' | 'readWith'>;
+
+/** What tells which template a collection reads its links with: the templates and the collections, as the store keeps them. */
+export interface ReadingTemplates {
+  readonly templates: Templates;
+  readonly notes: Readonly<Record<string, Note>>;
+}
 
 /** One address to save. */
 export interface LinkPlan {
@@ -54,11 +63,23 @@ export function readingFrom(saved: readonly LinkItem[]): LinkReading | null {
     imageUrl: read.imageUrl,
     error: null,
     analyzedAt: read.analyzedAt,
+    ...(read.readWith ? { readWith: read.readWith } : {}),
   };
 }
 
-/** One plan per distinct address; `into` null when Claude files them. */
-export function planLinks(urls: readonly string[], into: string | null, saved: ReadonlyMap<string, readonly LinkItem[]>): LinkPlan[] {
+/** The template a collection reads its links with: one of the person's own (its id), or null, each link by its kind. */
+function templateOf(collectionId: string, { templates, notes }: ReadingTemplates): string | null {
+  return collectionId === INBOX_ID ? null : (collectionTemplate(templates, notes[collectionId])?.id ?? null);
+}
+
+/**
+ * One plan per distinct address; `into` null when Claude files them. With `templates`, a reading is
+ * copied only from a collection that reads with the same template as `into`: a page read for « Vins »
+ * does not fill a collection that reads by kind (without it, from any collection, as before templates).
+ */
+export function planLinks(urls: readonly string[], into: string | null, saved: ReadonlyMap<string, readonly LinkItem[]>, templates?: ReadingTemplates): LinkPlan[] {
+  const wanted = into !== null && templates ? templateOf(into, templates) : null;
+  const readsAlike = (link: LinkItem): boolean => !templates || into === null || templateOf(link.noteId, templates) === wanted;
   const seen = new Set<string>();
   const plans: LinkPlan[] = [];
   for (const given of urls) {
@@ -72,10 +93,26 @@ export function planLinks(urls: readonly string[], into: string | null, saved: R
       cleaned: removed.length,
       savedIn: [...new Set(copies.map(link => link.noteId))],
       existing: existing?.id ?? null,
-      reading: existing ? null : readingFrom(copies),
+      reading: existing ? null : readingFrom(copies.filter(readsAlike)),
     });
   }
   return plans;
+}
+
+/**
+ * The most addresses one share saves (the phone's share sheet, the web app's share target and its
+ * capture dialog): a page that offers thousands fills neither the board nor Claude's budget.
+ */
+export const MAX_SHARED_URLS = 20;
+
+/** The first `MAX_SHARED_URLS` addresses of a share, and how many more it offered. */
+export function capSharedUrls(urls: readonly string[]): { readonly urls: readonly string[]; readonly more: number } {
+  return { urls: urls.slice(0, MAX_SHARED_URLS), more: Math.max(0, urls.length - MAX_SHARED_URLS) };
+}
+
+/** What a slip says of a share cut short: « 20 liens gardés sur les 25 partagés ». */
+export function cappedMessage(more: number): string {
+  return t('{kept} liens gardés sur les {offered} partagés', { kept: MAX_SHARED_URLS, offered: MAX_SHARED_URLS + more });
 }
 
 export interface AddedWording {
@@ -85,6 +122,14 @@ export interface AddedWording {
   readonly here?: boolean;
   /** Also say where new links went and the trackers they lost, not only what was saved already. */
   readonly announce?: boolean;
+}
+
+/**
+ * The tone of that slip, the same on both clients: some links added is done (success); all of them
+ * saved already is news (info).
+ */
+export function addedTone(plans: readonly Pick<LinkPlan, 'existing'>[]): 'success' | 'info' {
+  return plans.some(plan => plan.existing === null) ? 'success' : 'info';
 }
 
 /** The slip after adding links, or null when there is nothing to tell. */

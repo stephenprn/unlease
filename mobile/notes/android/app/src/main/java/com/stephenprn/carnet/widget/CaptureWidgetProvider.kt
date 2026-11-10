@@ -38,13 +38,13 @@ class CaptureWidgetProvider : CarnetWidgetProvider() {
   }
 
   private fun bar(context: Context, shown: Set<Int>): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_quick).apply {
+      widgetViews(context, R.layout.widget_quick).apply {
         for ((view, _) in ACTIONS) setViewVisibility(view, if (view in shown) View.VISIBLE else View.GONE)
         link(context, this)
       }
 
   private fun tall(context: Context, manager: AppWidgetManager, id: Int): RemoteViews =
-      RemoteViews(context.packageName, R.layout.widget_quick_tall).apply {
+      widgetViews(context, R.layout.widget_quick_tall).apply {
         // The strip's paddings and the mark (30) aside.
         val room = WidgetType.widthDp(manager, id) - 84f
         WidgetType.title(context, this, R.id.quick_search_hint_image, R.id.quick_search_hint, context.getString(R.string.widget_search_hint), WidgetType.Face.HINT, room, 1, R.color.wgen_ink_muted)

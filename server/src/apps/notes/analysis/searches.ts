@@ -14,11 +14,13 @@ import type { CouponRequest, CouponResponse } from '@unlease/notes/sync/coupons'
 import type { CoverageRequest, CoverageResponse } from '@unlease/notes/sync/coverage';
 import type { OfferRequest, OfferResponse } from '@unlease/notes/sync/offers';
 import type { RatingsRequest, RatingsResponse, RecapRequest, RecapResponse } from '@unlease/notes/sync/works';
-import { CLAUDE_COST_PER_LINK, CLAUDE_COST_PER_WEB_SEARCH, isClaudeModel } from '@unlease/core/sync/settings';
 import { log } from '../../../log';
 import { ModelError, type LinkModel, type ModuleSearch } from './model';
 import type { AnalysisContext } from './provider';
-import { monthStart, type CallUsage, type Kept, type ModuleTask, type UsageStore } from './usage';
+import { BUDGET_SPENT, withCutOffCall, type ModuleOutcome } from '../../../claude/outcome';
+import { BudgetSpentError } from '../../../claude/client';
+import type { CallUsage, Kept, UsageStore } from '../../../claude/usage';
+import type { ModuleTask } from './usage';
 
 /** How long an answer is shown again without a new search: prices move within the day. */
 export const SEARCH_KEEP_MS = 6 * 3_600_000;
@@ -28,10 +30,8 @@ const KEEP_MS = { coverage: 12 * HOUR_MS, ratings: 7 * 24 * HOUR_MS, recap: 30 *
 /** A search gives up before Cloudflare does (100 s), so the app hears why. */
 const DEADLINE_MS = 90_000;
 
+/** No key set, in Carnet's words (links are what is not read); every app's are `claude/outcome.ts`'s. */
 export const NO_KEY = 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.';
-export const BUDGET_SPENT = 'Budget mensuel atteint';
-
-export type ModuleOutcome<T> = { readonly ok: true; readonly answer: T } | { readonly ok: false; readonly status: 409 | 502; readonly error: string };
 
 export interface LinkSearchesOptions {
   readonly usage: UsageStore;
@@ -57,17 +57,6 @@ interface Keeping {
 }
 
 export const isoDay = (time: number): string => new Date(time).toISOString().slice(0, 10);
-
-/**
- * A call cut off by the deadline has run searches nobody reported: counted at a whole search's estimate,
- * so the budget errs high; a call that only read a page (`reading`), at a reading's.
- */
-export function withCutOffCall(spent: CallUsage | null, model: string, reading = false): CallUsage {
-  const costs = reading ? CLAUDE_COST_PER_LINK : CLAUDE_COST_PER_WEB_SEARCH;
-  const estimate = isClaudeModel(model) ? costs[model] : Math.max(...Object.values(costs));
-  const base = spent ?? { model, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0 };
-  return { ...base, costUsd: base.costUsd + estimate };
-}
 
 /** A kept answer as it is sent: without the language it was kept under. */
 function sent<T extends object>(kept: Kept<T>): T {
@@ -164,21 +153,24 @@ export class LinkSearches {
     const { usage } = this.options;
     const { model, budgetUsd } = this.options.analysis();
     if (!model) return { ok: false, status: 409, error: NO_KEY };
-    if (usage.costSince(monthStart(this.now())) >= budgetUsd) return { ok: false, status: 409, error: BUDGET_SPENT };
+    const hold = usage.hold(budgetUsd);
+    if (!hold) return { ok: false, status: 409, error: BUDGET_SPENT };
     const started = this.now();
     const signal = AbortSignal.timeout(this.options.deadlineMs ?? DEADLINE_MS);
     try {
-      const { usage: spent, found } = await run(model, { link: request.link, lang: request.lang, today: isoDay(started) }, signal);
+      const { usage: spent, found } = await run(model.holding(hold), { link: request.link, lang: request.lang, today: isoDay(started) }, signal);
       const answer: Found<T> = { ...found, searchedAt: this.now() };
-      usage.recordModule(task, { linkId: request.link.id, url, usage: spent, ok: true, error: null, durationMs: this.now() - started, result: { ...answer, lang: request.lang } });
+      usage.record(task, { linkId: request.link.id, url, usage: spent, ok: true, error: null, durationMs: this.now() - started, result: { ...answer, lang: request.lang } });
       log.info('module searched the web', { task, costUsd: Math.round(spent.costUsd * 10_000) / 10_000 });
       return { ok: true, answer };
     } catch (error) {
       if (!signal.aborted && !(error instanceof ModelError)) log.error('module search crashed', { task, error });
       const message = signal.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la recherche';
       const spent = error instanceof ModelError ? error.usage : null;
-      usage.recordModule(task, { linkId: request.link.id, url, usage: signal.aborted ? withCutOffCall(spent, model.model) : spent, ok: false, error: message, durationMs: this.now() - started, result: null });
-      return { ok: false, status: 502, error: message };
+      usage.record(task, { linkId: request.link.id, url, usage: signal.aborted ? withCutOffCall(spent, model.model) : spent, ok: false, error: message, durationMs: this.now() - started, result: null });
+      return { ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message };
+    } finally {
+      hold.release();
     }
   }
 }

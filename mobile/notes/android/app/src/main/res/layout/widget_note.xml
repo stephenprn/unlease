@@ -2,7 +2,9 @@
 <!-- Note: the note's own sheet (paper, or its wash). Its title opens it in the app; a checklist's items
      tick right here, the done ones gathered at the foot as in the editor. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/note_root"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wgen_panel_paper"

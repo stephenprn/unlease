@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { DRAWING_WIDTH, HIGHLIGHTER_OPACITY, STROKE_WIDTHS, type DrawingInk, type DrawingSize, type DrawingTool, type Stroke } from '@unlease/notes/models/drawing';
 import { eraserReach, finishStroke, newStrokeId, strokePath } from '@unlease/notes/services/drawing';
 
-import { reducedMotion, velocityTracker } from '../../components/gestures';
+import { reducedMotion, velocityTracker } from '@shared/ui/components/gestures';
 import styles from './drawing.module.css';
 import { usePen } from './pen';
 import { StrokeList } from './StrokeArt';

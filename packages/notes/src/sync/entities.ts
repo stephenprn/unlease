@@ -2,7 +2,6 @@
  * Domain entities to and from sync records. A record may be partial (a field added later,
  * a check seen before its note): reading fills in defaults and never throws.
  */
-import { BLOCK_KINDS, type Block, type BlockKind, type BlockTarget, type CellValue, type SelectOption, type TableColumn, type ViewColumn } from '../models/blocks';
 import { isLineColor, isNoteColor, isNotePattern, type LineColor } from '@unlease/design/colors';
 import {
   LINK_KINDS,
@@ -17,8 +16,9 @@ import {
   type Note,
   type NoteKind,
 } from '../models/entities';
+import type { LinkTemplate } from '../models/templates';
+import { parseTemplateFields } from '../services/templates';
 import { isLocale } from '@unlease/core/i18n';
-import { REF_TYPE_PATTERN } from '@unlease/core/refs';
 import { editedAt, type Fields, type SyncRecord } from '@unlease/core/sync/record';
 // Declares Carnet's record types to the sync before any record is read.
 import './types';
@@ -55,15 +55,25 @@ export function noteFromRecord(record: SyncRecord): Note {
     emblem: typeof f.emblem === 'string' ? f.emblem : null,
     hint: asString(f.hint),
     modules: Array.isArray(f.modules) ? f.modules.filter((key): key is string => typeof key === 'string') : null,
+    templateId: typeof f.templateId === 'string' && f.templateId ? f.templateId : null,
+    contactIds: asStrings(f.contactIds),
     createdAt: asTime(f.createdAt),
     deletedAt: asNullableTime(f.deletedAt),
     editedAt: editedAt(record),
   };
 }
 
-/** `emblem`, `pattern`, `modules`, `rich` and `drawing` are written only when given: fields most notes never set. */
+/** `emblem`, `pattern`, `modules`, `templateId`, `rich`, `drawing` and `contactIds` are written only when given: fields most notes never set. */
 export function noteFields(
-  note: Omit<Note, 'id' | 'editedAt' | 'emblem' | 'pattern' | 'modules' | 'rich' | 'drawing'> & { readonly emblem?: string | null; readonly pattern?: string | null; readonly modules?: readonly string[] | null; readonly rich?: boolean; readonly drawing?: string },
+  note: Omit<Note, 'id' | 'editedAt' | 'emblem' | 'pattern' | 'modules' | 'templateId' | 'rich' | 'drawing' | 'contactIds'> & {
+    readonly emblem?: string | null;
+    readonly pattern?: string | null;
+    readonly modules?: readonly string[] | null;
+    readonly templateId?: string | null;
+    readonly rich?: boolean;
+    readonly drawing?: string;
+    readonly contactIds?: readonly string[];
+  },
 ): Fields {
   return {
     kind: note.kind,
@@ -82,6 +92,8 @@ export function noteFields(
     ...(note.emblem !== undefined ? { emblem: note.emblem } : {}),
     ...(note.pattern !== undefined && note.pattern !== null ? { pattern: note.pattern } : {}),
     ...(note.modules !== undefined && note.modules !== null ? { modules: [...note.modules] } : {}),
+    ...(note.templateId ? { templateId: note.templateId } : {}),
+    ...(note.contactIds && note.contactIds.length > 0 ? { contactIds: [...note.contactIds] } : {}),
     hint: note.hint,
     createdAt: note.createdAt,
     deletedAt: note.deletedAt,
@@ -156,6 +168,9 @@ export function linkFromRecord(record: SyncRecord): LinkItem {
     kind,
     price: typeof f.price === 'number' && Number.isFinite(f.price) ? f.price : null,
     currency: typeof f.currency === 'string' && f.currency.length === 3 ? f.currency : null,
+    priceBefore: typeof f.priceBefore === 'number' && Number.isFinite(f.priceBefore) ? f.priceBefore : null,
+    priceChangedAt: asNullableTime(f.priceChangedAt),
+    priceCheckedAt: asNullableTime(f.priceCheckedAt),
     attributes: asAttributes(f.attributes),
     imageIds: asStrings(f.imageIds),
     imageUrl: typeof f.imageUrl === 'string' && f.imageUrl ? f.imageUrl : null,
@@ -165,13 +180,23 @@ export function linkFromRecord(record: SyncRecord): LinkItem {
     position: asString(f.position, 'a0'),
     error: typeof f.error === 'string' && f.error ? f.error : null,
     analyzedAt: asNullableTime(f.analyzedAt),
+    readWith: typeof f.readWith === 'string' && f.readWith ? f.readWith : null,
     lang: isLocale(f.lang) ? f.lang : 'fr',
+    copy: typeof f.copy === 'string' && f.copy ? f.copy : null,
+    contactIds: asStrings(f.contactIds),
     createdAt: asTime(f.createdAt),
     deletedAt: asNullableTime(f.deletedAt),
   };
 }
 
-export function linkFields(link: Omit<LinkItem, 'id'>): Fields {
+/**
+ * `contactIds` is written only when it names someone: most links never do. The price watch's fields
+ * are the server's: a client never writes them. So is `readWith`, but for a reading copied whole
+ * from another link at the same address (`savedLinks`), which carries the version it was read with.
+ */
+export function linkFields(
+  link: Omit<LinkItem, 'id' | 'contactIds' | 'priceBefore' | 'priceChangedAt' | 'priceCheckedAt' | 'readWith'> & { readonly contactIds?: readonly string[]; readonly readWith?: string | null },
+): Fields {
   return {
     noteId: link.noteId,
     url: link.url,
@@ -194,6 +219,9 @@ export function linkFields(link: Omit<LinkItem, 'id'>): Fields {
     error: link.error,
     analyzedAt: link.analyzedAt,
     lang: link.lang,
+    copy: link.copy,
+    ...(link.contactIds && link.contactIds.length > 0 ? { contactIds: [...link.contactIds] } : {}),
+    ...(link.readWith ? { readWith: link.readWith } : {}),
     createdAt: link.createdAt,
     deletedAt: link.deletedAt,
   };
@@ -252,106 +280,25 @@ export function attachmentFields(attachment: Omit<Attachment, 'id'>): Fields {
   };
 }
 
-function asColumns(value: unknown): TableColumn[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry): TableColumn[] => {
-    if (typeof entry !== 'object' || entry === null) return [];
-    const raw = entry as Record<string, unknown>;
-    if (typeof raw.id !== 'string' || typeof raw.name !== 'string' || typeof raw.type !== 'string') return [];
-    const options = Array.isArray(raw.options)
-      ? raw.options.flatMap((option): SelectOption[] => {
-          const o = option as Record<string, unknown> | null;
-          return o && typeof o.id === 'string' && typeof o.name === 'string' ? [{ id: o.id, name: o.name, color: isLineColor(o.color) ? o.color : 'grey' }] : [];
-        })
-      : undefined;
-    return [
-      {
-        id: raw.id,
-        name: raw.name,
-        type: raw.type,
-        ...(typeof raw.unit === 'string' && raw.unit ? { unit: raw.unit } : {}),
-        ...(options ? { options } : {}),
-        ...(typeof raw.width === 'number' && Number.isFinite(raw.width) ? { width: raw.width } : {}),
-      },
-    ];
-  });
-}
-
-function asCells(value: unknown): Record<string, CellValue> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
-  const out: Record<string, CellValue> = {};
-  for (const [key, cell] of Object.entries(value as Record<string, unknown>)) {
-    if (cell === null || typeof cell === 'string' || typeof cell === 'boolean' || (typeof cell === 'number' && Number.isFinite(cell))) out[key] = cell;
-    else if (Array.isArray(cell)) out[key] = cell.filter((entry): entry is string => typeof entry === 'string');
-  }
-  return out;
-}
-
-function asViewColumns(value: unknown): ViewColumn[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry): ViewColumn[] => {
-    const raw = entry as Record<string, unknown> | null;
-    return raw && typeof raw.key === 'string' && raw.key ? [{ key: raw.key, shown: raw.shown === true }] : [];
-  });
-}
-
-/** Any well-formed type, one a newer client added included: it is kept, and shows as unavailable. */
-function asTarget(type: unknown, id: unknown): BlockTarget | null {
-  return typeof type === 'string' && REF_TYPE_PATTERN.test(type) && typeof id === 'string' && id ? { type, id } : null;
-}
-
-export function blockFromRecord(record: SyncRecord): Block {
+export function linkTemplateFromRecord(record: SyncRecord): LinkTemplate {
   const f = record.fields;
-  const kind: BlockKind = (BLOCK_KINDS as readonly unknown[]).includes(f.kind) ? (f.kind as BlockKind) : 'text';
   return {
     id: record.id,
-    parentId: typeof f.parentId === 'string' && f.parentId ? f.parentId : null,
-    position: asString(f.position, 'a0'),
-    kind,
-    text: asString(f.text),
-    caption: asString(f.caption),
-    drawing: asString(f.drawing),
-    checked: asBool(f.checked),
-    language: asString(f.language),
-    icon: typeof f.icon === 'string' && f.icon ? f.icon : null,
-    color: isLineColor(f.color) ? f.color : null,
-    columns: asColumns(f.columns),
-    cells: asCells(f.cells),
-    fileId: typeof f.fileId === 'string' && f.fileId ? f.fileId : null,
-    fileName: asString(f.fileName),
-    mime: asString(f.mime),
-    bytes: typeof f.bytes === 'number' ? f.bytes : 0,
-    width: typeof f.width === 'number' ? f.width : 0,
-    height: typeof f.height === 'number' ? f.height : 0,
-    uploaded: asBool(f.uploaded),
-    url: typeof f.url === 'string' && f.url ? f.url : null,
-    target: asTarget(f.targetType, f.targetId),
-    view: f.view === 'table' ? 'table' : 'list',
-    viewColumns: asViewColumns(f.viewColumns),
-    showDone: asBool(f.showDone),
-    ratio: typeof f.ratio === 'number' && Number.isFinite(f.ratio) && f.ratio > 0 ? f.ratio : 1,
-    private: asBool(f.private),
-    trashedAt: asNullableTime(f.trashedAt),
+    name: asString(f.name),
+    kind: (LINK_KINDS as readonly unknown[]).includes(f.kind) ? (f.kind as LinkKind) : null,
+    fields: parseTemplateFields(f.fields),
     createdAt: asTime(f.createdAt),
     deletedAt: asNullableTime(f.deletedAt),
-    editedAt: editedAt(record),
   };
 }
 
-/** What a new block writes: its place, kind and text always, and only the other fields it uses. */
-export type NewBlockFields = Pick<Block, 'parentId' | 'position' | 'kind' | 'createdAt'> &
-  Partial<Omit<Block, 'id' | 'parentId' | 'position' | 'kind' | 'createdAt' | 'editedAt' | 'target'>> & { readonly target?: BlockTarget | null };
-
-export function blockFields(block: NewBlockFields): Fields {
-  const { target, ...rest } = block;
-  const fields: Fields = { text: '', deletedAt: null };
-  for (const [key, value] of Object.entries(rest)) {
-    if (value === undefined) continue;
-    fields[key] = key === 'columns' || key === 'cells' || key === 'viewColumns' ? JSON.parse(JSON.stringify(value)) : value;
-  }
-  if (target !== undefined) {
-    fields.targetType = target?.type ?? null;
-    fields.targetId = target?.id ?? null;
-  }
-  return fields;
+/** A template whole, as one write: its fields as the sync keeps them (id, name, type, hint). */
+export function linkTemplateFields(template: Omit<LinkTemplate, 'id'>): Fields {
+  return {
+    name: template.name,
+    kind: template.kind,
+    fields: template.fields.map(field => ({ id: field.id, name: field.name, type: field.type, hint: field.hint })),
+    createdAt: template.createdAt,
+    deletedAt: template.deletedAt,
+  };
 }

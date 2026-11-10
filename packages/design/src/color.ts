@@ -66,6 +66,13 @@ function toLab(hex: string): [number, number, number] {
   return [lightness, chroma * Math.cos(radians), chroma * Math.sin(radians)];
 }
 
+/** How far apart two colours look: their distance in OKLab. */
+export function oklabDistance(a: string, b: string): number {
+  const [l1, x1, y1] = toLab(a);
+  const [l2, x2, y2] = toLab(b);
+  return Math.hypot(l1 - l2, x1 - x2, y1 - y2);
+}
+
 /** `amount` of the way from `from` to `to`, through OKLab: two hues meet without the grey an sRGB blend passes through. */
 export function mixOklab(from: string, to: string, amount: number): string {
   const a = toLab(from);

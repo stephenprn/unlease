@@ -6,6 +6,8 @@
  * keep their order, then 62 random bits. `crypto.getRandomValues` where the platform has it (the
  * web, the server), else `Math.random` (Hermes): ids only have to differ, not to be unguessable.
  */
+import { hashHex } from './hash';
+
 let lastTime = -1;
 let counter = 0;
 /** Milliseconds borrowed past `lastTime` once its counter ran out (4096 ids in one millisecond). */
@@ -52,4 +54,16 @@ export function createId(now: number = Date.now(), random?: () => number): strin
   bytes[7] = counter & 0xff;
   bytes[8] = 0x80 | (bytes[8]! & 0x3f);
   return `${hex(bytes, 0, 4)}-${hex(bytes, 4, 6)}-${hex(bytes, 6, 8)}-${hex(bytes, 8, 10)}-${hex(bytes, 10, 16)}`;
+}
+
+/**
+ * The id of a record two devices may make for the same thing at once (an exception of a repeating
+ * event, made for one occurrence): derived from what it stands for, so both write the same record
+ * and its fields merge, instead of two records. UUID-shaped (version 8, RFC 9562's custom form), so
+ * it passes wherever a UUIDv7 does; it does not sort by creation.
+ */
+export function derivedId(name: string): string {
+  const digits = hashHex(name);
+  const variant = ((parseInt(digits[16]!, 16) & 0x3) | 0x8).toString(16);
+  return `${digits.slice(0, 8)}-${digits.slice(8, 12)}-8${digits.slice(13, 16)}-${variant}${digits.slice(17, 20)}-${digits.slice(20, 32)}`;
 }

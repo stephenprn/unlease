@@ -20,8 +20,8 @@ import { t } from '@unlease/core/i18n';
 import { DRAWING_LIMITS, DRAWING_WIDTH, ERASER_RADIUS, type Stroke } from '@unlease/notes/models/drawing';
 import { eraserReach, strokeWidth } from '@unlease/notes/services/drawing';
 
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import { inkPalette, keepSameBands, pathOf, sheetUnits, strokeOpacity, strokesByBand, type InkPalette } from './drawingModel';
 import { pathCurve, pathEnd, pathStart } from './livePath';
 import { StrokePath } from './StrokePath';

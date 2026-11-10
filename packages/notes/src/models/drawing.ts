@@ -6,7 +6,7 @@
  * Coordinates are units of a sheet `DRAWING_WIDTH` wide, whatever the screen, so a drawing made on
  * the phone keeps its proportions on the web; the sheet is as tall as what is drawn on it.
  */
-import { LINE_COLOR_NAMES, type LineColor } from '@unlease/design/colors';
+import { isLineColor, LINE_COLOR_NAMES, LINE_COLORS, type LineColor } from '@unlease/design/colors';
 import { localized, t, tx } from '@unlease/core/i18n';
 
 /** The sheet's width in drawing units. */
@@ -58,6 +58,38 @@ export const INK_NAME = tx('Encre');
 /** An ink's name in the interface's language, as a swatch's label says it. */
 export function drawingInkName(ink: DrawingInk): string {
   return ink === 'ink' ? t(INK_NAME) : LINE_COLOR_NAMES[ink];
+}
+
+/**
+ * What a page's drawing lies on (« Fond », in its block's `color`): the plain paper of a note
+ * without colour, the default; a pigment's wash; or none (`none`), left on what holds it (the page's
+ * ground, its frame). A drawing note's is the note's own colour, from « Couleur et papier ». Stored
+ * as a key: none chosen, or one this build does not know, draws the paper (`drawingBackgroundOf`).
+ */
+export const DRAWING_PAPER = 'paper';
+export const DRAWING_NONE = 'none';
+
+export type DrawingBackground = typeof DRAWING_NONE | typeof DRAWING_PAPER | LineColor;
+
+/** The backgrounds offered, in their picker's order. */
+export const DRAWING_BACKGROUNDS: readonly DrawingBackground[] = [DRAWING_NONE, DRAWING_PAPER, ...LINE_COLORS];
+
+export function isDrawingBackground(value: unknown): value is DrawingBackground {
+  return value === DRAWING_NONE || value === DRAWING_PAPER || isLineColor(value);
+}
+
+/** A page's drawing's background, from its block's `color`: the plain paper until another is chosen. */
+export function drawingBackgroundOf(color: unknown): DrawingBackground {
+  return isDrawingBackground(color) ? color : DRAWING_PAPER;
+}
+
+export const NO_BACKGROUND_NAME = tx('Sans fond');
+export const PAPER_BACKGROUND_NAME = tx('Papier');
+
+/** A background's name in the interface's language, as its swatch's label says it. */
+export function drawingBackgroundName(background: DrawingBackground): string {
+  if (background === DRAWING_NONE) return t(NO_BACKGROUND_NAME);
+  return background === DRAWING_PAPER ? t(PAPER_BACKGROUND_NAME) : LINE_COLOR_NAMES[background];
 }
 
 export interface Stroke {

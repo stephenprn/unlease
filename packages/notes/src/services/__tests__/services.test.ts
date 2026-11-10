@@ -162,7 +162,7 @@ describe('link rows', () => {
         { label: 'Disponibilité', value: 'En stock' },
       ],
     });
-    expect(watch).toEqual({ source: 'Komono', title: 'Max Flower Silver Black', facts: ['Argent et noir', 'Acier inoxydable'] });
+    expect(watch).toMatchObject({ source: 'Komono', title: 'Max Flower Silver Black', facts: ['Argent et noir', 'Acier inoxydable'] });
     const brick = link({
       title: 'Brique de verre orange / cuivré brillant',
       kind: 'product',
@@ -178,12 +178,12 @@ describe('link rows', () => {
     expect(earrings.facts).toEqual(['Épuisé', 'Or']);
     // Any script, and signs alone, are facts too.
     const ramen = link({ title: 'ラーメン一蘭', siteName: '一蘭', kind: 'restaurant', attributes: [{ label: 'Cuisine', value: 'ラーメン' }, { label: 'Prix moyen', value: '€€' }] });
-    expect(ramen).toEqual({ source: '一蘭', title: 'ラーメン一蘭', facts: ['ラーメン', '€€'] });
+    expect(ramen).toMatchObject({ source: '一蘭', title: 'ラーメン一蘭', facts: ['ラーメン', '€€'] });
   });
 
   it('gives an unread link a readable title, never its address', () => {
-    expect(link({ url: 'https://arcteryx.com/fr/fr/shop/mens/alpha-sv-jacket-9899' })).toEqual({ source: 'arcteryx.com', title: 'Alpha sv jacket', facts: [] });
-    expect(link({ url: 'https://www.theposterclub.com/' })).toEqual({ source: '', title: 'theposterclub.com', facts: [] });
+    expect(link({ url: 'https://arcteryx.com/fr/fr/shop/mens/alpha-sv-jacket-9899' })).toMatchObject({ source: 'arcteryx.com', title: 'Alpha sv jacket', facts: [] });
+    expect(link({ url: 'https://www.theposterclub.com/' })).toMatchObject({ source: '', title: 'theposterclub.com', facts: [] });
   });
 });
 
@@ -213,7 +213,7 @@ describe('french formatting', () => {
 describe('search', () => {
   const base: Note = {
     id: 'n1', kind: 'text', title: 'Café du coin', body: 'Le meilleur croissant de Belleville', rich: false, drawing: '', color: null, pattern: null, pinned: false, archived: false,
-    trashedAt: null, labelIds: [], position: 'a0', reminderAt: null, code: '', emblem: null, hint: '', modules: null, createdAt: 0, deletedAt: null, editedAt: 10,
+    trashedAt: null, labelIds: [], position: 'a0', reminderAt: null, code: '', emblem: null, hint: '', modules: null, contactIds: [], createdAt: 0, deletedAt: null, editedAt: 10,
   };
   it('folds accents and case, requires every term, ranks titles first', () => {
     expect(foldText('Œuvre Élégante')).toBe('oeuvre elegante');

@@ -3,7 +3,10 @@
  * through `SyncService.restore` (merge, or rollback: see `RestoreMode`); each photo and file the
  * server lacks comes back from the archive (a full one), else from the drive (Seafile) where the
  * backup says it is (taken as it is there, never sent again), else from S3's `fichiers/`. Photos get
- * their display copy made again. One restore at a time; the apps follow it through `status()`.
+ * their display copy made again. A snapshot asleep in cold storage (Glacier) cannot be read: S3 is
+ * asked to bring it out with every cold file, and the restore ends `thawing`, to be run again hours
+ * later; a cold file met on the way is asked out the same and counted (`coldFiles`). One restore at
+ * a time; the apps follow it through `status()`.
  */
 import { randomBytes } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
@@ -26,8 +29,9 @@ import type { SettingsStore } from '../settings/store';
 import type { RecordStore } from '../sync/records';
 import type { SyncService } from '../sync/service';
 import { ARCHIVE_DOCUMENT } from './archive';
-import { S3Error, s3Problem } from './s3';
-import { s3Client, snapshotsPrefix, toTempFile } from './service';
+import { isColdStorage } from '@unlease/core/sync/settings';
+import { isFrozen, S3Error, s3Problem } from './s3';
+import { filesPrefix, s3Client, snapshotsPrefix, toTempFile } from './service';
 import { readTar, TarError } from './tar';
 
 export type RestoreSource = { readonly kind: 'file'; readonly path: string; readonly name: string } | { readonly kind: 's3'; readonly name: string };
@@ -102,7 +106,7 @@ export interface RestoreServiceOptions {
 
 export class RestoreService {
   private readonly now: () => number;
-  private state: RestoreStatus = { running: false, startedAt: null, finishedAt: null, error: null, report: null };
+  private state: RestoreStatus = { running: false, startedAt: null, finishedAt: null, error: null, report: null, thawing: false };
 
   constructor(private readonly options: RestoreServiceOptions) {
     this.now = options.now ?? Date.now;
@@ -110,7 +114,8 @@ export class RestoreService {
     const stored = readMeta(options.records.db, 'restore');
     if (typeof stored === 'string') {
       try {
-        const last = JSON.parse(stored) as RestoreStatus;
+        const read = JSON.parse(stored) as RestoreStatus;
+        const last: RestoreStatus = { ...read, thawing: read.thawing === true, report: read.report ? { ...read.report, coldFiles: read.report.coldFiles ?? 0 } : null };
         this.state = last.running ? { ...last, running: false, finishedAt: last.startedAt, error: 'Interrompue : le serveur s’est arrêté. Relancez la restauration pour finir.' } : last;
       } catch {
         // Unreadable: no last restore.
@@ -134,10 +139,15 @@ export class RestoreService {
   /** Starts in the background, or answers null while another runs; an uploaded archive's file is removed once read. */
   start(source: RestoreSource, mode: RestoreMode): Promise<void> | null {
     if (this.state.running) return null;
-    this.setState({ running: true, startedAt: this.now(), finishedAt: null, error: null, report: null });
+    this.setState({ running: true, startedAt: this.now(), finishedAt: null, error: null, report: null, thawing: false });
     const exclusive = this.options.exclusive ?? (<T>(work: () => Promise<T>) => work());
     return exclusive(() => this.restore(source, mode))
       .then(report => {
+        if (report === 'thawing') {
+          this.setState({ ...this.state, running: false, finishedAt: this.now(), thawing: true });
+          log.info('restore waits for its snapshot to come out of cold storage', { snapshot: source.name });
+          return;
+        }
         this.setState({ ...this.state, running: false, finishedAt: this.now(), report });
         log.info('backup restored', { ...report });
       })
@@ -148,7 +158,7 @@ export class RestoreService {
       });
   }
 
-  private async restore(source: RestoreSource, requested: RestoreMode): Promise<RestoreReport> {
+  private async restore(source: RestoreSource, requested: RestoreMode): Promise<RestoreReport | 'thawing'> {
     const { sync, records, settings, tmpDir } = this.options;
     const work = join(tmpDir, `restore-${randomBytes(6).toString('hex')}`);
     await mkdir(work, { recursive: true });
@@ -157,7 +167,18 @@ export class RestoreService {
       if (source.kind === 's3') {
         const config = settings.backup();
         if (!config) throw new RestoreError('Sauvegarde S3 non configurée');
-        archive = await toTempFile((await s3Client(config, this.options.fetcher, this.options.s3RetryDelaysMs).get(`${snapshotsPrefix(config)}${source.name}`)).body, work);
+        const client = s3Client(config, this.options.fetcher, this.options.s3RetryDelaysMs);
+        const key = `${snapshotsPrefix(config)}${source.name}`;
+        try {
+          archive = await toTempFile((await client.get(key)).body, work);
+        } catch (error) {
+          if (!isFrozen(error)) throw error;
+          // Asleep in cold storage: brought out with every cold file it may name, so one wait does for all.
+          await client.thaw(key);
+          const files = filesPrefix(config);
+          for (const object of await client.list(files)) if (isColdStorage(object.storageClass)) await client.thaw(object.key);
+          return 'thawing';
+        }
       }
       const { document, root, extracted } = await this.read(archive!, work);
 
@@ -173,6 +194,7 @@ export class RestoreService {
       let files = 0;
       let missing = 0;
       let needDrive = 0;
+      let coldFiles = 0;
       const { drive } = this.options;
       const listings = new Map<string, Promise<Dirent[] | null>>();
       // The records are in: a file that fails counts as missing rather than stopping the rest.
@@ -186,6 +208,10 @@ export class RestoreService {
             continue;
           }
           const data = await this.bytesOf(entry, extractedPath);
+          if (data === 'cold') {
+            coldFiles += 1;
+            continue;
+          }
           if (!data) {
             // Kept in a drive this server is not linked to yet: it comes back once Seafile is set and the restore run again.
             if (entry.drive && !drive?.ready()) needDrive += 1;
@@ -200,7 +226,7 @@ export class RestoreService {
         }
       }
       if (files > 0) this.options.onFiles?.();
-      return { mode, source: source.name, records: written, files, missingFiles: missing, needDrive };
+      return { mode, source: source.name, records: written, files, missingFiles: missing, needDrive, coldFiles };
     } finally {
       await rm(work, { recursive: true, force: true });
       if (source.kind === 'file') await rm(source.path, { force: true });
@@ -271,16 +297,22 @@ export class RestoreService {
     return true;
   }
 
-  /** A file's bytes: from the archive, else from S3 (null when neither has it). */
-  private async bytesOf(entry: FileEntry, extractedPath: string | undefined): Promise<Buffer | null> {
+  /** A file's bytes: from the archive, else from S3 (null when neither has it; 'cold' when S3 keeps it in cold storage, asked out now). */
+  private async bytesOf(entry: FileEntry, extractedPath: string | undefined): Promise<Buffer | null | 'cold'> {
     if (extractedPath) return readFile(extractedPath);
     const config = this.options.settings.backup();
     if (!config || !entry.stored) return null;
+    const client = s3Client(config, this.options.fetcher, this.options.s3RetryDelaysMs);
+    const key = `${config.prefix}${entry.stored}`;
     try {
-      const { body } = await s3Client(config, this.options.fetcher, this.options.s3RetryDelaysMs).get(`${config.prefix}${entry.stored}`);
+      const { body } = await client.get(key);
       return Buffer.from(await new Response(body).arrayBuffer());
     } catch (error) {
       if (error instanceof S3Error && (error.status === 404 || error.code === 'NoSuchKey')) return null;
+      if (isFrozen(error)) {
+        await client.thaw(key);
+        return 'cold';
+      }
       throw error;
     }
   }

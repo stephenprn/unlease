@@ -1,5 +1,5 @@
 import { INBOX_ID } from '@unlease/notes/models/entities';
-import { closeDatabase, openDatabase } from '@data/db/database';
+import { closeDatabase, openDatabase } from '@shared/data/db/database';
 
 import {
   addCheck,
@@ -19,7 +19,7 @@ import {
   ensureInbox,
 } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore } from '../store/libraryStore';
-import { useSettingsStore } from '../store/settingsStore';
+import { useSettingsStore } from '@shared/app/store/settingsStore';
 import { collectionPayload, labelPayload, notePayload, WIDGET_LIMITS, type CollectionPayload, type LabelPayload, type NotePayload } from '../widgetPayloads';
 
 const state = () => useLibraryStore.getState();

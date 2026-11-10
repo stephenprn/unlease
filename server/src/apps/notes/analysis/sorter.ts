@@ -10,7 +10,8 @@ import type { SortLink, SortMove, SortRequest } from '@unlease/notes/sync/sortin
 import { log } from '../../../log';
 import { ModelError, type SortAnswer } from './model';
 import type { AnalysisContext } from './provider';
-import { monthStart, type UsageStore } from './usage';
+import type { UsageStore } from '../../../claude/usage';
+import { SORT_TASK } from './usage';
 
 /** Links per call: an answer that comes back in seconds, and a short message. */
 const BATCH = 60;
@@ -68,8 +69,7 @@ export class LinkSorter {
     const { usage } = this.options;
     const { model, budgetUsd } = this.options.analysis();
     if (!model) return { ok: false, status: 409, error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' };
-    const spent = () => usage.costSince(monthStart(this.now())) >= budgetUsd;
-    if (spent()) return { ok: false, status: 409, error: BUDGET_SPENT };
+    if (usage.spent(budgetUsd)) return { ok: false, status: 409, error: BUDGET_SPENT };
 
     const from = request.from === null ? null : request.targets.findIndex(target => target.id === request.from);
     const batches: SortLink[][] = [];
@@ -80,18 +80,21 @@ export class LinkSorter {
     const results = await inPool(batches, CONCURRENCY, async (links): Promise<SortMove[] | string | null> => {
       if (stop !== null) return null;
       if (signal.aborted) return (stop = 'Claude a mis trop de temps');
-      if (spent()) return (stop = BUDGET_SPENT);
+      const hold = usage.hold(budgetUsd);
+      if (!hold) return (stop = BUDGET_SPENT);
       const started = this.now();
       try {
-        const answer = await model.sort({ task: request.task, targets: request.targets, from, links }, signal);
-        usage.recordSort({ usage: answer.usage, ok: true, error: null, durationMs: this.now() - started });
+        const answer = await model.holding(hold).sort({ task: request.task, targets: request.targets, from, links }, signal);
+        usage.record(SORT_TASK, { usage: answer.usage, ok: true, error: null, durationMs: this.now() - started });
         return movesFrom(answer.moves, links, request);
       } catch (error) {
         if (signal.aborted) return (stop ??= 'Claude a mis trop de temps');
         if (!(error instanceof ModelError)) log.error('link sorting crashed', { error });
         const message = error instanceof ModelError ? error.message : 'Erreur du tri';
-        usage.recordSort({ usage: error instanceof ModelError ? error.usage : null, ok: false, error: message, durationMs: this.now() - started });
+        usage.record(SORT_TASK, { usage: error instanceof ModelError ? error.usage : null, ok: false, error: message, durationMs: this.now() - started });
         return (stop ??= message);
+      } finally {
+        hold.release();
       }
     });
 

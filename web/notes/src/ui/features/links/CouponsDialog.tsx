@@ -13,14 +13,14 @@ import { formatClock, formatDay } from '@unlease/core/services/format';
 import type { Coupon, CouponResponse } from '@unlease/notes/sync/coupons';
 
 import { findCoupons } from '../../../app/modules';
-import { useMinute } from '../../../app/hooks/useMinute';
+import { useMinute } from '@shared/app/hooks/useMinute';
 import { useLibraryStore } from '../../../app/store/library';
-import { showError, showSnack } from '../../../app/store/ui';
-import { Button } from '../../components/Button';
-import { DialogFrame } from '../../components/Dialog';
-import { IconButton } from '../../components/IconButton';
-import { Layer } from '../../components/Layer';
-import { useOutline } from '../../components/Outline';
+import { showError, showSnack } from '@shared/app/store/ui';
+import { Button } from '@shared/ui/components/Button';
+import { DialogFrame } from '@shared/ui/components/Dialog';
+import { IconButton } from '@shared/ui/components/IconButton';
+import { Layer } from '@shared/ui/components/Layer';
+import { useOutline } from '@shared/ui/components/Outline';
 import { ReadingTrack } from './ReadingTrack';
 import styles from './links.module.css';
 

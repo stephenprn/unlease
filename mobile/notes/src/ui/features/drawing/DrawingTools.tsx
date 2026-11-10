@@ -4,9 +4,10 @@
  * pen, the marker, the highlighter and the eraser (the one in hand on its filled pebble: the ink
  * veil on a note's own colour, matcha on the ground), then undo and redo where the screen has no top
  * bar for them (a note), and « Tout effacer », one step undo takes back. Under them, scrolling
- * sideways, the three sizes as dots of the tool's widths, then the inks as pebbles of the ink
- * itself, the chosen one ringed in ink a little way out. Where the inks run past the screen, the row
- * ends halfway through one, which says more lie further.
+ * sideways, what the drawing lies on (« Fond », where its holder offers it: the palette's glyph on a
+ * pebble of the background, opening its sheet), the three sizes as dots of the tool's widths, then
+ * the inks as pebbles of the ink itself, the chosen one ringed in ink a little way out. Where the
+ * inks run past the screen, the row ends halfway through one, which says more lie further.
  */
 import React, { memo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -15,12 +16,25 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { pebbleTurn } from '@unlease/design/pebbles';
 import { t, tc } from '@unlease/core/i18n';
-import { DRAWING_INKS, DRAWING_SIZES, DRAWING_SIZE_NAMES, DRAWING_TOOL_NAMES, drawingInkName, type DrawingInk, type DrawingSize, type DrawingTool } from '@unlease/notes/models/drawing';
+import {
+  DRAWING_INKS,
+  DRAWING_SIZES,
+  DRAWING_SIZE_NAMES,
+  DRAWING_TOOL_NAMES,
+  DRAWING_NONE,
+  drawingBackgroundName,
+  drawingInkName,
+  type DrawingBackground,
+  type DrawingInk,
+  type DrawingSize,
+  type DrawingTool,
+} from '@unlease/notes/models/drawing';
 
-import { AnimatedOrganic, IconButton, PressSurface, Tappable } from '../../components';
-import { useChosen } from '../../components/useChosen';
-import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
-import type { Theme } from '../../theme/theme';
+import { AnimatedOrganic, ICON_PEBBLE, ICON_SLOP, IconButton, PressSurface, Tappable } from '../../components';
+import { useChosen } from '@shared/ui/components/useChosen';
+import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
+import { backgroundPaint } from './DrawingBackgroundSheet';
 import { inkPalette, sizeDot } from './drawingModel';
 import type { DrawingEditor } from './useDrawingEditor';
 
@@ -50,6 +64,8 @@ export interface DrawingToolsProps {
   readonly edge?: boolean;
   /** Room under the tools: the gesture bar's, when they are the screen's foot. */
   readonly inset?: number;
+  /** What the drawing lies on (« Fond »), its sheet opened by `onPress` (mounted at the screen's root); left out, the tools offer none. */
+  readonly background?: { readonly value: DrawingBackground; readonly onPress: () => void };
 }
 
 /** A size: a dot of the tool's width in the writing ink, on a pebble filled while chosen, as a chosen tool's is. */
@@ -61,9 +77,9 @@ function SizeChoice({ size, dot, turn, selected, fill, onPress }: { size: Drawin
       accessibilityState={{ selected }}
       accessibilityLabel={t(DRAWING_SIZE_NAMES[size])}
       onPress={onPress}
-      hitSlop={2}
+      hitSlop={ICON_SLOP}
       pebble={turn}
-      style={[styles.size, selected ? { backgroundColor: fill } : null]}
+      style={[ICON_PEBBLE, selected ? { backgroundColor: fill } : null]}
     >
       <View style={[styles.dot, { width: dot, height: dot, borderRadius: dot / 2 }]} />
     </Tappable>
@@ -83,7 +99,7 @@ function InkChoice({ ink, turn, selected, color, width, onPress }: { ink: Drawin
   );
 }
 
-function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0 }: DrawingToolsProps) {
+function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0, background }: DrawingToolsProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const palette = inkPalette(theme);
@@ -108,6 +124,18 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0 
         <IconButton icon="trash" label={t('Tout effacer')} shape={3} disabled={editor.strokes.length === 0} onPress={editor.clear} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.palette} contentContainerStyle={styles.row} onLayout={event => setPaletteWidth(event.nativeEvent.layout.width)}>
+        {background ? (
+          <>
+            <IconButton
+              icon="palette"
+              label={t('Fond : {name}', { name: drawingBackgroundName(background.value) })}
+              shape={3}
+              onPress={background.onPress}
+              style={background.value === DRAWING_NONE ? null : backgroundPaint(theme, background.value)}
+            />
+            <View style={styles.divider} />
+          </>
+        ) : null}
         <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Épaisseur')}>
           {DRAWING_SIZES.map(size => (
             <SizeChoice key={size} size={size} dot={sizeDot(pen, size)} turn={pebbleTurn(size)} selected={size === sizes[pen]} fill={fill} onPress={() => editor.chooseSize(size)} />
@@ -137,7 +165,6 @@ const makeStyles = (theme: Theme) =>
     group: { flexDirection: 'row', alignItems: 'center' },
     divider: { width: StyleSheet.hairlineWidth, height: 24, marginHorizontal: 6, backgroundColor: theme.color.hairline },
     // An icon button's own box: 44 inside a 48 slot.
-    size: { width: 44, height: 44, margin: 2, alignItems: 'center', justifyContent: 'center' },
     dot: { backgroundColor: theme.color.ink },
     ink: { ...INK_CELL, alignItems: 'center', justifyContent: 'center' },
     ring: { position: 'absolute', top: (INK_CELL.height - RING) / 2, width: RING, height: RING, borderWidth: 2, borderColor: theme.color.ink },

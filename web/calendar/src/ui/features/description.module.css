@@ -1,0 +1,75 @@
+/*
+ * An event's description (`DescriptionField`): the design system's multiline field, its words drawn a
+ * second time under it (the backdrop) so a mention lies on its chip's wash while the field's own
+ * text stays on top. Both boxes measure and wrap the same, and scroll together.
+ */
+.field {
+  position: relative;
+  border-radius: var(--cut-field);
+  background: var(--field-veil);
+}
+
+.backdrop,
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 13.5px 19.5px;
+  font-family: inherit;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  scrollbar-gutter: stable;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* A mention: its chip's wash (`.mention` on the event's page), the field's ink over it. */
+.token {
+  border-radius: var(--cut-detail);
+  background: color-mix(in srgb, var(--action) 14%, transparent);
+  box-shadow:
+    -2px 0 0 color-mix(in srgb, var(--action) 14%, transparent),
+    2px 0 0 color-mix(in srgb, var(--action) 14%, transparent);
+  color: transparent;
+}
+
+.input {
+  position: relative;
+  display: block;
+  min-height: 96px;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  resize: none;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .input:hover {
+    box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  }
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}

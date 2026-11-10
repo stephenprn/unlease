@@ -1,49 +1,82 @@
-/** A note's photos: one at full width, more in a grid of equal tiles; a tap opens full screen. */
+/**
+ * A note's photos, as the web's: one at full width in its own proportion (420 high at most), more in a
+ * grid of equal square tiles (three across from five). A tap opens it full screen, on black, with the
+ * previous and the next a tap away; the corner × deletes it (with "Annuler"), on a slip so it reads on
+ * any picture in either theme.
+ */
 import React, { memo, useState } from 'react';
 import { Image, Modal, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { parseHex } from '@unlease/design/palette';
 import { t, tc } from '@unlease/core/i18n';
-import { useBlobSource } from '@app/hooks/useImageSource';
+import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { removeAttachment } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { showSnack } from '@app/store/uiStore';
+import { showSnack } from '@shared/app/store/uiStore';
 
 import { IconButton, Tappable } from '../../components';
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '@shared/ui/theme/ThemeProvider';
+
+/** A single photo stands no taller than this (the web's `max-height`). */
+const SINGLE_MAX = 420;
+const GAP = 4;
+
+const removed = (undo: () => void) => showSnack(t('Photo supprimée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
 
 function PhotoGridComponent({ noteId, editable }: { noteId: string; editable: boolean }) {
   const ids = useLibraryStore(s => s.attachmentsByNote[noteId]);
   const { width } = useWindowDimensions();
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<number | null>(null);
   if (!ids || ids.length === 0) return null;
   const single = ids.length === 1;
-  const tile = single ? width : (width - 4) / 2;
+  const columns = ids.length >= 5 ? 3 : 2;
+  const tile = single ? width : (width - GAP * (columns - 1)) / columns;
   return (
     <View style={styles.grid}>
-      {ids.map(id => (
-        <Photo key={id} id={id} width={tile} height={single ? Math.round(width * 0.75) : tile} onPress={() => setOpen(id)} />
+      {ids.map((id, index) => (
+        <Photo key={id} id={id} width={tile} single={single} editable={editable} onPress={() => setOpen(index)} />
       ))}
-      <Viewer id={open} editable={editable} onClose={() => setOpen(null)} />
+      <Viewer ids={ids} index={open} editable={editable} onIndex={setOpen} />
     </View>
   );
 }
 
-const Photo = memo(function PhotoView({ id, width, height, onPress }: { id: string; width: number; height: number; onPress: () => void }) {
+const Photo = memo(function PhotoView({ id, width, single, editable, onPress }: { id: string; width: number; single: boolean; editable: boolean; onPress: () => void }) {
   const source = useBlobSource(id);
   const theme = useTheme();
+  const ratio = useLibraryStore(s => {
+    const attachment = s.attachments[id];
+    return attachment && attachment.width > 0 && attachment.height > 0 ? attachment.width / attachment.height : null;
+  });
+  // Alone, the photo keeps its own proportion; in a grid, every tile is square.
+  const height = single ? Math.min(SINGLE_MAX, Math.round(ratio ? width / ratio : width * 0.75)) : width;
   return (
-    <Tappable onPress={onPress} accessibilityLabel={t('Ouvrir la photo')} style={{ width, height, backgroundColor: theme.color.paperHigh }}>
-      {source ? <Image source={source} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
-    </Tappable>
+    <View style={{ width, height }}>
+      <Tappable onPress={onPress} accessibilityLabel={t('Ouvrir la photo')} style={[StyleSheet.absoluteFill, { backgroundColor: theme.color.paperHigh }]}>
+        {source ? <Image source={source} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+      </Tappable>
+      {editable ? (
+        <IconButton
+          icon="close"
+          label={t('Supprimer la photo')}
+          onDark
+          size={18}
+          shape={1}
+          style={[styles.remove, { backgroundColor: theme.color.slip }]}
+          onPress={() => removed(removeAttachment(id))}
+        />
+      ) : null}
+    </View>
   );
 });
 
-function Viewer({ id, editable, onClose }: { id: string | null; editable: boolean; onClose: () => void }) {
+function Viewer({ ids, index, editable, onIndex }: { ids: readonly string[]; index: number | null; editable: boolean; onIndex: (index: number | null) => void }) {
+  const id = index !== null ? (ids[index] ?? null) : null;
   const source = useBlobSource(id, 'original');
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const onClose = () => onIndex(null);
   return (
     <Modal visible={id !== null} onRequestClose={onClose} animationType="fade" statusBarTranslucent navigationBarTranslucent>
       <View style={[styles.viewer, { backgroundColor: theme.color.viewer }]}>
@@ -59,11 +92,19 @@ function Viewer({ id, editable, onClose }: { id: string | null; editable: boolea
               onPress={() => {
                 const undo = removeAttachment(id);
                 onClose();
-                showSnack(t('Photo supprimée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+                removed(undo);
               }}
             />
           ) : null}
         </View>
+        {/* The other photos of the note, on either side, on the slip so they read over any picture. */}
+        {index !== null && index > 0 ? (
+          <IconButton icon="back" label={t('Photo précédente')} onDark shape={2} style={[styles.nav, styles.prev, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index - 1)} />
+        ) : null}
+        {index !== null && index < ids.length - 1 ? (
+          // The mirror of the previous one's arrow.
+          <IconButton icon="arrowRight" label={t('Photo suivante')} onDark shape={3} style={[styles.nav, styles.next, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index + 1)} />
+        ) : null}
       </View>
     </Modal>
   );
@@ -72,8 +113,12 @@ function Viewer({ id, editable, onClose }: { id: string | null; editable: boolea
 const shade = (hex: string, alpha: number): string => `rgba(${parseHex(hex).join(', ')}, ${alpha})`;
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
+  remove: { position: 'absolute', top: 4, right: 4 },
   viewer: { flex: 1 },
+  nav: { position: 'absolute', top: '50%', marginTop: -24 },
+  prev: { left: 8 },
+  next: { right: 8 },
   viewerBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, paddingBottom: 24 },
 });
 

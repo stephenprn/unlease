@@ -41,6 +41,11 @@ export class ChangeNotifier {
     this.notify();
   }
 
+  /** Shut down: every wait answers at once. */
+  get isClosed(): boolean {
+    return this.closed;
+  }
+
   get waiting(): number {
     return this.waiters.size;
   }

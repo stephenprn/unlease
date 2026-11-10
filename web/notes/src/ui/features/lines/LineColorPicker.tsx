@@ -8,8 +8,8 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { t } from '@unlease/core/i18n';
 import { LINE_COLORS, LINE_COLOR_NAMES, type LineColor } from '@unlease/design/colors';
 
-import { Icon } from '../../components/Icon';
-import { PebbleEdge } from '../../components/Outline';
+import { Icon } from '@shared/ui/components/Icon';
+import { PebbleEdge } from '@shared/ui/components/Outline';
 import styles from './colorPicker.module.css';
 
 export interface LineColorPickerProps {
