@@ -8,6 +8,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 - On the web, an app picked in the launcher (or another app's place opened from a menu, the drawer or the search) opens again: the browser no longer stays on the app you were in.
 - The demo's "page not found" no longer sends the browser round in circles when the page it sends to is missing too (the address grew until the browser refused it): it says the page is not there.
+- The demo keeps its language when you open another app from the launcher: in English, every app stays in English.
 
 ## [0.1.0] - 2026-11-10
 

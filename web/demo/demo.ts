@@ -9,7 +9,8 @@
  *    `DEMO_SERVER`, any token opens it): the apps, « Votre serveur », the appearance;
  *  - `?demo=empty`: an empty board, no server;
  *  - add `&reading=off` for a server without a Claude key (links kept plain), `&apps=notes` for a
- *    server running Carnet alone.
+ *    server running Carnet alone, `&lang=en` (or `fr`) for its language; without it, the language it
+ *    had (French the first time), so another app opened from the launcher speaks the same.
  *
  * It uses its own database and settings, and starts afresh on every load, so
  * it can never touch real notes kept in the same browser.
@@ -24,6 +25,16 @@ import { writeImported } from '@shared/app/store/records';
 import { buildDemoRecords } from './demoData';
 
 const NAME = 'unlease-demo';
+
+/** The language of the demo's last load (another app's, or the one picked in its Réglages); French the first time. */
+function earlierLocale(): 'fr' | 'en' {
+  try {
+    const settings = JSON.parse(localStorage.getItem(`${NAME}.settings`) ?? 'null') as { locale?: unknown } | null;
+    return settings?.locale === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
 
 function deleteDatabase(name: string): Promise<void> {
   return new Promise(resolve => {
@@ -40,8 +51,9 @@ export async function startDemo(mode: string): Promise<() => void> {
   await deleteDatabase(NAME);
   const params = new URLSearchParams(location.search);
   const reading = params.get('reading') !== 'off';
-  // `&lang=en`: the demo in English.
-  const locale = params.get('lang') === 'en' ? 'en' : 'fr';
+  // `&lang=en`: the demo in English; without it, in the language it had.
+  const asked = params.get('lang');
+  const locale = asked === 'en' || asked === 'fr' ? asked : earlierLocale();
   const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar').split(',').filter(isReadyApp);
   const settings =
     mode === 'setup'
