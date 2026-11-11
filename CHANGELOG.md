@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-11
+
 ### Added
 
 - On Android, Carnet's collections appear in the share sheet's first row: share a link straight into "Films & series" without choosing afterwards. The collections you filed into last come first.
@@ -26,7 +28,6 @@ All notable changes to Unlease are written here: the server and every app share 
 - On Android, the bins of Pages, Contacts and Agenda look like Carnet's, one card per item, and an item opens from the bin; renaming a label to a name already taken says so under the field and keeps what you typed.
 - In Agenda for Android, the event form says what is missing above its fields, and "Save" shows it is saving.
 - In Contacts on the web, Favourites and a label with no contacts yet offer to create or import them. On the web, the settings' bin row says "The bin is empty" and does nothing while it is.
-
 - Carnet's fact templates become "Facts Claude notes", on the web and on Android: a collection's menu opens its page, where you keep Claude's usual facts or give it its own and edit them right there, each fact one line that opens in place, its type shown as the shape of the answer (a number, a date…). Each kind's usual facts are changed from the overview, under Administration › Claude. Existing templates keep working as their collections' own facts.
 - The demo's notes, pages, events and people are in English; its interface follows your browser (English unless it is French), and `?lang=en` or `?lang=fr` picks one.
 - Text fields are frosted in every app, on the web and on Android: the background's grain no longer shows behind what you type.
@@ -41,6 +42,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - A collection's large background emblem is laid down as the collection opens, drifting into its slant as it fades in, as the empty states' cut-outs do.
 - In Agenda on the web, the quick form of an event drawn on the grid stands beside the slot and holds its day and hours (the slot follows them), a place, people and a description, each a line that opens into its field; "More options" keeps all of it, people included, and Escape asks before dropping what was typed. A day of the month offers "All day" to give it hours.
 - Dialogs' buttons sit as far from the dialog's foot as from its side.
+- The demo moves to https://demo.unlease.org (its old address leads there).
 
 ### Fixed
 
@@ -49,15 +51,6 @@ All notable changes to Unlease are written here: the server and every app share 
 - In Agenda on the web, the schedule's empty state is centred, and "Show more" appears only when something lies further ahead, reaching it in one press.
 - In Agenda on the web, the event title's underline starts under its first letter.
 - On the web, Escape in an open list (a time, a place, people) closes the list alone, not the dialog around it.
-
-## [0.1.1] - 2026-11-10
-
-### Changed
-
-- The demo moves to https://demo.unlease.org (its old address leads there).
-
-### Fixed
-
 - On the web, an app picked in the launcher (or another app's place opened from a menu, the drawer or the search) opens again: the browser no longer stays on the app you were in.
 - The demo's "page not found" no longer sends the browser round in circles when the page it sends to is missing too (the address grew until the browser refused it): it says the page is not there.
 - The demo keeps its language when you open another app from the launcher: in English, every app stays in English.
