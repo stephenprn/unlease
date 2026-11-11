@@ -15,7 +15,7 @@ import { LineScreen } from '../screens/LineScreen';
 import { LinesScreen } from '../screens/LinesScreen';
 import { LinkScreen } from '../screens/LinkScreen';
 import { NoteScreen } from '../screens/NoteScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
 import { SetupScreen } from '../screens/SetupScreen';
 import { TemplateScreen } from '../screens/TemplateScreen';
 import { TemplatesScreen } from '../screens/TemplatesScreen';
@@ -62,6 +62,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Lines" component={LinesScreen} options={DEEPER} />
       <Stack.Screen name="Labels" component={LabelsScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
       <Stack.Screen name="Import" component={ImportScreen} options={DEEPER} />
       <Stack.Screen name="Templates" component={TemplatesScreen} options={DEEPER} />

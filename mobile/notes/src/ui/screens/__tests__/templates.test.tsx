@@ -2,7 +2,8 @@
  * « Ce que Claude relève » on the phone: the overview (the collections with their own facts, every
  * kind's usual ones), a collection's page (Claude's usual facts or its own, a fact shaped in its sheet,
  * saved whole and undone from the slip), a kind's usual facts changed and set back, and what a link
- * read before its facts changed offers (« Relire », the well, the preview).
+ * read before its facts changed offers (« Relire », the well, the preview). All of it only once the
+ * server said Claude has a key: never offered before, and left when it says it has none.
  */
 import React from 'react';
 import { TextInput } from 'react-native';
@@ -101,7 +102,8 @@ function fakeFetch(input: string, init?: { body?: unknown }) {
 let mounted: ReactTestRenderer | null = null;
 let ids: Record<string, string> = {};
 
-async function boot(seed?: () => void): Promise<ReactTestRenderer> {
+/** The app on a server whose Claude has a key (`claude`: true), has none (false), or has not said yet (null). */
+async function boot(seed?: () => void, claude: boolean | null = true): Promise<ReactTestRenderer> {
   const previous = mounted;
   if (previous) await act(async () => previous.unmount());
   closeDatabase();
@@ -109,6 +111,8 @@ async function boot(seed?: () => void): Promise<ReactTestRenderer> {
   resetBootstrap();
   openDatabase({ name: 'templates.sqlite' });
   writePreference('onboarded', true);
+  writePreference('server', { url: 'https://carnet.test', token: 'jeton' });
+  writePreference('reading', claude);
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(<AppProviders />);
@@ -170,7 +174,8 @@ describe('the overview', () => {
 
 describe('a kind’s usual facts', () => {
   it('take a suggestion in one tap and are saved whole, under the kind’s own id', async () => {
-    const tree = await boot();
+    // Before the server says whether Claude reads, nothing is offered to read again: saved, the form leaves.
+    const tree = await boot(undefined, null);
     await go('Templates');
     await press(tree, 'Recette');
     expect(navigationRef.getCurrentRoute()?.name).toBe('Template');
@@ -222,6 +227,28 @@ describe('a collection’s « Ce que Claude relève »', () => {
     const rows = tree.root.findAll(node => node.props.accessibilityRole === 'menuitem' && typeof node.props.onPress === 'function', { deep: false }).map(textIn);
     expect(rows).toContain('Modules');
     expect(rows).not.toContain('Ce que Claude relève');
+  });
+
+  it('is offered only once the server said Claude has a key', async () => {
+    const menuRows = (tree: ReactTestRenderer) => tree.root.findAll(node => node.props.accessibilityRole === 'menuitem' && typeof node.props.onPress === 'function', { deep: false }).map(textIn);
+    for (const claude of [false, null]) {
+      const tree = await boot(undefined, claude);
+      await go('Line', { id: ids.vins! });
+      await press(tree, 'Plus d’actions');
+      expect(menuRows(tree)).toContain('Modules');
+      expect(menuRows(tree)).not.toContain('Ce que Claude relève');
+      // Nor on a link's page.
+      await go('Link', { id: ids.margaux! });
+      await press(tree, 'Plus d’actions');
+      expect(menuRows(tree)).toContain('Copier l’adresse');
+      expect(menuRows(tree)).not.toContain('Ce que Claude relève');
+      expect(menuRows(tree)).not.toContain('Relire la page');
+    }
+    const tree = await boot();
+    await go('Link', { id: ids.margaux! });
+    await press(tree, 'Plus d’actions');
+    expect(menuRows(tree)).toContain('Ce que Claude relève');
+    expect(menuRows(tree)).toContain('Relire la page');
   });
 
   it('takes its own facts from its links’ usual ones, a fact shaped in its sheet, saved whole and undone from the slip', async () => {
@@ -299,14 +326,35 @@ describe('links read before their facts changed', () => {
     expect(textOf(tree)).toMatch(/Lu en [\d,]+ s · 0,004 \$/);
   });
 
-  it('cannot be previewed without Claude', async () => {
+  it('offer neither the preview nor the well before the server says Claude has a key', async () => {
     const tree = await boot(() => {
       saveCollectionFacts(ids.vins!, WINE);
-    });
+      updateLink(ids.margaux!, { readWith: null });
+    }, null);
     await go('Template', { collection: ids.vins! });
-    expect(textOf(tree)).toContain('Claude n’est pas configuré : l’essai n’est pas possible.');
+    // Not said yet: the page stays, without what would ask Claude.
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Template');
+    expect(textOf(tree)).toContain('Domaine');
+    expect(textOf(tree)).not.toContain('Voyez ce que Claude relèverait');
     expect(tree.root.findAll(node => node.props.accessibilityLabel === 'Essayer' && typeof node.props.onPress === 'function')).toHaveLength(0);
-    // Nobody to note them: no well.
-    expect(textOf(tree)).not.toContain('Tout relire');
+    expect(textOf(tree)).not.toMatch(/lu avant ce changement/);
+  });
+});
+
+describe('without Claude', () => {
+  it('the facts pages leave for where they were opened from, once the server says it has no key', async () => {
+    await boot(undefined, null);
+    await go('Line', { id: ids.vins! });
+    await go('Templates');
+    await go('Template', { collection: ids.vins! });
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Template');
+    await act(async () => useSettingsStore.setState({ reading: false }));
+    await settle();
+    // Each page leaves as it comes to the front: back to the collection.
+    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Line', params: { id: ids.vins } });
+
+    // Opened while Claude has no key: straight back.
+    await go('Template', { kind: 'recipe' });
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Line');
   });
 });

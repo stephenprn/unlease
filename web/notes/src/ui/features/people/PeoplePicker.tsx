@@ -12,6 +12,7 @@ import { contactName, workLine } from '@unlease/contacts/services/names';
 import { PEOPLE_MAX } from '@unlease/notes/sync/types';
 
 import { useNotePeople, usePeopleFound } from '../../../app/hooks/useNotePeople';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
 import inputs from '@shared/ui/components/controls.module.css';
@@ -86,7 +87,7 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
         autoComplete="off"
         spellCheck={false}
       />
-      <div className={styles.list} role="group" aria-label={t('Personnes')}>
+      <div data-scroller="" className={styles.list} role="group" aria-label={t('Personnes')}>
         {!typing && chosen.length > 0 ? (
           <>
             {chosen.map(person => (
@@ -99,7 +100,7 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
           <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
         ))}
         {others.length === 0 && (typing || chosen.length === 0) ? (
-          <p className={`${styles.empty} t-meta`}>{typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')}</p>
+          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')} className={styles.empty} />
         ) : null}
       </div>
     </div>
@@ -111,7 +112,7 @@ export function PeoplePicker({ open, anchor, selected, onDismiss, onChange }: Pe
   // On a phone-sized window the sheet opens on its people with the keyboard down; the field is one tap away.
   const holder = useRef<HTMLDivElement>(null);
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Personnes')} width={340} initialFocus={narrow ? holder : undefined}>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Personnes')} width={340} initialFocus={narrow ? holder : undefined} rows>
       <PeopleList selected={selected} onChange={onChange} narrow={narrow} holder={holder} />
     </Popover>
   );

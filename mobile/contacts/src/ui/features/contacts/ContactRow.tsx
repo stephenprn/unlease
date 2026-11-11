@@ -16,7 +16,7 @@ import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useRed
 
 import { t } from '@unlease/core/i18n';
 import { GEOMETRY } from '@unlease/design/palette';
-import { SHAPES } from '@unlease/design/shapes';
+import { RADII, SHAPES } from '@unlease/design/shapes';
 import { listName, workLine } from '@unlease/contacts/services/names';
 import type { SortOrder } from '@unlease/contacts/services/names';
 import { callNumber as numberToCall } from '@unlease/contacts/services/phones';
@@ -26,7 +26,7 @@ import { callNumber, textNumber } from '@app/reach';
 import { haptic } from '@shared/platform/haptics';
 
 import { AnimatedOrganic, AppText, GroundSlice, Icon, Organic, Tappable } from '@shared/ui/components';
-import { duration, listPressDelay, spatial, standard } from '@shared/ui/theme/motion';
+import { duration, listPressDelay, spatial, standard, SWIPE_SHARE } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -35,13 +35,39 @@ import { RAIL_WIDTH } from './LetterRail';
 
 export const ROW_HEIGHT = 60;
 
-/** Past this share of the screen the slide acts once let go; beyond it the row follows the hand at a third of its speed. */
-const THRESHOLD = 0.3;
+/**
+ * Where a row lies in its letter's panel (`placeOf`): the panel is drawn row by row, so a list of
+ * fixed heights keeps its letters pinned and its jumps exact. Its first and last rows add the panel's
+ * inset (6 from its edge, less the rows' own half gap).
+ */
+export type PanelPlace = 'first' | 'middle' | 'last' | 'only';
+const PANEL_PAD = 6 - GEOMETRY.rowGap / 2;
+/** The panel's edge from the screen's (as the event form's panels and the settings groups). */
+export const PANEL_EDGE = 12;
+
+/** A row's height in its panel. */
+export function rowHeight(place: PanelPlace | null): number {
+  return ROW_HEIGHT + (place === 'first' || place === 'only' ? PANEL_PAD : 0) + (place === 'last' || place === 'only' ? PANEL_PAD : 0);
+}
+
+/** Where the row at `index` of a run of `count` lies in its panel. */
+export function placeOf(index: number, count: number): PanelPlace {
+  return count === 1 ? 'only' : index === 0 ? 'first' : index === count - 1 ? 'last' : 'middle';
+}
+
+const R = RADII.panel;
+/** The panel's paper, row by row: its corners on its first and last rows only. */
+const PANEL_CORNERS: Record<PanelPlace, readonly [number, number, number, number]> = { first: [R, R, 0, 0], middle: [0, 0, 0, 0], last: [0, 0, R, R], only: [R, R, R, R] };
+/** The row's press and slide, concentric with the panel's corners where it meets them. */
+const ROW_SHAPES = { first: SHAPES.panelRowFirst, middle: SHAPES.tab, last: SHAPES.panelRowLast, only: SHAPES.panelRowOnly } as const;
+
+/** Past this share of the screen (the suite's swipe, `SWIPE_SHARE`) the slide acts once let go; beyond it the row follows the hand at a third of its speed. */
+const THRESHOLD = SWIPE_SHARE;
 const RESIST = 0.35;
 
 type Way = 'call' | 'text';
 
-function ContactRowComponent({ id, order, detail = false, railed = false, onOpen }: { id: string; order: SortOrder; detail?: boolean; /** Beside the letters' rail: its press stops short of it. */ railed?: boolean; onOpen: (id: string) => void }) {
+function ContactRowComponent({ id, order, detail = false, railed = false, place = null, onOpen }: { id: string; order: SortOrder; detail?: boolean; /** Beside the letters' rail: its press stops short of it. */ railed?: boolean; /** Its place in its letter's panel; null on the ground. */ place?: PanelPlace | null; onOpen: (id: string) => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const reduced = useReducedMotion();
@@ -121,11 +147,12 @@ function ContactRowComponent({ id, order, detail = false, railed = false, onOpen
 
   if (!contact) return null;
   const name = listName(contact, order);
+  const shape = place ? ROW_SHAPES[place] : SHAPES.tab;
   const meta = detail ? workLine(contact) || contact.phones[0]?.number || contact.emails[0]?.address || '' : '';
   const ink = theme.color.onActionContainer;
 
   const uncovered = number ? (
-    <AnimatedOrganic pointerEvents="none" shape={SHAPES.tab} style={[StyleSheet.absoluteFill, styles.hole, hole]}>
+    <AnimatedOrganic pointerEvents="none" shape={shape} style={[StyleSheet.absoluteFill, styles.hole, hole]}>
       <Animated.View style={[styles.side, start]}>
         <Icon name="phoneCall" size={24} color={ink} />
         <AppText variant="label" color={ink}>
@@ -141,20 +168,21 @@ function ContactRowComponent({ id, order, detail = false, railed = false, onOpen
     </AnimatedOrganic>
   ) : null;
 
-  return (
-    <View ref={slot} style={[styles.slot, railed ? styles.railed : null]}>
+  const row = (
+    <View ref={slot} style={[styles.slot, place ? styles.inPanel : railed ? styles.railed : null]}>
       {reduced ? null : uncovered}
       <GestureDetector gesture={pan}>
         <Animated.View style={strip}>
+          {/* Slid off its place, it takes its paper with it (the panel's, or the ground's slice under it), so what it uncovers reads. */}
           {lifted ? (
-            <Organic pointerEvents="none" shape={SHAPES.tab} style={[StyleSheet.absoluteFill, styles.lifted]}>
-              <GroundSlice top={top} />
+            <Organic pointerEvents="none" shape={shape} style={[StyleSheet.absoluteFill, styles.lifted, place ? styles.liftedPaper : null]}>
+              {place ? null : <GroundSlice top={top} />}
             </Organic>
           ) : null}
           <Tappable
             unstable_pressDelay={listPressDelay}
             onPress={() => onOpen(id)}
-            style={styles.row}
+            style={[styles.row, place ? styles.rowInPanel : null, corners(shape)]}
             accessibilityRole="link"
             accessibilityLabel={name}
             accessibilityActions={number ? [{ name: 'call', label: t('Appeler') }, { name: 'text', label: t('Écrire un SMS') }] : undefined}
@@ -181,6 +209,12 @@ function ContactRowComponent({ id, order, detail = false, railed = false, onOpen
       {reduced ? uncovered : null}
     </View>
   );
+  if (!place) return row;
+  return (
+    <Organic shape={PANEL_CORNERS[place]} style={[styles.panel, railed ? styles.panelRailed : null, place === 'first' || place === 'only' ? styles.panelTop : null, place === 'last' || place === 'only' ? styles.panelFoot : null]}>
+      {row}
+    </Organic>
+  );
 }
 
 const makeStyles = (theme: Theme) =>
@@ -189,7 +223,17 @@ const makeStyles = (theme: Theme) =>
     slot: { height: ROW_HEIGHT - GEOMETRY.rowGap, marginHorizontal: 8, marginVertical: GEOMETRY.rowGap / 2 },
     // Clear of the rail by the rows' gap.
     railed: { marginRight: RAIL_WIDTH + GEOMETRY.rowGap },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 16, height: ROW_HEIGHT - GEOMETRY.rowGap, paddingHorizontal: 12, paddingVertical: 8, ...corners(SHAPES.tab) },
+    // A letter's people lie on one sheet of paper, as a settings group's rows: 6 in from its edge, its corners on its first and last.
+    // A row slid aside stays inside its panel, clipped to its curve: it goes under the panel's edge, never over the letters' rail.
+    panel: { marginLeft: PANEL_EDGE, marginRight: PANEL_EDGE, overflow: 'hidden', backgroundColor: theme.color.paper },
+    panelRailed: { marginRight: RAIL_WIDTH + GEOMETRY.rowGap },
+    panelTop: { paddingTop: PANEL_PAD },
+    panelFoot: { paddingBottom: PANEL_PAD },
+    inPanel: { marginHorizontal: 6 },
+    liftedPaper: { backgroundColor: theme.color.paper },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 16, height: ROW_HEIGHT - GEOMETRY.rowGap, paddingHorizontal: 12, paddingVertical: 8 },
+    // In a panel, a list row's 10 (`ListRow`): the faces 29 from the screen's edge, under the letter.
+    rowInPanel: { paddingHorizontal: 10 },
     lifted: { overflow: 'hidden' },
     // What the slid row uncovers: a well in the primary's container, the glyph centred on the faces' column (20 + 8 of its 40).
     hole: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, backgroundColor: theme.color.actionContainer },

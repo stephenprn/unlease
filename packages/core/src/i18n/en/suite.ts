@@ -29,6 +29,8 @@ export const EN_SUITE: Dictionary = {
     'The app’s screens, and what Claude writes when it reads a link saved from this device: title, summary, details. A link already read keeps its language; “Read the page again” reads it in this one.',
   'Les écrans de l’application, et la langue dans laquelle Claude répond aux questions posées depuis cet appareil.': 'The app’s screens, and the language Claude answers questions asked from this device in.',
   'Les écrans de l’application, les jours, les mois et les rappels.': 'The app’s screens, the days, the months and the reminders.',
+  'Les écrans de l’application, les dates et les rappels.': 'The app’s screens, the dates and the reminders.',
+  'Les écrans de l’application et les dates écrites dans les pages.': 'The app’s screens and the dates written in pages.',
   'Les écrans de l’application, les dates et les noms des types de numéros.': 'The app’s screens, dates, and the names of number types.',
   'Bientôt disponible': 'Coming soon',
   'Claude': 'Claude',

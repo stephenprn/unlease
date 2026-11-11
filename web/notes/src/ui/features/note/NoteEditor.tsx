@@ -70,6 +70,7 @@ import { LabelMark } from '@shared/ui/components/LabelMark';
 import { Layer } from '@shared/ui/components/Layer';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { currentPage, openNote } from '../../commands';
 import { isApple, isEditable } from '@shared/ui/dom';
 import { parseRoute } from '@shared/ui/router';
@@ -157,6 +158,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const labels = useLibraryStore(s => s.labels);
   const now = useMinute();
   const narrow = useMedia(NARROW);
+  // The words dissolve under the bars as far as they run on beyond them; a drawing's tools sit on its sheet, nothing under them.
+  const scrollEdges = useScrollEdges({ top: true, bottom: !(note?.kind === 'drawing' && note.trashedAt === null) });
   // People are offered once this browser holds some (Contacts' records, synced as Carnet reads them), or the note names some.
   const hasPeople = useHasPeople();
   const titleId = useId();
@@ -467,6 +470,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     </>
   );
 
+  // What the note wears sits between the words and the bar; a drawing's tools between the strokes and it.
+  const chipped = note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0;
+  const docked = note.kind === 'drawing' && editable;
   return (
     <NoteHistoryContext.Provider value={history}>
       <Layer
@@ -531,7 +537,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             ) : null}
             {/* Covering papers lie still over the whole sheet; ruled ones scroll with the text they rule. */}
             {note.pattern && !ruled ? <span className={styles.paperLayer} data-pattern={note.pattern} aria-hidden="true" /> : null}
-            <div className={styles.scroll}>
+            {/* A drawing's tools stay frosted at its foot (`.dock`): nothing fades or blurs over them. */}
+            <div ref={scrollEdges} className={styles.scroll} data-docked={docked || undefined}>
               <div className={styles.sheet} data-kind={note.kind}>
               <PhotoGrid noteId={id} editable={editable} />
               <div className={styles.head}>
@@ -594,7 +601,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
               </div>
             </div>
             {/* What the note wears, at its foot above the bar that changes it, as on its card: never lost mid-sheet or after the ticked items. */}
-            {note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0 ? (
+            {chipped ? (
               <div className={styles.chips}>
                 {note.reminderAt !== null ? (
                   <button

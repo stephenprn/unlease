@@ -29,6 +29,7 @@
  */
 import { useEffectEvent, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 
+import { settingsPageOf, type SettingsPage } from '@unlease/core/services/settingsSearch';
 import type { GlyphName } from '@unlease/design/glyphs';
 
 /**
@@ -39,7 +40,8 @@ import type { GlyphName } from '@unlease/design/glyphs';
 export interface Routes {
   /** `/`: the app's home. */
   readonly home: object;
-  readonly settings: object;
+  /** Réglages: its overview (null), or one of its pages (`/notes/settings/appearance`, the look's). */
+  readonly settings: { readonly page: SettingsPage | null };
   /** The Administration, the server's settings for every app: its home (null) or one of its sections (`/notes/admin/backup`). */
   readonly admin: { readonly section: string | null };
   readonly notFound: object;
@@ -102,7 +104,8 @@ export const decodePart = (value: string): string => {
 export function parseRoute(path: string): Route {
   const clean = path.replace(/\/+$/, '') || '/';
   if (clean === '/') return { name: 'home' };
-  if (clean === `${appHome}/settings`) return { name: 'settings' };
+  if (clean === `${appHome}/settings`) return { name: 'settings', page: null };
+  if (clean === `${appHome}/settings/appearance`) return { name: 'settings', page: 'appearance' };
   if (clean === `${appHome}/admin`) return { name: 'admin', section: null };
   if (clean.startsWith(`${appHome}/admin/`)) {
     const admin = /^\/([\w-]+)$/.exec(clean.slice(`${appHome}/admin`.length));
@@ -126,10 +129,27 @@ export const paths = {
   get settings(): string {
     return `${appHome}/settings`;
   },
+  /** « Apparence », Réglages' page for the look: the theme, the paper's grain, the colours, the ground. */
+  get appearance(): string {
+    return `${appHome}/settings/appearance`;
+  },
   get admin(): string {
     return `${appHome}/admin`;
   },
 };
+
+/** Réglages' overview or one of its pages. */
+export function settingsPagePath(page: SettingsPage | null): string {
+  return page ? `${paths.settings}/${page}` : paths.settings;
+}
+
+/**
+ * Réglages at one of its sections, on the page that holds it: the look's on « Apparence »'s
+ * (`/notes/settings/appearance#ground`), the others on the overview (`/notes/settings#language`).
+ */
+export function settingsPath(section?: string | null): string {
+  return section ? `${settingsPagePath(settingsPageOf(section))}#${section}` : paths.settings;
+}
 
 /** The Administration's home, or one of its sections (`server`, `reading`, an app's `seerr`). */
 export function adminPath(section?: string | null): string {

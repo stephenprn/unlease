@@ -8,6 +8,8 @@
 import React, { createContext, forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef } from 'react';
 import { Keyboard, ScrollView, type ScrollViewProps, type View } from 'react-native';
 
+import { ScrollEdges, splitScrollStyle, type EdgeProps } from './ScrollEdges';
+
 type Box = React.ComponentRef<typeof View>;
 type Scroller = React.ComponentRef<typeof ScrollView>;
 
@@ -24,7 +26,7 @@ const ROOM = 8;
 /** How long after a field asked the keyboard's arrival, and the scroller's new height, still move it. */
 const KEYBOARD_WAIT_MS = 1200;
 
-export const RevealScrollView = forwardRef<Scroller, ScrollViewProps>(function RevealScrollView({ children, onLayout, ...rest }, ref) {
+export const RevealScrollView = forwardRef<Scroller, ScrollViewProps & EdgeProps>(function RevealScrollView({ children, onLayout, style, top, bottom, ...rest }, ref) {
   const scroller = useRef<Scroller>(null);
   const asked = useRef<{ node: Box; at: number } | null>(null);
   useImperativeHandle(ref, () => scroller.current!, []);
@@ -60,18 +62,23 @@ export const RevealScrollView = forwardRef<Scroller, ScrollViewProps>(function R
     return () => subscription.remove();
   }, [again]);
 
+  const { outer, inner } = splitScrollStyle(style);
   return (
     <RevealContext.Provider value={reveal}>
-      <ScrollView
-        ref={scroller}
-        onLayout={event => {
-          again();
-          onLayout?.(event);
-        }}
-        {...rest}
-      >
-        {children}
-      </ScrollView>
+      {/* The form's ends soften under the top bar and the keyboard while it runs on past them. */}
+      <ScrollEdges style={outer} top={top} bottom={bottom}>
+        <ScrollView
+          ref={scroller}
+          style={inner}
+          onLayout={event => {
+            again();
+            onLayout?.(event);
+          }}
+          {...rest}
+        >
+          {children}
+        </ScrollView>
+      </ScrollEdges>
     </RevealContext.Provider>
   );
 });

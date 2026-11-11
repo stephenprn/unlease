@@ -8,36 +8,43 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 
 import { getLocale, t } from '@unlease/core/i18n';
 import { ASK_STARTERS, askContext } from '@unlease/calendar/services/ask';
 import { EVENT_LIMITS, isOwn } from '@unlease/calendar/models/events';
-import { blankDraft, type EditScope } from '@unlease/calendar/services/editing';
-import { whenLine } from '@unlease/calendar/services/eventText';
+import type { GlyphName } from '@unlease/design/glyphs';
+import { blankDraft, keepLength, type EditScope, type EventDraft } from '@unlease/calendar/services/editing';
 import { birthdaysIn } from '@unlease/calendar/services/layers';
 import { findOccurrence, hiddenFeedIds, occurrencesIn, type Occurrence } from '@unlease/calendar/services/occurrences';
-import { addDays, deviceZone, instantToDay, instantToWall, isDay } from '@unlease/calendar/services/time';
+import { addDays, addMinutes, deviceZone, instantToDay, instantToWall, isDay } from '@unlease/calendar/services/time';
 import type { CalendarAskTurn } from '@unlease/calendar/sync/routes';
 
 import { useContactsStore } from '@contacts/app/store/library';
-import { useMinute } from '@shared/app/hooks/useMinute';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
 import { showSnack } from '@shared/app/store/ui';
 import { Button, Spinner } from '@shared/ui/components/Button';
+import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import layers from '@shared/ui/components/layers.module.css';
 import { Layer } from '@shared/ui/components/Layer';
+import { PlaceField } from '@shared/ui/components/PlaceField';
 import { Popover } from '@shared/ui/components/Popover';
+import { useUnsaved } from '@shared/ui/components/useUnsaved';
 import { navigate, type Route } from '@shared/ui/router';
 import { askCalendar } from '../../app/api';
 import { kindOf, LAYER_COLORS, useColorOf } from '../../app/hooks/useItems';
+import { useNow } from '../../app/hooks/useToday';
 import { mentionWords } from '../../app/names';
 import { addEvent } from '../../app/store/actions';
-import { closePeek, closeQuick, setAskOpen, useCalendarUi, type Anchor } from '../../app/store/calendarUi';
+import { closePeek, closeQuick, handDraft, setAskOpen, setQuickTimes, useCalendarUi, type Anchor, type QuickDraft } from '../../app/store/calendarUi';
 import { useCalendarStore } from '../../app/store/library';
 import { usePrefsStore } from '../../app/store/prefs';
 import styles from '../calendar.module.css';
 import { paths } from '../routes';
 import { ChoiceRows } from './ChoiceRows';
+import { DescriptionField } from './DescriptionField';
 import { duplicateOccurrence, EventDetails, PeekTools } from './EventDetails';
+import { DateField, FormRow, TimeField, useKnownPlaces } from './Fields';
 import { BirthdayDetails, PageDateDetails, ReminderDetails } from './LayerDetails';
+import { PeoplePicker } from './People';
 
 /** A rectangle on screen as an element a popover can stand by. */
 function AnchorBox({ anchor, anchorRef }: { anchor: Anchor; anchorRef: React.RefObject<HTMLSpanElement | null> }) {
@@ -146,46 +153,178 @@ function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
   );
 }
 
-/** The quick form of an event drawn on the grid (or a day of the month): its title, and « Plus d'options ». */
-function Quick({ start, end, anchor }: { start: string; end: string; anchor: Anchor }) {
+/** How wide the quick form stands, and how far from the slot it stands beside. */
+const QUICK_WIDTH = 440;
+const QUICK_GAP = 8;
+const QUICK_MARGIN = 8;
+
+/**
+ * Where the quick form stands, as Google's: beside the slot drawn (on its right, else on its left),
+ * its top on the slot's, slid up only as far as the window needs; with no room on either side (a
+ * day's wide column, a narrow window), under or over the slot. A popover drops under its anchor:
+ * beside the slot, the anchor is that side's edge from the window's top down to the slot's top.
+ */
+function besideSlot(slot: Anchor): { readonly anchor: Anchor; readonly align: 'start' | 'end' } {
+  const viewport = document.documentElement.clientWidth;
+  const height = Math.max(0, slot.top - 4);
+  const right = slot.left + slot.width + QUICK_GAP;
+  if (right + QUICK_WIDTH + QUICK_MARGIN <= viewport) return { anchor: { left: right, top: 0, width: 0, height }, align: 'start' };
+  const left = slot.left - QUICK_GAP;
+  if (left - QUICK_WIDTH >= QUICK_MARGIN) return { anchor: { left, top: 0, width: 0, height }, align: 'end' };
+  return { anchor: slot, align: 'start' };
+}
+
+/** A row of the quick form not filled yet: its glyph in the slot, what it adds; a press opens it into its field, in place. */
+function QuickRow({ icon, label, onOpen }: { icon: GlyphName; label: string; onOpen: () => void }) {
+  return (
+    <button type="button" className={styles.quickRow} onClick={onOpen}>
+      <Icon name={icon} size={22} />
+      <span className="t-body">{label}</span>
+    </button>
+  );
+}
+
+type QuickPart = 'place' | 'people' | 'description';
+
+/**
+ * The quick form of an event drawn on the grid (or a day of the month), as Google's: its title; its
+ * day and hours, which the span drawn follows; then its place, its people and its description, each a
+ * line until it is opened into its field (the whole form's own); « Plus d'options » carries all of it
+ * to the whole form. Entrée in a line saves (⌘/Ctrl + Entrée anywhere), Échap closes, asking first
+ * once something is typed; saved in one batch.
+ */
+function Quick({ quick }: { quick: QuickDraft }) {
+  const { start, end } = quick;
   const anchorRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Placed once as it opens: what is typed or picked in it never moves it.
+  const [placed] = useState(() => besideSlot(quick.anchor));
+  const [opening] = useState(() => ({ start, end }));
   const [title, setTitle] = useState('');
-  const now = useMinute();
+  const [place, setPlace] = useState('');
+  const [contactIds, setContactIds] = useState<readonly string[]>([]);
+  const [description, setDescription] = useState('');
+  const [opened, setOpened] = useState<readonly QuickPart[]>([]);
   const prefs = usePrefsStore();
-  const zone = deviceZone();
+  const { today } = useNow();
+  const known = useKnownPlaces();
   const allDay = isDay(start);
-  const reminders = allDay ? prefs.allDayReminders : prefs.reminders;
+  const draft: EventDraft = {
+    ...blankDraft(start, end, deviceZone(), allDay ? prefs.allDayReminders : prefs.reminders),
+    title: title.trim(),
+    place: place.trim(),
+    contactIds,
+    description,
+  };
+  const dirty = draft.title !== '' || draft.place !== '' || contactIds.length > 0 || description.trim() !== '' || start !== opening.start || end !== opening.end;
+  const unsaved = useUnsaved(dirty);
+  const open = (part: QuickPart): void => setOpened(current => [...current, part]);
   const save = (): void => {
-    addEvent({ ...blankDraft(start, end, zone, reminders), title: title.trim() });
+    addEvent(draft);
     closeQuick();
     showSnack(t('Événement enregistré'), undefined, { tone: 'success' });
   };
   const more = (): void => {
+    handDraft(draft);
     closeQuick();
-    navigate(paths.newEvent({ start, end, title: title.trim() || undefined }));
+    navigate(paths.newEvent({ start, end, title: draft.title || undefined }));
   };
-  const startAt = allDay ? 0 : new Date(start).getTime();
-  const when = whenLine(
-    allDay
-      ? { startAt: 0, endAt: 0, allDay: true, firstDay: start, lastDay: addDays(end, -1) }
-      : { startAt, endAt: new Date(end).getTime(), allDay: false, firstDay: start.slice(0, 10), lastDay: instantToDay(new Date(end).getTime() - 1) },
-    now,
-    prefs.twelveHours,
-  );
+  const setStart = (next: string): void => setQuickTimes(next, keepLength({ start, end }, next));
+  // Opened on a whole day (the month's), its switch says so and gives it hours, as the whole form's does.
+  const toggleAllDay = (): void => {
+    const day = start.slice(0, 10);
+    if (allDay) setQuickTimes(`${day}T09:00`, addMinutes(`${day}T09:00`, prefs.eventLength));
+    else setQuickTimes(day, addDays(end.slice(0, 10) > day ? end.slice(0, 10) : day, 1));
+  };
+  // An all-day event's last day as shown (its stored end is the day after); a timed one's end on its start's day, or the next.
+  const lastDay = allDay ? addDays(end, -1) : end.slice(0, 10);
+  const sameDay = !allDay && end.slice(0, 10) === start.slice(0, 10);
   return (
     <>
-      <AnchorBox anchor={anchor} anchorRef={anchorRef} />
-      <Popover open onDismiss={closeQuick} anchor={anchorRef} label={t('Nouvel événement')} width={360} initialFocus={inputRef}>
+      <AnchorBox anchor={placed.anchor} anchorRef={anchorRef} />
+      <Popover open onDismiss={unsaved.guard(closeQuick)} anchor={anchorRef} align={placed.align} label={t('Nouvel événement')} width={QUICK_WIDTH} className={styles.quickPanel} initialFocus={inputRef}>
         <form
           className={styles.quick}
           onSubmit={event => {
             event.preventDefault();
             save();
           }}
+          onKeyDown={event => {
+            // ⌘ or Ctrl + Entrée saves from the description too, as on the whole form.
+            if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              save();
+            }
+          }}
         >
           <input ref={inputRef} className={styles.titleInput} value={title} onChange={event => setTitle(event.target.value)} placeholder={t('Ajouter un titre')} aria-label={t('Titre')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" />
-          <span className="t-meta">{when}</span>
+          <FormRow icon="clock" label={t('Quand')} wide>
+            <div className={styles.whenLine}>
+              <div className={styles.whenGroup}>
+                <DateField value={start.slice(0, 10)} label={allDay ? t('Premier jour') : t('Jour de début')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${start.slice(10)}`)} />
+                {!allDay ? <TimeField value={start.slice(11, 16)} label={t('Heure de début')} twelveHours={prefs.twelveHours} onChange={clock => setStart(`${start.slice(0, 10)}T${clock}`)} /> : null}
+              </div>
+              {/* One day all day is its day alone; else the end, its day only when it is another. */}
+              {!allDay || lastDay !== start ? (
+                <>
+                  <span className={styles.whenDash} aria-hidden="true">
+                    –
+                  </span>
+                  <div className={styles.whenGroup} data-end="">
+                    {!allDay ? (
+                      <TimeField
+                        value={end.slice(11, 16)}
+                        label={t('Heure de fin')}
+                        from={sameDay ? start.slice(11, 16) : undefined}
+                        twelveHours={prefs.twelveHours}
+                        // A time before the start's ends the next day, as on the whole form.
+                        onChange={clock => setQuickTimes(start, `${end.slice(0, 10)}T${clock}` < start ? `${addDays(end.slice(0, 10), 1)}T${clock}` : `${end.slice(0, 10)}T${clock}`)}
+                      />
+                    ) : null}
+                    {allDay || !sameDay ? (
+                      <DateField
+                        value={lastDay}
+                        label={allDay ? t('Dernier jour') : t('Jour de fin')}
+                        weekStart={prefs.weekStart}
+                        today={today}
+                        // Never before the start: an earlier day keeps the end where it was.
+                        onChange={day => setQuickTimes(start, allDay ? addDays(day < start ? start : day, 1) : `${day}${end.slice(10)}` > start ? `${day}${end.slice(10)}` : end)}
+                      />
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+            </div>
+            {isDay(opening.start) ? (
+              <div className={styles.whenOptions}>
+                <button type="button" role="switch" aria-checked={allDay} className={styles.switchRow} onClick={toggleAllDay}>
+                  <SwitchMark checked={allDay} />
+                  <span className="t-body">{t('Toute la journée')}</span>
+                </button>
+              </div>
+            ) : null}
+          </FormRow>
+          {opened.includes('place') ? (
+            <FormRow icon="mapPin" label={t('Lieu')} wide>
+              <PlaceField ariaLabel={t('Lieu')} value={place} onChange={next => setPlace(next.slice(0, EVENT_LIMITS.place))} known={known} placeholder={t('Ajouter un lieu')} autoFocus />
+            </FormRow>
+          ) : (
+            <QuickRow icon="mapPin" label={t('Ajouter un lieu')} onOpen={() => open('place')} />
+          )}
+          {opened.includes('people') ? (
+            <FormRow icon="people" label={t('Avec')} wide>
+              <PeoplePicker value={contactIds} max={EVENT_LIMITS.contacts} onChange={setContactIds} autoFocus />
+            </FormRow>
+          ) : (
+            <QuickRow icon="people" label={t('Ajouter des personnes')} onOpen={() => open('people')} />
+          )}
+          {opened.includes('description') ? (
+            <FormRow icon="text" label={t('Description')} wide>
+              <DescriptionField markup={description} onChange={setDescription} autoFocus />
+            </FormRow>
+          ) : (
+            <QuickRow icon="text" label={t('Ajouter une description')} onOpen={() => open('description')} />
+          )}
           <div className={styles.formFoot}>
             <Button kind="text" onClick={more}>
               {t('Plus d’options')}
@@ -196,6 +335,7 @@ function Quick({ start, end, anchor }: { start: string; end: string; anchor: Anc
           </div>
         </form>
       </Popover>
+      {unsaved.dialog}
     </>
   );
 }
@@ -375,7 +515,7 @@ export function CalendarOverlays(_props: { route: Route; pagePath: string }) {
   return (
     <>
       {peek ? <Peek key={peek.key} peekKey={peek.key} anchor={peek.anchor} /> : null}
-      {quick ? <Quick key={`${quick.start}|${quick.end}`} start={quick.start} end={quick.end} anchor={quick.anchor} /> : null}
+      {quick ? <Quick key={quick.id} quick={quick} /> : null}
       <ScopeDialog />
       <AskPanel />
     </>

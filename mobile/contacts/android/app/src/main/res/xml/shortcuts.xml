@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Contacts' static shortcuts (a long press on its icon).
+  Each opens a link of the app through ShortcutActivity (mobile/shared/android, launch/), which hands it
+  to MainActivity as a widget's tap is: Android opens a static shortcut clearing the app's task, the
+  trampoline takes that instead. Named by every launcher entry (tools/icons/build_android_drawables.mjs);
+  their icons are generated there too (ic_shortcut_*), their words are values/ and values-fr/.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="contact"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_contact"
+        android:shortcutShortLabel="@string/shortcut_contact_short"
+        android:shortcutLongLabel="@string/shortcut_contact_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-contacts://new"
+            android:targetPackage="com.stephenprn.contacts"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="favorites"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_favorites"
+        android:shortcutShortLabel="@string/shortcut_favorites_short"
+        android:shortcutLongLabel="@string/shortcut_favorites_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-contacts://favorites"
+            android:targetPackage="com.stephenprn.contacts"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="birthdays"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_birthdays"
+        android:shortcutShortLabel="@string/shortcut_birthdays_short"
+        android:shortcutLongLabel="@string/shortcut_birthdays_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-contacts://birthdays"
+            android:targetPackage="com.stephenprn.contacts"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-contacts://search"
+            android:targetPackage="com.stephenprn.contacts"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+</shortcuts>

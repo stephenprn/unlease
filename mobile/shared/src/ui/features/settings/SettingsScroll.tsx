@@ -7,6 +7,8 @@
 import React, { createContext, useCallback, useContext, useRef } from 'react';
 import { ScrollView, type LayoutChangeEvent, type ScrollViewProps } from 'react-native';
 
+import { ScrollEdges, splitScrollStyle } from '../../components/ScrollEdges';
+
 type Report = (anchor: string, y: number) => void;
 
 const AnchorContext = createContext<Report | null>(null);
@@ -14,7 +16,7 @@ const AnchorContext = createContext<Report | null>(null);
 /** Over the section landed on, the room the screen's list keeps at its top (its 12 of padding). */
 const LAND_GAP = 12;
 
-export function SettingsScroll({ section, children, onScrollBeginDrag, ...props }: ScrollViewProps & { readonly section?: string | null }) {
+export function SettingsScroll({ section, children, onScrollBeginDrag, style, ...props }: ScrollViewProps & { readonly section?: string | null }) {
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const moved = useRef(false);
   const report = useCallback(
@@ -25,18 +27,22 @@ export function SettingsScroll({ section, children, onScrollBeginDrag, ...props 
     },
     [section],
   );
+  const { outer, inner } = splitScrollStyle(style);
   return (
     <AnchorContext.Provider value={report}>
-      <ScrollView
-        ref={scroll}
-        {...props}
-        onScrollBeginDrag={event => {
-          moved.current = true;
-          onScrollBeginDrag?.(event);
-        }}
-      >
-        {children}
-      </ScrollView>
+      <ScrollEdges style={outer}>
+        <ScrollView
+          ref={scroll}
+          style={inner}
+          {...props}
+          onScrollBeginDrag={event => {
+            moved.current = true;
+            onScrollBeginDrag?.(event);
+          }}
+        >
+          {children}
+        </ScrollView>
+      </ScrollEdges>
     </AnchorContext.Provider>
   );
 }

@@ -74,9 +74,9 @@ export function useGlobalKeys(enabled = true): void {
         run(() => setShortcutsOpen(true));
         return;
       }
-      // The app's keys, wherever one is pressed: a note (C), a page (P).
+      // The app's keys, wherever one is pressed: its thing made (C, in every app), a checklist (L).
       const key = event.key.toLowerCase();
-      const command = theApp().commands?.find(entry => entry.key === key);
+      const command = theApp().commands?.find(entry => entry.key === key || entry.aliases?.includes(key));
       if (command) {
         run(command.run);
         return;

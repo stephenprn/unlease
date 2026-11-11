@@ -1,7 +1,8 @@
 /**
- * Pages' settings: the way to the Administration (the server, Claude, backups and files), the theme,
- * the colours and the ground, the language, and the bin. What this phone alone keeps; the server's
- * settings are the Administration's.
+ * Pages' settings, in every app's order (Pages has none of its own yet): « Apparence » (one row
+ * opening its own page: the theme, the paper's grain, the colours and the ground), the language, the
+ * bin, and the way to the Administration last (the server, Claude, backups and files). What this
+ * phone alone keeps; the server's settings are the Administration's.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -15,21 +16,18 @@ import { emptyPagesBin } from '@app/store/pages';
 import { showSnack } from '@shared/app/store/uiStore';
 
 import { AppText, Dialog, Ground, ListRow, TopBar } from '@shared/ui/components';
-import { ColorsSection, GroundSection, useAppearanceEditors } from '@shared/ui/features/appearance/AppearanceSections';
-import { useServicesCssHint } from '@shared/ui/features/appearance/ServicesCssSheet';
-import { AdminEntrySection, LanguageSection, ThemeSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
+import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
 
 export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
-  const { editColor, editGradient, editors } = useAppearanceEditors();
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const binned = useTrashedPages().length;
-  useServicesCssHint();
 
   return (
     <View style={styles.screen}>
@@ -37,12 +35,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
-
-        <ThemeSection />
-        <ColorsSection onEdit={editColor} />
-        <GroundSection onEditColor={() => editColor('ground')} onEditGradient={editGradient} />
-
+        <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
         <LanguageSection />
 
         <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
@@ -53,6 +46,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined}
           />
         </Section>
+
+        {/* What is set once and rarely, last. */}
+        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
         <AppText variant="meta" style={styles.about}>
           {t('{app} · vos documents, chez vous', { app: APP_NAME })}
@@ -72,10 +68,13 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           showSnack(t('{deleted} définitivement', { deleted: plural(pages, 'page supprimée', 'pages supprimées') }), undefined, { tone: 'success' });
         }}
       />
-
-      {editors}
     </View>
   );
+}
+
+/** Réglages' « Apparence » page, from its row or a search. */
+export function AppearanceSettingsScreen({ navigation, route }: ScreenProps<'Appearance'>) {
+  return <AppearanceScreen section={route.params?.section} onBack={() => navigation.goBack()} />;
 }
 
 const makeStyles = (theme: Theme) =>

@@ -19,6 +19,7 @@ import { showUndo } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { Emblem } from '@shared/ui/components/Emblem';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
 import { ReadingTrack } from '../links/ReadingTrack';
@@ -112,7 +113,7 @@ function ReviewBody({ id, titleId, onDismiss }: { id: string; titleId: string; o
     ) : failure !== null || phase.kind === 'failed' ? (
       <p className={`${styles.reviewNote} ${styles.reviewError} t-body`} role="alert">{t('Claude n’a pas pu relire la collection : {reason}', { reason: failure ? t(failure) : '' })}</p>
     ) : phase.moves.length === 0 ? (
-      <p className={`${styles.reviewNote} t-body`}>{t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })}</p>
+      <EmptyLine glyph="check" size="body" text={t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })} className={styles.reviewNote} role="status" />
     ) : (
       <>
         <p className={`${styles.choiceLead} t-body`}>{t('Claude propose d’en sortir {links} de {collection}. Décochez ceux qui y restent.', { links: plural(phase.moves.length, 'lien'), collection: shownTitle(line) })}</p>

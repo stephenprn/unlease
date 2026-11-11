@@ -15,7 +15,7 @@ import { markupToPlain } from '@unlease/core/services/richText';
 import { targetTitle } from '@app/hooks/usePages';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
-import { AppText, Tappable } from '@shared/ui/components';
+import { AppText, EmptyLine, Tappable } from '@shared/ui/components';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
@@ -57,11 +57,7 @@ function TocBlockComponent() {
     [key],
   );
   if (lines.length === 0) {
-    return (
-      <AppText variant="meta" style={styles.empty}>
-        {t('Ajoutez des titres à la page : ils apparaîtront ici.')}
-      </AppText>
-    );
+    return <EmptyLine glyph="contents" text={t('Ajoutez des titres à la page : ils apparaîtront ici.')} style={styles.empty} />;
   }
   return (
     <View>

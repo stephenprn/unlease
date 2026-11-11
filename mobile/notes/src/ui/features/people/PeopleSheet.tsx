@@ -13,7 +13,7 @@ import { contactName, workLine } from '@unlease/contacts/services/names';
 import { PEOPLE_MAX } from '@unlease/notes/sync/types';
 import { useNotePeople, usePeopleFound } from '@app/hooks/useNotePeople';
 
-import { AppText, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '../../components';
+import { EmptyLine, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '../../components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { PersonFace } from './PersonFace';
 
@@ -61,7 +61,7 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
       <View style={styles.field}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher une personne')} accessibilityLabel={t('Chercher une personne')} autoCorrect={false} returnKeyType="search" />
       </View>
-      <SheetScroll>
+      <SheetScroll top={false}>
         {!typing && chosen.length > 0 ? (
           <>
             {chosen.map(person => (
@@ -74,9 +74,7 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
           <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
         ))}
         {others.length === 0 && (typing || chosen.length === 0) ? (
-          <AppText variant="meta" style={styles.empty}>
-            {typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')}
-          </AppText>
+          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')} slot={40} gap={16} style={styles.empty} />
         ) : null}
       </SheetScroll>
     </Sheet>
@@ -88,5 +86,6 @@ const styles = StyleSheet.create({
   field: { paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
   // From the rows' faces to their end (a row's 6 and 10: the sheet's column).
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 4, marginHorizontal: SHEET_INSET },
+  // Its glyph in the faces' slot, its words on the names' column.
   empty: { paddingHorizontal: SHEET_INSET, paddingVertical: 12 },
 });

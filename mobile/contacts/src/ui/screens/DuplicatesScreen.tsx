@@ -6,7 +6,7 @@
  * on the web).
  */
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t, tc, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -18,8 +18,9 @@ import { ignoreDuplicates } from '@app/store/contactsUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmptyState, Ground, IconButton, Organic, Tappable, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeFlatList, EmptyState, Ground, IconButton, Organic, Tappable, TopBar } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
+import { listPressDelay } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { GEOMETRY } from '@unlease/design/palette';
@@ -41,7 +42,7 @@ function Member({ id, kept, onOpen }: { id: string; kept: boolean; onOpen: (id: 
   const name = contactName(contact);
   const detail = [workLine(contact), contact.phones[0]?.number, contact.emails[0]?.address].filter(Boolean).join(' · ');
   return (
-    <Tappable onPress={() => onOpen(id)} style={styles.member} accessibilityRole="link" accessibilityLabel={name}>
+    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(id)} style={styles.member} accessibilityRole="link" accessibilityLabel={name}>
       <ContactAvatar contact={contact} size={40} />
       <View style={styles.fill}>
         <AppText variant="bodyStrong" numberOfLines={1}>
@@ -101,7 +102,7 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Doublons')} onBack={() => navigation.goBack()} actions={groups.length > 1 ? <IconButton icon="people" label={t('Tout fusionner')} onPress={mergeAll} /> : undefined} />
-      <FlatList
+      <EdgeFlatList
         data={groups}
         keyExtractor={group => group.ids.join(',')}
         contentContainerStyle={styles.content}
@@ -132,5 +133,6 @@ const makeStyles = (theme: Theme) =>
     member: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 56, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 6, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     fill: { flex: 1 },
     // Its end in line with the rows' (« Gardé », 16 in), as far from the card's foot as the reasons from its top.
-    buttons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
+    // « Fusionner » in the card's corner, as far in from its foot as from its side (16: its 8 and the card's).
+    buttons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
   });

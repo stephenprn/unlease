@@ -16,6 +16,7 @@ import { useContactsStore } from '../../app/store/library';
 import { useQuery } from '@shared/app/store/search';
 import { showSnack, showUndo } from '@shared/app/store/ui';
 import { Confirm } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelCheck } from '@shared/ui/components/LabelMark';
 import { Popover } from '@shared/ui/components/Popover';
@@ -38,9 +39,9 @@ export function LabelsPopover({ ids, open, anchor, label, onDismiss }: { ids: re
   const labels = useLiveLabels();
   const contacts = useContactsStore(s => s.contacts);
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={label} align="end" className={shell.bulkLabels}>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={label} align="end" className={shell.bulkLabels} rows>
       {labels.length === 0 ? (
-        <p className={`${shell.bulkEmpty} t-meta`}>{t('Aucun libellé. Créez-en depuis la navigation.')}</p>
+        <EmptyLine glyph="tag" text={t('Aucun libellé. Créez-en depuis la navigation.')} className={shell.bulkEmpty} />
       ) : (
         <ul className={shell.bulkList}>
           {labels.map(label => {

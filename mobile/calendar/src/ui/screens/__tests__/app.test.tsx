@@ -4,10 +4,11 @@
  * `unlease-agenda://` links open an event and the form filled from a draft; an event is created,
  * opened, its reminders changed one at a time and its labels ticked in place, saved with a slip that
  * takes it back, and a repeating one asks which occurrences a deletion takes; the bin restores with
- * « Annuler » and asks before deleting for good; « Demander à Claude » shows only while offered.
+ * « Annuler » and asks before deleting for good; « Demander à Claude » shows only while offered (the
+ * drawer's, quick add's once Claude has a key), and its address goes back to the calendar while off.
  */
 import { Linking } from 'react-native';
-import { act } from 'react-test-renderer';
+import { act, type ReactTestInstance } from 'react-test-renderer';
 
 import { blankDraft } from '@unlease/calendar/services/editing';
 import { reminderWords } from '@unlease/calendar/services/eventText';
@@ -20,6 +21,7 @@ import { addEvent, createLabel } from '@app/store/actions';
 import { showView } from '@app/store/calendarUi';
 import { useLibraryStore, writeLocal } from '@app/store/libraryStore';
 import { navigationRef } from '@ui/navigation/navigationRef';
+import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 
 import { state as suite, __reset as resetSuite } from '../../../../../shared/__mocks__/NativeSuiteLink';
 import { boot, fakeFetch, inputs, pressableWithText, pressables, settle, textOf, unmountAll } from './harness';
@@ -327,5 +329,72 @@ describe('Agenda, its root', () => {
     await settle();
     expect(textOf(tree)).toContain('Demander à Claude');
     await act(async () => setDrawerOpen(false));
+  });
+
+  it('offers Claude’s reading of a few words only once the server has said Claude has a key', async () => {
+    const tree = await boot({ onboarded: true });
+    await act(async () => {
+      setServer({ url: 'https://suite.test', token: 'jeton' });
+      useSettingsStore.setState({ reading: null });
+      navigationRef.navigate('Calendar', { words: 'Anniversaire de Paul' });
+    });
+    await settle();
+    expect(inputs(tree, 'L’événement en quelques mots')[0]!.props.value).toBe('Anniversaire de Paul');
+    expect(textOf(tree)).toContain('Aucune date reconnue');
+    // Not known yet, then no key: nothing of Claude.
+    expect(textOf(tree)).not.toContain('Demander à Claude');
+    await act(async () => {
+      useSettingsStore.setState({ reading: false });
+    });
+    expect(textOf(tree)).not.toContain('Demander à Claude');
+    await act(async () => {
+      useSettingsStore.setState({ reading: true });
+    });
+    expect(textOf(tree)).toContain('Demander à Claude');
+  });
+
+  it('sends its address for questions back to the calendar while the server has said no', async () => {
+    await boot({ onboarded: true });
+    await act(async () => {
+      setServer({ url: 'https://suite.test', token: 'jeton' });
+      useSettingsStore.setState({ reading: true, calendarAsk: true });
+      navigationRef.navigate('Ask');
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Ask');
+    await act(async () => {
+      useSettingsStore.setState({ reading: false });
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Calendar');
+  });
+
+  it('puts the calendar’s own first in Réglages, the look one row opening its page, the Administration last', async () => {
+    const tree = await boot({ onboarded: true });
+    await act(async () => {
+      (navigationRef.navigate as (...args: unknown[]) => void)('Settings');
+    });
+    await settle();
+    // Réglages' own words (the drawer names the Administration too).
+    const textIn = (node: ReactTestInstance): string => node.children.map(child => (typeof child === 'string' ? child : textIn(child))).join(' ');
+    const overview = textIn(tree.root.findByType(SettingsScroll));
+    // The calendar's own first, then « Apparence », « Langue », « Données », and the way to the Administration last.
+    const order = ['La semaine commence le', 'Apparence', 'Langue', 'Données', 'Administration'].map(words => overview.indexOf(words));
+    expect(order.every(at => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(overview).not.toContain('Palettes');
+    // Its row opens « Apparence »'s page: the theme and the paper's grain, the colours, the ground.
+    await act(async () => {
+      pressables(tree, 'Apparence')[0]!.props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Appearance');
+    for (const words of ['Thème', 'Grain du papier', 'Palettes', 'Couleurs unies', 'Grain sur le fond']) expect(textOf(tree)).toContain(words);
+    // Back is Réglages.
+    await act(async () => {
+      navigationRef.goBack();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Settings');
   });
 });

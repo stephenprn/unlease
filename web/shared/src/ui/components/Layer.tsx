@@ -309,7 +309,9 @@ function LayerBody({
             {sheet ? (
               <>
                 <div className={styles.sheetHandle} aria-hidden="true" onPointerDown={handle.onPointerDown} onPointerMove={handle.onPointerMove} onPointerUp={handle.onPointerUp} onPointerCancel={handle.onPointerCancel} />
-                <div className={styles.sheetBody}>{children}</div>
+                <div className={styles.sheetBody} data-scroller="">
+                  {children}
+                </div>
               </>
             ) : (
               children

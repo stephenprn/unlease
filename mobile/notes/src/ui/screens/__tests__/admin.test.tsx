@@ -243,10 +243,11 @@ describe('the apps the server runs', () => {
 });
 
 describe('the other services’ sheets', () => {
+  /** Réglages' « Apparence » page, where the ground's foot leads to them. */
   async function openSettings(): Promise<ReactTestRenderer> {
     const tree = await openAdmin();
     await act(async () => {
-      (navigationRef.navigate as (...args: unknown[]) => void)('Settings');
+      (navigationRef.navigate as (...args: unknown[]) => void)('Appearance');
       jest.advanceTimersByTime(400);
     });
     await settle();

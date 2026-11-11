@@ -15,7 +15,7 @@
  * Reopened mid-setup, it resumes after the welcome.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, Linking, StyleSheet, View } from 'react-native';
 import Animated, { Keyframe, LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
@@ -62,7 +62,7 @@ import { connectedSibling, findSiblings, type Sibling } from '@shared/app/suiteL
 import { checkServer, fetchAdminStatus, saveServerSettings, SyncError, type Health } from '@shared/app/sync/transport';
 import { startSync, stopSync } from '@shared/app/sync/syncManager';
 
-import { AppText, Button, Collage, Dialog, FormMessage, Ground, Icon, ListRow, Organic, Tappable, TextField, useForm } from '../components';
+import { AppText, Button, Collage, Dialog, EdgeScrollView, FormMessage, Ground, Icon, ListRow, Organic, PanelTappable, placedRow, TextField, useForm, type RowPlace } from '../components';
 import { useKeyboardVisible } from '../components/useKeyboardVisible';
 import { BACKUP_INFO, BackupSection } from '../features/admin/BackupSection';
 import { ClaudeSection, type ClaudeExtra } from '../features/admin/ClaudeSection';
@@ -370,12 +370,12 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
           <Welcome app={app} siblings={siblings} onConnected={connected} onLater={() => go('appearance')} />
         ) : (
           // Scrolls below the status bar, not under it (the ground still lies behind the bar).
-          <ScrollView key={`${step}:${task ?? ''}`} style={{ marginTop: insets.top }} contentContainerStyle={[styles.content, { paddingTop: 24 }]} keyboardShouldPersistTaps="handled">
+          <EdgeScrollView key={`${step}:${task ?? ''}`} style={{ marginTop: insets.top }} contentContainerStyle={[styles.content, { paddingTop: 24 }]} keyboardShouldPersistTaps="handled">
             <Animated.View entering={place.back ? STEP_BACK : STEP_ON} style={styles.step}>
               <StepHead app={app} steps={steps} step={step} task={task} status={admin.status} />
               {body()}
             </Animated.View>
-          </ScrollView>
+          </EdgeScrollView>
         )}
       </LayoutAnimationConfig>
 
@@ -406,12 +406,13 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
  * for an announced one, which takes no tick), what it does, and its box at the end (ink when open,
  * the second ink ticked, never matcha). The last app on stays, and says why.
  */
-function AppCard({ choice, last, busy, onPress }: { choice: SetupAppChoice; last: boolean; busy: boolean; onPress: () => void }) {
+function AppCard({ choice, last, busy, onPress, place }: { choice: SetupAppChoice; last: boolean; busy: boolean; onPress: () => void; place?: RowPlace | null }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const fixed = choice.soon || choice.locked || last;
   return (
-    <Tappable
+    <PanelTappable
+      place={place}
       onPress={fixed || busy ? undefined : onPress}
       disabled={fixed || busy}
       // This phone's app and the last one on read as chosen, not faded; an announced one fades once (`soon`).
@@ -435,25 +436,29 @@ function AppCard({ choice, last, busy, onPress }: { choice: SetupAppChoice; last
           <Icon name={choice.checked ? 'boxChecked' : 'box'} size={26} color={choice.checked ? theme.color.inkMuted : theme.color.ink} />
         </View>
       )}
-    </Tappable>
+    </PanelTappable>
   );
 }
 
 /** A row of "Votre serveur": its state's dot, what it is, what it holds now (or would do), the way in. */
-function TaskRow({ line, onPress }: { line: SetupTaskLine; onPress: () => void }) {
+function TaskRow({ line, onPress, place }: { line: SetupTaskLine; onPress: () => void; place?: RowPlace | null }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable onPress={onPress} accessibilityLabel={line.title} accessibilityValue={{ text: line.meta }} style={styles.task}>
+    <PanelTappable place={place} onPress={onPress} accessibilityLabel={line.title} accessibilityValue={{ text: line.meta }} style={styles.task}>
       <View style={[styles.taskDot, { backgroundColor: toneColor(theme, line.tone) }]} />
       <View style={styles.flex}>
         <AppText variant="bodyStrong">{line.title}</AppText>
         <AppText variant="meta">{line.meta}</AppText>
       </View>
       <Icon name="chevronRight" size={20} color={theme.color.inkMuted} />
-    </Tappable>
+    </PanelTappable>
   );
 }
+
+// Their sheet tells its first and last where they lie.
+placedRow(AppCard);
+placedRow(TaskRow);
 
 /**
  * Where the setup stands (the app's mark and name over « Mise en route · Étape n sur m », as on the
@@ -575,7 +580,7 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
   const words = sibling ? siblingConnectionWords(sibling.app, sibling.server.url) : null;
 
   return (
-    <ScrollView style={{ marginTop: insets.top }} contentContainerStyle={[styles.welcome, { paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
+    <EdgeScrollView style={{ marginTop: insets.top }} contentContainerStyle={[styles.welcome, { paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
       {/* The interface's language, named in itself. */}
       <View style={styles.language}>
         <Button kind="text" icon="globe" label={LOCALE_NAMES[other]} onPress={() => setInterfaceLocale(other)} />
@@ -636,7 +641,7 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
         <AppText variant="meta">{t('Pas encore de serveur ?')}</AppText>
         <Button kind="text" small label={t('Le guide d’installation')} onPress={() => void Linking.openURL(SELF_HOSTING_GUIDE)} />
       </View>
-    </ScrollView>
+    </EdgeScrollView>
   );
 }
 

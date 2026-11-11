@@ -29,7 +29,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { contactPlace, eventPlace, notesPlace, openInApp } from '@shared/app/openApp';
 import { useMinute } from '@shared/app/hooks/useMinute';
 
-import { AppText, Button, EmptyState, Ground, Icon, IconButton, Menu, Organic, Tappable } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyState, Ground, Icon, IconButton, Menu, Organic, Tappable } from '@shared/ui/components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
 import { useKeyboardTop } from '@shared/ui/components/useKeyboardVisible';
 import { BlockBar } from '../features/pages/BlockBar';
@@ -534,7 +534,7 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
           onLayout={() => frame.current?.measureInWindow((_x, y, _width, height) => setFrameBottom(y + height))}
           style={[styles.fill, { paddingBottom: keyboardPad }]}
         >
-          <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
+          <EdgeScrollView ref={scroll} keyboardShouldPersistTaps="handled" onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
             <View style={styles.pageBar}>
               <Breadcrumb id={id} onOpen={openPage} onFold={() => setFolding(true)} />
               <Edited id={id} />
@@ -585,7 +585,7 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
             />
             {/* The events that mention the page, in Agenda. */}
             <EventsMentioning type="page" id={id} />
-          </ScrollView>
+          </EdgeScrollView>
           {editing ? <BlockBar /> : null}
         </View>
         <PageSheets page={id} openPage={openPage} />

@@ -10,7 +10,7 @@ import { AdminScreen } from '../screens/AdminScreen';
 import { DrawingScreen } from '../screens/DrawingScreen';
 import { PageScreen } from '../screens/PageScreen';
 import { PagesScreen } from '../screens/PagesScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
 import { SetupScreen } from '../screens/SetupScreen';
 import { TrashScreen } from '../screens/TrashScreen';
 import type { RootStackParamList } from './types';
@@ -29,10 +29,19 @@ export function blockFromHash(path: string): string {
   return block ? `${base}${base.includes('?') ? '&' : '?'}block=${encodeURIComponent(block)}` : base;
 }
 
+/** The launcher's shortcuts (res/xml/shortcuts.xml): `new` and `search`, read as the home's `capture`. */
+export function capturePath(path: string): string {
+  const asked = /^\/?(new|search)\/?$/.exec(path)?.[1];
+  if (asked === 'new') return '?capture=page';
+  if (asked === 'search') return '?capture=search';
+  return path;
+}
+
 /**
  * What another app of the suite opens here (`openInApp`, Carnet's « Pages » row and its pages
  * cited in notes): `unlease-pages://page/<id>` (`#block-<id>` or `?block=<id>` for a block),
- * `trash`, `settings`, `admin`; nothing after the scheme is the home.
+ * `trash`, `settings`, `admin`; nothing after the scheme is the home; `new` a new page and
+ * `search` the home's search (the launcher's shortcuts).
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [`${APP_SCHEME}://`],
@@ -47,7 +56,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Admin: 'admin/:section?',
     },
   },
-  getStateFromPath: (path, options) => getStateFromPath(blockFromHash(path), options),
+  getStateFromPath: (path, options) => getStateFromPath(capturePath(blockFromHash(path)), options),
 };
 
 /**
@@ -66,6 +75,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Drawing" component={DrawingScreen} />
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
     </Stack.Navigator>
   );

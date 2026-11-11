@@ -74,6 +74,7 @@ function PlaceFieldComponent({ label, accessibilityLabel, value, onChangeText, o
         </AppText>
       ) : null}
       <Tappable
+        frost
         onPress={open}
         style={[styles.field, { borderColor: problem ? theme.color.danger : theme.color.edge, borderWidth: problem ? 2 : 1, backgroundColor: theme.color.fieldVeil }]}
         accessibilityRole="button"

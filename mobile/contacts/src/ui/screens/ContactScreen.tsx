@@ -14,7 +14,7 @@
  * At the foot, the events they are in and the pages and notes that mention them.
  */
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 
 import { t, tc } from '@unlease/core/i18n';
@@ -41,7 +41,7 @@ import { mapsChoiceName, useMapsChoice } from '@shared/app/store/mapsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, EmptyState, Ground, Icon, IconButton, LabelMark, Menu, Organic, SwitchMark, Tappable, TopBar, type MenuItem } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyLine, EmptyState, Ground, Icon, IconButton, LabelMark, Menu, Organic, SwitchMark, Tappable, TopBar, type MenuItem } from '@shared/ui/components';
 import { decelerate, duration } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -357,7 +357,7 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
           )
         }
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         {trashed ? (
           // As on the web: the page says it is in the bin, and brings it back.
           <Organic outline="panel" style={styles.binNotice}>
@@ -419,15 +419,14 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
           <Card title={t('Coordonnées')} lines={reach} />
           <Addresses contact={contact} />
           <Card title={t('À propos')} lines={about} />
-          {reach.length === 0 && !place && about.length === 0 ? (
-            <AppText variant="meta" style={styles.none}>
-              {t('Aucune coordonnée. « Modifier » en ajoute.')}
-            </AppText>
+          {/* Nothing but a name: where the details would be, how to add them (as on the web). */}
+          {reach.length === 0 && !place && about.length === 0 && !trashed ? (
+            <EmptyLine text={t('Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.')} align="center" style={styles.none} />
           ) : null}
 
           <MentionedIn id={id} />
         </Animated.View>
-      </ScrollView>
+      </EdgeScrollView>
       <Menu visible={menu} items={menuItems} onDismiss={() => setMenu(false)} />
       <GiftSheet visible={gifting} name={name} contactId={contact.id} onDismiss={() => setGifting(false)} />
       {wishSheet}
@@ -483,5 +482,5 @@ const makeStyles = (theme: Theme) =>
     placeText: { flex: 1, paddingTop: 2 },
     placeKind: { marginTop: 2 },
     placeTools: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
-    none: { paddingHorizontal: 24, textAlign: 'center' },
+    none: { paddingHorizontal: 24 },
   });

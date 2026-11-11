@@ -11,7 +11,12 @@
  * a launcher icon, so each is the icon of a launcher entry of its own (an `<activity-alias>` of
  * MainActivity, written here between the marks in each app's manifest), and the app turns on the one
  * for the person's primary (mobile/shared/src/app/launcherIcon.ts). Carnet's palette is the icon as it
- * always was (`@mipmap/ic_launcher`).
+ * always was (`@mipmap/ic_launcher`). Every entry names the app's static shortcuts (`res/xml/shortcuts.xml`):
+ * the launcher shows those of the entry that is on.
+ *
+ * The static shortcuts' icons too (a long press on the app's icon): an Onde glyph on the mark's tile,
+ * as Material draws a shortcut (a 24 glyph in a 44 circle), static as the widgets are (they never follow
+ * the palette); and Carnet's Quick Settings tile, the glyph alone in white (Android tints it).
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { register } from 'node:module';
@@ -39,6 +44,7 @@ register(
       }`),
 );
 const { PALETTES, PALETTE_COLORS, markColors } = await import(pathToFileURL(resolve('packages/design/src/appearance.ts')).href);
+const { GLYPHS, GLYPH_STROKE } = await import(pathToFileURL(resolve('packages/design/src/glyphs.ts')).href);
 
 const CARNET_RES = resolve('mobile/notes/android/app/src/main/res');
 const PAGES_RES = resolve('mobile/pages/android/app/src/main/res');
@@ -147,6 +153,7 @@ function launcherPalettes(res, write, shape) {
       '    <category android:name="android.intent.category.LAUNCHER" />',
       '  </intent-filter>',
       `  <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="${key}" />`,
+      '  <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />',
       '</activity-alias>',
     ]
       .map(line => indent + line)
@@ -164,6 +171,48 @@ function launcherPalettes(res, write, shape) {
   }
 }
 
+/** An Onde glyph (24 grid) as vector paths, scaled by `scale` and moved by (tx, ty), in `ink`. */
+function glyphPaths(name, scale, tx, ty, ink, indent = '  ') {
+  const form = GLYPHS[name]?.line;
+  if (!form) throw new Error(`no glyph ${name}`);
+  return (
+    `${indent}<group android:translateX="${tx}" android:translateY="${ty}" android:scaleX="${scale}" android:scaleY="${scale}">\n` +
+    (form.stroke
+      ? `${indent}  <path android:pathData="${form.stroke}" android:fillColor="#00000000" android:strokeColor="${ink}" android:strokeWidth="${GLYPH_STROKE}" android:strokeLineCap="round" android:strokeLineJoin="round"/>\n`
+      : '') +
+    (form.fill ? `${indent}  <path android:pathData="${form.fill}" android:fillColor="${ink}" android:fillType="evenOdd"/>\n` : '') +
+    `${indent}</group>\n`
+  );
+}
+
+/**
+ * An app's static shortcuts' icons, `ic_shortcut_<key>` for each `{ key: glyph }`: from Android 8 an
+ * adaptive icon (the tile behind, the glyph in the card's cream in front, the visible 72 of its 108
+ * holding Material's 44 circle, so the glyph is 24/44 of it), and Android 7.1's own (the glyph on a 44
+ * circle in a 48 square). Their tile is the mark's (matcha): static, as the widgets are.
+ */
+function shortcutIcons(write, glyphs) {
+  write('values/ic_shortcuts.xml', `<resources>\n    <color name="ic_shortcut_background">${TILE}</color>\n</resources>\n`);
+  // The 44 circle is the visible 72: the 24 glyph grows by as much.
+  const scale = Math.round((72 / 44) * 10000) / 10000;
+  const at = Math.round((54 - 12 * scale) * 100) / 100;
+  for (const [key, glyph] of Object.entries(glyphs)) {
+    write(`drawable/ic_shortcut_${key}_glyph.xml`, vector(108, 108, glyphPaths(glyph, scale, at, at, CARD_INK)));
+    write(
+      `drawable-anydpi-v26/ic_shortcut_${key}.xml`,
+      '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n' +
+        '    <background android:drawable="@color/ic_shortcut_background" />\n' +
+        `    <foreground android:drawable="@drawable/ic_shortcut_${key}_glyph" />\n` +
+        `    <monochrome android:drawable="@drawable/ic_shortcut_${key}_glyph" />\n` +
+        '</adaptive-icon>\n',
+    );
+    write(
+      `drawable/ic_shortcut_${key}.xml`,
+      vector(48, 48, `  <path android:pathData="M24 2A22 22 0 1 1 24 46A22 22 0 1 1 24 2Z" android:fillColor="${TILE}"/>\n${glyphPaths(glyph, 1, 12, 12, CARD_INK)}`),
+    );
+  }
+}
+
 // Carnet: its launcher, its reminders' status bar icon, its widgets' mark.
 const write = writeIn(CARNET_RES);
 launcher(write, card);
@@ -177,11 +226,15 @@ launcherPalettes(CARNET_RES, write, card);
 }
 // The widget's mark: the card on its pebble, as the app draws it.
 write('drawable/ic_widget_mark.xml', vector(32, 100, `  <path android:pathData="${PEBBLE}" android:fillColor="${TILE}"/>\n${card(1, 0, 0, '  ')}`));
+// Its static shortcuts (res/xml/shortcuts.xml), and its Quick Settings tile « Nouvelle note » (white: Android tints it).
+shortcutIcons(write, { note: 'note', checklist: 'checklist', link: 'link', search: 'search' });
+write('drawable/ic_tile_note.xml', vector(24, 24, glyphPaths('note', 1, 0, 0, '#FFFFFFFF')));
 
 // Pages: its launcher.
 const writePages = writeIn(PAGES_RES);
 launcher(writePages, page);
 launcherPalettes(PAGES_RES, writePages, page);
+shortcutIcons(writePages, { page: 'pagePlus', search: 'search' });
 
 // Contacts: its launcher, and its widgets' mark (the card and its person on the pebble).
 const writeContacts = writeIn(CONTACTS_RES);
@@ -195,6 +248,7 @@ launcherPalettes(CONTACTS_RES, writeContacts, contact);
   writeContacts('drawable/ic_stat_contacts.xml', vector(24, 24, contact(scale.toFixed(4), tx.toFixed(2), ty.toFixed(2), '  ', '#FFFFFFFF')));
 }
 writeContacts('drawable/ic_widget_mark.xml', vector(32, 100, `  <path android:pathData="${PEBBLE}" android:fillColor="${TILE}"/>\n${contact(1, 0, 0, '  ')}`));
+shortcutIcons(writeContacts, { contact: 'personPlus', favorites: 'star', birthdays: 'cake', search: 'search' });
 
 // Agenda: its launcher, its reminders' status bar icon and its widgets' mark (the page and its days on the pebble).
 const writeCalendar = writeIn(CALENDAR_RES);
@@ -207,3 +261,4 @@ launcherPalettes(CALENDAR_RES, writeCalendar, calendar);
   writeCalendar('drawable/ic_stat_agenda.xml', vector(24, 24, calendar(scale.toFixed(4), tx.toFixed(2), ty.toFixed(2), '  ', '#FFFFFFFF')));
 }
 writeCalendar('drawable/ic_widget_mark.xml', vector(32, 100, `  <path android:pathData="${PEBBLE}" android:fillColor="${TILE}"/>\n${calendar(1, 0, 0, '  ')}`));
+shortcutIcons(writeCalendar, { event: 'calendar', quick: 'sparkle', today: 'today', search: 'search' });

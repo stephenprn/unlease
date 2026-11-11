@@ -11,6 +11,7 @@ import { whenLine } from '@unlease/calendar/services/eventText';
 import { findOccurrence, upcoming } from '@unlease/calendar/services/occurrences';
 import { searchEvents } from '@unlease/calendar/services/search';
 
+import { EmptyState } from '@shared/ui/components/EmptyState';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { Link } from '@shared/ui/router';
 import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
@@ -33,16 +34,18 @@ export function SearchResults({ query }: { query: string; today: string }) {
     const next = event.rrule ? upcoming([event], now, 800, 1)[0] : undefined;
     return next ?? findOccurrence(events, event.id, null);
   });
+  const summary = searchSummary(query, rows.length, settingsFound(query));
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
       {/* As on the phone: the settings the words name, above the events. */}
       <SettingsMatches query={query} />
-      {/* As in every app: the count, a line of meta over the results. */}
-      <h1 className={`${screens.resultCount} t-meta`} aria-live="polite">
-        {searchSummary(query, rows.length, settingsFound(query))}
+      {/* As in every app: the count, a line of meta over the results; nothing found, the empty state
+          says it, and this line stays for a screen reader alone, still announcing as words are typed. */}
+      <h1 className={rows.length === 0 ? 'sr-only' : `${screens.resultCount} t-meta`} aria-live="polite">
+        {summary}
       </h1>
       {rows.length === 0 ? (
-        <p className={`${screens.resultHint} t-meta`}>{APP_WORDS.calendar.searchHint}</p>
+        <EmptyState scene="search" title={summary} text={APP_WORDS.calendar.searchHint} />
       ) : (
         <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
           <ul className={styles.list}>

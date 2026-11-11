@@ -20,11 +20,10 @@ import { dateShown, dateSuggestions, dateWords, daysFrom } from '@unlease/core/s
 import type { DateRun } from '@unlease/core/services/richText';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, EmblemStone, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
+import { AppText, EmblemStone, EmptyLine, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
-import type { Theme } from '@shared/ui/theme/theme';
 import { KIND_ICONS } from '@carnet/ui/features/links/kindIcon';
 import { usePageContext } from './PageContext';
 import { BOOKMARK_SECTIONS, searchTargets, type TargetHit, type TargetSection } from './TargetSearch';
@@ -146,12 +145,10 @@ function TargetSheetComponent({ visible, purpose, pagesOnly = false, onPick, onP
           onSubmitEditing={pickFirst}
         />
       </View>
-      <SheetScroll contentContainerStyle={styles.list}>
+      <SheetScroll top={false} contentContainerStyle={styles.list}>
         {datesFirst ? dateRows : null}
         {hits.length === 0 && dates.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Rien ne correspond.')}
-          </AppText>
+          <EmptyLine glyph="info" text={t('Rien ne correspond.')} style={styles.empty} />
         ) : (
           hits.map((hit, index) => (
             <React.Fragment key={`${hit.target.type}:${hit.target.id}`}>
@@ -184,12 +181,12 @@ function TargetSheetComponent({ visible, purpose, pagesOnly = false, onPick, onP
   );
 }
 
-const makeStyles = (theme: Theme) =>
+const makeStyles = () =>
   StyleSheet.create({
     // The field, the sections' names and the empty line on the sheet's column, with its title.
     field: { paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
     list: { paddingBottom: 16 },
-    empty: { color: theme.color.inkMuted, paddingHorizontal: SHEET_INSET, paddingVertical: 20 },
+    empty: { paddingHorizontal: SHEET_INSET, paddingVertical: 20 },
     section: { paddingHorizontal: SHEET_INSET, paddingTop: 14, paddingBottom: 4 },
     // Inset by 6 so its press stays inside the sheet; a list row's geometry: a glyph on the column (under the section's name, 24 from the sheet's edge), the words at 64.
     row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 6, paddingLeft: 4, paddingRight: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },

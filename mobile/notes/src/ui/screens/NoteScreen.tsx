@@ -3,7 +3,7 @@
  * as Keep does. The note's colour or gradient paints the whole sheet, its paper under the text.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Share, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackActions } from '@react-navigation/native';
@@ -43,7 +43,7 @@ import { noteBackdrop, patternBackdrop } from '@unlease/design/backgrounds';
 import { isRuledPattern } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
 
-import { AppText, Button, Dialog, EmptyState, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
+import { AppText, Button, Dialog, EdgeScrollView, EmptyState, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { ChecklistEditor } from '../features/note/ChecklistEditor';
@@ -285,7 +285,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           </View>
         ) : null}
         <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+          <EdgeScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <PhotoGrid noteId={id} editable={editable} />
             <View style={styles.text}>
               <TextInput
@@ -322,7 +322,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             </View>
             {/* The events that mention the note, in Agenda. */}
             {keyboard ? null : <EventsMentioning type="note" id={id} />}
-          </ScrollView>
+          </EdgeScrollView>
           {/* What the note wears, at its foot above the bar that changes it, as on its card (aside while typing). */}
           {!keyboard && (note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0) ? (
             <View style={styles.chips}>

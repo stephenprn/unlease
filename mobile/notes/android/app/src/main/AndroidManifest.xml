@@ -67,17 +67,26 @@
         <!-- Opened from the launcher through its entries below (one per palette's icon), never directly:
              every other way in stays here. -->
 
-        <!-- The share sheet: links and text, one image or several (src/app/intake.ts). -->
-        <intent-filter android:label="Classer dans Carnet">
+        <!-- The share sheet: links and text, one image or several (src/app/intake.ts); a share through a
+             collection's sharing shortcut (res/xml/shortcuts.xml) names it (EXTRA_SHORTCUT_ID). -->
+        <intent-filter android:label="@string/share_links">
             <action android:name="android.intent.action.SEND" />
             <category android:name="android.intent.category.DEFAULT" />
             <data android:mimeType="text/plain" />
         </intent-filter>
-        <intent-filter android:label="Ajouter à Carnet">
+        <intent-filter android:label="@string/share_images">
             <action android:name="android.intent.action.SEND" />
             <action android:name="android.intent.action.SEND_MULTIPLE" />
             <category android:name="android.intent.category.DEFAULT" />
             <data android:mimeType="image/*" />
+        </intent-filter>
+
+        <!-- Text selected in another app (its menu's « Noter dans Carnet »): a link is filed, words become a
+             note, as a share is. Nothing is handed back, so a read-only selection is the same. -->
+        <intent-filter android:label="@string/process_text">
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
         </intent-filter>
 
         <!-- carnet://note/<id>, line/<id>, link/<id>, label/<id>, capture/<kind>: custom scheme, no host. -->
@@ -106,6 +115,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="carnet" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherSarcelle"
@@ -120,6 +130,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="sarcelle" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMyrtille"
@@ -134,6 +145,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="myrtille" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherGlycine"
@@ -148,6 +160,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="glycine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherPivoine"
@@ -162,6 +175,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="pivoine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMimosa"
@@ -176,6 +190,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mimosa" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherArdoise"
@@ -190,6 +205,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="ardoise" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMousse"
@@ -204,8 +220,32 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mousse" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <!-- GENERATED: end of the launcher entries -->
+
+      <!-- Where the launcher's static shortcuts land (res/xml/shortcuts.xml): it hands their link to
+           MainActivity, so Android's clearing of the task a static shortcut opens touches only its own.
+           Never shows. -->
+      <activity
+        android:name="com.stephenprn.unlease.launch.ShortcutActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
+
+      <!-- The Quick Settings tile « Nouvelle note »: an action, never on or off; only the system binds it. -->
+      <service
+        android:name=".tile.NewNoteTileService"
+        android:exported="true"
+        android:label="@string/tile_new_note"
+        android:icon="@drawable/ic_tile_note"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+        <intent-filter>
+          <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+      </service>
 
       <!-- The home-screen widgets (android/.../widget, docs/ARCHITECTURE.md). The providers are exported
            because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->

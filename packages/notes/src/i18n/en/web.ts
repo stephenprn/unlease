@@ -90,6 +90,7 @@ export const EN_WEB: Dictionary = {
   'Créer un label': 'Create a label',
   'Nom du nouveau label': 'New label’s name',
   'Créer': 'Create',
+  'Aucun label': 'No labels',
   'Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.': 'Labels group notes on the board. A note can wear several.',
   'Cette collection n’existe plus.': 'This collection no longer exists.',
   'Ce n’est pas un lien': 'That isn’t a link',
@@ -207,4 +208,15 @@ export const EN_WEB: Dictionary = {
   '{title} (copie)': '{title} (copy)',
   'Ce lien n’a pas de prix': 'This link has no price',
   'Ce lien n’existe plus.': 'This link no longer exists.',
+  // The shortcuts dialog's rows (`NOTES_SHORTCUTS`).
+  'Sur une note': 'On a note',
+  'Sélectionner (sur le tableau)': 'Select (on the board)',
+  'Sélectionner plusieurs notes': 'Select several notes',
+  'Fermer l’éditeur': 'Close the editor',
+  'Dans une liste à cocher': 'In a checklist',
+  'Élément suivant': 'Next item',
+  'Sur un élément vide : le supprimer': 'On an empty item: delete it',
+  'Monter l’élément': 'Move the item up',
+  'Descendre l’élément': 'Move the item down',
+  'Coller un lien sur le tableau : il est rangé dans la bonne collection': 'Paste a link on the board: it is filed in the right collection',
 };

@@ -1,7 +1,8 @@
 /**
  * "Modules": which link modules a collection shows (`notes/models/modules`), grouped by what they are
  * for, each switched on or off at once. A row says what the module does, which links it shows on,
- * what it costs, and why it would not show here. The web's `ModulesDialog`.
+ * what it costs, and why it would not show here. One that leans on a service the Administration has
+ * not set up (Claude, Seerr) is not listed until it is (`moduleOffered`). The web's `ModulesDialog`.
  */
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,7 +12,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
 import { MODULE_DESCRIPTIONS, MODULE_FITS, MODULE_GROUPS, MODULE_ICONS, MODULE_NAMES, type LinkModule } from '@unlease/notes/models/modules';
-import { lineModules, moduleCost, moduleMissing, withModule } from '@unlease/notes/services/modules';
+import { lineModules, moduleCost, moduleMissing, moduleOffered, withModule } from '@unlease/notes/services/modules';
 import { setLineModules } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
@@ -44,7 +45,9 @@ function ModulesBody({ id }: { id: string }) {
       <AppText variant="meta" style={styles.lead}>
         {t('Les modules choisis apparaissent sur les liens de {collection} qui s’y prêtent.', { collection: shownTitle(line) })}
       </AppText>
-      {MODULE_GROUPS.map(group => (
+      {MODULE_GROUPS.map(group => ({ ...group, modules: group.modules.filter(module => moduleOffered(module, can)) }))
+        .filter(group => group.modules.length > 0)
+        .map(group => (
         <View key={group.title}>
           <AppText variant="section" style={styles.section} accessibilityRole="header">
             {t(group.title)}

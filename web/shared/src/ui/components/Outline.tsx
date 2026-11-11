@@ -58,6 +58,18 @@ export function outlineRadius(kind: OutlineKind, width: number, height: number):
   return Math.min(kindRadius, CORNER_CAP * Math.min(width, height));
 }
 
+/**
+ * The corner of whatever lies `--row-inset` (6) inside an outlined container's corner (a row, a
+ * button's tint, a picker's choice): concentric with the outline as drawn (`--outline-radius`),
+ * scaled where the browser draws squircles. Every measured outline hands it down as `--row-outer`.
+ */
+const ROW_OUTER = 'max(0px, calc((var(--outline-radius) - var(--row-inset, 6px)) * var(--corner-scale, 1)))';
+
+/** What a measured outline hands its content: its corners' radius at this size and the corner of a row inside them. */
+export function cornerVars(kind: OutlineKind, width: number, height: number): Record<'--outline-radius' | '--row-outer', string> {
+  return { '--outline-radius': `${outlineRadius(kind, width, height).toFixed(2)}px`, '--row-outer': ROW_OUTER };
+}
+
 const listeners = new WeakMap<Element, (size: Size) => void>();
 let observer: ResizeObserver | null = null;
 
@@ -91,7 +103,7 @@ export function useOutline<T extends Element>(kind: OutlineKind | null): { reado
     stop.current = watch(node, next => setSize(previous => (previous && Math.abs(previous.width - next.width) < 0.5 && Math.abs(previous.height - next.height) < 0.5 ? previous : next)));
   }, []);
   const d = kind && size && size.width > 0 && size.height > 0 ? outlineD(kind, size.width, size.height) : null;
-  const vars = d && kind && size ? ({ ...outlineVars(d), '--outline-radius': `${outlineRadius(kind, size.width, size.height).toFixed(2)}px` } as CSSProperties) : outlineVars(d);
+  const vars = d && kind && size ? ({ ...outlineVars(d), ...cornerVars(kind, size.width, size.height) } as CSSProperties) : outlineVars(d);
   return { ref, d, vars, size };
 }
 

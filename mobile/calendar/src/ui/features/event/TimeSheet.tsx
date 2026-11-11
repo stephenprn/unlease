@@ -4,14 +4,14 @@
  * button keeps it, and a time that does not read is said under the field.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type FlatList } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { clockWords } from '@unlease/calendar/services/eventText';
 import { readClock } from '@unlease/calendar/services/time';
 import { later } from '@app/later';
 
-import { Button, Icon, LIST_ROW_PITCH, ListRow, Sheet, SHEET_INSET, TextField, useForm } from '@shared/ui/components';
+import { Button, Icon, LIST_ROW_PITCH, ListRow, Sheet, SHEET_INSET, SheetFlatList, TextField, useForm } from '@shared/ui/components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 const TIMES = Array.from({ length: 96 }, (_, index) => `${String(Math.floor(index / 4)).padStart(2, '0')}:${String((index % 4) * 15).padStart(2, '0')}`);
@@ -47,7 +47,7 @@ export function TimeSheet({ visible, title, value, twelveHours, onDismiss, onTim
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>
-      <FlatList
+      <SheetFlatList top={false}
         ref={list}
         data={TIMES}
         keyExtractor={item => item}

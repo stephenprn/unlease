@@ -28,7 +28,9 @@ import { Button } from '@shared/ui/components/Button';
 import { Confirm } from '@shared/ui/components/Dialog';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
+import { hasOpenLayer } from '@shared/ui/components/layers';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
+import { isEditable } from '@shared/ui/dom';
 import { Link, navigate, useLocation } from '@shared/ui/router';
 import { paths } from '../../routes';
 import { useMedia } from '@shared/ui/useMedia';
@@ -456,6 +458,17 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
       flushAll();
       closeEditor(id);
     };
+  }, [id]);
+
+  // Ctrl+Z out of any field (a button pressed, or nothing focused: the block that had the caret just
+  // went) is the page's undo too, never the browser's own, which rewrites blocks' words behind the editor.
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
+      if (event.defaultPrevented || event.isComposing || isEditable(event.target) || hasOpenLayer()) return;
+      historyKey(event, id);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [id]);
 
   useEffect(() => (drawn && !binned && article.current ? selectWithBox(article.current) : undefined), [drawn, binned]);

@@ -29,6 +29,7 @@ jest.mock('../shared/specs/NativeSuiteLink', () => require('../shared/__mocks__/
 jest.mock('../shared/specs/NativeLauncherIcon', () => require('../shared/__mocks__/NativeLauncherIcon'));
 jest.mock('../shared/specs/NativeReminders', () => require('../shared/__mocks__/NativeReminders'));
 jest.mock('../shared/specs/OrganicViewNativeComponent', () => require('../shared/__mocks__/OrganicViewNativeComponent'));
+jest.mock('../shared/specs/ScrollEdgesViewNativeComponent', () => require('../shared/__mocks__/ScrollEdgesViewNativeComponent'));
 
 jest.mock('react-native-screens', () => {
   const actual = jest.requireActual('react-native-screens');

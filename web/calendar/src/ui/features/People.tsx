@@ -16,6 +16,7 @@ import { searchContacts } from '@unlease/contacts/services/search';
 
 import { useContactsStore } from '@contacts/app/store/library';
 import { useBlobUrl } from '@shared/app/media/images';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Floating } from '@shared/ui/components/Floating';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
@@ -82,8 +83,8 @@ export function PersonChip({ id }: { id: string }) {
   );
 }
 
-/** The form's picker: the chosen people, and a field to find more. */
-export function PeoplePicker({ value, onChange, max }: { value: readonly string[]; onChange: (ids: readonly string[]) => void; max: number }) {
+/** The form's picker: the chosen people, and a field to find more (`autoFocus`: its caret as it appears, a quick form's row opened). */
+export function PeoplePicker({ value, onChange, max, autoFocus = false }: { value: readonly string[]; onChange: (ids: readonly string[]) => void; max: number; autoFocus?: boolean }) {
   const contacts = useContactsStore(s => s.contacts);
   const labels = useContactsStore(s => s.labels);
   const listId = useId();
@@ -118,8 +119,14 @@ export function PeoplePicker({ value, onChange, max }: { value: readonly string[
       onChange(value.slice(0, -1));
     }
   };
-  const shown = open && found.length > 0;
+  // Nothing found is said, as Carnet's picker says it; with no word typed and no favourite, it waits for one.
+  const typing = query.trim().length > 0;
+  const none = useMemo(() => !Object.values(contacts).some(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto), [contacts]);
+  const empty = found.length > 0 ? null : typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : none ? t('Aucun contact pour l’instant.') : null;
+  const listed = open && found.length > 0;
+  const shown = listed || (open && empty !== null);
   const anchor = useFieldAnchor(shown, field);
+  const width = anchor ? Math.min(Math.max(anchor.width, 280), 440) : undefined;
   return (
     <div className={styles.peoplePicker}>
       {value.length > 0 ? (
@@ -145,12 +152,14 @@ export function PeoplePicker({ value, onChange, max }: { value: readonly string[
             value={query}
             role="combobox"
             aria-label={t('Ajouter des personnes')}
-            aria-expanded={shown}
+            aria-expanded={listed}
+            data-owns-escape={open || undefined}
             aria-controls={listId}
             aria-autocomplete="list"
-            aria-activedescendant={shown ? `${listId}-${active}` : undefined}
+            aria-activedescendant={listed ? `${listId}-${active}` : undefined}
             placeholder={value.length > 0 ? t('Ajouter quelqu’un') : t('Ajouter des personnes')}
             autoComplete="off"
+            autoFocus={autoFocus}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             onChange={event => {
@@ -160,9 +169,15 @@ export function PeoplePicker({ value, onChange, max }: { value: readonly string[
             }}
             onKeyDown={onKeyDown}
           />
-          {shown && anchor ? (
+          {shown && anchor && !listed ? (
+            <Floating anchor={anchor} label={t('Contacts')} id={listId}>
+              <div style={{ width }}>
+                <EmptyLine glyph={typing ? 'search' : 'person'} className={styles.floatEmpty} role="status" text={empty!} />
+              </div>
+            </Floating>
+          ) : shown && anchor ? (
             <Floating anchor={anchor} label={query.trim() ? t('Contacts') : t('Favoris')} role="listbox" id={listId}>
-              <div className={styles.floatList} style={{ width: Math.min(Math.max(anchor.width, 280), 440) }}>
+              <div className={styles.floatList} style={{ width }}>
                 {found.map((contact, index) => {
                   const detail = workLine(contact) || contact.emails[0]?.address || contact.phones[0]?.number || '';
                   return (

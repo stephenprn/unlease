@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { DEFAULT_APPEARANCE, parseAppearance, type Appearance } from '@unlease/design/appearance';
 import { isLocale, setLocale, type Locale } from '@unlease/core/i18n';
 import { isAppId, type AppId } from '@unlease/core/apps';
-import { isClaudeModel, parseEnabledApps, parsePagesAsk, type ClaudeModel, type PagesAskSettings, type ServerSettings } from '@unlease/core/sync/settings';
+import { isClaudeModel, parseEnabledApps, parsePagesAsk, parseServerFeatures, serverFeatures, type ClaudeModel, type PagesAskSettings, type ServerFeature, type ServerFeatures, type ServerSettings } from '@unlease/core/sync/settings';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { deviceLanguage } from '@shared/platform/locale';
 
@@ -32,6 +32,8 @@ export interface SettingsState {
   readonly reading: boolean | null;
   /** Seerr's address as the server last gave it ('' when not linked): its module shows on films and series. */
   readonly seerr: string;
+  /** Which of the Administration's other services the server has set up (S3, the drive, Seerr), as it last said; one left out is not known yet. Claude's is `reading`. */
+  readonly serverFeatures: ServerFeatures;
   /** The Claude model the server last said it reads with: what a module's cost is shown at. */
   readonly model: ClaudeModel;
   /** The questions about the pages, as the server last said: « Demander à Claude » shows on the pages when they are on. */
@@ -62,6 +64,7 @@ const DEFAULTS: SettingsState = {
   onboarded: false,
   reading: null,
   seerr: '',
+  serverFeatures: {},
   model: 'claude-opus-5-5',
   pagesAsk: null,
   calendarAsk: false,
@@ -99,6 +102,25 @@ export const selectCanRead = (s: SettingsState): boolean => s.server !== null &&
 export const selectSeerr = (s: SettingsState): boolean => s.server !== null && s.seerr !== '';
 export const selectSeerrUrl = (s: SettingsState): string => (s.server ? s.seerr : '');
 export const selectModel = (s: SettingsState): ClaudeModel => s.model;
+/** Whether a server is connected and has said it set up this service (`on`), said it has not or none is connected (`off`), or has not said yet (`unknown`). */
+export type FeatureState = 'on' | 'off' | 'unknown';
+
+export const selectServerFeatureState =
+  (feature: ServerFeature) =>
+  (s: SettingsState): FeatureState => {
+    if (s.server === null) return 'off';
+    const known = feature === 'claude' ? s.reading : s.serverFeatures[feature];
+    return known === null || known === undefined ? 'unknown' : known ? 'on' : 'off';
+  };
+/**
+ * The server has said it set up one of the Administration's optional services (Claude, the backup
+ * to S3, the drive, Seerr): what leans on it shows only then (`useServerFeature`). Not known yet
+ * counts as not set up; remembered across starts.
+ */
+export const selectServerFeature =
+  (feature: ServerFeature) =>
+  (s: SettingsState): boolean =>
+    selectServerFeatureState(feature)(s) === 'on';
 /** The apps the server runs, once it has said (`apps`); null meanwhile, and without a server. */
 export const selectServerApps = (s: SettingsState): readonly AppId[] | null => (s.server ? s.apps : null);
 /** The server runs this app, or has not said otherwise. */
@@ -128,6 +150,7 @@ export function loadSettings(): void {
     onboarded: stored.onboarded === true,
     reading: typeof stored.reading === 'boolean' ? stored.reading : null,
     seerr: typeof stored.seerr === 'string' ? stored.seerr : '',
+    serverFeatures: parseServerFeatures(stored.serverFeatures),
     model: isClaudeModel(stored.model) ? stored.model : DEFAULTS.model,
     pagesAsk: typeof stored.pagesAsk === 'object' && stored.pagesAsk !== null ? parsePagesAsk(stored.pagesAsk) : null,
     calendarAsk: stored.calendarAsk === true,
@@ -158,10 +181,13 @@ export function setTheme(theme: ThemePreference): void {
 export const setOnboarded = (): void => save('onboarded', true);
 export const setReading = (reading: boolean | null): void => save('reading', reading);
 
-/** What the server said of itself, remembered for the next start: whether it reads links, whether Seerr is linked, the questions about the pages and the calendar, the apps it runs. */
+/** What the server said of itself, remembered for the next start: whether it reads links, whether Seerr is linked, S3 and the drive set up, the questions about the pages and the calendar, the apps it runs. */
 export function rememberServerSettings(settings: ServerSettings): void {
   setReading(settings.analysis.enabled);
   save('seerr', settings.seerr.url);
+  const { backup, drive, seerr } = serverFeatures(settings);
+  const known = useSettingsStore.getState().serverFeatures;
+  if (known.backup !== backup || known.drive !== drive || known.seerr !== seerr) save('serverFeatures', { backup, drive, seerr });
   save('model', settings.analysis.model);
   save('pagesAsk', settings.pages);
   save('calendarAsk', settings.calendar.ask);
@@ -273,6 +299,7 @@ export function setServer(config: ServerConfig | null): void {
     save('server', null);
     save('reading', null);
     save('seerr', '');
+    save('serverFeatures', {});
     save('pagesAsk', null);
     save('calendarAsk', false);
     save('apps', null);
@@ -280,7 +307,12 @@ export function setServer(config: ServerConfig | null): void {
   }
   const url = config.url.trim().replace(/\/+$/, '');
   const origin = /^https?:\/\//.test(url) ? url : `https://${url}`;
-  // Another server says for itself which apps it runs.
-  if (useSettingsStore.getState().server?.url !== origin) save('apps', null);
+  // Another server says for itself which apps it runs and which services it set up.
+  if (useSettingsStore.getState().server?.url !== origin) {
+    save('apps', null);
+    save('reading', null);
+    save('seerr', '');
+    save('serverFeatures', {});
+  }
   save('server', { url: origin, token: config.token.trim() });
 }

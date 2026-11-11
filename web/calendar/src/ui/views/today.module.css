@@ -174,22 +174,15 @@
 }
 
 /* An empty day: one kind line, and the way to fill it. */
-.emptyDay {
+/* Nothing today nor after: the view's empty place, on the column's middle. */
+.emptyView {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  justify-content: center;
+}
+
+/* Nothing today, something after: the day's line, on the rows' column. */
+.emptyDay {
   padding: 8px 16px 12px;
-}
-
-.emptyDay > p {
-  margin: 0;
-  color: var(--ink-muted);
-}
-
-/* The text button keeps its own padding: its words on the column's. */
-.emptyDay > :last-child {
-  margin-left: -20px;
 }
 
 .section {

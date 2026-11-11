@@ -8,12 +8,13 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, Keyframe, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { withAlpha } from '@unlease/design/color';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { ROLES } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { dismissSnack, selectSnack, useUiStore, type Snack, type SnackTone } from '@shared/app/store/uiStore';
 
-import { accelerate, decelerate, duration, spatial, throwTo } from '../theme/motion';
+import { accelerate, decelerate, duration, FLING_SPEED, spatial, SWIPE_SHARE, throwTo } from '../theme/motion';
 import { corners } from '../theme/shape';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
@@ -75,7 +76,7 @@ function Slip({ id, message, tone, action }: Pick<Snack, 'id' | 'message' | 'ton
           x.value = event.translationX;
         })
         .onEnd(event => {
-          if (Math.abs(event.translationX) > width * 0.3 || Math.abs(event.velocityX) > 900) {
+          if (Math.abs(event.translationX) > width * SWIPE_SHARE || Math.abs(event.velocityX) > FLING_SPEED) {
             const side = Math.sign(event.translationX || event.velocityX);
             x.value = throwTo(side * width, x.value, event.velocityX, finished => {
               if (finished) runOnJS(dismissSnack)(id);
@@ -131,8 +132,8 @@ const makeStyles = (t: Theme) =>
     clip: { ...corners(SHAPES.slip), overflow: 'hidden', minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16, paddingRight: 16 },
     withAction: { paddingRight: 6 },
     message: { flex: 1, paddingVertical: 14 },
-    // habits-garden's toast action: its own chip on the slip, edged in cream.
-    action: { minHeight: 40, marginVertical: 6, paddingHorizontal: 14, justifyContent: 'center', ...corners(SHAPES.chip), borderWidth: 1, borderColor: 'rgba(249, 244, 237, 0.22)' },
+    // habits-garden's toast action: its own chip on the slip, edged in its ink at 22% (the web's).
+    action: { minHeight: 40, marginVertical: 6, paddingHorizontal: 14, justifyContent: 'center', ...corners(SHAPES.chip), borderWidth: 1, borderColor: withAlpha(t.color.onSlip, 0.22) },
   });
 
 export const Snackbar = memo(SnackbarComponent);

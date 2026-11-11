@@ -13,7 +13,7 @@ import { monthTitle } from '@unlease/calendar/services/eventText';
 import { addMonths } from '@unlease/calendar/services/time';
 
 import { AppText, Button, IconButton, Sheet, SHEET_INSET } from '@shared/ui/components';
-import { decelerate, duration } from '@shared/ui/theme/motion';
+import { decelerate, duration, FLING_SPEED } from '@shared/ui/theme/motion';
 import { MiniMonth } from './MiniMonth';
 
 /** A month comes in with a short shift and a fade, from the left going back. */
@@ -22,9 +22,8 @@ const monthIn = (from: number) =>
 const MONTH_ON = monthIn(24);
 const MONTH_BACK = monthIn(-24);
 const TITLE_IN = new Keyframe({ 0: { opacity: 0 }, 100: { opacity: 1, easing: decelerate } }).duration(duration.medium);
-/** A swipe this long, or this fast, turns the month. */
+/** A swipe this long, or flung (`FLING_SPEED`), turns the month. */
 const SWIPE = 48;
-const FLING = 600;
 
 export interface DayPickerSheetProps {
   readonly visible: boolean;
@@ -58,7 +57,7 @@ export function DayPickerSheet({ visible, title, day, today, weekStart, onDismis
     .activeOffsetX([-20, 20])
     .failOffsetY([-12, 12])
     .onEnd(event => {
-      if (Math.abs(event.translationX) > SWIPE || Math.abs(event.velocityX) > FLING) turn(event.translationX < 0 ? 1 : -1);
+      if (Math.abs(event.translationX) > SWIPE || Math.abs(event.velocityX) > FLING_SPEED) turn(event.translationX < 0 ? 1 : -1);
     });
   const key = month.slice(0, 7);
   return (

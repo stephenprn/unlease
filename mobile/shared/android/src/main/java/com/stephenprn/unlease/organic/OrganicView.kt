@@ -12,9 +12,13 @@ import android.graphics.Region
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewOutlineProvider
+import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.PathInterpolator
+import com.facebook.react.R
+import com.facebook.react.uimanager.BackgroundStyleApplicator
 import com.facebook.react.views.view.ReactViewGroup
 import kotlin.math.max
 import kotlin.math.min
@@ -51,6 +55,25 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
 
   /** React Native's background (a colour, a gradient, a pattern): drawn inside the shape, never by View. */
   private var backdrop: Drawable? = null
+
+  /**
+   * Frosted (a field): what lies behind it is painted first, without its grain, so the veil and the
+   * words typed lie on a smooth paper. Behind it is the nearest surface that paints all of itself (a
+   * sheet, a panel, a card, a note's colour), or the screen's ground (`nativeID` [GROUND]) laid before
+   * it; either is drawn as its own background alone, its grain (a child) left out, which is what a
+   * blur of it would show. Drawn where the field stands in the window, it stays in step as it scrolls.
+   */
+  private var frost = false
+  private val here = IntArray(2)
+  private val there = IntArray(2)
+  private var drawnX = Int.MIN_VALUE
+  private var drawnY = Int.MIN_VALUE
+  private val frostMoved =
+      ViewTreeObserver.OnPreDrawListener {
+        getLocationInWindow(here)
+        if (here[0] != drawnX || here[1] != drawnY) invalidate()
+        true
+      }
 
   private val outer = Path()
   private val edge = Path()
@@ -123,7 +146,69 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
   override fun onDetachedFromWindow() {
     giving?.cancel()
     giving = null
+    if (frost) viewTreeObserver.removeOnPreDrawListener(frostMoved)
     super.onDetachedFromWindow()
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    if (frost) viewTreeObserver.addOnPreDrawListener(frostMoved)
+  }
+
+  fun setFrost(value: Boolean) {
+    if (value == frost) return
+    frost = value
+    if (isAttachedToWindow) {
+      if (value) viewTreeObserver.addOnPreDrawListener(frostMoved) else viewTreeObserver.removeOnPreDrawListener(frostMoved)
+    }
+    invalidate()
+  }
+
+  /** The surface behind this view whose background shows through it, or null. */
+  private fun surfaceBehind(): View? {
+    var child: View = this
+    var parent = child.parent
+    while (parent is ViewGroup) {
+      // Laid before it in the same parent: the screen's ground (or a bar's slice of it, one level in).
+      for (i in parent.indexOfChild(child) - 1 downTo 0) groundIn(parent.getChildAt(i))?.let { return it }
+      if (paintsWhole(parent)) return parent
+      child = parent
+      parent = parent.parent
+    }
+    return null
+  }
+
+  private fun groundIn(view: View): View? {
+    if (view.visibility != View.VISIBLE) return null
+    if (isGround(view)) return view
+    if (view is ViewGroup && view.childCount > 0 && isGround(view.getChildAt(0))) return view.getChildAt(0)
+    return null
+  }
+
+  private fun isGround(view: View): Boolean = view.getTag(R.id.view_tag_native_id) == GROUND
+
+  /** A surface that hides what is behind it: an opaque colour under its own drawing. */
+  private fun paintsWhole(view: View): Boolean {
+    if (view.background == null) return false
+    val color = BackgroundStyleApplicator.getBackgroundColor(view) ?: return false
+    return Color.alpha(color) == 255
+  }
+
+  /** The surface behind, as its own background alone, laid where it lies relative to this view. */
+  private fun drawSurfaceBehind(canvas: Canvas) {
+    getLocationInWindow(here)
+    drawnX = here[0]
+    drawnY = here[1]
+    val surface = surfaceBehind() ?: return
+    val paper = surface.background ?: return
+    surface.getLocationInWindow(there)
+    val save = canvas.save()
+    canvas.clipPath(outer)
+    canvas.translate((there[0] - here[0]).toFloat(), (there[1] - here[1]).toFloat())
+    // The surface's background is laid at its own size (an OrganicView sets its bounds when it draws).
+    if (paper.bounds.width() != surface.width || paper.bounds.height() != surface.height) paper.setBounds(0, 0, surface.width, surface.height)
+    paper.draw(canvas)
+    canvas.restoreToCount(save)
   }
 
   fun setStrokeColor(color: Int) {
@@ -247,6 +332,7 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
         canvas.restoreToCount(save)
       }
     }
+    if (frost) drawSurfaceBehind(canvas)
     backdrop?.let { paper ->
       paper.setBounds(0, 0, width, height)
       val save = canvas.save()
@@ -304,4 +390,9 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
   override fun getBackground(): Drawable? = backdrop
 
   override fun verifyDrawable(who: Drawable): Boolean = who === backdrop || super.verifyDrawable(who)
+
+  companion object {
+    /** The `nativeID` of the screen's ground (`Ground`, `GroundSlice`): what a frosted view lays under its veil when no surface is nearer. */
+    const val GROUND = "unlease-ground"
+  }
 }

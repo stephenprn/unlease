@@ -316,12 +316,12 @@
 
 @media (hover: hover) {
   .retry:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
+    background: color-mix(in srgb, var(--link) 8%, transparent);
   }
 }
 
 .retry:active {
-  background: color-mix(in srgb, var(--link) 10%, transparent);
+  background: color-mix(in srgb, var(--link) 12%, transparent);
 }
 
 .trailing {
@@ -451,7 +451,8 @@
 
 .trackScissors svg {
   transform-origin: 40% 50%;
-  animation: snip 0.18s ease-in-out infinite alternate;
+  /* The blades' beat is the capture slip's (and the phone's): 130 on the standard curve. */
+  animation: snip 130ms var(--ease-standard) infinite alternate;
 }
 
 @keyframes along {
@@ -745,8 +746,9 @@
   gap: 16px;
 }
 
+/* Claude's summary runs the dialog's width, as the facts under it do. */
 .summary {
-  max-width: 65ch;
+  text-wrap: pretty;
 }
 
 /* The facts Claude pulled: a well in its own outline, ruled by paper. */
@@ -811,6 +813,31 @@ textarea.noteInput {
 
 .open {
   flex: 1;
+}
+
+/*
+ * In the centred dialog (a wide window) the two stand in its foot's corners, as far in from its foot
+ * as from its sides (12): their corners there concentric with the dialog's (`--outline-radius`, 12
+ * less). Too short for those and a button's above them as squircles (their radii run 1.84 times as
+ * long: the browser would shrink every corner), they are drawn round at the same depth.
+ */
+@media (min-width: 720px) {
+  .panelFoot {
+    padding-inline: 12px;
+  }
+
+  .panelFoot > :is(a, button) {
+    corner-shape: round;
+    border-radius: calc(var(--cut-button) / var(--corner-scale));
+  }
+
+  .panelFoot > :first-child {
+    border-bottom-left-radius: max(var(--cut-button) / var(--corner-scale), var(--outline-radius, 28px) - 12px);
+  }
+
+  .panelFoot > :last-child {
+    border-bottom-right-radius: max(var(--cut-button) / var(--corner-scale), var(--outline-radius, 28px) - 12px);
+  }
 }
 
 @media (max-width: 719px) {

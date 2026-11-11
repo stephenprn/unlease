@@ -18,7 +18,7 @@ import { CELL_FORMATS, columnType, isoDay, parseDay, readCellInput } from '@unle
 import { useLibraryStore } from '@app/store/libraryStore';
 import { setCell, setColumnOptions } from '@app/store/pages';
 
-import { AppText, Button, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
+import { AppText, Button, EmptyLine, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import { MonthCalendar } from './MonthCalendar';
@@ -152,7 +152,7 @@ function OptionsEditor({ request, column, value, onDone }: { request: CellReques
           maxLength={100}
         />
       </View>
-      <SheetScroll contentContainerStyle={styles.options}>
+      <SheetScroll top={false} contentContainerStyle={styles.options}>
         {shown.map(option => (
           <Tappable key={option.id} accessibilityRole={multi ? 'checkbox' : 'radio'} accessibilityState={{ checked: chosen.has(option.id) }} accessibilityLabel={option.name} onPress={() => choose(option.id)} style={styles.optionRow}>
             <View style={styles.optionChip}>
@@ -169,11 +169,7 @@ function OptionsEditor({ request, column, value, onDone }: { request: CellReques
             </AppText>
           </Tappable>
         ) : null}
-        {options.length === 0 && !query.trim() ? (
-          <AppText variant="meta" style={styles.hint}>
-            {t('Tapez le nom d’une option pour la créer.')}
-          </AppText>
-        ) : null}
+        {options.length === 0 && !query.trim() ? <EmptyLine text={t('Tapez le nom d’une option pour la créer.')} style={styles.hint} /> : null}
       </SheetScroll>
       {multi ? (
         <View style={[styles.actions, styles.foot]}>

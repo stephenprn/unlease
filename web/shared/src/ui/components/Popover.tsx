@@ -24,12 +24,14 @@ export interface PopoverProps {
   /** Its width; a menu given one (a select's, as wide as its field) may pass the menus' 360. */
   readonly width?: number;
   readonly className?: string;
+  /** Its content is a picker's rows (a field above them at most): they sit 6 in from its every edge, concentric with its corners, as a menu's do (`data-rows`). */
+  readonly rows?: boolean;
   readonly initialFocus?: RefObject<HTMLElement | null>;
 }
 
 const MARGIN = 8;
 
-function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start', width, className }: Omit<PopoverProps, 'open' | 'onDismiss' | 'initialFocus'>) {
+function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start', width, className, rows }: Omit<PopoverProps, 'open' | 'onDismiss' | 'initialFocus'>) {
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   // A menu's own outline: its paint clipped to it, its edge inside it, its lift cast by the stage.
@@ -97,6 +99,7 @@ function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start
         className={[styles.popover, className ?? ''].join(' ')}
         style={width ? { ...vars, width, ...(role === 'menu' ? { maxWidth: 'calc(100vw - 16px)' } : {}) } : vars}
         data-layer-panel=""
+        data-rows={rows ? '' : undefined}
       >
         {/* It scrolls inside its outline, so its edge stays put. */}
         <div className={styles.popoverScroll}>
@@ -108,12 +111,21 @@ function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start
   );
 }
 
+/** A picker risen as the sheet: the sheet's body scrolls it, unless its own class caps it shorter (a list of labels). */
+function SheetPicker({ className, children }: { readonly className?: string; readonly children: ReactNode }) {
+  return (
+    <div className={[styles.sheetPicker, className ?? ''].join(' ')}>
+      {children}
+    </div>
+  );
+}
+
 export function Popover({ open, onDismiss, initialFocus, ...rest }: PopoverProps) {
   const narrow = useMedia(NARROW);
   if (narrow && rest.role !== 'menu') {
     return (
       <Layer open={open} onDismiss={onDismiss} kind="bottom" label={rest.label} initialFocus={initialFocus}>
-        <div className={[styles.sheetPicker, rest.className ?? ''].join(' ')}>{rest.children}</div>
+        <SheetPicker className={rest.className}>{rest.children}</SheetPicker>
       </Layer>
     );
   }

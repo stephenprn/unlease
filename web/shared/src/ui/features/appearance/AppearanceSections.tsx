@@ -84,6 +84,25 @@ function groundStyle(ground: GroundChoice, mode: Mode): CSSProperties {
   return { backgroundColor: paint.base, backgroundImage: paint.layers.join(', ') || undefined };
 }
 
+/**
+ * The look in two pebbles, as « Apparence »'s row on Réglages ends (the phone's twins): the colours,
+ * the primary over the accent as the screen shows them, then the ground, painted.
+ */
+export function LookPebbles() {
+  const ground = useSettingsStore(state => selectAppearance(state).ground);
+  const mode = useShownMode();
+  return (
+    <span className={styles.lookPebbles} aria-hidden="true">
+      <span className={`${styles.lookPebble} ${styles.lookPair}`} data-pebble-under={pebbleTurn(1)} data-still>
+        <PebbleEdge turn={pebbleTurn(1)} />
+      </span>
+      <span className={styles.lookPebble} data-pebble={pebbleTurn(3)} data-still style={groundStyle(ground, mode)}>
+        <PebbleEdge turn={pebbleTurn(3)} />
+      </span>
+    </span>
+  );
+}
+
 /** Keys for a group of swatches whose chosen one may be in another group: the arrows move inside this one. */
 function groupKeys<T extends string>(keys: readonly T[], chosen: T | null, choose: (key: T) => void): (event: KeyboardEvent<HTMLElement>) => void {
   return arrowKeys(keys, chosen ?? keys[0]!, choose, key => key);
@@ -221,7 +240,10 @@ export function GroundSection() {
         </section>
       </div>
       <button type="button" role="switch" aria-checked={appearance.grain} className={settings.row} onClick={() => setAppearance({ ...appearance, grain: !appearance.grain })}>
-        <span className={`${settings.rowText} t-body`}>{t('Grain sur le fond')}</span>
+        <span className={settings.rowText}>
+          <span className="t-body">{t('Grain sur le fond')}</span>
+          <span className="t-meta">{t('Le grain de film sur le fond de l’écran.')}</span>
+        </span>
         <SwitchMark checked={appearance.grain} />
       </button>
       <div className={styles.servicesOpen}>

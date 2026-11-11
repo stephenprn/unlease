@@ -33,10 +33,10 @@ function PagesTrashScreen() {
   const [emptying, setEmptying] = useState(false);
   return (
     <div className={settings.page}>
-      {/* The title and how long pages stay, as Carnet's bin says it right under its own. */}
+      {/* The title and, while it holds pages, how long they stay, as Carnet's bin says it right under its own (empty, the empty place says it). */}
       <div>
         <PageHead title={t('Corbeille')} action={binned > 0 ? { icon: 'broom', label: t('Vider la corbeille'), onClick: () => setEmptying(true) } : undefined} />
-        <p className={`${styles.binNote} t-meta`}>{t('Les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p>
+        {binned > 0 ? <p className={`${styles.binNote} t-meta`}>{t('Les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       </div>
       {binned === 0 ? <EmptyState scene="trash" title={t('La corbeille est vide')} text={t('Les pages supprimées y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })} /> : <PagesBinSection />}
       <EmptyPagesBinDialog open={emptying} onClose={() => setEmptying(false)} />

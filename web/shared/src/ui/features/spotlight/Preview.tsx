@@ -12,6 +12,7 @@ import type { SpotMeta } from '@unlease/core/services/spotlight';
 
 import { useRecordsRevision } from '../../../app/store/records';
 import { Highlight } from '../../components/Highlight';
+import { useScrollEdgesOn } from '../../components/scrollEdges';
 import { modKey } from '../../dom';
 import { kindOf, spotKinds } from '../../../app/spotKinds';
 import { theApp } from '../../../modules';
@@ -64,6 +65,7 @@ function scrollToMatch(scroller: HTMLElement, part: SearchPart | null): void {
 
 export const SpotPreview = memo(function SpotPreview({ doc, part, matcher, now }: { doc: SearchDoc<SpotMeta> | null; part: SearchPart | null; matcher: Matcher; now: number }) {
   const scroller = useRef<HTMLElement>(null);
+  useScrollEdgesOn(scroller, [], { top: true });
   // Every change of the records draws it again: its title and facts are read as they are now.
   useRecordsRevision();
   const kind = doc ? kindOf(doc.meta.type) : null;

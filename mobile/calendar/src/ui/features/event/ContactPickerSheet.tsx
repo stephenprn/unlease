@@ -3,7 +3,7 @@
  * address becomes its place. Found by name as typed.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
@@ -11,7 +11,7 @@ import { contactName, sortContacts } from '@unlease/contacts/services/names';
 import type { Contact } from '@unlease/contacts/models/contacts';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, ListRow, Sheet, SHEET_INSET, TextField } from '@shared/ui/components';
+import { EmptyLine, ListRow, Sheet, SHEET_INSET, SheetFlatList, TextField } from '@shared/ui/components';
 
 export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: { visible: boolean; title: string; only?: (contact: Contact) => boolean; onDismiss: () => void; onPick: (contact: Contact) => void }) {
   const people = useLibraryStore(s => s.people);
@@ -29,9 +29,8 @@ export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher un contact')} accessibilityLabel={t('Rechercher un contact')} autoFocus />
       </View>
-      <FlatList
+      <SheetFlatList top={false}
         data={found}
-        keyboardShouldPersistTaps="handled"
         keyExtractor={contact => contact.id}
         renderItem={({ item }) => (
           <ListRow
@@ -43,7 +42,8 @@ export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: 
             }}
           />
         )}
-        ListEmptyComponent={<AppText variant="meta" style={styles.none}>{t('Aucun contact ne correspond')}</AppText>}
+        // No contact at all, before a word: the address book is empty; else none answers the words or the kind asked for.
+        ListEmptyComponent={<EmptyLine glyph={query.trim() ? 'search' : 'person'} text={!query.trim() && !only ? t('Aucun contact pour l’instant') : t('Aucun contact ne correspond')} style={styles.none} />}
       />
     </Sheet>
   );

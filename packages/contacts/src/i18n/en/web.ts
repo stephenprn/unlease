@@ -55,7 +55,6 @@ export const EN_WEB: Dictionary = {
   'Ajoutez une date de naissance à un contact : elle apparaît ici, avec le nombre de jours qui vous en séparent.': 'Add a birthday to a contact: it shows here, with how many days away it is.',
 
   // A contact
-  'Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.': 'Nothing else yet: “Edit” adds a number, an email, an address, a birthday.',
   'WhatsApp avec le {number}': 'WhatsApp with {number}',
   'Ouvrir dans les cartes': 'Open in maps',
   'Ce contact n’existe plus': 'This contact no longer exists',
@@ -157,4 +156,6 @@ export const EN_WEB: Dictionary = {
   'Une image déposée ici devient sa photo.': 'An image dropped here becomes their photo.',
   'Photo': 'Photo',
   'Choisir une autre photo…': 'Choose another photo…',
+  // The shortcuts dialog's rows (`CONTACTS_SHORTCUTS`).
+  'Sélectionner jusqu’à ce contact': 'Select up to this contact',
 };

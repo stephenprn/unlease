@@ -8,7 +8,7 @@ import { freshLibrary } from '@test/library';
 import { addLink, createLine, createNote, setLinkDone, updateLink } from '@notes/app/store/actions';
 import { pagesLibrary } from '../../app/store/blocks';
 import { createPage, insertBlock, insertDrafts, insertTable, setCell, setCollectionView, trashPage } from '../../app/store/pages';
-import { setToggleOpen } from '../../app/store/pagesUi';
+import { setToggleOpen, usePagesUiStore } from '../../app/store/pagesUi';
 import { BLOCKS_TYPE, htmlToDrafts, pageMarkdown, readBlocks, writeBlocks } from '../features/pages/clipboard';
 import { selectBlocks } from '../features/pages/editorStore';
 import { PagesBinSection } from '../features/pages/PagesBin';
@@ -469,6 +469,94 @@ describe('Enter in a page', () => {
     expect(kids(page)).toHaveLength(5);
     expect(kids(page)[3]).toBe(code);
     await waitFor(() => expect(document.activeElement).toBe(rich(kids(page)[4]!)));
+  });
+});
+
+describe('Tab in a page', () => {
+  beforeEach(async () => {
+    await freshLibrary();
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { value: () => {}, configurable: true, writable: true });
+    Object.defineProperty(Range.prototype, 'getClientRects', { value: () => [], configurable: true, writable: true });
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    delete (Range.prototype as { getClientRects?: unknown }).getClientRects;
+  });
+
+  const kids = (id: string): string[] => [...(state().blocksByParent[id] ?? [])];
+  const rich = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-rich-block="${id}"]`);
+  const isOpen = (id: string): boolean => usePagesUiStore.getState().openToggles.has(id);
+  const typeIn = (element: HTMLElement, value: string): void => {
+    element.textContent = value;
+    window.getSelection()!.setBaseAndExtent(element.firstChild!, value.length, element.firstChild!, value.length);
+    fireEvent.input(element);
+  };
+
+  /** A closed toggle, then a callout just made under it, at the page's level. */
+  function underToggle(): { page: string; toggle: string; callout: string } {
+    const page = createPage({ title: 'Réunion' });
+    const toggle = insertBlock(page, page, 0, { kind: 'toggle', text: 'Détails' });
+    const callout = insertBlock(page, page, 1, { kind: 'callout', text: '' });
+    return { page, toggle, callout };
+  }
+
+  it('nests a callout written in under the closed toggle above, which opens: its words stay in sight, and Ctrl+Z puts it back', async () => {
+    const { page, toggle, callout } = underToggle();
+    render(<PageView id={page} />);
+    typeIn(rich(callout)!, 'À retenir');
+    fireEvent.keyDown(rich(callout)!, { key: 'Tab' });
+    expect(kids(page)).toEqual([toggle]);
+    expect(kids(toggle)).toEqual([callout]);
+    expect(isOpen(toggle)).toBe(true);
+    expect(state().blocks[callout]).toMatchObject({ kind: 'callout', text: 'À retenir' });
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
+    expect(rich(callout)).toHaveTextContent('À retenir');
+
+    // One step: the nesting alone goes, the words stay.
+    fireEvent.keyDown(rich(callout)!, { key: 'z', ctrlKey: true });
+    expect(kids(page)).toEqual([toggle, callout]);
+    expect(kids(toggle)).toEqual([]);
+    expect(state().blocks[callout]).toMatchObject({ kind: 'callout', text: 'À retenir' });
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
+  });
+
+  it('brings it back out with Maj+Tab, and nests selected blocks the same way, the toggle opened', async () => {
+    const { page, toggle, callout } = underToggle();
+    render(<PageView id={page} />);
+    fireEvent.keyDown(rich(callout)!, { key: 'Tab' });
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
+    fireEvent.keyDown(rich(callout)!, { key: 'Tab', shiftKey: true });
+    expect(kids(page)).toEqual([toggle, callout]);
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
+
+    act(() => setToggleOpen(toggle, false));
+    const editor = document.querySelector<HTMLElement>('[data-page-editor]')!;
+    act(() => selectBlocks([callout]));
+    editor.focus();
+    fireEvent.keyDown(editor, { key: 'Tab' });
+    expect(kids(toggle)).toEqual([callout]);
+    expect(isOpen(toggle)).toBe(true);
+    expect(rich(callout)).not.toBeNull();
+    fireEvent.keyDown(editor, { key: 'z', ctrlKey: true });
+    expect(kids(page)).toEqual([toggle, callout]);
+  });
+
+  it('undoes the page with Ctrl+Z when no field has the focus, never the browser’s own undo', async () => {
+    const { page, toggle, callout } = underToggle();
+    render(<PageView id={page} />);
+    fireEvent.keyDown(rich(callout)!, { key: 'Tab' });
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
+    // Its toggle closed again from its chevron: the block is out of sight, the focus on the button.
+    fireEvent.click(screen.getByRole('button', { name: 'Replier' }));
+    expect(rich(callout)).toBeNull();
+    const undo = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true });
+    act(() => {
+      document.body.dispatchEvent(undo);
+    });
+    expect(undo.defaultPrevented).toBe(true);
+    expect(kids(page)).toEqual([toggle, callout]);
+    await waitFor(() => expect(document.activeElement).toBe(rich(callout)));
   });
 });
 

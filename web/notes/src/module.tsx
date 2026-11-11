@@ -6,11 +6,11 @@
 import { t, tx } from '@unlease/core/i18n';
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 
-import { emptyTrash } from './app/store/actions';
+import { emptyTrash, trashedNoteIds } from './app/store/actions';
 import { resetBoard } from './app/store/board';
 import { useLibraryStore } from './app/store/library';
 import { openCapture } from './app/store/notesUi';
-import type { AppModule, SpotLabel } from '@shared/modules';
+import { MOD_KEY, type AppModule, type ShortcutGroup, type SpotLabel } from '@shared/modules';
 import { NOTES_ADMIN_SECTIONS } from './admin';
 import { notesData } from './data';
 import { handleCaptureRoute } from './ui/captureRoute';
@@ -45,6 +45,30 @@ function spotLabels(): readonly SpotLabel[] {
   labelsCache = { state, labels };
   return labels;
 }
+
+/** Its keys in the shortcuts dialog beyond its commands': a link pasted anywhere, a note's, a checklist's. */
+const NOTES_SHORTCUTS: readonly ShortcutGroup[] = [
+  { rows: [[[MOD_KEY, 'V'], tx('Coller un lien sur le tableau : il est rangé dans la bonne collection')]] },
+  {
+    title: tx('Sur une note'),
+    rows: [
+      [['E'], tx('Archiver')],
+      [['#'], tx('Supprimer')],
+      [['X'], tx('Sélectionner (sur le tableau)')],
+      [[tx('Maj'), tx('clic')], tx('Sélectionner plusieurs notes')],
+      [[MOD_KEY, tx('Entrée')], tx('Fermer l’éditeur')],
+    ],
+  },
+  {
+    title: tx('Dans une liste à cocher'),
+    rows: [
+      [[tx('Entrée')], tx('Élément suivant')],
+      [['Retour'], tx('Sur un élément vide : le supprimer')],
+      [['Alt', '↑'], tx('Monter l’élément')],
+      [['Alt', '↓'], tx('Descendre l’élément')],
+    ],
+  },
+];
 
 export const notesModule: AppModule = {
   id: 'notes',
@@ -85,11 +109,13 @@ export const notesModule: AppModule = {
   ],
   spotCreates: [{ type: 'note', title: typed => t('Créer la note « {title} »', { title: typed }), icon: 'note', run: typed => void newTitledNote(typed) }],
   onKey: onNotesKey,
+  shortcuts: NOTES_SHORTCUTS,
   onPaste: onNotesPaste,
   onDropFiles: onNotesDrop,
 
   settingsSections: NOTES_SETTINGS,
   emptyBin: () => emptyTrash(),
+  binCount: () => trashedNoteIds().length,
   adminSections: NOTES_ADMIN_SECTIONS,
   settingsPlaces: NOTES_SETTINGS_PLACES,
   ClaudeExtras: ReadingExtras,

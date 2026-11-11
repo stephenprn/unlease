@@ -260,10 +260,10 @@ describe('a kind’s usual facts', () => {
     expect(within(panel).getByText('Serveur injoignable')).toBeInTheDocument();
     offline.unmount();
 
+    // Without a key, no try at all.
     setReading(false);
     render(<FactsEditScreen part="kind-film" />);
-    panel = screen.getByRole('region', { name: 'Aperçu sur un lien' });
-    expect(within(panel).getByText('Claude n’est pas configuré : l’essai n’est pas possible.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Aperçu sur un lien' })).not.toBeInTheDocument();
   }, 20_000);
 });
 

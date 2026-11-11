@@ -15,7 +15,7 @@ import { rememberServerSettings, type ServerConfig } from '@shared/app/store/set
 import { showSnack } from '@shared/app/store/uiStore';
 import { fetchServerSettings, fetchUsage, saveServerSettings, type Usage } from '@shared/app/sync/transport';
 
-import { AppText, Button, ListRow, Segmented, TextField, useForm } from '../../components';
+import { AppText, Button, ListRow, Organic, Segmented, TextField, useForm } from '../../components';
 import { StatusRow } from './StatusRow';
 import type { Confirmation } from './overlays';
 import { corners } from '@shared/ui/theme/shape';
@@ -196,7 +196,7 @@ function UsagePanel({ usage, budgetUsd }: { usage: Usage | null; budgetUsd: numb
   return (
     <View style={styles.usage}>
       <AppText variant="bodyStrong">{t('Ce mois-ci : {cost}', { cost: usd(usage.month.costUsd) })}</AppText>
-      <View
+      <Organic
         style={[styles.meter, { backgroundColor: theme.color.paperHigh, borderColor: theme.color.outline }]}
         accessible
         accessibilityRole="progressbar"
@@ -204,7 +204,7 @@ function UsagePanel({ usage, budgetUsd }: { usage: Usage | null; budgetUsd: numb
         accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
       >
         <View style={[styles.meterFill, { width: `${share * 100}%`, backgroundColor: share > 0.8 ? theme.color.waiting : theme.color.action }]} />
-      </View>
+      </Organic>
       <AppText variant="meta">{t('Sur un budget de {budget} · depuis le début {total}', { budget: usd(budgetUsd), total: usd(usage.total.costUsd) })}</AppText>
     </View>
   );

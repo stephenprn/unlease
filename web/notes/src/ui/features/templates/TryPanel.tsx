@@ -15,7 +15,7 @@ import { linkRowText } from '@unlease/notes/services/linkRow';
 import type { TemplateTryResponse } from '@unlease/notes/sync/templateTry';
 
 import { tryFields } from '../../../app/templates';
-import { useCanRead } from '../../../app/store/prefs';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { selectSyncMessage, selectSyncPhase, useSyncStore } from '@shared/app/store/syncStatus';
 import { Button } from '@shared/ui/components/Button';
 import { Icon } from '@shared/ui/components/Icon';
@@ -42,7 +42,7 @@ export interface TryPanelProps {
 }
 
 export function TryPanel({ fields, links }: TryPanelProps) {
-  const reading = useCanRead();
+  const reading = useServerFeature('claude');
   const phase = useSyncStore(selectSyncPhase);
   const syncMessage = useSyncStore(selectSyncMessage);
   const [choice, setChoice] = useState<string>(() => links[0]?.id ?? PASTE);

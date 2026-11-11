@@ -3,7 +3,7 @@
  *
  * The page underneath and every layer below the top one are made `inert`, so
  * focus, clicks and screen readers stay in the top layer; Escape dismisses the
- * top layer only; scrolling the page is locked while any layer is drawn (its
+ * top layer only (but a field with its list open, `data-owns-escape`, closes the list first); scrolling the page is locked while any layer is drawn (its
  * exit included, `holdScroll`); and focus returns to whatever opened the layer
  * when it closes.
  *
@@ -73,6 +73,8 @@ function lockScroll(locked: boolean): void {
 
 function onKeyDown(event: KeyboardEvent): void {
   if (event.key !== 'Escape' || event.isComposing) return;
+  // A field whose list is open (a time's, a place's, a person's) takes this Escape to close the list alone.
+  if (event.target instanceof Element && event.target.closest('[data-owns-escape]')) return;
   const top = stack[stack.length - 1];
   if (!top) return;
   event.preventDefault();

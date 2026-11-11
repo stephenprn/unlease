@@ -260,9 +260,18 @@
   box-shadow: inset 0 1px 0 var(--hairline);
 }
 
-/* « Fermer » sits in the dialog's corner: its own corner there concentric with the dialog's (`--outline-radius`, 12 in from its side). */
+/*
+ * « Fermer » sits in the dialog's corner, 6 in from its side and its foot as a row would: its corner
+ * there concentric with the dialog's (`--row-outer`). Too short to hold that corner and its own above
+ * it as squircles (their radii run 1.84 times as long: the browser would shrink every corner), it is
+ * drawn round at the same depth, its radii unscaled.
+ */
 .toolbar > button:last-child {
-  border-bottom-right-radius: max(var(--cut-button), calc((var(--outline-radius, 28px) - 12px) * var(--corner-scale)));
+  align-self: stretch;
+  margin-right: -6px;
+  corner-shape: round;
+  border-radius: calc(var(--cut-button) / var(--corner-scale));
+  border-bottom-right-radius: calc(var(--row-outer, var(--cut-button)) / var(--corner-scale));
 }
 
 /* Under 720px, the phone's screen: a top bar on the note's own paper (back, then the note's toggles)... */
@@ -835,6 +844,20 @@
   padding: 8px;
 }
 
+/* A picker of rows dropped as a popover (`rows`): the popover holds them 6 in from its every edge, concentric with its corners. */
+[data-rows] .picker {
+  padding: 0;
+}
+
+[data-rows] .labelFilter {
+  width: 100%;
+  margin: 0 0 6px;
+}
+
+[data-rows] .pickerNote {
+  padding-bottom: 10px;
+}
+
 /* The label sheet holds focus here on a phone, as a panel does: a place, not a control, so no ring. */
 .picker:focus-visible {
   outline: none;
@@ -1098,7 +1121,10 @@
   overflow-y: auto;
 }
 
+/* On the rows' column: the tag in the tags' 26px slot, the words where the names start. */
 .emptyLabels {
+  --empty-slot: 26px;
+  --empty-gap: 12px;
   padding: 8px 10px 12px;
 }
 

@@ -11,7 +11,7 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 
-import { AppText, Icon, Tappable } from '../../components';
+import { AppText, Icon, placedRow, Tappable, usePanelRowCorners, type RowPlace } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
@@ -35,9 +35,12 @@ export interface TemplateRowProps {
   readonly onPress?: () => void;
   readonly accessibilityRole?: AccessibilityRole;
   readonly accessibilityState?: AccessibilityState;
+  /** Its place among its panel's rows, as a `ListRow`'s (a `Section` gives it to its first and last rows). */
+  readonly place?: RowPlace | null;
 }
 
-function TemplateRowComponent({ icon, title, meta, strong, metaLine, adds, danger, disabled, error, chevron, trailing, onPress, accessibilityRole, accessibilityState }: TemplateRowProps) {
+function TemplateRowComponent({ icon, title, meta, strong, metaLine, adds, danger, disabled, error, chevron, trailing, onPress, accessibilityRole, accessibilityState, place }: TemplateRowProps) {
+  const shape = usePanelRowCorners(place);
   const theme = useTheme();
   const ink = disabled ? theme.color.inkMuted : danger ? theme.color.danger : adds ? theme.color.link : theme.color.ink;
   const body = (
@@ -76,14 +79,14 @@ function TemplateRowComponent({ icon, title, meta, strong, metaLine, adds, dange
       accessibilityValue={error || meta ? { text: error ?? meta } : undefined}
       accessibilityRole={accessibilityRole ?? 'button'}
       accessibilityState={disabled ? { ...accessibilityState, disabled: true } : accessibilityState}
-      style={styles.row}
+      style={[styles.row, shape]}
     >
       {body}
     </Tappable>
   );
 }
 
-export const TemplateRow = memo(TemplateRowComponent);
+export const TemplateRow = placedRow(memo(TemplateRowComponent));
 
 const styles = StyleSheet.create({
   // `ListRow`'s, number for number: its press stays inside the panel or sheet it lists in.

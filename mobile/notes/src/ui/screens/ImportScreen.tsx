@@ -4,7 +4,7 @@
  * what came in and what was left out.
  */
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -17,7 +17,7 @@ import { fetchServerSettings } from '@app/sync/transport';
 
 import { SHAPES } from '@unlease/design/shapes';
 
-import { AppText, Button, Checkbox, FormMessage, Ground, ListRow, Organic, Switch, TopBar } from '../components';
+import { AppText, Button, Checkbox, EdgeScrollView, EmptyLine, FormMessage, Ground, ListRow, Organic, Switch, TopBar } from '../components';
 import { formatUsd } from '@shared/ui/features/settings/money';
 import type { ScreenProps } from '../navigation/types';
 import { corners } from '@shared/ui/theme/shape';
@@ -124,11 +124,11 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
           navigation.goBack();
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         {done ? (
           <Organic outline="panel" style={styles.card}>
             <AppText variant="title">{t('Import terminé')}</AppText>
-            {done.imported.length > 0 ? done.imported.map(line => <AppText key={line} variant="body">{line}</AppText>) : <AppText variant="body">{t('Rien de nouveau dans cette archive.')}</AppText>}
+            {done.imported.length > 0 ? done.imported.map(line => <AppText key={line} variant="body">{line}</AppText>) : <EmptyLine size="body" text={t('Rien de nouveau dans cette archive.')} />}
             {done.skipped.length > 0 ? (
               <View style={styles.skipped}>
                 <AppText variant="bodyStrong">{t('Laissé de côté')}</AppText>
@@ -259,7 +259,7 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
             <AppText variant="meta">{t('Les notes importées gardent leur date, leur couleur, leurs labels, leur mise en forme et leurs photos. Importer la même archive une seconde fois ne double rien. Rien n’est envoyé ailleurs que sur votre serveur.')}</AppText>
           </Organic>
         )}
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }
@@ -268,7 +268,8 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
     content: { padding: 12, paddingBottom: 48 },
-    card: { backgroundColor: theme.color.paper, borderWidth: 1, borderColor: theme.color.hairline, boxShadow: theme.lift.card, paddingHorizontal: 16, paddingVertical: 18, gap: 14 },
+    // 16 in all round: its last button stands in its corner as far from its foot as from its side.
+    card: { backgroundColor: theme.color.paper, borderWidth: 1, borderColor: theme.color.hairline, boxShadow: theme.lift.card, padding: 16, gap: 14 },
     step: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
     // A count, not a choice: a small round well, never matcha, never a pebble; centred on its step's first line (23).
     stepNumber: { width: 24, height: 24, ...corners(SHAPES.dot), alignItems: 'center', justifyContent: 'center' },

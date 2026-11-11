@@ -5,7 +5,7 @@
  * they lacked, the labels to make. A card shared to the app lands here, read already.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { tx, t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -16,7 +16,7 @@ import { askPermission, openAppSettings } from '@platform/phoneContacts';
 import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, FormMessage, Ground, Icon, Organic, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, FormMessage, Ground, Icon, Organic, TopBar } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
@@ -100,7 +100,7 @@ export function ImportScreen({ navigation, route }: ScreenProps<'Import'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Importer')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         {report ? (
           <Organic outline="card" style={styles.panel}>
             <Icon name="check" size={28} color={theme.color.ok} />
@@ -159,7 +159,7 @@ export function ImportScreen({ navigation, route }: ScreenProps<'Import'>) {
             {busy}
           </AppText>
         ) : null}
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

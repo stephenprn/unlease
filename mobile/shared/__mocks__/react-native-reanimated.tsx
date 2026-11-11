@@ -48,6 +48,18 @@ export const useDerivedValue = <T,>(factory: () => T): { value: T } => ({ value:
 /** A scroll handler that does nothing: the list still scrolls, nothing reads the offset. */
 export const useAnimatedScrollHandler = (): (() => void) => () => {};
 
+/** An animated ref is a callback ref that also holds `current` (a sheet's body scrolled back to its top). */
+export function useAnimatedRef<T>(): ((node: T | null) => void) & { current: T | null } {
+  return React.useMemo(() => {
+    const ref = ((node: T | null) => {
+      ref.current = node;
+    }) as ((node: T | null) => void) & { current: T | null };
+    ref.current = null;
+    return ref;
+  }, []);
+}
+export const scrollTo = (): void => {};
+
 /** Skipping entering or exiting animations means nothing when there are none. */
 export function LayoutAnimationConfig({ children }: { children?: React.ReactNode }): React.ReactElement {
   return <>{children}</>;

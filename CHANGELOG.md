@@ -4,10 +4,51 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Added
+
+- On Android, Carnet's collections appear in the share sheet's first row: share a link straight into "Films & series" without choosing afterwards. The collections you filed into last come first.
+- On Android, every app's icon holds shortcuts on a long press: a new note, list or link and the search in Carnet; a new page and the search in Pages; a new event, an event in a few words, today and the search in Agenda; a new contact, the favourites, the birthdays and the search in Contacts.
+- On Android, text selected in any app can go to Carnet ("Note in Carnet": a link is filed, words become a note) or become an event ("Create event": Agenda's quick add, already filled in).
+- On Android, "Add to calendar" and "Add contact" in other apps (a booking in your e-mail, a number in your dialer or Messages) open Agenda's or Contacts' new form, filled in; nothing is saved until you save it.
+- On Android, a `webcal://` link opens Agenda's subscriptions with its address, ready to subscribe, and a link that opens the calendar at a moment (from the Clock or another app) opens that day.
+- On Android, Quick Settings tiles for a new note (Carnet) and a new event (Agenda), and Pages in the share sheet: shared text becomes a new page.
+- On Android, pull Agenda's views down to sync, as in the other apps.
+- On the web, `C` makes a page in Pages, as it makes a note, an event or a contact in the other apps (`P` still works); the `?` help lists Agenda's and Contacts' own keys; `E` opens the selected event's form in Agenda and `#` bins the selected contacts in Contacts, as their buttons said.
+- Carnet's starter collections (Fashion, Films & series, Restaurants, To read, Home, Travel) come with their own facts for Claude to note, chosen as they are made; one made earlier starts from them when you give it its own.
+
 ### Changed
+
+- On the web and on Android, what scrolls under a bar, a dialog's title or a form's buttons gently dissolves as it slides under them, only while there is more beyond, and only there: where it simply runs off the screen (the foot of a page or of the side menu), or under a search field, it stays a plain edge. The line you are typing on always stays clear of it, as when writing on the last line of a note or above a form's buttons. On Android, tapping into a long note or page no longer jumps it to its top before scrolling back to your line: it stays put, then glides just enough to keep the caret above the keyboard. The side menu, and sheets and pickers without buttons, now scroll down to the very bottom of the screen instead of stopping short of it. Dialogs on the web no longer draw a line under their title or over their buttons.
+- Every empty place says so and arrives with a little motion, in every app: a search with nothing found lays down its own collage, and pickers, menus and small lists show a line that settles in. A few places that showed nothing now say why (Agenda's search before you type, a time zone or a country with no match, the web's people picker in Agenda).
+- Lists move the same way in every app, on the web and on Android: what you remove fades where it was and the rest close ranks; what you add settles in (contacts, bins, labels, Pages' home and tree, Agenda's reminders).
+- On Android, Back from Archives, Reminders, the bin or a label in Carnet goes back to your notes instead of leaving the app.
+- On Android, swipes follow one rule: a row that acts (a link marked done, a contact called) acts only when you let go past its threshold, which clicks; what goes away (a note archived, a week turned) goes when flung too, with a click.
+- On Android, the bins of Pages, Contacts and Agenda look like Carnet's, one card per item, and an item opens from the bin; renaming a label to a name already taken says so under the field and keeps what you typed.
+- In Agenda for Android, the event form says what is missing above its fields, and "Save" shows it is saving.
+- In Contacts on the web, Favourites and a label with no contacts yet offer to create or import them. On the web, the settings' bin row says "The bin is empty" and does nothing while it is.
 
 - Carnet's fact templates become "Facts Claude notes", on the web and on Android: a collection's menu opens its page, where you keep Claude's usual facts or give it its own and edit them right there, each fact one line that opens in place, its type shown as the shape of the answer (a number, a date…). Each kind's usual facts are changed from the overview, under Administration › Claude. Existing templates keep working as their collections' own facts.
 - The demo's notes, pages, events and people are in English; its interface follows your browser (English unless it is French), and `?lang=en` or `?lang=fr` picks one.
+- Text fields are frosted in every app, on the web and on Android: the background's grain no longer shows behind what you type.
+- On Android, a bottom sheet follows your finger from anywhere on it, as Google's do: pull it down to close it, and a list in it scrolls back to its top before the sheet moves. Photos in a note and pictures in a page close with a pull down, zoom with a pinch or a double tap, and a swipe goes to the next photo.
+- On Android, a long text field (an event's description, a contact's note, a question to Claude) grows to eight lines, then scrolls, so the form stays in reach above the keyboard.
+- In Agenda for Android, an event's colour is one line that opens the colours, instead of three rows of swatches.
+- In Contacts, each letter's people are grouped on their own panel under a larger letter, instead of a thin rule.
+- Settings are reorganised the same way in every app, on the web and on Android: the app's own settings come first (Carnet's board layout and reminders, Agenda's calendar, Contacts' order and birthdays), then "Appearance" as one row showing your look, then Language and Data, and the Administration last. "Appearance" opens its own page with the theme, the paper grain, the colours and the background; a search for a colour or the background opens it there, and older links to `…/settings#colors` or `#ground` still land.
+- "Paper grain" and "Grain on the background" each say what they texture: the first is a fine paper texture on notes, cards and panels, the second the film grain over the screen's background.
+- Help lines and paragraphs in settings, the Administration, the setup, dialogs and the facts pages run the full width of their panel instead of stopping at about two thirds of it.
+- What needs a service set up in the Administration shows only once it is set up, in every app, on the web and on Android: without a Claude key, "Facts Claude notes", reading links again, Claude's sorting, asking Claude about a link, Claude's link modules and Agenda's "Ask Claude" no longer show (and the language setting no longer mentions Claude); Seerr's module waits until Seerr is linked. Each device remembers what the server last said, so nothing flickers when it starts offline.
+- A collection's large background emblem is laid down as the collection opens, drifting into its slant as it fades in, as the empty states' cut-outs do.
+- In Agenda on the web, the quick form of an event drawn on the grid stands beside the slot and holds its day and hours (the slot follows them), a place, people and a description, each a line that opens into its field; "More options" keeps all of it, people included, and Escape asks before dropping what was typed. A day of the month offers "All day" to give it hours.
+- Dialogs' buttons sit as far from the dialog's foot as from its side.
+
+### Fixed
+
+- Pages: Tab on a block under a closed toggle (a callout just written, for instance) no longer hides it: the toggle opens with the block and the caret in it, and Ctrl+Z puts it back. Ctrl+Z undoes the page even when no text has the focus, instead of the browser's own undo changing blocks' text.
+- Highlights, buttons and focus rings in the corner of a panel, menu, popover, dialog or sheet sit as far in from both sides and follow its curve, on the web and on Android (settings, the Administration, the setup, pickers, list dialogs, the facts page, the link page, Agenda's event pages).
+- In Agenda on the web, the schedule's empty state is centred, and "Show more" appears only when something lies further ahead, reaching it in one press.
+- In Agenda on the web, the event title's underline starts under its first letter.
+- On the web, Escape in an open list (a time, a place, people) closes the list alone, not the dialog around it.
 
 ## [0.1.1] - 2026-11-10
 

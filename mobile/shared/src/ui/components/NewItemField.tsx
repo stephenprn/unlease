@@ -50,7 +50,7 @@ function NewItemFieldComponent({ value, onChangeText, onSubmit, placeholder, acc
   };
   return (
     <View style={[styles.wrap, style]}>
-      <Organic style={[styles.field, strong ? styles.fieldStrong : null, { backgroundColor: theme.color.fieldVeil, borderColor: problem ? theme.color.danger : focused ? theme.color.focus : theme.color.outline }]}>
+      <Organic frost style={[styles.field, strong ? styles.fieldStrong : null, { backgroundColor: theme.color.fieldVeil, borderColor: problem ? theme.color.danger : focused ? theme.color.focus : theme.color.outline }]}>
         <Icon name={icon} size={24} color={theme.color.inkMuted} />
         <TextInput
           value={value}

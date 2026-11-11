@@ -11,8 +11,8 @@ import { plural } from '@unlease/core/services/format';
 
 import { useLines } from '../../../app/hooks/useLines';
 import { useLibraryStore } from '../../../app/store/library';
-import { useCanRead } from '../../../app/store/prefs';
 import { selectSorting, useNotesUiStore } from '../../../app/store/notesUi';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
@@ -41,7 +41,8 @@ export function DeleteLineDialog({ ids, open, onDismiss, onChoose, onPickLine }:
   const lines = useLines();
   const deleting = lines.filter(line => ids.includes(line.id) && line.id !== INBOX_ID);
   const count = useLibraryStore(s => ids.reduce((sum, id) => sum + (id !== INBOX_ID && s.notes[id]?.kind === 'links' ? (s.linksByNote[id]?.length ?? 0) : 0), 0));
-  const reading = useCanRead();
+  // « Les ranger avec Claude » once the server has said it has a key.
+  const reading = useServerFeature('claude');
   const sorting = useNotesUiStore(selectSorting);
   const others = lines.some(line => !ids.includes(line.id) && line.id !== INBOX_ID);
   const words = {

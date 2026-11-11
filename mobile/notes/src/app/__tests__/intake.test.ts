@@ -2,11 +2,11 @@ import { INBOX_ID } from '@unlease/notes/models/entities';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 
 import { receiveShare } from '../intake';
-import { ensureInbox } from '../store/actions';
+import { createLine, ensureInbox, trashNotes } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore } from '../store/libraryStore';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
 
-const share = (over: Partial<{ text: string; subject: string; files: string[] }>) => ({
+const share = (over: Partial<{ text: string; subject: string; files: string[]; shortcutId: string }>) => ({
   id: 'share-1',
   text: '',
   subject: '',
@@ -74,5 +74,30 @@ describe('a link shared again', () => {
     const id = first.kind === 'links' ? first.links[0]!.id : '';
     expect(again).toMatchObject({ kind: 'links', links: [{ id, existing: id, savedIn: [INBOX_ID] }] });
     expect(Object.keys(useLibraryStore.getState().links)).toEqual([id]);
+  });
+});
+
+describe('a share through a collection in the share sheet', () => {
+  it('puts the link in that collection, on the person\'s say, never filed again', async () => {
+    const films = createLine({ title: 'Films' });
+    const result = await receiveShare(share({ text: 'https://cine.fr/film', subject: 'Le film', shortcutId: `collection:${films}` }));
+    expect(result).toMatchObject({ kind: 'links', into: films });
+    const id = result.kind === 'links' ? result.links[0]!.id : '';
+    expect(useLibraryStore.getState().links[id]).toMatchObject({ noteId: films, autoFile: false, filedBy: 'person', title: 'Le film' });
+  });
+
+  it('files it as any share once that collection is gone', async () => {
+    const films = createLine({ title: 'Films' });
+    trashNotes([films]);
+    const result = await receiveShare(share({ text: 'https://cine.fr/film', shortcutId: `collection:${films}` }));
+    expect(result).toMatchObject({ kind: 'links', into: null });
+    const id = result.kind === 'links' ? result.links[0]!.id : '';
+    expect(useLibraryStore.getState().links[id]).toMatchObject({ noteId: INBOX_ID, autoFile: true });
+  });
+
+  it('still makes a note of words with no link', async () => {
+    const films = createLine({ title: 'Films' });
+    const result = await receiveShare(share({ text: 'Revoir les Kaurismäki', shortcutId: `collection:${films}` }));
+    expect(result.kind).toBe('note');
   });
 });

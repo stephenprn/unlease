@@ -4,7 +4,7 @@
  */
 import React, { memo, useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, Keyframe, LinearTransition } from 'react-native-reanimated';
+import Animated, { Keyframe } from 'react-native-reanimated';
 
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
@@ -15,7 +15,7 @@ import { useContact, useContactIds, useUpcomingBirthdays } from '@app/hooks/useC
 import { useMinute } from '@shared/app/hooks/useMinute';
 
 import { AppText, Icon, Tappable } from '@shared/ui/components';
-import { accelerate, decelerate, duration, standard } from '@shared/ui/theme/motion';
+import { accelerate, decelerate, duration, listIn, listMove } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -26,9 +26,9 @@ const FACE = 56;
 /** A face starred elsewhere settles into the row, the others make room; one unstarred leaves where it was. */
 const FACE_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.9 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.medium).delay(duration.short);
 const FACE_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.94 }], easing: accelerate } }).duration(duration.short);
-const MAKE_ROOM = LinearTransition.duration(duration.medium).easing(standard);
+const MAKE_ROOM = listMove;
 /** The row or the line arriving while the list is shown (a first favourite, a birthday this week). */
-const BLOCK_IN = FadeIn.duration(duration.medium).easing(decelerate);
+const BLOCK_IN = listIn;
 
 /** False on the first render: what is there when the list opens stays still; what comes later settles in. */
 function useArrived(): boolean {

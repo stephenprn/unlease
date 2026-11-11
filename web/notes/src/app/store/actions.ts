@@ -18,7 +18,7 @@ import { normalizeUrl } from '@unlease/core/services/url';
 import { asLineColor, nextLineColor, type LineColor, type NoteColor, type NotePattern } from '@unlease/design/colors';
 import { INBOX_HINT, INBOX_ID, INBOX_TITLE, shownTitle, type LinkFiler, type LinkKind, type NoteKind } from '@unlease/notes/models/entities';
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
-import { collectionTemplate, kindTemplateId, otherCollectionsOf, presetFields, sameFields } from '@unlease/notes/services/templates';
+import { collectionTemplate, kindTemplateId, otherCollectionsOf, presetFields, sameFields, starterFacts, starterTemplateId } from '@unlease/notes/services/templates';
 import { GENESIS_HLC } from '@unlease/core/sync/hlc';
 import { attachmentFields, checkFields, labelFields, linkFields, linkTemplateFields, noteFields } from '@unlease/notes/sync/entities';
 import type { Fields } from '@unlease/core/sync/record';
@@ -120,34 +120,40 @@ export interface NewNote {
   readonly emblem?: string;
   readonly hint?: string;
   readonly id?: string;
+  /** A collection's own facts (`linkTemplate`), written in the same batch. */
+  readonly templateId?: string;
+}
+
+/** A new note's record, first on the board. */
+function newNote(init: NewNote, now: number): LocalChange {
+  return {
+    type: 'note',
+    id: init.id ?? createId(now),
+    patch: noteFields({
+      kind: init.kind,
+      title: init.title ?? '',
+      body: init.body ?? '',
+      color: init.color ?? null,
+      pinned: init.pinned ?? false,
+      archived: false,
+      trashedAt: null,
+      labelIds: init.labelIds ?? [],
+      position: topPosition(),
+      reminderAt: null,
+      code: init.code ?? '',
+      ...(init.emblem !== undefined ? { emblem: init.emblem } : {}),
+      ...(init.templateId !== undefined ? { templateId: init.templateId } : {}),
+      hint: init.hint ?? '',
+      createdAt: now,
+      deletedAt: null,
+    }),
+  };
 }
 
 export function createNote(init: NewNote, now: number = Date.now()): string {
-  const id = init.id ?? createId(now);
-  write([
-    {
-      type: 'note',
-      id,
-      patch: noteFields({
-        kind: init.kind,
-        title: init.title ?? '',
-        body: init.body ?? '',
-        color: init.color ?? null,
-        pinned: init.pinned ?? false,
-        archived: false,
-        trashedAt: null,
-        labelIds: init.labelIds ?? [],
-        position: topPosition(),
-        reminderAt: null,
-        code: init.code ?? '',
-        ...(init.emblem !== undefined ? { emblem: init.emblem } : {}),
-        hint: init.hint ?? '',
-        createdAt: now,
-        deletedAt: null,
-      }),
-    },
-  ]);
-  return id;
+  const note = newNote(init, now);
+  write([note]);
+  return note.id;
 }
 
 /**
@@ -284,9 +290,14 @@ export function deleteForever(ids: readonly string[], now: number = Date.now()):
   write(changes, now);
 }
 
-export function emptyTrash(now: number = Date.now()): number {
+/** The notes in the bin. */
+export function trashedNoteIds(): string[] {
   const { noteOrder, notes } = state();
-  const trashed = noteOrder.filter(id => notes[id]?.trashedAt !== null);
+  return noteOrder.filter(id => notes[id]?.trashedAt !== null);
+}
+
+export function emptyTrash(now: number = Date.now()): number {
+  const trashed = trashedNoteIds();
   deleteForever(trashed, now);
   return trashed.length;
 }
@@ -433,22 +444,40 @@ export interface NewLine {
   readonly id?: string;
 }
 
-/** A collection: a note of kind `links` with a cut-out emblem. */
+/**
+ * A collection: a note of kind `links` with a cut-out emblem. A starter (`SUGGESTED_COLLECTIONS`)
+ * comes with its own facts, chosen, in the same batch: its list under a fixed id
+ * (`starterTemplateId`), named after it, so two devices making « Restaurants » write one.
+ */
 export function createLine(init: NewLine, now: number = Date.now()): string {
   const { notes, noteOrder } = state();
   const collections = noteOrder.map(id => notes[id]).filter(n => n?.kind === 'links');
-  return createNote(
+  const title = init.title.trim();
+  const facts = init.id ? starterFacts(init.id) : null;
+  const templateId = init.id && facts ? starterTemplateId(init.id) : undefined;
+  const note = newNote(
     {
       kind: 'links',
       id: init.id,
-      title: init.title.trim(),
-      code: (init.code ?? init.title.trim().charAt(0)).toUpperCase().slice(0, 2),
+      title,
+      code: (init.code ?? title.charAt(0)).toUpperCase().slice(0, 2),
       color: init.color ?? nextLineColor(collections.map(n => asLineColor(n!.color))),
       emblem: init.emblem ?? nextEmblem(collections.map(n => n!)),
       hint: init.hint ?? '',
+      templateId,
     },
     now,
   );
+  const changes: LocalChange[] = [note];
+  if (templateId && facts) {
+    changes.unshift({
+      type: 'linkTemplate',
+      id: templateId,
+      patch: linkTemplateFields({ name: title.slice(0, TEMPLATE_LIMITS.name), kind: null, fields: facts, createdAt: now, deletedAt: null }),
+    });
+  }
+  write(changes);
+  return note.id;
 }
 
 /** False without a server, or when the server said it has no key: unknown (null) counts as on. */

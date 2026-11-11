@@ -11,6 +11,12 @@
   gap: var(--row-gap);
 }
 
+/* Each page, with its open sub-pages, moves as one: the tree and every page are their rows' frames (useListMotion). */
+.tree,
+.tree li {
+  position: relative;
+}
+
 /* An open page's sub-pages start the same gap under it. */
 .group {
   margin-top: var(--row-gap);

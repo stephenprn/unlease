@@ -62,3 +62,15 @@ export const APP_WORDS: Record<AppId, AppWords> = {
     languageNote: tx('Les écrans de l’application, les dates et les noms des types de numéros.'),
   }),
 };
+
+/**
+ * The language's name and note while the server has no Claude key, for the apps whose language also
+ * sets what Claude writes (Carnet's readings, Pages' answers): Claude is not mentioned where it does nothing.
+ */
+export const LANGUAGE_WITHOUT_CLAUDE: Partial<Record<AppId, Pick<AppWords, 'language' | 'languageNote'>>> = {
+  notes: localized({ language: tx('Langue de l’interface'), languageNote: tx('Les écrans de l’application, les dates et les rappels.') }),
+  pages: localized({ language: tx('Langue de l’interface'), languageNote: tx('Les écrans de l’application et les dates écrites dans les pages.') }),
+};
+
+/** The language's name and note in an app's Réglages, with or without Claude. */
+export const languageWords = (app: AppId, claude: boolean): Pick<AppWords, 'language' | 'languageNote'> => (claude ? APP_WORDS[app] : (LANGUAGE_WITHOUT_CLAUDE[app] ?? APP_WORDS[app]));

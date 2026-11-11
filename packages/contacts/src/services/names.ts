@@ -27,6 +27,17 @@ export function nameOrNull(contact: Named): string | null {
   return phone ?? null;
 }
 
+/**
+ * A name written whole (a card's « FN », another app's « Créer un contact »): its last word the last
+ * name, the words before it the first name; a single word is the first name (a number saved as
+ * « Plombier »).
+ */
+export function splitName(whole: string): Pick<Contact, 'firstName' | 'lastName'> {
+  const words = whole.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= 1) return { firstName: words[0] ?? '', lastName: '' };
+  return { firstName: words.slice(0, -1).join(' '), lastName: words[words.length - 1]! };
+}
+
 /** The name as shown: « Léa Martin », or « Sans nom ». */
 export function contactName(contact: Named): string {
   return nameOrNull(contact) ?? t(UNNAMED);

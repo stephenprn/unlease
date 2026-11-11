@@ -45,7 +45,7 @@
 }
 
 .row[data-active] {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .row:active {
@@ -103,7 +103,5 @@
 }
 
 .empty {
-  margin: 0;
   padding: 10px 12px;
-  color: var(--ink-muted);
 }

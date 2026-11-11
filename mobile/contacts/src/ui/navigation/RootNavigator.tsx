@@ -14,18 +14,20 @@ import { DuplicatesScreen } from '../screens/DuplicatesScreen';
 import { EditContactScreen } from '../screens/EditContactScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { LabelsScreen } from '../screens/LabelsScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
 import { SetupScreen } from '../screens/SetupScreen';
 import { TrashScreen } from '../screens/TrashScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-/** The list's places by their own address (`favorites`, `label/<id>`), read as the list's params. */
+/** The list's places by their own address (`favorites`, `label/<id>`, `search`), read as the list's params. */
 export function listPath(path: string): string {
   const [base = '', query = ''] = path.replace(/^\/+/, '').split('?');
   const join = (params: string): string => (query ? `?${params}&${query}` : `?${params}`);
   if (base === 'favorites') return join('filter=favorites');
+  // The launcher's shortcut « Rechercher »: the list's search strip takes the keyboard.
+  if (base === 'search') return join('capture=search');
   const label = /^label\/([^/]+)$/.exec(base);
   if (label) return join(`label=${label[1]}`);
   return path;
@@ -35,7 +37,7 @@ export function listPath(path: string): string {
  * What another app of the suite, a widget or a notification opens here (`openInApp` with
  * `contactPlace`): `unlease-contacts://contact/<id>`, `new` (« Créer un contact », `?phone=` to start
  * with a number), `edit/<id>`, `favorites`, `label/<id>`, `birthdays`, `labels`, `import`, `duplicates`, `trash`,
- * `settings`, `admin`; nothing after the scheme is the list.
+ * `settings`, `admin`, `search` (the list's search, the launcher's shortcut); nothing after the scheme is the list.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [`${APP_SCHEME}://`],
@@ -82,6 +84,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Duplicates" component={DuplicatesScreen} options={DEEPER} />
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
     </Stack.Navigator>
   );

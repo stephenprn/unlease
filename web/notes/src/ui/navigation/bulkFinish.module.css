@@ -24,7 +24,6 @@
 
 /* What a collection takes, on the groups' column (the picker's 4 and its heading's 2). */
 .note {
-  max-width: 44ch;
   padding: 0 6px;
   color: var(--ink-muted);
 }

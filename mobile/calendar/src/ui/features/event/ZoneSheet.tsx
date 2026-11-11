@@ -1,17 +1,17 @@
 /**
  * An event's time zone (its hour there, Google's « Fuseau horaire »): the phone's, the usual ones, or
  * any IANA name typed (the list narrows to what is typed); the keyboard's « OK » or the button keeps a
- * typed one, and a name that is no zone is said under the field.
+ * typed one, and a name that is no zone is said under the field; nothing in the list says so.
  */
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
 import { deviceZone, isKnownZone, USUAL_ZONES } from '@unlease/calendar/services/time';
 import { later } from '@app/later';
 
-import { Button, ListRow, Sheet, SHEET_INSET, TextField, useForm } from '@shared/ui/components';
+import { Button, EmptyLine, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField, useForm } from '@shared/ui/components';
 
 /** « europe/paris » typed as it came: the platform's own spelling (« Europe/Paris »). */
 function canonicalZone(zone: string): string {
@@ -51,11 +51,13 @@ export function ZoneSheet({ visible, zone, onDismiss, onZone }: { visible: boole
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled">
+      <SheetScroll top={false}>
         {zones.map(each => (
           <ListRow key={each} title={each.replace(/_/g, ' ')} supporting={each === own ? t('Fuseau de ce téléphone') : undefined} icon={each === zone ? 'check' : 'globe'} onPress={() => pick(each)} />
         ))}
-      </ScrollView>
+        {/* Nothing in the list: a zone typed whole is still kept by « OK ». */}
+        {zones.length === 0 ? <EmptyLine text={isKnownZone(name) ? t('Pas dans la liste : « OK » garde ce fuseau.') : t('Aucun fuseau ne correspond.')} style={styles.none} /> : null}
+      </SheetScroll>
     </Sheet>
   );
 }
@@ -66,4 +68,6 @@ const styles = StyleSheet.create({
   field: { flex: 1 },
   // As tall as the field beside it and level with it, whatever is said under the field.
   ok: { minHeight: 52 },
+  // On the sheet's column, as the other pickers' line saying nothing matches.
+  none: { paddingHorizontal: SHEET_INSET, paddingVertical: 12 },
 });

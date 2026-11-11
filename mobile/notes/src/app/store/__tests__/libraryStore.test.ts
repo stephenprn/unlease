@@ -1,4 +1,6 @@
+import { SUGGESTED_COLLECTIONS } from '@unlease/notes/models/collections';
 import { INBOX_ID } from '@unlease/notes/models/entities';
+import { collectionTemplate, starterFacts, starterTemplateId } from '@unlease/notes/services/templates';
 import { planKeepImport } from '@unlease/notes/services/keepImport';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
@@ -206,6 +208,19 @@ describe('duplicates and links', () => {
     expect(state().notes[second]?.emblem).not.toBe(state().notes[first]?.emblem);
     const chosen = createLine({ title: 'Vins', emblem: 'goutte' });
     expect(state().notes[chosen]?.emblem).toBe('goutte');
+  });
+
+  it('makes a starter with its own facts chosen, the collection, its list and the pointer in one pending batch', () => {
+    const before = countPending();
+    const line = createLine(SUGGESTED_COLLECTIONS.find(starter => starter.id === 'line-films')!);
+    const id = starterTemplateId(line);
+    expect(line).toBe('line-films');
+    expect(state().notes[line]?.templateId).toBe(id);
+    expect(collectionTemplate(state().linkTemplates, state().notes[line])).toMatchObject({ id, name: 'Films & séries', kind: null, deletedAt: null, fields: starterFacts(line) });
+    expect(getRecord('note', line)!.clocks.templateId).toBe(getRecord('linkTemplate', id)!.clocks.fields);
+    expect(countPending()).toBe(before + 2);
+    // Any other collection reads its links by kind until it takes its own.
+    expect(state().notes[createLine({ title: 'Vins' })]?.templateId ?? null).toBeNull();
   });
 
   it('cleans the trackers off links saved before a rule knew them, undoably', () => {

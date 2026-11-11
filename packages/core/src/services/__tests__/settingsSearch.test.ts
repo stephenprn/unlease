@@ -6,9 +6,9 @@ import { CONTACTS_SETTINGS_PLACES } from '@unlease/contacts/services/settingsPla
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { PAGES_SETTINGS_PLACES } from '@unlease/pages/services/settingsPlaces';
 
-import { APP_IDS, type AppId } from '../../apps';
+import { APP_IDS, APPS, type AppId } from '../../apps';
 import { setLocale } from '../../i18n';
-import { findSettings, placesFor, settingsWhere, SHARED_SETTINGS_PLACES, type SettingsClient, type SettingsPlace } from '../settingsSearch';
+import { findSettings, placesFor, settingsPageOf, settingsWhere, SETTINGS_SECTIONS, SHARED_SETTINGS_PLACES, type SettingsClient, type SettingsPlace } from '../settingsSearch';
 
 const OWN: Readonly<Record<AppId, readonly SettingsPlace[]>> = { notes: NOTES_SETTINGS_PLACES, pages: PAGES_SETTINGS_PLACES, contacts: CONTACTS_SETTINGS_PLACES, calendar: CALENDAR_SETTINGS_PLACES };
 
@@ -84,7 +84,7 @@ describe('the settings a search finds', () => {
     expect(found('seerr', 'pages')).not.toContain('notes-seerr');
     expect(first('tableau', 'notes')).toBe('notes-layout');
     expect(found('tableau', 'contacts')).toEqual([]);
-    // Carnet's reminders are a section of the web's Réglages: the phone rings them, and says nothing there.
+    // Carnet's reminders are a row of the web's Réglages: the phone rings them, and says nothing there.
     expect(first('rappels', 'notes', 'web')).toBe('notes-reminders');
     expect(found('rappels', 'notes', 'phone')).not.toContain('notes-reminders');
     // The Keep import: its own section on the web, a row of « Données » on the phone.
@@ -104,16 +104,26 @@ describe('the settings a search finds', () => {
     expect(first('emoji', 'pages', 'web')).toBe('search-languages');
   });
 
+  it('puts the look’s sections on « Apparence »’s page, every other on the overview', () => {
+    expect([SETTINGS_SECTIONS.appearance, SETTINGS_SECTIONS.colors, SETTINGS_SECTIONS.ground].map(settingsPageOf)).toEqual(['appearance', 'appearance', 'appearance']);
+    expect([SETTINGS_SECTIONS.language, SETTINGS_SECTIONS.data, 'notes', 'import', null].map(settingsPageOf)).toEqual([null, null, null, null, null]);
+  });
+
   it('says where each place is', () => {
     const where = (id: string, app: AppId = 'notes'): string => settingsWhere(placesFor(app, 'phone', OWN[app]).find(place => place.id === id)!);
-    expect(where('ground-grain')).toBe('Réglages › Fond');
-    expect(where('ground')).toBe('Réglages');
+    // The look's own page lies between: « Apparence » itself is a row of Réglages.
+    expect(where('appearance')).toBe('Réglages');
+    expect(where('theme')).toBe('Réglages › Apparence');
+    expect(where('ground')).toBe('Réglages › Apparence');
+    expect(where('ground-grain')).toBe('Réglages › Apparence › Fond');
+    expect(where('language')).toBe('Réglages');
+    expect(where('notes-layout')).toBe(`Réglages › ${APPS.notes.name}`);
     expect(where('claude-budget')).toBe('Administration › Claude');
     expect(where('admin-backup')).toBe('Administration');
     expect(where('settings')).toBe('');
     expect(where('calendar-weekends', 'calendar')).toBe('Réglages › Agenda');
     setLocale('en');
-    expect(where('ground-grain')).toBe('Settings › Background');
+    expect(where('ground-grain')).toBe('Settings › Appearance › Background');
     expect(where('calendar-weekends', 'calendar')).toBe('Settings › Calendar');
   });
 

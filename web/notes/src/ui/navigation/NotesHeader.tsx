@@ -18,6 +18,7 @@ import { askDeleteLines, openCapture } from '../../app/store/notesUi';
 import { setLayout, useLayout } from '../../app/store/prefs';
 import { showSnack, showUndo } from '@shared/app/store/ui';
 import { Confirm } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelCheck } from '@shared/ui/components/LabelMark';
@@ -54,9 +55,9 @@ function BulkLabels({ ids }: { ids: readonly string[] }) {
   return (
     <>
       <IconButton ref={anchor} icon="tag" label={t('Labels')} shape={2} onClick={() => setOpen(true)} />
-      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Labels des notes sélectionnées')} align="end" className={styles.bulkLabels}>
+      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Labels des notes sélectionnées')} align="end" className={styles.bulkLabels} rows>
         {live.length === 0 ? (
-          <p className={`${styles.bulkEmpty} t-meta`}>{t('Aucun label. Créez-en depuis la page Labels.')}</p>
+          <EmptyLine glyph="tag" text={t('Aucun label. Créez-en depuis la page Labels.')} className={styles.bulkEmpty} />
         ) : (
           <ul className={styles.bulkList}>
             {live.map(label => {

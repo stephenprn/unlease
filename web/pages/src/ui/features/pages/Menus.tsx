@@ -21,6 +21,7 @@ import { pagesLibrary, usePagesLibrary, useWholePagesLibrary } from '../../../ap
 import { placeBlock } from '../../../app/store/pages';
 import { selectLanguages, useSettingsStore } from '@shared/app/store/settings';
 import { EmblemStone } from '@shared/ui/components/Emblem';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { KIND_ICONS } from '@notes/ui/features/links/kindIcon';
 import { declineEmoji, focusBlock, richHandle, setMenu, setMenuKeys, useEditorStore, type MenuState } from './editorStore';
@@ -71,7 +72,8 @@ function PickerList({ rows, active, onActive, empty, label, details = 'all' }: {
     if (rect.top < box.top) node.scrollTop -= box.top - rect.top;
     else if (rect.bottom > box.bottom) node.scrollTop += rect.bottom - box.bottom;
   }, [active]);
-  if (rows.length === 0) return <p className={`${styles.menuEmpty} t-meta`}>{empty}</p>;
+  // As the shared mention menu says it.
+  if (rows.length === 0) return <EmptyLine glyph="info" className={styles.menuEmpty} role="status" text={empty} />;
   return (
     <div ref={list} className={styles.menuList} role="listbox" aria-label={label}>
       {rows.map((row, index) => (
@@ -271,7 +273,14 @@ function MentionPanel({ menu }: { menu: Extract<MenuState, { kind: 'mention' | '
   const [active, setActive] = useListKeys(rows, () => setMenu(null), true);
   return (
     <Floating anchor={anchor} label={cite ? t('Citer une page') : t('Mentionner')} className={styles.menuPanel} id={panel}>
-      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Rien ne correspond.')} label={cite ? t('Pages') : t('Pages, contacts, événements, notes, collections, liens et dates')} />
+      <PickerList
+        rows={rows}
+        active={active}
+        onActive={setActive}
+        // As on the phone: what was typed matches nothing, or there is nothing yet to name.
+        empty={menu.query.replace(/\]+$/, '').trim() ? t('Rien ne correspond.') : cite ? t('Aucune autre page pour l’instant.') : t('Rien à mentionner pour l’instant.')}
+        label={cite ? t('Pages') : t('Pages, contacts, événements, notes, collections, liens et dates')}
+      />
     </Floating>
   );
 }

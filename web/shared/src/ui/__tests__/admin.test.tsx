@@ -8,12 +8,13 @@ import { PALETTE_COLORS } from '@unlease/design/appearance';
 import type { BackupSettings, DriveSettings, SeerrSettings, ServerSettings } from '@unlease/core/sync/settings';
 
 import { freshLibrary } from '@test/library';
-import { setAppearance, setOnboarded, setServer, useSettingsStore } from '../../app/store/settings';
+import { setAppearance, setOnboarded, setServer, setTheme, useSettingsStore } from '../../app/store/settings';
 import { setServicesCssOpen, useUiStore } from '../../app/store/ui';
 import { stopSync } from '../../app/sync/loop';
 import { ServicesCssDialog } from '../features/appearance/ServicesCssDialog';
 import { AdminScreen } from '../screens/AdminScreen';
 import { App } from '../App';
+import { AppearanceScreen } from '../screens/AppearanceScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { initHistory, parseRoute } from '../router';
 
@@ -344,6 +345,45 @@ describe('the settings', () => {
     expect(location.pathname).toBe('/notes/admin');
   });
 
+  it('put the app’s own first, the look on one row, the data, what is done once, and the Administration last', () => {
+    render(<SettingsScreen />);
+    // The page's sheets, each named by its title or by its one row.
+    const page = screen.getByRole('heading', { level: 1, name: 'Réglages' }).parentElement!.parentElement!;
+    const names = [...page.querySelectorAll(':scope > section')].map(section => document.getElementById(section.getAttribute('aria-labelledby') ?? '')?.textContent);
+    expect(names).toEqual(['Carnet', 'Apparence', 'Langue', 'Données', 'Importer depuis Google Keep', 'Administration']);
+    // The board's layout is Carnet's own now, beside its reminders; the look is on its own page.
+    const own = screen.getByRole('region', { name: 'Carnet' });
+    expect(within(own).getByRole('radiogroup', { name: 'Disposition du tableau' })).toBeInTheDocument();
+    expect(within(own).getByText('Les rappels sonnent sur votre téléphone')).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'Thème' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Couleurs' })).not.toBeInTheDocument();
+  });
+
+  it('say the look on « Apparence »’s row, which opens its page: the theme, the paper’s grain said for what it is, the colours and the ground', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<SettingsScreen />);
+    const row = within(screen.getByRole('region', { name: 'Apparence' })).getByRole('button', { name: /^Apparence/ });
+    expect(row).toHaveTextContent('Thème du système · apparence d’origine');
+    act(() => {
+      setTheme('dark');
+      setAppearance({ ...useSettingsStore.getState().appearance, ...PALETTE_COLORS.myrtille, ground: { kind: 'preset', key: 'ciel' } });
+    });
+    expect(row).toHaveTextContent('Thème sombre · couleurs Myrtille · fond Ciel');
+    act(() => setAppearance({ ...useSettingsStore.getState().appearance, primary: '#123456' }));
+    expect(row).toHaveTextContent('Thème sombre · couleurs sur mesure · fond Ciel');
+    await user.click(row);
+    expect(location.pathname).toBe('/notes/settings/appearance');
+    unmount();
+    render(<AppearanceScreen />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Apparence' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Thème' })).toBeInTheDocument();
+    const grain = screen.getByRole('switch', { name: /^Grain du papier/ });
+    expect(grain).toHaveTextContent('Une fine texture de papier sur les notes, les cartes et les panneaux.');
+    await user.click(grain);
+    expect(useSettingsStore.getState().grain).toBe(false);
+    expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual(['Couleurs', 'Fond']);
+  });
+
   it('open the other services’ sheets from the ground, and copy one', async () => {
     const user = userEvent.setup();
     const writeText = vi.fn(async (_text: string) => {});
@@ -351,7 +391,7 @@ describe('the settings', () => {
     onTestFinished(() => void delete (navigator as { clipboard?: unknown }).clipboard);
     render(
       <>
-        <SettingsScreen />
+        <AppearanceScreen />
         <ServicesCssDialog />
       </>,
     );
@@ -408,7 +448,7 @@ describe('the settings', () => {
     vi.useFakeTimers();
     onTestFinished(() => void vi.useRealTimers());
     useUiStore.setState({ snack: null });
-    render(<SettingsScreen />);
+    render(<AppearanceScreen />);
     act(() => setAppearance({ ...useSettingsStore.getState().appearance, ...PALETTE_COLORS.myrtille }));
     act(() => void vi.advanceTimersByTime(1000));
     expect(useUiStore.getState().snack).toBeNull();

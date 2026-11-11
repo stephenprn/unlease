@@ -10,13 +10,13 @@
  */
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { BackHandler, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { Keyframe, LayoutAnimationConfig, LinearTransition, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Keyframe, LayoutAnimationConfig, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { t } from '@unlease/core/i18n';
 import type { LineColor } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
 
-import { decelerate, duration, standard } from '../theme/motion';
+import { decelerate, duration, listMove, standard } from '../theme/motion';
 import { corners } from '../theme/shape';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
@@ -37,7 +37,7 @@ export const LABEL_FIELD = 52;
 const SLOP = 4;
 /** A label made here, or the field to name one, settles in. */
 const SETTLE = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.92 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.medium);
-const REFLOW = LinearTransition.duration(duration.medium).easing(standard);
+const REFLOW = listMove;
 
 export interface LabelChipItem {
   readonly id: string;
@@ -163,7 +163,7 @@ function LabelChipsComponent({ labels, chosen, onToggle, onCreate, maxLength, wo
         ))}
         {naming ? (
           <Animated.View key="naming" entering={SETTLE} layout={REFLOW} style={styles.namingBox}>
-            <Organic style={[styles.naming, { borderColor: problem ? theme.color.danger : theme.color.focus, backgroundColor: theme.color.fieldVeil }]}>
+            <Organic frost style={[styles.naming, { borderColor: problem ? theme.color.danger : theme.color.focus, backgroundColor: theme.color.fieldVeil }]}>
               {/* The chip's plus becomes the way back. */}
               <IconButton icon="close" label={t('Annuler')} onPress={close} />
               <TextInput

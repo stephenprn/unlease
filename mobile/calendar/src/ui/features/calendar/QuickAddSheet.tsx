@@ -2,8 +2,9 @@
  * « Ajouter en quelques mots » (the web's words): an event typed in a few words (« Dîner chez Paul jeudi 20h »), read on the phone
  * (`readQuickAdd`) and shown as it will be kept before it is; « Créer » keeps it, « Détails » opens the
  * form with it. Words the phone cannot read go to Claude (`POST /api/calendar/parse`) when asked (« Demander
- * à Claude », under the line saying no date was read); what Claude could not do is said by the actions,
- * pinned at the sheet's foot.
+ * à Claude », under the line saying no date was read, once the server has said Claude has a key); what
+ * Claude could not do is said by the actions, pinned at the sheet's foot. Words selected in another app
+ * (« Créer un événement ») open it with them in its field, read at once.
  */
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -17,6 +18,7 @@ import type { EventProposal } from '@unlease/calendar/sync/routes';
 import { addEvent } from '@app/store/actions';
 import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
 import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { parseWithClaude, SyncError } from '@app/sync/transport';
 import { later } from '@app/later';
 
@@ -24,6 +26,8 @@ import { AppText, Button, FormFoot, Sheet, SHEET_INSET, TextField } from '@share
 
 export interface QuickAddSheetProps {
   readonly visible: boolean;
+  /** The words it opens with (another app's selection); none from the button. */
+  readonly words?: string;
   readonly today: string;
   readonly onDismiss: () => void;
   readonly onCreated: (id: string) => void;
@@ -37,17 +41,18 @@ function whenWords(draft: Pick<QuickDraft, 'start' | 'end'>, zone: string): stri
   return `${weekdayDay(draft.start)} · ${timeRange({ allDay: false, startAt: wallToInstant(draft.start, zone), endAt: wallToInstant(draft.end, zone) })}`;
 }
 
-export function QuickAddSheet({ visible, today, onDismiss, onCreated, onDetails }: QuickAddSheetProps) {
+export function QuickAddSheet({ visible, words = '', today, onDismiss, onCreated, onDetails }: QuickAddSheetProps) {
   const prefs = useCalendarUiStore(selectPrefs);
   const server = useSettingsStore(selectServer);
+  const claude = useServerFeature('claude');
   const [text, setText] = useState('');
   const [asking, setAsking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   useEffect(() => {
     if (!visible) return;
-    setText('');
+    setText(words);
     setProblem(null);
-  }, [visible]);
+  }, [visible, words]);
   const zone = deviceZone();
   const draft = text.trim() ? readQuickAdd(text, today, prefs.eventLength) : null;
   const understood = draft !== null && (draft.foundDay || draft.foundTime);
@@ -100,7 +105,7 @@ export function QuickAddSheet({ visible, today, onDismiss, onCreated, onDetails 
             <AppText variant="meta">{draft.place ? `${whenWords(draft, zone)} · ${draft.place}` : whenWords(draft, zone)}</AppText>
             {!understood ? <AppText variant="meta">{t('Aucune date reconnue : l’événement sera pour aujourd’hui.')}</AppText> : null}
             {/* Under the line it answers, beside text: three buttons in the foot run off a 360 phone. */}
-            {server && !understood ? <Button label={t('Demander à Claude')} icon="sparkle" kind="text" small busy={asking} onPress={() => later(ask())} style={styles.claude} /> : null}
+            {server && claude && !understood ? <Button label={t('Demander à Claude')} icon="sparkle" kind="text" small busy={asking} onPress={() => later(ask())} style={styles.claude} /> : null}
           </View>
         ) : (
           <AppText variant="meta" style={styles.preview}>

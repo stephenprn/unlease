@@ -17,7 +17,7 @@ import type { Offer, OfferMarket, OfferResponse } from '@unlease/notes/sync/offe
 import { findOffers } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Button, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, Button, EmptyLine, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
@@ -110,7 +110,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {market === 'used' && range ? <AppText variant="bodyStrong">{rangeText(range)}</AppText> : null}
       {offers.length === 0 ? (
-        <AppText variant="body">{market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')}</AppText>
+        <EmptyLine size="body" text={market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES[market === 'new' ? 'cheaper' : 'secondhand']}>
           {offers.map((offer, index) => (

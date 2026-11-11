@@ -408,3 +408,33 @@ export function parseServerSettings(body: unknown): ServerSettings | null {
     seerr: parseSeerr(raw.seerr),
   };
 }
+
+/**
+ * The optional services the Administration sets up: Claude (a key), the backup to S3, the drive
+ * (Seafile) and Seerr. What leans on one shows in the apps only once the server has said it is set
+ * up (each client remembers what it last said: the web's `useServerFeature`, the phone's).
+ */
+export const SERVER_FEATURES = ['claude', 'backup', 'drive', 'seerr'] as const;
+export type ServerFeature = (typeof SERVER_FEATURES)[number];
+
+/** Which of them a server has set up, as far as it has said: a feature left out is not known yet. */
+export type ServerFeatures = { readonly [F in ServerFeature]?: boolean };
+
+/** What the server's settings say of each: Claude has a key, S3 is set, a drive holds the files, Seerr is linked. */
+export function serverFeatures(settings: ServerSettings): Required<ServerFeatures> {
+  return {
+    claude: settings.analysis.enabled,
+    backup: settings.backup.configured,
+    drive: settings.drive.provider !== null,
+    seerr: settings.seerr.url !== '',
+  };
+}
+
+/** Features as a device kept them: known ones only, each true or false. */
+export function parseServerFeatures(value: unknown): ServerFeatures {
+  if (typeof value !== 'object' || value === null) return {};
+  const raw = value as Record<string, unknown>;
+  const known: { [F in ServerFeature]?: boolean } = {};
+  for (const feature of SERVER_FEATURES) if (typeof raw[feature] === 'boolean') known[feature] = raw[feature];
+  return known;
+}

@@ -114,6 +114,13 @@ export function handedUrl(value: string | null | undefined): string {
   return value ? feedUrl(cleanEventUrl(value).url) : '';
 }
 
+/** A new event's repeat from what another app hands the form (an RRULE: Android's « Ajouter à l'agenda »): one this build reads, written as the form writes it; else none. */
+export function handedRule(value: string | null | undefined): string {
+  const rule = value ? parseRule(value) : null;
+  const written = rule ? serializeRule(rule) : '';
+  return written.length <= EVENT_LIMITS.rrule ? written : '';
+}
+
 /** A new event from its draft, one batch. */
 export function createEvent(draft: EventDraft, now: number, id: string = createId(now), extra: Partial<Pick<CalendarEvent, 'uid'>> = {}): EventChange {
   return change(

@@ -1,9 +1,11 @@
-/** The device's appearance in its settings: what a new phone starts from, the old grain switch carried over, a choice kept. */
+/** The device's settings: its appearance (what a new phone starts from, the old grain switch carried over, a choice kept), and what the server set up. */
 import { DEFAULT_APPEARANCE, PALETTE_COLORS, type Appearance } from '@unlease/design/appearance';
+import { parseServerSettings } from '@unlease/core/sync/settings';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 
-import { loadSettings, setAppearance, setGrain, useSettingsStore } from '../settingsStore';
+import { hasServerFeature } from '../../hooks/useServerFeature';
+import { loadSettings, rememberServerSettings, selectCanRead, selectServerFeature, selectServerFeatureState, setAppearance, setGrain, setReading, setServer, useSettingsStore } from '../settingsStore';
 
 const state = () => useSettingsStore.getState();
 
@@ -59,5 +61,54 @@ describe('the appearance', () => {
     writePreference('appearance', { primary: 'vert', ground: { kind: 'gradient', colors: [] } });
     loadSettings();
     expect(state().appearance).toEqual(DEFAULT_APPEARANCE);
+  });
+});
+
+describe('the server’s optional services (useServerFeature)', () => {
+  const settings = (claude: boolean, seerr: string) =>
+    parseServerSettings({ analysis: { enabled: claude, keySource: claude ? 'app' : null, keyHint: null, model: 'claude-opus-5-5', budgetUsd: 15 }, backup: { configured: true }, seerr: { url: seerr } })!;
+  const server = { url: 'https://unlease.example.org', token: 'jeton' };
+
+  it('counts none as set up without a server, and none as known before the server says', () => {
+    loadSettings();
+    expect(selectServerFeatureState('claude')(state())).toBe('off');
+    setServer(server);
+    for (const feature of ['claude', 'backup', 'drive', 'seerr'] as const) {
+      expect(selectServerFeatureState(feature)(state())).toBe('unknown');
+      expect(selectServerFeature(feature)(state())).toBe(false);
+    }
+    // A link saved meanwhile still waits for the server to read it.
+    expect(selectCanRead(state())).toBe(true);
+  });
+
+  it('follows what the server says, remembers it for the next start, and forgets it for another server', () => {
+    loadSettings();
+    setServer(server);
+    rememberServerSettings(settings(true, 'https://seerr.example.org'));
+    expect(['claude', 'backup', 'drive', 'seerr'].map(feature => selectServerFeatureState(feature as 'claude')(state()))).toEqual(['on', 'on', 'off', 'on']);
+    loadSettings();
+    expect(selectServerFeature('claude')(state())).toBe(true);
+    expect(selectServerFeature('backup')(state())).toBe(true);
+    expect(selectServerFeature('drive')(state())).toBe(false);
+
+    rememberServerSettings(settings(false, ''));
+    expect(selectServerFeatureState('claude')(state())).toBe('off');
+    expect(selectServerFeatureState('seerr')(state())).toBe('off');
+
+    setServer({ url: 'https://other.example.org', token: 'jeton' });
+    expect(selectServerFeatureState('claude')(state())).toBe('unknown');
+    expect(selectServerFeatureState('backup')(state())).toBe('unknown');
+    setServer(null);
+    expect(selectServerFeatureState('backup')(state())).toBe('off');
+  });
+
+  it('is asked outside a component too', () => {
+    loadSettings();
+    setServer(server);
+    expect(hasServerFeature('claude')).toBe(false);
+    rememberServerSettings(settings(true, ''));
+    expect(hasServerFeature('claude')).toBe(true);
+    setReading(false);
+    expect(hasServerFeature('claude')).toBe(false);
   });
 });

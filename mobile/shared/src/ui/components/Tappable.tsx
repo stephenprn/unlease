@@ -36,6 +36,8 @@ export interface TappableProps extends Omit<PressableProps, 'style' | 'children'
   readonly outline?: OutlineKind | null;
   /** The brand's pebble, this turn of it: its paint and its press take that shape, and it gives under the finger. */
   readonly pebble?: number | null;
+  /** A field's surface (a picker, a place): frosted as a text field is (`Organic`'s `frost`). */
+  readonly frost?: boolean;
 }
 
 const PressContext = createContext<{ readonly pressed: SharedValue<number>; readonly color: string } | null>(null);
@@ -153,7 +155,7 @@ export function PressSurface({ style, pebble = null, children }: { style: StyleP
   );
 }
 
-function TappableComponent({ style, children, onDark = false, onFill = false, noTint = false, pressScale = 1, ownDisabled = false, outline = null, pebble = null, accessibilityRole = 'button', disabled, onPressIn, onPressOut, ...rest }: TappableProps) {
+function TappableComponent({ style, children, onDark = false, onFill = false, noTint = false, pressScale = 1, ownDisabled = false, outline = null, pebble = null, frost = false, accessibilityRole = 'button', disabled, onPressIn, onPressOut, ...rest }: TappableProps) {
   const theme = useTheme();
   const pressed = useSharedValue(0);
   // Only a pebble re-renders on the press: it hands the press to its native view, which gives and springs back.
@@ -185,7 +187,7 @@ function TappableComponent({ style, children, onDark = false, onFill = false, no
   const surface = useMemo(() => ({ pressed, color }), [pressed, color]);
   const content = (
     <PressContext.Provider value={surface}>
-      {organic?.layer ? <Organic pointerEvents="none" shape={organic.shape} outline={outline} pebble={pebble} pressed={down} style={organic.layer} /> : null}
+      {organic?.layer ? <Organic pointerEvents="none" shape={organic.shape} outline={outline} pebble={pebble} pressed={down} frost={frost} style={organic.layer} /> : null}
       {organic && !noTint ? <OrganicTint pressed={pressed} shape={organic.shape} outline={outline} pebble={pebble} down={down} inset={organic.border} color={color} /> : null}
       {shape ? <Tint pressed={pressed} shape={shape} color={color} /> : null}
       {children}

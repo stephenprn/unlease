@@ -9,6 +9,7 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { t } from '@unlease/core/i18n';
 
 import { selectLanguages, useSettingsStore } from '@shared/app/store/settings';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
 import { useMedia } from '@shared/ui/useMedia';
@@ -88,7 +89,7 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
           onKeyDown={onKeyDown}
         />
       </label>
-      <div ref={scroll} className={styles.emojiScroll} tabIndex={-1}>
+      <div ref={scroll} data-scroller="" className={styles.emojiScroll} tabIndex={-1}>
         {pasted ? (
           <div className={styles.emojiGrid}>
             <EmojiChoice emoji={pasted} name={name(pasted)} current={pasted === value} turn={0} onPick={onPick} />
@@ -101,9 +102,14 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
               ))}
             </div>
           ) : (
-            <p className={`${styles.emojiNothing} t-meta`}>
-              {catalogue ? t('Aucun emoji pour « {query} ».', { query: query.trim() }) : failed ? t('La liste des emoji n’a pas pu se charger. Collez-en un, ou réessayez en ligne.') : t('Chargement…')}
-            </p>
+            <EmptyLine
+              align="center"
+              className={styles.emojiNothing}
+              role="status"
+              // Naming what is typed, it settles in once, not at every letter.
+              replayKey={catalogue ? 'none' : undefined}
+              text={catalogue ? t('Aucun emoji pour « {query} ».', { query: query.trim() }) : failed ? t('La liste des emoji n’a pas pu se charger. Collez-en un, ou réessayez en ligne.') : t('Chargement…')}
+            />
           )
         ) : (
           <>

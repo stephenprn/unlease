@@ -44,6 +44,7 @@ function PickerFieldComponent({ label, value, placeholder, onPress, icon, help, 
         </AppText>
       ) : null}
       <Tappable
+        frost
         onPress={onPress}
         disabled={disabled}
         accessibilityRole="button"

@@ -34,6 +34,7 @@ import {
   focusBlock,
   menuKey,
   neighbour,
+  openTogglesAbove,
   richHandle,
   selectableOutline,
   selectBlocks,
@@ -98,8 +99,8 @@ function focusNeighbour(id: string, step: -1 | 1, at: FocusAt): boolean {
   return true;
 }
 
-/** Ctrl+Z, Ctrl+Maj+Z, Ctrl+Y, anywhere in the page. */
-export function historyKey(event: KeyboardEvent, page: string): boolean {
+/** Ctrl+Z, Ctrl+Maj+Z, Ctrl+Y, anywhere in the page (a block's key, or the document's when no field has the focus). */
+export function historyKey(event: Pick<KeyboardEvent, 'key' | 'metaKey' | 'ctrlKey' | 'altKey' | 'shiftKey' | 'preventDefault'>, page: string): boolean {
   if (!isMod(event) || event.altKey) return false;
   const key = event.key.toLowerCase();
   if (key !== 'z' && key !== 'y') return false;
@@ -426,7 +427,8 @@ export function selectionKey(event: KeyboardEvent<HTMLElement>, page: string): v
   } else if (key === 'Tab') {
     stop();
     if (event.shiftKey) outdentBlocks(page, ids, outline);
-    else indentBlocks(page, ids, outline);
+    // Nested under a closed toggle: it opens, so the blocks stay in sight, still selected.
+    else if (indentBlocks(page, ids, outline)) openTogglesAbove(first);
   } else if (mod && lower === 'a') {
     stop();
     selectBlocks(outline);

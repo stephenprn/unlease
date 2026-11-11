@@ -11,7 +11,7 @@ import { setLabelOn } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, LabelCheck, ListRow, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, EmptyLine, LabelCheck, ListRow, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean; ids: readonly string[]; onDismiss: () => void }) {
@@ -24,9 +24,7 @@ export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean;
     <Sheet visible={visible} onDismiss={onDismiss} title={t('Labels des notes sélectionnées')}>
       <SheetScroll>
         {live.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Aucun label. Créez-en depuis la page Labels.')}
-          </AppText>
+          <EmptyLine glyph="tag" text={t('Aucun label. Créez-en depuis la page Labels.')} slot={24} gap={16} style={styles.empty} />
         ) : (
           live.map(label => {
             const wearing = ids.filter(id => notes[id]?.labelIds.includes(label!.id)).length;
@@ -66,6 +64,6 @@ export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean;
 const styles = StyleSheet.create({
   // The tag (26) centred on a list row's 24 slot, as the note's own labels sheet lays it.
   mark: { width: 24, alignItems: 'center' },
-  // On the sheet's title.
+  // The tag in the rows' slot, the words on their column.
   empty: { paddingHorizontal: SHEET_INSET, paddingVertical: 12 },
 });

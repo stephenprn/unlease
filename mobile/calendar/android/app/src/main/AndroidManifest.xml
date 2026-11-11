@@ -98,6 +98,49 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="unlease-agenda" />
         </intent-filter>
+
+        <!-- The ways other apps reach a calendar (IntakeModule; each waits for the first run, then opens
+             a form the person confirms: nothing is written by arriving). « Ajouter à l'agenda » (a ticket,
+             a booking, a mail's date: CalendarContract's INSERT, its extras): the new event's form, filled. -->
+        <intent-filter android:label="@string/add_event">
+            <action android:name="android.intent.action.INSERT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="vnd.android.cursor.dir/event" />
+            <data android:mimeType="vnd.android.cursor.item/event" />
+        </intent-filter>
+
+        <!-- A calendar to subscribe to, linked from a website (webcal://, webcals://, read as https://):
+             the subscriptions' form with its address, subscribed only once the person says so. -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="webcal" />
+            <data android:scheme="webcals" />
+        </intent-filter>
+
+        <!-- Words selected in any app, « Créer un événement » in the selection's menu: quick add, the words in it. -->
+        <intent-filter android:label="@string/create_event">
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+
+        <!-- « Open the calendar at » (the Clock's, widgets', other apps'): content://com.android.calendar/time/<epoch ms>,
+             the day view of the day it falls on. The system's calendar provider types it time/epoch; the
+             second filter takes it when nothing does. (…/events/<id> names the phone's calendar's own
+             events, none of this app's: not taken.) -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="time/epoch" />
+            <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/time" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/time" />
+        </intent-filter>
       </activity>
 
       <!-- The launcher's entries: the app's icon in each palette's primary (tools/icons/build_android_drawables.mjs),
@@ -117,6 +160,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="carnet" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherSarcelle"
@@ -131,6 +175,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="sarcelle" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMyrtille"
@@ -145,6 +190,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="myrtille" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherGlycine"
@@ -159,6 +205,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="glycine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherPivoine"
@@ -173,6 +220,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="pivoine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMimosa"
@@ -187,6 +235,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mimosa" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherArdoise"
@@ -201,6 +250,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="ardoise" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMousse"
@@ -215,8 +265,20 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mousse" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <!-- GENERATED: end of the launcher entries -->
+
+      <!-- Where the launcher's static shortcuts land (res/xml/shortcuts.xml): it hands their link to
+           MainActivity, so Android's clearing of the task a static shortcut opens touches only its own.
+           Never shows. -->
+      <activity
+        android:name="com.stephenprn.unlease.launch.ShortcutActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
 
       <!-- The home-screen widgets (android/.../widget, docs/ARCHITECTURE.md). The providers are exported
            because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->
@@ -325,6 +387,20 @@
         android:authorities="${applicationId}.suite"
         android:exported="true"
         android:readPermission="com.stephenprn.unlease.permission.SUITE" />
+
+      <!-- The Quick Settings tile « Nouvel événement » (tile/NewEventTileService): the new event's form.
+           Exported for the system's panel, which alone may bind it (BIND_QUICK_SETTINGS_TILE); its icon
+           the app's mark in one colour, as its notifications wear it. -->
+      <service
+        android:name=".tile.NewEventTileService"
+        android:exported="true"
+        android:icon="@drawable/ic_stat_agenda"
+        android:label="@string/tile_new_event"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+        <intent-filter>
+          <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+      </service>
 
       <!-- The reminders seen to after the system's changes (mobile/shared/android/src/reminders): each a
            protected broadcast only Android sends, so not exported. -->

@@ -5,7 +5,7 @@
  * so. A row opens `TemplateScreen`. The web's `/notes/facts`.
  */
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { t } from '@unlease/core/i18n';
@@ -13,10 +13,11 @@ import { INBOX_ID, LINK_KIND_NAMES, LINK_KINDS, shownTitle } from '@unlease/note
 import { collectionTemplate } from '@unlease/notes/services/templates';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Ground, TopBar } from '../components';
+import { AppText, EdgeScrollView, Ground, TopBar } from '../components';
 import { Section } from '@shared/ui/features/settings/Section';
 import { KIND_ICONS } from '../features/links/kindIcon';
 import { TemplateRow } from '../features/templates/TemplateRow';
+import { useLeaveWithoutClaude } from './TemplateScreen';
 import { factNames, kindFactsMeta } from '../features/templates/templateWords';
 import type { ScreenProps } from '../navigation/types';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -27,6 +28,7 @@ const KINDS = LINK_KINDS.filter(kind => kind !== 'other');
 
 export function TemplatesScreen({ navigation }: ScreenProps<'Templates'>) {
   const styles = useThemedStyles(makeStyles);
+  useLeaveWithoutClaude(navigation);
   const templates = useLibraryStore(s => s.linkTemplates);
   // The collections with their own facts, in the board's order.
   const own = useLibraryStore(
@@ -43,7 +45,7 @@ export function TemplatesScreen({ navigation }: ScreenProps<'Templates'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Ce que Claude relève')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         <AppText variant="meta" style={styles.intro}>
           {t('Une collection peut avoir les siennes : « Ce que Claude relève » dans son menu.')}
         </AppText>
@@ -67,7 +69,7 @@ export function TemplatesScreen({ navigation }: ScreenProps<'Templates'>) {
             <TemplateRow key={kind} icon={KIND_ICONS[kind]} title={LINK_KIND_NAMES[kind]} meta={kindFactsMeta(templates, kind)} metaLine chevron onPress={() => navigation.navigate('Template', { kind })} />
           ))}
         </Section>
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

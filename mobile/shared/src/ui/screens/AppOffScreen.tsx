@@ -5,7 +5,7 @@
  * Réglages stay in reach (another server, or this phone alone).
  */
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APPS, type AppId } from '@unlease/core/apps';
@@ -15,7 +15,7 @@ import { rememberServerSettings, selectServer, selectServerApps, useSettingsStor
 import { showSnack } from '@shared/app/store/uiStore';
 import { saveServerSettings } from '@shared/app/sync/transport';
 
-import { AppText, Button, Ground } from '../components';
+import { AppText, Button, EdgeScrollView, Ground } from '../components';
 import { BrandMark } from '../icons/BrandMark';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
@@ -53,7 +53,7 @@ export function AppOffScreen({ app, onSettings }: { app: AppId; onSettings?: () 
   return (
     <View style={StyleSheet.absoluteFill}>
       <Ground />
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }]}>
+      <EdgeScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }]}>
         <BrandMark app={app} size={72} />
         <AppText variant="title" accessibilityRole="header" style={styles.center}>
           {words.title}
@@ -68,7 +68,7 @@ export function AppOffScreen({ app, onSettings }: { app: AppId; onSettings?: () 
           </AppText>
         ) : null}
         {onSettings ? <Button kind="text" label={t('Réglages')} icon="settings" onPress={onSettings} /> : null}
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

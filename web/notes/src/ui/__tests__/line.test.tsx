@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { freshLibrary } from '@test/library';
-import { addLink, createLine, setLinkDone, updateLink } from '../../app/store/actions';
+import { addLink, createLine, saveCollectionFacts, setLinkDone, updateLink } from '../../app/store/actions';
 import { getRecord } from '@shared/app/store/records';
 import { useLibraryStore } from '../../app/store/library';
 import { setServer } from '@shared/app/store/settings';
@@ -23,6 +23,8 @@ describe('a collection page', () => {
   beforeEach(async () => {
     await freshLibrary();
     setServer({ url: 'https://carnet.test', token: 'jeton' });
+    // A server with a Claude key: a reading may be asked again.
+    setReading(true);
     line = createLine({ id: 'line-mode', title: 'Mode', code: 'M', color: 'magenta', emblem: 'fleur', hint: 'Vêtements à acheter.' });
     addLink('https://www.tissage.fr/chemise', { noteId: line });
     ready = addLink('https://www.atelier-nord.fr/veste', { noteId: line });
@@ -151,6 +153,8 @@ describe('a collection page', () => {
 
   it('says a link is in the collection already, and adds one from another collection with its reading', async () => {
     const user = userEvent.setup();
+    // Mode, a starter, comes with its own facts: back on the usual ones, it reads as Cadeaux does, so its reading is copied.
+    saveCollectionFacts(line, null);
     const cadeaux = createLine({ title: 'Cadeaux' });
     render(<LineScreen id={cadeaux} />);
     const field = screen.getByRole('textbox', { name: 'Ajouter un lien à Cadeaux' });

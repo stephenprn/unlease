@@ -22,12 +22,11 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
 import { openCapture } from '@app/store/captureStore';
-import { requestSync } from '@shared/app/sync/syncManager';
 import { haptic } from '@shared/platform/haptics';
 import { readClipboard } from '@shared/platform/clipboard';
 import { extractUrls } from '@unlease/core/services/url';
 
-import { AppText, Button, Dialog, FAB_CLEARANCE, FabMenu, Ground, IconButton } from '../components';
+import { AppText, Button, Dialog, EmptyState, FAB_CLEARANCE, FabMenu, Ground, IconButton, usePullToSync } from '../components';
 import { BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
 import { SelectionBar } from '../features/board/SelectionBar';
 import { BulkLabelsSheet } from '../features/board/BulkLabelsSheet';
@@ -39,7 +38,7 @@ import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineShe
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { NewLineSheet } from '../features/lines/NewLineSheet';
 import { sortDeletedLinksOnSlip } from '../features/lines/sortingSlips';
-import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
+import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
 import { Drawer } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -76,7 +75,8 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const [deleteIds, setDeleteIds] = useState<readonly string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  // A pull asks for a sync, on the wall and on an empty view alike.
+  const pullToSync = usePullToSync();
   const drawerOpen = useUiStore(selectDrawerOpen);
   const layout = useLayoutStore(selectLayout);
   const columns = layout === 'wall' ? 2 : 1;
@@ -85,16 +85,20 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const { sections, total } = useBoardSections(view, now);
   const results = useSearch(query, view === 'trash');
   const searching = query.trim().length > 0;
-  // Back ends a search before it leaves the app; only while the board is the screen shown, so it never takes a note's Back.
+  // Back ends a search, then the narrowed board (a label, Rappels, Archives, Corbeille: back to the notes, as Contacts'
+  // and Agenda's lists go back to all), before it leaves the app; only while the board is the screen shown, so it
+  // never takes a note's Back. What is open over it (a sheet, a menu, the drawer, a selection) closes first, on its own.
+  const narrowed = view !== 'notes';
   useFocusEffect(
     useCallback(() => {
-      if (!searching) return undefined;
+      if (!searching && !narrowed) return undefined;
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-        setQuery('');
+        if (searching) setQuery('');
+        else navigation.setParams({ view: 'notes', label: undefined });
         return true;
       });
       return () => subscription.remove();
-    }, [searching]),
+    }, [searching, narrowed, navigation]),
   );
   const showCapture = view === 'notes' || view === 'reminders' || view.startsWith('label:');
 
@@ -237,12 +241,6 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   };
   const openLine = useCallback((id: string) => navigation.navigate('Line', { id }), [navigation]);
   const newLine = useCallback(() => setNewLineOpen(true), []);
-  // A pull asks for a sync, on the wall and on an empty view alike.
-  const refresh = () => {
-    setRefreshing(true);
-    requestSync();
-    setTimeout(() => setRefreshing(false), 900);
-  };
 
   // The head of the wall, scrolling with it: only the search strip stays pinned.
   const intro = (
@@ -272,18 +270,15 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         <SettingsMatches
           query={query}
           own={NOTES_SETTINGS_PLACES}
-          onOpen={place => (place.area === 'admin' ? navigation.navigate('Admin', place.section ? { section: place.section } : undefined) : navigation.navigate('Settings', place.section ? { section: place.section } : undefined))}
+          onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
         />
       ) : null}
-      {searching ? (
-        <AppText variant="meta" style={styles.notice}>
-          {searchSummary(query, results.length, view === 'notes' ? settingsFound(query, NOTES_SETTINGS_PLACES) : 0)}
-        </AppText>
-      ) : null}
-      {/* As in every app: under nothing found, what the search looks through, close under the count it explains. */}
+      {/* The count over the results; as in every app, nothing found is the search's empty state: what it looks through under the count. */}
       {searching && results.length === 0 ? (
-        <AppText variant="meta" style={styles.noticeMore}>
-          {APP_WORDS.notes.searchHint}
+        <EmptyState scene="search" title={searchSummary(query, 0, view === 'notes' ? settingsFound(query, NOTES_SETTINGS_PLACES) : 0)} text={APP_WORDS.notes.searchHint} />
+      ) : searching ? (
+        <AppText variant="meta" style={styles.notice}>
+          {searchSummary(query, results.length)}
         </AppText>
       ) : null}
     </View>
@@ -305,7 +300,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
       />
 
       {total === 0 && !searching ? (
-        <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshing={refreshing} onRefresh={refresh} />
+        <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshControl={pullToSync} />
       ) : (
         <Wall
           sections={shown}
@@ -319,8 +314,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           footerSpace={(showCapture ? FAB_CLEARANCE : 16) + insets.bottom + 24}
           onSwipe={swipeable ? onSwipe : undefined}
           canSwipe={canSwipe}
-          refreshing={refreshing}
-          onRefresh={refresh}
+          refreshControl={pullToSync}
         />
       )}
 
@@ -435,7 +429,6 @@ const makeStyles = (theme: Theme) =>
     viewTitleText: { flexShrink: 1 },
     notice: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
     // The search's second line, under its count: one block, not two notices.
-    noticeMore: { paddingHorizontal: 16, paddingBottom: 8, marginTop: -4 },
     // A line that belongs to the title above it: closer to it than to the cards under it.
     underTitle: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 8 },
   });

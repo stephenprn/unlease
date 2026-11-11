@@ -26,5 +26,4 @@ export const EN_PHONE_PAGES_INLINE: Dictionary = {
   'Ajoutez des titres à la page : ils apparaîtront ici.': 'Add headings to the page: they will show here.',
 
   // « [[ » with no other page to cite
-  'Aucune autre page pour l’instant.': 'No other page yet.',
 };

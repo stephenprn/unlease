@@ -18,12 +18,11 @@ import { eventItem, itemOn, type AgendaItem } from '@app/agenda';
 import { useAgenda } from '@app/hooks/useAgenda';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Organic, PressSurface, Tappable } from '@shared/ui/components';
-import { listPressDelay } from '@shared/ui/theme/motion';
+import { AppText, Organic, PressSurface, Tappable, useArrivals } from '@shared/ui/components';
+import { listIn, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { ITEM_IN, useArrivals } from './arrivals';
 import { EDGE_ROOM, EventEdge } from './EventEdge';
 import { itemColor, itemTitle, paintOf } from './paint';
 
@@ -115,7 +114,7 @@ function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers
                       const paint = paintOf(theme, itemColor(item));
                       const key = `${item.key}@${day}`;
                       return (
-                        <Animated.View key={item.key} entering={arrived.has(key) ? ITEM_IN : undefined} style={[styles.barSlot, { top: HEAD + (row.used + at) * LANE, left: BAR_INSET, width: cell - 2 * BAR_INSET }]}>
+                        <Animated.View key={item.key} entering={arrived.has(key) ? listIn : undefined} style={[styles.barSlot, { top: HEAD + (row.used + at) * LANE, left: BAR_INSET, width: cell - 2 * BAR_INSET }]}>
                           <Tappable onPress={() => onOpen(item, day)} style={[styles.bar, { backgroundColor: paint.tint }]} accessibilityRole="button" accessibilityLabel={itemTitle(item)}>
                             <AppText variant="labelSmall" color={paint.text} numberOfLines={1}>
                               {itemTitle(item)}
@@ -138,7 +137,7 @@ function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers
                 return (
                   <Animated.View
                     key={bar.occurrence.key}
-                    entering={arrived.has(`${bar.occurrence.key}@${row.week[0]}`) ? ITEM_IN : undefined}
+                    entering={arrived.has(`${bar.occurrence.key}@${row.week[0]}`) ? listIn : undefined}
                     style={[styles.barSlot, { top: HEAD + bar.lane * LANE, left: gutter + bar.column * cell + BAR_INSET, width: bar.span * cell - 2 * BAR_INSET }]}
                   >
                     <Tappable

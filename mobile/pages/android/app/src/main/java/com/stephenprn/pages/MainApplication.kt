@@ -6,6 +6,7 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
+import com.stephenprn.pages.intake.IntakePackage
 import com.stephenprn.unlease.clipboard.ClipboardPackage
 import com.stephenprn.unlease.connectivity.ConnectivityPackage
 import com.stephenprn.unlease.haptics.HapticsPackage
@@ -32,6 +33,8 @@ class MainApplication : Application(), ReactApplication {
           add(ClipboardPackage())
           add(SuiteLinkPackage())
           add(LauncherIconPackage())
+          // Pages' own: text shared to it becomes a page.
+          add(IntakePackage())
         },
     )
   }

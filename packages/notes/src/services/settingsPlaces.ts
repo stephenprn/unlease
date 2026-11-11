@@ -1,23 +1,30 @@
 /**
  * Carnet's places a search finds (`core/services/settingsSearch`), beside every app's: in Réglages
- * the board's layout, the reminders (the web's section: the phone rings them), cleaning the links
- * saved and the Keep import (its own section on the web, a row of « Données » on the phone); in the
- * Administration, Seerr, and « Ce que Claude relève » in Claude's section.
+ * its own section, first (« Carnet »: the board's layout; the reminders, the web's row: the phone
+ * rings them), cleaning the links saved and the Keep import (its own section on the web, a row of
+ * « Données » on the phone); in the Administration, Seerr, and « Ce que Claude relève » in Claude's
+ * section.
  */
 import { tx } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS, type SettingsPlace } from '@unlease/core/services/settingsSearch';
 import type { GlyphName } from '@unlease/design/glyphs';
 
-/** Réglages' « Rappels » section on the web, as an address (`#reminders`). */
-export const REMINDERS_SETTINGS_SECTION = 'reminders';
+import { APP_NAME } from '../brand';
+
+/**
+ * Réglages' « Carnet » section, the page's first (as Agenda's « Agenda »), as an address: the web's
+ * `#notes`, the phone's `section`. (The web's reminders were a section of their own, `#reminders`:
+ * that address still opens Réglages at its top, on this one.)
+ */
+export const NOTES_SETTINGS_SECTION = 'notes';
 /** The web's Keep import, a section of its own after « Données » (`#import`). */
 export const KEEP_SETTINGS_SECTION = 'import';
 
 const KEEP_WORDS = ['keep', 'google keep', 'takeout', 'import'];
 
 export const NOTES_SETTINGS_PLACES: readonly SettingsPlace<GlyphName>[] = [
-  { id: 'notes-layout', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Disposition du tableau'), within: tx('Apparence'), glyph: 'grid', words: ['tableau', 'mur', 'liste', 'colonnes', 'grille', 'board', 'layout', 'wall', 'list', 'columns', 'grid'] },
-  { id: 'notes-reminders', app: 'notes', area: 'settings', section: REMINDERS_SETTINGS_SECTION, title: tx('Rappels'), within: null, glyph: 'bell', words: ['notifications', 'alarmes', 'sonner', 'reminders', 'alarms', 'ring'], only: 'web' },
+  { id: 'notes-layout', app: 'notes', area: 'settings', section: NOTES_SETTINGS_SECTION, title: tx('Disposition du tableau'), within: APP_NAME, glyph: 'grid', words: ['tableau', 'mur', 'liste', 'colonnes', 'grille', 'board', 'layout', 'wall', 'list', 'columns', 'grid'] },
+  { id: 'notes-reminders', app: 'notes', area: 'settings', section: NOTES_SETTINGS_SECTION, title: tx('Rappels'), within: APP_NAME, glyph: 'bell', words: ['notifications', 'alarmes', 'sonner', 'reminders', 'alarms', 'ring'], only: 'web' },
   { id: 'notes-clean-links', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Nettoyer les liens enregistrés'), within: tx('Données'), glyph: 'broom', words: ['suivi', 'pistage', 'utm', 'fbclid', 'tracking', 'clean', 'links'] },
   { id: 'notes-keep', app: 'notes', area: 'settings', section: KEEP_SETTINGS_SECTION, title: tx('Importer depuis Google Keep'), within: null, glyph: 'download', words: KEEP_WORDS, only: 'web' },
   { id: 'notes-keep', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Importer depuis Google Keep'), within: tx('Données'), glyph: 'download', words: KEEP_WORDS, only: 'phone' },

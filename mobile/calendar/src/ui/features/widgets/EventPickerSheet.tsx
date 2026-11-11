@@ -4,14 +4,14 @@
  * quick window over the home screen.
  */
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { countdownChoices, type CountdownChoice } from '@app/widgetPayloads';
 
-import { AppText, Icon, ListRow, Sheet, SHEET_INSET, TextField } from '@shared/ui/components';
+import { EmptyLine, Icon, ListRow, Sheet, SHEET_INSET, SheetFlatList, TextField } from '@shared/ui/components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { paintOf } from '../calendar/paint';
 
@@ -38,18 +38,14 @@ export function EventPickerSheet({ visible, title, current, onDismiss, onPick }:
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher un événement')} accessibilityLabel={t('Rechercher un événement')} returnKeyType="search" autoCorrect={false} />
       </View>
-      <FlatList
+      <SheetFlatList top={false}
         data={choices}
         style={styles.list}
         contentContainerStyle={styles.body}
         keyboardShouldPersistTaps="handled"
         keyExtractor={item => item.eventId}
         renderItem={({ item }) => <EventChoiceRow choice={item} current={item.eventId === current} onPick={onPick} />}
-        ListEmptyComponent={
-          <AppText variant="meta" style={styles.none}>
-            {query.trim() ? t('Aucun événement ne correspond') : t('Aucun événement à venir : une recherche trouve aussi les passés.')}
-          </AppText>
-        }
+        ListEmptyComponent={<EmptyLine text={query.trim() ? t('Aucun événement ne correspond') : t('Aucun événement à venir : une recherche trouve aussi les passés.')} style={styles.none} />}
       />
     </Sheet>
   );

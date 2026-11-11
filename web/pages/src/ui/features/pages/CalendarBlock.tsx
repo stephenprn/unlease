@@ -16,6 +16,7 @@ import { dayToInstant } from '@unlease/calendar/services/time';
 import { useEventsStore } from '@notes/app/events/store';
 import { updateBlock } from '../../../app/store/pages';
 import { suitePlace } from '@shared/app/suitePlaces';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { LabelTag } from '@shared/ui/components/LabelMark';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
@@ -79,7 +80,7 @@ export function CalendarBlock({ block }: { block: Block }) {
         </a>
       </header>
       {days.length === 0 ? (
-        <p className={`${styles.calendarEmpty} t-meta`}>{t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })}</p>
+        <EmptyLine className={styles.calendarEmpty} text={t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })} />
       ) : (
         <ol className={styles.calendarDays}>
           {days.map(({ day, items }) => (

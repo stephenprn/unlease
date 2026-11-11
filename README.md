@@ -68,7 +68,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 - **Notes and checklists**, Keep's way: a wall of cards, pinned and archived, labels, colours and papers, reminders, photos, drawings, undo and a bin. Moves in from a Google Keep export (Takeout).
 - **Collections of links**: share a link from any app, or paste it, and Claude writes what matters (title, price, key facts, its pictures kept) and files it in the right collection, so your lists stay useful after the pages disappear.
 - **Modules on links**, switched on per collection: promo codes, the same item cheaper elsewhere or second-hand, a recipe for N people with its shopping list and a cook mode, ratings, a series' recap up to where you stopped, the way to a place, a copy of an article kept as a page in Pages, a question to Claude.
-- **On Android**: the share sheet, five home-screen widgets, and reminders that ring on time.
+- **On Android**: the share sheet, with your collections in its first row; « Note in Carnet » on any selected text; shortcuts on the icon and a Quick Settings tile for a new note; five home-screen widgets; reminders that ring on time.
 
 </details>
 
@@ -86,6 +86,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 - **Nested pages** of headings, lists, tasks, toggles, callouts, code, tables with typed columns, side-by-side columns, pictures, videos, PDFs, files and drawings, with templates for a new page.
 - **Your other apps inside**: Carnet's notes, collections and links cited inline or embedded as a list or a table; people and events mentioned with `@`; dates that show in Agenda.
 - **Questions to Claude** about a page, its sub-pages or all your pages, each answer pointing at the passages it rests on. Off until you turn it on; a page you keep private is never sent.
+- **On Android**: share text from any app as a new page; a new page or the search from the icon's shortcuts.
 
 </details>
 
@@ -103,7 +104,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 - **Day, three days, week, month, year, a schedule and Today**; repeating events and their exceptions, reminders, time zones, labels, places with their weather, guests from Contacts, files kept with an event.
 - **Beside your events**: your contacts' birthdays (with a message or a gift idea a tap away), Carnet's reminders, the days written in your pages and your country's public holidays.
 - **Calendars in and out**: subscribe to any calendar by its address (Google's secret iCal address included), import Google Calendar's export, publish yours at a secret address. Type an event in a few words, or ask Claude about your week; a meeting's notes become a page in one tap.
-- **On Android**: five widgets (the schedule, today, the month, the next event and a countdown).
+- **On Android**: five widgets (the schedule, today, the month, the next event and a countdown); « Add to calendar » in your other apps opens Agenda's form, filled in; `webcal://` links subscribe; selected text becomes an event; a Quick Settings tile and the icon's shortcuts.
 
 </details>
 
@@ -121,7 +122,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 - **An address book**: names, numbers, e-mails, addresses, birthdays, labels and favourites, imported from Google Contacts (vCard or CSV) or from the phone's own contacts; duplicates found and merged.
 - **One tap** to call, text or open WhatsApp; birthday notifications and wishes; gift ideas kept in Carnet.
 - **Where each person appears**: the pages and notes that mention them, the events you share.
-- **On Android**: two widgets, quick calls to your favourites (or a label) and a new contact.
+- **On Android**: two widgets, quick calls to your favourites (or a label) and a new contact; « Add contact » in your dialer or Messages opens Contacts' form, filled in.
 
 </details>
 
@@ -133,6 +134,23 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 | Home-screen widgets | 5 | – | 5 | 2 |
 | Moves in from | Google Keep (Takeout) | – | Google Calendar (iCalendar) | Google Contacts (vCard, CSV), the phone |
 | With Claude | reads and files links | answers about your pages | answers about your week | – |
+
+## How the apps behave
+
+The four apps are one suite: on the phone and on the web they look, move and answer alike, so what you learn in one works in the others.
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/android-dark.jpg"><img src="docs/images/android-light.jpg" alt="The four Android apps side by side: Carnet's wall of notes, a page in Pages, a week in Agenda and the list in Contacts"></picture>
+</p>
+
+- **Content slides under the bars, it isn't sliced by them.** As a list or a form scrolls under a bar or a form's buttons, its edge gently dissolves, only while there is more beyond; where it simply runs off the screen, it just goes.
+- **Every empty place says so**, and what fills it: a small paper collage on a whole screen, one line in a picker or a menu, both arriving with a little motion.
+- **Gestures (Android):** a sheet follows your finger from anywhere and closes with a pull down; rows slide to act (a link done, a contact called or texted), clicking as they pass the point where they will act, and acting only when you let go; pull a list down to sync; Back closes what is open first, then a search or a narrowed list, then leaves.
+- **Transitions:** going deeper slides in, a form rises over the screen, menus grow from where you opened them; what you remove fades and the rest close ranks, what you add settles in. Android's "Remove animations" and your browser's "Reduce motion" are honoured.
+- **Keys (web):** `C` makes something new, `/` searches, `?` lists every key, `Esc` closes, `Ctrl`+`K` opens the spotlight, in every app.
+- **On Android, part of the phone:** the share sheet (straight into a Carnet collection), selected text into a note or an event, "Add to calendar" and "Add contact" from your other apps, `webcal://` links, shortcuts on each icon, Quick Settings tiles, widgets, and icons that follow your wallpaper's themed style.
+
+The full rules live in [DESIGN.md](DESIGN.md).
 
 ## How the apps work together
 

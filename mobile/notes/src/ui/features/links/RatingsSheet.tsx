@@ -16,7 +16,7 @@ import type { Rating } from '@unlease/notes/sync/works';
 import { findRatings } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, EmptyLine, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -72,7 +72,7 @@ function RatingsBody({ id }: { id: string }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {work ? <AppText variant="bodyStrong">{work}</AppText> : null}
       {ratings.length === 0 ? (
-        <AppText variant="body">{t('Aucune note trouvée pour l’instant.')}</AppText>
+        <EmptyLine size="body" text={t('Aucune note trouvée pour l’instant.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES.ratings}>
           {ratings.map((rating, index) => (

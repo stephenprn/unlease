@@ -28,7 +28,7 @@ const BUBBLE = 64;
 const PAD = 6;
 
 const BUBBLE_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.9 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.short);
-const BUBBLE_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.94 }], easing: accelerate } }).duration(120);
+const BUBBLE_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.94 }], easing: accelerate } }).duration(duration.fadeBack);
 
 export interface LetterRailProps {
   readonly letters: readonly string[];
@@ -103,7 +103,7 @@ function LetterRailComponent({ letters, current = null, onLetter }: LetterRailPr
             height.current = event.nativeEvent.layout.height;
           }}
         >
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.well, well]} />
+          <AnimatedOrganic pointerEvents="none" style={[StyleSheet.absoluteFill, styles.well, well]} />
           {letters.map(letter => (
             <AppText key={letter} variant="labelSmall" color={letter === lit ? theme.color.action : theme.color.inkMuted} style={styles.letter}>
               {letter}

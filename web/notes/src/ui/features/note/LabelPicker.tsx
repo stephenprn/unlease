@@ -9,6 +9,7 @@ import { foldText } from '@unlease/core/services/search';
 
 import { createLabel } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { LabelCheck } from '@shared/ui/components/LabelMark';
 import { Popover } from '@shared/ui/components/Popover';
@@ -61,7 +62,7 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
         aria-label={t('Chercher ou créer un label')}
         maxLength={60}
       />
-      <div className={styles.labelList}>
+      <div data-scroller="" className={styles.labelList}>
         {filter.trim() && !exact ? (
           <button type="button" className={`${styles.pickerRow} ${styles.pickerAdd}`} onClick={create}>
             <Icon name="plus" size={20} />
@@ -79,7 +80,7 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
             </label>
           );
         })}
-        {order.length === 0 && !filter ? <p className={`${styles.emptyLabels} t-meta`}>{t('Aucun label pour l’instant. Tapez un nom pour en créer un.')}</p> : null}
+        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant. Tapez un nom pour en créer un.')} className={styles.emptyLabels} /> : null}
       </div>
     </div>
   );
@@ -90,7 +91,7 @@ export function LabelPicker({ open, anchor, selected, onDismiss, onChange }: Lab
   // On a phone the sheet opens on its labels with the keyboard down, as the phone's does; the field is one tap away.
   const holder = useRef<HTMLDivElement>(null);
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Labels')} width={300} initialFocus={narrow ? holder : undefined}>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Labels')} width={300} initialFocus={narrow ? holder : undefined} rows>
       <LabelList selected={selected} onChange={onChange} narrow={narrow} holder={holder} />
     </Popover>
   );

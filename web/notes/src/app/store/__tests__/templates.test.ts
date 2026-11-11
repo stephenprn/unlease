@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { SUGGESTED_COLLECTIONS } from '@unlease/notes/models/collections';
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import type { TemplateField } from '@unlease/notes/models/templates';
-import { collectionTemplate, kindTemplateId, linksReadBefore, presetFields } from '@unlease/notes/services/templates';
+import { collectionTemplate, kindTemplateId, linksReadBefore, presetFields, starterFacts, starterTemplateId } from '@unlease/notes/services/templates';
 
 import { freshLibrary } from '@test/library';
 import { addLink, createLine, deleteTemplate, resetKindTemplate, saveCollectionFacts, saveTemplate, setCollectionTemplate, updateLink } from '../actions';
@@ -111,6 +112,21 @@ describe('link templates, as library writes', () => {
     // « Non classé » has none of its own.
     saveCollectionFacts(INBOX_ID, WINE);
     expect(useLibraryStore.getState().notes[INBOX_ID]!.templateId ?? null).toBeNull();
+  });
+
+  it('makes a starter with its own facts chosen, the collection, its list and the pointer in one batch, under ids two devices share', () => {
+    const restos = SUGGESTED_COLLECTIONS.find(starter => starter.id === 'line-restos')!;
+    const line = createLine(restos);
+    const id = starterTemplateId(line);
+    expect(line).toBe('line-restos');
+    expect(useLibraryStore.getState().notes[line]!.templateId).toBe(id);
+    expect(collectionTemplate(templates(), useLibraryStore.getState().notes[line])).toMatchObject({ id, name: 'Restaurants', kind: null, deletedAt: null, fields: starterFacts(line) });
+    expect(getRecord('note', line)!.clocks.templateId).toBe(getRecord('linkTemplate', id)!.clocks.fields);
+    expect(getRecord('note', line)!.clocks.title).toBe(getRecord('linkTemplate', id)!.clocks.fields);
+    // Any other collection reads by kind until it takes its own.
+    const mine = createLine({ title: 'Vins' });
+    expect(useLibraryStore.getState().notes[mine]!.templateId ?? null).toBeNull();
+    expect(ownLists().map(template => template.id)).toEqual([id]);
   });
 
   it('keeps a list another collection notes with when one goes back to the usual facts', () => {

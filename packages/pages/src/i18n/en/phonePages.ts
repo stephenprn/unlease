@@ -41,7 +41,6 @@ export const EN_PHONE_PAGES: Dictionary = {
   'Chercher ou créer une option': 'Search or create an option',
   'Créer une option': 'Create an option',
   'Créer « {name} »': 'Create “{name}”',
-  'Tapez le nom d’une option pour la créer.': 'Type an option’s name to create it.',
 
   // CodeBlock
   'Langage : {language}': 'Language: {language}',
@@ -66,6 +65,7 @@ export const EN_PHONE_PAGES: Dictionary = {
   // EmojiSheet
   'Chargement…': 'Loading…',
   'Aucun emoji pour « {query} ».': 'No emoji for “{query}”.',
+  'La liste des emoji n’a pas pu se charger. Collez-en un.': 'The emoji list couldn’t load. Paste one.',
   'Courants': 'Frequently used',
   'Icône': 'Icon',
   'Chercher : soleil, sun…': 'Search: sun, soleil…',

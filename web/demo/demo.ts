@@ -70,12 +70,13 @@ export async function startDemo(mode: string): Promise<() => void> {
           onboarded: true,
           theme: 'system',
           server: mode === 'empty' ? null : { url: DEMO_SERVER, token: 'jeton-de-demonstration' },
-          // What the app would have cached from an earlier visit.
+          // What the app would have cached from an earlier visit: the apps, and whether Claude reads links.
           serverApps: mode === 'empty' ? null : apps,
+          serverFeatures: mode === 'empty' ? {} : { claude: reading },
         };
   localStorage.setItem(`${NAME}.settings`, JSON.stringify(settings));
-  // Carnet's own: the board's layout, and whether the server reads links, as an earlier visit left them.
-  localStorage.setItem(`${NAME}.notes`, JSON.stringify({ layout: params.get('layout') === 'list' ? 'list' : 'wall', reading: mode === 'empty' || mode === 'setup' ? null : reading }));
+  // Carnet's own: the board's layout, as an earlier visit left it.
+  localStorage.setItem(`${NAME}.notes`, JSON.stringify({ layout: params.get('layout') === 'list' ? 'list' : 'wall' }));
 
   const server = new FakeServer({ reading, apps, setupDone: mode !== 'setup' });
   // The whole suite's records on the server too, as a real one holds them: what one app asks of another's (where a person is mentioned) finds them.

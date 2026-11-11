@@ -10,7 +10,7 @@ import { useMentions } from '@app/hooks/useMentions';
 import { later } from '@app/later';
 import { notesPlace, openInApp, pagePlace } from '@shared/app/openApp';
 
-import { AppText, Icon, Organic, Tappable } from '@shared/ui/components';
+import { AppText, Icon, PanelTappable, RowPanel } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -26,14 +26,14 @@ export function MentionedIn({ id }: { id: string }) {
   const places = useMentions('event', id);
   if (places.length === 0) return null;
   return (
-    <Organic outline="card" style={styles.panel}>
+    <RowPanel outline="card" style={styles.panel}>
       <AppText variant="section" style={styles.head} accessibilityRole="header">
         {t('Mentionné dans')}
       </AppText>
       {places.map(place => {
         const title = place.title.trim() || t('Sans titre');
         return (
-          <Tappable key={`${place.app}:${place.id}`} onPress={() => open(place)} style={styles.row} accessibilityRole="link" accessibilityLabel={title}>
+          <PanelTappable key={`${place.app}:${place.id}`} onPress={() => open(place)} style={styles.row} accessibilityRole="link" accessibilityLabel={title}>
             <View style={styles.mark}>{place.icon ? <AppText style={styles.emoji}>{place.icon}</AppText> : <Icon name={place.app === 'pages' ? 'page' : 'note'} size={22} color={theme.color.inkMuted} />}</View>
             <View style={styles.fill}>
               <AppText variant="body" numberOfLines={1}>
@@ -46,16 +46,17 @@ export function MentionedIn({ id }: { id: string }) {
               ) : null}
             </View>
             <Icon name="external" size={18} color={theme.color.inkMuted} />
-          </Tappable>
+          </PanelTappable>
         );
       })}
-    </Organic>
+    </RowPanel>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    panel: { marginHorizontal: 12, paddingVertical: 8, backgroundColor: theme.color.paper },
+    // Its last row 6 above its foot, as from its sides (its 4 and the row's 2): its press concentric with its corners (`RowPanel`).
+    panel: { marginHorizontal: 12, paddingTop: 8, paddingBottom: 4, backgroundColor: theme.color.paper },
     head: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 },
     // A list row's geometry (6 in, 10, a 24 slot, 16), as the event's rows above.
     row: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 56, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },

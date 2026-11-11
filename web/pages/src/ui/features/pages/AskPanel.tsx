@@ -40,6 +40,7 @@ import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { usePresence } from '@shared/ui/components/presence';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Segmented } from '@shared/ui/components/Segmented';
 import { TextField } from '@shared/ui/components/TextField';
 import { formatUsd } from '@shared/ui/money';
@@ -163,6 +164,8 @@ function AskBody({ pageId, settings, titleId, onClose, sheet }: { pageId: string
   const [draft, setDraft] = useState('');
   const field = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
+  // The conversation fades and blurs under the scope and the question being written, as far as it runs on.
+  const threadEdges = useScrollEdges({ top: true, bottom: true });
   const pending = thread.turns.some(turn => turn.answer === null && turn.error === null);
   const scope: PageScope = thread.scope === 'all' && !settings.everywhere ? 'page' : thread.scope === 'tree' && subCount === 0 ? 'page' : thread.scope;
   const web = thread.web && settings.web;
@@ -238,7 +241,7 @@ function AskBody({ pageId, settings, titleId, onClose, sheet }: { pageId: string
         </div>
       )}
 
-      <div className={styles.thread} aria-live="polite">
+      <div ref={threadEdges} className={styles.thread} aria-live="polite">
         {kept ? (
           <div className={styles.private}>
             <Icon name="eyeOff" size={24} />

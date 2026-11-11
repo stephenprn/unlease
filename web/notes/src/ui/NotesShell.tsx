@@ -4,6 +4,8 @@
  * (overlays: the page under them is in the history's state, a deep link gets a sensible one); and
  * what Carnet keeps mounted while it is on (the capture dialog, the transfer panel, the timers).
  */
+import { useEffect } from 'react';
+
 import { t } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
 import { spotKey } from '@unlease/core/services/spotlight';
@@ -11,7 +13,8 @@ import { spotKey } from '@unlease/core/services/spotlight';
 import { useLibraryStore, type LibraryState } from '../app/store/library';
 import { selectNewLineOpen, setNewLineOpen, useNotesUiStore } from '../app/store/notesUi';
 import { useLeaving } from '@shared/ui/components/presence';
-import { goBack, navigate, parseRoute, type Route } from '@shared/ui/router';
+import { useServerFeatureState } from '@shared/app/store/serverSettings';
+import { adminPath, goBack, navigate, parseRoute, type Route } from '@shared/ui/router';
 import { CaptureDialog } from './features/capture/CaptureDialog';
 import { TransferPanel } from './features/capture/TransferPanel';
 import { GlobalDeleteLines } from './features/lines/GlobalDeleteLines';
@@ -41,12 +44,26 @@ export function NotesScreen({ route }: { route: Route }) {
     case 'labels':
       return <LabelsScreen />;
     case 'templates':
-      return <FactsScreen />;
     case 'template':
-      return <FactsEditScreen key={route.id} part={route.id} />;
+      return <FactsPlace route={route} />;
     default:
       return null;
   }
+}
+
+/**
+ * « Ce que Claude relève » is Claude's: once the server says it has no key (or none is connected),
+ * an address of it leads back to where it came from (a collection's facts to the collection, the rest
+ * to Claude's section of the Administration, where a key is set). Drawn as it is while not known.
+ */
+function FactsPlace({ route }: { route: Extract<Route, { name: 'templates' | 'template' }> }) {
+  const claude = useServerFeatureState('claude');
+  const back = route.name === 'template' && !route.id.startsWith('kind-') ? paths.line(route.id) : adminPath('reading');
+  useEffect(() => {
+    if (claude === 'off') navigate(back, { replace: true });
+  }, [claude, back]);
+  if (claude === 'off') return null;
+  return route.name === 'templates' ? <FactsScreen /> : <FactsEditScreen key={route.id} part={route.id} />;
 }
 
 function titleFor(state: LibraryState, route: Route, overlay: Route): string | null {

@@ -6,7 +6,8 @@
  * collections and labels; Pages' tree of pages). A row closes the drawer before it acts.
  */
 import React, { createContext, memo, useCallback, useContext, useEffect, useRef } from 'react';
-import { BackHandler, Keyboard, ScrollView, StatusBar, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { BackHandler, Keyboard, StatusBar, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { EdgeScrollView } from './ScrollEdges';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,8 @@ import { t } from '@unlease/core/i18n';
 import { useReachableApps } from '../../app/hooks/useAppReachable';
 import { appHome, openInApp } from '../../app/openApp';
 import { BrandMark } from '../icons/BrandMark';
-import { accelerate, decelerate, duration, listPressDelay, spatialSlow, throwTo } from '../theme/motion';
+import { haptic } from '../../platform/haptics';
+import { accelerate, decelerate, duration, FLING_SPEED, listPressDelay, spatialSlow, throwTo } from '../theme/motion';
 import { corners } from '../theme/shape';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
@@ -28,6 +30,9 @@ import { AppText } from './AppText';
 import { GroundSlice } from './Ground';
 import { Icon } from './Icon';
 import { Tappable } from './Tappable';
+
+/** Pushed back past this share of its width (or flung), it closes. */
+const CLOSE_SHARE = 0.35;
 
 /** How a row of the drawer closes it before it acts. */
 const CloseContext = createContext<() => void>(() => {});
@@ -64,6 +69,8 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   const shownValue = useSharedValue(0);
   const drag = useSharedValue(0);
   const width = useSharedValue(0);
+  // Whether letting go now would close it: crossing that point clicks, as the sheet's does.
+  const past = useSharedValue(false);
   const thrown = useRef(false);
 
   const settled = useCallback(() => {
@@ -107,11 +114,24 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   const pan = Gesture.Pan()
     .activeOffsetX([-14, 14])
     .failOffsetY([-14, 14])
+    .onStart(() => {
+      past.value = false;
+    })
     .onUpdate(event => {
       drag.value = Math.min(0, event.translationX);
+      // Past the point where it would close, it clicks; back short of it, it clicks again.
+      const beyond = event.translationX < -width.value * CLOSE_SHARE;
+      if (beyond !== past.value) {
+        past.value = beyond;
+        runOnJS(haptic)(beyond ? 'threshold' : 'release');
+      }
     })
     .onEnd(event => {
-      if (event.translationX < -width.value * 0.35 || event.velocityX < -900) {
+      const beyond = past.value;
+      past.value = false;
+      if (beyond || event.velocityX < -FLING_SPEED) {
+        // Flung short of that point, it still says it acts.
+        if (!beyond) runOnJS(haptic)('threshold');
         runOnJS(markThrown)();
         runOnJS(onClose)();
         drag.value = throwTo(-width.value - 24, drag.value, event.velocityX, finished => {
@@ -147,7 +167,7 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
         <Tappable accessibilityLabel={t('Fermer le menu')} noTint onPress={onClose} style={styles.scrim} />
       </Animated.View>
       <GestureDetector gesture={pan}>
-        <Animated.View onLayout={onSheetLayout} style={[styles.sheet, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 12 }, sheetStyle]} accessibilityViewIsModal={open}>
+        <Animated.View onLayout={onSheetLayout} style={[styles.sheet, { paddingTop: insets.top + 16 }, sheetStyle]} accessibilityViewIsModal={open}>
           <View style={styles.paper} pointerEvents="none">
             {/* Against the screen's left edge, its full height: the screen's own ground, slice for slice. */}
             <GroundSlice top={0} />
@@ -157,10 +177,11 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
             <AppText variant="display">{APPS[app].name}</AppText>
           </View>
           <CloseContext.Provider value={onClose}>
-            <ScrollView contentContainerStyle={styles.list}>
+            {/* It runs down to the screen's edge, the room over the gesture bar inside it. */}
+            <EdgeScrollView contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}>
               {children}
               <SuiteApps app={app} />
-            </ScrollView>
+            </EdgeScrollView>
           </CloseContext.Provider>
         </Animated.View>
       </GestureDetector>

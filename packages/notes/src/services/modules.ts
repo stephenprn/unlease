@@ -126,6 +126,23 @@ export function moduleMissing(module: LinkModule, can: ModuleAbilities): string 
   return MODULE_NEEDS[module] === 'seerr' ? t('Il faut relier Seerr dans l’administration') : t('Il faut une clé Claude');
 }
 
+/**
+ * Whether the « Modules » list offers a module at all: one that leans on a service the
+ * Administration has not set up (Claude, Seerr) is left out until the server says it is (one picked
+ * already stays picked); the others show, with what they wait for (`moduleMissing`).
+ */
+export function moduleOffered(module: LinkModule, can: Pick<ModuleAbilities, 'reading' | 'seerr'>): boolean {
+  switch (MODULE_NEEDS[module]) {
+    case 'claude':
+    case 'agenda':
+      return can.reading;
+    case 'seerr':
+      return can.seerr;
+    default:
+      return true;
+  }
+}
+
 /** The keys a collection holds that this version knows. */
 export function knownModules(keys: readonly string[]): LinkModule[] {
   return keys.filter(isLinkModule);

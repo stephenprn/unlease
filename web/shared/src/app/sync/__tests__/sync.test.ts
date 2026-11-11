@@ -12,11 +12,10 @@ import { addAttachment, createNote, updateNote } from '@notes/app/store/actions'
 import { acknowledge, countPending, deviceNode, mergeRemote, pendingRecords, readCursor, readSyncedTypes, writeCursor } from '@shared/app/store/records';
 import { useLibraryStore } from '@notes/app/store/library';
 import { useServerSettingsStore } from '../../store/serverSettings';
-import { setServer, setServerApps } from '../../store/settings';
+import { setServer, setServerApps, useSettingsStore } from '../../store/settings';
 import { useSyncStore } from '../../store/syncStatus';
 import { configureSync, startSync, stopSync } from '../loop';
 import { createTransport, fetchServerSettings, saveServerSettings, SyncError } from '../transport';
-import { usePrefsStore } from '@notes/app/store/prefs';
 
 const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const SETTINGS = { analysis: { enabled: false, keySource: null, keyHint: null, model: 'claude-haiku-5-5', budgetUsd: 5 } };
@@ -146,13 +145,13 @@ describe('the sync loop', () => {
   });
 
   it('asks the server whether it reads links, and remembers the answer', async () => {
-    expect(usePrefsStore.getState().reading).toBeNull();
+    expect(useSettingsStore.getState().serverFeatures.claude).toBeUndefined();
     startSync();
-    await vi.waitFor(() => expect(usePrefsStore.getState().reading).toBe(false));
+    await vi.waitFor(() => expect(useSettingsStore.getState().serverFeatures.claude).toBe(false));
     expect(useServerSettingsStore.getState().settings?.analysis.model).toBe('claude-haiku-5-5');
     // Another server may differ: forgetting the address forgets the answer.
     setServer(null);
-    expect(usePrefsStore.getState().reading).toBeNull();
+    expect(useSettingsStore.getState().serverFeatures.claude).toBeUndefined();
   });
 
   it('pulls the record types of its own app, whatever else the server runs', async () => {

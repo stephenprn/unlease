@@ -5,7 +5,7 @@
  * page's own data, or Claude reads them when it has none. The web's `CookMode`.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Keyframe, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { keepScreenOn } from '@platform/screen';
 
-import { AppText, Button, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
+import { AppText, Button, EdgeScrollView, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
 import { KitchenTimers } from '../features/links/KitchenTimers';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { servingsLine, ServingsStepper, useServings } from '../features/links/Servings';
@@ -146,7 +146,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
       </View>
     );
     return (
-      <ScrollView contentContainerStyle={[styles.scroll, stepping || timing ? null : { paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
+      <EdgeScrollView contentContainerStyle={[styles.scroll, stepping || timing ? null : { paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
         {lines.length > 0 ? <ServingsStepper id={id} /> : null}
         {count > 0 && lines.length > 0 ? (
           <Segmented<Part>
@@ -177,7 +177,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
             {ingredients}
           </>
         )}
-      </ScrollView>
+      </EdgeScrollView>
     );
   };
 

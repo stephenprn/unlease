@@ -26,7 +26,7 @@ import { createPage, deleteBlocks, duplicateBlocks, insertAfter, insertColumns, 
 import { requestTitleFocus } from '@app/store/pagesUi';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, FormFoot, Icon, ListRow, Organic, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm } from '@shared/ui/components';
+import { AppText, Button, EmptyLine, FormFoot, Icon, ListRow, Organic, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm } from '@shared/ui/components';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { corners } from '@shared/ui/theme/shape';
@@ -521,7 +521,7 @@ function MoveHost({ page, openPage }: { page: string; openPage: (id: string) => 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher une page')} accessibilityLabel={t('Chercher une page')} />
       </View>
-      <SheetScroll contentContainerStyle={styles.list}>
+      <SheetScroll top={false} contentContainerStyle={styles.list}>
         {headed ? (
           <>
             <AppText variant="section" style={styles.section} accessibilityRole="header">
@@ -535,11 +535,7 @@ function MoveHost({ page, openPage }: { page: string; openPage: (id: string) => 
         ) : null}
         {pageSheet.visible && !query.trim() ? <PageChoice title={t('Au premier niveau')} icon={null} path={t('Avec les pages de l’accueil')} here={current === null} onPress={() => pick(null)} /> : null}
         {all.map(place => choice(place, place.page.id))}
-        {all.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Aucune page ne correspond.')}
-          </AppText>
-        ) : null}
+        {all.length === 0 ? <EmptyLine text={t('Aucune page ne correspond.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -569,7 +565,7 @@ function LanguageSheet({ page }: { page: string }) {
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher un langage')} accessibilityLabel={t('Chercher un langage')} autoCapitalize="none" autoCorrect={false} returnKeyType="done" onSubmitEditing={() => (found[0] ? pick(found[0].key) : undefined)} />
       </View>
-      <SheetScroll contentContainerStyle={styles.list}>
+      <SheetScroll top={false} contentContainerStyle={styles.list}>
         {found.map(language => (
           <ListRow
             key={language.key}
@@ -578,11 +574,7 @@ function LanguageSheet({ page }: { page: string }) {
             onPress={() => pick(language.key)}
           />
         ))}
-        {found.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Aucun langage ne correspond.')}
-          </AppText>
-        ) : null}
+        {found.length === 0 ? <EmptyLine text={t('Aucun langage ne correspond.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -761,7 +753,7 @@ const makeStyles = (theme: Theme) =>
     choiceIconHere: { backgroundColor: theme.color.paper },
     choiceEmoji: { fontSize: 20, lineHeight: 26 },
     choiceText: { flex: 1, gap: 2 },
-    empty: { padding: 16, color: theme.color.inkMuted },
+    empty: { padding: 16 },
   });
 
 export const PageSheets = memo(PageSheetsComponent);

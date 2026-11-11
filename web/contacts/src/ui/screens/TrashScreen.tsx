@@ -3,7 +3,7 @@
  * (undone from the slip) and « Supprimer définitivement » (asked first); the head's broom, « Vider la
  * corbeille », for all of them (asked first). The server empties it after its retention.
  */
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { formatRelative, plural } from '@unlease/core/services/format';
@@ -20,6 +20,7 @@ import { IconButton } from '@shared/ui/components/IconButton';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { PageHead } from '@shared/ui/navigation/PageHead';
 import { Link } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import styles from '../contacts.module.css';
 import { Avatar } from '../features/Avatar';
 import { paths } from '../routes';
@@ -27,7 +28,7 @@ import { paths } from '../routes';
 const BinRow = memo(function BinRow({ contact, now, onDelete }: { contact: Contact; now: number; onDelete: (id: string) => void }) {
   const name = contactName(contact);
   return (
-    <li className={styles.row}>
+    <li className={styles.row} data-motion={contact.id}>
       <span className={styles.pick}>
         <Avatar contact={contact} size={40} />
       </span>
@@ -49,6 +50,9 @@ export function TrashScreen() {
   const binned = useTrashedContacts();
   const now = useMinute();
   const [confirm, setConfirm] = useState<'all' | string | null>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // A contact restored or deleted fades where it was, the others close ranks; one put back by « Annuler » settles in.
+  useListMotion(list, { late: true });
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
       <div>
@@ -59,7 +63,7 @@ export function TrashScreen() {
         <EmptyState scene="trash" title={t('La corbeille est vide')} text={t('Les contacts supprimés y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })} />
       ) : (
         <OutlinedBox kind="panel" lift="card" className={`${styles.table} paper`}>
-          <ul className={styles.group}>
+          <ul ref={list} className={styles.group}>
             {binned.map(contact => (
               <BinRow key={contact.id} contact={contact} now={now} onDelete={setConfirm} />
             ))}

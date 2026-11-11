@@ -19,7 +19,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Keyboard, ScrollView, StyleSheet, View, type AccessibilityActionEvent, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, Keyframe, LayoutAnimationConfig, LinearTransition, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Keyframe, LayoutAnimationConfig, LinearTransition, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 
@@ -39,8 +39,8 @@ import { canRedo, canUndo, redoPage, undoPage } from '@app/store/pageHistory';
 import { indentBlocks, moveBlocks, nudgeBlocks, outdentBlocks } from '@app/store/pages';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, Button, Grain, Ground, Icon, IconButton, Organic, TopBar } from '@shared/ui/components';
-import { accelerate, decelerate, duration, standard } from '@shared/ui/theme/motion';
+import { AppText, Button, EdgeScrollView, EmptyLine, Grain, Ground, Icon, IconButton, Organic, TopBar } from '@shared/ui/components';
+import { accelerate, decelerate, duration, listIn, listMove, listOut, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -203,11 +203,11 @@ const RowBody = memo(function RowBodyView({ look, carried, grip }: { look: RowLo
   );
 });
 
-const ROW_MOVE = LinearTransition.duration(duration.medium).easing(standard);
+const ROW_MOVE = listMove;
 /** The rows parting for a held one, quicker, to keep up with the finger. */
 const ROW_SHIFT = LinearTransition.duration(duration.short).easing(standard);
-const ROW_IN = FadeIn.duration(duration.medium).easing(decelerate);
-const ROW_OUT = FadeOut.duration(duration.short).easing(accelerate);
+const ROW_IN = listIn;
+const ROW_OUT = listOut;
 
 interface RowProps {
   readonly row: OutlineRow;
@@ -313,7 +313,6 @@ function drawnFor(id: string): string {
 function ReorderLayer({ request }: { request: ReorderRequest }) {
   const page = request.page;
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const { jumpTo, readOnly } = usePageContext();
@@ -612,7 +611,7 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
           placeChosen();
         }}
       >
-        <ScrollView
+        <EdgeScrollView
           ref={scroll}
           scrollEnabled={!lifted}
           onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -633,17 +632,13 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
               placeChosen();
             }}
           >
-            {shown.length === 0 ? (
-              <AppText variant="body" color={theme.color.inkMuted} style={styles.empty}>
-                {t('Cette page n’a pas encore de blocs.')}
-              </AppText>
-            ) : null}
+            {shown.length === 0 ? <EmptyLine size="body" text={t('Cette page n’a pas encore de blocs.')} style={styles.empty} /> : null}
             {/* The list as it opens is simply there; what changes after it moves. */}
             <LayoutAnimationConfig skipEntering>
               {laid}
             </LayoutAnimationConfig>
           </View>
-        </ScrollView>
+        </EdgeScrollView>
         {floating && floatingLook ? (
           <Animated.View pointerEvents="none" style={[styles.float, { left: INSET + floating.depth * NEST }, floatStyle]} importantForAccessibility="no-hide-descendants">
             <Organic style={styles.strip}>

@@ -8,7 +8,7 @@ import { labelKey } from '@unlease/notes/models/entities';
 import { createLabel } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Icon, LabelTag, ListRow, NewItemField, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { EmptyLine, Icon, LabelTag, ListRow, NewItemField, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 export interface LabelPickerSheetProps {
@@ -52,11 +52,7 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <SheetScroll contentContainerStyle={styles.body}>
-        {order.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Aucun label pour l’instant : nommez le premier.')}
-          </AppText>
-        ) : null}
+        {order.length === 0 ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant : nommez le premier.')} slot={24} gap={16} style={styles.empty} /> : null}
         {order.map(id => {
           const label = labels[id];
           if (!label) return null;
@@ -84,7 +80,7 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
 
 const styles = StyleSheet.create({
   body: { paddingBottom: 8 },
-  // On the sheet's column, under its title.
+  // Under the sheet's title, its glyph in the rows' slot, its words on their column.
   empty: { marginHorizontal: SHEET_INSET, marginBottom: 8 },
   // The tag in the rows' 24 slot, so the names start on the rows' words.
   tag: { width: 24, alignItems: 'center' },

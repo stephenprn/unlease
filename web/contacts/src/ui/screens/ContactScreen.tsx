@@ -33,6 +33,7 @@ import { useContactsStore } from '../../app/store/library';
 import { useCallingRegion } from '../../app/store/prefs';
 import { showSnack, showUndo, showWarning } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
@@ -389,12 +390,8 @@ export function ContactScreen({ id }: { id: string }) {
         </nav>
       ) : null}
       {trashed ? null : <BirthdayNotice contact={contact} region={region} />}
-      {nothing ? (
-        <OutlinedBox kind="panel" className={`${styles.notice} paper`}>
-          <Icon name="info" size={22} />
-          <span className="t-body">{t('Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.')}</span>
-        </OutlinedBox>
-      ) : null}
+      {/* Nothing but a name: where the details would be, how to add them (as on the phone). */}
+      {nothing && !trashed ? <EmptyLine text={t('Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.')} align="center" className={styles.noDetails} /> : null}
       <Coordinates contact={contact} />
       <Addresses contact={contact} />
       <About contact={contact} />

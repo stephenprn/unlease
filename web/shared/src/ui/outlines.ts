@@ -1,13 +1,14 @@
 /**
  * Outlines for plain containers marked `data-outline="kind"` (a page's callouts, code, media,
- * bookmarks): one watcher clips each to its outline as it is sized (`--outline-clip`) and hands its
+ * bookmarks, a floating menu): one watcher clips each to its outline as it is sized (`--outline-clip`;
+ * `--outline-radius` and `--row-outer` for what lies in its corners, as `useOutline`) and hands its
  * edge to CSS as a ring along it (`--outline-ring`, an even-odd path one edge wide), which the
  * container's `::after` paints when it carries `data-edge`. A container that needs more (a lift, a
  * focus ring) uses `useOutline` instead.
  */
 import { OUTLINES, type OutlineKind } from '@unlease/design/outline';
 
-import { outlineD } from './components/Outline';
+import { cornerVars, outlineD } from './components/Outline';
 
 /** How wide an edge ring is. */
 const EDGE = 1;
@@ -22,6 +23,8 @@ function shape(element: HTMLElement, width: number, height: number): void {
   if (!kind || width <= 0 || height <= 0) return;
   const outer = outlineD(kind, width, height);
   element.style.setProperty('--outline-clip', `path('${outer}')`);
+  // Its corners as drawn, and the corner of a row or a tint lying 6 inside them (`--row-outer`).
+  for (const [name, value] of Object.entries(cornerVars(kind, width, height))) element.style.setProperty(name, value);
   if (element.dataset.edge !== undefined) element.style.setProperty('--outline-ring', `path(evenodd, '${outer} ${outlineD(kind, width, height, EDGE)}')`);
 }
 

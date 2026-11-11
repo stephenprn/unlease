@@ -84,4 +84,21 @@
     <string name="widget_preview_links">4 liens</string>
     <string name="widget_preview_film_1">Les Herbes sèches</string>
     <string name="widget_preview_film_3">Le Règne animal</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_note_short">Note</string>
+    <string name="shortcut_note_long">Nouvelle note</string>
+    <string name="shortcut_checklist_short">Liste</string>
+    <string name="shortcut_checklist_long">Nouvelle liste</string>
+    <string name="shortcut_link_short">Lien</string>
+    <string name="shortcut_link_long">Classer un lien</string>
+    <string name="shortcut_search_short">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher dans vos notes</string>
+
+    <!-- The share sheet's lines and the text selection's (AndroidManifest.xml). -->
+    <string name="share_links">Classer dans Carnet</string>
+    <string name="share_images">Ajouter à Carnet</string>
+    <string name="process_text">Noter dans Carnet</string>
+    <!-- The Quick Settings tile (tile/NewNoteTileService). -->
+    <string name="tile_new_note">Nouvelle note</string>
 </resources>

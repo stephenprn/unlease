@@ -95,7 +95,9 @@ describe('« Aujourd’hui »', () => {
     const tree = await boot({ onboarded: true });
     await act(async () => showView('today'));
     await settle();
-    expect(textOf(tree)).toContain('Rien de prévu aujourd’hui : la journée est à vous.');
+    // Nothing today nor tomorrow: the view's empty state, its action the way to fill it.
+    expect(textOf(tree)).toContain('Rien de prévu aujourd’hui');
+    expect(textOf(tree)).toContain('La journée est à vous.');
     await act(async () => {
       pressableWithText(tree, 'Créer un événement').props.onPress();
     });

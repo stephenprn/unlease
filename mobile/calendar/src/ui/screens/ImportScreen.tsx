@@ -4,7 +4,7 @@
  * « Importer » writes them as one batch, one's own from then on.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -17,7 +17,7 @@ import { later } from '@app/later';
 import { showSnack } from '@shared/app/store/uiStore';
 import { pickDocument } from '@shared/platform/documents';
 
-import { AppText, Button, Collage, Ground, Organic, TopBar } from '@shared/ui/components';
+import { AppText, Button, Collage, EdgeScrollView, Ground, Organic, TopBar } from '@shared/ui/components';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
@@ -55,7 +55,7 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Importer')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         {!pending || !plan ? (
           <View style={styles.empty}>
             <Collage scene="notes" width={220} />
@@ -67,7 +67,8 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
         ) : (
           <Organic outline="card" style={styles.panel}>
             <AppText variant="title">{pending.calendar.name || pending.name || t('Agenda importé')}</AppText>
-            <AppText variant="body">{t('{events} à ajouter', { events: plural(plan.creates.length, 'événement') })}</AppText>
+            {/* As on the web: nothing new is said, not counted. */}
+            <AppText variant="body">{plan.creates.length > 0 ? t('{events} à ajouter', { events: plural(plan.creates.length, 'événement') }) : t('Rien de nouveau à importer.')}</AppText>
             {plan.skipped > 0 ? <AppText variant="meta">{t('{events} déjà dans l’agenda', { events: plural(plan.skipped, 'événement') })}</AppText> : null}
             {plan.dropped > 0 ? <AppText variant="meta">{t('{events} annulés ou incomplets, laissés de côté', { events: plural(plan.dropped, 'événement') })}</AppText> : null}
             {/* As every form's foot: « Annuler » as text, the primary at the end. */}
@@ -77,7 +78,7 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
             </View>
           </Organic>
         )}
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

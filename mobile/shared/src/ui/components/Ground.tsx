@@ -13,6 +13,9 @@ import type { GroundPaint } from '@unlease/design/appearance';
 import { useTheme } from '../theme/ThemeProvider';
 import { Grain } from './Grain';
 
+/** Marks the ground's paint (`OrganicView.GROUND`): a frosted field lays it, without its grain, under its veil. */
+export const GROUND_ID = 'unlease-ground';
+
 /** A ground's paint as React Native style props: its layers over its flat colour. */
 export function groundStyle(ground: GroundPaint): ViewStyle {
   return ground.layers.length > 0 ? { backgroundColor: ground.base, backgroundImage: ground.layers.join(', ') } : { backgroundColor: ground.base };
@@ -21,7 +24,7 @@ export function groundStyle(ground: GroundPaint): ViewStyle {
 function GroundComponent() {
   const theme = useTheme();
   return (
-    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, groundStyle(theme.ground)]}>
+    <View nativeID={GROUND_ID} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, groundStyle(theme.ground)]}>
       <Grain ground />
     </View>
   );
@@ -39,7 +42,7 @@ function GroundSliceComponent({ top }: { top: number }) {
   const window = useWindowDimensions();
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.clip}>
-      <View style={[styles.whole, { top: -top, width: window.width, height: window.height }, groundStyle(theme.ground)]}>
+      <View nativeID={GROUND_ID} style={[styles.whole, { top: -top, width: window.width, height: window.height }, groundStyle(theme.ground)]}>
         <Grain ground width={window.width} height={window.height} />
       </View>
     </View>

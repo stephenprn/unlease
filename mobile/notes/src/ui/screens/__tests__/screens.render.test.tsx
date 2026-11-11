@@ -162,6 +162,10 @@ describe.each([
     expect(textOf(tree)).toContain('Labels');
     await go('Settings');
     expect(textOf(tree)).toContain('Réglages');
+    // The look is one row there, its galleries on their own page.
+    expect(textOf(tree)).toContain('Apparence');
+    expect(textOf(tree)).not.toContain('Palettes');
+    await go('Appearance');
     // The colours and the ground, each with its own grain switch beside the paper's.
     for (const words of ['Palettes', 'Sur mesure', 'Principale', 'Couleurs unies', 'Les vôtres', 'Grain sur le fond', 'Grain du papier']) expect(textOf(tree)).toContain(words);
     // The server and Claude's reading moved to the Administration.

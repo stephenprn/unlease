@@ -6,21 +6,12 @@
   min-height: 0;
 }
 
-/* How far the scroller's top fades: nothing at rest, a soft edge once rows have gone up under it. Registered, so it eases. */
-@property --nav-fade {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-
 /*
- * Everything but the foot scrolls; the archive, the bin and the settings stay in reach. Its last
- * 24px fade, so a row cut by the foot reads as "more below", never as a row sliced in two; the
- * padding under the last row lets it scroll clear of the fade. Once scrolled, its top fades and
- * blurs the same way, as the page slides under the header.
+ * Everything but the foot scrolls; the archive, the bin and the settings stay in reach. Its top
+ * fades as far as rows lie above it (`useScrollEdges`), and blurs under what stays there: the header
+ * or the drawer's brand. Its foot is the column's own end: a plain cut there.
  */
 .navMain {
-  --nav-fade: 0px;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -29,52 +20,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  /* 4px of room on its sides and top for a row's focus ring (2px, 2px out), given back by the margin. */
+  /* 4px of room around its rows for a row's focus ring (2px, 2px out), given back by the margin. */
   margin: -4px -4px 0;
-  padding: 4px 4px 28px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--nav-fade), #000 calc(100% - 24px), transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 var(--nav-fade), #000 calc(100% - 24px), transparent);
-  transition: --nav-fade var(--duration-medium) var(--ease-standard);
-}
-
-.navMain[data-scrolled] {
-  --nav-fade: 32px;
-}
-
-/* The blur under that fade: pinned to the scroller's top, taking no room, the rows softening as they go up into it. */
-.navBlur {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  flex: none;
-  height: 0;
-  /* The list's gap after it, given back. */
-  margin-bottom: calc(-1 * var(--row-gap));
-  pointer-events: none;
-}
-
-.navBlur::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
-  mask-image: linear-gradient(to bottom, #000, transparent);
-  opacity: 0;
-  transition: opacity var(--duration-medium) var(--ease-standard);
-}
-
-.navMain[data-scrolled] .navBlur::before {
-  opacity: 1;
-}
-
-/* Its keyboard focus (a scroller takes the tab in Chromium) as an inset ring, not a line down the page. */
-.navMain:focus-visible {
-  outline-offset: -2px;
+  padding: 4px;
 }
 
 .navFoot {

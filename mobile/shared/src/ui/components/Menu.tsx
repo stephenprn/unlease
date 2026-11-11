@@ -13,7 +13,7 @@ import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 
-import { accelerate, decelerate } from '../theme/motion';
+import { accelerate, decelerate, duration } from '../theme/motion';
 import { corners } from '../theme/shape';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
@@ -38,8 +38,8 @@ export interface MenuItem {
 /** It grows out of the corner it was opened from (`transformOrigin`), and fades back into it, faster. */
 /** A menu's own outline. */
 const OUTLINE = 'menu';
-const MENU_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.9 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(200);
-const MENU_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.95 }], easing: accelerate } }).duration(120);
+const MENU_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.9 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.grow);
+const MENU_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.95 }], easing: accelerate } }).duration(duration.fadeBack);
 
 /** `top`: below the safe area (from a top bar); `bottom`: above it (from a bottom toolbar). */
 function MenuComponent({ visible, items, onDismiss, top = 56, bottom }: { visible: boolean; items: readonly MenuItem[]; onDismiss: () => void; top?: number; bottom?: number }) {

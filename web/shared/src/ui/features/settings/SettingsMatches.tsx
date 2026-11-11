@@ -3,8 +3,8 @@
  * or « S3 » offers the place of Réglages or of the Administration that holds it. The app's home
  * shows them above its own results, as the phone's search does: a small group « Réglages », three
  * at most until « Tout voir », each row the place's glyph, its name with the words that found it
- * marked, and where it is (« Réglages › Fond »), opening it in one press. The spotlight lists the same
- * places in a group of its own (`settingsRows`).
+ * marked, and where it is (« Réglages › Apparence › Fond »), opening it in one press, on its page.
+ * The spotlight lists the same places in a group of its own (`settingsRows`).
  */
 import { useId, useMemo, useState } from 'react';
 
@@ -15,7 +15,7 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { theApp } from '../../../modules';
 import { Highlight } from '../../components/Highlight';
 import { Icon } from '../../components/Icon';
-import { adminPath, Link, paths } from '../../router';
+import { adminPath, Link, settingsPath } from '../../router';
 import styles from './settingsMatches.module.css';
 
 export type WebSettingsPlace = SettingsPlace<GlyphName>;
@@ -26,10 +26,9 @@ export function appSettingsPlaces(): readonly WebSettingsPlace[] {
   return placesFor(app.id, 'web', app.settingsPlaces ?? []);
 }
 
-/** A place's address: a section of the Administration (`/notes/admin/backup`), or Réglages at one of its sections (`/notes/settings#ground`). */
+/** A place's address: a section of the Administration (`/notes/admin/backup`), or Réglages at one of its sections, on its page (`/notes/settings#language`, `/notes/settings/appearance#ground`). */
 export function settingsPlacePath(place: SettingsPlace<string>): string {
-  if (place.area === 'admin') return adminPath(place.section);
-  return place.section ? `${paths.settings}#${place.section}` : paths.settings;
+  return place.area === 'admin' ? adminPath(place.section) : settingsPath(place.section);
 }
 
 /** Above the results of an app's home search: the settings the words typed name, if any. */

@@ -5,15 +5,16 @@
  *
  * A collection's asks one thing first: « Les informations habituelles » (each link gets those of its
  * kind; the kinds its links have are listed, each opening its usual facts) or « Les informations de
- * cette collection » (one list for every link here, starting from the usual facts of its most
- * frequent kind). A kind's is that list alone, with « Rétablir celles de Claude » under it while it
+ * cette collection » (one list for every link here, starting from a starter's own facts, else the
+ * usual facts of its most frequent kind). A kind's is that list alone, with « Rétablir celles de Claude » under it while it
  * is changed. The facts are rows (each opens its sheet: name, what Claude notes in it, the answer's
  * shape; moved or removed there), « Ajouter une information » and suggestions one tap away, then a
  * preview on one link. Saved, links read before the change can all be read again from the well at
  * the top. Opened with an old template's id, it shows the first collection noting with it.
  */
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { t, tc } from '@unlease/core/i18n';
 import { formatUsd, plural } from '@unlease/core/services/format';
@@ -25,6 +26,7 @@ import { INBOX_ID, LINK_KIND_NAMES, shownTitle, type LinkItem, type LinkKind, ty
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
 import {
   changedKindTemplate,
+  collectionKinds,
   collectionTemplate,
   collectionsOfTemplate,
   kindFields,
@@ -44,10 +46,11 @@ import {
 import { readLinks, resetKindTemplate, saveCollectionFacts, saveTemplate } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { linksToTry } from '@app/templates';
-import { selectCanRead, selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeatureState } from '@shared/app/hooks/useServerFeature';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmblemStone, EmptyState, FormMessage, Ground, Icon, RevealScrollView, Tappable, TopBar, useForm, useUnsaved } from '../components';
+import { AppText, Button, EmblemStone, EmptyLine, EmptyState, FormMessage, Ground, Icon, RevealScrollView, Tappable, TopBar, useForm, useUnsaved } from '../components';
 import { Section } from '@shared/ui/features/settings/Section';
 import { ReadAllBanner } from '../features/lines/LineRefine';
 import { KIND_ICONS } from '../features/links/kindIcon';
@@ -56,7 +59,8 @@ import { FIELD_TYPE_GLYPHS } from '../features/templates/fieldTypes';
 import { TemplateRow } from '../features/templates/TemplateRow';
 import { factMeta, factNames, readAgainWords } from '../features/templates/templateWords';
 import { TryLinkSheet, TrySection, useTemplateTry } from '../features/templates/TryTemplate';
-import type { ScreenProps } from '../navigation/types';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList, ScreenProps } from '../navigation/types';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -76,6 +80,7 @@ export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
   // A kind's usual facts, by its kind or by its fixed id; a collection's facts, by the collection or by an old template id.
   const kind: LinkKind | null = params.kind ?? (params.id ? kindOfTemplateId(params.id) : null);
   const lineId = kind ? null : (params.collection ?? (params.id ? (collectionsOfTemplate(params.id, notes).find(ownsFacts)?.id ?? null) : null));
+  useLeaveWithoutClaude(navigation, lineId);
   if (kind) return <FactsForm navigation={navigation} kind={kind} />;
   if (lineId && ownsFacts(notes[lineId])) return <FactsForm navigation={navigation} lineId={lineId} />;
   // Deleted on another device, or a stale way to it: a way back, never a blank form.
@@ -88,6 +93,22 @@ export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
   );
 }
 
+/**
+ * Claude's facts lead nowhere once the server says it has no key: the screen goes back where it was
+ * opened from (its collection, or the Board). While the server has not said, it stays.
+ */
+export function useLeaveWithoutClaude(navigation: Pick<NativeStackNavigationProp<RootStackParamList>, 'canGoBack' | 'goBack' | 'navigate'>, lineId: string | null = null): void {
+  const claude = useServerFeatureState('claude');
+  useFocusEffect(
+    useCallback(() => {
+      if (claude !== 'off') return;
+      if (navigation.canGoBack()) navigation.goBack();
+      else if (lineId) navigation.navigate('Line', { id: lineId });
+      else navigation.navigate('Board');
+    }, [claude, navigation, lineId]),
+  );
+}
+
 type FormProps = { readonly navigation: ScreenProps<'Template'>['navigation'] } & ({ readonly kind: LinkKind; readonly lineId?: undefined } | { readonly lineId: string; readonly kind?: undefined });
 
 function FactsForm({ navigation, kind, lineId }: FormProps) {
@@ -97,7 +118,8 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
   const links = useLibraryStore(s => s.links);
   const notes = useLibraryStore(s => s.notes);
   const linksByNote = useLibraryStore(s => s.linksByNote);
-  const reading = useSettingsStore(selectCanRead);
+  // « Tout relire » once the server said Claude has a key.
+  const reading = useServerFeatureState('claude') === 'on';
   const model = useSettingsStore(selectModel);
   const line = lineId ? notes[lineId]! : null;
   const collection = line ? shownTitle(line) : '';
@@ -121,6 +143,8 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     return (linksByNote[lineId!] ?? []).flatMap(id => (links[id] && links[id]!.deletedAt === null ? [links[id]!] : []));
   }, [kind, lineId, allLinks, notes, templates, linksByNote, links]);
   const kinds = useMemo(() => kindsOfLinks(theirLinks), [theirLinks]);
+  // What the facts are for: the page's kind, or the collection's links' kinds then those its title names (« Films & séries »).
+  const expected = useMemo((): LinkKind[] => (kind ? [kind] : collectionKinds(theirLinks, collection)), [kind, theirLinks, collection]);
   // Noted before the facts they read with now, as saved: « Tout relever à nouveau ».
   const noteBefore = useMemo((): LinkItem[] => {
     if (kind) return linksReadBefore({ id: kindTemplateId(kind), kind }, allLinks, notes, templates);
@@ -145,8 +169,8 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
   };
   const choose = (value: boolean): void => {
     if (value === own) return;
-    // Its own list taken for the first time: the usual facts of its links' most frequent kind, to change.
-    if (value && fields.length === 0) setFields(startingFacts(templates, kinds));
+    // Its own list taken for the first time: a starter's own facts, else the usual facts of its links' most frequent kind, to change.
+    if (value && fields.length === 0) setFields(startingFacts(templates, expected, lineId));
     setOwn(value);
   };
   const save = (): void => {
@@ -196,7 +220,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
 
   const full = fields.length >= TEMPLATE_LIMITS.fields;
   // The usual facts of its links' kinds (or of the page's kind) first.
-  const suggestions = full ? [] : suggestedFields(fields, kind ? [kind] : kinds).slice(0, SUGGESTED);
+  const suggestions = full ? [] : suggestedFields(fields, expected).slice(0, SUGGESTED);
   const cost = formatUsd(noteBefore.length * CLAUDE_COST_PER_LINK[model]);
 
   return (
@@ -245,11 +269,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
 
           {own ? (
             <Section title={t('Informations')}>
-              {fields.length === 0 ? (
-                <AppText variant="meta" style={styles.line}>
-                  {t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')}
-                </AppText>
-              ) : null}
+              {fields.length === 0 ? <EmptyLine text={t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')} style={styles.line} /> : null}
               {fields.map(field => (
                 <TemplateRow
                   key={field.id}
@@ -292,11 +312,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
             </Section>
           ) : (
             <Section title={t('Types de liens ici')}>
-              {kinds.length === 0 ? (
-                <AppText variant="meta" style={styles.line}>
-                  {t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')}
-                </AppText>
-              ) : null}
+              {kinds.length === 0 ? <EmptyLine text={t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')} style={styles.line} /> : null}
               {kinds.map(each => (
                 <TemplateRow key={each} icon={KIND_ICONS[each]} title={LINK_KIND_NAMES[each]} meta={factNames(kindFields(templates, each))} metaLine chevron onPress={() => navigation.push('Template', { kind: each })} />
               ))}

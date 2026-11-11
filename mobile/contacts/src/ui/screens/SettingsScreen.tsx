@@ -1,10 +1,11 @@
 /**
- * Contacts' settings: the way to the Administration, the theme, the colours and the ground, the
- * language; then the address book's own: the list's order (Google's « Trier par »), the country of
- * the numbers written without their `+` (« Indicatif par défaut »), the maps app addresses open in
- * (« Ouvrir les adresses dans »), the imports, the export as a
- * `.vcf`, and the bin. What this phone alone keeps; the server's settings are the
- * Administration's.
+ * Contacts' settings, in every app's order: the address book's own first (the list's order, Google's
+ * « Trier par », the country of the numbers written without their `+`, « Indicatif par défaut », the
+ * maps app addresses open in, « Ouvrir les adresses dans », then the birthdays' notices and what keeps
+ * them from ringing on time, only while something does); then « Apparence » (one row opening its own
+ * page: the theme, the paper's grain, the colours and the ground), the language, the imports, the
+ * export as a `.vcf` and the bin, and the way to the Administration last. What this phone alone
+ * keeps; the server's settings are the Administration's.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -24,13 +25,12 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { makerBatterySettings } from '@platform/notifications';
 
 import { AppText, Dialog, Ground, ListRow, PickerField, Segmented, TopBar } from '@shared/ui/components';
-import { ColorsSection, GroundSection, useAppearanceEditors } from '@shared/ui/features/appearance/AppearanceSections';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
-import { useServicesCssHint } from '@shared/ui/features/appearance/ServicesCssSheet';
-import { AdminEntrySection, LanguageSection, ThemeSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
+import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { BirthdayNotices } from '../features/contacts/BirthdayNotices';
@@ -40,7 +40,6 @@ import { later } from '@app/later';
 
 export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
-  const { editColor, editGradient, editors } = useAppearanceEditors();
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const binned = useTrashedContacts().length;
   const count = useLibraryStore(s => s.liveContacts.length);
@@ -48,7 +47,6 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const region = useContactsUiStore(selectRegion);
   const birthdays = useContactsUiStore(selectBirthdays);
   const [pickingRegion, setPickingRegion] = useState(false);
-  useServicesCssHint();
 
   const exportAll = async (): Promise<void> => {
     const state = useLibraryStore.getState();
@@ -63,14 +61,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
-
-        <ThemeSection />
-        <ColorsSection onEdit={editColor} />
-        <GroundSection onEditColor={() => editColor('ground')} onEditGradient={editGradient} />
-
-        <LanguageSection />
-
+        {/* The address book's own first. */}
         <Section title={t('Contacts')} anchor={CONTACTS_SETTINGS_SECTION}>
           <View style={styles.fields}>
             {/* A field as the pickers under it are: its label, its control and its help 6 apart, the words 4 in. */}
@@ -106,6 +97,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         </Section>
         <ReminderHealthSection wanted={birthdays.enabled} makerSettings={makerBatterySettings} />
 
+        <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
+        <LanguageSection />
+
         <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
           <ListRow icon="download" title={t('Importer')} supporting={t('Un fichier exporté de Google Contacts, ou les contacts de ce téléphone')} onPress={() => navigation.navigate('Import')} />
           <ListRow icon="upload" title={t('Exporter')} supporting={count > 0 ? t('{contacts} dans un fichier .vcf', { contacts: plural(count, 'contact') }) : t('Aucun contact à exporter.')} onPress={count > 0 ? () => later(exportAll()) : undefined} />
@@ -116,6 +110,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined}
           />
         </Section>
+
+        {/* What is set once and rarely, last. */}
+        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
         <AppText variant="meta" style={styles.about}>
           {t('{app} · vos contacts, chez vous', { app: APP_NAME })}
@@ -137,10 +134,13 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       />
 
       <RegionSheet visible={pickingRegion} chosen={region} phone={phoneRegion()} onChoose={setRegion} onDismiss={() => setPickingRegion(false)} />
-
-      {editors}
     </View>
   );
+}
+
+/** Réglages' « Apparence » page, from its row or a search. */
+export function AppearanceSettingsScreen({ navigation, route }: ScreenProps<'Appearance'>) {
+  return <AppearanceScreen section={route.params?.section} onBack={() => navigation.goBack()} />;
 }
 
 const makeStyles = (theme: Theme) =>

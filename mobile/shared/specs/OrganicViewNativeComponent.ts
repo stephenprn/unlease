@@ -16,6 +16,11 @@ export interface NativeProps extends ViewProps {
   /** The same pebble given, which it morphs toward while `given` (pressed). */
   pebbleGiven?: ReadonlyArray<CodegenTypes.Float>;
   given?: CodegenTypes.WithDefault<boolean, false>;
+  /**
+   * Frosted, as a field is: it first paints what lies behind it without its grain (the surface it sits
+   * on, or the screen's ground, in step as it scrolls), so its own veil lies on a smooth paper.
+   */
+  frost?: CodegenTypes.WithDefault<boolean, false>;
 }
 
 export default codegenNativeComponent<NativeProps>('OrganicView', { excludedPlatforms: ['iOS'] }) as HostComponent<NativeProps>;

@@ -1,5 +1,5 @@
 import { EMBLEMS, EMBLEM_PATHS, emblemShape, LABEL_TAG_PATH } from '../emblems';
-import { collageEntrances, COLLAGE_STAGGER, SCENES, type CollageScene } from '../collage';
+import { collageEntrances, COLLAGE_STAGGER, CUTOUT_LAY, GHOST_ENTRANCE, SCENES, type CollageScene } from '../collage';
 
 describe('emblems', () => {
   it('has a path for every emblem, and a hole only where the shape is cut through', () => {
@@ -20,5 +20,12 @@ describe('empty states’ collages', () => {
         expect(Math.hypot(entrance.dx, entrance.dy)).toBeLessThanOrEqual(16);
       });
     }
+  });
+
+  it('lays a collection’s ghost as a cut-out: from just beyond its top right corner, upright into its slant', () => {
+    expect(Math.hypot(GHOST_ENTRANCE.dx, GHOST_ENTRANCE.dy)).toBeCloseTo(CUTOUT_LAY.drift);
+    expect(GHOST_ENTRANCE.dx).toBeGreaterThan(0);
+    expect(GHOST_ENTRANCE.dy).toBeLessThan(0);
+    expect(GHOST_ENTRANCE).toMatchObject({ turn: CUTOUT_LAY.turn, scale: CUTOUT_LAY.scale, delay: 0 });
   });
 });

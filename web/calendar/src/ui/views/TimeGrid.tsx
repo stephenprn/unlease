@@ -21,6 +21,7 @@ import { useWeather } from '../../app/hooks/useWeather';
 import { anchorOf, openPeek, openQuick, useCalendarUi } from '../../app/store/calendarUi';
 import { usePrefsStore } from '../../app/store/prefs';
 import { Icon } from '@shared/ui/components/Icon';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { navigate } from '@shared/ui/router';
 import styles from '../calendar.module.css';
 import { paths } from '../routes';
@@ -85,6 +86,8 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
   const weather = useWeather(days, items);
   const quick = useCalendarUi(s => s.quick);
   const scroller = useRef<HTMLDivElement>(null);
+  // The hours fade and blur under the days' heads and the all-day strip as far as they run on.
+  useScrollEdgesOn(scroller, [], { top: true });
   const columns = useRef<(HTMLDivElement | null)[]>([]);
   const dragged = useRef(false);
   const [drag, setDrag] = useState<Drag | null>(null);

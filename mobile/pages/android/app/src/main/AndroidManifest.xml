@@ -48,6 +48,13 @@
         <!-- Opened from the launcher through its entries below (one per palette's icon), never directly:
              every other way in stays here. -->
 
+        <!-- The share sheet: text or a link becomes a new page (src/app/intake.ts). -->
+        <intent-filter android:label="@string/share_page">
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+
         <!-- unlease-pages://page/<id> (APPS.pages.scheme), its home with no path: custom scheme, no host. -->
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
@@ -74,6 +81,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="carnet" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherSarcelle"
@@ -88,6 +96,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="sarcelle" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMyrtille"
@@ -102,6 +111,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="myrtille" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherGlycine"
@@ -116,6 +126,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="glycine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherPivoine"
@@ -130,6 +141,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="pivoine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMimosa"
@@ -144,6 +156,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mimosa" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherArdoise"
@@ -158,6 +171,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="ardoise" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMousse"
@@ -172,8 +186,20 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mousse" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <!-- GENERATED: end of the launcher entries -->
+
+      <!-- Where the launcher's static shortcuts land (res/xml/shortcuts.xml): it hands their link to
+           MainActivity, so Android's clearing of the task a static shortcut opens touches only its own.
+           Never shows. -->
+      <activity
+        android:name="com.stephenprn.unlease.launch.ShortcutActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
 
       <!-- Lets the system camera app write one photo into files/photos; not exported. -->
       <provider

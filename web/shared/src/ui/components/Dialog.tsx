@@ -1,11 +1,11 @@
 /**
  * A dialog's frame, and the confirmation built on it. The frame keeps a dialog's head and its
  * actions in place and scrolls only what lies between them, so the scrollbar never runs past the
- * title or into the actions; a hairline parts each from the body once the body runs under it.
+ * title or into the actions; the body fades and blurs under each once it runs on under it.
  * Confirmation is kept for what cannot be undone (empty the bin, delete for ever); everything
  * undoable is a snackbar instead.
  */
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useId, type FormEvent, type ReactNode } from 'react';
 
 import { t } from '@unlease/core/i18n';
 
@@ -14,6 +14,7 @@ import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { Layer } from './Layer';
 import styles from './layers.module.css';
+import { useScrollEdges } from './scrollEdges';
 
 export interface DialogFrameProps {
   /** The title, set in the head; `titleId` names the dialog. */
@@ -34,53 +35,23 @@ export interface DialogFrameProps {
   readonly page?: boolean;
 }
 
-/** Whether the body scrolls at all, and whether it has left its top: each draws its hairline. */
-function useScrollEdges(): { readonly attach: (node: HTMLDivElement | null) => void; readonly overflow: boolean; readonly scrolled: boolean } {
-  const [node, setNode] = useState<HTMLDivElement | null>(null);
-  const [overflow, setOverflow] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const frame = useRef(0);
-  useEffect(() => {
-    if (!node) return;
-    const measure = (): void => {
-      cancelAnimationFrame(frame.current);
-      frame.current = requestAnimationFrame(() => {
-        setOverflow(node.scrollHeight > node.clientHeight + 1);
-        setScrolled(node.scrollTop > 0);
-      });
-    };
-    measure();
-    node.addEventListener('scroll', measure, { passive: true });
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
-    observer?.observe(node);
-    // What the body holds grows too (a field typed into, a list that arrives).
-    for (const child of node.children) observer?.observe(child);
-    return () => {
-      cancelAnimationFrame(frame.current);
-      node.removeEventListener('scroll', measure);
-      observer?.disconnect();
-    };
-  }, [node]);
-  const attach = useCallback((element: HTMLDivElement | null) => setNode(element), []);
-  return { attach, overflow, scrolled };
-}
-
 export function DialogFrame({ title, titleId, onClose, foot, children, kind = 'form', className, onSubmit, page }: DialogFrameProps) {
   const sheet = useMedia(NARROW);
-  const { attach, overflow, scrolled } = useScrollEdges();
+  // Under its head always; over its foot when it has actions (without, the body ends at the dialog's own edge).
+  const edges = useScrollEdges({ top: true, bottom: !!foot });
   const parts = (
     <>
-      <div className={styles.frameHead} data-edge={scrolled || undefined}>
+      <div className={styles.frameHead}>
         <h2 id={titleId} className={`${styles.frameTitle} t-title`}>
           {title}
         </h2>
         {onClose && (!sheet || page) ? <IconButton icon="close" label={t('Fermer')} onClick={onClose} /> : null}
       </div>
-      <div ref={attach} className={styles.frameBody}>
+      <div ref={edges} className={styles.frameBody} data-scroll-sheet="">
         {children}
       </div>
       {foot ? (
-        <div className={styles.frameFoot} data-edge={overflow || undefined}>
+        <div className={styles.frameFoot}>
           {foot}
         </div>
       ) : null}

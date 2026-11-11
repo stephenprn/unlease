@@ -12,7 +12,7 @@ import { useContactIds, useLabelCounts } from '@app/hooks/useContacts';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { leaveQuick, pointWidget } from '@app/widgets';
 
-import { AppText, Icon, LabelTag, ListRow, Sheet, SheetScrim, SheetScroll } from '@shared/ui/components';
+import { EmptyLine, Icon, LabelTag, ListRow, Sheet, SheetScrim, SheetScroll } from '@shared/ui/components';
 import { duration } from '@shared/ui/theme/motion';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
@@ -69,11 +69,7 @@ export function QuickRoot({ launch }: { launch: QuickLaunch }) {
                 />
               );
             })}
-            {order.length === 0 ? (
-              <AppText variant="meta" style={styles.note}>
-                {t('Un libellé créé dans l’application s’ajoute ici.')}
-              </AppText>
-            ) : null}
+            {order.length === 0 ? <EmptyLine glyph="tag" text={t('Un libellé créé dans l’application s’ajoute ici.')} slot={24} gap={16} style={styles.note} /> : null}
           </SheetScroll>
         </Sheet>
       </View>
@@ -85,6 +81,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   body: { paddingBottom: 12 },
   tag: { width: 24, alignItems: 'center' },
-  // On the rows' text column, where the labels' names come.
-  note: { paddingLeft: 56, paddingRight: 16, paddingVertical: 12 },
+  // Its glyph on the rows' icon column, its words on their text column, where the labels' names come.
+  note: { paddingHorizontal: 16, paddingVertical: 12 },
 });

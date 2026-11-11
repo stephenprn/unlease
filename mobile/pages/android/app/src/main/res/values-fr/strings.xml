@@ -1,0 +1,13 @@
+<resources>
+    <!-- French, for a phone or an app in French (English is values/). -->
+    <string name="app_name">Pages</string>
+
+    <!-- The share sheet's line (AndroidManifest.xml): what is shared becomes a page. -->
+    <string name="share_page">Ajouter à Pages</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_page_short">Page</string>
+    <string name="shortcut_page_long">Nouvelle page</string>
+    <string name="shortcut_search_short">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher dans les pages</string>
+</resources>

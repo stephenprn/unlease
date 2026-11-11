@@ -7,6 +7,7 @@ import { INBOX_ID } from '@unlease/notes/models/entities';
 import { freshLibrary } from '@test/library';
 import { useLibraryStore } from '../../app/store/library';
 import { setServer } from '@shared/app/store/settings';
+import { setReading } from '../../app/store/prefs';
 import { useNotesUiStore } from '../../app/store/notesUi';
 import { handleCaptureRoute } from '../captureRoute';
 import { CaptureDialog } from '../features/capture/CaptureDialog';
@@ -25,6 +26,8 @@ describe('a share arriving at its address', () => {
     await freshLibrary();
     history.replaceState(null, '', '/');
     setServer({ url: 'https://carnet.test', token: 'jeton' });
+    // A server with a Claude key: « Classer » files with Claude.
+    setReading(true);
   });
 
   it('opens the capture dialog on its link and saves nothing until the person files it', async () => {

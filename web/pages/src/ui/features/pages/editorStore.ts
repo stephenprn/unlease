@@ -6,8 +6,11 @@
 import { create } from 'zustand';
 
 import type { BlockTarget } from '@unlease/pages/models/blocks';
+import { togglesAbove } from '@unlease/pages/services/blocks';
 import type { Run } from '@unlease/core/services/richText';
 
+import { useBlocksStore } from '../../../app/store/blocks';
+import { setToggleOpen } from '../../../app/store/pagesUi';
 import { placeCaretAtX, richLengthOf, setSelectionOffsets } from './richDom';
 
 /** What one editable block lets the editor do. */
@@ -181,11 +184,18 @@ export function registerFocuser(id: string, focus: (at: FocusAt) => void): () =>
   };
 }
 
+/** The toggles a block sits in, up to its page, opened so it is drawn (Tab nested it under a closed one, an undo put it back there). */
+export function openTogglesAbove(id: string): void {
+  for (const toggle of togglesAbove(useBlocksStore.getState().blocks, id)) setToggleOpen(toggle, true);
+}
+
 /**
  * Puts the caret in a block once the gesture's changes are drawn: a block just made, or one drawn
  * anew (its kind changed, it moved), takes it as it mounts; one that stays takes it right after.
+ * The toggles it sits in open first, or it would never be drawn to take it.
  */
 export function focusBlock(id: string, at: FocusAt): void {
+  openTogglesAbove(id);
   pending = { id, at };
   clearBlockSelection();
   queueMicrotask(applyPendingFocus);

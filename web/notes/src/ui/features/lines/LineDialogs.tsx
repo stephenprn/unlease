@@ -20,8 +20,8 @@ import { meaningChanged, sortable } from '@unlease/notes/services/sorting';
 import { useLines } from '../../../app/hooks/useLines';
 import { createLine, updateNote } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { useCanRead } from '../../../app/store/prefs';
 import { selectSorting, useNotesUiStore } from '../../../app/store/notesUi';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { Emblem } from '@shared/ui/components/Emblem';
@@ -89,7 +89,8 @@ function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProp
   const [fill, setFill] = useState(true);
   const form = useForm({ title: nameProblem(title, lines) });
   useReportDirty(!isBlank(title) || !isBlank(hint) || color !== opened.color || emblem !== opened.emblem, onDirty);
-  const reading = useCanRead();
+  // Claude's sorting, once the server has said it has a key.
+  const reading = useServerFeature('claude');
   const inboxLinks = useLibraryStore(s => (s.linksByNote[INBOX_ID] ?? []).filter(id => s.links[id] && sortable(s.links[id]!)).length);
   const sorting = useNotesUiStore(selectSorting);
   const offerFill = reading && inboxLinks > 0 && !sorting;

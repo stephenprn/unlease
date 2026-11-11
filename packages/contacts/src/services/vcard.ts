@@ -6,6 +6,7 @@
  */
 import { CONTACT_LIMITS, type Contact, type ContactLabel } from '../models/contacts';
 import { readBirthday, writeBirthday } from './birthdays';
+import { splitName } from './names';
 import type { ImportedAddress, ImportedContact, ImportedEntry, ImportedPhoto } from './importing';
 
 interface Property {
@@ -267,11 +268,7 @@ function readCard(lines: readonly string[]): ImportedContact | null {
         break;
     }
   }
-  if (!firstName && !lastName && formatted && formatted !== company) {
-    const words = formatted.split(/\s+/);
-    firstName = words.length > 1 ? words.slice(0, -1).join(' ') : formatted;
-    lastName = words.length > 1 ? words[words.length - 1]! : '';
-  }
+  if (!firstName && !lastName && formatted && formatted !== company) ({ firstName, lastName } = splitName(formatted));
   const contact: ImportedContact = { firstName, lastName, company, jobTitle, note, birthday, favorite, photo, phones, emails, addresses, labels: categories };
   return firstName || lastName || company || phones.length > 0 || emails.length > 0 ? contact : null;
 }

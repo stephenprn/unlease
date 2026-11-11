@@ -26,7 +26,7 @@ import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
 import { AnimatedOrganic, AppText, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
-import { decelerate, duration, listPressDelay, standard } from '@shared/ui/theme/motion';
+import { accelerate, decelerate, duration, listPressDelay, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -38,7 +38,7 @@ import { peopleNames } from '@unlease/notes/services/noteMentions';
 
 /** Picked: the ring is laid on and the tick pebble is pinned over the corner; let go, both lift off. */
 const RING_IN = FadeIn.duration(duration.short).easing(standard);
-const RING_OUT = FadeOut.duration(100);
+const RING_OUT = FadeOut.duration(duration.short).easing(accelerate);
 const TICK_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.5 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.medium);
 
 export interface NoteCardProps {

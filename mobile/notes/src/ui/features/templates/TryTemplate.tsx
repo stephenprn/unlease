@@ -3,7 +3,7 @@
  * (saved or not) and shows what it would put in each, writing nothing (`tryFields`). The page is one
  * of the links the template reads, the newest first (picked in a sheet of link rows), or an address
  * typed or pasted. Every field tried is listed in the facts' well, « — » where the page said nothing,
- * then how long it took and what it cost. Without Claude it says so and offers nothing; offline the
+ * then how long it took and what it cost. It shows once the server said Claude has a key; offline the
  * button waits.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,7 +16,7 @@ import type { LinkItem } from '@unlease/notes/models/entities';
 import type { TemplateField } from '@unlease/notes/models/templates';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { namedFields, tryFields } from '@app/templates';
-import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { selectSyncPhase, useSyncStore } from '@shared/app/store/syncStore';
 import { readClipboard } from '@shared/platform/clipboard';
 
@@ -120,65 +120,58 @@ export function useTemplateTry(fields: readonly TemplateField[], links: readonly
 export function TrySection({ state, fields }: { state: TemplateTry; fields: readonly TemplateField[] }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const reading = useSettingsStore(selectCanRead);
+  const claude = useServerFeature('claude');
   const offline = useSyncStore(selectSyncPhase) === 'offline';
   const { phase } = state;
   const nothing = namedFields(fields).length === 0;
   const picked = state.links.find(link => link.id === state.chosen);
+  if (!claude) return null;
 
   return (
     <Section title={t('Aperçu sur un lien')}>
       <View style={styles.section}>
-        {!reading ? (
+        <AppText variant="meta">
+          {t('Voyez ce que Claude relèverait, sans rien enregistrer.')}
+        </AppText>
+        {state.links.length > 0 ? (
+          <PickerField label={t('Lien')} value={picked ? linkRowText(picked).title : t('Une autre adresse')} icon={picked ? KIND_ICONS[picked.kind] : 'link'} onPress={() => state.setPicking(true)} />
+        ) : null}
+        {state.chosen === ADDRESS ? (
+          <TextField
+            label={t('Adresse')}
+            kind="url"
+            value={state.address}
+            onChangeText={state.setAddress}
+            placeholder="https://…"
+            error={state.problem}
+            returnKeyType="done"
+            onSubmitEditing={() => {
+              if (!nothing && !offline && phase.kind !== 'trying') state.run();
+            }}
+          />
+        ) : null}
+        <View style={styles.actions}>
+          <Button kind="tonal" icon="sparkle" label={t('Essayer')} busy={phase.kind === 'trying'} disabled={nothing || offline} onPress={state.run} />
+        </View>
+        {offline ? (
           <AppText variant="meta">
-            {t('Claude n’est pas configuré : l’essai n’est pas possible.')}
+            {t('Hors ligne.')}
           </AppText>
-        ) : (
-          <>
-            <AppText variant="meta">
-              {t('Voyez ce que Claude relèverait, sans rien enregistrer.')}
-            </AppText>
-            {state.links.length > 0 ? (
-              <PickerField label={t('Lien')} value={picked ? linkRowText(picked).title : t('Une autre adresse')} icon={picked ? KIND_ICONS[picked.kind] : 'link'} onPress={() => state.setPicking(true)} />
-            ) : null}
-            {state.chosen === ADDRESS ? (
-              <TextField
-                label={t('Adresse')}
-                kind="url"
-                value={state.address}
-                onChangeText={state.setAddress}
-                placeholder="https://…"
-                error={state.problem}
-                returnKeyType="done"
-                onSubmitEditing={() => {
-                  if (!nothing && !offline && phase.kind !== 'trying') state.run();
-                }}
-              />
-            ) : null}
-            <View style={styles.actions}>
-              <Button kind="tonal" icon="sparkle" label={t('Essayer')} busy={phase.kind === 'trying'} disabled={nothing || offline} onPress={state.run} />
+        ) : phase.kind === 'trying' ? (
+          <AppText variant="meta" accessibilityLiveRegion="polite">
+            {t('Claude lit la page…')}
+          </AppText>
+        ) : phase.kind === 'failed' ? (
+          <View style={styles.problem} accessibilityLiveRegion="polite">
+            <View style={styles.problemGlyph}>
+              <Icon name="error" size={16} color={theme.color.danger} />
             </View>
-            {offline ? (
-              <AppText variant="meta">
-                {t('Hors ligne.')}
-              </AppText>
-            ) : phase.kind === 'trying' ? (
-              <AppText variant="meta" accessibilityLiveRegion="polite">
-                {t('Claude lit la page…')}
-              </AppText>
-            ) : phase.kind === 'failed' ? (
-              <View style={styles.problem} accessibilityLiveRegion="polite">
-                <View style={styles.problemGlyph}>
-                  <Icon name="error" size={16} color={theme.color.danger} />
-                </View>
-                <AppText variant="meta" color={theme.color.danger} style={styles.fill}>
-                  {phase.message}
-                </AppText>
-              </View>
-            ) : null}
-            {phase.kind === 'done' ? <TriedFacts phase={phase} /> : null}
-          </>
-        )}
+            <AppText variant="meta" color={theme.color.danger} style={styles.fill}>
+              {phase.message}
+            </AppText>
+          </View>
+        ) : null}
+        {phase.kind === 'done' ? <TriedFacts phase={phase} /> : null}
       </View>
     </Section>
   );

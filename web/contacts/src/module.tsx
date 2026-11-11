@@ -7,10 +7,11 @@ import { t, tx } from '@unlease/core/i18n';
 import { isLive } from '@unlease/contacts/models/contacts';
 import { CONTACTS_SETTINGS_PLACES } from '@unlease/contacts/services/settingsPlaces';
 
-import { emptyContactsBin } from './app/store/actions';
+import { binnedContacts, emptyContactsBin, trashContacts } from './app/store/actions';
 import { clearSelection, setImportFile, useContactsUi } from './app/store/contactsUi';
 import { useContactsStore } from './app/store/library';
-import type { AppModule, SpotLabel } from '@shared/modules';
+import { showUndo } from '@shared/app/store/ui';
+import type { AppModule, ShortcutGroup, SpotLabel } from '@shared/modules';
 import { navigate } from '@shared/ui/router';
 import { contactsData } from './data';
 import { contactsBackTo, ContactsBottomBar, ContactsHeaderActions, ContactsNav, ContactsNavFoot, contactsOpened, contactsPathOf, ContactsScreen, contactsStillThere, useContactsTitle } from './ui/ContactsShell';
@@ -39,6 +40,17 @@ function spotLabels(): readonly SpotLabel[] {
   labelsCache = { state, labels };
   return labels;
 }
+
+/** Its keys in the shortcuts dialog beyond its commands' (C): a pick's. */
+const CONTACTS_SHORTCUTS: readonly ShortcutGroup[] = [
+  {
+    title: tx('Contacts sélectionnés'),
+    rows: [
+      [['#'], tx('Supprimer')],
+      [[tx('Maj'), tx('clic')], tx('Sélectionner jusqu’à ce contact')],
+    ],
+  },
+];
 
 export const contactsModule: AppModule = {
   id: 'contacts',
@@ -72,12 +84,24 @@ export const contactsModule: AppModule = {
     { title: tx('Anniversaires'), icon: 'cake', run: () => navigate(paths.birthdays) },
   ],
   spotCreates: [{ type: 'contact', title: typed => t('Créer le contact « {name} »', { name: typed }), icon: 'personPlus', run: typed => openNewContact(typed) }],
-  // Escape ends a pick before the search.
-  onKey: event => {
-    if (event.key !== 'Escape' || useContactsUi.getState().selection.size === 0) return false;
+  // Escape ends a pick before the search; # sends what is picked to the bin, as the selection bar's « Supprimer » (in the bin, deleting for good asks first: its bar).
+  onKey: (event, route) => {
+    const picked = useContactsUi.getState().selection;
+    if (picked.size === 0) return false;
+    if (event.key === 'Escape') {
+      clearSelection();
+      return true;
+    }
+    if (event.key !== '#' || route.name === 'contactsTrash') return false;
+    const contacts = useContactsStore.getState().contacts;
+    const ids = [...picked].filter(id => contacts[id] && isLive(contacts[id]));
+    if (ids.length === 0) return false;
+    const undo = trashContacts(ids);
     clearSelection();
+    showUndo(ids.length > 1 ? t('Contacts placés dans la corbeille') : t('Contact placé dans la corbeille'), undo);
     return true;
   },
+  shortcuts: CONTACTS_SHORTCUTS,
   // A vCard or a CSV dropped anywhere: the import page reads it.
   onDropFiles: files => {
     const file = files.find(each => /\.(vcf|vcard|csv)$/i.test(each.name) || /vcard|csv/i.test(each.type));
@@ -86,9 +110,9 @@ export const contactsModule: AppModule = {
     navigate(paths.import);
     return true;
   },
-  shortcuts: [{ keys: 'C', label: tx('Créer un contact') }],
 
   settingsSections: CONTACTS_SETTINGS,
   emptyBin: () => emptyContactsBin(),
+  binCount: () => binnedContacts().length,
   settingsPlaces: CONTACTS_SETTINGS_PLACES,
 };

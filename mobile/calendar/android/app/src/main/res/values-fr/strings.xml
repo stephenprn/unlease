@@ -1,5 +1,8 @@
 <resources>
     <string name="import_calendar">Importer dans Agenda</string>
+    <string name="add_event">Ajouter à l’agenda</string>
+    <string name="create_event">Créer un événement</string>
+    <string name="tile_new_event">Nouvel événement</string>
 
     <string name="widget_schedule_label">Planning</string>
     <string name="widget_schedule_description">Vos deux prochaines semaines, jour par jour.</string>
@@ -35,4 +38,14 @@
     <string name="widget_preview_date">jeu. 24 déc. · 9:00</string>
     <string name="widget_preview_today">Lundi 9 novembre</string>
     <string name="widget_preview_day">lun. 9 nov.</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_event_short">Événement</string>
+    <string name="shortcut_event_long">Nouvel événement</string>
+    <string name="shortcut_quick_short">Ajout rapide</string>
+    <string name="shortcut_quick_long">Ajouter en quelques mots</string>
+    <string name="shortcut_today_short">Aujourd’hui</string>
+    <string name="shortcut_today_long">Aujourd’hui</string>
+    <string name="shortcut_search_short">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher un événement</string>
 </resources>

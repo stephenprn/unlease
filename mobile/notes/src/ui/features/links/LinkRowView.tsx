@@ -4,7 +4,10 @@
  * that moved says by how much beside it (a drop in the ok ink, a rise in the second); the owner's
  * note, quoted, takes the facts' line, so a list shows which links carry one.
  * The row keeps its height when the reading lands, so nothing jumps under a finger.
- * Slid sideways it is stamped (or put back to do); pressed, it opens the link's page.
+ * Slid sideways it is stamped (or put back to do), as a contact's row calls: past its threshold it
+ * clicks and turns full strength, and only let go there does it act (a throw short of it springs
+ * back); under Reduce Motion the row stays put and what the slide would uncover fades in over it.
+ * Pressed, it opens the link's page.
  *
  * The row as drawn, handed its link and what stamping and reading again write: Carnet's `LinkRow`
  * connects it to its library, and Pages (which shows collections in its pages) to its own. A leaf:
@@ -13,7 +16,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Linking, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Extrapolation, FadeOut, Keyframe, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Extrapolation, FadeOut, Keyframe, interpolate, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { t, tc } from '@unlease/core/i18n';
 import { formatDay } from '@unlease/core/services/format';
@@ -23,11 +26,12 @@ import { peopleNames } from '@unlease/notes/services/noteMentions';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import type { LinkItem } from '@unlease/notes/models/entities';
 import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { showSnack } from '@shared/app/store/uiStore';
 import { haptic } from '@shared/platform/haptics';
 
 import { AnimatedOrganic, AppText, Grain, Icon, IconButton, Organic, Stamp, Tappable, stampWord } from '../../components';
-import { decelerate, duration, listPressDelay, spatial, standard } from '@shared/ui/theme/motion';
+import { decelerate, duration, listPressDelay, spatial, standard, SWIPE_SHARE } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { KIND_ICONS } from './kindIcon';
@@ -35,10 +39,8 @@ import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 
 export const LINK_IMAGE = { width: 76, height: 95 } as const;
 
-/** Past this share of the screen, or thrown, the slide stamps; beyond it the row follows the hand at a third of its speed. */
-const THRESHOLD = 0.28;
+/** Past the swipe's share of the screen (`SWIPE_SHARE`) the slide stamps once let go; beyond it the row follows the hand at a third of its speed. */
 const RESIST = 0.35;
-const FLING = 1200;
 /** « Réessayer » sits on an 18 high line: 48 under a finger. */
 const RETRY_SLOP = { top: 15, bottom: 15, left: 4, right: 8 } as const;
 
@@ -65,13 +67,16 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { width: screen } = useWindowDimensions();
+  const reduced = useReducedMotion();
   // The row and what its slide uncovers share one outline for life; its picture's frame has its own.
   const outline = 'row';
   const reading = useSettingsStore(selectCanRead);
+  // « Réessayer », « Lire la page »: once the server said Claude has a key.
+  const claude = useServerFeature('claude');
   const source = useBlobSource(link?.imageIds[0]);
   const done = !!link?.done;
   const pending = !!link && link.status === 'pending' && reading;
-  const threshold = screen * THRESHOLD;
+  const threshold = screen * SWIPE_SHARE;
 
   const x = useSharedValue(0);
   const over = useSharedValue(false);
@@ -108,40 +113,43 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
         .failOffsetY([-12, 12])
         .onStart(() => {
           runOnJS(setHeld)(done);
-          runOnJS(setLifted)(true);
+          if (!reduced) runOnJS(setLifted)(true);
         })
         .onUpdate(event => {
           const reach = Math.abs(event.translationX);
           x.value = Math.sign(event.translationX) * (reach <= threshold ? reach : threshold + (reach - threshold) * RESIST);
           if (reach > threshold !== over.value) {
             over.value = reach > threshold;
-            armed.value = withTiming(over.value ? 1 : 0, { duration: duration.short, easing: standard });
+            armed.value = reduced ? (over.value ? 1 : 0) : withTiming(over.value ? 1 : 0, { duration: duration.short, easing: standard });
             runOnJS(setPast)(over.value);
             runOnJS(haptic)(over.value ? 'threshold' : 'release');
           }
         })
         .onEnd(event => {
-          const reach = Math.abs(event.translationX);
-          const thrown = Math.abs(event.velocityX) > FLING && Math.sign(event.velocityX) === Math.sign(event.translationX) && reach > threshold * 0.4;
-          if (reach > threshold || thrown) runOnJS(toggle)();
+          // Only let go past the threshold: a throw short of it stamps nothing.
+          const past = over.value;
+          if (past) runOnJS(toggle)();
           over.value = false;
-          armed.value = withTiming(0, { duration: duration.short, easing: standard });
+          armed.value = reduced ? 0 : withTiming(0, { duration: duration.short, easing: standard });
           runOnJS(setPast)(false);
-          // The row goes back to its place with the hand's speed, whatever was decided.
-          x.value = withSpring(0, { ...spatial, velocity: event.velocityX * (reach > threshold ? RESIST : 1) }, finished => {
+          // The row goes back to its place with the hand's speed, whatever was decided; under Reduce Motion what showed over it fades.
+          const back = (finished?: boolean) => {
+            'worklet';
             if (finished) {
               runOnJS(setLifted)(false);
               runOnJS(setHeld)(null);
             }
-          });
+          };
+          x.value = reduced ? withTiming(0, { duration: duration.short, easing: standard }, back) : withSpring(0, { ...spatial, velocity: event.velocityX * (past ? RESIST : 1) }, back);
         }),
-    [pending, done, threshold, toggle, x, over, armed],
+    [pending, done, reduced, threshold, toggle, x, over, armed],
   );
 
-  const strip = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const hole = useAnimatedStyle(() => ({ opacity: interpolate(Math.abs(x.value), [0, 12], [0, 1], Extrapolation.CLAMP) }));
-  const start = useAnimatedStyle(() => ({ opacity: x.value > 0 ? 0.55 + 0.45 * armed.value : 0, transform: [{ scale: 0.88 + 0.12 * armed.value }] }));
-  const end = useAnimatedStyle(() => ({ opacity: x.value < 0 ? 0.55 + 0.45 * armed.value : 0, transform: [{ scale: 0.88 + 0.12 * armed.value }] }));
+  const strip = useAnimatedStyle(() => ({ transform: [{ translateX: reduced ? 0 : x.value }] }));
+  // Uncovered, it shows at once; laid over the row (Reduce Motion), it fades in as the hand nears the threshold.
+  const hole = useAnimatedStyle(() => ({ opacity: interpolate(Math.abs(x.value), [0, reduced ? threshold : 12], [0, 1], Extrapolation.CLAMP) }));
+  const start = useAnimatedStyle(() => ({ opacity: x.value > 0 ? 0.55 + 0.45 * armed.value : 0, transform: [{ scale: reduced ? 1 : 0.88 + 0.12 * armed.value }] }));
+  const end = useAnimatedStyle(() => ({ opacity: x.value < 0 ? 0.55 + 0.45 * armed.value : 0, transform: [{ scale: reduced ? 1 : 0.88 + 0.12 * armed.value }] }));
   const frame = useAnimatedStyle(() => ({ opacity: fade.value }));
 
   if (!link) return null;
@@ -172,22 +180,26 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
   const holeInk = undoing ? theme.color.ink : theme.color.onActionContainer;
   const glyph = undoing ? 'undo' : 'stamp';
 
+  const uncovered = (
+    <AnimatedOrganic pointerEvents="none" outline={outline} style={[StyleSheet.absoluteFill, styles.hole, undoing ? styles.holeUndo : styles.holeStamp, hole]}>
+      <Animated.View style={[styles.holeStart, start]}>
+        <Icon name={glyph} size={24} color={holeInk} solid={past && undoing} />
+        <AppText variant="label" color={holeInk}>
+          {verb}
+        </AppText>
+      </Animated.View>
+      <Animated.View style={[styles.holeEnd, end]}>
+        <AppText variant="label" color={holeInk}>
+          {verb}
+        </AppText>
+        <Icon name={glyph} size={24} color={holeInk} solid={past && undoing} />
+      </Animated.View>
+    </AnimatedOrganic>
+  );
+
   return (
     <View style={styles.slot}>
-      <AnimatedOrganic pointerEvents="none" outline={outline} style={[StyleSheet.absoluteFill, styles.hole, undoing ? styles.holeUndo : styles.holeStamp, hole]}>
-        <Animated.View style={[styles.holeStart, start]}>
-          <Icon name={glyph} size={24} color={holeInk} solid={past && undoing} />
-          <AppText variant="label" color={holeInk}>
-            {verb}
-          </AppText>
-        </Animated.View>
-        <Animated.View style={[styles.holeEnd, end]}>
-          <AppText variant="label" color={holeInk}>
-            {verb}
-          </AppText>
-          <Icon name={glyph} size={24} color={holeInk} solid={past && undoing} />
-        </Animated.View>
-      </AnimatedOrganic>
+      {reduced ? null : uncovered}
       <GestureDetector gesture={pan}>
         <Animated.View style={strip}>
           {lifted ? (
@@ -257,7 +269,7 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
                   <AppText variant="meta" numberOfLines={1} style={styles.shrink}>
                     {link.error ? t(link.error) : t('Lecture impossible')}
                   </AppText>
-                  {reading ? (
+                  {claude ? (
                     <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Relire la page')} hitSlop={RETRY_SLOP} style={styles.retry}>
                       <AppText variant="metaStrong" color={theme.color.link}>
                         {t('Réessayer')}
@@ -265,7 +277,7 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
                     </Tappable>
                   ) : null}
                 </View>
-              ) : unread && reading ? (
+              ) : unread && claude ? (
                 // Kept without being read, while the server can read it: one tap reads it (the web's).
                 <View style={styles.failed}>
                   <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Lire {title}', { title: text.title })} hitSlop={RETRY_SLOP} style={[styles.retry, styles.retryAlone]}>
@@ -290,6 +302,7 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
           </Tappable>
         </Animated.View>
       </GestureDetector>
+      {reduced ? uncovered : null}
     </View>
   );
 }

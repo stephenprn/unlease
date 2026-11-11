@@ -16,6 +16,7 @@ import { markupToPlain } from '@unlease/core/services/richText';
 import { mentionLabel } from '../../../app/hooks/usePages';
 import { useBlocksStore } from '../../../app/store/blocks';
 import { browserPath, isPlainClick } from '@shared/ui/router';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { paths } from '../../routes';
 import { editorRoot, selectBlocks } from './editorStore';
 import styles from './inline.module.css';
@@ -34,7 +35,7 @@ export function TocBlock({ block }: { block: Block }) {
   const key = useBlocksStore(s => JSON.stringify(pageHeadings(s.blocks, s.blocksByParent, page).map(entry => [entry.id, entry.depth, markupToPlain(entry.text, mentionLabel, dateWords)])));
   const entries = useMemo(() => (JSON.parse(key) as [string, number, string][]).map<Entry>(([id, depth, words]) => ({ id, depth, words })), [key]);
 
-  if (entries.length === 0) return <p className={`${styles.tocEmpty} t-meta`}>{t('Ajoutez des titres à la page : ils apparaîtront ici.')}</p>;
+  if (entries.length === 0) return <EmptyLine glyph="contents" className={styles.tocEmpty} text={t('Ajoutez des titres à la page : ils apparaîtront ici.')} />;
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     const links = [...event.currentTarget.querySelectorAll<HTMLElement>('[data-toc-entry]')];

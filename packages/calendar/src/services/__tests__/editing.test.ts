@@ -1,7 +1,7 @@
 import { setLocale } from '@unlease/core/i18n';
 import type { SyncRecord } from '@unlease/core/sync/record';
 import { readQuickAdd } from '../quickAdd';
-import { createEvent, deleteOccurrence, saveOccurrence, blankDraft, draftOf, handedDescription, handedUrl, type EventChange } from '../editing';
+import { createEvent, deleteOccurrence, saveOccurrence, blankDraft, draftOf, handedDescription, handedRule, handedUrl, type EventChange } from '../editing';
 import { occurrencesIn } from '../occurrences';
 import { layoutDay } from '../layout';
 import { eventFromRecord } from '../../sync/entities';
@@ -121,5 +121,11 @@ describe('a new event from its address', () => {
     expect(handedUrl('https://example.org/soiree?utm_source=x')).toBe('https://example.org/soiree');
     expect(handedUrl('example.org/soiree')).toBe('https://example.org/soiree');
     for (const url of ['javascript:alert(1)', 'intent://x#Intent;end', 'carnet://note/1', 'tel:+33612345678', '', null]) expect(handedUrl(url)).toBe('');
+  });
+
+  it('keeps a repeat it reads, written as the form writes it', () => {
+    expect(handedRule('RRULE:freq=weekly;byday=MO,WE;interval=2')).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE');
+    expect(handedRule('FREQ=MONTHLY;COUNT=3')).toBe('FREQ=MONTHLY;COUNT=3');
+    for (const rule of ['FREQ=SECONDLY', 'BYDAY=MO', 'nonsense', '', null, undefined]) expect(handedRule(rule)).toBe('');
   });
 });

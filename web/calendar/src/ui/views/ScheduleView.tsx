@@ -1,34 +1,47 @@
 /**
  * The planning, Google's « Planning »: the days ahead that hold something, each with its events in
- * order (their hours, their colour, their title and place), « Afficher plus » going further.
+ * order (their hours, their colour, their title and place), « Afficher plus » going further while
+ * something lies further; nothing on these days, the view's empty state, centred, alone.
  */
 import { useMemo, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { shortMonth, shortWeekday, timeRange } from '@unlease/calendar/services/eventText';
 import { onDay, type Occurrence } from '@unlease/calendar/services/occurrences';
-import { addDays, partsOf, weekdayOf } from '@unlease/calendar/services/time';
+import { addDays, daysBetween, partsOf, weekdayOf } from '@unlease/calendar/services/time';
 
 import { useColorOf, useItems } from '../../app/hooks/useItems';
 import { anchorOf, openPeek } from '../../app/store/calendarUi';
 import { usePrefsStore } from '../../app/store/prefs';
 import { Button } from '@shared/ui/components/Button';
 import { EmptyState } from '@shared/ui/components/EmptyState';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import styles from '../calendar.module.css';
 
 /** Days a page of the planning reaches; « Afficher plus » adds as many. */
 const SPAN = 30;
 
+/** How far past the days shown « Afficher plus » looks for something: a year, as the year's view reads. */
+const LOOK_AHEAD = 365;
+
 export function ScheduleView({ day, today }: { day: string; today: string }) {
   const [span, setSpan] = useState(SPAN);
-  const items = useItems(day, addDays(day, span));
-  return <ScheduleList from={day} days={span} items={items} today={today} onMore={() => setSpan(span + SPAN)} />;
+  const end = addDays(day, span);
+  const items = useItems(day, end);
+  // The first day past those shown that holds something, looked for only under a list (never under
+  // the empty state); none within the year, nothing more to show.
+  const later = useItems(end, items.length > 0 ? addDays(end, LOOK_AHEAD) : end);
+  const next = useMemo(() => (later.length > 0 ? later.reduce((first, item) => (item.firstDay < first ? item.firstDay : first), later[0]!.firstDay) : null), [later]);
+  // « Afficher plus » reaches that day and a page after it, so what it shows is never only empty days.
+  const more = next ? () => setSpan(Math.max(span, daysBetween(day, next)) + SPAN) : undefined;
+  return <ScheduleList from={day} days={span} items={items} today={today} onMore={more} />;
 }
 
 /** Days and their events, in order; also the search's results. */
 export function ScheduleList({ from, days, items, today, onMore }: { from: string; days: number; items: readonly Occurrence[]; today: string; onMore?: () => void }) {
   const twelveHours = usePrefsStore(s => s.twelveHours);
   const colorOf = useColorOf();
+  const scheduleEdges = useScrollEdges({ top: true });
   const groups = useMemo(() => {
     const out: { day: string; items: Occurrence[] }[] = [];
     for (let index = 0; index < days; index += 1) {
@@ -40,8 +53,13 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
   }, [from, days, items]);
   return (
     <div className={`${styles.frame} paper`} data-outline="panel">
-      <div className={styles.schedule}>
-        {groups.length === 0 ? <EmptyState scene="reminders" title={t('Rien de prévu')} text={t('Aucun événement sur ces jours. Un clic sur « Créer » en ajoute un.')} /> : null}
+      <div ref={scheduleEdges} className={styles.schedule}>
+        {groups.length === 0 ? (
+          // The view's empty place, centred in it as « Aujourd'hui »'s is.
+          <div className={styles.scheduleEmpty}>
+            <EmptyState scene="reminders" title={t('Rien de prévu')} text={t('Aucun événement sur ces jours. Un clic sur « Créer » en ajoute un.')} />
+          </div>
+        ) : null}
         {groups.map(group => (
           <section key={group.day} className={styles.scheduleDay} aria-label={group.day}>
             <div className={styles.scheduleDate} data-today={group.day === today || undefined}>
@@ -64,7 +82,7 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
             </ul>
           </section>
         ))}
-        {onMore ? (
+        {onMore && groups.length > 0 ? (
           <div className={styles.moreLater}>
             <Button kind="text" icon="arrowDown" onClick={onMore}>
               {t('Afficher plus')}

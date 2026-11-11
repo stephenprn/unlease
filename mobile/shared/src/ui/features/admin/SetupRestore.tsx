@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { t } from '@unlease/core/i18n';
 import { formatMoment, restoreSummary, type StatusLine, thawingLine, snapshotMeta } from '@unlease/core/services/admin';
@@ -15,7 +16,7 @@ import type { ServerConfig } from '@shared/app/store/settingsStore';
 import { restoreFile, restoreSnapshot } from '@shared/app/sync/transport';
 import { pickBackupArchive, removePath } from '@shared/platform/media';
 
-import { Button, Icon, ListRow } from '../../components';
+import { Button, Icon, ListRow, settleIn } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Section } from '../settings/Section';
 import { StatusRow } from './StatusRow';
@@ -105,7 +106,13 @@ export function SetupRestore({ server, admin, backups, now, onSetBackup }: { ser
           <Section title={t('Sauvegardes sur S3')}>
             {s3Line ? (
               <>
-                <StatusRow line={s3Line} />
+                {s3Line.title === SETUP_RESTORE_WORDS.none ? (
+                  <Animated.View entering={settleIn}>
+                    <StatusRow line={s3Line} />
+                  </Animated.View>
+                ) : (
+                  <StatusRow line={s3Line} />
+                )}
                 {!backup?.configured ? (
                   <View style={styles.addS3}>
                     <Button kind="tonal" label={SETUP_RESTORE_WORDS.addStorage} icon="server" onPress={onSetBackup} />

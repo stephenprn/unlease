@@ -7,7 +7,7 @@
  * that needs a server says so until one is connected.
  */
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, StyleSheet, View } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 
 import { t } from '@unlease/core/i18n';
@@ -25,7 +25,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { requestDownload, restoreFile, restoreSnapshot } from '@shared/app/sync/transport';
 import { removePath } from '@shared/platform/media';
 
-import { AppText, Dialog, Ground, Icon, ListRow, Organic, Sheet, Tappable, TopBar } from '../components';
+import { AppText, Dialog, EdgeScrollView, Ground, Icon, ListRow, Organic, PanelTappable, Sheet, TopBar } from '../components';
 import { APPS_INFO, AppsSection } from '../features/admin/AppsSection';
 import { BACKUP_INFO, BackupSection } from '../features/admin/BackupSection';
 import { ClaudeSection, type ClaudeExtra } from '../features/admin/ClaudeSection';
@@ -186,7 +186,8 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
             ? t('Le serveur ne répond pas pour l’instant.')
             : t('Lecture des réglages du serveur…');
     return (
-      <Tappable key={each.id} onPress={() => onOpen(each.id)} accessibilityRole="button" accessibilityLabel={each.title} accessibilityValue={{ text: state }} style={styles.row}>
+      // Its sheet tells its first and last rows where they lie: their press follows its corners.
+      <PanelTappable key={each.id} onPress={() => onOpen(each.id)} accessibilityRole="button" accessibilityLabel={each.title} accessibilityValue={{ text: state }} style={styles.row}>
         <Organic style={styles.glyph}>
           <Icon name={each.icon} size={22} color={theme.color.ink} />
         </Organic>
@@ -200,7 +201,7 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
           </View>
         </View>
         <Icon name="chevronRight" size={20} color={theme.color.inkMuted} />
-      </Tappable>
+      </PanelTappable>
     );
   };
 
@@ -228,7 +229,7 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
       <TopBar title={place ? place.title : t('Administration')} onBack={onBack} />
       {/* The app is edge to edge: without this the lower fields (Seafile, Seerr) stay under the keyboard. */}
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {place ? (
           <>
             {place.info ? (
@@ -248,7 +249,7 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
             {own.length > 0 ? <Section title={APPS[app].name}>{own.map(row)}</Section> : null}
           </>
         )}
-      </ScrollView>
+      </EdgeScrollView>
       </KeyboardAvoidingView>
 
       <Sheet visible={snapshotOpen} onDismiss={() => setSnapshotOpen(false)} title={snapshot ? t('Sauvegarde du {moment}', { moment: formatMoment(snapshot.at, now) }) : undefined}>

@@ -24,6 +24,7 @@ import { addLinks } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
 import { useCanRead } from '../../../app/store/prefs';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { showError, showSnack } from '@shared/app/store/ui';
 import {
   closeCapture,
@@ -61,19 +62,22 @@ const URL_INPUT = fieldInput('url').web;
 function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: string; initialTitle: string; onClose: () => void; onDirty: (dirty: boolean) => void }) {
   const lines = useLines();
   const titleId = useId();
+  // Whether the link will be read (unknown counts as yes: the server decides)…
   const reading = useCanRead();
+  // …and whether Claude may file it (« Automatique »), once the server has said it has a key.
+  const claude = useServerFeature('claude');
   const server = useSettingsStore(selectServer);
   const [text, setText] = useState(initial);
-  const [target, setTarget] = useState<string>(() => (reading ? AUTO : INBOX_ID));
+  const [target, setTarget] = useState<string>(() => (claude ? AUTO : INBOX_ID));
   const tabs = useRef<HTMLDivElement>(null);
   const urls = extractUrls(text);
   // A share (or a paste) offering more links than one share takes: the first ones, and the dialog says so.
   const { urls: kept, more } = capSharedUrls(urls);
   const removed = [...new Set(kept.flatMap(url => cleanUrl(url).removed))];
-  // Reading on: "Non classé" is what Automatique falls back to, so it is not offered. Off: it is the default, so it leads.
+  // Claude on: "Non classé" is what Automatique falls back to, so it is not offered. Off: it is the default, so it leads.
   const others = lines.filter(line => line.id !== INBOX_ID);
-  const targets = reading ? others : [...lines.filter(line => line.id === INBOX_ID), ...others];
-  const choices = [...(reading ? [AUTO] : []), ...targets.map(line => line.id)];
+  const targets = claude ? others : [...lines.filter(line => line.id === INBOX_ID), ...others];
+  const choices = [...(claude ? [AUTO] : []), ...targets.map(line => line.id)];
   // A choice can vanish while the dialog is open (reading turned off, a collection deleted).
   const chosen = choices.includes(target) ? target : choices[0]!;
   const form = useForm({ link: !isBlank(text) && urls.length === 0 ? t('Aucun lien ici : collez une adresse, comme https://example.org/page.') : null });
@@ -138,7 +142,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
             </Button>
           ) : null}
           <Button type="submit" icon="check" disabled={isBlank(text)}>
-            {reading ? t('Classer') : t('Ajouter')}
+            {claude ? t('Classer') : t('Ajouter')}
           </Button>
         </>
       }
@@ -185,7 +189,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
           {t('Collection')}
         </p>
         <div ref={tabs} className={styles.targets} role="radiogroup" aria-labelledby={`${titleId}-collection`} onKeyDown={onTabsKey}>
-          {reading ? (
+          {claude ? (
             <button
               type="button"
               role="radio"

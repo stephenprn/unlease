@@ -18,7 +18,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, EmptyLine, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -93,7 +93,7 @@ function CouponsBody({ id }: { id: string }) {
     <>
     <SheetScroll contentContainerStyle={styles.body}>
       {coupons.length === 0 ? (
-        <AppText variant="body">{t('Aucun code en cours trouvé pour {shop}.', { shop })}</AppText>
+        <EmptyLine size="body" text={t('Aucun code en cours trouvé pour {shop}.', { shop })} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={t('Codes promo')}>
           {coupons.map((coupon, index) => (

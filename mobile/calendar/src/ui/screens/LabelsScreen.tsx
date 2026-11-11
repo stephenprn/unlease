@@ -1,11 +1,11 @@
 /**
  * « Gérer les libellés »: create, rename, recolour, delete (undoable; a deleted label leaves every
- * event). A name another label has is said under the strip, what was typed kept.
+ * event). The screen's pieces are the suite's (`LabelsEditor`): a name another label has is said
+ * under its field, what was typed kept.
  */
-import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Keyboard, KeyboardAvoidingView, StyleSheet, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
-import { SHAPES } from '@unlease/design/shapes';
 import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { EVENT_LIMITS, isLive, labelNameTaken as takenIn } from '@unlease/calendar/models/events';
@@ -13,11 +13,9 @@ import { createLabel, deleteLabel, renameLabel, setLabelColor } from '@app/store
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, EmptyState, FormMessage, Ground, ICON_PEBBLE, ICON_SLOP, Icon, IconButton, LabelTag, LineColorPicker, Organic, Sheet, SHEET_INSET, Tappable, TopBar } from '@shared/ui/components';
-import { corners } from '@shared/ui/theme/shape';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { EmptyState, Ground, LabelEditRow, LabelsList, LineColorPicker, NewLabelStrip, Sheet, SHEET_INSET, TopBar } from '@shared/ui/components';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { variantStyle } from '@shared/ui/theme/typography';
 import type { ScreenProps } from '../navigation/types';
 
 /** Whether a live label has that name already (another than `except`). */
@@ -35,23 +33,10 @@ function useLabelCounts(): Readonly<Record<string, number>> {
 
 export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const order = useLibraryStore(s => s.calendarLabelOrder);
-  const [name, setName] = useState('');
-  const [problem, setProblem] = useState<string | null>(null);
   const [coloring, setColoring] = useState<string | null>(null);
   const coloringLabel = useLibraryStore(s => (coloring ? s.calendarLabels[coloring] : undefined));
 
-  const add = (): void => {
-    if (!name.trim()) return;
-    if (labelNameTaken(name)) {
-      setProblem(t('Ce libellé existe déjà : choisissez un autre nom.'));
-      return;
-    }
-    createLabel(name);
-    setName('');
-    setProblem(null);
-  };
   // The keyboard would cover the colours: they are picked, not typed.
   const openColors = (id: string): void => {
     Keyboard.dismiss();
@@ -62,46 +47,22 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Libellés')} onBack={() => navigation.goBack()} />
-      <Organic style={[styles.newRow, problem ? styles.newRowWrong : null]}>
-        <View style={styles.newGlyph}>
-          <Icon name="tag" size={24} color={theme.color.ink} />
-        </View>
-        <TextInput
-          value={name}
-          onChangeText={text => {
-            setName(text);
-            if (problem) setProblem(labelNameTaken(text) ? problem : null);
-          }}
-          onSubmitEditing={add}
-          submitBehavior="submit"
-          autoCapitalize="sentences"
-          importantForAutofill="no"
-          accessibilityLabel={[t('Créer un libellé'), problem].filter(Boolean).join(', ')}
-          placeholder={t('Créer un libellé')}
-          placeholderTextColor={theme.color.inkFaint}
-          selectionColor={theme.color.highlight}
-          selectionHandleColor={theme.color.focus}
-          cursorColor={theme.color.focus}
-          maxLength={EVENT_LIMITS.labelName}
-          returnKeyType="done"
-          style={[variantStyle(theme, 'body'), styles.input]}
-        />
-        {name ? <IconButton icon="check" label={t('Créer')} onPress={add} /> : null}
-      </Organic>
-      {problem ? (
-        <View style={styles.problem}>
-          <FormMessage message={problem} />
-        </View>
-      ) : null}
-      <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-        <FlatList
-          data={order}
-          keyExtractor={id => id}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => <LabelRow id={item} onColor={() => openColors(item)} onOpen={() => navigation.navigate('Calendar', { label: item })} />}
-          ListEmptyComponent={<EmptyState scene="label" title={t('Aucun libellé')} text={t('Créez-en un pour ranger vos événements : Travail, Famille, Sport…')} />}
-        />
-      </KeyboardAvoidingView>
+      <NewLabelStrip
+        placeholder={t('Créer un libellé')}
+        accessibilityLabel={t('Nom du nouveau libellé')}
+        submitLabel={t('Créer')}
+        takenMessage={t('Ce libellé existe déjà : choisissez un autre nom.')}
+        maxLength={EVENT_LIMITS.labelName}
+        isTaken={name => labelNameTaken(name)}
+        onCreate={name => {
+          createLabel(name);
+        }}
+      />
+      <LabelsList
+        order={order}
+        renderRow={id => <LabelRow id={id} onColor={() => openColors(id)} onOpen={() => navigation.navigate('Calendar', { label: id })} />}
+        empty={<EmptyState scene="label" title={t('Aucun libellé')} text={t('Créez-en un pour ranger vos événements : Travail, Famille, Sport…')} />}
+      />
       <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringLabel?.name ?? t('Couleur')}>
         <View style={styles.sheet}>
           <LineColorPicker
@@ -118,91 +79,39 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
 }
 
 function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; onOpen: () => void }) {
-  const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const label = useLibraryStore(s => s.calendarLabels[id]);
   const count = useLabelCounts()[id] ?? 0;
-  const [draft, setDraft] = useState(label?.name ?? '');
-  const [focused, setFocused] = useState(false);
-  // While it is not typed in, the name follows a rename made on another device.
-  const [shown, setShown] = useState(label?.name ?? '');
-  if (!focused && label && label.name !== shown) {
-    setShown(label.name);
-    setDraft(label.name);
-  }
-  // What is typed is saved on leaving the field, and on leaving the screen with the field still open.
-  const typed = useRef<string | null>(null);
-  const commit = (): void => {
-    const text = typed.current;
-    typed.current = null;
-    const current = useLibraryStore.getState().calendarLabels[id];
-    if (text === null || !current || current.deletedAt !== null) return;
-    const next = text.trim();
-    if (!next || next === current.name) {
-      setDraft(current.name);
-      return;
-    }
-    if (labelNameTaken(next, id)) {
-      showSnack(t('Ce libellé existe déjà'), undefined, { tone: 'warning' });
-      setDraft(current.name);
-      return;
-    }
-    renameLabel(id, next);
-  };
-  const commitOnLeave = useRef(commit);
-  commitOnLeave.current = commit;
-  useEffect(() => () => commitOnLeave.current(), []);
   if (!label) return null;
   return (
-    <View style={styles.row}>
-      <Tappable accessibilityLabel={t('Couleur de {name}', { name: label.name })} onPress={onColor} hitSlop={ICON_SLOP} pebble={1} style={ICON_PEBBLE}>
-        <LabelTag color={label.color} size={26} />
-      </Tappable>
-      <TextInput
-        value={draft}
-        onChangeText={text => {
-          typed.current = text;
-          setDraft(text);
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => {
-          setFocused(false);
-          commit();
-        }}
-        selectionColor={theme.color.highlight}
-        selectionHandleColor={theme.color.focus}
-        cursorColor={theme.color.focus}
-        maxLength={EVENT_LIMITS.labelName}
-        style={[variantStyle(theme, 'body'), styles.input]}
-        accessibilityLabel={t('Renommer {name}', { name: label.name })}
-      />
-      <Tappable onPress={onOpen} style={styles.count} accessibilityRole="link" accessibilityLabel={t('Voir les événements de {name}', { name: label.name })}>
-        <AppText variant="meta">{plural(count, 'événement')}</AppText>
-      </Tappable>
-      <IconButton
-        icon="trash"
-        label={t('Supprimer {name}', { name: label.name })}
-        onPress={() => {
-          const undo = deleteLabel(id);
-          showSnack(t('Libellé « {name} » supprimé', { name: label.name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
-        }}
-      />
-    </View>
+    <LabelEditRow
+      name={label.name}
+      color={label.color}
+      maxLength={EVENT_LIMITS.labelName}
+      words={{
+        color: t('Couleur de {name}', { name: label.name }),
+        rename: t('Renommer {name}', { name: label.name }),
+        remove: t('Supprimer {name}', { name: label.name }),
+        taken: t('Ce libellé existe déjà : choisissez un autre nom.'),
+      }}
+      stored={() => {
+        const current = useLibraryStore.getState().calendarLabels[id];
+        return current && current.deletedAt === null ? current.name : null;
+      }}
+      isTaken={name => labelNameTaken(name, id)}
+      onRename={name => renameLabel(id, name)}
+      onColor={onColor}
+      onDelete={() => {
+        const undo = deleteLabel(id);
+        showSnack(t('Libellé « {name} » supprimé', { name: label.name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+      }}
+      count={{ text: plural(count, 'événement'), label: t('Voir les événements de {name}', { name: label.name }), onPress: onOpen }}
+    />
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
-    fill: { flex: 1 },
-    newRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, marginHorizontal: 12, marginBottom: 8, ...corners(SHAPES.search), backgroundColor: theme.color.fieldVeil, borderWidth: 1, borderColor: theme.color.outline },
-    newRowWrong: { borderColor: theme.color.danger, borderWidth: 2 },
-    problem: { marginHorizontal: 16, marginTop: -2, marginBottom: 10 },
-    // On the new-label field's column (its 12 margin, its edge, its 4): each tag under its glyph, each name under its words.
-    row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 17, minHeight: 56 },
-    newGlyph: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-    input: { flex: 1, height: 52, paddingVertical: 0, color: theme.color.ink },
-    count: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10, ...corners(SHAPES.chip) },
     // The colours on the sheet's column, under its title.
     sheet: { paddingHorizontal: SHEET_INSET, paddingBottom: 8 },
   });

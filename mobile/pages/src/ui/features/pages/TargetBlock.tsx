@@ -34,7 +34,7 @@ import { setCollectionView } from '@app/store/pages';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmblemStone, Grain, Icon, IconButton, Organic, Segmented, Tappable } from '@shared/ui/components';
+import { AppText, Button, EmblemStone, EmptyLine, Grain, Icon, IconButton, Organic, Segmented, Tappable } from '@shared/ui/components';
 import type { SegmentedOption } from '@shared/ui/components/Segmented';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -314,9 +314,7 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
         ) : (
           <>
             {openIds.length === 0 && doneIds.length === 0 ? (
-              <AppText variant="meta" style={styles.collectionEmpty}>
-                {t('Aucun lien à faire dans cette collection.')}
-              </AppText>
+              <EmptyLine text={t('Aucun lien à faire dans cette collection.')} style={styles.collectionEmpty} />
             ) : null}
             {openIds.map(lid => (
               <LinkRow key={lid} id={lid} onOpen={openLink} />

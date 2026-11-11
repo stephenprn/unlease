@@ -1,4 +1,13 @@
 <resources>
     <!-- APPS.pages.name (packages/core/src/apps.ts). -->
     <string name="app_name">Pages</string>
+
+    <!-- The share sheet's line (AndroidManifest.xml): what is shared becomes a page. -->
+    <string name="share_page">Add to Pages</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_page_short">Page</string>
+    <string name="shortcut_page_long">New page</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search your pages</string>
 </resources>

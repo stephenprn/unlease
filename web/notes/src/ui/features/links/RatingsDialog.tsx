@@ -17,6 +17,7 @@ import { findRatings } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { useOutline } from '@shared/ui/components/Outline';
@@ -74,7 +75,7 @@ function RatingsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
       <>
         {phase.answer.work ? <p className="t-body-strong">{phase.answer.work}</p> : null}
         {phase.answer.ratings.length === 0 ? (
-          <p className="t-body">{t('Aucune note trouvée pour l’instant.')}</p>
+          <EmptyLine size="body" text={t('Aucune note trouvée pour l’instant.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES.ratings}>
             {phase.answer.ratings.map((rating, index) => (

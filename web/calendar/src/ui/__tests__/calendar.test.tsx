@@ -16,6 +16,7 @@ import { setOnboarded } from '@shared/app/store/settings';
 import { App } from '@shared/ui/App';
 import { initHistory } from '@shared/ui/router';
 import { addEvent, applyImport } from '../../app/store/actions';
+import { openQuick } from '../../app/store/calendarUi';
 import { useCalendarStore } from '../../app/store/library';
 import { readCalendarFile } from '../screens/ImportScreen';
 import { parseCalendarRoute } from '../routes';
@@ -277,6 +278,87 @@ describe('Agenda’s web app', () => {
     await user.click(screen.getByRole('button', { name: 'Restaurer' }));
     expect(useCalendarStore.getState().events[id]!.trashedAt).toBeNull();
     expect(await screen.findByText('Événement restauré')).toBeInTheDocument();
+  });
+
+  it('offers « Afficher plus » on the planning only while something lies further, never under its empty state', async () => {
+    const user = userEvent.setup();
+    const day = addDays(today(), 400);
+    open(`/agenda/schedule/${day}`);
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Rien de prévu' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Afficher plus' })).not.toBeInTheDocument();
+    act(() => {
+      addEvent({ ...blankDraft(`${addDays(day, 2)}T10:00`, `${addDays(day, 2)}T11:00`, 'Europe/Paris'), title: 'Atelier' });
+      addEvent({ ...blankDraft(`${addDays(day, 100)}T10:00`, `${addDays(day, 100)}T11:00`, 'Europe/Paris'), title: 'Concert' });
+    });
+    expect(await screen.findByText('Atelier')).toBeInTheDocument();
+    expect(screen.queryByText('Concert')).not.toBeInTheDocument();
+    // Pressed, it reaches what lies further at once, however far; then nothing lies further.
+    await user.click(screen.getByRole('button', { name: 'Afficher plus' }));
+    expect(await screen.findByText('Concert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Afficher plus' })).not.toBeInTheDocument();
+  });
+
+  it('makes an event from the quick form with its place, people and description, in one batch', async () => {
+    const user = userEvent.setup();
+    const day = addDays(today(), 2);
+    const lea = person('Léa', null, null);
+    open(`/agenda/week/${day}`);
+    render(<App />);
+    act(() => openQuick({ start: `${day}T10:00`, end: `${day}T11:30`, anchor: { left: 0, top: 0, width: 100, height: 40 } }));
+    const quick = await screen.findByRole('dialog', { name: 'Nouvel événement' });
+    await user.type(within(quick).getByRole('textbox', { name: 'Titre' }), 'Café');
+    // Each line opens into its field, the caret in it.
+    await user.click(within(quick).getByRole('button', { name: 'Ajouter un lieu' }));
+    expect(within(quick).getByRole('combobox', { name: 'Lieu' })).toHaveFocus();
+    await user.keyboard('Le Perchoir');
+    await user.click(within(quick).getByRole('button', { name: 'Ajouter des personnes' }));
+    await user.keyboard('Léa{Enter}');
+    await user.click(within(quick).getByRole('button', { name: 'Ajouter une description' }));
+    await user.keyboard('Le livre.');
+    await user.click(within(quick).getByRole('button', { name: 'Enregistrer' }));
+    const [made] = Object.values(state().events);
+    expect(made).toMatchObject({ title: 'Café', place: 'Le Perchoir', contactIds: [lea], description: 'Le livre.', start: `${day}T10:00`, end: `${day}T11:30` });
+    expect(new Set(Object.values(getRecord('calendarEvent', made!.id)!.clocks)).size).toBe(1);
+  });
+
+  it('closes an open time list on Escape, never the quick form around it', async () => {
+    const user = userEvent.setup();
+    const day = addDays(today(), 2);
+    open(`/agenda/week/${day}`);
+    render(<App />);
+    act(() => openQuick({ start: `${day}T10:00`, end: `${day}T11:30`, anchor: { left: 0, top: 0, width: 100, height: 40 } }));
+    const quick = await screen.findByRole('dialog', { name: 'Nouvel événement' });
+    const end = within(quick).getByRole('combobox', { name: 'Heure de fin' });
+    await user.click(end);
+    expect(end).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard('{Escape}');
+    expect(end).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('dialog', { name: 'Nouvel événement' })).toBeInTheDocument();
+    // The list closed, the next Escape is the form's: nothing typed, it goes.
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Nouvel événement' })).not.toBeInTheDocument());
+  });
+
+  it('carries what the quick form holds to « Plus d’options », people included, and asks before it is left', async () => {
+    const user = userEvent.setup();
+    const day = addDays(today(), 2);
+    person('Léa', null, null);
+    open(`/agenda/week/${day}`);
+    render(<App />);
+    act(() => openQuick({ start: `${day}T10:00`, end: `${day}T11:30`, anchor: { left: 0, top: 0, width: 100, height: 40 } }));
+    const quick = await screen.findByRole('dialog', { name: 'Nouvel événement' });
+    await user.type(within(quick).getByRole('textbox', { name: 'Titre' }), 'Atelier');
+    await user.click(within(quick).getByRole('button', { name: 'Ajouter des personnes' }));
+    await user.keyboard('Léa{Enter}');
+    await user.click(within(quick).getByRole('button', { name: 'Plus d’options' }));
+    await waitFor(() => expect(location.pathname).toBe('/agenda/new'));
+    expect(screen.getByRole('textbox', { name: 'Titre' })).toHaveValue('Atelier');
+    expect(screen.getByRole('list', { name: 'Avec' })).toHaveTextContent('Léa Martin');
+    // Nothing changed here yet, but what was typed there is not lost by a slip either.
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(await screen.findByRole('alertdialog', { name: 'Abandonner les modifications ?' })).toBeInTheDocument();
+    expect(Object.values(state().events)).toHaveLength(0);
   });
 
   it('finds events from the search box', async () => {

@@ -3,7 +3,7 @@
  * series is one result, opened at its next occurrence. Above them, the settings the words name.
  */
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { APP_WORDS } from '@unlease/core/appWords';
 import { t } from '@unlease/core/i18n';
@@ -15,8 +15,8 @@ import { CALENDAR_SETTINGS_PLACES } from '@unlease/calendar/services/settingsPla
 import { nameOf } from '@app/mentionNames';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Ground, ListRow, SearchHeader } from '@shared/ui/components';
-import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
+import { AppText, EdgeFlatList, EmptyLine, EmptyState, Ground, ListRow, SearchHeader } from '@shared/ui/components';
+import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
@@ -31,12 +31,13 @@ export function SearchScreen({ navigation }: ScreenProps<'Search'>) {
     return searchEvents(Object.values(events), feeds, query, target => nameOf(state, target) ?? '').slice(0, 100);
   }, [events, feeds, query]);
   const now = Date.now();
+  const summary = searchSummary(query, found.length, settingsFound(query, CALENDAR_SETTINGS_PLACES));
   return (
     <View style={styles.screen}>
       <Ground />
       {/* The homes' strip, Back at its start: the same field, placeholder and count in every app. */}
       <SearchHeader query={query} onQuery={setQuery} onBack={() => navigation.goBack()} placeholder={APP_WORDS.calendar.search} focusKey={1} />
-      <FlatList
+      <EdgeFlatList
         data={found}
         keyboardShouldPersistTaps="handled"
         // Scrolling with the events: the settings the words name, then the count.
@@ -46,14 +47,20 @@ export function SearchScreen({ navigation }: ScreenProps<'Search'>) {
               <SettingsMatches
                 query={query}
                 own={CALENDAR_SETTINGS_PLACES}
-                onOpen={place => (place.area === 'admin' ? navigation.navigate('Admin', place.section ? { section: place.section } : undefined) : navigation.navigate('Settings', place.section ? { section: place.section } : undefined))}
+                onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
               />
-              <View style={styles.search}>
-                <AppText variant="meta">{searchSummary(query, found.length, settingsFound(query, CALENDAR_SETTINGS_PLACES))}</AppText>
-                {found.length === 0 ? <AppText variant="meta">{APP_WORDS.calendar.searchHint}</AppText> : null}
-              </View>
+              {found.length > 0 ? (
+                <View style={styles.search}>
+                  <AppText variant="meta">{summary}</AppText>
+                </View>
+              ) : null}
             </View>
           ) : undefined
+        }
+        // As in every app, nothing found is the search's empty state: the count, and what it looks through.
+        // Before a word, what it looks through (the other apps show the list it looks in).
+        ListEmptyComponent={
+          query.trim() ? <EmptyState scene="search" title={summary} text={APP_WORDS.calendar.searchHint} /> : <EmptyLine glyph="search" text={APP_WORDS.calendar.searchHint} style={styles.search} />
         }
         keyExtractor={event => event.id}
         renderItem={({ item }) => {

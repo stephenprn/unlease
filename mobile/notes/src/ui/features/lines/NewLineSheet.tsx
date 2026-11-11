@@ -18,7 +18,7 @@ import { sortable } from '@unlease/notes/services/sorting';
 import { createLine } from '@app/store/actions';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { selectSorting, useCaptureStore } from '@app/store/captureStore';
 
 import { AppText, Button, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
@@ -45,7 +45,8 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
   const [fill, setFill] = useState(true);
   /** The emblem and colour it opened with: picking others is a change too. */
   const [opened, setOpened] = useState<{ color: LineColor; emblem: EmblemKey } | null>(null);
-  const reading = useSettingsStore(selectCanRead);
+  // Claude fills it from « Non classé » once the server said it has a key.
+  const reading = useServerFeature('claude');
   const inboxLinks = useLibraryStore(s => (s.linksByNote[INBOX_ID] ?? []).filter(id => s.links[id] && sortable(s.links[id]!)).length);
   const sorting = useCaptureStore(selectSorting);
   const offerFill = reading && inboxLinks > 0 && !sorting;

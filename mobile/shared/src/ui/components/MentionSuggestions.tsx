@@ -8,7 +8,8 @@
  * (`core/services/mentionSearch`); each app gives its kinds.
  */
 import React, { memo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { EdgeScrollView } from './ScrollEdges';
 import { Keyframe } from 'react-native-reanimated';
 
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -20,6 +21,7 @@ import { corners } from '../theme/shape';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
 import { AppText } from './AppText';
+import { EmptyLine } from './EmptyLine';
 import { Grain } from './Grain';
 import { Icon } from './Icon';
 import { AnimatedOrganic, Organic } from './Organic';
@@ -69,14 +71,10 @@ function MentionSuggestionsComponent({ rows, label, empty = null, docked = true,
   if (rows.length === 0 && !empty) return null;
   const body =
     rows.length === 0 ? (
-      <View style={styles.empty}>
-        <Icon name="info" size={18} color={theme.color.inkMuted} />
-        <AppText variant="meta" color={theme.color.inkMuted} style={styles.emptyText}>
-          {empty}
-        </AppText>
-      </View>
+      <EmptyLine text={empty ?? ''} glyph="info" style={styles.empty} />
     ) : (
-      <ScrollView keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: (SUGGESTION_ROW + GEOMETRY.rowGap) * ROWS_SHOWN + INSET * 2 }} contentContainerStyle={styles.list}>
+      // A small card of its own: its ends are its own, nothing slides under anything.
+      <EdgeScrollView top={false} bottom={false} keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: (SUGGESTION_ROW + GEOMETRY.rowGap) * ROWS_SHOWN + INSET * 2 }} contentContainerStyle={styles.list}>
         {rows.map(row => (
           <Tappable key={row.key} onPress={row.onPress} accessibilityLabel={row.title} accessibilityValue={row.detail ? { text: row.detail } : undefined} style={styles.row}>
             <View style={styles.mark}>{row.mark ?? (row.icon ? <Icon name={row.icon} size={22} color={theme.color.inkMuted} /> : null)}</View>
@@ -97,7 +95,7 @@ function MentionSuggestionsComponent({ rows, label, empty = null, docked = true,
             {foot}
           </AppText>
         ) : null}
-      </ScrollView>
+      </EdgeScrollView>
     );
   // A menu's sheet of paper, its edge in the outline ink, lifted as a menu is: under a field, whole;
   // on the keyboard, its top corners rounded and its foot flush with the keys.
@@ -135,8 +133,7 @@ const makeStyles = (theme: Theme) =>
     row: { minHeight: SUGGESTION_ROW, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 10, paddingVertical: 6, ...corners(SHAPES.tab) },
     mark: { width: 32, alignItems: 'center', justifyContent: 'center' },
     text: { flex: 1, minWidth: 0, gap: 1 },
-    empty: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14 },
-    emptyText: { flex: 1 },
+    empty: { paddingHorizontal: 16, paddingVertical: 14 },
     foot: { paddingHorizontal: 10, paddingTop: 2, paddingBottom: 2 },
   });
 

@@ -13,6 +13,7 @@ import { movePlaces, type MovePlace } from '@unlease/pages/services/recentPages'
 
 import { useBlocksStore, type BlocksState } from '../../../app/store/blocks';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
 import lineStyles from '@notes/ui/features/lines/lines.module.css';
@@ -107,7 +108,7 @@ export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTo
             </button>
           ) : null}
           {all.map(place => row(place, place.page.id))}
-          {all.length === 0 ? <p className={`${styles.pickerEmpty} t-meta`}>{t('Aucune page ne correspond.')}</p> : null}
+          {all.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('Aucune page ne correspond.')} /> : null}
         </section>
       </DialogFrame>
     </Layer>

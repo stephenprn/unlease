@@ -28,6 +28,20 @@ import { paths } from '../routes';
 
 const EMPTY_TEXT = tx('Créez un contact, ou importez ceux de Google : sur contacts.google.com, « Exporter », puis déposez le fichier ici.');
 
+/** No contact at all, in every list (as on the phone): how to make one, or bring them all in. `labelId`: the label a new one wears. */
+function NoContactsYet({ labelId }: { labelId?: string }) {
+  return (
+    <EmptyState scene="welcome" title={t('Aucun contact pour l’instant')} text={t(EMPTY_TEXT)}>
+      <Button icon="personPlus" onClick={() => openNewContact('', labelId ? [labelId] : undefined)}>
+        {t('Créer un contact')}
+      </Button>
+      <Button kind="text" icon="download" onClick={() => navigate(paths.import)}>
+        {t('Importer des contacts')}
+      </Button>
+    </EmptyState>
+  );
+}
+
 /** Every contact, or what the search found. */
 function AllContacts() {
   const all = useLiveContacts();
@@ -41,12 +55,15 @@ function AllContacts() {
       <div className={styles.screen}>
         {/* As on the phone: the settings the words name, above the contacts. */}
         <SettingsMatches query={query} />
-        <h1 className={`${screens.resultCount} t-meta`} aria-live="polite">
-          {searchSummary(query, found.length, settingsFound(query))}
-        </h1>
-        {/* As in every app: under nothing found, what the search looks through. */}
-        {found.length === 0 ? <p className={`${screens.resultHint} t-meta`}>{APP_WORDS.contacts.searchHint}</p> : null}
-        <ContactList sections={[{ id: 'found', contacts: found }]} />
+        <div aria-live="polite">
+          {found.length > 0 ? (
+            <h1 className={`${screens.resultCount} t-meta`}>{searchSummary(query, found.length, settingsFound(query))}</h1>
+          ) : (
+            // As in every app: nothing found is an empty place, saying what the search looks through.
+            <EmptyState scene="search" as="h1" title={searchSummary(query, 0, settingsFound(query))} text={APP_WORDS.contacts.searchHint} />
+          )}
+        </div>
+        {found.length > 0 ? <ContactList sections={[{ id: 'found', contacts: found }]} /> : null}
       </div>
     );
   }
@@ -59,14 +76,7 @@ function AllContacts() {
         {all.length > 0 ? <p className={`${styles.count} t-meta tabular`}>{plural(all.length, 'contact')}</p> : null}
       </div>
       {all.length === 0 ? (
-        <EmptyState scene="welcome" title={t('Aucun contact pour l’instant')} text={t(EMPTY_TEXT)}>
-          <Button icon="personPlus" onClick={() => openNewContact()}>
-            {t('Créer un contact')}
-          </Button>
-          <Button kind="text" icon="download" onClick={() => navigate(paths.import)}>
-            {t('Importer des contacts')}
-          </Button>
-        </EmptyState>
+        <NoContactsYet />
       ) : (
         <>
           {/* As the phone's: the favourites' faces and the week's birthdays above everyone. */}
@@ -80,14 +90,17 @@ function AllContacts() {
 }
 
 function Favorites() {
-  const favorites = useLiveContacts().filter(contact => contact.favorite);
+  const all = useLiveContacts();
+  const favorites = all.filter(contact => contact.favorite);
   return (
     <div className={styles.screen}>
       <div className={styles.listHead}>
         <PageHead title={t('Favoris')} />
         {favorites.length > 0 ? <p className={`${styles.count} t-meta tabular`}>{plural(favorites.length, 'contact')}</p> : null}
       </div>
-      {favorites.length === 0 ? (
+      {all.length === 0 ? (
+        <NoContactsYet />
+      ) : favorites.length === 0 ? (
         <EmptyState scene="label" title={t('Aucun favori')} text={t('L’étoile d’un contact le met ici, à portée de main, et dans le widget d’appels rapides du téléphone.')} />
       ) : (
         <ContactList sections={[{ id: 'favorites', contacts: favorites, letters: true }]} />
@@ -98,7 +111,8 @@ function Favorites() {
 
 function LabelContacts({ id }: { id: string }) {
   const label = useContactsStore(s => s.labels[id]);
-  const wearing = useLiveContacts().filter(contact => contact.labelIds.includes(id));
+  const all = useLiveContacts();
+  const wearing = all.filter(contact => contact.labelIds.includes(id));
   if (!label || label.deletedAt !== null) {
     return (
       <div className={styles.screen}>
@@ -112,10 +126,12 @@ function LabelContacts({ id }: { id: string }) {
         <PageHead title={label.name} action={{ icon: 'personPlus', label: t('Créer un contact'), onClick: () => openNewContact('', [id]) }} />
       </div>
       {wearing.length > 0 ? <p className={`${styles.count} t-meta tabular`}>{plural(wearing.length, 'contact')}</p> : null}
-      {wearing.length === 0 ? (
+      {all.length === 0 ? (
+        <NoContactsYet labelId={id} />
+      ) : wearing.length === 0 ? (
         <EmptyState scene="label" title={t('Personne avec ce libellé')} text={t('Ouvrez un contact et ajoutez-lui ce libellé, ou sélectionnez-en plusieurs dans la liste.')} />
       ) : (
-        <ContactList sections={[{ id: 'label', contacts: wearing, letters: true }]} />
+        <ContactList sections={[{ id: `label:${id}`, contacts: wearing, letters: true }]} />
       )}
     </div>
   );

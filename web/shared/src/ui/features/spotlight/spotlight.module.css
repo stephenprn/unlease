@@ -41,6 +41,8 @@
   padding: 6px 8px 6px 14px;
   border-radius: var(--cut-search);
   background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
   box-shadow: inset 0 0 0 2px var(--focus);
   color: var(--ink-muted);
 }
@@ -259,6 +261,7 @@
 /* ── the results ────────────────────────────────────────────────────────── */
 
 .body {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
@@ -269,13 +272,12 @@
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
 }
 
+/* The results and the preview each dissolve at their top as far as they run on under the field's head (`useScrollEdges`); their foot is the dialog's own end. */
 .results {
   min-height: 0;
   padding: 6px 8px 24px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 
 .notice {
@@ -293,6 +295,11 @@
 
 .nothing :last-child {
   color: var(--ink-muted);
+}
+
+/* No words yet, and the kind or the filters keep nothing. */
+.bare {
+  padding: 18px 10px 8px;
 }
 
 .group {
@@ -471,8 +478,6 @@
   border-left: 1px solid var(--hairline);
   overflow-y: auto;
   overscroll-behavior: contain;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 
 .previewArticle {
@@ -750,7 +755,6 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-width: 46ch;
   padding-top: 2px;
 }
 

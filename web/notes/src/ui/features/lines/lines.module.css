@@ -19,7 +19,9 @@
 }
 
 /* The washed emblem: present enough to own the page, quiet enough to read over. It fades out
-   toward its foot, so whatever ends below it never cuts it. */
+   toward its foot, so whatever ends below it never cuts it. Laid down as the collection opens
+   (design/collage: GHOST_ENTRANCE, the numbers set on `.head`): from just beyond its corner,
+   upright, it turns into its slant while fading up to its wash. */
 .ghost {
   position: absolute;
   z-index: -1;
@@ -29,10 +31,32 @@
   height: var(--ghost);
   /* As on the phone: quiet enough that the description over it holds 4.5:1 on every pigment. */
   opacity: 0.14;
-  transform: rotate(-12deg);
+  /* Its slant, written as its arrival's steps so the two turn into each other. */
+  transform: translate(0, 0) rotate(-12deg) scale(1);
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
+  animation: ghost-lay var(--ghost-duration) var(--ease-decelerate) both;
+}
+
+@keyframes ghost-lay {
+  from {
+    opacity: 0;
+    transform: translate(var(--ghost-dx), var(--ghost-dy)) rotate(calc(-12deg + var(--ghost-turn))) scale(var(--ghost-from));
+  }
+}
+
+/* Movement goes; it still fades up to its wash. */
+@media (prefers-reduced-motion: reduce) {
+  .ghost {
+    animation-name: ghost-fade;
+  }
+}
+
+@keyframes ghost-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 .headInner {
@@ -104,6 +128,8 @@
   padding: 0 4px 0 16px;
   border-radius: var(--cut-search);
   background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
   box-shadow: inset 0 0 0 1px var(--outline);
   transition: box-shadow var(--duration-short) var(--ease-standard);
 }
@@ -161,7 +187,7 @@
   padding: 24px 16px 8px;
 }
 
-/* An empty collection: the outline of the sheet its links will fill. */
+/* An empty collection: the outline of the sheet its links will fill. It settles in (`settleIn`), so a collection that fills at once never shows it. */
 .empty {
   /* Its outline (`OutlinedBox`), dashed. */
   --edge-color: var(--outline);
@@ -346,12 +372,12 @@
 
 @media (hover: hover) {
   .newTile:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
+    background: color-mix(in srgb, var(--link) 8%, transparent);
   }
 }
 
 .newTile:active {
-  background: color-mix(in srgb, var(--link) 10%, transparent);
+  background: color-mix(in srgb, var(--link) 12%, transparent);
 }
 
 @media (max-width: 719px) {
@@ -817,6 +843,19 @@ textarea.hintInput {
   margin-top: 12px;
   padding: 8px 8px 8px 14px;
   background: var(--paper-high);
+}
+
+/*
+ * Its button stands in the banner's two right corners, as far in from its foot and its top as from its
+ * side (8): its corners there concentric with the banner's as drawn (`--outline-radius`, a short sheet's
+ * cap), the others a button's. Too short to hold them as squircles (their radii run 1.84 times as long:
+ * the browser would shrink every corner), it is drawn round at the same depth, its radii unscaled.
+ */
+.readAll > button:last-child {
+  corner-shape: round;
+  border-radius: calc(var(--cut-button) / var(--corner-scale));
+  border-top-right-radius: max(0px, calc(var(--outline-radius, 14px) - 8px));
+  border-bottom-right-radius: max(0px, calc(var(--outline-radius, 14px) - 8px));
 }
 
 .readAllMark {

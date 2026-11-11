@@ -18,9 +18,10 @@ import { directionsUrl, linkModules, sensCritiqueUrl } from '@unlease/notes/serv
 import { agendaDraft, keepCopy, runningCopy } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
 import { useServerRuns } from '@shared/app/apps';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
 import { pathOfRef } from '@shared/modules';
-import { useCanRead, useSeerr } from '../../../app/store/prefs';
+import { useSeerr } from '../../../app/store/prefs';
 import { showError, showSnack } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { navigate } from '@shared/ui/router';
@@ -43,7 +44,8 @@ export function ModuleBar({ id }: { id: string }) {
   const link = useLibraryStore(s => s.links[id]);
   const line = useLibraryStore(s => (link ? s.notes[link.noteId] : undefined));
   const server = useSettingsStore(selectServer);
-  const reading = useCanRead();
+  // Claude's modules once the server has said it has a key (Seerr's once it gave Seerr's address).
+  const reading = useServerFeature('claude');
   const seerr = useSeerr();
   const [opened, setOpened] = useState<Opened | null>(null);
   const [copying, setCopying] = useState(() => runningCopy(id) !== null);

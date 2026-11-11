@@ -19,6 +19,7 @@ import { findOffers } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { useOutline } from '@shared/ui/components/Outline';
@@ -120,7 +121,7 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
       <>
         {market === 'used' && phase.answer.range ? <p className="t-body-strong">{rangeText(phase.answer.range)}</p> : null}
         {phase.answer.offers.length === 0 ? (
-          <p className="t-body">{market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')}</p>
+          <EmptyLine size="body" text={market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES[market === 'new' ? 'cheaper' : 'secondhand']}>
             {phase.answer.offers.map((offer, index) => (

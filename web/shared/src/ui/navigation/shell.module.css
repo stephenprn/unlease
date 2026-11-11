@@ -18,18 +18,50 @@
   color: var(--ink);
 }
 
-/* Cards slide under the ground rather than being cut by a line: the ground, grain and all, fading out below the header. */
-.header::after {
+/*
+ * Cards slide under the ground rather than being cut by a line: the ground, grain and all, laid over
+ * them below the header on an eased curve, as strongly as the page has scrolled (`usePageEdges`), so
+ * nothing is washed at the page's top. Over the page's column only: the docked navigation stays.
+ */
+.header::after,
+.topBar::after {
   content: '';
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  height: 12px;
+  height: var(--edge-fade);
   pointer-events: none;
   background: var(--ground-paint);
-  -webkit-mask-image: linear-gradient(#000, transparent);
-  mask-image: linear-gradient(#000, transparent);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 1) 0%,
+    rgb(0 0 0 / 0.962) 12.5%,
+    rgb(0 0 0 / 0.854) 25%,
+    rgb(0 0 0 / 0.691) 37.5%,
+    rgb(0 0 0 / 0.5) 50%,
+    rgb(0 0 0 / 0.309) 62.5%,
+    rgb(0 0 0 / 0.146) 75%,
+    rgb(0 0 0 / 0.038) 87.5%,
+    rgb(0 0 0 / 0) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 1) 0%,
+    rgb(0 0 0 / 0.962) 12.5%,
+    rgb(0 0 0 / 0.854) 25%,
+    rgb(0 0 0 / 0.691) 37.5%,
+    rgb(0 0 0 / 0.5) 50%,
+    rgb(0 0 0 / 0.309) 62.5%,
+    rgb(0 0 0 / 0.146) 75%,
+    rgb(0 0 0 / 0.038) 87.5%,
+    rgb(0 0 0 / 0) 100%
+  );
+  opacity: var(--page-above-k, 0);
+}
+
+.header::after {
+  left: var(--nav-width);
 }
 
 .headerRow {
@@ -405,10 +437,12 @@
   color: var(--ink-muted);
 }
 
+/* No label yet: its glyph in the rows' tag column, its words on their names. */
 .bulkEmpty {
+  --empty-slot: 22px;
+  --empty-gap: 12px;
   max-width: 240px;
   padding: 10px 12px;
-  color: var(--ink-muted);
 }
 
 .selectionCount {
@@ -476,19 +510,6 @@
   padding: 0 4px;
   background: var(--ground-paint);
   color: var(--ink);
-}
-
-.topBar::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 12px;
-  pointer-events: none;
-  background: var(--ground-paint);
-  -webkit-mask-image: linear-gradient(#000, transparent);
-  mask-image: linear-gradient(#000, transparent);
 }
 
 /* The page's head moves in here (`PageHead`): its title centred on the back pebble, its action at the far end. */

@@ -1,7 +1,8 @@
 /**
  * The board's search finds the settings too: a small group « Réglages » above the notes, three at
- * most until « Tout voir », each row opening Réglages at its section (scrolled to it) or the
- * Administration's section.
+ * most until « Tout voir », each row opening Réglages at its section (scrolled to it), « Apparence »'s
+ * page for the look's, or the Administration's section. Réglages itself: Carnet's own first, the look
+ * one row opening its page, the Administration last.
  */
 import React from 'react';
 import { ScrollView } from 'react-native';
@@ -33,6 +34,11 @@ function textOf(tree: ReactTestRenderer): string {
   };
   walk(tree.toJSON());
   return parts.join(' ');
+}
+
+/** The text inside one element (Réglages' scroll). */
+function textIn(node: ReactTestInstance): string {
+  return node.children.map(child => (typeof child === 'string' ? child : textIn(child))).join(' ');
 }
 
 let mounted: ReactTestRenderer | null = null;
@@ -90,7 +96,7 @@ afterAll(async () => {
 });
 
 describe('the board’s search', () => {
-  it('shows the settings the words name above the notes, and opens Réglages at the section', async () => {
+  it('shows the settings the words name above the notes, and opens « Apparence » at the section', async () => {
     const tree = await boot(() => {
       createNote({ kind: 'text', title: 'Café en grains' });
     });
@@ -103,9 +109,10 @@ describe('the board’s search', () => {
     // The note's words marked, split around the match.
     expect(text).toMatch(/Café en\s+grain/);
     await press(outermost(tree, props => props.title === 'Grain sur le fond' && typeof props.onPress === 'function')[0]!);
-    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Settings', params: { section: 'ground' } });
+    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Appearance', params: { section: 'ground' } });
+    expect(textOf(tree)).toContain('Couleurs unies');
 
-    // Réglages lands on « Fond » once it is laid out (12 over it, the list's own room), until the person scrolls.
+    // « Apparence » lands on « Fond » once it is laid out (12 over it, the list's own room), until the person scrolls.
     const landing = tree.root.findByType(SettingsScroll);
     const scroll = landing.findByType(ScrollView).instance as { scrollTo: jest.Mock };
     scroll.scrollTo = jest.fn();
@@ -150,10 +157,52 @@ describe('the board’s search', () => {
     expect(settingRows(tree)).toEqual([]);
   });
 
+  it('opens « Fond » on « Apparence »’s page, and the board’s layout on Réglages’ own', async () => {
+    const tree = await boot();
+    await search(tree, 'fond');
+    expect(settingRows(tree)[0]).toBe('Fond');
+    await press(outermost(tree, props => props.title === 'Fond' && typeof props.onPress === 'function')[0]!);
+    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Appearance', params: { section: 'ground' } });
+    for (const words of ['Thème', 'Grain du papier', 'Palettes', 'Couleurs unies', 'Grain sur le fond']) expect(textOf(tree)).toContain(words);
+    await go('Board', { view: 'notes' });
+
+    await search(tree, 'tableau');
+    expect(settingRows(tree)).toEqual(['Disposition du tableau']);
+    await press(outermost(tree, props => props.title === 'Disposition du tableau' && typeof props.onPress === 'function')[0]!);
+    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Settings', params: { section: 'notes' } });
+  });
+
   it('keeps a view’s search to its own notes', async () => {
     const tree = await boot();
     await go('Board', { view: 'archive' });
     await search(tree, 'grain');
     expect(settingRows(tree)).toEqual([]);
+  });
+});
+
+describe('Réglages', () => {
+  it('puts Carnet’s own first, the look one row opening its page, and the Administration last', async () => {
+    const tree = await boot();
+    await go('Settings');
+    // Réglages' own words (the drawer under the board names the Administration too).
+    const text = textIn(tree.root.findByType(SettingsScroll));
+    // Carnet's section, then « Apparence », « Langue », « Données », and the way to the Administration.
+    const order = ['Carnet', 'Tableau', 'Apparence', 'Langue', 'Données', 'Administration'].map(words => text.indexOf(words));
+    expect(order.every(at => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    // No gallery on the overview.
+    expect(text).not.toContain('Palettes');
+    // The look in words on its row: the theme, the palette, the ground.
+    const row = outermost(tree, props => props.title === 'Apparence' && typeof props.onPress === 'function')[0]!;
+    expect(row.props.supporting).toBe('Thème du système · apparence d’origine');
+    await press(row);
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Appearance');
+    for (const words of ['Thème', 'Grain du papier', 'Une fine texture de papier sur les notes, les cartes et les panneaux.', 'Couleurs', 'Fond']) expect(textOf(tree)).toContain(words);
+    // Back is Réglages.
+    await act(async () => {
+      navigationRef.goBack();
+      jest.advanceTimersByTime(400);
+    });
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Settings');
   });
 });

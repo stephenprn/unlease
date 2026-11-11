@@ -62,16 +62,16 @@ export interface AdminSection {
   readonly task?: string;
 }
 
-/** A row of the Réglages, the app's own (the board's layout, the Keep import). */
+/** A piece of the Réglages, the app's own (Carnet's section, the Keep import). */
 export interface SettingsSection {
   readonly id: string;
   readonly Body: ComponentType;
   /**
-   * Where it goes (DESIGN's order): `appearance` inside « Apparence », after the theme (Carnet's
-   * board layout); `data` first in « Données » (cleaning the links saved); `last` after « Données »
-   * (an import, done once); else a section of its own between the language and « Données ».
+   * Where it goes (DESIGN's order): `data` first in « Données » (cleaning the links saved); `last`
+   * after « Données » (an import, done once); else a section of its own at the page's top, before
+   * « Apparence » (the settings an app's own are those set most: Carnet's board, Agenda's calendar).
    */
-  readonly place?: 'appearance' | 'data' | 'last';
+  readonly place?: 'data' | 'last';
 }
 
 /** One kind of spotlight document, the app's own (`note`, `collection`, `link`, `page`). */
@@ -106,10 +106,29 @@ export interface AppCommand {
   readonly title: string;
   readonly icon: GlyphName;
   readonly run: () => void;
-  /** Its single key, when the board has one (`c`). */
+  /** Its single key, when the board has one (`c`; making the app's thing is C in every app). */
   readonly key?: string;
+  /** Other single keys that run it too, left out of the help (Pages' P, from before C made a page everywhere). */
+  readonly aliases?: readonly string[];
   /** False: a key alone, not offered in the spotlight. */
   readonly spotlight?: boolean;
+}
+
+/** In a shortcut's keys, ⌘ on a Mac and Ctrl elsewhere, named where shown. */
+export const MOD_KEY = 'Mod';
+
+/**
+ * A row of the shortcuts dialog: the keys pressed together, then what they do (French, `tx`, read
+ * where shown). A key is shown as written (`J`, `↑`, `#`), but for `MOD_KEY`, `Retour` (Backspace)
+ * and a key's French name (`tx('Maj')`, `tx('Entrée')`), read where shown.
+ */
+export type ShortcutRow = readonly [keys: readonly string[], what: string];
+
+/** An app's own group of the shortcuts dialog (`AppModule.shortcuts`). */
+export interface ShortcutGroup {
+  /** Where its keys work (French, `tx`: « Sur une note »); none: its rows join « Partout », after the commands' keys. */
+  readonly title?: string;
+  readonly rows: readonly ShortcutRow[];
 }
 
 /** What the spotlight offers to make from what was typed (« Créer la page « Lisbonne » »). */
@@ -202,13 +221,15 @@ export interface AppModule {
   readonly onDropFiles?: (files: readonly File[], route: Route) => boolean;
   /** Keys of its own (a card's X, E, #); true when it took the key. */
   readonly onKey?: (event: KeyboardEvent, route: Route) => boolean;
-  /** The shortcuts dialog's rows. */
-  readonly shortcuts?: readonly { readonly keys: string; readonly label: string }[];
+  /** Its keys in the shortcuts dialog (« ? ») beyond its commands' (which « Partout » lists already): its pages' own, in groups. */
+  readonly shortcuts?: readonly ShortcutGroup[];
 
   // ── settings ────────────────────────────────────────────────────────────
   readonly settingsSections?: readonly SettingsSection[];
   /** Empties its bin for good (Réglages > « Vider la corbeille »): how many went. */
   readonly emptyBin?: () => number;
+  /** How many things its bin holds: Réglages' « Vider la corbeille » says so, with nothing to press while it is empty. */
+  readonly binCount?: () => number;
   /** Its own sections of the Administration, after the shared ones. */
   readonly adminSections?: readonly AdminSection[];
   /** Its own places of the Réglages and the Administration a search finds (its package's: Carnet's board layout, Seerr), after every app's (`core/services/settingsSearch`). */

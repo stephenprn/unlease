@@ -4,10 +4,11 @@
  * page. While there are only a few pages, a line says what one can hold; with none, the same empty
  * place as the board's. One quiet line leads to the pages in the bin. Back leaves the app.
  */
-import React, { memo, useCallback, useMemo, useState } from 'react';
-import { BackHandler, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { GEOMETRY } from '@unlease/design/palette';
@@ -28,12 +29,12 @@ import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 import { createPage, duplicateBlocks, trashPage } from '@app/store/pages';
 import { requestTitleFocus, setExpanded } from '@app/store/pagesUi';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
-import { requestSync } from '@shared/app/sync/syncManager';
 
-import { AppText, EmptyState, FAB_CLEARANCE, FabMenu, Ground, Icon, ListRow, SearchHeader, Sheet, SyncLine, Tappable } from '@shared/ui/components';
-import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
+import { AppText, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, Icon, ListRow, SearchHeader, Sheet, SyncLine, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
+import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
 import { Drawer } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
+import { listIn, listMove, listOut, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -69,7 +70,8 @@ function PageMark({ icon }: { icon: string | null }) {
 }
 
 /** A page as a row: its mark, its title, then where it sits or what it holds and when it changed. */
-const PageRow = memo(function PageRow({ id, now, recent, onOpen, snippet }: { id: string; now: number; recent: boolean; onOpen: (id: string) => void; snippet?: string }) {
+/** Held down, it opens the page's actions, as its row in the drawer's tree does. */
+const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snippet }: { id: string; now: number; recent: boolean; onOpen: (id: string) => void; onActions?: (id: string) => void; snippet?: string }) {
   const styles = useThemedStyles(makeStyles);
   const page = useLibraryStore(s => s.blocks[id]);
   const glance = useLibraryStore(useShallow(s => pageGlance(s, id)));
@@ -80,7 +82,16 @@ const PageRow = memo(function PageRow({ id, now, recent, onOpen, snippet }: { id
   const facts = [recent ? glance.path || null : subPages > 0 ? plural(subPages, 'sous-page') : null, formatEdited(edited, now)].filter(Boolean).join(' · ');
   const line = snippet ?? (recent ? glance.preview : '');
   return (
-    <Tappable onPress={() => onOpen(id)} style={styles.row} accessibilityRole="link" accessibilityLabel={title}>
+    <Tappable
+      unstable_pressDelay={listPressDelay}
+      onPress={() => onOpen(id)}
+      onLongPress={onActions ? () => onActions(id) : undefined}
+      style={styles.row}
+      accessibilityRole="link"
+      accessibilityLabel={title}
+      accessibilityActions={onActions ? [{ name: 'actions', label: t('Plus d’actions') }] : undefined}
+      onAccessibilityAction={onActions ? () => onActions(id) : undefined}
+    >
       <PageMark icon={page.icon} />
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" numberOfLines={1}>
@@ -149,7 +160,7 @@ function usePageResults(query: string) {
   }, [query, revision]);
 }
 
-export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
+export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -159,10 +170,13 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
   const roots = useChildPages(null);
   const count = useLibraryStore(s => livePageIds(s).length);
   const recent = useRecentPages(RECENT);
+  // What arrives while the home is shown settles in; back from a search, the lists are shown whole.
+  const arrivedRecent = useArrivals(recent, searching ? 'search' : 'home');
+  const arrivedRoots = useArrivals(roots, searching ? 'search' : 'home');
   const binned = useTrashedPages().length;
   const drawerOpen = useUiStore(selectDrawerOpen);
   const now = useMinute();
-  const [refreshing, setRefreshing] = useState(false);
+  const pullToSync = usePullToSync();
 
   // Back ends a search before it leaves the app.
   useFocusEffect(
@@ -186,6 +200,19 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
   /** The page whose actions are open (its tree row held down). */
   const [acting, setActing] = useState<string | null>(null);
 
+  // A search asked for from the launcher's shortcut: the strip takes the keyboard.
+  const [searchFocus, setSearchFocus] = useState(0);
+  // The launcher's shortcuts arrive as a `capture` param: act once, then clear it.
+  const capture = route.params?.capture;
+  useEffect(() => {
+    if (!capture) return;
+    navigation.setParams({ capture: undefined });
+    if (capture === 'page') newPage(null);
+    if (capture === 'search') setSearchFocus(n => n + 1);
+    // Only the param should trigger this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capture]);
+
   return (
     <View style={styles.screen}>
       <Ground />
@@ -194,24 +221,14 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
         onQuery={setQuery}
         onMenu={() => setDrawerOpen(true)}
         placeholder={APP_WORDS.pages.search}
+        focusKey={searchFocus}
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
         localText={t('Pas de serveur : les pages restent sur ce téléphone.')}
       />
-      <ScrollView
+      <EdgeScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: FAB_CLEARANCE + insets.bottom }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            colors={[theme.color.focus]}
-            progressBackgroundColor={theme.color.paper}
-            onRefresh={() => {
-              setRefreshing(true);
-              requestSync();
-              setTimeout(() => setRefreshing(false), 900);
-            }}
-          />
-        }
+        refreshControl={pullToSync}
       >
         <SyncLine />
         {searching ? (
@@ -220,19 +237,18 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
             <SettingsMatches
               query={query}
               own={PAGES_SETTINGS_PLACES}
-              onOpen={place => (place.area === 'admin' ? navigation.navigate('Admin', place.section ? { section: place.section } : undefined) : navigation.navigate('Settings', place.section ? { section: place.section } : undefined))}
+              onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
             />
-            <AppText variant="meta" style={styles.notice}>
-              {searchSummary(query, results.length, settingsFound(query, PAGES_SETTINGS_PLACES))}
-            </AppText>
-            {/* As in every app: under nothing found, what the search looks through, close under the count it explains. */}
+            {/* The count over the results; as in every app, nothing found is the search's empty state: what it looks through under the count. */}
             {results.length === 0 ? (
-              <AppText variant="meta" style={styles.noticeMore}>
-                {APP_WORDS.pages.searchHint}
+              <EmptyState scene="search" title={searchSummary(query, 0, settingsFound(query, PAGES_SETTINGS_PLACES))} text={APP_WORDS.pages.searchHint} />
+            ) : (
+              <AppText variant="meta" style={styles.notice}>
+                {searchSummary(query, results.length)}
               </AppText>
-            ) : null}
+            )}
             {results.map(hit => (
-              <PageRow key={hit.pageId} id={hit.pageId} now={now} recent onOpen={openPage} snippet={hit.snippet || undefined} />
+              <PageRow key={hit.pageId} id={hit.pageId} now={now} recent onOpen={openPage} onActions={setActing} snippet={hit.snippet || undefined} />
             ))}
           </View>
         ) : roots.length === 0 ? (
@@ -244,24 +260,33 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
                 {t('Vos documents, rangés comme vous voulez : une page peut en contenir d’autres. Tapez « / » dans une page pour y ajouter un bloc, « @ » pour citer un contact, une note, une collection ou un lien.')}
               </AppText>
             ) : null}
+            {/* A page leaving fades where it was and the others close ranks; one arriving settles in after them. A section shown whole (opened, back from a search) just is there, and goes whole. */}
             {count >= RECENT_FROM ? (
+              <LayoutAnimationConfig skipEntering skipExiting>
+                <View style={styles.section}>
+                  <AppText variant="section" style={styles.head} accessibilityRole="header">
+                    {t('Récentes')}
+                  </AppText>
+                  {recent.map(id => (
+                    <Animated.View key={id} layout={listMove} entering={arrivedRecent.has(id) ? listIn : undefined} exiting={listOut}>
+                      <PageRow id={id} now={now} recent onOpen={openPage} onActions={setActing} />
+                    </Animated.View>
+                  ))}
+                </View>
+              </LayoutAnimationConfig>
+            ) : null}
+            <LayoutAnimationConfig skipEntering skipExiting>
               <View style={styles.section}>
                 <AppText variant="section" style={styles.head} accessibilityRole="header">
-                  {t('Récentes')}
+                  {t('Toutes les pages')}
                 </AppText>
-                {recent.map(id => (
-                  <PageRow key={id} id={id} now={now} recent onOpen={openPage} />
+                {roots.map(id => (
+                  <Animated.View key={id} layout={listMove} entering={arrivedRoots.has(id) ? listIn : undefined} exiting={listOut}>
+                    <PageRow id={id} now={now} recent={false} onOpen={openPage} onActions={setActing} />
+                  </Animated.View>
                 ))}
               </View>
-            ) : null}
-            <View style={styles.section}>
-              <AppText variant="section" style={styles.head} accessibilityRole="header">
-                {t('Toutes les pages')}
-              </AppText>
-              {roots.map(id => (
-                <PageRow key={id} id={id} now={now} recent={false} onOpen={openPage} />
-              ))}
-            </View>
+            </LayoutAnimationConfig>
           </>
         )}
         {binned > 0 && !searching ? (
@@ -270,7 +295,7 @@ export function PagesScreen({ navigation }: ScreenProps<'Pages'>) {
             <AppText variant="meta">{t('{pages} dans la corbeille', { pages: plural(binned, 'page') })}</AppText>
           </Tappable>
         ) : null}
-      </ScrollView>
+      </EdgeScrollView>
       <FabMenu actions={[{ icon: 'plus', label: t('Nouvelle page'), onPress: () => newPage(null) }]} />
       <Drawer
         open={drawerOpen}
@@ -295,7 +320,6 @@ const makeStyles = (theme: Theme) =>
     section: { paddingTop: 8 },
     head: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6 },
     notice: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-    noticeMore: { paddingHorizontal: 16, paddingBottom: 8, marginTop: -4 },
     intro: { paddingHorizontal: 16, paddingTop: 16, maxWidth: 560 },
     // A list row's geometry (inset 6, padded 10): the mark on the section heads' 16, the words at 56.
     row: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 64, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },

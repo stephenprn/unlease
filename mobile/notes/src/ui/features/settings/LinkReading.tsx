@@ -39,13 +39,16 @@ function LinkReading({ model, enabled, links }: { model: keyof typeof CLAUDE_COS
           onPress={() => showSnack(t('{links} en lecture', { links: plural(readSkippedLinks(), 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' })}
         />
       ) : null}
-      <ListRow
-        icon="list"
-        title={t('Ce que Claude relève')}
-        supporting={t('Ce que Claude relève sur chaque lien qu’il lit')}
-        trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />}
-        onPress={() => navigate('Templates')}
-      />
+      {/* Without a key, the facts lead nowhere: they wait for one. */}
+      {enabled ? (
+        <ListRow
+          icon="list"
+          title={t('Ce que Claude relève')}
+          supporting={t('Ce que Claude relève sur chaque lien qu’il lit')}
+          trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />}
+          onPress={() => navigate('Templates')}
+        />
+      ) : null}
     </View>
   );
 }

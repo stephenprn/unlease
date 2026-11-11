@@ -3,6 +3,7 @@ package com.stephenprn.carnet.intake
 import android.content.Context
 import android.content.Intent
 import android.view.WindowManager
+import androidx.core.content.pm.ShortcutManagerCompat
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -53,6 +54,8 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
       val raw = ShareReader.parse(intent) ?: return
       val appContext = context.applicationContext
       io.execute {
+        // A sharing shortcut used: Android ranks it higher in the share sheet.
+        if (raw.shortcutId.isNotEmpty()) runCatching { ShortcutManagerCompat.reportShortcutUsed(appContext, raw.shortcutId) }
         val share = ShareReader.materialize(appContext, raw)
         pending.set(share)
         live?.get()?.deliver(share)
@@ -65,6 +68,7 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
           putString("text", share?.text ?: "")
           putString("subject", share?.subject ?: "")
           putString("mimeType", share?.mimeType ?: "")
+          putString("shortcutId", share?.shortcutId ?: "")
           putArray("files", Arguments.createArray().apply { share?.files?.forEach { pushString(it) } })
         }
   }

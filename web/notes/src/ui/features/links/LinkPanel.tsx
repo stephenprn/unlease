@@ -27,6 +27,7 @@ import templateStyles from '../templates/templates.module.css';
 import { paths } from '../../routes';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
 import { useCanRead } from '../../../app/store/prefs';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { showError, showSnack, showUndo } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { Emblem } from '@shared/ui/components/Emblem';
@@ -34,6 +35,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { Menu } from '@shared/ui/components/Menu';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Stamp, stampWord } from '../../components/Stamp';
 import { TextField } from '@shared/ui/components/TextField';
 import { adminPath, navigate } from '@shared/ui/router';
@@ -134,7 +136,10 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   // Under 720px the link is a whole page, as on the phone: Back leaves it; wider, the side sheet closes.
   const narrow = useMedia(NARROW);
   const leave = narrow ? ({ icon: 'back', label: t('Retour') } as const) : ({ icon: 'close', label: t('Fermer') } as const);
+  // How its reading stands (unknown counts as on: a link saved meanwhile waits for the server)…
   const reading = useCanRead();
+  // …and what may be asked of Claude, once the server has said it has a key.
+  const claude = useServerFeature('claude');
   // Where its facts are chosen (« Ce que Claude relève »): its collection's page, else its kind's usual facts; « Non classé »'s link of no kind has none.
   const factsPart = useLibraryStore(s => {
     const shown = s.links[id];
@@ -152,6 +157,8 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const server = useSettingsStore(selectServer);
   const now = useMinute();
   const titleId = useId();
+  // What it says fades and blurs under its head and its foot as far as it runs on beyond them.
+  const scrollEdges = useScrollEdges({ top: true, bottom: true });
   // The sheet opens on its title, not on the close button: focus starts where reading does.
   const heading = useRef<HTMLHeadingElement>(null);
   const [menu, setMenu] = useState(false);
@@ -259,7 +266,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
         <span className={styles.panelHeadSpace} />
         <IconButton ref={more} icon="more" label={t('Plus d’actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
       </div>
-      <div className={styles.panelScroll}>
+      <div ref={scrollEdges} className={styles.panelScroll} data-scroll-sheet="">
         {pictureLost ? null : kept.length > 0 ? (
           <Gallery blobIds={kept} fallback={link.imageUrl} onLost={() => setLostPicture(pictures)} />
         ) : link.imageUrl ? (
@@ -304,11 +311,11 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
                         ? t('Pas lu : ajoutez une clé API Claude dans l’administration pour que les liens soient lus.')
                         : t('Ce lien a été gardé sans être lu.')}
                 </p>
-                {reading ? (
+                {claude ? (
                   <Button kind="text" small className={styles.noticeAction} onClick={() => reanalyzeLink(id)}>
                     {failed ? t('Réessayer') : t('Lire la page')}
                   </Button>
-                ) : unread ? (
+                ) : unread && !reading ? (
                   <Button kind="text" small className={styles.noticeAction} onClick={toAdmin}>
                     {t('Administration')}
                   </Button>
@@ -317,7 +324,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
             </OutlinedBox>
           ) : null}
 
-          {link.summary || link.attributes.length > 0 || (reading && readBefore) ? (
+          {link.summary || link.attributes.length > 0 || (claude && readBefore) ? (
             <div className={styles.about}>
               {link.summary ? <p className={`${styles.summary} t-body`}>{link.summary}</p> : null}
               {link.attributes.length > 0 ? (
@@ -331,7 +338,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
                 </dl>
               ) : null}
               {/* Read before its facts changed: under them, the way to read it again. */}
-              {reading && readBefore ? (
+              {claude && readBefore ? (
                 <p className={`${templateStyles.stale} t-meta`}>
                   <span>{t('Lu avant le dernier changement de ses informations.')}</span>
                   <Button kind="text" small onClick={() => reanalyzeLink(id)}>
@@ -407,9 +414,9 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
             ? [{ label: t('Partager'), icon: 'share' as const, onSelect: () => void navigator.share({ url: link.url, title: link.title || undefined }).catch(() => {}) }]
             : []),
           // Reading again only means something when the server reads links.
-          ...(reading ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
+          ...(claude ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
           // What Claude notes on it: where its facts are chosen.
-          ...(factsPart ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(factsPart)) }] : []),
+          ...(factsPart && claude ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(factsPart)) }] : []),
           {
             label: t('Supprimer'),
             icon: 'trash',

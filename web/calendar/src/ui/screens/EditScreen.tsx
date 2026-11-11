@@ -10,11 +10,9 @@
  * an end before the start is said under the hours and the save, pressed, goes to it; what was typed is
  * never lost by a slip (`useUnsaved`).
  */
-import { useEffect, useEffectEvent, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
-import { placeFromLine, type Place } from '@unlease/core/sync/places';
-import type { GlyphName } from '@unlease/design/glyphs';
 import { DAY_PATTERN, EVENT_LIMITS, labelNameTaken, WALL_PATTERN, type EventFile } from '@unlease/calendar/models/events';
 import { asksScope, blankDraft, draftOf, handedDescription, handedUrl, keepLength, type EventDraft } from '@unlease/calendar/services/editing';
 import { reminderWords, REMINDER_CHOICES } from '@unlease/calendar/services/eventText';
@@ -22,10 +20,7 @@ import { findOccurrence, type Occurrence } from '@unlease/calendar/services/occu
 import { cleanEventUrl, readsAsEventUrl } from '@unlease/calendar/services/links';
 import { choiceOf, choiceRule, choiceWords, describeRule, parseRule, repeatChoices, type RepeatChoice } from '@unlease/calendar/services/recurrence';
 import { addDays, addMinutes, deviceZone, instantToWall, isDay, isKnownZone, USUAL_ZONES } from '@unlease/calendar/services/time';
-import { addressLine } from '@unlease/contacts/services/addresses';
-import { contactName } from '@unlease/contacts/services/names';
 
-import { useContactsStore } from '@contacts/app/store/library';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { showError, showSnack, showUndo } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
@@ -43,36 +38,24 @@ import { useForm } from '@shared/ui/components/useForm';
 import { useUnsaved } from '@shared/ui/components/useUnsaved';
 import { PageHead } from '@shared/ui/navigation/PageHead';
 import { goBack, navigate, useLocation } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { keepEventFile, sendFiles } from '../../app/files';
 import { addEvent, createLabel, saveEvent } from '../../app/store/actions';
 import { LabelChips } from '@shared/ui/components/LabelChips';
-import { askScope } from '../../app/store/calendarUi';
+import { askScope, handDraft, useCalendarUi } from '../../app/store/calendarUi';
 import { useNow } from '../../app/hooks/useToday';
 import { useCalendarStore } from '../../app/store/library';
 import { usePrefsStore } from '../../app/store/prefs';
 import styles from '../calendar.module.css';
 import { ColorPicker } from '../features/ColorPicker';
 import { DescriptionField } from '../features/DescriptionField';
-import { ChoiceField, DateField, TimeField } from '../features/Fields';
+import { ChoiceField, DateField, FormRow, TimeField, useKnownPlaces } from '../features/Fields';
 import { PeoplePicker } from '../features/People';
 import { RepeatDialog } from '../features/RepeatDialog';
 import { paths } from '../routes';
 
 /** The key held with Entrée to save: ⌘ on a Mac, Ctrl elsewhere. */
 const SAVE_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
-
-/**
- * A row of the form, led by its glyph, centred on the row's first line: a field's (52, the default),
- * chips' (40), a file's (36), the swatches' (34) or a small button's (32).
- */
-function Row({ icon, children, label, wide = false, first }: { icon: GlyphName; children: ReactNode; label?: string; wide?: boolean; first?: 'chips' | 'file' | 'swatches' | 'small' }) {
-  return (
-    <div className={styles.formRow} role={label ? 'group' : undefined} aria-label={label} data-first={first}>
-      <Icon name={icon} size={22} />
-      <div className={wide ? styles.formFieldsWide : styles.formFields}>{children}</div>
-    </div>
-  );
-}
 
 /** A new event's draft from its address, else the next hour's. */
 function draftFromQuery(search: string, now: number, length: number, reminders: { timed: readonly number[]; allDay: readonly number[] }): EventDraft {
@@ -97,22 +80,6 @@ function draftFromQuery(search: string, now: number, length: number, reminders: 
   };
 }
 
-/** The places this device knows: the events' own (the most used first), then the contacts' addresses. */
-function useKnownPlaces(): readonly Place[] {
-  const events = useCalendarStore(s => s.events);
-  const contacts = useContactsStore(s => s.contacts);
-  return useMemo(() => {
-    const used = Object.values(events)
-      .filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && event.place.trim())
-      .sort((a, b) => b.editedAt - a.editedAt)
-      .map(event => placeFromLine(event.place));
-    const kept = Object.values(contacts)
-      .filter(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto)
-      .flatMap(contact => contact.addresses.map(address => addressLine(address)).filter(Boolean).map(line => ({ ...placeFromLine(line), detail: `${contactName(contact)} · ${placeFromLine(line).detail}`.replace(/ · $/, '') })));
-    return [...used, ...kept];
-  }, [events, contacts]);
-}
-
 /** What is wrong with a link typed, or null (`readsAsEventUrl`). */
 function urlProblem(url: string): string | null {
   return readsAsEventUrl(url) ? null : t('Un lien comme https://exemple.fr/billets, ou visio.exemple.org.');
@@ -123,13 +90,17 @@ function zoneChoices(current: string): readonly { value: string; label: string }
   return [...new Set([deviceZone(), current, ...USUAL_ZONES].filter(Boolean))].map(zone => ({ value: zone, label: zone.replace(/_/g, ' ') }));
 }
 
-function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; initial: EventDraft }) {
+/** `typed`: the draft holds what was typed elsewhere (the quick form's « Plus d'options »), so leaving it asks too. */
+function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurrence | null; initial: EventDraft; typed?: boolean }) {
   const [draft, setDraft] = useState<EventDraft>(initial);
   const [repeatOpen, setRepeatOpen] = useState(false);
   const [showZone, setShowZone] = useState(() => !isDay(initial.start) && !!initial.timeZone && initial.timeZone !== deviceZone());
   const [removed, setRemoved] = useState<readonly string[]>([]);
   const [reminderMenu, setReminderMenu] = useState(false);
   const reminderButton = useRef<HTMLSpanElement>(null);
+  const reminderList = useRef<HTMLDivElement>(null);
+  // A reminder taken off fades where it was, the others and « Un autre rappel » close ranks; one added settles in once they have made room.
+  useListMotion(reminderList, { late: true });
   const fileInput = useRef<HTMLInputElement>(null);
   const since = useRef({ title: occurrence ? occurrence.event.title : null, description: occurrence ? occurrence.event.description : null });
   const prefs = usePrefsStore();
@@ -177,7 +148,7 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
   const endField = form.field('end');
   const endProblem = form.error('end');
   const endNote = useId();
-  const unsaved = useUnsaved(JSON.stringify(draft) !== JSON.stringify(initial), { page: paths.home });
+  const unsaved = useUnsaved(typed || JSON.stringify(draft) !== JSON.stringify(initial), { page: paths.home });
   /** A day or an hour changed: an end before the start is said at once (a pick is a field left). */
   const setWhen = (patch: Partial<EventDraft>): void => {
     set(patch);
@@ -232,7 +203,7 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
         <PageHead title={occurrence ? t('Modifier l’événement') : t('Nouvel événement')} />
         <OutlinedBox kind="panel" lift="card" className={`${styles.formSheet} paper`}>
           <input className={styles.titleInput} value={draft.title} onChange={event => set({ title: event.target.value })} placeholder={t('Ajouter un titre')} aria-label={t('Titre')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" autoFocus={!occurrence} />
-          <Row icon="clock" label={t('Quand')} wide>
+          <FormRow icon="clock" label={t('Quand')} wide>
             <div className={styles.whenLine}>
               <div className={styles.whenGroup}>
                 <DateField value={draft.start.slice(0, 10)} label={allDay ? t('Premier jour') : t('Jour de début')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${draft.start.slice(10)}`)} />
@@ -289,8 +260,8 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
                 {draft.timeZone && draft.timeZone !== deviceZone() ? <span className="t-meta">{t('Heures sur place, à {zone}', { zone: draft.timeZone.replace(/_/g, ' ').split('/').pop() ?? draft.timeZone })}</span> : null}
               </div>
             ) : null}
-          </Row>
-          <Row icon="refresh" label={t('Répétition')}>
+          </FormRow>
+          <FormRow icon="refresh" label={t('Répétition')}>
             <ChoiceField
               value={choice}
               shown={repeatShown}
@@ -301,23 +272,23 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
                 else set({ rrule: choiceRule(next, draft.start) });
               }}
             />
-          </Row>
-          <Row icon="mapPin" label={t('Lieu')} wide>
+          </FormRow>
+          <FormRow icon="mapPin" label={t('Lieu')} wide>
             <PlaceField ariaLabel={t('Lieu')} value={draft.place} onChange={place => set({ place: place.slice(0, EVENT_LIMITS.place) })} known={known} placeholder={t('Ajouter un lieu')} />
-          </Row>
-          <Row icon="people" label={t('Avec')} wide>
+          </FormRow>
+          <FormRow icon="people" label={t('Avec')} wide>
             <PeoplePicker value={draft.contactIds} max={EVENT_LIMITS.contacts} onChange={contactIds => set({ contactIds })} />
-          </Row>
-          <Row icon="bell" label={t('Rappels')} first="small">
+          </FormRow>
+          <FormRow icon="bell" label={t('Rappels')} first="small" fieldsRef={reminderList}>
             {draft.reminders.map(minutes => (
-              <span key={minutes} className={styles.pick}>
+              <span key={minutes} className={styles.pick} data-motion={`reminder:${minutes}`}>
                 {reminderWords(minutes, allDay)}
                 <IconButton icon="close" label={t('Retirer le rappel {when}', { when: reminderWords(minutes, allDay) })} compact size={16} onClick={() => set({ reminders: draft.reminders.filter(each => each !== minutes) })} />
               </span>
             ))}
             {draft.reminders.length < EVENT_LIMITS.reminders && reminderChoices.length > 0 ? (
               <>
-                <span ref={reminderButton} className={styles.anchorSpan}>
+                <span ref={reminderButton} className={styles.anchorSpan} data-motion="reminder-add">
                   <Button kind="text" small icon="plus" onClick={() => setReminderMenu(true)}>
                     {draft.reminders.length > 0 ? t('Un autre rappel') : t('Ajouter un rappel')}
                   </Button>
@@ -332,8 +303,8 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
                 />
               </>
             ) : null}
-          </Row>
-          <Row icon="tag" label={t('Libellés')} first="chips">
+          </FormRow>
+          <FormRow icon="tag" label={t('Libellés')} first="chips">
             {/* Each label its chip, its own tag the tick, and a new one named in place (as Contacts' form and the phone's). */}
             <LabelChips
               labels={liveLabels}
@@ -348,14 +319,14 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
               maxLength={EVENT_LIMITS.labelName}
               words={{ add: t('Nouveau libellé'), placeholder: t('Nom du libellé'), field: t('Nom du nouveau libellé'), create: t('Créer le libellé') }}
             />
-          </Row>
-          <Row icon="palette" label={t('Couleur')} wide first="swatches">
+          </FormRow>
+          <FormRow icon="palette" label={t('Couleur')} wide first="swatches">
             <ColorPicker<true> value={draft.color} onChange={color => set({ color })} label={t('Couleur')} none={t('Celle de ses libellés')} />
-          </Row>
-          <Row icon="text" label={t('Description')} wide>
+          </FormRow>
+          <FormRow icon="text" label={t('Description')} wide>
             <DescriptionField markup={draft.description} onChange={description => set({ description })} />
-          </Row>
-          <Row icon="link" label={t('Lien')} wide>
+          </FormRow>
+          <FormRow icon="link" label={t('Lien')} wide>
             <TextField
               kind="url"
               ariaLabel={t('Lien')}
@@ -372,8 +343,8 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
               maxLength={EVENT_LIMITS.url}
               help={removed.length > 0 ? t('Pistage retiré : {names}', { names: removed.join(', ') }) : undefined}
             />
-          </Row>
-          <Row icon="file" label={t('Fichiers')} first={draft.files.length > 0 ? 'file' : 'small'}>
+          </FormRow>
+          <FormRow icon="file" label={t('Fichiers')} first={draft.files.length > 0 ? 'file' : 'small'}>
             {draft.files.map(file => (
               <span key={file.id} className={styles.file}>
                 <Icon name={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} size={18} />
@@ -385,7 +356,7 @@ function EventForm({ occurrence, initial }: { occurrence: Occurrence | null; ini
               {t('Joindre un fichier')}
             </Button>
             <input ref={fileInput} type="file" multiple hidden onChange={event => void addFiles(event.target.files).then(() => (event.target.value = ''))} />
-          </Row>
+          </FormRow>
         </OutlinedBox>
         <FormFoot form={form}>
           <span className={`${styles.formHint} t-meta`}>{t('{key} + Entrée pour enregistrer', { key: SAVE_KEY })}</span>
@@ -417,11 +388,18 @@ export function NewEventScreen() {
   const { search } = useLocation();
   const now = useMinute();
   const prefs = usePrefsStore();
-  // The form opens once with its query: later renders keep what was typed.
-  const [initial] = useState(() => draftFromQuery(search, now, prefs.eventLength, { timed: prefs.reminders, allDay: prefs.allDayReminders }));
+  // The form opens once with its query, or with what the quick form held for these same times (its
+  // « Plus d'options »: the people and the mentions an address cannot carry); later renders keep what was typed.
+  const [opening] = useState(() => {
+    const asked = draftFromQuery(search, now, prefs.eventLength, { timed: prefs.reminders, allDay: prefs.allDayReminders });
+    const handed = useCalendarUi.getState().handed;
+    return handed && handed.start === asked.start && handed.end === asked.end ? { draft: handed, typed: true } : { draft: asked, typed: false };
+  });
+  // Taken once: the next new event starts from its own address.
+  useEffect(() => handDraft(null), []);
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
-      <EventForm occurrence={null} initial={initial} />
+      <EventForm occurrence={null} initial={opening.draft} typed={opening.typed} />
     </div>
   );
 }

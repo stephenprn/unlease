@@ -168,8 +168,13 @@ export function deleteForever(ids: readonly string[], now: number = Date.now()):
 }
 
 /** Empties the bin for good (Réglages > « Vider la corbeille »): how many went. */
+/** The contacts in the bin. */
+export function binnedContacts(): Contact[] {
+  return Object.values(state().contacts).filter(contact => contact.deletedAt === null && contact.trashedAt !== null);
+}
+
 export function emptyContactsBin(now: number = Date.now()): number {
-  const binned = Object.values(state().contacts).filter(contact => contact.deletedAt === null && contact.trashedAt !== null);
+  const binned = binnedContacts();
   deleteForever(
     binned.map(contact => contact.id),
     now,

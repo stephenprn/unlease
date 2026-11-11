@@ -298,4 +298,16 @@ export const EN_WEB_PAGES: Dictionary = {
   'pages supprimées': 'pages deleted',
   'La corbeille est vide.': 'The bin is empty.',
   'Les pages supprimées y restent {days} jours, le temps de changer d’avis.': 'Deleted pages stay there for {days} days, in case you change your mind.',
+  // The shortcuts dialog's rows (`PAGES_SHORTCUTS`).
+  'Dans une page': 'In a page',
+  'Nouveau paragraphe (Maj+Entrée : nouvelle ligne)': 'New paragraph (Shift+Enter: new line)',
+  'Cocher la tâche, ou sortir du bloc de code': 'Tick the to-do, or leave the code block',
+  'Mentionner une page, une note, une collection ou un lien': 'Mention a page, a note, a collection or a link',
+  'Gras (I : italique, U : souligné, E : code)': 'Bold (I: italic, U: underline, E: code)',
+  'Lien sur les mots sélectionnés': 'Link on the selected words',
+  'Imbriquer le bloc (Maj+Tab : le désimbriquer)': 'Indent the block (Shift+Tab: outdent it)',
+  'Monter le bloc (↓ : le descendre)': 'Move the block up (↓: move it down)',
+  'Dupliquer le bloc': 'Duplicate the block',
+  'Sélectionner le bloc': 'Select the block',
+  'Annuler (Ctrl+Maj+Z : rétablir)': 'Undo (Ctrl+Shift+Z: redo)',
 };

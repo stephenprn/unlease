@@ -5,13 +5,13 @@
  * current one on matcha. The grid is a list of rows, so the whole catalogue scrolls smoothly.
  */
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View, useWindowDimensions, type ListRenderItemInfo } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ListRenderItemInfo } from 'react-native';
 
 import { pebbleTurn } from '@unlease/design/pebbles';
 import { t } from '@unlease/core/i18n';
 import { emojiName, EVERYDAY_EMOJI, searchEmoji, typedEmoji, type EmojiCatalogue } from '@unlease/design/emojiSearch';
 
-import { AppText, Button, Sheet, SHEET_INSET, Tappable, TextField } from '@shared/ui/components';
+import { AppText, Button, EmptyLine, Sheet, SHEET_INSET, SheetFlatList, Tappable, TextField } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { emojiCatalogue, emojiLanguages, loadedEmojiCatalogue } from './EmojiCatalogue';
@@ -65,6 +65,8 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
   const { width, height } = useWindowDimensions();
   const [query, setQuery] = useState('');
   const [catalogue, setCatalogue] = useState<EmojiCatalogue | null>(loadedEmojiCatalogue);
+  // A catalogue that cannot be made searchable says so, never « Chargement… » for good.
+  const [failed, setFailed] = useState(false);
   const columns = Math.max(5, Math.floor((width - 2 * SHEET_SIDE) / CELL));
   const languages = emojiLanguages();
 
@@ -73,10 +75,16 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
     if (visible) setQuery('');
   }, [visible]);
   useEffect(() => {
-    if (!visible || catalogue) return;
-    const timer = setTimeout(() => setCatalogue(emojiCatalogue()), PREPARE_AFTER_MS);
+    if (!visible || catalogue || failed) return;
+    const timer = setTimeout(() => {
+      try {
+        setCatalogue(emojiCatalogue());
+      } catch {
+        setFailed(true);
+      }
+    }, PREPARE_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [visible, catalogue]);
+  }, [visible, catalogue, failed]);
 
   const pick = useCallback((emoji: string | null) => onPick(emoji), [onPick]);
 
@@ -91,7 +99,7 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
     };
     if (pasted) return cellRows('pasted', [named(pasted)], columns);
     if (searching) {
-      if (!catalogue) return [{ kind: 'note', key: 'loading', text: t('Chargement…') }];
+      if (!catalogue) return [{ kind: 'note', key: 'loading', text: failed ? t('La liste des emoji n’a pas pu se charger. Collez-en un.') : t('Chargement…') }];
       const found = searchEmoji(catalogue, query, languages).map(emoji => ({ emoji: emoji.emoji, name: emojiName(emoji, languages) }));
       return found.length > 0 ? cellRows('found', found, columns) : [{ kind: 'note', key: 'none', text: t('Aucun emoji pour « {query} ».', { query: query.trim() }) }];
     }
@@ -101,7 +109,7 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
       out.push(...cellRows(group.key, catalogue.emojis.filter(emoji => emoji.group === index).map(emoji => ({ emoji: emoji.emoji, name: emojiName(emoji, languages) })), columns));
     });
     return out;
-  }, [byEmoji, catalogue, columns, languages, pasted, query, searching]);
+  }, [byEmoji, catalogue, columns, failed, languages, pasted, query, searching]);
 
   const offsets = useMemo(() => {
     const out: number[] = [];
@@ -122,13 +130,8 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
           </AppText>
         );
       }
-      if (item.kind === 'note') {
-        return (
-          <AppText variant="meta" style={styles.note}>
-            {item.text}
-          </AppText>
-        );
-      }
+      // Nothing found names what is typed: it settles in once, not at every letter.
+      if (item.kind === 'note') return <EmptyLine text={item.text} replayKey={item.key === 'none' ? 'none' : undefined} style={styles.note} />;
       return (
         <View style={styles.row}>
           {item.cells.map((cell, column) => (
@@ -163,7 +166,7 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
           />
           {allowNone && value !== null ? <Button kind="text" label={t('Retirer l’icône')} onPress={() => pick(null)} style={styles.none} /> : null}
         </View>
-        <FlatList
+        <SheetFlatList top={false}
           data={rows}
           keyExtractor={row => row.key}
           renderItem={renderRow}
@@ -193,7 +196,7 @@ const makeStyles = (theme: Theme) =>
     // The groups' names and the grid on the sheet's column too; the list still scrolls the panel's width.
     listContent: { paddingHorizontal: SHEET_INSET, paddingBottom: 16 },
     head: { height: HEAD, paddingTop: 14 },
-    note: { minHeight: 56, paddingTop: 16, color: theme.color.inkMuted },
+    note: { minHeight: 56, paddingTop: 16 },
     row: { height: CELL, flexDirection: 'row' },
     // Each cell is square, so its pebble stays a pebble, never an oval.
     slot: { flex: 1, alignItems: 'center', justifyContent: 'center' },

@@ -4,12 +4,12 @@
  * "Mode" or "À voir" means to this person than the title alone, and the
  * fields of its own template when it has one (a link filed there fills them).
  */
-import { INBOX_ID, INBOX_TITLE, type LinkKind } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_TITLE } from '@unlease/notes/models/entities';
 import type { TemplateField } from '@unlease/notes/models/templates';
 import { comparePositions } from '@unlease/core/services/fractionalIndex';
 import { foldText } from '@unlease/core/services/search';
 import { sortTargets } from '@unlease/notes/services/sorting';
-import { collectionTemplate, type Templates } from '@unlease/notes/services/templates';
+import { collectionTemplate, titleNamesKind, type Templates } from '@unlease/notes/services/templates';
 import { linkFromRecord, noteFromRecord } from '@unlease/notes/sync/entities';
 import type { RecordStore } from '../../../sync/records';
 import { clipText } from './output';
@@ -47,23 +47,6 @@ export function routingLists(records: RecordStore, templates?: Templates): Routi
   });
 }
 
-/** Words a list title uses for each kind, French then English, folded (no accents). */
-const KIND_WORDS: Record<LinkKind, readonly string[]> = {
-  product: ['achat', 'shopping', 'envie', 'wishlist', 'cadeau', 'buy', 'gift', 'wish', 'shop'],
-  film: ['film', 'cinema', 'movie'],
-  series: ['serie', 'show', 'tv'],
-  book: ['livre', 'bouquin', 'lecture', 'book', 'reading'],
-  music: ['musique', 'album', 'chanson', 'playlist', 'music', 'song'],
-  game: ['jeu', 'jeux', 'gaming', 'game', 'games', 'console'],
-  restaurant: ['restaurant', 'resto', 'bar', 'cafe', 'manger', 'food', 'eat', 'dining'],
-  place: ['lieu', 'visite', 'voyage', 'sortie', 'place', 'visit', 'travel', 'trip'],
-  recipe: ['recette', 'cuisine', 'recipe', 'cooking'],
-  article: ['article', 'lecture', 'lire', 'read'],
-  video: ['video'],
-  event: ['evenement', 'concert', 'expo', 'sortie', 'event', 'exhibition', 'gig'],
-  other: [],
-};
-
 /**
  * Where a cached result goes without asking Claude again: the list it was
  * filed in last time (renamed or not), else one with that list's name, else a
@@ -77,11 +60,9 @@ export function routeCached(lists: readonly RoutingList[], cached: CachedAnalysi
     const same = lists.find(list => fold(list.title) === fold(cached.listTitle!));
     if (same) return same.id;
   }
-  const words = KIND_WORDS[cached.kind] ?? [];
   for (const list of lists) {
     if (list.id === INBOX_ID) continue;
-    const tokens = fold(list.title).split(/[^a-z0-9]+/);
-    if (words.some(word => tokens.some(token => token.startsWith(word)))) return list.id;
+    if (titleNamesKind(list.title, cached.kind)) return list.id;
   }
   return INBOX_ID;
 }

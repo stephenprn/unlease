@@ -3,6 +3,12 @@
     <string name="app_name">Agenda</string>
     <!-- The share sheet's line for a calendar file. -->
     <string name="import_calendar">Import into Agenda</string>
+    <!-- Another app's « Add to calendar », as the system's chooser lists the app. -->
+    <string name="add_event">Add to Agenda</string>
+    <!-- The menu of words selected in any app. -->
+    <string name="create_event">Create event</string>
+    <!-- The Quick Settings tile. -->
+    <string name="tile_new_event">New event</string>
 
     <!-- The widgets, as the launcher's picker lists them. -->
     <string name="widget_schedule_label">Schedule</string>
@@ -44,4 +50,14 @@
     <string name="widget_preview_date">Thu 24 Dec · 9:00</string>
     <string name="widget_preview_today">Monday 9 November</string>
     <string name="widget_preview_day">Mon 9 Nov</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_event_short">Event</string>
+    <string name="shortcut_event_long">New event</string>
+    <string name="shortcut_quick_short">Quick add</string>
+    <string name="shortcut_quick_long">Add in a few words</string>
+    <string name="shortcut_today_short">Today</string>
+    <string name="shortcut_today_long">Today</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search events</string>
 </resources>

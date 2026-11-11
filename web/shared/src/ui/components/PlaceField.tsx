@@ -13,6 +13,7 @@ import { knownPlaces, PLACE_QUERY_MIN, type Place } from '@unlease/core/sync/pla
 import { findPlaces, placesFound } from '../../app/places';
 import { selectServer, useSettingsStore } from '../../app/store/settings';
 import controls from './controls.module.css';
+import { EmptyLine } from './EmptyLine';
 import { Floating } from './Floating';
 import { Icon } from './Icon';
 import styles from './placeField.module.css';
@@ -159,6 +160,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={shown}
+        data-owns-escape={shown || undefined}
         aria-controls={shown ? listId : undefined}
         aria-activedescendant={shown && at >= 0 ? optionId(at) : undefined}
         aria-label={label ? undefined : ariaLabel}
@@ -206,7 +208,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
                 </span>
               </div>
             ))}
-            {said ? <p className={`${styles.said} t-meta`}>{said}</p> : null}
+            {said ? <EmptyLine text={said} glyph="info" className={styles.said} /> : null}
             {rows.some(row => !row.known) ? <p className={`${styles.credit} t-meta`}>{t('Lieux : © les contributeurs d’OpenStreetMap')}</p> : null}
           </div>
         </Floating>

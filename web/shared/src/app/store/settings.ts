@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { DEFAULT_APPEARANCE, parseAppearance, type Appearance } from '@unlease/design/appearance';
 import { isAppId, SUITE_SLUG, type AppId } from '@unlease/core/apps';
 import { isLocale, setLocale, type Locale } from '@unlease/core/i18n';
+import { parseServerFeatures, SERVER_FEATURES, type ServerFeature, type ServerFeatures } from '@unlease/core/sync/settings';
 
 import { getDeviceName, getOwnApp } from '../env';
 
@@ -45,6 +46,8 @@ export interface SettingsState {
   readonly server: ServerConfig | null;
   /** The apps the server runs, as last heard (`/api/health`, `GET /api/settings`); null until known, or with no server. */
   readonly serverApps: readonly AppId[] | null;
+  /** Which of the Administration's optional services the server has set up (Claude, S3, the drive, Seerr), as last heard; one left out is not known yet. */
+  readonly serverFeatures: ServerFeatures;
   /** The first-run screen was answered (connected, or "later"). */
   readonly onboarded: boolean;
   /** The languages searched by word, at least one, in the order of `LANGUAGES`. */
@@ -59,7 +62,7 @@ export interface SettingsState {
 
 const ALL_LANGUAGES: readonly Language[] = LANGUAGES.map(language => language.id);
 
-const DEFAULTS: SettingsState = { theme: 'system', server: null, serverApps: null, onboarded: false, languages: ALL_LANGUAGES, grain: true, appearance: DEFAULT_APPEARANCE, locale: 'fr' };
+const DEFAULTS: SettingsState = { theme: 'system', server: null, serverApps: null, serverFeatures: {}, onboarded: false, languages: ALL_LANGUAGES, grain: true, appearance: DEFAULT_APPEARANCE, locale: 'fr' };
 
 export const useSettingsStore = create<SettingsState>(() => DEFAULTS);
 
@@ -71,6 +74,17 @@ export const selectGrain = (s: SettingsState): boolean => s.grain;
 export const selectAppearance = (s: SettingsState): Appearance => s.appearance;
 export const selectLocale = (s: SettingsState): Locale => s.locale;
 export const selectServerApps = (s: SettingsState): readonly AppId[] | null => (s.server ? s.serverApps : null);
+
+/** Whether a server is connected and has said it set up this service (`on`), said it has not or none is connected (`off`), or has not said yet (`unknown`). */
+export type FeatureState = 'on' | 'off' | 'unknown';
+
+export const selectServerFeatureState =
+  (feature: ServerFeature) =>
+  (s: SettingsState): FeatureState => {
+    if (s.server === null) return 'off';
+    const known = s.serverFeatures[feature];
+    return known === undefined ? 'unknown' : known ? 'on' : 'off';
+  };
 
 /** The device's settings, every app's (`env.ts`). */
 const storageKey = (): string => `${getDeviceName()}.settings`;
@@ -159,6 +173,7 @@ export function loadSettings(): void {
       theme: look?.theme ?? suiteLook.theme,
       server: isServer(stored.server) && stored.server.url ? stored.server : null,
       serverApps: readApps(stored.serverApps),
+      serverFeatures: parseServerFeatures(stored.serverFeatures),
       onboarded: stored.onboarded === true,
       languages: readLanguages(stored.languages),
       grain: stored.grain !== false,
@@ -219,6 +234,18 @@ export function setServerApps(apps: readonly AppId[]): void {
   if (current && current.length === apps.length && current.every((id, at) => id === apps[at])) return;
   save({ serverApps: [...apps] });
 }
+
+/** What the server says it set up (all of it from its settings, Claude alone from its health); null forgets one (not known). */
+export function setServerFeatures(features: { readonly [F in ServerFeature]?: boolean | null }): void {
+  const current = useSettingsStore.getState().serverFeatures;
+  const next: { [F in ServerFeature]?: boolean } = {};
+  for (const feature of SERVER_FEATURES) {
+    const said = feature in features ? features[feature] : current[feature];
+    if (typeof said === 'boolean') next[feature] = said;
+  }
+  if (SERVER_FEATURES.every(feature => next[feature] === current[feature])) return;
+  save({ serverFeatures: next });
+}
 export const setGrain = (grain: boolean): void => save({ grain });
 export const setAppearance = (appearance: Appearance): void => save({ appearance });
 
@@ -242,10 +269,10 @@ export function normalizeServer(config: ServerConfig): ServerConfig {
 }
 
 export function setServer(config: ServerConfig | null): void {
-  // Another server runs other apps: forget what this one said.
+  // Another server runs other apps and sets up other services: forget what this one said.
   const next = config ? normalizeServer(config) : null;
   const same = next !== null && next.url === useSettingsStore.getState().server?.url;
-  save(next ? { server: next, ...(same ? {} : { serverApps: null }) } : { server: null, serverApps: null });
+  save(next ? { server: next, ...(same ? {} : { serverApps: null, serverFeatures: {} }) } : { server: null, serverApps: null, serverFeatures: {} });
 }
 
 /** Test seam. */

@@ -2,6 +2,9 @@
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_PHONE: Dictionary = {
+  'Couleur : {name}': 'Colour: {name}',
+  'Couleur de ses libellés': 'Its labels’ colour',
+  'Couleur par défaut': 'Default colour',
   '« Demander à Claude » sur l’agenda': '“Ask Claude” about the calendar',
   '{app} · votre agenda, chez vous': '{app} · your calendar, at home',
   '{day}, aujourd’hui': '{day}, today',
@@ -162,4 +165,6 @@ export const EN_PHONE: Dictionary = {
   'Donnez-lui un nom.': 'Give it a name.',
   'Lieu : {place}': 'Place: {place}',
   'Aucun événement sur ces jours. Le bouton +, en bas, en ajoute un.': 'No events on these days. The + button, at the bottom, adds one.',
+  'Pas dans la liste : « OK » garde ce fuseau.': 'Not in the list: “OK” keeps this time zone.',
+  'Aucun fuseau ne correspond.': 'No time zone matches.',
 };

@@ -21,11 +21,11 @@ import { useMinute } from '@shared/app/hooks/useMinute';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, FAB_CLEARANCE, Organic, Tappable } from '@shared/ui/components';
+import { AppText, FAB_CLEARANCE, Organic, ScrollEdges, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
+import { listIn } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { ITEM_IN, useArrivals } from './arrivals';
 import { EDGE_ROOM, EventEdge } from './EventEdge';
 import { itemColor, itemTitle, paintOf } from './paint';
 import { usePeriodScroll } from './PeriodPager';
@@ -83,6 +83,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
   );
   // The day scrolls up from under the bottom bar, which lies over the screen's foot.
   const insets = useSafeAreaInsets();
+  const pullToSync = usePullToSync();
   const state = useLibraryStore.getState();
 
   // Opens on the morning, or on now when today shows and it is later; turning the period keeps the hours where they were, as a page turned keeps its line.
@@ -153,7 +154,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
           {bars.map(bar => {
             const paint = paintOf(theme, bar.item.kind === 'event' ? bar.item.color : null);
             return (
-              <Animated.View key={bar.occurrence.key} entering={arrived.has(bar.occurrence.key) ? ITEM_IN : undefined} style={[styles.barSlot, { left: GUTTER + bar.column * column + 2, width: bar.span * column - 4, top: bar.lane * LANE + 2 }]}>
+              <Animated.View key={bar.occurrence.key} entering={arrived.has(bar.occurrence.key) ? listIn : undefined} style={[styles.barSlot, { left: GUTTER + bar.column * column + 2, width: bar.span * column - 4, top: bar.lane * LANE + 2 }]}>
                 <Tappable onPress={() => onOpen(bar.item, days[bar.column]!)} style={[styles.bar, styles.edged, { backgroundColor: paint.tint }]} accessibilityRole="button" accessibilityLabel={itemTitle(bar.item)}>
                   <EventEdge color={paint.fill} />
                   <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1}>
@@ -168,7 +169,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
               const paint = paintOf(theme, itemColor(item));
               const key = `${item.key}@${days[index]}`;
               return (
-                <Animated.View key={key} entering={arrived.has(key) ? ITEM_IN : undefined} style={[styles.barSlot, { left: GUTTER + index * column + 2, width: column - 4, top: (barLanes + row) * LANE + 2 }]}>
+                <Animated.View key={key} entering={arrived.has(key) ? listIn : undefined} style={[styles.barSlot, { left: GUTTER + index * column + 2, width: column - 4, top: (barLanes + row) * LANE + 2 }]}>
                   <Tappable onPress={() => onOpen(item, days[index]!)} style={[styles.bar, { backgroundColor: paint.tint }]} accessibilityRole="button" accessibilityLabel={itemTitle(item)}>
                     <AppText variant="labelSmall" color={paint.text} numberOfLines={1}>
                       {item.kind === 'reminder' ? `${clockWords(formatClock(item.reminder.at), twelveHours)} ${itemTitle(item)}` : itemTitle(item)}
@@ -196,7 +197,9 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
           )}
         </View>
       ) : null}
-      <Animated.ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} style={styles.fill} contentContainerStyle={{ height: HOUR_HEIGHT * 24 + 24 + FAB_CLEARANCE + insets.bottom }}>
+      {/* The hours soften as they slide under the day heads and the screen's foot. */}
+      <ScrollEdges>
+      <Animated.ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} style={styles.fill} contentContainerStyle={{ height: HOUR_HEIGHT * 24 + 24 + FAB_CLEARANCE + insets.bottom }} refreshControl={pullToSync}>
         {Array.from({ length: 24 }, (_, hour) => (
           <View key={hour} style={[styles.hour, { top: hour * HOUR_HEIGHT }]}>
             <AppText variant="labelSmall" color={theme.color.inkMuted} style={styles.hourLabel}>
@@ -230,7 +233,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
                   return (
                     <Animated.View
                       key={box.occurrence.key}
-                      entering={arrived.has(box.occurrence.key) ? ITEM_IN : undefined}
+                      entering={arrived.has(box.occurrence.key) ? listIn : undefined}
                       style={[styles.boxSlot, { top: (box.top / 60) * HOUR_HEIGHT + 1, height, left: box.column * part + 2, width: part * box.span - 4 }]}
                     >
                       <Tappable
@@ -273,6 +276,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
           </View>
         ) : null}
       </Animated.ScrollView>
+      </ScrollEdges>
     </View>
   );
 }

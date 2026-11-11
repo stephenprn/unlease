@@ -6,6 +6,8 @@
  * demo.
  */
 import { inEnglish, t, tc } from '@unlease/core/i18n';
+import { foldText } from '@unlease/core/services/search';
+import { SUGGESTED_COLLECTIONS } from '../models/collections';
 import { INBOX_ID, LINK_KINDS, type LinkItem, type LinkKind, type Note } from '../models/entities';
 import {
   KIND_TEMPLATES,
@@ -242,12 +244,59 @@ export function kindsOfLinks(links: readonly Pick<LinkItem, 'kind' | 'deletedAt'
   return [...counts].sort((a, b) => b[1] - a[1] || LINK_KINDS.indexOf(a[0]) - LINK_KINDS.indexOf(b[0])).map(([kind]) => kind);
 }
 
+/** Words a collection's title uses for each kind, French then English, folded (no accents). */
+export const KIND_WORDS: Readonly<Record<LinkKind, readonly string[]>> = {
+  product: ['achat', 'shopping', 'envie', 'wishlist', 'cadeau', 'buy', 'gift', 'wish', 'shop'],
+  film: ['film', 'cinema', 'movie'],
+  series: ['serie', 'show', 'tv'],
+  book: ['livre', 'bouquin', 'lecture', 'book', 'reading'],
+  music: ['musique', 'album', 'chanson', 'playlist', 'music', 'song'],
+  game: ['jeu', 'jeux', 'gaming', 'game', 'games', 'console'],
+  restaurant: ['restaurant', 'resto', 'bar', 'cafe', 'manger', 'food', 'eat', 'dining'],
+  place: ['lieu', 'visite', 'voyage', 'sortie', 'place', 'visit', 'travel', 'trip'],
+  recipe: ['recette', 'cuisine', 'recipe', 'cooking'],
+  article: ['article', 'lecture', 'lire', 'read'],
+  video: ['video'],
+  event: ['evenement', 'concert', 'expo', 'sortie', 'event', 'exhibition', 'gig'],
+  other: [],
+};
+
+/** Whether a collection's title names this kind (« Films & séries » names films and series). */
+export function titleNamesKind(title: string, kind: LinkKind): boolean {
+  const tokens = foldText(title).trim().split(/[^a-z0-9]+/);
+  return KIND_WORDS[kind].some(word => tokens.some(token => token.startsWith(word)));
+}
+
 /**
- * What a collection's own facts start from when it takes them: the usual facts of its links' most
- * frequent kind (a wine shop's products: their brand, colour…), to change rather than write from
- * nothing; none when its links have no kind yet.
+ * The kinds a collection's facts are for: its links' (most frequent first), then those its title
+ * names, so a collection whose links are not read yet (« Films & séries ») starts from, and is
+ * offered, a film's facts rather than a product's.
  */
-export function startingFacts(templates: Templates, kinds: readonly LinkKind[]): TemplateField[] {
+export function collectionKinds(links: readonly Pick<LinkItem, 'kind' | 'deletedAt'>[], title: string): LinkKind[] {
+  const found = kindsOfLinks(links);
+  return [...found, ...LINK_KINDS.filter(kind => !found.includes(kind) && titleNamesKind(title, kind))];
+}
+
+/** The fixed id a starter collection's own facts are kept under (`facts-line-restos`): two devices making « Restaurants » write one list. */
+export function starterTemplateId(collectionId: string): string {
+  return `facts-${collectionId}`;
+}
+
+/** A starter collection's own facts (`SuggestedCollection.facts`) in the interface's language, or null for any other collection. */
+export function starterFacts(collectionId: string): TemplateField[] | null {
+  const facts = SUGGESTED_COLLECTIONS.find(starter => starter.id === collectionId)?.facts ?? [];
+  return facts.length > 0 ? facts.map(presetField) : null;
+}
+
+/**
+ * What a collection's own facts start from when it takes them: a starter's own (« Restaurants »
+ * made before starters came with them), else the usual facts of its links' most frequent kind (a
+ * wine shop's products: their brand, colour…), or of the kind its title names, to change rather
+ * than write from nothing; none when neither says.
+ */
+export function startingFacts(templates: Templates, kinds: readonly LinkKind[], collectionId?: string): TemplateField[] {
+  const starter = collectionId ? starterFacts(collectionId) : null;
+  if (starter) return starter;
   const kind = kinds[0];
   return kind ? kindFields(templates, kind).map(field => ({ ...field })) : [];
 }

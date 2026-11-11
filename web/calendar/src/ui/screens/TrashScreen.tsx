@@ -3,7 +3,7 @@
  * week, each with when it went there, « Restaurer » (with « Annuler ») and « Supprimer
  * définitivement » (asked first); « Vider la corbeille » at its head, asked first.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { formatRelative } from '@unlease/core/services/format';
@@ -18,6 +18,7 @@ import { EmptyState } from '@shared/ui/components/EmptyState';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { PageHead } from '@shared/ui/navigation/PageHead';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { binnedEvents, deleteEventForGood, emptyBin, restore } from '../../app/store/actions';
 import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
@@ -29,6 +30,9 @@ export function TrashScreen() {
   const [deleting, setDeleting] = useState<CalendarEvent | null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const binned = useMemo(() => binnedEvents(), [events]);
+  const list = useRef<HTMLUListElement>(null);
+  // An event restored or deleted fades where it was, the others close ranks; one put back by « Annuler » settles in.
+  useListMotion(list, { late: true });
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
       <PageHead title={t('Corbeille')} action={binned.length > 0 ? { label: t('Vider la corbeille'), icon: 'broom', onClick: () => setEmptying(true) } : undefined} />
@@ -38,11 +42,11 @@ export function TrashScreen() {
         <>
           <p className={`${styles.lead} t-meta`}>{t('Les événements de la corbeille sont supprimés au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p>
           <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
-            <ul className={styles.list}>
+            <ul ref={list} className={styles.list}>
               {binned.map(event => {
                 const title = event.title.trim() || t('Sans titre');
                 return (
-                  <li key={event.id} className={styles.simpleRow}>
+                  <li key={event.id} className={styles.simpleRow} data-motion={event.id}>
                     <span className={styles.rowText}>
                       <span className="t-body-strong">{title}</span>
                       <span className="t-meta">

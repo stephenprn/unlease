@@ -1,6 +1,11 @@
-/** Every collection as a pinned tile: its emblem, what it holds and for whom Claude files, a glimpse of its links; "Non classé" last. */
+/**
+ * Every collection as a pinned tile: its emblem, what it holds and for whom Claude files, a glimpse of
+ * its links; "Non classé" last. A few dozen at most, so they hang in one wrap rather than a virtualised
+ * grid: one leaving fades where it was and the others close ranks, one arriving settles in after them.
+ */
 import React, { memo, useState } from 'react';
-import { FlatList, Image, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
@@ -14,9 +19,10 @@ import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 
-import { AppText, EmblemStone, Grain, Ground, Icon, IconButton, Organic, Tappable, TopBar } from '../components';
+import { AppText, EdgeScrollView, EmblemStone, Grain, Ground, Icon, IconButton, Organic, Tappable, TopBar, useArrivals } from '../components';
 import { NewLineSheet } from '../features/lines/NewLineSheet';
 import type { ScreenProps } from '../navigation/types';
+import { listIn, listMove, listOut, listPressDelay } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
@@ -38,40 +44,38 @@ export function LinesScreen({ navigation }: ScreenProps<'Lines'>) {
   const [creating, setCreating] = useState(false);
   const tile = (width - PADDING * 2 - GAP) / 2;
   const data = [...lines.map(line => line.id), NEW];
+  const arrived = useArrivals(data);
   return (
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Collections')} onBack={() => navigation.goBack()} actions={<IconButton icon="plus" label={t('Nouvelle collection')} onPress={() => setCreating(true)} />} />
-      <FlatList
-        data={data}
-        keyExtractor={id => id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <AppText variant="body" style={styles.intro}>
-            {t('Claude lit chaque lien que vous enregistrez et le range dans la collection qui lui correspond. La phrase de chaque collection l’aide à choisir.')}
-          </AppText>
-        }
-        renderItem={({ item }) =>
-          item === NEW ? (
-            <Tappable onPress={() => setCreating(true)} accessibilityLabel={t('Nouvelle collection')} outline={NEW_TILE} style={[styles.add, { width: tile }]}>
-              <Icon name="plus" size={28} color={styles.addText.color} />
-              <AppText variant="bodyStrong" color={styles.addText.color}>
-                {t('Nouvelle collection')}
-              </AppText>
-            </Tappable>
-          ) : (
-            <CollectionTile id={item} width={tile} onPress={() => navigation.navigate('Line', { id: item })} />
-          )
-        }
-      />
+      <EdgeScrollView contentContainerStyle={styles.list}>
+        <AppText variant="body" style={styles.intro}>
+          {t('Claude lit chaque lien que vous enregistrez et le range dans la collection qui lui correspond. La phrase de chaque collection l’aide à choisir.')}
+        </AppText>
+        <View style={styles.grid}>
+          {data.map(item => (
+            <Animated.View key={item} layout={listMove} entering={arrived.has(item) ? listIn : undefined} exiting={listOut} style={{ width: tile }}>
+              {item === NEW ? (
+                <Tappable unstable_pressDelay={listPressDelay} onPress={() => setCreating(true)} accessibilityLabel={t('Nouvelle collection')} outline={NEW_TILE} style={styles.add}>
+                  <Icon name="plus" size={28} color={styles.addText.color} />
+                  <AppText variant="bodyStrong" color={styles.addText.color}>
+                    {t('Nouvelle collection')}
+                  </AppText>
+                </Tappable>
+              ) : (
+                <CollectionTile id={item} onPress={() => navigation.navigate('Line', { id: item })} />
+              )}
+            </Animated.View>
+          ))}
+        </View>
+      </EdgeScrollView>
       <NewLineSheet visible={creating} onDismiss={() => setCreating(false)} onCreated={id => navigation.navigate('Line', { id })} />
     </View>
   );
 }
 
-function CollectionTile({ id, width, onPress }: { id: string; width: number; onPress: () => void }) {
+function CollectionTile({ id, onPress }: { id: string; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const line = useLibraryStore(s => s.notes[id]);
@@ -89,8 +93,8 @@ function CollectionTile({ id, width, onPress }: { id: string; width: number; onP
   // What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading).
   const holds = count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : [plural(count, 'lien'), total].filter(Boolean).join(' · ');
   return (
-    <Organic outline="card" style={[styles.tile, { width }]}>
-      <Tappable onPress={onPress} accessibilityLabel={`${shownTitle(line)}, ${holds}`} style={styles.press}>
+    <Organic outline="card" style={styles.tile}>
+      <Tappable unstable_pressDelay={listPressDelay} onPress={onPress} accessibilityLabel={`${shownTitle(line)}, ${holds}`} style={styles.press}>
         <Grain />
         <View style={styles.mark}>
           <EmblemStone id={id} emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={40} width={64} height={58} tilt={-6} />
@@ -138,9 +142,10 @@ const makeStyles = (theme: Theme) =>
     list: { paddingHorizontal: PADDING, paddingBottom: 32 },
     // On the screen's margin (16), in line with the top bar's Back.
     intro: { color: theme.color.inkMuted, paddingHorizontal: 4, paddingTop: 4, paddingBottom: 16 },
-    row: { gap: GAP, marginBottom: GAP },
-    // It clips its paper's grain to its own shape; its shadow is drawn outside the clip.
-    tile: { backgroundColor: theme.color.paper, borderWidth: 1, borderColor: theme.color.hairline, boxShadow: theme.lift.card, overflow: 'hidden' },
+    // Two tiles a row, as tall as the taller of the two.
+    grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GAP, rowGap: GAP, paddingBottom: GAP },
+    // It clips its paper's grain to its own shape; its shadow is drawn outside the clip. It fills its slot.
+    tile: { flexGrow: 1, backgroundColor: theme.color.paper, borderWidth: 1, borderColor: theme.color.hairline, boxShadow: theme.lift.card, overflow: 'hidden' },
     press: { overflow: 'hidden', padding: 14, gap: 4, minHeight: 190 },
     mark: { alignSelf: 'flex-start', marginBottom: 10, marginLeft: -4 },
     hint: { flexGrow: 1 },
@@ -148,6 +153,6 @@ const makeStyles = (theme: Theme) =>
     glimpses: { flexDirection: 'row', gap: 6, marginTop: 6 },
     count: { marginTop: 6 },
     // habits-garden's dashed affordance: an ink edge, the label in deep terracotta.
-    add: { minHeight: 190, alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.color.dashed, padding: 14 },
+    add: { flexGrow: 1, minHeight: 190, alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.color.dashed, padding: 14 },
     addText: { color: theme.color.link },
   });

@@ -29,6 +29,7 @@ import { addedTone } from '@notes/app/store/notesUi';
 import { openLink } from '@notes/ui/commands';
 import { Switch } from '@shared/ui/components/Checkbox';
 import controls from '@shared/ui/components/controls.module.css';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
@@ -265,7 +266,7 @@ export function CollectionTable({ block, lineId, name, ids, done }: { block: Blo
           </table>
         </div>
       ) : (
-        <p className={`${styles.embedEmpty} t-meta`}>{t('Aucun lien à faire dans cette collection.')}</p>
+        <EmptyLine className={styles.embedEmpty} text={t('Aucun lien à faire dans cette collection.')} />
       )}
       {readOnly ? null : <AddLink lineId={lineId} name={name} />}
     </>

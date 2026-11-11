@@ -93,6 +93,24 @@
             <data android:mimeType="text/directory" />
         </intent-filter>
 
+        <!-- « Créer un contact » from another app (the dialer's, Messages', a mail app's), and « Ajouter à un
+             contact » (INSERT_OR_EDIT): the new contact's form, filled with what it hands
+             (ContactsContract.Intents.Insert, IntakeModule); nothing is kept until it is saved. -->
+        <intent-filter android:label="@string/add_contact">
+            <action android:name="android.intent.action.INSERT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="vnd.android.cursor.dir/contact" />
+            <data android:mimeType="vnd.android.cursor.dir/raw_contact" />
+            <data android:mimeType="vnd.android.cursor.dir/person" />
+        </intent-filter>
+        <intent-filter android:label="@string/add_contact">
+            <action android:name="android.intent.action.INSERT_OR_EDIT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="vnd.android.cursor.item/contact" />
+            <data android:mimeType="vnd.android.cursor.item/raw_contact" />
+            <data android:mimeType="vnd.android.cursor.item/person" />
+        </intent-filter>
+
         <!-- unlease-contacts://contact/<id>, new, favorites, birthdays, label/<id> (APPS.contacts.scheme), its home with no path: custom scheme, no host. -->
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
@@ -119,6 +137,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="carnet" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherSarcelle"
@@ -133,6 +152,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="sarcelle" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMyrtille"
@@ -147,6 +167,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="myrtille" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherGlycine"
@@ -161,6 +182,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="glycine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherPivoine"
@@ -175,6 +197,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="pivoine" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMimosa"
@@ -189,6 +212,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mimosa" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherArdoise"
@@ -203,6 +227,7 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="ardoise" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <activity-alias
         android:name=".LauncherMousse"
@@ -217,8 +242,20 @@
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <meta-data android:name="com.stephenprn.unlease.launcher.palette" android:value="mousse" />
+        <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
       </activity-alias>
       <!-- GENERATED: end of the launcher entries -->
+
+      <!-- Where the launcher's static shortcuts land (res/xml/shortcuts.xml): it hands their link to
+           MainActivity, so Android's clearing of the task a static shortcut opens touches only its own.
+           Never shows. -->
+      <activity
+        android:name="com.stephenprn.unlease.launch.ShortcutActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="false"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true" />
 
       <!-- The home-screen widgets (android/.../widget, docs/ARCHITECTURE.md). The providers are exported
            because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->

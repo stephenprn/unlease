@@ -232,7 +232,7 @@ export function ReminderPicker({ open, anchor, current, now, onDismiss, onSet }:
     onDismiss();
   };
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Rappel')} width={340}>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Rappel')} width={340} rows>
       <div className={styles.picker}>
         {/* A sheet on a phone says what it holds; by the bell it came from, the times do. */}
         {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Rappel')}</h2> : null}

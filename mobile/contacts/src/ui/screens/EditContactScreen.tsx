@@ -28,6 +28,7 @@ import { addressPlace, phoneKindName, placeKindName } from '@unlease/contacts/se
 import { CALLING_CODES, numberParts, writtenNumber, type NumberParts } from '@unlease/contacts/services/phones';
 import type { Place } from '@unlease/core/sync/places';
 import { useContact } from '@app/hooks/useContacts';
+import { handedDraft } from '@app/handedContact';
 import { deviceRegion } from '@app/reach';
 import { cleanDraft, createContact, createLabel, draftPatch, labelNameTaken, updateContact, type ContactDraft } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -76,7 +77,7 @@ function CodeChip({ region, onPress }: { region: string | null; onPress: () => v
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable onPress={onPress} style={[styles.kind, styles.code]} accessibilityRole="button" accessibilityLabel={t('Indicatif : {country}', { country: region ? callingCountry(region) : t('Aucun indicatif') })}>
+    <Tappable frost onPress={onPress} style={[styles.kind, styles.code]} accessibilityRole="button" accessibilityLabel={t('Indicatif : {country}', { country: region ? callingCountry(region) : t('Aucun indicatif') })}>
       <AppText variant="label" numberOfLines={1} style={styles.kindText}>
         {region ? `+${CALLING_CODES[region] ?? ''}` : '—'}
       </AppText>
@@ -105,7 +106,7 @@ function KindChip({ name, onPress }: { name: string; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable onPress={onPress} style={styles.kind} accessibilityRole="button" accessibilityLabel={t('Type : {kind}', { kind: name })}>
+    <Tappable frost onPress={onPress} style={styles.kind} accessibilityRole="button" accessibilityLabel={t('Type : {kind}', { kind: name })}>
       <AppText variant="label" numberOfLines={1} style={styles.kindText}>
         {name}
       </AppText>
@@ -146,6 +147,8 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
   const initial = useMemo<ContactDraft>(() => {
     // A number and an e-mail ready to fill, as on the web (Google's form): an empty row is left out when saved.
     if (contact) return { ...EMPTY_DRAFT, ...contact, phones: contact.phones.length > 0 ? contact.phones : [newPhone()], emails: contact.emails.length > 0 ? contact.emails : [newEmail()] };
+    // Another app's « Créer un contact »: what it handed, kept only once saved (× leaves without a trace).
+    if (route.params?.handed) return { ...EMPTY_DRAFT, ...handedDraft(route.params.handed, createId) };
     return {
       ...EMPTY_DRAFT,
       phones: [newPhone(route.params?.phone ?? '')],
@@ -156,7 +159,7 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
     // The form starts from the contact as it was opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const initialNote = useRef(contact?.note ?? '').current;
+  const initialNote = useRef(contact?.note ?? route.params?.handed?.note ?? '').current;
   // The « Indicatif par défaut » as the form opened: a number without its code, and every new one, take it.
   const [fallback] = useState(deviceRegion);
   // A birthday is read month first in English where the region writes dates so (`birthdayMonthFirst`).

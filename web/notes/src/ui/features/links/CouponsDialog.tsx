@@ -18,6 +18,7 @@ import { useLibraryStore } from '../../../app/store/library';
 import { showError, showSnack } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { useOutline } from '@shared/ui/components/Outline';
@@ -116,7 +117,7 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
     ) : (
       <>
         {phase.answer.coupons.length === 0 ? (
-          <p className="t-body">{t('Aucun code en cours trouvé pour {shop}.', { shop })}</p>
+          <EmptyLine size="body" text={t('Aucun code en cours trouvé pour {shop}.', { shop })} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={t('Codes promo')}>
             {phase.answer.coupons.map((coupon, index) => (

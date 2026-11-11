@@ -19,7 +19,6 @@ import { ClaudeSection } from '@shared/ui/features/settings/ClaudeSection';
 import { AdminScreen } from '@shared/ui/screens/AdminScreen';
 import { parseRoute } from '@shared/ui/router';
 import { SettingsScreen } from '@shared/ui/screens/SettingsScreen';
-import { usePrefsStore } from '@notes/app/store/prefs';
 
 const SERVER = { url: 'https://carnet.test', token: 'jeton' };
 const ON: ServerSettings['analysis'] = { enabled: true, keySource: 'app', keyHint: '…k3Xq', model: 'claude-opus-5-5', budgetUsd: 15 };
@@ -77,7 +76,7 @@ describe('link reading by Claude, in the Administration', () => {
     expect(screen.getByText(/^Sur un budget de 15,00\s\$ · depuis le début 0,40\s\$$/)).toBeInTheDocument();
     expect(screen.getByRole('meter', { name: 'Budget du mois utilisé' })).toHaveAttribute('aria-valuenow', '1');
     // The cache that new links are marked from follows the server.
-    expect(usePrefsStore.getState().reading).toBe(true);
+    expect(useSettingsStore.getState().serverFeatures.claude).toBe(true);
   });
 
   it('shows the server’s refusal of a key, then saves a good one', async () => {
@@ -101,7 +100,7 @@ describe('link reading by Claude, in the Administration', () => {
     expect(await screen.findByText('Claude activé')).toBeInTheDocument();
     expect(screen.getByText('Clé …ABCD')).toBeInTheDocument();
     expect(puts.at(-1)).toEqual({ anthropicApiKey: 'sk-ant-api03-abcdefghijklmnopqrstuvwxyzABCD' });
-    expect(usePrefsStore.getState().reading).toBe(true);
+    expect(useSettingsStore.getState().serverFeatures.claude).toBe(true);
     expect(useUiStore.getState().snack?.message).toBe('Clé enregistrée');
   });
 
@@ -125,7 +124,7 @@ describe('link reading by Claude, in the Administration', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Supprimer' }));
     expect(await screen.findByText('Claude désactivé')).toBeInTheDocument();
     expect(puts.at(-1)).toEqual({ anthropicApiKey: null });
-    expect(usePrefsStore.getState().reading).toBe(false);
+    expect(useSettingsStore.getState().serverFeatures.claude).toBe(false);
   });
 
   it('offers to read the links kept unread, in one go', async () => {
@@ -180,7 +179,7 @@ describe('link reading by Claude, in the Administration', () => {
     await user.type(screen.getByLabelText('Jeton'), 'jeton');
     await user.click(screen.getByRole('button', { name: 'Se connecter' }));
     await waitFor(() => expect(useSettingsStore.getState().server?.url).toBe('https://carnet.test'));
-    expect(usePrefsStore.getState().reading).toBe(false);
+    expect(useSettingsStore.getState().serverFeatures.claude).toBe(false);
     expect(useUiStore.getState().snack?.message).toBe('Connecté, mais le serveur n’a pas de clé Claude.');
     // A link saved now is kept plain, not left waiting for a reader.
     const later = addLink('https://www.exemple.fr/c', { autoFile: true });
@@ -245,9 +244,25 @@ describe('classifying a link', () => {
     expect(screen.getByText('Le lien est gardé tel quel : ajoutez une clé API Claude dans l’administration pour qu’il soit lu et rangé.')).toBeInTheDocument();
   });
 
+  it('before the server has said whether it reads links, offers no « Automatique » yet, and lets the server decide', async () => {
+    const user = userEvent.setup();
+    setServer(SERVER);
+    createLine({ title: 'Mode', id: 'line-mode' });
+    openCapture('https://www.exemple.fr/veste');
+    render(<CaptureDialog />);
+    const collections = screen.getByRole('radiogroup', { name: 'Collection' });
+    expect(within(collections).queryByRole('radio', { name: /Automatique/ })).not.toBeInTheDocument();
+    expect(within(collections).getByRole('radio', { name: 'Non classé' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByRole('button', { name: 'Administration' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ajouter' }));
+    // Kept for the server to read, should it have a key.
+    expect(links()[0]).toMatchObject({ noteId: INBOX_ID, status: 'pending', autoFile: false });
+  });
+
   it('when the server reads links, files it automatically with the snip, the trackers counted', async () => {
     const user = userEvent.setup();
     setServer(SERVER);
+    setReading(true);
     createLine({ title: 'Mode', id: 'line-mode' });
     openCapture('');
     render(<CaptureDialog />);
@@ -266,6 +281,7 @@ describe('classifying a link', () => {
   it('moves between collections with the arrow keys, and files by hand where it is put', async () => {
     const user = userEvent.setup();
     setServer(SERVER);
+    setReading(true);
     const mode = createLine({ title: 'Mode', id: 'line-mode' });
     openCapture('https://www.exemple.fr/pull');
     render(<CaptureDialog />);

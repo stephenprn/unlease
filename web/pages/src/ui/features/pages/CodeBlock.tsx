@@ -15,6 +15,7 @@ import { useBlocksStore } from '../../../app/store/blocks';
 import { insertAfter, saveBlockText, turnInto, updateBlock } from '../../../app/store/pages';
 import { showError, showSnack } from '@shared/app/store/ui';
 import { onBeforePause } from '@shared/app/sync/loop';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
 import { historyKey, isMod } from './editing';
@@ -40,7 +41,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
         {codeLanguage(value).name}
         {disabled ? null : <Icon name="chevronDown" size={14} />}
       </button>
-      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={t('Langage')} width={240} align="start">
+      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={t('Langage')} width={240} align="start" rows>
         <div className={styles.languagePanel}>
           <input
             className={styles.pickerField}
@@ -57,7 +58,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
               onPick(found[0].key);
             }}
           />
-          <div className={styles.languageList} role="listbox" aria-label={t('Langages')}>
+          <div data-scroller="" className={styles.languageList} role="listbox" aria-label={t('Langages')}>
             {found.map(language => (
               <button
                 key={language.key}
@@ -76,7 +77,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
               </button>
             ))}
           </div>
-          {found.length === 0 ? <p className={`${styles.pickerEmpty} t-meta`}>{t('Aucun langage ne correspond.')}</p> : null}
+          {found.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('Aucun langage ne correspond.')} /> : null}
         </div>
       </Popover>
     </>

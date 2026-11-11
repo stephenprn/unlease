@@ -1,8 +1,10 @@
 /**
- * Agenda's settings: the way to the Administration, the theme, the colours and the ground, the
- * language; then the calendar's own on this phone: the week's first day, weekends and week numbers,
- * the hours' format, a new event's length and reminders, the maps app places open in, what keeps the reminders from ringing on
- * the minute (only while something does), the import and the export of one's events as an `.ics`, the bin.
+ * Agenda's settings, in every app's order: the calendar's own on this phone first (the week's first
+ * day, weekends and week numbers, the hours' format, a new event's length and reminders, the maps app
+ * places open in, then what keeps the reminders from ringing on the minute, only while something
+ * does); then « Apparence » (one row opening its own page: the theme, the paper's grain, the colours
+ * and the ground), the language, the import and the export of one's events as an `.ics`, the other
+ * calendars and the bin, and the way to the Administration last.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -28,13 +30,12 @@ import { makerBatterySettings } from '@platform/notifications';
 
 import { AppText, Dialog, Ground, Icon, ListRow, PickerField, Segmented, Sheet, SheetScroll, TopBar } from '@shared/ui/components';
 import { SwitchRow } from '@shared/ui/features/appearance/SwitchRow';
-import { ColorsSection, GroundSection, useAppearanceEditors } from '@shared/ui/features/appearance/AppearanceSections';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
-import { useServicesCssHint } from '@shared/ui/features/appearance/ServicesCssSheet';
-import { AdminEntrySection, LanguageSection, ThemeSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
+import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { ReminderSheet } from '../features/event/ReminderSheet';
@@ -58,12 +59,10 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const prefs = useCalendarUiStore(selectPrefs);
-  const { editColor, editGradient, editors } = useAppearanceEditors();
   const events = useLibraryStore(s => s.events);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [reminding, setReminding] = useState<'timed' | 'allDay' | null>(null);
   const [lengthOpen, setLengthOpen] = useState(false);
-  useServicesCssHint();
   const binned = Object.values(events).filter(event => event.deletedAt === null && event.trashedAt !== null && !event.recurringId && event.feedId === null).length;
   const own = Object.values(events).filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && !event.recurringId).length;
 
@@ -87,13 +86,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
-
-        <ThemeSection />
-        <ColorsSection onEdit={editColor} />
-        <GroundSection onEditColor={() => editColor('ground')} onEditGradient={editGradient} />
-        <LanguageSection />
-
+        {/* The calendar's own first. */}
         <Section title={t('Agenda')} anchor={CALENDAR_SETTINGS_SECTION}>
           <View style={styles.fields}>
             <AppText variant="metaStrong">{t('La semaine commence le')}</AppText>
@@ -126,12 +119,18 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
 
         <ReminderHealthSection makerSettings={makerBatterySettings} />
 
+        <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
+        <LanguageSection />
+
         <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
           <ListRow icon="download" title={t('Importer')} supporting={t('Un fichier .ics : l’export de Google Agenda, une invitation')} onPress={() => navigation.navigate('Import')} />
           <ListRow icon="upload" title={t('Exporter')} supporting={own > 0 ? t('{events} dans un fichier .ics', { events: plural(own, 'événement') }) : t('Aucun événement à exporter.')} onPress={own > 0 ? () => later(exportAll()) : undefined} />
           <ListRow icon="calendar" title={t('Autres agendas')} supporting={t('Vos abonnements et les jours fériés')} onPress={() => navigation.navigate('Feeds')} />
           <ListRow icon="trash" title={t('Vider la corbeille')} supporting={binned > 0 ? t('{events} dans la corbeille', { events: plural(binned, 'événement') }) : t('La corbeille est vide.')} onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined} />
         </Section>
+
+        {/* What is set once and rarely, last. */}
+        <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
         <AppText variant="meta" style={styles.about}>
           {t('{app} · votre agenda, chez vous', { app: APP_NAME })}
@@ -176,16 +175,20 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           showSnack(deletedForGoodWords(emptyBin()), undefined, { tone: 'success' });
         }}
       />
-      {editors}
     </View>
   );
+}
+
+/** Réglages' « Apparence » page, from its row or a search. */
+export function AppearanceSettingsScreen({ navigation, route }: ScreenProps<'Appearance'>) {
+  return <AppearanceScreen section={route.params?.section} onBack={() => navigation.goBack()} />;
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
     content: { padding: 12, paddingBottom: 48, gap: 20 },
-    // As the shared sections' above it (Apparence, Langue).
+    // As the shared sections' (Apparence's theme, Langue).
     fields: { gap: 14, paddingHorizontal: 16, paddingVertical: 12 },
     about: { textAlign: 'center' },
   });

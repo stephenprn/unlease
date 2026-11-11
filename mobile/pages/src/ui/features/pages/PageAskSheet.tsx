@@ -37,7 +37,7 @@ import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, Icon, IconButton, Segmented, Sheet, SHEET_INSET, SwitchMark, Tappable, TextField } from '@shared/ui/components';
+import { AppText, Button, Icon, IconButton, Organic, Segmented, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable, TextField } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -144,7 +144,7 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
         <ScopeFacts pageId={pageId} scope={scope} settings={settings} model={model} web={web} />
       </View>
 
-      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" style={styles.thread} contentContainerStyle={styles.threadContent} onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
+      <SheetScroll ref={scroll} style={styles.thread} contentContainerStyle={styles.threadContent} onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
         {thread.turns.length === 0 ? (
           <View role="group" accessibilityLabel={t('Questions pour commencer')} style={styles.starters}>
             <AppText variant="meta">{t('Claude répond d’après vos pages et cite les passages.')}</AppText>
@@ -157,7 +157,7 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
         ) : (
           thread.turns.map(turn => <Turn key={turn.id} pageId={pageId} turn={turn} onCite={cite} />)
         )}
-      </ScrollView>
+      </SheetScroll>
 
       <View style={styles.composer}>
         <View style={styles.composeRow}>
@@ -194,11 +194,11 @@ function Turn({ pageId, turn, onCite }: { pageId: string; turn: AskTurn; onCite:
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.turn}>
-      <View style={styles.question}>
+      <Organic style={styles.question}>
         <AppText variant="body" selectable>
           {turn.question}
         </AppText>
-      </View>
+      </Organic>
       {turn.answer ? (
         <Answer pageId={pageId} turn={turn} answer={turn.answer} onCite={index => onCite(turn.answer!, index)} />
       ) : turn.error !== null ? (
@@ -273,11 +273,11 @@ function Answer({ pageId, turn, answer, onCite }: { pageId: string; turn: AskTur
             return (
               <Tappable key={index} onPress={() => onCite(index)} accessibilityRole="link" accessibilityLabel={t('Source {number} : {page}', { number: cite, page: where(citation.pageId) })} style={styles.source}>
                 <View style={styles.slot}>
-                  <View style={styles.sourceNumber}>
+                  <Organic style={styles.sourceNumber}>
                     <AppText variant="metaStrong" color={theme.color.onActionContainer}>
                       {cite}
                     </AppText>
-                  </View>
+                  </Organic>
                 </View>
                 <View style={styles.flex}>
                   <AppText variant="metaStrong" numberOfLines={1}>

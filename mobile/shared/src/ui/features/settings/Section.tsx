@@ -1,13 +1,15 @@
 /**
  * A sheet of the settings or the Administration, under its title; `info` puts the "how it works"
- * pebble beside the title. Without a title, the sheet alone (a setup step heads its own).
+ * pebble beside the title. Without a title, the sheet alone (a setup step heads its own). Its rows lie
+ * 6 in from its every edge (`RowPanel`): its first and last rows (a `ListRow`, a `PanelTappable`) take
+ * their place, their press concentric with its corners as drawn at its size.
  */
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 
-import { AppText, Grain, Organic } from '../../components';
+import { AppText, Grain, Organic, RowPanel } from '../../components';
 import { useThemedStyles } from '../../theme/ThemeProvider';
 import type { Theme } from '../../theme/theme';
 import { InfoBubble, InfoButton, useInfoBubble } from './InfoBubble';
@@ -30,10 +32,9 @@ export function Section({ title, info, children, anchor }: { title?: string; inf
       ) : null}
       {title && info && bubble.open ? <InfoBubble text={t(info)} style={styles.bubble} /> : null}
       <Organic outline="panel" style={styles.card}>
-        <Organic outline="panel" style={styles.cardClip}>
-          <Grain />
+        <RowPanel outline="panel" style={styles.cardClip} backdrop={<Grain />}>
           {children}
-        </Organic>
+        </RowPanel>
       </Organic>
     </View>
   );

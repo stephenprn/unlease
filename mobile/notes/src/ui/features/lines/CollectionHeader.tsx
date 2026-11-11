@@ -2,18 +2,23 @@
  * A collection's page head: its emblem cut large and pinned at a slant, its name, the sentence
  * Claude files by, and what it holds. The same emblem, washed and huge, sits behind: it leaves by
  * the screen's top and right edges and fades out toward its foot, so the head's own bottom edge
- * never cuts it.
+ * never cuts it. Each time a collection opens, its ghost is laid down as an empty state's cut-out
+ * is (`GHOST_ENTRANCE`): it drifts in from beyond its corner and turns into its slant as it fades
+ * up to its wash. Reduce Motion shows it still.
  */
 import React, { memo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { Keyframe } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
+import { COLLAGE_LAY, GHOST_ENTRANCE } from '@unlease/design/collage';
 import { emblemShape, type CollectionEmblem } from '@unlease/design/emblems';
 import { t } from '@unlease/core/i18n';
 import type { LineColor } from '@unlease/design/colors';
 
 import { AppText, EmblemStone, IconButton } from '../../components';
+import { decelerate } from '@shared/ui/theme/motion';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
 export interface CollectionHeaderProps {
@@ -33,6 +38,15 @@ export interface CollectionHeaderProps {
 const GHOST_OPACITY = 0.14;
 /** How far up and right the ghost leaves the screen, as a share of its size. */
 const BLEED = { top: 0.2, right: 0.26 };
+
+/** The ghost laid down, from just beyond its corner, upright, into its slant (the slant itself is `styles.slant`, under it). */
+const GHOST_LAY = new Keyframe({
+  0: {
+    opacity: 0,
+    transform: [{ translateX: GHOST_ENTRANCE.dx }, { translateY: GHOST_ENTRANCE.dy }, { rotate: `${GHOST_ENTRANCE.turn}deg` }, { scale: GHOST_ENTRANCE.scale }],
+  },
+  100: { opacity: 1, transform: [{ translateX: 0 }, { translateY: 0 }, { rotate: '0deg' }, { scale: 1 }], easing: decelerate },
+}).duration(COLLAGE_LAY);
 
 /** The ghost: its gouache at full wash at the top right, gone toward its foot and toward the heading at its left, so the words never sit on it. */
 function Ghost({ emblem, fill, size }: { emblem: CollectionEmblem; fill: string; size: number }) {
@@ -61,9 +75,12 @@ function CollectionHeaderComponent({ title, emblem, color, id, hint, meta, onBac
   return (
     <View style={styles.head} onLayout={event => setHeight(Math.round(event.nativeEvent.layout.height))}>
       {height > 0 ? (
-        <View style={[styles.ghost, { top: -ghost * BLEED.top, right: -ghost * BLEED.right }]} pointerEvents="none">
-          <Ghost emblem={emblem} fill={theme.line[color ?? 'grey'].fill} size={ghost} />
-        </View>
+        // Keyed by the collection: another one opened lays its own down; its size settling as the head fills never replays it.
+        <Animated.View key={id} entering={GHOST_LAY} style={[styles.ghost, { top: -ghost * BLEED.top, right: -ghost * BLEED.right }]} pointerEvents="none">
+          <View style={styles.slant}>
+            <Ghost emblem={emblem} fill={theme.line[color ?? 'grey'].fill} size={ghost} />
+          </View>
+        </Animated.View>
       ) : null}
       <View style={[styles.bar, { marginTop: insets.top }]}>
         <IconButton icon="back" label={t('Retour')} onPress={onBack} />
@@ -96,7 +113,8 @@ function CollectionHeaderComponent({ title, emblem, color, id, hint, meta, onBac
 
 const styles = StyleSheet.create({
   head: { overflow: 'hidden', paddingBottom: 8 },
-  ghost: { position: 'absolute', transform: [{ rotate: '-12deg' }] },
+  ghost: { position: 'absolute' },
+  slant: { transform: [{ rotate: '-12deg' }] },
   // The top bar's own 64 (`TopBar`), so Back stays put from the Collections to here and on to a link.
   bar: { height: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   flex: { flex: 1 },

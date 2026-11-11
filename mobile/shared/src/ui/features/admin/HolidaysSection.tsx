@@ -17,7 +17,7 @@ import type { ServerConfig } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { saveServerSettings } from '@shared/app/sync/transport';
 
-import { AppText, Button, Icon, ListRow, TextField } from '../../components';
+import { AppText, Button, EmptyLine, Icon, ListRow, TextField } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
 import { StatusRow } from './StatusRow';
 
@@ -129,6 +129,7 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
       <View accessibilityRole="radiogroup" accessibilityLabel={t('Pays')} style={styles.list}>
         {shown.map(country => choice(country.code, country.name, current.country === country.code, () => void save(country.code, null)))}
       </View>
+      {shown.length === 0 && query.trim() && countries.length > 0 ? <EmptyLine text={t('Rien ne correspond à « {query} »', { query: query.trim() })} glyph="search" replayKey="none" style={styles.none} /> : null}
     </View>
   );
 }
@@ -138,5 +139,6 @@ const styles = StyleSheet.create({
   heading: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
   field: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
   list: { paddingBottom: 4 },
+  none: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
   mark: { width: 24, alignItems: 'center' },
 });

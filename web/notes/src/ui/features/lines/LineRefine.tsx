@@ -14,6 +14,7 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineView } from '@unlease/notes/services/lineView';
 
 import { Button } from '@shared/ui/components/Button';
+import { settleIn } from '@shared/ui/components/EmptyLine';
 import controls from '@shared/ui/components/controls.module.css';
 import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
@@ -82,11 +83,12 @@ export function ReadAllBanner({ text, action, onRead }: { text: string; action: 
   );
 }
 
-/** The filter keeps none of the collection's links: what it looked for, and the way back to all. */
+/** The filter keeps none of the collection's links: what it looked for, and the way back to all. It settles in as the empty collection's sheet does, afresh for another filter. */
 export function FilteredEmpty({ filter, collection, onClear }: { filter: LineFilter; collection: string; onClear: () => void }) {
+  const sentence = emptyFilterSentence(filter, collection);
   return (
-    <OutlinedBox kind="panel" className={`${styles.empty} ${styles.filteredEmpty} t-body`}>
-      <span>{emptyFilterSentence(filter, collection)}</span>
+    <OutlinedBox key={sentence} kind="panel" className={`${styles.empty} ${styles.filteredEmpty} ${settleIn} t-body`} role="status">
+      <span>{sentence}</span>
       <Button kind="text" small onClick={onClear}>
         {t('Tout afficher')}
       </Button>

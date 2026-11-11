@@ -3,7 +3,7 @@
  * weather when its layer is on; what takes the whole day (birthdays, all-day events, a page's day);
  * then what has a time, in time order, what is over in muted ink, what is under way (its title a
  * weight up) and what comes next saying how long (« Encore 25 min », « Dans 20 min »), the now line between them; an empty day
- * says so and offers to add an event; « Note du jour »; Carnet's reminders missed and still set;
+ * says so and offers to add an event (the view's empty state when nothing follows either, else a line); « Note du jour »; Carnet's reminders missed and still set;
  * tomorrow's birthdays, all-day events and first events. Each row opens what it is: the event, the
  * birthday, the note in Carnet, the page in Pages (`suitePlace`). Read again each minute.
  */
@@ -23,7 +23,10 @@ import { pebbleTurnOf } from '@unlease/design/pebbles';
 
 import { suitePlace } from '@shared/app/suitePlaces';
 import { Button } from '@shared/ui/components/Button';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
+import { EmptyState } from '@shared/ui/components/EmptyState';
 import { Icon } from '@shared/ui/components/Icon';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Link, navigate } from '@shared/ui/router';
 import { useTodayPlan } from '../../app/hooks/useTodayPlan';
 import { useWeather } from '../../app/hooks/useWeather';
@@ -156,9 +159,10 @@ export function TodayView({ today, now }: { today: string; now: number }) {
   const weather = useWeather(useMemo(() => [today], [today]), placed).get(today);
   const tomorrow = plan.tomorrow;
   const ids = useId();
+  const scrollEdges = useScrollEdges({ top: true });
   return (
     <div className={`${calendar.frame} paper`} data-outline="panel">
-      <div className={styles.scroll}>
+      <div ref={scrollEdges} className={styles.scroll}>
         <div className={styles.column}>
           {weather ? (
             <p className={`${styles.weather} t-meta`}>
@@ -183,13 +187,23 @@ export function TodayView({ today, now }: { today: string; now: number }) {
               ))}
               {plan.timed.length > 0 && plan.nowAt === plan.timed.length ? <NowLine now={now} twelveHours={twelveHours} /> : null}
             </ul>
-          ) : (
-            <div className={styles.emptyDay}>
-              <p className="t-body">{t('Rien de prévu aujourd’hui : la journée est à vous.')}</p>
-              <Button kind="text" icon="plus" onClick={() => navigate(paths.newEvent())}>
-                {t('Créer un événement')}
-              </Button>
+          ) : plan.overdue.length === 0 && !tomorrow ? (
+            // Nothing today nor tomorrow: the view's empty place.
+            <div className={styles.emptyView}>
+              <EmptyState scene="reminders" title={t('Rien de prévu aujourd’hui')} text={t('La journée est à vous.')}>
+                <Button kind="tonal" icon="plus" onClick={() => navigate(paths.newEvent())}>
+                  {t('Créer un événement')}
+                </Button>
+              </EmptyState>
             </div>
+          ) : (
+            // Nothing today, something below: the day's line, the way to fill it after.
+            <EmptyLine
+              className={styles.emptyDay}
+              size="body"
+              text={t('Rien de prévu aujourd’hui : la journée est à vous.')}
+              action={{ label: t('Créer un événement'), onClick: () => navigate(paths.newEvent()) }}
+            />
           )}
 
           {journal ? (

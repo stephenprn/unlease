@@ -11,7 +11,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { matchRanges } from '@unlease/core/services/search';
-import { findSettings, placesFor, settingsWhere, SETTINGS_SHOWN, type SettingsPlace } from '@unlease/core/services/settingsSearch';
+import { findSettings, placesFor, settingsPageOf, settingsWhere, SETTINGS_SHOWN, type SettingsPlace } from '@unlease/core/services/settingsSearch';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { SHAPES } from '@unlease/design/shapes';
 import { ownApp } from '@shared/app/store/library';
@@ -29,10 +29,16 @@ export interface SettingsMatchesProps {
   readonly query: string;
   /** The app's own places, from its package (Carnet's board layout, Seerr), after every app's. */
   readonly own: readonly PhoneSettingsPlace[];
-  /** Opens the place: the `Settings` screen or the `Admin` screen, with its `section`. */
+  /** Opens the place: the screen `settingsScreenOf` names, with its `section`. */
   readonly onOpen: (place: PhoneSettingsPlace) => void;
   /** Where the screen's own list sits off the 16 every row takes (Contacts' faces, 4 further in). */
   readonly style?: StyleProp<ViewStyle>;
+}
+
+/** The screen a place opens, with its `section`: the Administration's, « Apparence »'s page (the look's sections, `settingsPageOf`), or Réglages'. */
+export function settingsScreenOf(place: PhoneSettingsPlace): 'Admin' | 'Appearance' | 'Settings' {
+  if (place.area === 'admin') return 'Admin';
+  return settingsPageOf(place.section) === 'appearance' ? 'Appearance' : 'Settings';
 }
 
 /** How many settings the words name (the search's summary says « Rien d'autre » under them). */

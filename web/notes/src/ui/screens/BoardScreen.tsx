@@ -24,6 +24,7 @@ import { showSnack } from '@shared/app/store/ui';
 import { newChecklist, newDrawing, newNote, newPhotoNote, openNote } from '../commands';
 import { Button } from '@shared/ui/components/Button';
 import { Confirm } from '@shared/ui/components/Dialog';
+import { EmptyState } from '@shared/ui/components/EmptyState';
 import { LabelTag } from '@shared/ui/components/LabelMark';
 import styles from '../features/board/board.module.css';
 import { CollectionChips } from '../features/board/CollectionChips';
@@ -62,6 +63,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
   const shown = useMemo(() => (searching ? [{ key: 'results', title: null, ids: results }] : sections), [searching, results, sections]);
   const title = viewTitle(view, label?.name);
   const showComposer = !searching && (view === 'notes' || view === 'reminders' || view.startsWith('label:'));
+  const summary = searching ? searchSummary(query, found, view === 'notes' ? settingsFound(query) : 0) : '';
 
   const onSelect = useCallback((id: string, event: MouseEvent, order: readonly string[]) => {
     // Shift extends from the last picked card, in reading order.
@@ -109,12 +111,13 @@ export function BoardScreen({ view }: { view: BoardView }) {
       {/* As on the phone: the settings the words name, above the notes, in the search of every note (a view's searches its own). */}
       {searching && view === 'notes' ? <SettingsMatches query={query} /> : null}
       {searching ? (
-        // As on the phone: the count, a line of meta over the results.
-        <h1 className={`${screens.resultCount} t-meta`} aria-live="polite">
-          {searchSummary(query, found, view === 'notes' ? settingsFound(query) : 0)}
+        // As on the phone: the count, a line of meta over the results; nothing found, the empty state
+        // says it, and this line stays for a screen reader alone, still announcing as words are typed.
+        <h1 className={found === 0 ? 'sr-only' : `${screens.resultCount} t-meta`} aria-live="polite">
+          {summary}
         </h1>
       ) : null}
-      {searching && found === 0 ? <p className={`${screens.resultHint} t-meta`}>{APP_WORDS.notes.searchHint}</p> : null}
+      {searching && found === 0 ? <EmptyState scene="search" title={summary} text={APP_WORDS.notes.searchHint} /> : null}
       {inBin === 0 && !searching ? (
         <EmptyBoard view={view} />
       ) : shown.some(section => section.ids.length > 0) ? (

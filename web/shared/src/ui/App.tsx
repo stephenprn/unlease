@@ -19,6 +19,7 @@ import { recordVisit } from '../app/store/spotlight';
 import { moduleOfRoute, theApp, type AppModule } from '../modules';
 import { adminPlace } from './features/admin/places';
 import { useAppearanceEffect } from './appearanceStyle';
+import { usePageEdges } from './components/scrollEdges';
 import { Snackbar } from './components/Snackbar';
 import { Tooltip } from './components/Tooltip';
 import { LookShareDialog } from './features/appearance/LookShareDialog';
@@ -29,8 +30,9 @@ import { APP_HEADER_ID, Header } from './navigation/Header';
 import { NavDrawer, NavList } from './navigation/NavDrawer';
 import { PageHeadSlot, TopBar } from './navigation/PageHead';
 import shell from './navigation/shell.module.css';
-import { adminPath, navigate, parseRoute, paths, useLocation, type Arrival, type Route } from './router';
+import { adminPath, navigate, parseRoute, paths, settingsPagePath, useLocation, type Arrival, type Route } from './router';
 import { AdminScreen } from './screens/AdminScreen';
+import { AppearanceScreen } from './screens/AppearanceScreen';
 import { AppOffScreen } from './screens/AppOffScreen';
 import { NotFound } from './screens/NotFound';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -92,7 +94,7 @@ function pageUnder(route: Route, background: string | undefined): Route {
 function pathOf(route: Route): string {
   switch (route.name) {
     case 'settings':
-      return paths.settings;
+      return settingsPagePath(route.page);
     case 'admin':
       return adminPath(route.section);
     default:
@@ -104,7 +106,7 @@ function pathOf(route: Route): string {
 function Page({ route, module }: { route: Route; module: AppModule | null }) {
   switch (route.name) {
     case 'settings':
-      return <SettingsScreen />;
+      return route.page === 'appearance' ? <AppearanceScreen /> : <SettingsScreen />;
     case 'admin':
       return <AdminScreen route={route} />;
     case 'home':
@@ -127,6 +129,7 @@ function useTabTitle(module: AppModule | null, page: Route, route: Route): strin
     const section = page.section ? adminPlace(page.section, on) : null;
     return section ? `${section.title} · ${t('Administration')} · ${name}` : `${t('Administration')} · ${name}`;
   }
+  if (page.name === 'settings' && page.page === 'appearance') return `${t('Apparence')} · ${t('Réglages')} · ${name}`;
   const title = (module ? own : null) ?? (page.name === 'settings' ? t('Réglages') : null);
   return title ? `${title} · ${name}` : name;
 }
@@ -149,6 +152,8 @@ export function App() {
   // Not during the first-run setup: a letter typed there must not make a note or a page.
   useGlobalKeys(onboarded);
   useHeaderHeight();
+  // How far the page runs on above and below the window: the header's fade and a form's pinned foot follow it.
+  usePageEdges();
   const location = useLocation();
   const route = parseRoute(location.path);
   const page = pageUnder(route, location.state.background);
@@ -201,7 +206,8 @@ export function App() {
 
   // Back from a section of the Administration, on a tab opened there: its home.
   // Back from a section of the Administration, on a tab opened there: its home.
-  const fallback = page.name === 'admin' && page.section ? adminPath() : (own?.backTo?.(page) ?? theApp().home);
+  // Back from Réglages' « Apparence », on a tab opened there: the overview.
+  const fallback = page.name === 'admin' && page.section ? adminPath() : page.name === 'settings' && page.page ? paths.settings : (own?.backTo?.(page) ?? theApp().home);
   const Bar = own && !off ? own.BottomBar : undefined;
   const Overlays = theApp().Overlays;
   return (

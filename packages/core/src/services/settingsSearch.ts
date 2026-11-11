@@ -21,11 +21,29 @@ export type SettingsArea = 'settings' | 'admin';
 export type SettingsClient = 'web' | 'phone';
 
 /**
- * The sections of Réglages every app has, as addresses: the web's `/<app>/settings#ground`, the
- * phone's `Settings` screen's `section`. An app's own are its own (`reminders`, `calendar`). Never
- * renamed: a search's results point at them.
+ * The sections of Réglages every app has, as addresses: the web's `/<app>/settings#language` (and
+ * `/<app>/settings/appearance#ground` for the look's, `settingsPageOf`), the phone's `section`. An
+ * app's own are its own (`notes`, `calendar`). Never renamed: a search's results point at them.
  */
 export const SETTINGS_SECTIONS = { appearance: 'appearance', colors: 'colors', ground: 'ground', language: 'language', data: 'data' } as const;
+
+/**
+ * Réglages' pages besides its overview: « Apparence », the look's own (the theme and the paper's
+ * grain, the colours, the ground), opened from its one row on the overview, as Android's settings
+ * give a large group a page of its own. The web's `/<app>/settings/appearance`, the phone's screen.
+ */
+export type SettingsPage = 'appearance';
+
+/** The sections on the look's page; every other is on the overview. */
+const LOOK_SECTIONS: readonly string[] = [SETTINGS_SECTIONS.appearance, SETTINGS_SECTIONS.colors, SETTINGS_SECTIONS.ground];
+
+/** The page of Réglages a section sits on: « Apparence »'s for the look's, null for the overview. */
+export function settingsPageOf(section: string | null): SettingsPage | null {
+  return section !== null && LOOK_SECTIONS.includes(section) ? 'appearance' : null;
+}
+
+/** A page's name, French (`tx`), as a place's second line says where it is. */
+const SETTINGS_PAGE_TITLES: Readonly<Record<SettingsPage, string>> = { appearance: tx('Apparence') };
 
 /** A place a search finds. `G` is the glyph's name: the design system's, which the core does not know (each app's package types its own). */
 export interface SettingsPlace<G extends string = string> {
@@ -56,7 +74,7 @@ const shared = (place: Omit<SettingsPlace, 'app'>): SettingsPlace => ({ ...place
 /** Every app's places: Réglages' sections and settings, then the Administration's shared sections and what they hold. */
 export const SHARED_SETTINGS_PLACES: readonly SettingsPlace[] = [
   shared({ id: 'settings', area: 'settings', section: null, title: tx('Réglages'), within: null, glyph: 'settings', words: ['parametres', 'preferences', 'options', 'configuration', 'settings', 'preferences'] }),
-  shared({ id: 'appearance', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Apparence'), within: null, glyph: 'sun', words: ['affichage', 'aspect', 'look', 'display', 'style'] }),
+  shared({ id: 'appearance', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Apparence'), within: null, glyph: 'palette', words: ['affichage', 'aspect', 'look', 'display', 'style'] }),
   shared({ id: 'theme', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Thème'), within: tx('Apparence'), glyph: 'moon', words: ['sombre', 'clair', 'nuit', 'jour', 'systeme', 'mode sombre', 'dark', 'light', 'night', 'dark mode', 'light mode', 'system'] }),
   shared({ id: 'paper-grain', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Grain du papier'), within: tx('Apparence'), glyph: 'note', words: ['texture', 'feuille', 'papier', 'paper', 'sheet', 'noise'] }),
   shared({ id: 'colors', area: 'settings', section: SETTINGS_SECTIONS.colors, title: tx('Couleurs'), within: null, glyph: 'palette', words: ['couleur', 'palette', 'primaire', 'accent', 'teinte', 'color', 'colour', 'primary', 'tint', 'hue'] }),
@@ -143,11 +161,17 @@ export function settingsAreaName(area: SettingsArea): string {
 }
 
 /**
- * Where a place is, as a result's second line says it: « Réglages › Fond » for a setting, the area
- * alone for a section (« Administration »); nothing for an area's own home.
+ * Where a place is, as a result's second line says it: « Réglages › Langue » for a setting, the area
+ * alone for a section of its home (« Administration »), the page between them for what lies on one
+ * (« Réglages › Apparence » for the colours, « Réglages › Apparence › Fond » for the ground's grain);
+ * nothing for an area's own home.
  */
 export function settingsWhere(place: SettingsPlace<string>): string {
   if (place.section === null) return '';
-  const area = settingsAreaName(place.area);
-  return place.within ? `${area} › ${t(place.within)}` : area;
+  const trail = [settingsAreaName(place.area)];
+  const page = place.area === 'settings' ? settingsPageOf(place.section) : null;
+  // The page itself (« Apparence ») sits on the overview; what it holds says it is on it.
+  if (page !== null && place.section !== page) trail.push(t(SETTINGS_PAGE_TITLES[page]));
+  if (place.within && !(page !== null && place.within === SETTINGS_PAGE_TITLES[page] && trail.length > 1)) trail.push(t(place.within));
+  return trail.join(' › ');
 }

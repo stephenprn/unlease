@@ -19,13 +19,26 @@ import { useSettingsStore } from './store/settingsStore';
 /** The palette whose entry is on, as last read or set (undefined until first asked; null: this build has none). */
 let on: string | null | undefined;
 
+/** What follows the entry that is on (an app's dynamic shortcuts belong to one, and go with it). */
+const switched = new Set<() => void>();
+
+/** Called after each switch of the launcher's entry; returns how to stop. */
+export function onLauncherIconSwitch(listener: () => void): () => void {
+  switched.add(listener);
+  return () => {
+    switched.delete(listener);
+  };
+}
+
 /** The entry for this app's primary turned on, when another is. */
 export function applyLauncherIcon(): void {
   if (on === undefined) on = launcherIconOn();
   if (on === null) return;
   const wanted = launcherPalette(useSettingsStore.getState().appearance.primary);
   if (wanted === on) return;
-  if (switchLauncherIcon(wanted)) on = wanted;
+  if (!switchLauncherIcon(wanted)) return;
+  on = wanted;
+  switched.forEach(listener => listener());
 }
 
 let background: NativeEventSubscription | null = null;

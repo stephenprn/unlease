@@ -19,8 +19,10 @@ export type RootStackParamList = {
   Cooking: { id: string };
   Lines: undefined;
   Labels: undefined;
-  /** Réglages, or one of its sections, landed on from a search (`appearance`, `ground`, `data`…). */
+  /** Réglages, or one of its sections, landed on from a search (`language`, `data`, the app's own…). */
   Settings: { readonly section?: string } | undefined;
+  /** Réglages' « Apparence » page, or one of its sections (`appearance`, `colors`, `ground`), from its row or a search. */
+  Appearance: { readonly section?: string } | undefined;
   /** The Administration's home, or one of its sections (`server`, `reading`, `seerr`…). */
   Admin: { readonly section?: string } | undefined;
   Import: undefined;

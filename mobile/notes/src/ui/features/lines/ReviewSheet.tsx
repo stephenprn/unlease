@@ -18,7 +18,7 @@ import { applyReview, reviewLine } from '@app/sorting';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, Emblem, EmptyLine, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
@@ -108,9 +108,7 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     return (
       <>
         <SheetScroll contentContainerStyle={styles.body}>
-          <AppText variant="body" accessibilityLiveRegion="polite">
-            {t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })}
-          </AppText>
+          <EmptyLine glyph="check" size="body" text={t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })} />
         </SheetScroll>
         <FormFoot>
           <Button kind="text" label={t('Fermer')} onPress={onDismiss} />

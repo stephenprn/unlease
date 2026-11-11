@@ -7,7 +7,7 @@ import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { selectSorting, useCaptureStore } from '@app/store/captureStore';
 
 import { AppText, ListRow, Sheet, SHEET_INSET } from '../../components';
@@ -22,7 +22,8 @@ export function DeleteLineSheet({ ids, visible, onDismiss, onChoose, onPickLine 
   const lines = useLines();
   const deleting = lines.filter(line => ids.includes(line.id) && line.id !== INBOX_ID);
   const count = useLibraryStore(s => ids.reduce((sum, id) => sum + (id !== INBOX_ID && s.notes[id]?.kind === 'links' ? (s.linksByNote[id]?.length ?? 0) : 0), 0));
-  const reading = useSettingsStore(selectCanRead);
+  // « Les ranger avec Claude » once the server said it has a key.
+  const reading = useServerFeature('claude');
   const sorting = useCaptureStore(selectSorting);
   const others = lines.some(line => !ids.includes(line.id) && line.id !== INBOX_ID);
   const choose = (fate: LinksFate) => {

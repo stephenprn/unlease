@@ -1,13 +1,13 @@
 /** The year: its twelve months as small grids, the days holding something dotted; a day opens it, a month's name the month. */
 import React, { memo, useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { addDays, dayKey } from '@unlease/calendar/services/time';
 import { itemDay } from '@app/agenda';
 import { useAgenda } from '@app/hooks/useAgenda';
 
-import { FAB_CLEARANCE } from '@shared/ui/components';
+import { EdgeScrollView, FAB_CLEARANCE, usePullToSync } from '@shared/ui/components';
 import { MiniMonth } from './MiniMonth';
 
 export interface YearViewProps {
@@ -21,6 +21,7 @@ export interface YearViewProps {
 
 function YearViewComponent({ year, today, weekStart, labelId, onDay, onMonth }: YearViewProps) {
   const insets = useSafeAreaInsets();
+  const pullToSync = usePullToSync();
   const first = dayKey(year, 1, 1);
   const agenda = useAgenda(first, dayKey(year + 1, 1, 1), labelId);
   const marked = useMemo(() => {
@@ -30,7 +31,7 @@ function YearViewComponent({ year, today, weekStart, labelId, onDay, onMonth }: 
     return out;
   }, [agenda]);
   return (
-    <ScrollView contentContainerStyle={[styles.grid, { paddingBottom: FAB_CLEARANCE + insets.bottom }]}>
+    <EdgeScrollView contentContainerStyle={[styles.grid, { paddingBottom: FAB_CLEARANCE + insets.bottom }]} refreshControl={pullToSync}>
       {Array.from({ length: 12 }, (_, index) => {
         const month = dayKey(year, index + 1, 1);
         return (
@@ -39,7 +40,7 @@ function YearViewComponent({ year, today, weekStart, labelId, onDay, onMonth }: 
           </View>
         );
       })}
-    </ScrollView>
+    </EdgeScrollView>
   );
 }
 

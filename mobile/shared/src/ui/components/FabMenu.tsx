@@ -36,9 +36,9 @@ const PEBBLE_HEIGHT = 60;
 /** What a list leaves free at its foot (over the gesture bar's inset) so its last row scrolls clear of the pebble. */
 export const FAB_CLEARANCE = MARGIN + PEBBLE_HEIGHT + 16;
 
-/** The pebble arrives from small, as Material's FAB does, and leaves faster. */
-const FAB_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.6 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.medium);
-const FAB_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.6 }], easing: accelerate } }).duration(duration.short);
+/** The pebble settles in from 0.9 (nothing grows from nothing), and leaves faster. */
+const FAB_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.9 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(duration.medium);
+const FAB_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.9 }], easing: accelerate } }).duration(duration.short);
 const DIM_IN = new Keyframe({ 0: { opacity: 0 }, 100: { opacity: 1, easing: decelerate } }).duration(duration.medium);
 const DIM_OUT = new Keyframe({ 0: { opacity: 1 }, 100: { opacity: 0, easing: accelerate } }).duration(duration.exit);
 
@@ -54,7 +54,7 @@ const ITEM_IN = Array.from({ length: 6 }, (_, index) =>
 const ITEM_OUT = new Keyframe({
   0: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
   100: { opacity: 0, transform: [{ translateY: 8 }, { scale: 0.96 }], easing: accelerate },
-}).duration(120);
+}).duration(duration.fadeBack);
 
 export interface FabMenuProps {
   /** What the pebble makes, or opens: the first is the main one (nearest the thumb). One alone, and a press makes it. */

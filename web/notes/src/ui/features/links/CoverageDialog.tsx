@@ -15,6 +15,7 @@ import { findCoverage } from '../../../app/modules';
 import { useLibraryStore } from '../../../app/store/library';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { useOutline } from '@shared/ui/components/Outline';
@@ -72,7 +73,7 @@ function CoverageBody({ id, titleId, onDismiss }: { id: string; titleId: string;
       <>
         {phase.answer.story ? <p className="t-body-strong">{phase.answer.story}</p> : null}
         {phase.answer.outlets.length === 0 ? (
-          <p className="t-body">{t('Aucun autre média trouvé sur ce sujet pour l’instant.')}</p>
+          <EmptyLine size="body" text={t('Aucun autre média trouvé sur ce sujet pour l’instant.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES.coverage}>
             {phase.answer.outlets.map((outlet, index) => (

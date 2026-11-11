@@ -3,10 +3,12 @@
  * iCal », a team's, a sports club's) and the public holidays: each shown or hidden on every device, its
  * colour, its name, when the server last read it (or why it could not), read again now, or left. The
  * server reads each address, every few hours; its events are read-only here (« Dupliquer » makes one's
- * own). An address that cannot be read, or one already followed, is said under its field.
+ * own). An address that cannot be read, or one already followed, is said under its field. A calendar
+ * linked from a website (`webcal://`) opens here with its address in the field: subscribed only once
+ * « S'abonner » is pressed.
  */
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { t, tc } from '@unlease/core/i18n';
 import { formatRelative } from '@unlease/core/services/format';
@@ -21,20 +23,20 @@ import { useMinute } from '@shared/app/hooks/useMinute';
 import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmptyState, FormFoot, Ground, IconButton, LineColorPicker, ListRow, Organic, Sheet, SHEET_INSET, SwitchMark, TextField, TopBar, useForm, useUnsaved } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyState, FormFoot, Ground, IconButton, LineColorPicker, ListRow, Organic, Sheet, SHEET_INSET, SwitchMark, TextField, TopBar, useForm, useUnsaved } from '@shared/ui/components';
 import { FeedStone } from '../features/calendar/FeedStone';
 import { Section } from '@shared/ui/features/settings/Section';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
 
-export function FeedsScreen({ navigation }: ScreenProps<'Feeds'>) {
+export function FeedsScreen({ navigation, route }: ScreenProps<'Feeds'>) {
   const styles = useThemedStyles(makeStyles);
   const now = useMinute();
   const server = useSettingsStore(selectServer);
   const order = useLibraryStore(s => s.feedOrder);
   const feeds = useLibraryStore(s => s.feeds);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(route.params?.url ?? '');
   const [name, setName] = useState('');
   const [coloring, setColoring] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -62,6 +64,12 @@ export function FeedsScreen({ navigation }: ScreenProps<'Feeds'>) {
     },
     { order: ['url', 'name'], sendOnDone: add },
   );
+  // A linked address reads as one left: if it is already followed, that is said before « S'abonner ».
+  const handedUrl = route.params?.url;
+  const urlField = form.field('url');
+  useEffect(() => {
+    if (handedUrl) urlField.left(handedUrl);
+  }, [handedUrl, urlField]);
 
   const refresh = async (id: string): Promise<void> => {
     if (!server) return;
@@ -82,7 +90,7 @@ export function FeedsScreen({ navigation }: ScreenProps<'Feeds'>) {
       <Ground />
       <TopBar title={t('Autres agendas')} onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Section title={t('S’abonner à un agenda')}>
             <View style={styles.form}>
               <TextField
@@ -146,7 +154,7 @@ export function FeedsScreen({ navigation }: ScreenProps<'Feeds'>) {
               {t('Les jours fériés se choisissent dans l’Administration, rubrique « Jours fériés ».')}
             </AppText>
           ) : null}
-        </ScrollView>
+        </EdgeScrollView>
       </KeyboardAvoidingView>
       <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringFeed?.name ?? t('Couleur')}>
         <View style={styles.sheet}>

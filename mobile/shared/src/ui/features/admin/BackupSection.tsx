@@ -20,7 +20,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { requestDownload, saveServerSettings, startBackup } from '@shared/app/sync/transport';
 import { pickBackupArchive } from '@shared/platform/media';
 
-import { AppText, Button, FormMessage, Icon, ListRow, Segmented, TextField, useForm } from '../../components';
+import { AppText, Button, EmptyLine, FormMessage, Icon, ListRow, Segmented, TextField, useForm } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { AdminOverlays, RestoreTarget } from './overlays';
 import { StatusRow } from './StatusRow';
@@ -310,9 +310,7 @@ export function BackupSection({
               {t('Lecture des sauvegardes…')}
             </AppText>
           ) : snapshots.length === 0 ? (
-            <AppText variant="meta" style={styles.note}>
-              {t('Aucune sauvegarde sur S3 pour l’instant.')}
-            </AppText>
+            <EmptyLine text={t('Aucune sauvegarde sur S3 pour l’instant.')} glyph="archive" style={styles.note} />
           ) : (
             shown.map(snapshot => <ListRow key={snapshot.name} icon="archive" title={formatMoment(snapshot.at, now)} supporting={snapshotMeta(snapshot)} onPress={() => overlays.openSnapshot(snapshot)} />)
           )}

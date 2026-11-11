@@ -27,12 +27,13 @@ export type CollagePiece =
       readonly width: number;
       readonly height: number;
       readonly rotate: number;
+      /** Its ink lines; none, a sheet turned over on its blank back. */
       readonly lines: number;
       /** A ticked box before the lines: a list. */
       readonly check?: boolean;
     };
 
-export type CollageScene = 'notes' | 'reminders' | 'archive' | 'trash' | 'label' | 'welcome';
+export type CollageScene = 'notes' | 'reminders' | 'archive' | 'trash' | 'label' | 'welcome' | 'search';
 
 export const COLLAGE_SIZE = { width: 240, height: 150 } as const;
 
@@ -71,6 +72,18 @@ export const SCENES: Record<CollageScene, readonly CollagePiece[]> = {
     { kind: 'emblem', emblem: 'goutte', ink: 'sky', x: 178, y: 78, size: 52, rotate: 12 },
   ],
   welcome: NOTES,
+  /**
+   * An app's search with nothing found: sheets fanned as if leafed through, the front one turned
+   * over on its blank back, a pebble's ring for the glass that looked.
+   */
+  search: [
+    { kind: 'emblem', emblem: 'nuage', ink: 'lilac', x: 0, y: 2, size: 72, rotate: -8 },
+    { kind: 'sheet', x: 26, y: 40, width: 76, height: 90, rotate: -17, lines: 2 },
+    { kind: 'sheet', x: 70, y: 26, width: 80, height: 98, rotate: -4, lines: 3 },
+    { kind: 'sheet', x: 120, y: 32, width: 76, height: 92, rotate: 11, lines: 0 },
+    { kind: 'emblem', emblem: 'galet', ink: 'sky', x: 170, y: 88, size: 54, rotate: -6 },
+    { kind: 'emblem', emblem: 'etoile', ink: 'yellow', x: 194, y: 6, size: 30, rotate: 12 },
+  ],
 };
 
 // ── laying the collage down ────────────────────────────────────────────────
@@ -78,6 +91,9 @@ export const SCENES: Record<CollageScene, readonly CollagePiece[]> = {
 /** Each piece is laid this long after the one under it (drawing order), each in `COLLAGE_LAY` ms. */
 export const COLLAGE_STAGGER = 70;
 export const COLLAGE_LAY = 420;
+
+/** How a cut-out is laid: from this far outside its place (board units), turned this many degrees more, from this scale. */
+export const CUTOUT_LAY = { drift: 10, turn: 12, scale: 0.92 } as const;
 
 /** A piece's box on the board, unturned: a sheet's own, an emblem's square. */
 export function pieceBox(piece: CollagePiece): { readonly x: number; readonly y: number; readonly width: number; readonly height: number } {
@@ -108,6 +124,19 @@ export function collageEntrances(scene: CollageScene): PieceEntrance[] {
     const length = Math.hypot(away.x, away.y) || 1;
     const side = index % 2 === 0 ? -1 : 1;
     if (piece.kind === 'sheet') return { dx: (away.x / length) * 6, dy: 14, turn: side * 7, scale: 0.97, delay: index * COLLAGE_STAGGER };
-    return { dx: (away.x / length) * 10, dy: (away.y / length) * 10, turn: side * 12, scale: 0.92, delay: index * COLLAGE_STAGGER };
+    return { dx: (away.x / length) * CUTOUT_LAY.drift, dy: (away.y / length) * CUTOUT_LAY.drift, turn: side * CUTOUT_LAY.turn, scale: CUTOUT_LAY.scale, delay: index * COLLAGE_STAGGER };
   });
 }
+
+/**
+ * A collection's ghost (the washed emblem behind its page's head) is laid as a cut-out, once each
+ * time the page opens: from just beyond the corner it leaves by (up and to the right, in pixels),
+ * upright, turning into its slant as it fades up to its wash, `COLLAGE_LAY` long.
+ */
+export const GHOST_ENTRANCE: PieceEntrance = {
+  dx: CUTOUT_LAY.drift * Math.SQRT1_2,
+  dy: -CUTOUT_LAY.drift * Math.SQRT1_2,
+  turn: CUTOUT_LAY.turn,
+  scale: CUTOUT_LAY.scale,
+  delay: 0,
+};

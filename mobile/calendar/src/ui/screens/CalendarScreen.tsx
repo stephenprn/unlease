@@ -113,6 +113,8 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
   const [views, setViews] = useState(false);
   const [picking, setPicking] = useState(false);
   const [quick, setQuick] = useState(false);
+  /** The words quick add opens with: none from the button, another app's selection from outside. */
+  const [quickWords, setQuickWords] = useState('');
 
   // A link into a day or a view (`unlease-agenda://day/…`, a widget's day) moves the calendar there.
   const asked = route.params?.day;
@@ -120,7 +122,26 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
   useEffect(() => {
     if (asked) showDay(asked);
     if (askedView) showView(askedView);
-  }, [asked, askedView]);
+    // Spent once followed, so the same day asked again later (« open the calendar at ») moves the calendar again.
+    if (asked || askedView) navigation.setParams({ day: undefined, view: undefined });
+  }, [asked, askedView, navigation]);
+
+  // Words selected in another app (« Créer un événement »): quick add, with them in it.
+  const handedWords = route.params?.words;
+  useEffect(() => {
+    if (handedWords === undefined) return;
+    setQuickWords(handedWords);
+    setQuick(true);
+    navigation.setParams({ words: undefined });
+  }, [handedWords, navigation]);
+
+  // The launcher's shortcut « Ajouter en quelques mots » arrives as a `capture` param: quick add opens, once.
+  const capture = route.params?.capture;
+  useEffect(() => {
+    if (capture !== 'quick') return;
+    navigation.setParams({ capture: undefined });
+    setQuick(true);
+  }, [capture, navigation]);
 
   // Back leaves a label's events for the whole calendar before it leaves the app.
   useFocusEffect(
@@ -257,8 +278,12 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
       <DayPickerSheet visible={picking} title={t('Aller au jour')} day={day} today={today} weekStart={prefs.weekStart} onDismiss={() => setPicking(false)} onDay={isToday ? goDay : showDay} />
       <QuickAddSheet
         visible={quick}
+        words={quickWords}
         today={day < today ? today : day}
-        onDismiss={() => setQuick(false)}
+        onDismiss={() => {
+          setQuick(false);
+          setQuickWords('');
+        }}
         onCreated={id => showSnack(t('Événement enregistré'), { label: tc('event', 'Ouvrir'), run: () => navigation.navigate('Event', { id }) }, { tone: 'success' })}
         onDetails={draft => navigation.navigate('Edit', { title: draft.title, start: draft.start, end: draft.end, place: draft.place, ...('timeZone' in draft && draft.timeZone ? { tz: draft.timeZone } : {}), ...('url' in draft && draft.url ? { url: draft.url } : {}), ...('description' in draft && draft.description ? { description: draft.description } : {}) })}
       />

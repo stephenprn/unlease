@@ -9,10 +9,10 @@ import { PAGES_SETTINGS_PLACES } from '@unlease/pages/services/settingsPlaces';
 
 import { pagesProjection, useBlocksStore } from './app/store/blocks';
 import { resetPageHistory } from './app/store/pageHistory';
-import { createPage, emptyPagesBin, markBlockFileUploaded } from './app/store/pages';
+import { createPage, emptyPagesBin, markBlockFileUploaded, trashedPages } from './app/store/pages';
 import { loadPagesUi } from './app/store/pagesUi';
 import { navigate } from '@shared/ui/router';
-import type { AppData, AppModule } from '@shared/modules';
+import { MOD_KEY, type AppData, type AppModule, type ShortcutGroup } from '@shared/modules';
 import { PAGES_ADMIN_SECTIONS } from './admin';
 import { openNewPage } from './ui/features/pages/PageTree';
 import { PAGES_SPOT_KINDS } from './ui/features/spotlight/kinds';
@@ -36,6 +36,27 @@ const pagesData: AppData = {
   refPaths: { page: paths.page },
 };
 
+/** Its keys in the shortcuts dialog beyond its commands': a page's editor's. */
+const PAGES_SHORTCUTS: readonly ShortcutGroup[] = [
+  {
+    title: tx('Dans une page'),
+    rows: [
+      [[tx('Entrée')], tx('Nouveau paragraphe (Maj+Entrée : nouvelle ligne)')],
+      [[MOD_KEY, tx('Entrée')], tx('Cocher la tâche, ou sortir du bloc de code')],
+      [['/'], tx('Ajouter un bloc')],
+      [['@'], tx('Mentionner une page, une note, une collection ou un lien')],
+      [[MOD_KEY, 'B'], tx('Gras (I : italique, U : souligné, E : code)')],
+      [[MOD_KEY, tx('Maj'), 'S'], tx('Barré')],
+      [[MOD_KEY, 'K'], tx('Lien sur les mots sélectionnés')],
+      [['Tab'], tx('Imbriquer le bloc (Maj+Tab : le désimbriquer)')],
+      [[MOD_KEY, tx('Maj'), '↑'], tx('Monter le bloc (↓ : le descendre)')],
+      [[MOD_KEY, 'D'], tx('Dupliquer le bloc')],
+      [[tx('Échap')], tx('Sélectionner le bloc')],
+      [[MOD_KEY, 'Z'], tx('Annuler (Ctrl+Maj+Z : rétablir)')],
+    ],
+  },
+];
+
 export const pagesModule: AppModule = {
   id: 'pages',
   home: HOME,
@@ -57,10 +78,13 @@ export const pagesModule: AppModule = {
   searchHome: HOME,
 
   spotKinds: PAGES_SPOT_KINDS,
-  commands: [{ title: tx('Nouvelle page'), icon: 'pagePlus', key: 'p', run: () => openNewPage(null) }],
+  // C makes the app's thing in every app; P, Pages' key before that, still does.
+  commands: [{ title: tx('Nouvelle page'), icon: 'pagePlus', key: 'c', aliases: ['p'], run: () => openNewPage(null) }],
+  shortcuts: PAGES_SHORTCUTS,
   spotCreates: [{ type: 'page', title: typed => t('Créer la page « {title} »', { title: typed }), icon: 'pagePlus', run: typed => navigate(paths.page(createPage({ title: typed }))) }],
 
   emptyBin: () => emptyPagesBin(),
+  binCount: () => trashedPages().length,
   adminSections: PAGES_ADMIN_SECTIONS,
   settingsPlaces: PAGES_SETTINGS_PLACES,
 };

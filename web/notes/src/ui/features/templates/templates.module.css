@@ -15,7 +15,6 @@
 }
 
 .lead {
-  max-width: 62ch;
   padding: 0 4px;
   color: var(--ink-muted);
   text-wrap: pretty;
@@ -62,7 +61,6 @@
 }
 
 .lead2 > p {
-  max-width: 62ch;
   color: var(--ink-muted);
   text-wrap: pretty;
 }
@@ -223,20 +221,25 @@
 /* A collection on Claude's usual facts: nothing yet to say about its links' kinds. */
 .usualEmpty {
   padding: 12px 16px 4px;
-  color: var(--ink-muted);
-  text-wrap: pretty;
 }
 
-/* Every kind's usual facts, the overview: quiet, at the card's foot. */
+/*
+ * Every kind's usual facts, the overview: quiet, at the card's foot, 6 in from its side and its foot
+ * as the rows are, its tint's corner there concentric with the card's (`--row-outer`). Too short to
+ * hold that corner and a tab's above it as squircles (their radii run 1.84 times as long: the browser
+ * would shrink every corner), it is drawn round at the same depth, its radii unscaled.
+ */
 .usualAll {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-height: 40px;
-  margin: 4px 6px 2px;
+  margin: 4px 6px 0;
   padding: 0 10px;
   border: 0;
-  border-radius: var(--cut-tab);
+  corner-shape: round;
+  border-radius: calc(var(--cut-tab) / var(--corner-scale));
+  border-bottom-left-radius: calc(var(--row-outer, var(--cut-tab)) / var(--corner-scale));
   background: transparent;
   color: var(--link);
   transition: background-color var(--duration-short) var(--ease-standard);
@@ -244,12 +247,12 @@
 
 @media (hover: hover) {
   .usualAll:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
+    background: color-mix(in srgb, var(--link) 8%, transparent);
   }
 }
 
 .usualAll:active {
-  background: color-mix(in srgb, var(--link) 10%, transparent);
+  background: color-mix(in srgb, var(--link) 12%, transparent);
 }
 
 /* ── the facts ────────────────────────────────────────────────────────────── */
@@ -265,8 +268,24 @@
   flex-direction: column;
   gap: var(--row-gap);
   margin: 0;
-  padding: 4px 6px;
+  padding: 0 6px 4px;
   list-style: none;
+}
+
+/*
+ * The first fact lies in the sheet's top corners, 6 in from its top as from its sides: its line's corner
+ * there (and its well's, open) concentric with the sheet's (`--row-outer`), and its grip's too, drawn
+ * round at the same depth (too narrow for that corner and its own as squircles, whose radii run long).
+ */
+.facts:first-child > .factList > .fact:first-child .factHead,
+.facts:first-child > .factList > .fact:first-child .factBox {
+  border-top-right-radius: var(--row-outer, var(--cut-tab));
+}
+
+.facts:first-child > .factList > .fact:first-child .grip {
+  corner-shape: round;
+  border-radius: calc(var(--cut-small) / var(--corner-scale));
+  border-top-left-radius: calc(var(--row-outer, var(--cut-small)) / var(--corner-scale));
 }
 
 /* A fact: the grip, then its line (which opens it) and, open, what it is made of. */
@@ -457,8 +476,6 @@
 /* No fact: what Claude still notes, in the sheet's own words. */
 .empty {
   padding: 14px 16px 6px;
-  color: var(--ink-muted);
-  text-wrap: pretty;
 }
 
 /* « Ajouter une information »: a row of the sheet in link ink, its plus on the grips' column. */
@@ -478,14 +495,22 @@
   transition: background-color var(--duration-short) var(--ease-standard);
 }
 
+/* With no suggestions under it, it closes the sheet, 6 above its foot: its corners there the sheet's curve (`--row-outer`), drawn round at the same depth (too short for them and a tab's as squircles, whose radii run long). */
+.facts:nth-last-child(1 of :not(svg)) > .add:not(:has(+ .common)) {
+  corner-shape: round;
+  border-radius: calc(var(--cut-tab) / var(--corner-scale));
+  border-bottom-left-radius: calc(var(--row-outer, var(--cut-tab)) / var(--corner-scale));
+  border-bottom-right-radius: calc(var(--row-outer, var(--cut-tab)) / var(--corner-scale));
+}
+
 @media (hover: hover) {
   .add:hover {
-    background: color-mix(in srgb, var(--link) 6%, transparent);
+    background: color-mix(in srgb, var(--link) 8%, transparent);
   }
 }
 
 .add:active {
-  background: color-mix(in srgb, var(--link) 10%, transparent);
+  background: color-mix(in srgb, var(--link) 12%, transparent);
 }
 
 .add:focus-visible {

@@ -116,7 +116,8 @@
   display: flex;
   flex-direction: column;
   max-height: 88%;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  /* The room it keeps above the screen's foot: inside what scrolls (`.sheetBody`), so what scrolls runs down to the screen's edge. */
+  --sheet-foot: max(16px, env(safe-area-inset-bottom));
   background: var(--wall);
   color: var(--ink);
   clip-path: var(--outline-clip, none);
@@ -155,6 +156,24 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-bottom: var(--sheet-foot);
+}
+
+/*
+ * A dialog without actions risen as the sheet scrolls its own body: the sheet's room goes inside that
+ * body instead, so its rows too run down to the screen's edge (with actions, the room lies under them).
+ */
+.sheetBody:has(> .frame:not([data-foot])) {
+  padding-bottom: 0;
+}
+.sheetBody > .frame:not([data-foot]) {
+  padding-bottom: 0;
+}
+.sheetBody > .frame:not([data-foot]) > .frameBody {
+  padding-bottom: calc(20px + var(--sheet-foot));
+}
+.sheetBody > .frame[data-kind='list']:not([data-foot]) > .frameBody {
+  padding-bottom: calc(8px + var(--sheet-foot));
 }
 
 /* A dialog sized for the middle of a wide screen fills the sheet instead, the handle standing where its top margin was. */
@@ -167,6 +186,23 @@
 /* A picker dropped from a button has no margins of its own: the sheet's 16, as on the phone. */
 .sheetPicker {
   padding: 0 16px 4px;
+}
+
+/*
+ * A picker whose own list ends it (a capped list of labels under its search field): the sheet's room
+ * goes inside that list, so its rows too run down to the screen's edge.
+ */
+.sheetBody:has(> .sheetPicker > [data-scroller]:last-child),
+.sheetBody:has(> .sheetPicker > :last-child > [data-scroller]:last-child),
+.sheetBody > .sheetPicker:has(> [data-scroller]:last-child),
+.sheetBody > .sheetPicker:has(> :last-child > [data-scroller]:last-child),
+.sheetBody > .sheetPicker > :last-child:has(> [data-scroller]:last-child) {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+.sheetBody > .sheetPicker > [data-scroller]:last-child,
+.sheetBody > .sheetPicker > :last-child > [data-scroller]:last-child {
+  padding-bottom: calc(4px + var(--sheet-foot));
 }
 
 /* Side sheet: a link's details, beside its collection. */
@@ -299,6 +335,15 @@
   padding: 6px;
 }
 
+/*
+ * A picker of rows (`rows`): the same 6 from every edge, so its first and last rows (and a field over
+ * them) are concentric with its corners; the picker's own padding is for the sheet it rises as on a
+ * phone-sized window, and goes here (`[data-rows] .its-class { padding: 0 }`).
+ */
+.popover[data-rows] {
+  padding: 6px;
+}
+
 /* Its rows, a little apart, so the one under the pointer never runs into the next. */
 .menuList {
   display: flex;
@@ -385,7 +430,8 @@
 /*
  * A dialog's frame (`DialogFrame`): the head and the actions stay, the body between them is the one
  * thing that scrolls, so its scrollbar runs from under the title to above the actions, clear of the
- * dialog's corners. Each edge takes a hairline once the body runs under it.
+ * dialog's corners. The body fades and blurs under the head, and over the actions when there are
+ * some, as far as it runs on beyond them (`useScrollEdges`), no hairline.
  */
 .frame {
   --frame-side: 24px;
@@ -413,6 +459,27 @@
   padding-bottom: 12px;
 }
 
+/*
+ * A centred list without actions: its body stops 6 short of the dialog's foot, as its rows do of its
+ * sides, so the last row lies 6 above the foot and its foot follows the dialog's corners (`--row-outer`):
+ * its hover and its press are concentric with them (a row grouped under a heading is its section's last).
+ */
+@media (min-width: 720px) {
+  .frame[data-kind='list']:not([data-foot]) {
+    padding-bottom: 6px;
+  }
+
+  .frame[data-kind='list']:not([data-foot]) > .frameBody {
+    padding-bottom: 0;
+  }
+
+  .frame[data-kind='list']:not([data-foot]) > .frameBody > :last-child:is(button, a),
+  .frame[data-kind='list']:not([data-foot]) > .frameBody > :last-child > :last-child:is(button, a) {
+    border-bottom-left-radius: var(--row-outer, var(--cut-tab));
+    border-bottom-right-radius: var(--row-outer, var(--cut-tab));
+  }
+}
+
 .frameHead {
   flex: none;
   display: flex;
@@ -421,17 +488,6 @@
   gap: 12px;
   min-height: 48px;
   padding: 20px 16px 12px 24px;
-  box-shadow: inset 0 -1px 0 transparent;
-  transition: box-shadow var(--duration-short) var(--ease-standard);
-}
-
-.frameHead[data-edge],
-.frameFoot[data-edge] {
-  --frame-edge: var(--hairline);
-}
-
-.frameHead[data-edge] {
-  box-shadow: inset 0 -1px 0 var(--frame-edge);
 }
 
 .frameTitle {
@@ -460,6 +516,7 @@
   padding-bottom: 4px;
 }
 
+/* The actions: the last one stands in the dialog's corner, as far in from its foot as from its side (24). */
 .frameFoot {
   flex: none;
   display: flex;
@@ -467,13 +524,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding: 12px 24px 20px;
-  box-shadow: inset 0 1px 0 transparent;
-  transition: box-shadow var(--duration-short) var(--ease-standard);
-}
-
-.frameFoot[data-edge] {
-  box-shadow: inset 0 1px 0 var(--frame-edge);
+  padding: 12px 24px 24px;
 }
 
 /* The phone's sheet: its handle stands where the head's top margin was, and its content keeps the sheet's 16 from the edges. */
@@ -507,7 +558,7 @@
     --frame-side: 24px;
   }
   .centerPanel > .frame.dialog .frameFoot {
-    padding: 12px 24px 20px;
+    padding: 12px 24px 24px;
   }
   /* A dialog risen as the sheet: its title under the handle, on the sheet's 16 as its body is. */
   .sheetBody > .frame.dialog .frameHead {

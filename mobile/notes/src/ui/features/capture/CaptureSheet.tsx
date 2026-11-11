@@ -18,7 +18,8 @@ import { asLineColor } from '@unlease/design/colors';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { addLinks, type PlacedLink } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectCanRead, selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeatureState } from '@shared/app/hooks/useServerFeature';
 import { useLines } from '@app/hooks/useLines';
 import { showSnack } from '@shared/app/store/uiStore';
 import { closeCapture, selectCaptureOpen, selectCaptureText, startTransfer, useCaptureStore } from '@app/store/captureStore';
@@ -56,7 +57,9 @@ export interface LinkCaptureSheetProps {
 export function LinkCaptureSheet({ visible, initial, preset = null, title = t('Classer un lien'), offerClipboard = true, onDismiss, onAdded, onAdmin }: LinkCaptureSheetProps) {
   const theme = useTheme();
   const lines = useLines();
-  const reading = useSettingsStore(selectCanRead);
+  // Claude files it (« Automatique ») once the server said it has a key; said it has none, the way to the Administration. Not said yet: neither (a link added still waits for its reading).
+  const claude = useServerFeatureState('claude');
+  const reading = claude === 'on';
   const server = useSettingsStore(selectServer);
   const [text, setText] = useState('');
   const [target, setTarget] = useState<LinkTarget>('auto');
@@ -88,6 +91,17 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
   // A link typed and not filed is asked about before the sheet closes on it.
   const unsaved = useUnsaved(visible && !isBlank(text) && text.trim() !== initial.trim());
   const dismiss = unsaved.guard(onDismiss);
+
+  // What becomes of the link, under the chips.
+  const fate = !server
+    ? t('Sans serveur, le lien est gardé tel quel. Claude lit les liens depuis votre serveur {app} : connectez-le dans l’administration.', { app: APP_NAME })
+    : claude === 'off'
+      ? t('Le lien est gardé tel quel : ajoutez une clé API Claude dans l’administration pour qu’il soit lu et rangé.')
+      : !reading
+        ? null
+        : target === 'auto'
+          ? t('Claude lit la page et range le lien dans la bonne collection, ou dans Non classé.')
+          : t('Claude lit la page ; le lien reste dans cette collection.');
 
   // Chosen: the paper chip ringed in matcha, as a picker marks its choice, so an emblem always sits on paper.
   const chip = (selected: boolean) => [
@@ -152,18 +166,10 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
             );
           })}
         </ScrollView>
-        <AppText variant="meta">
-          {!server
-            ? t('Sans serveur, le lien est gardé tel quel. Claude lit les liens depuis votre serveur {app} : connectez-le dans l’administration.', { app: APP_NAME })
-            : !reading
-              ? t('Le lien est gardé tel quel : ajoutez une clé API Claude dans l’administration pour qu’il soit lu et rangé.')
-              : target === 'auto'
-                ? t('Claude lit la page et range le lien dans la bonne collection, ou dans Non classé.')
-                : t('Claude lit la page ; le lien reste dans cette collection.')}
-        </AppText>
+        {fate ? <AppText variant="meta">{fate}</AppText> : null}
       </SheetScroll>
       <FormFoot message={form.message}>
-        {!reading ? <Button kind="text" label={t('Administration')} icon="server" onPress={onAdmin} /> : null}
+        {claude === 'off' ? <Button kind="text" label={t('Administration')} icon="server" onPress={onAdmin} /> : null}
         <Button label={reading ? t('Classer') : t('Ajouter')} icon="check" disabled={isBlank(text)} onPress={() => void form.submit(save)} />
       </FormFoot>
     </Sheet>

@@ -22,6 +22,7 @@ import { showError, showSnack } from '../../../app/store/ui';
 import { requestDownload, restoreFile, restoreSnapshot, saveServerSettings, startBackup } from '../../../app/sync/transport';
 import { Button } from '../../components/Button';
 import { Confirm } from '../../components/Dialog';
+import { EmptyLine } from '../../components/EmptyLine';
 import { Icon } from '../../components/Icon';
 import { FormMessage } from '../../components/FormMessage';
 import { Segmented } from '../../components/Segmented';
@@ -309,7 +310,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
               ) : backups.snapshots === null ? (
                 <p className="t-meta">{backups.loading ? t('Lecture des sauvegardes…') : ''}</p>
               ) : snapshots.length === 0 ? (
-                <p className="t-meta">{t('Aucune sauvegarde sur S3 pour l’instant.')}</p>
+                <EmptyLine text={t('Aucune sauvegarde sur S3 pour l’instant.')} glyph="archive" />
               ) : (
                 <ul className={styles.snapshots} aria-label={t('Sauvegardes sur S3')}>
                   {listed.map(snapshot => (

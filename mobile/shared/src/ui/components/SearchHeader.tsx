@@ -81,7 +81,7 @@ function SearchHeaderComponent({ query, onQuery, onMenu, onBack, layout, onToggl
   return (
     <View style={[styles.header, { paddingTop: insets.top + SEARCH_TOP }]}>
       <StatusBar barStyle={theme.barStyle} />
-      <Organic style={styles.search}>
+      <Organic frost style={styles.search}>
         {onBack ? (
           <IconButton icon="back" label={t('Fermer la recherche')} onPress={onBack} />
         ) : searching ? (

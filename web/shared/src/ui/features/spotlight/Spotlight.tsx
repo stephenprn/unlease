@@ -24,12 +24,14 @@ import { useRecordsRevision } from '../../../app/store/records';
 import { habitBoost, recordPick, useSpotlightMemory } from '../../../app/store/spotlight';
 import { selectSpotlightOpen, setShortcutsOpen, setSpotlightOpen, useUiStore } from '../../../app/store/ui';
 import { theApp, type SpotLabel } from '../../../modules';
+import { EmptyLine, settleIn } from '../../components/EmptyLine';
 import { Highlight } from '../../components/Highlight';
 import { Icon } from '../../components/Icon';
 import { IconButton } from '../../components/IconButton';
 import { LabelTag } from '../../components/LabelMark';
 import { Layer } from '../../components/Layer';
 import { Menu, type MenuItem } from '../../components/Menu';
+import { useScrollEdges } from '../../components/scrollEdges';
 import { modKey } from '../../dom';
 import { browserPath, navigate, paths } from '../../router';
 import { useMedia } from '../../useMedia';
@@ -316,6 +318,8 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<{ readonly signature: string; readonly key: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const strip = useRef<HTMLDivElement>(null);
+  // The results fade and blur under the field's head as far as they run on (the preview beside them its own).
+  const resultEdges = useScrollEdges({ top: true });
   const listId = useId();
 
   const deferred = useDeferredValue(text);
@@ -494,6 +498,8 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
   const total = counted ? (results.counts[scope] ?? 0) : null;
   // A setting the words name is an answer too.
   const nothing = !results.browsing && results.hits.length === 0 && draft === null && !rows.some(row => row.kind === 'setting');
+  // No words yet, and the kind or the filters keep nothing: said, never a blank list.
+  const bare = results.browsing && rows.length === 0;
   const activeDoc = activeRow?.kind === 'doc' ? activeRow : null;
   const activePart = activeDoc && activeDoc.hit && activeDoc.hit.tier !== 'title' ? bestPart(activeDoc.doc, results.matcher) : null;
 
@@ -598,13 +604,16 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <div className={styles.body}>
-        <div className={styles.results}>
+        <div ref={resultEdges} className={styles.results}>
           {results.typos ? <p className={`${styles.notice} t-meta`}>{t('Aucun mot exact : voici les plus proches.')}</p> : null}
           {nothing ? (
-            <div className={styles.nothing}>
+            // Settles in once, as an empty line does; another hint (the filters changed) settles in afresh, more letters typed do not.
+            <div key={filters.length > 0 || scope !== 'all' ? 'narrowed' : 'all'} className={`${styles.nothing} ${settleIn}`}>
               <p className="t-body-strong">{t('Rien ne correspond à « {query} »', { query: query.trim() || '…' })}</p>
               <p className="t-meta">{filters.length > 0 || scope !== 'all' ? t('Les filtres écartent peut-être ce que vous cherchez.') : t('Essayez un autre mot, ou moins de mots.')}</p>
             </div>
+          ) : bare ? (
+            <EmptyLine text={filters.length > 0 ? t('Rien ne correspond à ces filtres.') : t('Rien de ce type pour l’instant.')} glyph="search" className={styles.bare} />
           ) : null}
           <div
             id={listId}

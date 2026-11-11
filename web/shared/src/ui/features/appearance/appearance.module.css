@@ -184,13 +184,12 @@
 .roles {
   display: flex;
   flex-direction: column;
-  padding-bottom: 4px;
 }
 
-/* The last colour closes the sheet, 8 above its foot (this list's 4 and the sheet's): its press follows the sheet's corner. */
+/* The last colour closes the sheet, 6 above its foot as from its sides: its press follows the sheet's corner (`--row-outer`). */
 .roles:last-of-type > button:last-child {
-  border-bottom-left-radius: max(0px, calc((var(--outline-radius, 22px) - 8px) * var(--corner-scale)));
-  border-bottom-right-radius: max(0px, calc((var(--outline-radius, 22px) - 8px) * var(--corner-scale)));
+  border-bottom-left-radius: var(--row-outer);
+  border-bottom-right-radius: var(--row-outer);
 }
 
 /* On the swatches' heads' line, 16 in from the sheet's edge as the rows' words are. */
@@ -207,6 +206,27 @@
   width: 30px;
   height: 30px;
   --edge-color: var(--hairline);
+}
+
+/* ── the look's row on Réglages ────────────────────────────────────────── */
+
+/* Before its chevron: the colours (the primary over the accent, as on screen), then the ground, painted. */
+.lookPebbles {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lookPebble {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  --edge-color: var(--hairline);
+}
+
+.lookPair {
+  --pebble-fill: linear-gradient(135deg, var(--leaf) 0%, var(--leaf) 50%, var(--action) 50%, var(--action) 100%);
 }
 
 /* ── the preview ───────────────────────────────────────────────────────── */
@@ -667,11 +687,42 @@
 }
 
 /* « Habiller vos autres services… », the quiet way out at the ground's foot, inset as its rows. */
+/*
+ * The quiet buttons at the ground's foot, 6 in from the sheet's side and its foot as the rows are. The
+ * one lying in its corner (the first; the last when they stand one under the other on a narrow window)
+ * takes the sheet's curve there (`--row-outer`). Too short to hold that corner and its own above it as
+ * squircles (their radii run 1.84 times as long: the browser would shrink every corner), it is drawn
+ * round at the same depth, its radii unscaled.
+ */
 .servicesOpen {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 4px 8px;
-  padding: var(--row-gap) 6px 8px;
+  padding: var(--row-gap) 6px 0;
+}
+
+.servicesOpen > :first-child {
+  corner-shape: round;
+  border-radius: calc(var(--cut-button) / var(--corner-scale));
+  border-bottom-left-radius: calc(var(--row-outer, var(--cut-button)) / var(--corner-scale));
+}
+
+@media (max-width: 719px) {
+  .servicesOpen {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .servicesOpen > :first-child:not(:last-child) {
+    corner-shape: inherit;
+    border-radius: var(--cut-button);
+  }
+
+  .servicesOpen > :last-child {
+    corner-shape: round;
+    border-radius: calc(var(--cut-button) / var(--corner-scale));
+    border-bottom-left-radius: calc(var(--row-outer, var(--cut-button)) / var(--corner-scale));
+  }
 }
 
 /* « Appliquer cette apparence »: what goes where, then the apps, each row its checkbox. */

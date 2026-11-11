@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Agenda's static shortcuts (a long press on its icon).
+  Each opens a link of the app through ShortcutActivity (mobile/shared/android, launch/), which hands it
+  to MainActivity as a widget's tap is: Android opens a static shortcut clearing the app's task, the
+  trampoline takes that instead. Named by every launcher entry (tools/icons/build_android_drawables.mjs);
+  their icons are generated there too (ic_shortcut_*), their words are values/ and values-fr/.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="event"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_event"
+        android:shortcutShortLabel="@string/shortcut_event_short"
+        android:shortcutLongLabel="@string/shortcut_event_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-agenda://new"
+            android:targetPackage="com.stephenprn.agenda"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="quick"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_quick"
+        android:shortcutShortLabel="@string/shortcut_quick_short"
+        android:shortcutLongLabel="@string/shortcut_quick_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-agenda://quick"
+            android:targetPackage="com.stephenprn.agenda"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="today"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_today"
+        android:shortcutShortLabel="@string/shortcut_today_short"
+        android:shortcutLongLabel="@string/shortcut_today_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-agenda://today"
+            android:targetPackage="com.stephenprn.agenda"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-agenda://search"
+            android:targetPackage="com.stephenprn.agenda"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+</shortcuts>

@@ -23,7 +23,7 @@ import { paths } from '../../routes';
 export function ReadingExtras({ settings, usage }: { server: ServerConfig; settings: ServerSettings; usage: Usage | null }) {
   const skipped = useLibraryStore(s => Object.values(s.links).filter(link => link.status === 'skipped' && link.deletedAt === null).length);
   const { model, enabled } = settings.analysis;
-  // The first run's form stays where it is: the templates wait for the Administration.
+  // The first run's form stays where it is: the facts wait for the Administration, and for a key.
   const onboarded = useSettingsStore(selectOnboarded);
   return (
     <>
@@ -47,7 +47,7 @@ export function ReadingExtras({ settings, usage }: { server: ServerConfig; setti
           </span>
         </button>
       ) : null}
-      {onboarded ? (
+      {onboarded && enabled ? (
         <button type="button" className={styles.row} onClick={() => navigate(paths.templates)}>
           <Icon name="list" size={24} />
           <span className={styles.rowText}>

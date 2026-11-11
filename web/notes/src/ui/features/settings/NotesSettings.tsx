@@ -1,11 +1,12 @@
 /**
- * Carnet's part of the Réglages, in DESIGN's order as on the phone: how the board lays out (in
- * « Apparence », after the theme), where the reminders ring (a section of its own), cleaning the
- * links already saved (a row of « Données »), and the Keep import, done once, after « Données ».
+ * Carnet's part of the Réglages, in DESIGN's order as on the phone: its own section first (« Carnet »:
+ * how the board lays out, where the reminders ring), cleaning the links already saved (a row of
+ * « Données »), and the Keep import, done once, after « Données ».
  */
 import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
-import { KEEP_SETTINGS_SECTION, REMINDERS_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
+import { APP_NAME } from '@unlease/notes/brand';
+import { KEEP_SETTINGS_SECTION, NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
 
 import { cleanSavedLinks, trackedLinkIds } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
@@ -18,7 +19,7 @@ import styles from '@shared/ui/features/settings/settings.module.css';
 import type { SettingsSection } from '@shared/modules';
 import { KeepImport } from './KeepImport';
 
-/** In « Apparence », under the theme, as on the phone. */
+/** The board's layout, the section's first: Mur or Liste. */
 function BoardLayout() {
   const layout = useLayout();
   return (
@@ -37,9 +38,11 @@ function BoardLayout() {
   );
 }
 
-function RemindersSection() {
+/** Réglages' first section, as Agenda's « Agenda » and Contacts' « Contacts »: the board, then where the reminders ring. */
+function NotesSection() {
   return (
-    <Section title={t('Rappels')} id={REMINDERS_SETTINGS_SECTION}>
+    <Section title={APP_NAME} id={NOTES_SETTINGS_SECTION}>
+      <BoardLayout />
       <div className={styles.row}>
         <Icon name="bell" size={24} />
         <span className={styles.rowText}>
@@ -89,8 +92,7 @@ function ImportSection() {
 }
 
 export const NOTES_SETTINGS: readonly SettingsSection[] = [
-  { id: 'board', Body: BoardLayout, place: 'appearance' },
-  { id: 'reminders', Body: RemindersSection },
+  { id: 'notes', Body: NotesSection },
   { id: 'links', Body: CleanLinksRow, place: 'data' },
   { id: 'import', Body: ImportSection, place: 'last' },
 ];

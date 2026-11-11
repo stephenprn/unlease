@@ -15,6 +15,7 @@ import { createLabel, deleteLabel, labelNameTaken, recolorLabel, renameLabel } f
 import { useContactsStore } from '../../app/store/library';
 import { showUndo, showWarning } from '@shared/app/store/ui';
 import { BoundInput, FieldProblem } from '@shared/ui/components/BoundInput';
+import { EmptyState } from '@shared/ui/components/EmptyState';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelTag } from '@shared/ui/components/LabelMark';
@@ -23,6 +24,7 @@ import { useForm } from '@shared/ui/components/useForm';
 import page from '@shared/ui/features/settings/settings.module.css';
 import { PageHead } from '@shared/ui/navigation/PageHead';
 import { Link, useLocation } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { LabelColorPicker } from '../features/LabelColorPicker';
 import { paths } from '../routes';
 
@@ -41,7 +43,7 @@ const LabelRow = memo(function LabelRow({ id, uses }: { id: string; uses: number
     setDraft(null);
   };
   return (
-    <li className={page.labelRow}>
+    <li className={page.labelRow} data-motion={id}>
       <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Couleur de {name}', { name: label.name })} data-tip={t('Couleur')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
         <LabelTag color={label.color} size={26} />
       </button>
@@ -87,6 +89,9 @@ export function LabelsScreen() {
   const { search } = useLocation();
   const creating = new URLSearchParams(search).has('new');
   const [name, setName] = useState('');
+  const list = useRef<HTMLUListElement>(null);
+  // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
+  useListMotion(list, { late: true });
   // A name already worn is said under the strip, what was typed kept.
   const form = useForm({ name: !isBlank(name) && labelNameTaken(name) ? t('Ce libellé existe déjà : choisissez un autre nom.') : null });
   const add = (): void => {
@@ -131,13 +136,13 @@ export function LabelsScreen() {
         </form>
         <FieldProblem field={form.field('name')} id="label-new-problem" className={page.labelNewProblem} />
         {labels.length > 0 ? (
-          <ul aria-label={t('Libellés')}>
+          <ul ref={list} className={page.labelList} aria-label={t('Libellés')}>
             {labels.map(label => (
               <LabelRow key={label.id} id={label.id} uses={counts.get(label.id) ?? 0} />
             ))}
           </ul>
         ) : (
-          <p className={`${page.labelsEmpty} t-meta`}>{t('Les libellés regroupent des contacts : la famille, le travail, le club. Un contact peut en porter plusieurs.')}</p>
+          <EmptyState scene="label" title={t('Aucun libellé')} text={t('Les libellés regroupent des contacts : la famille, le travail, le club. Un contact peut en porter plusieurs.')} />
         )}
       </section>
     </div>

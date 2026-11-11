@@ -52,8 +52,15 @@ function assign<T>(ref: React.Ref<T> | undefined, value: T | null): void {
 
 const AT_START = { start: 0, end: 0 } as const;
 
+/**
+ * A multiline field grows with its words to eight lines (its 12 above and below, eight of body's 23),
+ * then scrolls them inside: the form around it, and its actions, stay in reach above the keyboard. A
+ * field may set its own `maxHeight`. The web's grows to 320, on a taller window.
+ */
+const GROWS_TO = 12 * 2 + 8 * 23;
+
 const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
-  { label, help, error, kind, field, optional, revealLabels, style, onFocus, onBlur, onChangeText, onSubmitEditing, onContentSizeChange, accessibilityLabel, multiline, maxLength, value, secureTextEntry, ...rest },
+  { label, help, error, kind, field, optional, revealLabels, style, onFocus, onBlur, onChangeText, onSubmitEditing, onContentSizeChange, onLayout, accessibilityLabel, multiline, maxLength, value, secureTextEntry, ...rest },
   ref,
 ) {
   const theme = useTheme();
@@ -69,9 +76,10 @@ const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
   const strong = focused || !!problem;
   const room = roomLeft(value?.length ?? 0, maxLength);
   const register = field?.register;
-  // A multiline field grows with its words, which stay still as lines come (to its cap, if it has one).
-  const cap = multiline ? StyleSheet.flatten(style)?.maxHeight : undefined;
-  const { attach: hold, onContentSizeChange: grown } = useGrowingInput(typeof cap === 'number' ? cap : undefined);
+  // A multiline field grows with its words, which stay still as lines come, to its cap; there they scroll.
+  const own = multiline ? StyleSheet.flatten(style)?.maxHeight : undefined;
+  const cap = multiline ? (typeof own === 'number' ? own : GROWS_TO) : undefined;
+  const { attach: hold, onContentSizeChange: grown, onLayout: laidOut } = useGrowingInput(cap);
   const attach = useCallback(
     (node: Input | null) => {
       assign(ref, node);
@@ -95,7 +103,7 @@ const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
           {optional ? <AppText variant="meta" color={theme.color.inkMuted}>{` ${t('(facultatif)')}`}</AppText> : null}
         </AppText>
       ) : null}
-      <Organic style={[styles.field, strong ? styles.fieldStrong : styles.fieldIdle, { borderColor: border, backgroundColor: theme.color.fieldVeil }]}>
+      <Organic frost style={[styles.field, strong ? styles.fieldStrong : styles.fieldIdle, { borderColor: border, backgroundColor: theme.color.fieldVeil }]}>
         <TextInput
           ref={attach}
           placeholderTextColor={theme.color.inkFaint}
@@ -129,8 +137,12 @@ const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
             if (multiline) grown(event);
             onContentSizeChange?.(event);
           }}
+          onLayout={event => {
+            if (multiline) laidOut(event);
+            onLayout?.(event);
+          }}
           underlineColorAndroid="transparent"
-          style={[variantStyle(theme, 'body'), styles.input, strong ? styles.inputStrong : styles.inputIdle, hidden ? styles.inputRevealable : null, style]}
+          style={[variantStyle(theme, 'body'), styles.input, strong ? styles.inputStrong : styles.inputIdle, hidden ? styles.inputRevealable : null, multiline ? { maxHeight: cap } : null, style]}
           // TalkBack names the input by its label above, then what is wrong with it.
           accessibilityLabel={spoken || undefined}
           multiline={multiline}

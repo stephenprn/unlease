@@ -4,7 +4,7 @@ import { mergeField } from '@unlease/core/sync/textMerge';
 import type { Block, BlockKind, TableColumn } from '../../models/blocks';
 import { blockFields, blockFromRecord } from '../../sync/entities';
 import { isValidField } from '@unlease/core/sync/schema';
-import { ancestorPages, bulletMark, containingPage, descendants, isInBin, isWithin, listDepth, listNumber, numberLabel, pageHeadings, ROOT, shownTarget, subPages, type ChildIndex } from '../blocks';
+import { ancestorPages, bulletMark, containingPage, descendants, isInBin, isWithin, listDepth, listNumber, numberLabel, pageHeadings, ROOT, shownTarget, subPages, togglesAbove, type ChildIndex } from '../blocks';
 import { codeLanguage, languageFromFence } from '../code';
 import { buildPageDocuments, searchPageDocuments } from '../pageSearch';
 import { mediaKindFor, videoEmbedUrl } from '../media';
@@ -45,6 +45,16 @@ describe('the page tree', () => {
     expect(containingPage(blocks, 'n2a')).toBe('notes');
     expect(containingPage(blocks, 'voyage')).toBeNull();
     expect(ancestorPages(blocks, 'notes').map(page => page.id)).toEqual(['voyage', 'route']);
+  });
+
+  it('names the toggles a block is shown in, up to its own page', () => {
+    const { blocks } = workspace();
+    const nested = { ...blocks, inner: block('inner', 'toggle', 'toggle'), deep: block('deep', 'callout', 'inner'), held: block('held', 'text', 'n1') };
+    expect(togglesAbove(nested, 'deep')).toEqual(['inner', 'toggle']);
+    // A sub-page in a toggle: what it holds opens no toggle of the page above.
+    expect(togglesAbove(nested, 'held')).toEqual([]);
+    expect(togglesAbove(nested, 'intro')).toEqual([]);
+    expect(togglesAbove(nested, 'missing')).toEqual([]);
   });
 
   it('lists sub-pages wherever they sit in the content, and everything under a block', () => {

@@ -44,6 +44,11 @@ class OrganicViewManager : ReactViewManager() {
     (view as OrganicView).setGiven(given)
   }
 
+  @ReactProp(name = "frost", defaultBoolean = false)
+  fun setFrost(view: ReactViewGroup, frost: Boolean) {
+    (view as OrganicView).setFrost(frost)
+  }
+
   private fun floats(array: ReadableArray?): FloatArray? = array?.let { values -> FloatArray(values.size()) { values.getDouble(it).toFloat() } }?.takeIf { it.isNotEmpty() }
 
   // The shape comes from `radii`: a React Native radius is one circle.

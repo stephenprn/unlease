@@ -16,6 +16,7 @@ import { createLabel, deleteLabel, updateLabel } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
 import { showUndo } from '@shared/app/store/ui';
 import controls from '@shared/ui/components/controls.module.css';
+import { EmptyState } from '@shared/ui/components/EmptyState';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelTag } from '@shared/ui/components/LabelMark';
@@ -29,6 +30,7 @@ import { PageHead } from '@shared/ui/navigation/PageHead';
 import { Link } from '@shared/ui/router';
 import { pathForView } from '../routes';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
+import { useListMotion } from '@shared/ui/useListMotion';
 
 
 const LabelRow = memo(function LabelRow({ id }: { id: string }) {
@@ -58,7 +60,7 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
     return true;
   };
   return (
-    <li className={page.labelRow}>
+    <li className={page.labelRow} data-motion={id}>
       <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Couleur de {name}', { name: label.name })} data-tip={t('Couleur')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
         <LabelTag color={label.color} size={26} />
       </button>
@@ -121,6 +123,9 @@ export function LabelsScreen() {
   const order = useLibraryStore(s => s.labelOrder);
   const labels = useLibraryStore(s => s.labels);
   const [name, setName] = useState('');
+  const list = useRef<HTMLUListElement>(null);
+  // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
+  useListMotion(list, { late: true });
   // A name already worn is said under the strip, what was typed kept.
   const form = useForm({ name: !isBlank(name) && labelNameTaken(labels, name) ? t('Ce label existe déjà : choisissez un autre nom.') : null });
   const add = (): void => {
@@ -164,13 +169,13 @@ export function LabelsScreen() {
         </form>
         <FieldProblem field={form.field('name')} id="label-new-problem" className={page.labelNewProblem} />
         {order.length > 0 ? (
-          <ul aria-label={t('Labels')}>
+          <ul ref={list} className={page.labelList} aria-label={t('Labels')}>
             {order.map(id => (
               <LabelRow key={id} id={id} />
             ))}
           </ul>
         ) : (
-          <p className={`${page.labelsEmpty} t-meta`}>{t('Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.')}</p>
+          <EmptyState scene="label" title={t('Aucun label')} text={t('Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.')} />
         )}
       </section>
     </div>

@@ -25,6 +25,7 @@ import { addColumn, addRow, changeColumnType, deleteBlocks, deleteColumn, moveCo
 import { commit } from '../../../app/store/pageHistory';
 import { showError, showUndo } from '@shared/app/store/ui';
 import { Checkbox } from '@shared/ui/components/Checkbox';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
 import { LineColorPicker } from '@notes/ui/features/lines/LineColorPicker';
@@ -119,7 +120,7 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
           else create();
         }}
       />
-      <div className={styles.optionsList} role="listbox" aria-multiselectable={multi} aria-label={column.name}>
+      <div data-scroller="" className={styles.optionsList} role="listbox" aria-multiselectable={multi} aria-label={column.name}>
         {shown.map(option => (
           <button key={option.id} type="button" role="option" aria-selected={chosen.has(option.id)} className={styles.optionRow} onClick={() => choose(option.id)}>
             <OptionChip option={option} />
@@ -133,6 +134,8 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
           </button>
         ) : null}
       </div>
+      {/* As on the phone: no option yet, how one is made. */}
+      {options.length === 0 && !query.trim() ? <EmptyLine className={styles.optionsEmpty} text={t('Tapez le nom d’une option pour la créer.')} /> : null}
     </div>
   );
 }

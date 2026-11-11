@@ -11,7 +11,7 @@ import { state as native, __reset } from '../../../__mocks__/NativeLauncherIcon'
 import { launchActivity } from '../../platform/launcherIcon';
 import { closeDatabase, openDatabase } from '../../data/db/database';
 import { setAppearance, useSettingsStore } from '../store/settingsStore';
-import { applyLauncherIcon, startLauncherIcon, stopLauncherIcon } from '../launcherIcon';
+import { applyLauncherIcon, onLauncherIconSwitch, startLauncherIcon, stopLauncherIcon } from '../launcherIcon';
 
 let listeners: ((state: string) => void)[] = [];
 
@@ -78,6 +78,24 @@ describe('the launcher’s icon', () => {
     setAppearance({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.pivoine });
     applyLauncherIcon();
     expect(native.switched).toEqual([]);
+  });
+
+  it('tells what follows the entry on (the app\'s dynamic shortcuts) after each switch, and only then', () => {
+    const heard = jest.fn();
+    const stop = onLauncherIconSwitch(heard);
+    applyLauncherIcon();
+    expect(heard).not.toHaveBeenCalled();
+    setAppearance({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.glycine });
+    native.busy = true;
+    applyLauncherIcon();
+    expect(heard).not.toHaveBeenCalled();
+    native.busy = false;
+    applyLauncherIcon();
+    expect(heard).toHaveBeenCalledTimes(1);
+    stop();
+    setAppearance(DEFAULT_APPEARANCE);
+    applyLauncherIcon();
+    expect(heard).toHaveBeenCalledTimes(1);
   });
 
   it('leaves a build without entries alone', () => {

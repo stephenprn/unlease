@@ -48,15 +48,17 @@ interface LineColorPickerProps {
   readonly flush?: boolean;
   /** What the group is, for a screen reader, when no words show it (« Couleur »). */
   readonly accessibilityLabel?: string;
+  /** What « none » means here (an event's: its labels' colour), for a screen reader; « Aucune couleur » by default. */
+  readonly noneLabel?: string;
 }
 
-function LineColorPickerComponent({ value, onChange, allowNone = false, flush = false, accessibilityLabel }: LineColorPickerProps) {
+function LineColorPickerComponent({ value, onChange, allowNone = false, flush = false, accessibilityLabel, noneLabel }: LineColorPickerProps) {
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
   const columns = columnsFor(LINE_COLORS.length + (allowNone ? 1 : 0));
   const cell = { width: `${100 / columns}%` } as const;
   const swatches = [
-    ...(allowNone ? [<Swatch key="none" label={t('Aucune couleur')} turn={0} selected={value === null} fill="none" tick={theme.color.ink} onFill={false} onPress={() => onChange(null)} />] : []),
+    ...(allowNone ? [<Swatch key="none" label={noneLabel ?? t('Aucune couleur')} turn={0} selected={value === null} fill="none" tick={theme.color.ink} onFill={false} onPress={() => onChange(null)} />] : []),
     ...LINE_COLORS.map((color, index) => <Swatch key={color} label={LINE_COLOR_NAMES[color]} turn={index + 1} selected={color === value} fill={theme.line[color].fill} tick={theme.line[color].on} onFill onPress={() => onChange(color)} />),
   ];
   if (flush) {

@@ -100,6 +100,19 @@ export function containingPage(blocks: BlockMap, id: string): string | null {
   return shownChain(blocks, id).path.slice(1).find(block => block.kind === 'page')?.id ?? null;
 }
 
+/**
+ * The toggles a block is shown in, up to its page, the nearest first: what must open for it to be
+ * drawn (a block Tab nested under a closed toggle takes the caret there).
+ */
+export function togglesAbove(blocks: BlockMap, id: string): string[] {
+  const out: string[] = [];
+  for (const block of shownChain(blocks, id).path.slice(1)) {
+    if (block.kind === 'page') break;
+    if (block.kind === 'toggle') out.push(block.id);
+  }
+  return out;
+}
+
 /** The pages above a page, the top-level one first: its breadcrumb. */
 export function ancestorPages(blocks: BlockMap, pageId: string): Block[] {
   return shownChain(blocks, pageId)

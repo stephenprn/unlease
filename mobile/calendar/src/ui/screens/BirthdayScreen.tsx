@@ -10,7 +10,7 @@
  * installed here.
  */
 import React, { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { APPS } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
@@ -36,7 +36,7 @@ import { openPlace } from '@shared/app/openPlace';
 import { showSnack } from '@shared/app/store/uiStore';
 import { deviceLanguage } from '@shared/platform/locale';
 
-import { AppText, Button, EmptyState, FormFoot, Ground, Icon, Organic, Sheet, SHEET_INSET, Tappable, TextField, TopBar, useForm, useUnsaved } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyLine, EmptyState, FormFoot, Ground, Icon, Organic, PanelTappable, RowPanel, Sheet, SHEET_INSET, Tappable, TextField, TopBar, useForm, useUnsaved } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -126,7 +126,7 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         <View style={styles.head}>
           <Organic pebble={1} style={styles.cake}>
             <Icon name="cake" size={40} color={theme.line[LAYER_COLORS.birthday].on} />
@@ -147,15 +147,12 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
           {place ? <Action icon="mapPin" label={t('Itinéraire')} turn={next()} onPress={() => later(openPlace(addressLine(place), { directions: true, title: t('Itinéraire jusqu’à {name}', { name }) }))} /> : null}
           <Action icon="person" label={APPS.contacts.name} turn={next()} onPress={() => later(openInApp('contacts', contactPlace(contact.id)))} />
         </View>
-        <Organic outline="card" style={styles.panel}>
+        <RowPanel outline="card" style={styles.panel}>
           <AppText variant="section" style={styles.panelHead} accessibilityRole="header">
             {t('Idées cadeaux')}
           </AppText>
-          {ideas.length === 0 ? (
-            <AppText variant="meta" style={styles.none}>
-              {t('Aucune idée gardée pour {name} dans « Cadeaux ».', { name })}
-            </AppText>
-          ) : null}
+          {/* On the rows' columns: the glyph on theirs, the words on theirs. */}
+          {ideas.length === 0 ? <EmptyLine glyph="bag" slot={24} gap={16} text={t('Aucune idée gardée pour {name} dans « Cadeaux ».', { name })} style={styles.none} /> : null}
           {ideas.map(idea => (
             <Tappable key={idea.linkId} onPress={() => later(openInApp('notes', notesPlace('link', idea.linkId)))} style={styles.idea} accessibilityRole="link" accessibilityLabel={idea.title}>
               <View style={styles.slot}>
@@ -168,19 +165,19 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
             </Tappable>
           ))}
           {/* The list's last line, as the event form's « Ajouter un rappel »: on the rows' columns, in the link's ink. */}
-          <Tappable onPress={() => setGifting(true)} style={styles.idea} accessibilityRole="button" accessibilityLabel={t('Ajouter une idée')}>
+          <PanelTappable onPress={() => setGifting(true)} style={styles.idea} accessibilityRole="button" accessibilityLabel={t('Ajouter une idée')}>
             <View style={styles.slot}>
               <Icon name="plus" size={22} color={theme.color.link} />
             </View>
             <AppText variant="body" color={theme.color.link} style={styles.fill}>
               {t('Ajouter une idée')}
             </AppText>
-          </Tappable>
-        </Organic>
+          </PanelTappable>
+        </RowPanel>
         {/* Who tells of it: Contacts' notifications, set there (its birthdays open on them), never here. */}
-        <Organic outline="card" style={styles.panel}>
+        <RowPanel outline="card" style={[styles.panel, styles.panelBare]}>
           {contactsHere ? (
-            <Tappable onPress={() => later(openInApp('contacts', CONTACTS_BIRTHDAYS))} style={styles.idea} accessibilityRole="link" accessibilityLabel={t('Notifications d’anniversaire')} accessibilityHint={t('Ouvre les anniversaires de {app}', { app: APPS.contacts.name })}>
+            <PanelTappable onPress={() => later(openInApp('contacts', CONTACTS_BIRTHDAYS))} style={styles.idea} accessibilityRole="link" accessibilityLabel={t('Notifications d’anniversaire')} accessibilityHint={t('Ouvre les anniversaires de {app}', { app: APPS.contacts.name })}>
               <View style={styles.slot}>
                 <Icon name="bell" size={22} color={theme.color.inkMuted} />
               </View>
@@ -189,7 +186,7 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
                 <AppText variant="meta">{t('Envoyées par {app} : l’heure et la veille se choisissent là.', { app: APPS.contacts.name })}</AppText>
               </View>
               <Icon name="external" size={18} color={theme.color.inkMuted} />
-            </Tappable>
+            </PanelTappable>
           ) : (
             <View style={styles.idea}>
               <View style={styles.slot}>
@@ -201,8 +198,8 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
               </View>
             </View>
           )}
-        </Organic>
-      </ScrollView>
+        </RowPanel>
+      </EdgeScrollView>
       <Sheet visible={gifting} onDismiss={unsaved.guard(closeGift)} title={t('Idée cadeau pour {name}', { name })}>
         <View style={styles.sheet}>
           <TextField
@@ -240,7 +237,10 @@ const makeStyles = (theme: Theme) =>
     actions: { flexDirection: 'row', justifyContent: 'center', paddingHorizontal: 8 },
     action: { flex: 1, maxWidth: 80, alignItems: 'center', gap: 6 },
     actionStone: { width: 56, height: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.actionContainer },
-    panel: { marginHorizontal: 12, paddingVertical: 8, backgroundColor: theme.color.paper },
+    // Its last row 6 above its foot, as from its sides (its 4 and the row's 2): its press concentric with its corners (`RowPanel`).
+    panel: { marginHorizontal: 12, paddingTop: 8, paddingBottom: 4, backgroundColor: theme.color.paper },
+    // With no head, its row 6 under its top too.
+    panelBare: { paddingTop: 4 },
     panelHead: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 },
     none: { paddingHorizontal: 16, paddingVertical: 8 },
     // A list row's geometry (6 in, 10, a 24 glyph slot, 16), as the event page's rows.

@@ -1,6 +1,7 @@
 /**
  * A link's row, as the web's: kept unread while the server can read it, it offers « Lire la page »,
- * which reads it; without a server, nothing to press.
+ * which reads it, and a failed reading « Réessayer »; without a server, or before the server said
+ * Claude has a key, nothing to press.
  */
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -72,5 +73,29 @@ describe('a link kept unread', () => {
     useSettingsStore.setState({ server: null, reading: null });
     const tree = await render(skipped());
     expect(readButton(tree)).toHaveLength(0);
+  });
+
+  it('offers nothing to press before the server said Claude has a key, nor once it said it has none', async () => {
+    for (const reading of [null, false]) {
+      useSettingsStore.setState({ server: { url: 'https://carnet.test', token: 'jeton' }, reading });
+      const tree = await render(skipped());
+      expect(readButton(tree)).toHaveLength(0);
+    }
+  });
+});
+
+describe('a link that could not be read', () => {
+  const retry = (tree: ReactTestRenderer) => tree.root.findAll(node => node.props.accessibilityLabel === 'Relire la page' && typeof node.props.onPress === 'function', { deep: false });
+  const failed = (): string => {
+    const id = skipped();
+    updateLink(id, { status: 'failed', error: 'La page n’a pas pu être lue.' });
+    return id;
+  };
+
+  it('offers « Réessayer » only once the server said Claude has a key', async () => {
+    useSettingsStore.setState({ server: { url: 'https://carnet.test', token: 'jeton' }, reading: null });
+    expect(retry(await render(failed()))).toHaveLength(0);
+    useSettingsStore.setState({ reading: true });
+    expect(retry(await render(failed()))).toHaveLength(1);
   });
 });

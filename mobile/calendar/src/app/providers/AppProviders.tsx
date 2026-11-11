@@ -7,7 +7,7 @@ import { AppShell } from '@shared/ui/AppShell';
 import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
 import { MapsSheets } from '@shared/ui/features/maps/MapsSheets';
 import { linking, RootNavigator } from '@ui/navigation/RootNavigator';
-import { navigate, navigationRef } from '@ui/navigation/navigationRef';
+import { backToCalendar, navigate, navigationRef, push } from '@ui/navigation/navigationRef';
 import type { PressedEvent } from '@platform/notifications';
 
 import { bootstrap } from '../bootstrap';
@@ -22,11 +22,23 @@ const openEvent = (event: PressedEvent): void => navigate('Event', { id: event.e
 /** Back in the foreground: the widgets learn the new day. Stable, as the lifecycle hook restarts on a new one. */
 const onForeground = (): void => later(publishWidgets());
 
-/** Above every screen: the sync follows the app in and out of the foreground (the widgets learn the new day); a shared `.ics` opens the import; reminders are kept armed. */
+/** Above every screen: the sync follows the app in and out of the foreground (the widgets learn the new day); a shared `.ics` opens the import, and other apps' ways in their screens (`listenForShares`); reminders are kept armed. */
 function Overlays(): React.ReactElement {
   useAppLifecycle(onForeground);
   const onboarded = useSettingsStore(selectOnboarded);
-  useEffect(() => (onboarded ? listenForShares(() => navigate('Import', { source: 'shared' })) : undefined), [onboarded]);
+  useEffect(
+    () =>
+      onboarded
+        ? listenForShares({
+            import: () => navigate('Import', { source: 'shared' }),
+            event: handed => push('Edit', handed),
+            subscribe: url => push('Feeds', { url }),
+            words: words => backToCalendar({ words }, { merge: true }),
+            day: day => backToCalendar({ day, view: 'day' }),
+          })
+        : undefined,
+    [onboarded],
+  );
   useEventAlarms(openEvent);
   return (
     <>

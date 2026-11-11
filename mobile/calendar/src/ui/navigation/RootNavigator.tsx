@@ -16,7 +16,7 @@ import { FeedsScreen } from '../screens/FeedsScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { LabelsScreen } from '../screens/LabelsScreen';
 import { SearchScreen } from '../screens/SearchScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
 import { SetupScreen } from '../screens/SetupScreen';
 import { TrashScreen } from '../screens/TrashScreen';
 import type { RootStackParamList } from './types';
@@ -26,8 +26,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 /**
  * What another app of the suite, a widget or a notification opens here (`openInApp` with
  * `eventPlace`, `newEventPlace`): `unlease-agenda://event/<id>?at=…`, `new?title=…&start=…`,
- * `birthday/<contact>`, `day/<2026-11-02>`, `today` (« Aujourd'hui »), `labels`, `feeds`, `import`, `trash`, `search`, `ask`,
- * `settings`, `admin`; nothing after the scheme is the calendar.
+ * `birthday/<contact>`, `day/<2026-11-02>`, `today` (« Aujourd'hui »), `quick` (« Ajouter en quelques mots »), `labels`, `feeds`,
+ * `import`, `trash`, `search`, `ask`, `settings`, `admin`; nothing after the scheme is the calendar.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [`${APP_SCHEME}://`],
@@ -53,6 +53,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
     const day = /^\/?day\/(\d{4}-\d{2}-\d{2})/.exec(path);
     if (day) return getStateFromPath(`?day=${day[1]}&view=day`, options);
     if (/^\/?today\/?$/.test(path)) return getStateFromPath('?view=today', options);
+    // The launcher's shortcut « Ajouter en quelques mots »: the calendar, its quick add open.
+    if (/^\/?quick\/?$/.test(path)) return getStateFromPath('?capture=quick', options);
     return getStateFromPath(path, options);
   },
 };
@@ -76,6 +78,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Ask" component={AskScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
     </Stack.Navigator>
   );

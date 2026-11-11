@@ -1,11 +1,12 @@
 /**
  * What is open in Agenda's views, never stored: the event shown in its popover (and where it was
- * clicked), the new event being drawn on the grid with its quick form, the question « which of a
+ * clicked), the new event being drawn on the grid with its quick form (its times, which the span
+ * drawn under it follows), what that form hands « Plus d'options », the question « which of a
  * series' events? » waiting for its answer, and the file an import reads.
  */
 import { create } from 'zustand';
 
-import type { EditScope } from '@unlease/calendar/services/editing';
+import type { EditScope, EventDraft } from '@unlease/calendar/services/editing';
 
 /** A rectangle on screen the popover stands beside. */
 export interface Anchor {
@@ -24,7 +25,10 @@ export interface PeekTarget {
 export interface QuickDraft {
   readonly start: string;
   readonly end: string;
+  /** The slot drawn, where the form stands beside. */
   readonly anchor: Anchor;
+  /** Which opening this is: its times change in place, the form and what is typed in it stay. */
+  readonly id: number;
 }
 
 interface ScopeAsk {
@@ -35,12 +39,16 @@ interface ScopeAsk {
 export interface CalendarUiState {
   readonly peek: PeekTarget | null;
   readonly quick: QuickDraft | null;
+  /** The quick form's draft as « Plus d'options » leaves it, for the new event's form to open on. */
+  readonly handed: EventDraft | null;
   readonly scopeAsk: ScopeAsk | null;
   readonly importFile: File | null;
   readonly askOpen: boolean;
 }
 
-const INITIAL: CalendarUiState = { peek: null, quick: null, scopeAsk: null, importFile: null, askOpen: false };
+const INITIAL: CalendarUiState = { peek: null, quick: null, handed: null, scopeAsk: null, importFile: null, askOpen: false };
+
+let quickOpenings = 0;
 
 export const useCalendarUi = create<CalendarUiState>(() => INITIAL);
 
@@ -51,8 +59,12 @@ export const anchorOf = (element: Element): Anchor => {
 
 export const openPeek = (key: string, anchor: Anchor): void => useCalendarUi.setState({ peek: { key, anchor }, quick: null });
 export const closePeek = (): void => useCalendarUi.setState({ peek: null });
-export const openQuick = (draft: QuickDraft): void => useCalendarUi.setState({ quick: draft, peek: null });
+export const openQuick = (draft: Omit<QuickDraft, 'id'>): void => useCalendarUi.setState({ quick: { ...draft, id: (quickOpenings += 1) }, peek: null });
+/** The quick form's day or hours changed: the span drawn on the grid follows. */
+export const setQuickTimes = (start: string, end: string): void => useCalendarUi.setState(state => (state.quick ? { quick: { ...state.quick, start, end } } : {}));
 export const closeQuick = (): void => useCalendarUi.setState({ quick: null });
+/** What « Plus d'options » carries to the new event's form (null once it has taken it). */
+export const handDraft = (draft: EventDraft | null): void => useCalendarUi.setState({ handed: draft });
 export const setImportFile = (file: File | null): void => useCalendarUi.setState({ importFile: file });
 export const setAskOpen = (askOpen: boolean): void => useCalendarUi.setState({ askOpen });
 

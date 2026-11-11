@@ -4,7 +4,7 @@
  * SMS, WhatsApp or an e-mail, `WishSheet`) when there is a way to write to them.
  */
 import React, { useMemo } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
@@ -17,8 +17,9 @@ import { useUpcomingBirthdays } from '@app/hooks/useContacts';
 import { deviceRegion } from '@app/reach';
 import { useMinute } from '@shared/app/hooks/useMinute';
 
-import { AppText, Button, EmptyState, Ground, Tappable, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeSectionList, EmptyState, Ground, Tappable, TopBar } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
+import { listPressDelay } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { ContactAvatar } from '../features/contacts/ContactAvatar';
@@ -39,7 +40,7 @@ export function BirthdaysScreen({ navigation }: ScreenProps<'Birthdays'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar title={t('Anniversaires')} onBack={() => navigation.goBack()} />
-      <SectionList
+      <EdgeSectionList
         sections={sections}
         keyExtractor={entry => entry.contact.id}
         contentContainerStyle={styles.content}
@@ -61,7 +62,7 @@ export function BirthdaysScreen({ navigation }: ScreenProps<'Birthdays'>) {
           const age = ageToday(item.birthday, now);
           return (
             <View style={styles.line}>
-              <Tappable onPress={() => navigation.navigate('Contact', { id: item.contact.id })} style={styles.row} accessibilityRole="link" accessibilityLabel={name}>
+              <Tappable unstable_pressDelay={listPressDelay} onPress={() => navigation.navigate('Contact', { id: item.contact.id })} style={styles.row} accessibilityRole="link" accessibilityLabel={name}>
                 <ContactAvatar contact={item.contact} size={40} />
                 <View style={styles.text}>
                   <AppText variant={item.days === 0 ? 'bodyStrong' : 'body'} numberOfLines={1}>

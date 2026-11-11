@@ -6,7 +6,8 @@
  * radius in % of the box is a dot. A `pebble` (its turn, `pebbles.ts` in core) draws the brand's
  * stone instead, which gives toward round while `pressed` and springs back. Either way it draws its
  * background, border and shadow in that shape and, with `overflow: 'hidden'`, clips what it holds
- * to the inside of its border. One border colour; a side may go without.
+ * to the inside of its border. One border colour; a side may go without. A field's surface is
+ * `frost`ed: what lies behind it shows through its veil smooth, without its grain.
  */
 import React, { forwardRef, memo, useMemo } from 'react';
 import { StyleSheet, type ViewProps, type ViewStyle } from 'react-native';
@@ -30,6 +31,11 @@ export interface OrganicProps extends ViewProps {
   readonly pressed?: boolean;
   /** Drawn this much inside its radii: a layer laid inside a border meets it exactly. */
   readonly inset?: number;
+  /**
+   * Frosted, as every field is: what lies behind it is painted first without its grain (the surface it
+   * sits on, or the screen's ground), so the words typed never sit on the grain.
+   */
+  readonly frost?: boolean;
 }
 
 type Radius = ViewStyle['borderTopLeftRadius'];

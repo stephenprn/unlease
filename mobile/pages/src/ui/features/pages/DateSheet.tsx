@@ -15,7 +15,7 @@ import { dateRun, parseRich, serializeRich, type DateRun, type Run } from '@unle
 import { useLibraryStore } from '@app/store/libraryStore';
 import { saveBlockText } from '@app/store/pages';
 
-import { AppText, ListRow, Sheet, SHEET_INSET, SwitchMark, Tappable } from '@shared/ui/components';
+import { AppText, ListRow, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { flushAll, focusBlock, richHandle } from './editorStore';
@@ -115,9 +115,8 @@ function DateSheetHostComponent({ page }: { page: string }) {
   return (
     <Sheet visible={visible} onDismiss={dismiss} title={run ? dateWords(run) : ''} tall>
       {run ? (
-        <ScrollView
+        <SheetScroll
           ref={scroll}
-          keyboardShouldPersistTaps="handled"
           style={styles.scroll}
           contentContainerStyle={styles.body}
           onContentSizeChange={() => {
@@ -171,7 +170,7 @@ function DateSheetHostComponent({ page }: { page: string }) {
           <View style={styles.rows}>
             <ListRow icon="trash" title={t('Retirer la date')} danger onPress={remove} />
           </View>
-        </ScrollView>
+        </SheetScroll>
       ) : null}
     </Sheet>
   );

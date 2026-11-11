@@ -2,15 +2,17 @@
  * Creating and editing a contact through its form: « Enregistrer » writes one batch (every field
  * under one clock), an edit writes only what changed; the star makes a favourite, which the list
  * shows above everyone; a shared card opens the import, which writes its labels and contacts in one
- * batch.
+ * batch; another app's « Créer un contact » opens the form filled, kept only once saved.
  */
 import { Linking } from 'react-native';
 import { act } from 'react-test-renderer';
 
+import { createLabel } from '@app/store/actions';
 import { getRecord, useLibraryStore } from '@app/store/libraryStore';
 import { navigationRef } from '@ui/navigation/navigationRef';
 
-import { __queueShare, __reset as resetIntake } from '../../../../../shared/__mocks__/NativeIntake';
+import { __queueShare, __reset as resetIntake, state as intake } from '../../../../../shared/__mocks__/NativeIntake';
+import { HANDED_CONTACT } from '@platform/intake';
 import { state as media, __reset as resetMedia } from '../../../../../shared/__mocks__/NativeMedia';
 import { state as mapApps, __reset as resetMapApps } from '../../../../../shared/__mocks__/NativeMapApps';
 import { boot, fakeFetch, inputs, pressableWithText, pressables, settle, textOf, unmountAll } from './harness';
@@ -336,5 +338,88 @@ describe('Contacts, its form', () => {
     // The labels and the contacts: one batch, one clock.
     const all = [...liveContacts.map(id => clocks(id)), (getRecord('contactLabel', friends.id)?.clocks ?? {}) as Record<string, string>].flatMap(fields => Object.values(fields));
     expect(new Set(all).size).toBe(1);
+  });
+
+  it('opens another app’s « Créer un contact » filled, and leaves it without a trace', async () => {
+    const handed = { name: 'Inès Morel', phone: '06 55 44 33 22', phone_type: 3, email: 'ines@example.org', company: 'Boulangerie Morel', notes: 'Voisine' };
+    __queueShare({ id: 'insert-1', mimeType: HANDED_CONTACT, text: JSON.stringify(handed) });
+    const tree = await boot({ onboarded: true });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Edit');
+    expect(inputs(tree, 'Prénom')[0]!.props.value).toBe('Inès');
+    expect(inputs(tree, 'Nom de famille')[0]!.props.value).toBe('Morel');
+    expect(inputs(tree, 'Entreprise')[0]!.props.value).toBe('Boulangerie Morel');
+    expect(textOf(tree)).toContain('Travail');
+    // × leaves at once (nothing typed here), and nothing was kept.
+    await act(async () => {
+      pressables(tree, 'Fermer')[0]!.props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Contacts');
+    expect(useLibraryStore.getState().liveContacts).toHaveLength(0);
+
+    __queueShare({ id: 'insert-2', mimeType: HANDED_CONTACT, text: JSON.stringify(handed) });
+    const again = await boot({ onboarded: true });
+    await settle();
+    await act(async () => {
+      pressableWithText(again, 'Enregistrer').props.onPress();
+    });
+    await settle();
+    const id = (navigationRef.getCurrentRoute()?.params as { id: string }).id;
+    const contact = useLibraryStore.getState().contacts[id]!;
+    expect(contact).toMatchObject({ firstName: 'Inès', lastName: 'Morel', company: 'Boulangerie Morel', note: 'Voisine' });
+    // A number nobody touched is kept as it was handed.
+    expect(contact.phones).toEqual([expect.objectContaining({ number: '06 55 44 33 22', kind: 'work' })]);
+    expect(contact.emails).toEqual([expect.objectContaining({ address: 'ines@example.org' })]);
+  });
+
+  it('says a label name already worn under its field, keeping what was typed, when making one and renaming one', async () => {
+    let work = '';
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        createLabel('Famille');
+        work = createLabel('Travail');
+      },
+    });
+    await go('Labels');
+    const taken = 'Ce libellé existe déjà : choisissez un autre nom.';
+    // Making one: refused under the strip, the name kept, until it is free.
+    await type(tree, 'Nom du nouveau libellé', 'Famille');
+    await act(async () => {
+      inputs(tree, 'Nom du nouveau libellé')[0]!.props.onSubmitEditing();
+    });
+    expect(textOf(tree)).toContain(taken);
+    expect(inputs(tree, 'Nom du nouveau libellé, ' + taken)[0]!.props.value).toBe('Famille');
+    expect(Object.values(useLibraryStore.getState().labels).filter(label => label?.name === 'Famille')).toHaveLength(1);
+    await type(tree, 'Nom du nouveau libellé, ' + taken, 'Voisins');
+    expect(textOf(tree)).not.toContain(taken);
+    // Renaming one: the same, under its row, nothing saved.
+    const field = () => tree.root.findAll(node => typeof node.props.onChangeText === 'function' && String(node.props.accessibilityLabel ?? '').startsWith('Renommer Travail'), { deep: false })[0]!;
+    await act(async () => {
+      field().props.onChangeText('Famille');
+    });
+    await act(async () => {
+      field().props.onBlur();
+    });
+    expect(useLibraryStore.getState().labels[work]!.name).toBe('Travail');
+    expect(field().props.value).toBe('Famille');
+    expect(textOf(tree)).toContain(taken);
+    await act(async () => {
+      field().props.onChangeText('Bureau');
+    });
+    expect(textOf(tree)).not.toContain(taken);
+    await act(async () => {
+      field().props.onBlur();
+    });
+    expect(useLibraryStore.getState().labels[work]!.name).toBe('Bureau');
+  });
+
+  it('keeps another app’s new contact waiting until the first run is done', async () => {
+    __queueShare({ id: 'insert-3', mimeType: HANDED_CONTACT, text: JSON.stringify({ name: 'Inès Morel' }) });
+    await boot({ onboarded: false });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
+    expect(intake.pending?.id).toBe('insert-3');
   });
 });

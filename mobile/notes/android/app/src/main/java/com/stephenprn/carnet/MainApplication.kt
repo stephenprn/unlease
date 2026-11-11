@@ -8,6 +8,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.stephenprn.carnet.intake.IntakePackage
+import com.stephenprn.carnet.shortcuts.ShortcutsPackage
 import com.stephenprn.carnet.widget.Widgets
 import com.stephenprn.carnet.widget.WidgetsPackage
 import com.stephenprn.unlease.clipboard.ClipboardPackage
@@ -42,6 +43,7 @@ class MainApplication : Application(), ReactApplication {
           // Carnet's own:
           add(IntakePackage())
           add(WidgetsPackage())
+          add(ShortcutsPackage())
         },
     )
   }

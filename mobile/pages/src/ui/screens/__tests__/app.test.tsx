@@ -6,7 +6,7 @@
  * both apps' records and the sync asks for both. As on the web: a page says when it changed and
  * folds its breadcrumb into a menu, « Déplacer vers » lists pages by their paths, an embedded link
  * shows its facts and stamp, an embedded collection shows as a table when asked, and a page of the
- * drawer's tree held down offers its actions.
+ * drawer's tree held down offers its actions; the bin keeps a card per page, as every app's.
  */
 import React from 'react';
 import { Linking } from 'react-native';
@@ -18,14 +18,15 @@ import { linkFields, noteFields } from '@unlease/notes/sync/entities';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { writePreference } from '@shared/data/repositories/stateRepository';
 import { syncedTypes } from '@shared/app/store/library';
-import { setDrawerOpen } from '@shared/app/store/uiStore';
+import { setDrawerOpen, useUiStore } from '@shared/app/store/uiStore';
 import { setServer, setServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
 import { bootstrap, resetBootstrap } from '@app/bootstrap';
 import { resetLibrary, useLibraryStore, writeLocal } from '@app/store/libraryStore';
-import { createPage, insertBlock, targetBlock } from '@app/store/pages';
+import { createPage, insertBlock, targetBlock, trashPage } from '@app/store/pages';
 import { AppProviders } from '@app/providers/AppProviders';
 import { blockFromHash, linking } from '@ui/navigation/RootNavigator';
 import { navigationRef } from '@ui/navigation/navigationRef';
+import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 
 import { state as suite, __reset as resetSuite } from '../../../../../shared/__mocks__/NativeSuiteLink';
 
@@ -189,6 +190,9 @@ describe('Pages, its root', () => {
     expect(leaf(linking.getStateFromPath!('page/abc#block-def', linking.config))).toMatchObject({ name: 'Page', params: { id: 'abc', block: 'def' } });
     expect(leaf(linking.getStateFromPath!('', linking.config))).toMatchObject({ name: 'Pages' });
     expect(leaf(linking.getStateFromPath!('trash', linking.config))).toMatchObject({ name: 'Trash' });
+    // The launcher's shortcuts: a new page, the search.
+    expect(leaf(linking.getStateFromPath!('new', linking.config))).toMatchObject({ name: 'Pages', params: { capture: 'page' } });
+    expect(leaf(linking.getStateFromPath!('search', linking.config))).toMatchObject({ name: 'Pages', params: { capture: 'search' } });
 
     let page = '';
     jest.spyOn(Linking, 'getInitialURL').mockImplementation(async () => `unlease-pages://page/${page}`);
@@ -401,6 +405,53 @@ describe('Pages, its root', () => {
     expect(textOf(tree)).toContain('Page placée dans la corbeille');
   });
 
+  it('keeps the bin as every app’s: a card per page, restored with « Annuler », opened, deleted for good once asked', async () => {
+    let page = '';
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        page = createPage({ title: 'Recettes' });
+        trashPage(page);
+      },
+    });
+    await act(async () => {
+      navigationRef.navigate('Trash');
+    });
+    await settle();
+    expect(textOf(tree)).toMatch(/Les pages de la corbeille sont supprimées au bout de \d+\sjours\./);
+    await act(async () => {
+      pressables(tree, 'Restaurer Recettes')[0]!.props.onPress();
+    });
+    expect(useLibraryStore.getState().blocks[page]!.trashedAt).toBeNull();
+    const snack = useUiStore.getState().snack;
+    expect(snack).toMatchObject({ message: 'Page restaurée', tone: 'success' });
+    await act(async () => snack!.action!.run());
+    expect(useLibraryStore.getState().blocks[page]!.trashedAt).not.toBeNull();
+    await settle();
+    await act(async () => {
+      pressables(tree, 'Recettes')[0]!.props.onPress();
+    });
+    expect(leaf(navigationRef.getRootState())).toMatchObject({ name: 'Page', params: { id: page } });
+    await act(async () => {
+      navigationRef.goBack();
+    });
+    await settle();
+    await act(async () => {
+      pressables(tree, 'Supprimer définitivement Recettes')[0]!.props.onPress();
+    });
+    await settle();
+    expect(textOf(tree)).toContain('Cette page disparaîtra de tous vos appareils, avec tout ce qu’elle contient.');
+    await act(async () => {
+      pressableWithText(tree, 'Supprimer').props.onPress();
+    });
+    await settle();
+    const gone = useLibraryStore.getState().blocks[page];
+    expect(gone === undefined || gone.deletedAt !== null).toBe(true);
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Page supprimée définitivement', tone: 'success' });
+    expect(useUiStore.getState().snack?.action).toBeUndefined();
+    expect(textOf(tree)).toContain('La corbeille est vide');
+  });
+
   it('offers Carnet in the drawer when it is installed, and opens it there', async () => {
     jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
     const tree = await boot({ onboarded: true });
@@ -415,5 +466,34 @@ describe('Pages, its root', () => {
     await act(async () => {
       setDrawerOpen(false);
     });
+  });
+
+  it('keeps Réglages in every app’s order: the look one row opening its page, the Administration last', async () => {
+    const tree = await boot({ onboarded: true });
+    await act(async () => {
+      (navigationRef.navigate as (...args: unknown[]) => void)('Settings');
+    });
+    await settle();
+    // Réglages' own words (the drawer names the Administration too).
+    const textIn = (node: ReactTestInstance): string => node.children.map(child => (typeof child === 'string' ? child : textIn(child))).join(' ');
+    const overview = textIn(tree.root.findByType(SettingsScroll));
+    // No settings of its own yet: « Apparence », « Langue », « Données », and the way to the Administration last.
+    const order = ['Apparence', 'Langue', 'Données', 'Administration'].map(words => overview.indexOf(words));
+    expect(order.every(at => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(overview).not.toContain('Palettes');
+    // Its row opens « Apparence »'s page: the theme and the paper's grain, the colours, the ground.
+    await act(async () => {
+      pressables(tree, 'Apparence')[0]!.props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Appearance');
+    for (const words of ['Thème', 'Grain du papier', 'Palettes', 'Couleurs unies', 'Grain sur le fond']) expect(textOf(tree)).toContain(words);
+    // Back is Réglages.
+    await act(async () => {
+      navigationRef.goBack();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Settings');
   });
 });

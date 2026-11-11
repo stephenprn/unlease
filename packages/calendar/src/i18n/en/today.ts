@@ -14,4 +14,5 @@ export const EN_TODAY: Dictionary = {
   'À écrire dans {app}': 'To write in {app}',
   'Rien de prévu aujourd’hui': 'Nothing planned today',
   'Rien d’autre aujourd’hui': 'Nothing else today',
+  'La journée est à vous.': 'The day is yours.',
 };

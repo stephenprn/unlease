@@ -7,7 +7,7 @@
  * calendar's event is read-only: « Copier dans mon agenda » stands on the line that says so.
  */
 import React, { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { getLocale, t, tc } from '@unlease/core/i18n';
 import { safeLink } from '@unlease/core/services/url';
@@ -40,7 +40,7 @@ import { openPlace } from '@shared/app/openPlace';
 import { mapsChoiceName, useMapsChoice } from '@shared/app/store/mapsStore';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, EmptyState, Grain, Ground, Icon, IconButton, LabelTag, Menu, Organic, Tappable, TopBar, type MenuItem } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyState, Grain, Ground, Icon, IconButton, LabelTag, Menu, Organic, placedRow, RowPanel, Tappable, TopBar, usePanelRowCorners, type MenuItem, type RowPlace } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -58,9 +58,11 @@ function openEventLink(url: string): void {
   if (address && !address.startsWith('/')) later(Linking.openURL(address));
 }
 
-function Line({ icon, children, onPress, onLongPress, label, hint }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; onLongPress?: () => void; label?: string; hint?: string }) {
+function Line({ icon, children, onPress, onLongPress, label, hint, place }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; onLongPress?: () => void; label?: string; hint?: string; place?: RowPlace | null }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // Its panel tells its first and last lines where they lie: their press follows its corners.
+  const shape = usePanelRowCorners(place);
   const body = (
     <>
       <View style={styles.lineIcon}>
@@ -72,11 +74,12 @@ function Line({ icon, children, onPress, onLongPress, label, hint }: { icon: Gly
   // What only reads (its reminders, its labels) is content, drawn in full ink: never a control put out of reach.
   if (!onPress) return <View style={styles.line}>{body}</View>;
   return (
-    <Tappable onPress={onPress} onLongPress={onLongPress} style={styles.line} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint}>
+    <Tappable onPress={onPress} onLongPress={onLongPress} style={[styles.line, shape]} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint}>
       {body}
     </Tappable>
   );
 }
+placedRow(Line);
 
 /** A label the event wears, as the form ticks it: a chip of its wash, its tag in its pigment, its name. */
 function WornLabel({ name, color }: { name: string; color: LineColor }) {
@@ -191,7 +194,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
           </>
         }
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <EdgeScrollView contentContainerStyle={styles.content}>
         {/* In the bin, as on the web: it says so first, and comes back from here. */}
         {trashed ? (
           <Organic outline="panel" style={styles.binned}>
@@ -234,7 +237,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
 
         {/* The details on their panel, when there is any (the web's too). */}
         {details ? (
-          <Organic outline="card" style={styles.panel}>
+          <RowPanel outline="card" style={styles.panel}>
             {event.place.trim() ? (
               <Line
                 icon="mapPin"
@@ -320,7 +323,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
                 </AppText>
               </Line>
             ) : null}
-          </Organic>
+          </RowPanel>
         ) : null}
 
         <MentionedIn id={occurrence.seriesId} />
@@ -330,7 +333,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
             <Button label={t('Créer une page de notes')} icon="pagePlus" kind="tonal" busy={making} onPress={() => later(meetingPage())} />
           </View>
         ) : null}
-      </ScrollView>
+      </EdgeScrollView>
       <Menu visible={menu} items={menuItems} onDismiss={() => setMenu(false)} />
       <ScopeSheet visible={scoping} deleting onDismiss={() => setScoping(false)} onScope={remove} />
     </View>
@@ -351,7 +354,8 @@ const makeStyles = (theme: Theme) =>
     // 8 apart, as the labels' chips.
     people: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     fill: { flex: 1, gap: 2 },
-    panel: { marginHorizontal: 12, paddingVertical: 8, backgroundColor: theme.color.paper },
+    // Its lines 6 in from its every edge (theirs 2 and its 4): the first's and the last's press concentric with its corners (`RowPanel`).
+    panel: { marginHorizontal: 12, paddingVertical: 4, backgroundColor: theme.color.paper },
     // A list row's geometry (6 in, 10, a 24 glyph slot, 16): the words on the form's text column.
     line: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, minHeight: 52, paddingHorizontal: 10, paddingVertical: 10, marginHorizontal: 6, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     lineIcon: { width: 24, alignItems: 'center', paddingTop: 1 },

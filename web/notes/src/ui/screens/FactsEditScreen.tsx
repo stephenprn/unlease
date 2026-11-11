@@ -4,8 +4,8 @@
  *
  * A collection's page asks one thing first: « Les informations habituelles » (each link gets those of
  * its kind; « Types de liens ici » lists the kinds its links have, each opening its usual facts) or
- * « Les informations de cette collection » (one list for every link here, edited right there, starting from the usual
- * facts of its most frequent kind). A kind's page is that list alone, with « Rétablir celles de
+ * « Les informations de cette collection » (one list for every link here, edited right there, starting from a starter's
+ * own facts, else the usual facts of its most frequent kind). A kind's page is that list alone, with « Rétablir celles de
  * Claude » while it is changed. Either way the facts read as they will on a link (`FactRows`), a
  * preview on one link sits beside them on a wide window (under them otherwise), and « Enregistrer »
  * sticks to the window's foot (⌘/Ctrl+S, ⌘/Ctrl+Entrée) and saves the page whole: the page stays,
@@ -27,6 +27,7 @@ import { INBOX_ID, LINK_KIND_NAMES, shownTitle, type LinkItem, type LinkKind, ty
 import type { TemplateField } from '@unlease/notes/models/templates';
 import {
   changedKindTemplate,
+  collectionKinds,
   collectionTemplate,
   collectionsOfTemplate,
   kindFields,
@@ -43,12 +44,12 @@ import {
 
 import { readLinks, resetKindTemplate, saveCollectionFacts, saveTemplate } from '../../app/store/actions';
 import { useLibraryStore, type LibraryState } from '../../app/store/library';
-import { useCanRead } from '../../app/store/prefs';
 import { kindDraftFields, templateKey } from '../../app/templates';
-import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { selectServerSettings, useServerFeature, useServerSettingsStore } from '@shared/app/store/serverSettings';
 import { showSnack, showUndo } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { EmblemStone } from '@shared/ui/components/Emblem';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { FormFoot } from '@shared/ui/components/FormFoot';
 import { Icon } from '@shared/ui/components/Icon';
@@ -132,7 +133,8 @@ function FactsEditor({ kind, lineId }: EditorProps) {
     setDraft(saved);
   }
   const unsaved = useUnsaved(dirty, { page: lineId ? paths.line(lineId) : paths.templates });
-  const reading = useCanRead();
+  // Reading again and the try, once the server has said Claude has a key.
+  const reading = useServerFeature('claude');
   const model = useServerSettingsStore(selectServerSettings)?.analysis.model ?? 'claude-opus-5-5';
   const slot = useContext(PageHeadSlot);
 
@@ -150,6 +152,8 @@ function FactsEditor({ kind, lineId }: EditorProps) {
     }),
   );
   const kinds = useMemo(() => kindsOfLinks(links), [links]);
+  // What the facts are for: the page's kind, or the collection's links' kinds then those its title names (« Films & séries »).
+  const expected = useMemo((): LinkKind[] => (kind ? [kind] : collectionKinds(links, collection)), [kind, links, collection]);
   const tryLinks: LinkItem[] = useMemo(() => [...links].sort((a, b) => b.createdAt - a.createdAt).slice(0, TRY_LINKS), [links]);
   // Read before the facts they read with now (as saved): « Tout relire ».
   const before = useLibraryStore(
@@ -167,8 +171,8 @@ function FactsEditor({ kind, lineId }: EditorProps) {
   const choose = (own: boolean): void => {
     setDraft(current => {
       if (current.own === own) return current;
-      // Its own list taken for the first time: the usual facts of its most frequent kind, to change.
-      const fields = own && current.fields.length === 0 ? startingFacts(templates, kinds) : current.fields;
+      // Its own list taken for the first time: a starter's own facts, else the usual facts of its most frequent kind, to change.
+      const fields = own && current.fields.length === 0 ? startingFacts(templates, expected, lineId) : current.fields;
       return { own, fields };
     });
   };
@@ -258,14 +262,14 @@ function FactsEditor({ kind, lineId }: EditorProps) {
         <div className={styles.main}>
           {draft.own ? (
             <Section title={t('Informations')}>
-              <FactRows fields={draft.fields} problems={problems.fields} kinds={kind ? [kind] : kinds} onChange={fields => setDraft(current => ({ ...current, fields }))} binding={id => form.field(`field:${id}`)} />
+              <FactRows fields={draft.fields} problems={problems.fields} kinds={expected} onChange={fields => setDraft(current => ({ ...current, fields }))} binding={id => form.field(`field:${id}`)} />
               {others.length > 0 ? <p className={`${styles.shared} t-meta`}>{t('Aussi relevées sur les liens de {collections}.', { collections: others.join(', ') })}</p> : null}
             </Section>
           ) : (
             <UsualFacts kinds={kinds} />
           )}
         </div>
-        {draft.own ? (
+        {draft.own && reading ? (
           <div className={styles.side}>
             <Section title={t('Aperçu sur un lien')}>
               <TryPanel fields={draft.fields} links={tryLinks} />
@@ -320,7 +324,7 @@ function UsualFacts({ kinds }: { kinds: readonly LinkKind[] }) {
   const templates = useLibraryStore(s => s.linkTemplates);
   return (
     <Section title={t('Types de liens ici')}>
-      {kinds.length === 0 ? <p className={`${styles.usualEmpty} t-meta`}>{t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')}</p> : null}
+      {kinds.length === 0 ? <EmptyLine text={t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')} className={styles.usualEmpty} /> : null}
       {kinds.map(kind => {
         const names = kindFields(templates, kind)
           .map(field => field.name)

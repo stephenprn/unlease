@@ -2,6 +2,9 @@
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_SHARED: Dictionary = {
+  'Aucun libellé': 'No labels',
+  'Les libellés regroupent des contacts : la famille, le travail, le club. Un contact peut en porter plusieurs.': 'Labels group contacts: family, work, the club. A contact can have several.',
+  'Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.': 'Nothing else yet: “Edit” adds a number, an email, an address, a birthday.',
   'Plus d’actions': 'More actions',
   'Sans nom': 'No name',
   'Mobile': 'Mobile',

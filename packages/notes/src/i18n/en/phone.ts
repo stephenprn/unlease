@@ -95,6 +95,7 @@ export const EN_PHONE: Dictionary = {
   'Choisir l’archive': 'Choose the archive',
   'Créer un label': 'Create a label',
   'Enregistrer': 'Save',
+  'Aucun label': 'No labels',
   'Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.': 'Labels group notes on the board. A note can wear several.',
   'Couleur': 'Colour',
   'Couleur de {name}': 'Colour of {name}',

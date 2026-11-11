@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Carnet's static shortcuts (a long press on its icon), and its sharing shortcuts' target: the
+  collections JavaScript publishes (src/app/shareShortcuts.ts) show in the share sheet's first row,
+  and a share through one files its links there.
+  Each opens a link of the app through ShortcutActivity (mobile/shared/android, launch/), which hands it
+  to MainActivity as a widget's tap is: Android opens a static shortcut clearing the app's task, the
+  trampoline takes that instead. Named by every launcher entry (tools/icons/build_android_drawables.mjs);
+  their icons are generated there too (ic_shortcut_*), their words are values/ and values-fr/.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="note"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_note"
+        android:shortcutShortLabel="@string/shortcut_note_short"
+        android:shortcutLongLabel="@string/shortcut_note_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="carnet://capture/note"
+            android:targetPackage="com.stephenprn.carnet"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="checklist"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_checklist"
+        android:shortcutShortLabel="@string/shortcut_checklist_short"
+        android:shortcutLongLabel="@string/shortcut_checklist_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="carnet://capture/checklist"
+            android:targetPackage="com.stephenprn.carnet"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="link"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_link"
+        android:shortcutShortLabel="@string/shortcut_link_short"
+        android:shortcutLongLabel="@string/shortcut_link_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="carnet://capture/link"
+            android:targetPackage="com.stephenprn.carnet"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="carnet://capture/search"
+            android:targetPackage="com.stephenprn.carnet"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+
+    <!-- A collection in the share sheet (Direct Share): a share through it reaches MainActivity's SEND filter with its id (EXTRA_SHORTCUT_ID). -->
+    <share-target android:targetClass="com.stephenprn.carnet.MainActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="com.stephenprn.carnet.category.COLLECTION" />
+    </share-target>
+</shortcuts>

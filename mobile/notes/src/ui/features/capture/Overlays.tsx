@@ -26,9 +26,12 @@ export function Overlays(): React.ReactElement {
     const result = await receiveShare(share);
     if (result.kind === 'links') {
       const added = result.links.filter(link => link.existing === null);
-      if (result.reading) added.forEach(link => startTransfer(link.id, added.length === 1 ? link.cleaned : 0));
+      // Sent to a collection (its sharing shortcut), they stay there: the slip names it, as « Classer un lien » into one does.
+      const into = result.into;
+      if (result.reading && into === null) added.forEach(link => startTransfer(link.id, added.length === 1 ? link.cleaned : 0));
       // Read, the new links travel on the transfer panel; the slip tells what was saved already.
-      const message = addedMessage(result.links, result.reading ? { into: null } : { into: INBOX_ID, announce: true }, useLibraryStore.getState().notes);
+      const wording = into !== null ? { into, announce: true } : result.reading ? { into: null } : { into: INBOX_ID, announce: true };
+      const message = addedMessage(result.links, wording, useLibraryStore.getState().notes);
       // A share offering more links than one share takes says what was left out first.
       if (result.more > 0) showSnack([cappedMessage(result.more), message].filter(Boolean).join(' · '), undefined, { tone: 'warning' });
       else if (message) showSnack(message, undefined, { tone: addedTone(result.links) });

@@ -173,6 +173,25 @@ export function sameGround(a: GroundChoice, b: GroundChoice): boolean {
   return b.kind === 'gradient' && sameGradient(a, b);
 }
 
+/** The theme as « Apparence »'s row says it, on both clients. */
+export const THEME_WORDS: Readonly<Record<'system' | 'light' | 'dark', string>> = { system: tx('Thème du système'), light: tx('Thème clair'), dark: tx('Thème sombre') };
+
+/**
+ * The look in words, as « Apparence »'s row says it on both clients: the theme, then « apparence
+ * d’origine » while the colours and the ground are still the ones out of the box, else the colours
+ * (their palette's name, or made to measure) and the ground, each named for what it is, so the
+ * palette and the ground both called « Carnet » never read « Carnet · Carnet ».
+ */
+export function lookWords(theme: 'system' | 'light' | 'dark', appearance: Pick<Appearance, 'primary' | 'accent' | 'ground'>): string {
+  const shown = t(THEME_WORDS[theme]);
+  const palette = paletteOf(appearance.primary, appearance.accent);
+  const { ground } = appearance;
+  if (palette === 'carnet' && sameGround(ground, DEFAULT_APPEARANCE.ground)) return t('{theme} · apparence d’origine', { theme: shown });
+  const colors = palette ? t('couleurs {palette}', { palette: PALETTE_NAMES[palette] }) : t('couleurs sur mesure');
+  const backdrop = ground.kind === 'preset' ? t('fond {ground}', { ground: GROUND_NAMES[ground.key] }) : ground.kind === 'color' ? t('fond uni sur mesure') : t('fond dégradé sur mesure');
+  return t('{theme} · {colors} · {ground}', { theme: shown, colors, ground: backdrop });
+}
+
 /** A ground's name as a picker heads it. */
 export function groundName(ground: GroundChoice): string {
   if (ground.kind === 'preset') return GROUND_NAMES[ground.key];

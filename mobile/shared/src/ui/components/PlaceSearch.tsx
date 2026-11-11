@@ -12,7 +12,8 @@
  * root over everything else, shows it.
  */
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { BackHandler, StyleSheet, TextInput, View } from 'react-native';
+import { EdgeScrollView } from './ScrollEdges';
 import Animated, { Keyframe } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
@@ -29,8 +30,8 @@ import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
 import { variantStyle } from '../theme/typography';
 import { AppText } from './AppText';
+import { EmptyLine } from './EmptyLine';
 import { Ground } from './Ground';
-import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 import { ListRow } from './ListRow';
 import { Organic } from './Organic';
@@ -153,7 +154,7 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
     <Animated.View entering={IN} exiting={OUT} style={styles.layer} onLayout={event => setHeight(event.nativeEvent.layout.height)} accessibilityViewIsModal>
       <Ground />
       <View style={{ paddingTop: insets.top + SEARCH_TOP }}>
-        <Organic style={styles.strip}>
+        <Organic frost style={styles.strip}>
           <IconButton icon="back" label={t('Retour')} onPress={closePlaceSearch} />
           <TextInput
             ref={input}
@@ -177,7 +178,7 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
           {text ? <IconButton icon="close" label={t('Effacer')} onPress={() => (setText(''), input.current?.focus())} /> : null}
         </Organic>
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.list, { paddingBottom: under + insets.bottom + 16 }]}>
+      <EdgeScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.list, { paddingBottom: under + insets.bottom + 16 }]}>
         {typed ? (
           <ListRow icon="edit" title={t('Utiliser « {place} »', { place: typed })} onPress={() => done(typed, null)} />
         ) : request.value.trim() ? (
@@ -189,22 +190,13 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
         {theirs.map(place => (
           <ListRow key={`f:${place.name}|${place.detail}`} icon="mapPin" title={place.name} supporting={place.detail || undefined} onPress={() => done(place.label, place)} />
         ))}
-        {status ? (
-          <View style={styles.status} accessibilityLiveRegion="polite">
-            <View style={styles.slot}>
-              <Icon name="info" size={18} color={theme.color.inkMuted} />
-            </View>
-            <AppText variant="meta" style={styles.grow}>
-              {status}
-            </AppText>
-          </View>
-        ) : null}
+        {status ? <EmptyLine text={status} glyph="info" slot={24} gap={16} style={styles.status} /> : null}
         {theirs.length > 0 ? (
           <AppText variant="labelSmall" color={theme.color.inkMuted} style={styles.credit}>
             {t('Lieux : © les contributeurs d’OpenStreetMap')}
           </AppText>
         ) : null}
-      </ScrollView>
+      </EdgeScrollView>
     </Animated.View>
   );
 }
@@ -238,8 +230,6 @@ const makeStyles = (theme: Theme) =>
     // On the strip's margin: the rows' glyphs under its Back arrow.
     list: { paddingTop: 8, paddingHorizontal: 12 },
     // On the rows' columns (inset 6, padded 10): its glyph in their glyphs' slot, its words on their text.
-    status: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, paddingHorizontal: 16, paddingVertical: 14 },
-    slot: { width: 24, alignItems: 'center' },
-    grow: { flex: 1 },
+    status: { paddingHorizontal: 16, paddingVertical: 14 },
     credit: { paddingLeft: 56, paddingRight: 16, paddingTop: 4 },
   });

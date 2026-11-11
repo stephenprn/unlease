@@ -1,9 +1,10 @@
 /**
  * « Planning »: the days ahead from the day shown, those holding something (and today), each under
- * its heading, which stays at the top while its day scrolls. Reaching the end reads two more months.
+ * its heading, which stays at the top while its day scrolls; nothing at all on them, the list's empty
+ * state. Reaching the end reads two more months.
  */
 import React, { memo, useMemo, useRef, useState } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,11 +15,11 @@ import { itemsOn, type AgendaItem } from '@app/agenda';
 import { useAgenda } from '@app/hooks/useAgenda';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, EmptyState, FAB_CLEARANCE, GroundSlice } from '@shared/ui/components';
+import { AppText, EdgeSectionList, EmptyLine, EmptyState, FAB_CLEARANCE, GroundSlice, useArrivals, usePullToSync } from '@shared/ui/components';
+import { listIn } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { AgendaRow } from './AgendaRow';
-import { ITEM_IN, useArrivals } from './arrivals';
 
 const STEP_DAYS = 60;
 
@@ -37,6 +38,7 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const pullToSync = usePullToSync();
   const [span, setSpan] = useState(STEP_DAYS);
   const to = addDays(from, span);
   const agenda = useAgenda(from, to, labelId);
@@ -47,7 +49,8 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
       const items = itemsOn(state, agenda, day);
       if (items.length > 0 || day === today) out.push({ day, data: items });
     }
-    return out;
+    // Nothing at all on these days: no today alone, the list's empty state (as on the web).
+    return out.some(section => section.data.length > 0) ? out : [];
   }, [agenda, from, to, today]);
 
   // What is made, brought back or moved into the days read settles in; the list opened, filtered or read further just shows.
@@ -59,6 +62,8 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
   // The day pinned at the top lies on the ground's slice there; the others on the ground itself.
   const [top, setTop] = useState<string | null>(null);
   const [listTop, setListTop] = useState(0);
+  // The pinned day's height: what scrolls softens under it, not under the bar above.
+  const [headHeight, setHeadHeight] = useState(0);
   const box = useRef<React.ComponentRef<typeof View>>(null);
   const onViewable = useRef(({ viewableItems }: { viewableItems: readonly { readonly section?: { readonly day: string } }[] }) => {
     const first = viewableItems[0];
@@ -67,12 +72,14 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
 
   return (
     <View ref={box} style={styles.fill} onLayout={() => box.current?.measureInWindow((_x, y) => setListTop(y))}>
-    <SectionList
+    <EdgeSectionList
       sections={sections}
       viewabilityConfig={VIEWABILITY}
       onViewableItemsChanged={onViewable}
       keyExtractor={(item, index) => `${item.key}#${index}`}
       stickySectionHeadersEnabled
+      insetTop={top ? headHeight : 0}
+      refreshControl={pullToSync}
       // Android's default clipping, with sticky days coming and going (a label chosen, two more months read), makes Fabric insert a view out of range (« addViewAt » crash).
       removeClippedSubviews={false}
       initialNumToRender={20}
@@ -80,7 +87,7 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
       onEndReachedThreshold={0.5}
       onEndReached={() => setSpan(value => Math.min(value + STEP_DAYS, 730))}
       renderSectionHeader={({ section }) => (
-        <View style={styles.heading}>
+        <View style={styles.heading} onLayout={section.day === top ? event => setHeadHeight(event.nativeEvent.layout.height) : undefined}>
           {section.day === top ? <GroundSlice top={listTop} /> : null}
           <AppText variant="labelStrong" color={section.day === today ? theme.color.link : theme.color.ink}>
             {longDay(section.day)}
@@ -89,17 +96,11 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
         </View>
       )}
       renderItem={({ item, section }) => (
-        <Animated.View entering={arrived.has(`${item.key}@${section.day}`) ? ITEM_IN : undefined}>
+        <Animated.View entering={arrived.has(`${item.key}@${section.day}`) ? listIn : undefined}>
           <AgendaRow item={item} day={section.day} twelveHours={twelveHours} onOpen={each => onOpen(each, section.day)} />
         </Animated.View>
       )}
-      renderSectionFooter={({ section }) =>
-        section.data.length === 0 ? (
-          <AppText variant="meta" style={styles.none}>
-            {t('Rien de prévu')}
-          </AppText>
-        ) : null
-      }
+      renderSectionFooter={({ section }) => (section.data.length === 0 ? <EmptyLine text={t('Rien de prévu')} style={styles.none} /> : null)}
       ItemSeparatorComponent={Gap}
       ListEmptyComponent={<EmptyState scene="reminders" title={t('Rien de prévu')} text={t('Aucun événement sur ces jours. Le bouton +, en bas, en ajoute un.')} />}
     />

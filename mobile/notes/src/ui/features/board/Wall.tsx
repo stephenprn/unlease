@@ -3,28 +3,27 @@
  * The scroll offset is bucketed, and only a change of bucket re-renders the list.
  */
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { Keyframe, LayoutAnimationConfig, LinearTransition } from 'react-native-reanimated';
+import { StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent, type RefreshControlProps } from 'react-native';
+import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import type { WallMetrics } from '@unlease/notes/services/wall';
 import type { BoardSections } from '@app/hooks/useBoard';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText } from '../../components';
-import { accelerate, decelerate, duration, standard } from '@shared/ui/theme/motion';
-import { useTheme } from '@shared/ui/theme/ThemeProvider';
+import { AppText, EdgeScrollView } from '../../components';
+import { listIn, listMove, listOut } from '@shared/ui/theme/motion';
 import { NoteCard } from './NoteCard';
 import { SwipeToArchive } from './SwipeToArchive';
 import { layoutWall, PAGE_PADDING, SECTION_HEIGHT } from './wallLayout';
 
 const BUCKET = 480;
 
-/** When a card leaves (archived) or comes back (undone), the others slide to their new place. */
-const REFLOW = LinearTransition.duration(duration.medium).easing(standard);
+/** When a card leaves (archived) or comes back (undone), the others slide to their new place (the suite's list motion). */
+const REFLOW = listMove;
 /** A card new to the wall (back from the archive, a view just opened) settles in once the others have made room. */
-const CARD_IN = new Keyframe({ 0: { opacity: 0, transform: [{ scale: 0.94 }] }, 100: { opacity: 1, transform: [{ scale: 1 }], easing: decelerate } }).duration(200).delay(120);
+const CARD_IN = listIn;
 /** A card taken off the wall without a swipe (archived or binned from the selection) fades where it was. Off-screen cards dropped by the window go the same way, unseen. */
-const CARD_OUT = new Keyframe({ 0: { opacity: 1, transform: [{ scale: 1 }] }, 100: { opacity: 0, transform: [{ scale: 0.96 }], easing: accelerate } }).duration(duration.short);
+const CARD_OUT = listOut;
 const NO_ARRIVALS: ReadonlySet<string> = new Set();
 
 export interface WallProps {
@@ -37,15 +36,14 @@ export interface WallProps {
   readonly onLongPress: (id: string) => void;
   readonly header?: React.ReactNode;
   readonly footerSpace: number;
-  readonly refreshing: boolean;
-  readonly onRefresh?: () => void;
+  /** The pull to sync (`usePullToSync`). */
+  readonly refreshControl?: React.ReactElement<RefreshControlProps>;
   /** A card swiped off the board; absent, cards do not swipe. */
   readonly onSwipe?: (id: string) => void;
   readonly canSwipe?: (id: string) => boolean;
 }
 
-function WallComponent({ sections, metrics, columns, query, selection, onPress, onLongPress, header, footerSpace, refreshing, onRefresh, onSwipe, canSwipe }: WallProps) {
-  const theme = useTheme();
+function WallComponent({ sections, metrics, columns, query, selection, onPress, onLongPress, header, footerSpace, refreshControl, onSwipe, canSwipe }: WallProps) {
   const { height: windowHeight } = useWindowDimensions();
   const [bucket, setBucket] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -78,15 +76,11 @@ function WallComponent({ sections, metrics, columns, query, selection, onPress, 
   // or its fading cards would hold its old place in the screen while the new content and any closing dialog draw.
   return (
     <LayoutAnimationConfig skipExiting>
-      <ScrollView
+      <EdgeScrollView
         onScroll={onScroll}
         scrollEventThrottle={32}
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.color.focus]} progressBackgroundColor={theme.color.paper} />
-          ) : undefined
-        }
+        refreshControl={refreshControl}
       >
         <View onLayout={event => setHeaderHeight(event.nativeEvent.layout.height)}>{header}</View>
         <View style={{ height: layout.height + footerSpace }}>
@@ -123,7 +117,7 @@ function WallComponent({ sections, metrics, columns, query, selection, onPress, 
             ),
           )}
         </View>
-      </ScrollView>
+      </EdgeScrollView>
     </LayoutAnimationConfig>
   );
 }

@@ -6,7 +6,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Easing, FadeIn, FadeOut, LayoutAnimationConfig, LinearTransition, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { LayoutAnimationConfig, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { noteBackdrop } from '@unlease/design/backgrounds';
@@ -23,7 +23,7 @@ import { haptic } from '@shared/platform/haptics';
 
 import { AnimatedOrganic, AppText, Checkbox, Grain, Icon, IconButton, Organic, Tappable } from '../../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
-import { decelerate, duration, spatial, standard } from '@shared/ui/theme/motion';
+import { duration, listIn, listInAtOnce, listMove, listOut, spatial, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -31,13 +31,13 @@ import { variantStyle } from '@shared/ui/theme/typography';
 
 type InputRef = React.ComponentRef<typeof TextInput>;
 
-/** Items glide to their new place when one is ticked, added, removed or dropped; an item arriving or leaving fades. */
-const ROW_MOVE = LinearTransition.duration(duration.medium).easing(standard);
-const ROW_IN = FadeIn.duration(duration.medium).easing(decelerate);
+/** Items glide to their new place when one is ticked, added, removed or dropped (the suite's list motion); an item typed fades in at once, under the caret. */
+const ROW_MOVE = listMove;
+const ROW_IN = listInAtOnce;
 /** The ticked group (and what arrives in it) comes in once the open list has closed ranks above it. */
-const ROW_IN_LATE = FadeIn.duration(duration.medium).easing(decelerate).delay(duration.short);
-/** Out of the way before the next item slides into its place: a quick fade that starts at once. */
-const ROW_OUT = FadeOut.duration(100).easing(Easing.out(Easing.quad));
+const ROW_IN_LATE = listIn;
+/** Out of the way before the next item slides into its place. */
+const ROW_OUT = listOut;
 /** Two Enters closer than this are one press echoed (a hardware key submits on its press and again in the next item). */
 const SPLIT_ECHO_MS = 150;
 

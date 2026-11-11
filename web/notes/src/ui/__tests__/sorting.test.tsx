@@ -17,6 +17,7 @@ import { NewLineDialog } from '../features/lines/LineDialogs';
 import { initHistory } from '@shared/ui/router';
 import { LineScreen } from '../screens/LineScreen';
 import { useNotesUiStore } from '@notes/app/store/notesUi';
+import { setReading } from '@notes/app/store/prefs';
 
 const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const state = () => useLibraryStore.getState();
@@ -52,6 +53,8 @@ let tarte: string;
 beforeEach(async () => {
   await freshLibrary();
   setServer({ url: 'https://carnet.test', token: 'jeton' });
+  // A server with a Claude key: what Claude sorts is offered.
+  setReading(true);
   films = createLine({ id: 'line-films', title: 'Films', hint: 'Films à voir' });
   mode = createLine({ id: 'line-mode', title: 'Mode', hint: 'Vêtements à acheter.' });
   veste = readLink('veste', mode);

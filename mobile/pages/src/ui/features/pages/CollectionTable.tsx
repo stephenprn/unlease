@@ -25,7 +25,7 @@ import { setLinkDone } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Icon, IconButton, Organic, Tappable } from '@shared/ui/components';
+import { AppText, EmptyLine, Icon, IconButton, Organic, Tappable } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -115,11 +115,7 @@ function CollectionTableComponent({ block, ids, done, onOpen }: { block: Block; 
     setAvailable(event.nativeEvent.layout.width);
   };
   if (shownIds.length === 0) {
-    return (
-      <AppText variant="meta" style={styles.empty}>
-        {t('Aucun lien à faire dans cette collection.')}
-      </AppText>
-    );
+    return <EmptyLine text={t('Aucun lien à faire dans cette collection.')} style={styles.empty} />;
   }
   // Narrower than the embed, the last column takes what is left, so the rows' lines reach its edge.
   const natural = TITLE_WIDTH + columns.reduce((sum, column) => sum + widthOf(column.key), 0) + END;

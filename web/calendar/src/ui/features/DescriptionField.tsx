@@ -121,7 +121,8 @@ function Backdrop({ text, spans }: { text: string; spans: ReturnType<typeof toke
 
 const MENU_ID = 'description-mentions';
 
-export function DescriptionField({ markup, onChange, except = null }: { markup: string; onChange: (markup: string) => void; except?: string | null }) {
+/** `autoFocus`: its caret as it appears (a quick form's row opened). */
+export function DescriptionField({ markup, onChange, except = null, autoFocus = false }: { markup: string; onChange: (markup: string) => void; except?: string | null; autoFocus?: boolean }) {
   const field = useRef<HTMLTextAreaElement>(null);
   const backdrop = useRef<HTMLDivElement>(null);
   const [{ text, tokens }, setState] = useState(() => toTyped(markup));
@@ -232,6 +233,7 @@ export function DescriptionField({ markup, onChange, except = null }: { markup: 
         className={`${styles.input} t-body`}
         value={text}
         rows={3}
+        autoFocus={autoFocus}
         aria-label={t('Description')}
         placeholder={t('Ajouter une description. « @ » mentionne une personne, une page, une note…')}
         aria-autocomplete="list"

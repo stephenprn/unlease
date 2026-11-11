@@ -3,13 +3,13 @@
  * what takes the whole day (birthdays, all-day events, a page's day); then what has a time, in time
  * order, what is over in the second ink, what runs a weight up and what comes next saying how long
  * (« Encore 25 min », « Dans 20 min »), the now line between them; an empty day says so and offers
- * an event; « Note du jour »; Carnet's reminders missed and still set; tomorrow's birthdays, all-day
+ * an event (the view's empty state when nothing follows either, else a line); « Note du jour »; Carnet's reminders missed and still set; tomorrow's birthdays, all-day
  * events and first events. Each row opens what it is (`onOpen`: the event, the birthday, the note in
  * Carnet, the page in Pages). Rows are list rows (`ListRow`'s geometry): the mark in a 24 slot 16 in,
  * the words at 56. Drawn again each minute by the screen.
  */
 import React, { memo, useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,12 +28,11 @@ import { SHAPES } from '@unlease/design/shapes';
 import { useTodayPlan } from '@app/hooks/useTodayPlan';
 import { useWeather } from '@app/hooks/useWeather';
 
-import { AppText, Button, FAB_CLEARANCE, Icon, Organic, Tappable } from '@shared/ui/components';
-import { listPressDelay } from '@shared/ui/theme/motion';
+import { AppText, Button, EdgeScrollView, EmptyLine, EmptyState, FAB_CLEARANCE, Icon, Organic, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
+import { listIn, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { ITEM_IN, useArrivals } from './arrivals';
 
 const LAYER_GLYPHS: Readonly<Record<Exclude<DayItem['kind'], 'event'>, GlyphName>> = { birthday: 'cake', reminder: 'bell', page: 'page' };
 
@@ -180,6 +179,7 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const pullToSync = usePullToSync();
   const { plan, dailyPageId } = useTodayPlan(today, now);
   const rows = useMemo(() => [...plan.allDay, ...plan.timed], [plan]);
   const weather = useWeather(
@@ -191,12 +191,12 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
     rows.map(row => row.item.key),
     today,
   );
-  const enter = (key: string) => (arrived.has(key) ? ITEM_IN : undefined);
+  const enter = (key: string) => (arrived.has(key) ? listIn : undefined);
   const clock = clockWords(formatClock(now), twelveHours);
   const tomorrow = plan.tomorrow;
 
   return (
-    <ScrollView style={styles.fill} contentContainerStyle={[styles.content, { paddingBottom: FAB_CLEARANCE + insets.bottom }]}>
+    <EdgeScrollView style={styles.fill} contentContainerStyle={[styles.content, { paddingBottom: FAB_CLEARANCE + insets.bottom }]} refreshControl={pullToSync}>
       {weather ? (
         <View style={styles.weather} accessible accessibilityLabel={`${weatherWords(weather.day)}, ${weather.place}`}>
           <Icon name={weatherKind(weather.day.code) === 'clear' ? 'sun' : 'cloud'} size={18} color={theme.color.inkMuted} />
@@ -206,13 +206,14 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
         </View>
       ) : null}
 
-      {rows.length === 0 ? (
-        <View style={styles.emptyDay}>
-          <AppText variant="body" color={theme.color.inkMuted}>
-            {t('Rien de prévu aujourd’hui : la journée est à vous.')}
-          </AppText>
-          <Button kind="text" icon="plus" label={t('Créer un événement')} onPress={onCreate} style={styles.emptyAction} />
-        </View>
+      {rows.length === 0 && plan.overdue.length === 0 && !tomorrow ? (
+        // Nothing today nor tomorrow: the view's empty place.
+        <EmptyState scene="reminders" title={t('Rien de prévu aujourd’hui')} text={t('La journée est à vous.')}>
+          <Button kind="tonal" icon="plus" label={t('Créer un événement')} onPress={onCreate} />
+        </EmptyState>
+      ) : rows.length === 0 ? (
+        // Nothing today, something below: the day's line, the way to fill it after.
+        <EmptyLine size="body" text={t('Rien de prévu aujourd’hui : la journée est à vous.')} action={{ label: t('Créer un événement'), onPress: onCreate }} style={styles.emptyDay} />
       ) : (
         <View accessibilityLabel={t('Aujourd’hui')}>
           {plan.allDay.map(row => (
@@ -279,7 +280,7 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
           ) : null}
         </View>
       ) : null}
-    </ScrollView>
+    </EdgeScrollView>
   );
 }
 
@@ -302,9 +303,7 @@ const makeStyles = (_theme: Theme) =>
     nowLine: { flex: 1, height: 2 },
     weather: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 },
     weatherWords: { flexShrink: 1 },
-    emptyDay: { alignItems: 'flex-start', gap: 4, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-    // The text button's words on the column's: its own padding stands out to the left.
-    emptyAction: { marginLeft: -14 },
+    emptyDay: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
     section: { paddingTop: 20 },
     // A group's head on the marks' column, more room above than below.
     head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, paddingHorizontal: 16, paddingBottom: 4 },

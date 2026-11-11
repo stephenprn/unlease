@@ -4,7 +4,7 @@
  * empties them all and says how long they stay (`emptyPagesBinAsked`). Nothing is drawn while no page
  * is in it.
  */
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
@@ -19,6 +19,7 @@ import { Button } from '@shared/ui/components/Button';
 import { Confirm } from '@shared/ui/components/Dialog';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
+import { useListMotion } from '@shared/ui/useListMotion';
 import styles from './pages.module.css';
 
 const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: number; onDelete: (id: string) => void }) {
@@ -26,7 +27,7 @@ const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: nu
   if (!page) return null;
   const title = page.text.trim() || t(UNTITLED_PAGE);
   return (
-    <li className={styles.binRow} data-outline="panel" data-edge>
+    <li className={styles.binRow} data-outline="panel" data-edge data-motion={id}>
       <span className={styles.binIcon}>{page.icon ? <span className={styles.tileEmoji}>{page.icon}</span> : <Icon name="page" size={22} />}</span>
       <span className={styles.binText}>
         <span className="t-body-strong">{title}</span>
@@ -53,11 +54,14 @@ export function PagesBinSection() {
   const binned = useTrashedPages();
   const now = useMinute();
   const [confirm, setConfirm] = useState<string | null>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // A page restored or deleted fades where it was, the others close ranks; one put back by « Annuler » settles in.
+  useListMotion(list, { late: true });
   return (
     <>
       {binned.length > 0 ? (
         // No head of its own: the Corbeille's title and its line on how long pages stay are right above, and Pages' bin holds pages alone.
-        <ul className={styles.binList} aria-label={t('Pages')}>
+        <ul ref={list} className={styles.binList} aria-label={t('Pages')}>
           {binned.map(id => (
             <BinRow key={id} id={id} now={now} onDelete={setConfirm} />
           ))}

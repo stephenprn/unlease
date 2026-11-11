@@ -6,7 +6,7 @@
  * they live), files and link; and what can be done with it (`EventActions`): change it, copy it,
  * write its notes in Pages, delete it (one's own; a subscription's is only copied).
  */
-import { useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { getLocale, t } from '@unlease/core/i18n';
 import { isRichEmpty } from '@unlease/core/services/richText';
@@ -28,6 +28,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelTag } from '@shared/ui/components/LabelMark';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
+import { isEditable } from '@shared/ui/dom';
 import { navigate } from '@shared/ui/router';
 import { makeEventPage } from '../../app/api';
 import { saveEventFile } from '../../app/files';
@@ -245,22 +246,29 @@ export function EventActions({ item }: { item: Occurrence }) {
 export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose: () => void; onOpen: () => void }) {
   const own = isOwn(item.event);
   const more = useRef<HTMLButtonElement>(null);
+  const tools = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState(false);
   const items = useMoreItems(item);
+  const edit = (): void => {
+    onClose();
+    navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null));
+  };
+  // E changes it, as its button says (Google's key), while nothing lies over the peek (a menu, a dialog: then it is inert).
+  const onEditKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.defaultPrevented || event.isComposing || event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== 'e') return;
+    if (isEditable(event.target) || !tools.current || tools.current.closest('[inert]')) return;
+    event.preventDefault();
+    edit();
+  });
+  useEffect(() => {
+    if (!own) return;
+    const listener = (event: KeyboardEvent): void => onEditKey(event);
+    document.addEventListener('keydown', listener);
+    return () => document.removeEventListener('keydown', listener);
+  }, [own]);
   return (
-    <div className={styles.peekTools}>
-      {own ? (
-        <IconButton
-          icon="edit"
-          label={t('Modifier')}
-          compact
-          shortcut="E"
-          onClick={() => {
-            onClose();
-            navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null));
-          }}
-        />
-      ) : null}
+    <div ref={tools} className={styles.peekTools}>
+      {own ? <IconButton icon="edit" label={t('Modifier')} compact shortcut="E" onClick={edit} /> : null}
       {own ? (
         <IconButton
           icon="trash"

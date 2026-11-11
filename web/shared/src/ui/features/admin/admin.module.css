@@ -19,13 +19,13 @@
   }
 }
 
-/* Its rows 6 in from every edge of the sheet (their outer corners concentric with it), a little apart. */
+/* Its rows 6 in from every edge of the sheet (their outer corners concentric with it), a little apart: the sheet's own 6 above and below them. */
 .rows {
   display: flex;
   flex-direction: column;
   gap: var(--row-gap);
   margin: 0;
-  padding: 6px 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -43,11 +43,7 @@
   transition: background-color var(--duration-short) var(--ease-standard);
 }
 
-/* The first and last rows of the sheet: their outer corners concentric with its own, as drawn at its size (`--outline-radius`). */
-.rows {
-  --row-outer: max(0px, calc((var(--outline-radius, 22px) - 6px) * var(--corner-scale)));
-}
-
+/* The first and last rows of the sheet: their outer corners concentric with its own, as drawn at its size (`--row-outer`, the sheet's). */
 .rows > li:first-child > .row {
   border-radius: var(--row-outer) var(--row-outer) var(--cut-tab) var(--cut-tab);
 }

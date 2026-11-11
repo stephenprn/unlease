@@ -1,23 +1,61 @@
 /**
- * The event form's own controls, drawn as the suite's fields: a day picked on a small month
- * (`DateField`), a time typed as one says it (« 20h », « 2030 », « 8:30 ») or picked from the
- * quarters (the end's with how long it lasts, as Google's: `TimeField`), and one choice among a few
- * from a menu (`ChoiceField`).
+ * The event form's own controls, drawn as the suite's fields: a row led by its glyph (`FormRow`), a
+ * day picked on a small month (`DateField`), a time typed as one says it (« 20h », « 2030 », « 8:30 »)
+ * or picked from the quarters (the end's with how long it lasts, as Google's: `TimeField`), and one
+ * choice among a few from a menu (`ChoiceField`); the places offered as one is typed
+ * (`useKnownPlaces`). The whole form and the quick one on the grid share them.
  */
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type RefObject } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
+import { placeFromLine, type Place } from '@unlease/core/sync/places';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { clockWords, weekdayDay } from '@unlease/calendar/services/eventText';
 import { partsOf, readClock } from '@unlease/calendar/services/time';
+import { addressLine } from '@unlease/contacts/services/addresses';
+import { contactName } from '@unlease/contacts/services/names';
 
+import { useContactsStore } from '@contacts/app/store/library';
 import { Floating } from '@shared/ui/components/Floating';
 import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
+import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
 import { MiniMonth } from '../views/MiniMonth';
+
+/**
+ * A row of the form, led by its glyph, centred on the row's first line: a field's (52, the default),
+ * chips' (40), a file's (36), the swatches' (34) or a small button's (32).
+ */
+export function FormRow({ icon, children, label, wide = false, first, fieldsRef }: { icon: GlyphName; children: ReactNode; label?: string; wide?: boolean; first?: 'chips' | 'file' | 'swatches' | 'small'; fieldsRef?: Ref<HTMLDivElement> }) {
+  return (
+    <div className={styles.formRow} role={label ? 'group' : undefined} aria-label={label} data-first={first}>
+      <Icon name={icon} size={22} />
+      {/* Fields that move (the reminders) are their own frame. */}
+      <div ref={fieldsRef} className={`${wide ? styles.formFieldsWide : styles.formFields}${fieldsRef ? ` ${styles.movingFields}` : ''}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** The places this device knows: the events' own (the most used first), then the contacts' addresses. */
+export function useKnownPlaces(): readonly Place[] {
+  const events = useCalendarStore(s => s.events);
+  const contacts = useContactsStore(s => s.contacts);
+  return useMemo(() => {
+    const used = Object.values(events)
+      .filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && event.place.trim())
+      .sort((a, b) => b.editedAt - a.editedAt)
+      .map(event => placeFromLine(event.place));
+    const kept = Object.values(contacts)
+      .filter(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto)
+      .flatMap(contact => contact.addresses.map(address => addressLine(address)).filter(Boolean).map(line => ({ ...placeFromLine(line), detail: `${contactName(contact)} · ${placeFromLine(line).detail}`.replace(/ · $/, '') })));
+    return [...used, ...kept];
+  }, [events, contacts]);
+}
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 
@@ -153,6 +191,7 @@ export function TimeField({ value, onChange, label, from, twelveHours = false, i
         role="combobox"
         aria-label={label}
         aria-expanded={open}
+        data-owns-escape={open || undefined}
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={open ? `${listId}-${active}` : undefined}

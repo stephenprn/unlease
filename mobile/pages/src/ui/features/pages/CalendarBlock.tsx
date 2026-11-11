@@ -18,7 +18,7 @@ import { updateBlock } from '@app/store/pages';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { eventPlace, openInApp } from '@shared/app/openApp';
 
-import { AppText, Icon, LabelTag, ListRow, Organic, Segmented, Sheet, SheetScroll, Tappable } from '@shared/ui/components';
+import { AppText, EmptyLine, Icon, LabelTag, ListRow, Organic, Segmented, Sheet, SheetScroll, Tappable } from '@shared/ui/components';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -66,9 +66,7 @@ function CalendarBlockComponent({ block }: { block: Block }) {
         />
       )}
       {days.length === 0 ? (
-        <AppText variant="meta" style={styles.empty}>
-          {t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })}
-        </AppText>
+        <EmptyLine text={t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })} />
       ) : (
         days.map(({ day, items }) => (
           <View key={day} style={styles.day}>
@@ -134,7 +132,6 @@ const makeStyles = (theme: Theme) =>
     head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     chip: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 8, paddingVertical: 4, ...corners(SHAPES.chip) },
     fill: { flex: 1 },
-    empty: { color: theme.color.inkMuted },
     day: { gap: 2 },
     item: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 4, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     dot: { width: 8, height: 8, ...corners(SHAPES.dot) },

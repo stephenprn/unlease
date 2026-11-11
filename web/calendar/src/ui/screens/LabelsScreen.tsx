@@ -1,5 +1,5 @@
 /** The labels: each renamed, coloured or deleted (its events lose it), a new one made; a label opens its events. */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -14,6 +14,7 @@ import { TextField } from '@shared/ui/components/TextField';
 import { useForm } from '@shared/ui/components/useForm';
 import { PageHead } from '@shared/ui/navigation/PageHead';
 import { Link } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { createLabel, deleteLabel, renameLabel, setLabelColor } from '../../app/store/actions';
 import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
@@ -33,6 +34,9 @@ export function LabelsScreen() {
   }, [events]);
   const taken = (typed: string, except: string | null = null): string | null => (labelNameTaken(labels, typed, except) ? t('Ce libellé existe déjà : choisissez un autre nom.') : null);
   const form = useForm({ name: taken(name) });
+  const list = useRef<HTMLUListElement>(null);
+  // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
+  useListMotion(list, { late: true });
   const create = (): void => {
     if (!name.trim()) return;
     createLabel(name);
@@ -53,10 +57,10 @@ export function LabelsScreen() {
         <EmptyState scene="label" title={t('Aucun libellé')} text={t('Créez-en un pour ranger vos événements : Travail, Famille, Sport…')} />
       ) : (
         <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
-          <ul className={styles.list}>
+          <ul ref={list} className={styles.list}>
             {/* Each label: its name in its field (a list of names needs no « Nom » over each), its events and its bin on the field's line, its colours under it. */}
             {live.map(label => (
-              <li key={label.id} className={styles.item}>
+              <li key={label.id} className={styles.item} data-motion={label.id}>
                 <div className={styles.itemHead}>
                   <div className={styles.itemName}>
                     <NameField ariaLabel={t('Nom')} value={label.name} onSave={value => renameLabel(label.id, value)} maxLength={EVENT_LIMITS.labelName} check={value => taken(value, label.id)} />

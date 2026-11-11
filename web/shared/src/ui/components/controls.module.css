@@ -240,6 +240,8 @@
   border: 0;
   border-radius: var(--cut-field);
   background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
   box-shadow: inset 0 0 0 1.5px var(--edge);
   color: var(--ink);
   font-size: 16px;
@@ -551,8 +553,9 @@ textarea.input {
 }
 
 /*
- * A page form's actions (`FormFoot`): sticking to the window's bottom on the ground's own paint, a
- * short fade over what scrolls under it; the form's line above the buttons, the primary last.
+ * A page form's actions (`FormFoot`): sticking to the window's bottom on the ground's own paint, the
+ * ground laid over what runs under it on an eased curve, as strongly as the form runs on below it
+ * (`useStuckFootEdge`); the form's line above the buttons, the primary last.
  */
 .formFoot {
   position: sticky;
@@ -571,11 +574,34 @@ textarea.input {
   left: 0;
   right: 0;
   bottom: 100%;
-  height: 16px;
+  height: var(--edge-fade);
   pointer-events: none;
   background: var(--ground-paint);
-  -webkit-mask-image: linear-gradient(transparent, #000);
-  mask-image: linear-gradient(transparent, #000);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    rgb(0 0 0 / 1) 0%,
+    rgb(0 0 0 / 0.962) 12.5%,
+    rgb(0 0 0 / 0.854) 25%,
+    rgb(0 0 0 / 0.691) 37.5%,
+    rgb(0 0 0 / 0.5) 50%,
+    rgb(0 0 0 / 0.309) 62.5%,
+    rgb(0 0 0 / 0.146) 75%,
+    rgb(0 0 0 / 0.038) 87.5%,
+    rgb(0 0 0 / 0) 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    rgb(0 0 0 / 1) 0%,
+    rgb(0 0 0 / 0.962) 12.5%,
+    rgb(0 0 0 / 0.854) 25%,
+    rgb(0 0 0 / 0.691) 37.5%,
+    rgb(0 0 0 / 0.5) 50%,
+    rgb(0 0 0 / 0.309) 62.5%,
+    rgb(0 0 0 / 0.146) 75%,
+    rgb(0 0 0 / 0.038) 87.5%,
+    rgb(0 0 0 / 0) 100%
+  );
+  opacity: var(--edge-below-k, 0);
 }
 /* A field reached by Tab or by its problem stops clear of the pinned foot (and of the header on a narrow window). */
 :global(form):has(.formFoot) :is(input, textarea, button):not(.formFootActions *) {

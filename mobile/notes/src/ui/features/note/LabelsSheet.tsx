@@ -9,7 +9,7 @@ import { foldText } from '@unlease/core/services/search';
 import { createLabel } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Icon, LabelCheck, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '../../components';
+import { AppText, EmptyLine, Icon, LabelCheck, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
@@ -47,7 +47,7 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
           }}
         />
       </View>
-      <SheetScroll>
+      <SheetScroll top={false}>
         {wanted ? (
           // A list row's anatomy (`ListRow`) in link ink: the plus in the tags' slot, the words on their column.
           <Tappable onPress={create} style={styles.row}>
@@ -78,11 +78,7 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
             />
           );
         })}
-        {order.length === 0 && !filter ? (
-          <AppText variant="meta" style={styles.empty}>
-            {t('Aucun label pour l’instant. Tapez un nom pour en créer un.')}
-          </AppText>
-        ) : null}
+        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant. Tapez un nom pour en créer un.')} slot={24} gap={16} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -96,6 +92,6 @@ const styles = StyleSheet.create({
   // The tag (26) centred on the rows' 24 slot, so every row's words start on one column.
   mark: { width: 24, alignItems: 'center' },
   name: { flex: 1 },
-  // On the field's edge and the sheet's title.
+  // The tag in the rows' slot, the words on their column.
   empty: { paddingHorizontal: SHEET_INSET, paddingVertical: 12 },
 });

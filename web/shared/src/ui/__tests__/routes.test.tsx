@@ -36,7 +36,9 @@ describe('Carnet’s web app’s places', () => {
     expect(parseRoute('/notes/capture/share')).toEqual({ name: 'capture', kind: 'share' });
     expect(parseRoute('/notes/capture/other')).toEqual({ name: 'notFound' });
     expect(parseRoute('/')).toEqual({ name: 'home' });
-    expect(parseRoute('/notes/settings')).toEqual({ name: 'settings' });
+    expect(parseRoute('/notes/settings')).toEqual({ name: 'settings', page: null });
+    expect(parseRoute('/notes/settings/appearance')).toEqual({ name: 'settings', page: 'appearance' });
+    expect(parseRoute('/notes/settings/other')).toEqual({ name: 'notFound' });
     expect(parseRoute('/notes/admin')).toEqual({ name: 'admin', section: null });
     expect(parseRoute('/notes/admin/backup')).toEqual({ name: 'admin', section: 'backup' });
     // Pages' places are Pages' web app's; the shell's are under the app's path, never at the top.

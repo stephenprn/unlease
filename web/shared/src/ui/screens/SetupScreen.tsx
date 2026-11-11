@@ -58,6 +58,7 @@ import { theApp } from '../../modules';
 import { BrandMark } from '../components/BrandMark';
 import { Button } from '../components/Button';
 import { Collage } from '../components/Collage';
+import { settleIn } from '../components/EmptyLine';
 import { ColorsSection, GroundSection } from '../features/appearance/AppearanceSections';
 import { Icon } from '../components/Icon';
 import { OutlinedBox, OutlineLift, PebbleEdge, useOutline } from '../components/Outline';
@@ -601,7 +602,9 @@ function RestoreStep({ server, settings, admin, onSetBackup }: { server: ServerC
       ) : backups.snapshots === null ? (
         <StatusRow tone="waiting" title={SETUP_RESTORE_WORDS.reading} />
       ) : snapshots.length === 0 ? (
-        <StatusRow tone="off" title={SETUP_RESTORE_WORDS.none} meta={setupNoBackupsMeta(settings.backup.bucket, settings.backup.prefix)} />
+        <div className={settleIn}>
+          <StatusRow tone="off" title={SETUP_RESTORE_WORDS.none} meta={setupNoBackupsMeta(settings.backup.bucket, settings.backup.prefix)} />
+        </div>
       ) : (
         <div className={settingsStyles.block}>
           <div role="radiogroup" aria-label={t('Sauvegarde à restaurer')} className={settingsStyles.choices}>

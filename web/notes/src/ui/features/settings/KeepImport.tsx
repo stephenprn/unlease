@@ -16,6 +16,7 @@ import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/
 import { useCanRead } from '../../../app/store/prefs';
 import { Button } from '@shared/ui/components/Button';
 import { Checkbox, Switch } from '@shared/ui/components/Checkbox';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { formatUsd as usd } from '@shared/ui/money';
 import { navigate } from '@shared/ui/router';
@@ -91,7 +92,7 @@ export function KeepImport() {
             ))}
           </ul>
         ) : (
-          <p className="t-body">{t('Rien de nouveau dans cette archive.')}</p>
+          <EmptyLine size="body" text={t('Rien de nouveau dans cette archive.')} />
         )}
         {skipped.length > 0 ? (
           <>

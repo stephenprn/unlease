@@ -87,9 +87,11 @@ describe('« Aujourd’hui »', () => {
     const user = userEvent.setup();
     open('/agenda/today');
     render(<App />);
-    const kind = await screen.findByText('Rien de prévu aujourd’hui : la journée est à vous.');
+    // Nothing today nor tomorrow: the view's empty state, its action the way to fill it.
+    const empty = (await screen.findByRole('heading', { name: 'Rien de prévu aujourd’hui' })).parentElement!;
+    expect(within(empty).getByText('La journée est à vous.')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Demain' })).toBeNull();
-    await user.click(within(kind.parentElement!).getByRole('button', { name: 'Créer un événement' }));
+    await user.click(within(empty).getByRole('button', { name: 'Créer un événement' }));
     await waitFor(() => expect(location.pathname).toBe('/agenda/new'));
   });
 });

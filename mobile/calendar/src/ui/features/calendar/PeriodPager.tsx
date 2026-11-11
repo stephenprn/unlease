@@ -16,11 +16,10 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { cancelAnimation, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { haptic } from '@shared/platform/haptics';
-import { decelerate, duration, fling, flingDuration, spatial } from '@shared/ui/theme/motion';
+import { decelerate, duration, fling, flingDuration, FLING_SPEED, spatial, SWIPE_SHARE } from '@shared/ui/theme/motion';
 
-/** Past this share of the width, or flung, the period turns. */
-const THRESHOLD = 0.3;
-const FLING = 800;
+/** Past this share of the width, or flung (`FLING_SPEED`), the period turns. */
+const THRESHOLD = SWIPE_SHARE;
 /** How far a period jumped to comes in from (Carnet's steps come 24; a whole calendar a little more). */
 const ENTER_SHIFT = 40;
 const SLOTS = [0, 1, 2] as const;
@@ -178,14 +177,17 @@ function PeriodPagerComponent({ view, period, anchors, swipes, onStep, onTurning
           }
         })
         .onEnd(event => {
+          const past = armed.value;
           armed.value = false;
           const at = origin.value + event.translationX;
-          const flung = Math.abs(event.velocityX) > FLING && Math.sign(event.velocityX) === Math.sign(at);
+          const flung = Math.abs(event.velocityX) > FLING_SPEED && Math.sign(event.velocityX) === Math.sign(at);
           if (Math.abs(at) <= (width.value || 1) * THRESHOLD && !flung) {
             // Back into place with the hand's own speed, settling without a bounce.
             x.value = withSpring(0, { ...spatial, velocity: event.velocityX });
             return;
           }
+          // Flung short of the threshold, it still says it will turn.
+          if (!past) runOnJS(haptic)('threshold');
           // Dragged to the left, the period after comes from the right.
           const direction: 1 | -1 = at < 0 ? 1 : -1;
           runOnJS(turning)(direction);
@@ -196,7 +198,7 @@ function PeriodPagerComponent({ view, period, anchors, swipes, onStep, onTurning
           }
           // The next page laid in place with the hand's speed, then the pages turn round under it, unmoved.
           const target = -direction * (width.value || 400);
-          const thrown = Math.abs(event.velocityX) > 1000 && Math.sign(event.velocityX) === Math.sign(target - x.value);
+          const thrown = Math.abs(event.velocityX) > FLING_SPEED && Math.sign(event.velocityX) === Math.sign(target - x.value);
           const timing = thrown ? { duration: flingDuration(target - x.value, event.velocityX), easing: fling } : { duration: duration.medium, easing: decelerate };
           x.value = withTiming(target, timing, finished => {
             if (!finished) return;

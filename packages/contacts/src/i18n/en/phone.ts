@@ -47,7 +47,6 @@ export const EN_PHONE: Dictionary = {
   'Appel vidéo WhatsApp': 'WhatsApp video call',
   'Afficher les appels WhatsApp': 'Show WhatsApp calls',
   'Lit les contacts du téléphone, où WhatsApp note les numéros qu’il connaît.': 'Reads the phone’s contacts, where WhatsApp notes the numbers it knows.',
-  'Aucune coordonnée. « Modifier » en ajoute.': 'No contact details. “Edit” adds some.',
   'Note': 'Note',
   'Ce téléphone ne passe pas d’appels.': 'This phone doesn’t make calls.',
   'Ajoutez l’indicatif du pays à ce numéro (+33…) pour l’ouvrir dans WhatsApp.': 'Add the country code to this number (+44…) to open it in WhatsApp.',
@@ -99,7 +98,6 @@ export const EN_PHONE: Dictionary = {
   'Un anniversaire ajouté à un contact s’affiche ici, et en tête de la liste la semaine venue.': 'A birthday added to a contact shows here, and at the top of the list in its week.',
 
   // Labels
-  'Les libellés regroupent des contacts : la famille, le travail, le club. Un contact peut en porter plusieurs.': 'Labels group contacts: family, work, the club. A contact can have several.',
   'Couleur': 'Colour',
   'Couleur de {name}': 'Colour of {name}',
   'Renommer {name}': 'Rename {name}',
@@ -166,10 +164,7 @@ export const EN_PHONE: Dictionary = {
   'contacts supprimés': 'contacts deleted',
 
   // The bin
-  'La corbeille est vide': 'The bin is empty',
   'Mis à la corbeille {when}': 'Moved to the bin {when}',
-  'Restaurer {name}': 'Restore {name}',
-  'Supprimer définitivement {name}': 'Delete {name} forever',
   'Supprimer définitivement ?': 'Delete forever?',
   // The widgets
   'Appeler {name}': 'Call {name}',

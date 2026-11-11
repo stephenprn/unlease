@@ -13,7 +13,7 @@ import type { CoverageOutlet } from '@unlease/notes/sync/coverage';
 import { findCoverage } from '@app/modules';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, EmptyLine, IconButton, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
@@ -68,7 +68,7 @@ function CoverageBody({ id }: { id: string }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {story ? <AppText variant="bodyStrong">{story}</AppText> : null}
       {outlets.length === 0 ? (
-        <AppText variant="body">{t('Aucun autre média trouvé sur ce sujet pour l’instant.')}</AppText>
+        <EmptyLine size="body" text={t('Aucun autre média trouvé sur ce sujet pour l’instant.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES.coverage}>
           {outlets.map((outlet, index) => (

@@ -33,7 +33,7 @@ import { IconButton } from '@shared/ui/components/IconButton';
 import styles from './editor.module.css';
 import { useAutoGrow } from './useAutoGrow';
 import { useKeptCaret } from './useKeptCaret';
-import { useListMotion } from './useListMotion';
+import { useListMotion } from '@shared/ui/useListMotion';
 
 interface Focus {
   readonly id: string;

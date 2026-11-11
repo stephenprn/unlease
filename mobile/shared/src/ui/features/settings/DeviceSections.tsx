@@ -1,25 +1,29 @@
 /**
- * The Réglages every app shares, the device's own: the way to the Administration, « Apparence » (the theme, the paper's grain, and
- * what the app adds there: Carnet's board layout), and « Langue » (the interface's, with what the app
- * says it changes besides, `APP_WORDS`). The colours and the ground are `ColorsSection` and `GroundSection`; the
+ * The Réglages every app shares, the device's own. On Réglages' page, after the app's own sections:
+ * « Apparence » (one row, the look in words and its two pebbles, opening its own screen), « Langue »
+ * (the interface's, with what the app says it changes besides, `APP_WORDS`), and, last, the way to
+ * the Administration. On « Apparence »'s screen (`AppearanceScreen`): the theme and the paper's
+ * grain (`ThemeSection`), then the colours and the ground (`ColorsSection`, `GroundSection`); the
  * look is this app's, sent to the others on « Appliquer aux autres » (`LookShare`).
  */
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { APP_WORDS } from '@unlease/core/appWords';
+import { languageWords } from '@unlease/core/appWords';
 import { LOCALE_NAMES, LOCALES, t } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
+import { lookWords } from '@unlease/design/appearance';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { ownApp } from '@shared/app/store/library';
-import { selectGrain, selectLocale, selectThemePreference, setGrain, setInterfaceLocale, setTheme, useSettingsStore } from '@shared/app/store/settingsStore';
+import { selectAppearance, selectGrain, selectLocale, selectThemePreference, setGrain, setInterfaceLocale, setTheme, useSettingsStore } from '@shared/app/store/settingsStore';
 
-import { AppText, Icon, ListRow, Segmented } from '../../components';
-import { useTheme } from '../../theme/ThemeProvider';
-import { useLookShareHint } from '../appearance/LookShare';
+import { AppText, groundStyle, Icon, ListRow, Organic, Segmented } from '../../components';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
+import type { Theme } from '../../theme/theme';
 import { SwitchRow } from '../appearance/SwitchRow';
 import { Section } from './Section';
 
-/** Réglages' first section, the way to the Administration, in the same words in every app and on the web: its row names it, so no title repeats it. */
+/** Réglages' last section, the way to the Administration, in the same words in every app and on the web: its row names it, so no title repeats it. */
 export function AdminEntrySection({ onOpen }: { onOpen: () => void }) {
   const theme = useTheme();
   return (
@@ -29,15 +33,41 @@ export function AdminEntrySection({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function ThemeSection({ children }: { children?: React.ReactNode }) {
+/**
+ * « Apparence » on Réglages' page: one row, as Android's settings open a large group (the colours'
+ * and the ground's galleries) on a page of its own, its second line the look now, its end the look's
+ * pebbles (the palette's split pebble as the colours show it, the ground as it is painted), then the
+ * chevron. Its row names it, so no title repeats it.
+ */
+export function AppearanceEntrySection({ onOpen }: { onOpen: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  const preference = useSettingsStore(selectThemePreference);
+  const appearance = useSettingsStore(selectAppearance);
+  const { leaf, action } = theme.color;
+  const pebbles = (
+    <View style={styles.look}>
+      <Organic pebble={1} style={[styles.pebble, { backgroundColor: leaf, backgroundImage: `linear-gradient(135deg, ${leaf} 0%, ${leaf} 50%, ${action} 50%, ${action} 100%)` }]} />
+      <Organic pebble={3} style={[styles.pebble, groundStyle(theme.ground)]} />
+      <Icon name="chevronRight" size={20} color={theme.color.inkMuted} />
+    </View>
+  );
+  return (
+    <Section>
+      <ListRow icon="palette" title={t('Apparence')} supporting={lookWords(preference, appearance)} trailing={pebbles} onPress={onOpen} />
+    </Section>
+  );
+}
+
+/** « Apparence »'s first panel, under its screen's title: the theme, then the paper's grain, said for what it is (the ground's own is « Fond »'s). */
+export function ThemeSection() {
+  const styles = useThemedStyles(makeStyles);
   const themePreference = useSettingsStore(selectThemePreference);
   const grain = useSettingsStore(selectGrain);
-  // Every Réglages shows the theme (the first run does not): a change of look there, the theme's, the colours' or the ground's, offers to send it to the other apps.
-  useLookShareHint();
   return (
-    <Section title={t('Apparence')} anchor={SETTINGS_SECTIONS.appearance}>
+    <Section anchor={SETTINGS_SECTIONS.appearance}>
       <View style={styles.fields}>
-        {/* Its name over it as a field's is (6 above, 4 in), the groups 14 apart. */}
+        {/* Its name over it as a field's is (6 above, 4 in). */}
         <View style={styles.field}>
           <AppText variant="metaStrong" style={styles.fieldLabel}>
             {t('Thème')}
@@ -53,9 +83,8 @@ export function ThemeSection({ children }: { children?: React.ReactNode }) {
             ]}
           />
         </View>
-        {children}
       </View>
-      <SwitchRow title={t('Grain du papier')} supporting={t('Le grain du papier sur les notes et les feuilles, sur cet appareil.')} value={grain} onChange={setGrain} />
+      <SwitchRow title={t('Grain du papier')} supporting={t('Une fine texture de papier sur les notes, les cartes et les panneaux.')} value={grain} onChange={setGrain} />
     </Section>
   );
 }
@@ -66,8 +95,10 @@ export function ThemeSection({ children }: { children?: React.ReactNode }) {
  * l’interface ») is for TalkBack, the note under it saying what it changes.
  */
 export function LanguageSection() {
+  const styles = useThemedStyles(makeStyles);
   const locale = useSettingsStore(selectLocale);
-  const words = APP_WORDS[ownApp()];
+  // Carnet's and Pages' note names what Claude writes: only once Claude has a key.
+  const words = languageWords(ownApp(), useServerFeature('claude'));
   return (
     <Section title={t('Langue')} anchor={SETTINGS_SECTIONS.language}>
       <View style={[styles.fields, styles.choice]}>
@@ -79,10 +110,14 @@ export function LanguageSection() {
   );
 }
 
-const styles = StyleSheet.create({
-  fields: { gap: 14, paddingHorizontal: 16, paddingVertical: 12 },
-  field: { gap: 6 },
-  fieldLabel: { marginLeft: 4 },
-  // A choice and its note under it, as a field and its help.
-  choice: { gap: 8 },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    fields: { gap: 14, paddingHorizontal: 16, paddingVertical: 12 },
+    field: { gap: 6 },
+    fieldLabel: { marginLeft: 4 },
+    // A choice and its note under it, as a field and its help.
+    choice: { gap: 8 },
+    // The look's two pebbles before the chevron, a little apart from it.
+    look: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    pebble: { width: 24, height: 24, borderWidth: 1, borderColor: theme.color.hairline },
+  });

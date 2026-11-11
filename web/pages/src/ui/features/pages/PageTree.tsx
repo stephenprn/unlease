@@ -12,7 +12,7 @@ import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages, isWithin } from '@unlease/pages/services/blocks';
 
-import { useChildPages } from '../../../app/hooks/usePages';
+import { childPagesOf, useChildPages } from '../../../app/hooks/usePages';
 import { useBlocksStore } from '../../../app/store/blocks';
 import { createPage, duplicateBlocks, trashPage } from '../../../app/store/pages';
 import { expandAll, requestTitleFocus, setExpanded, usePagesUiStore } from '../../../app/store/pagesUi';
@@ -22,6 +22,7 @@ import { pebbleUnder } from '@shared/ui/components/IconButton';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import navStyles from '@shared/ui/navigation/nav.module.css';
 import { browserPath, getLocation, isPlainClick, navigate, parseRoute, type Route } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { paths } from '../../routes';
 import { consumeDragClick, pressToDrag } from './dragDrop';
 import { applyDrop } from './drops';
@@ -59,7 +60,8 @@ const PageIcon = memo(function PageIcon({ icon }: { icon: string | null }) {
 /** The rows' links in reading order, in the tree that holds `from`: what the arrow keys walk through. */
 function treeLinks(from: HTMLElement): HTMLAnchorElement[] {
   const tree = from.closest('[role="tree"]');
-  return tree ? [...tree.querySelectorAll<HTMLAnchorElement>('a[data-tree-link]')] : [];
+  // A row fading out (useListMotion's copy) is inert: out of the walk.
+  return tree ? [...tree.querySelectorAll<HTMLAnchorElement>('a[data-tree-link]')].filter(link => !link.closest('[inert]')) : [];
 }
 
 const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate }: { id: string; depth: number; current: string | null; tabStop: boolean; onNavigate?: () => void }) {
@@ -118,7 +120,7 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
   };
 
   return (
-    <li role="treeitem" aria-expanded={children.length > 0 ? open : undefined} aria-level={depth + 1} aria-selected={current === id}>
+    <li role="treeitem" aria-expanded={children.length > 0 ? open : undefined} aria-level={depth + 1} aria-selected={current === id} data-motion={id}>
       <div className={styles.row} data-tree-page={id} data-current={current === id || undefined} data-parent={children.length > 0 || undefined} style={{ '--tree-pad': `${4 + depth * TREE_INDENT}px` } as CSSProperties}>
         <button
           type="button"
@@ -178,9 +180,29 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
   );
 });
 
+/** The rows the tree shows, in order (each page, then an open one's sub-pages): read so the tree's holder renders when they change, and its rows move. */
+function useShownRows(): string {
+  const expanded = usePagesUiStore(s => s.expanded);
+  return useBlocksStore(s => {
+    const rows: string[] = [];
+    const walk = (parent: string | null): void => {
+      for (const id of childPagesOf(s, parent)) {
+        rows.push(id);
+        if (expanded.has(id)) walk(id);
+      }
+    };
+    walk(null);
+    return rows.join(',');
+  });
+}
+
 export function PagesSection({ route, onNavigate }: { route: Route; onNavigate?: () => void }) {
   const roots = useChildPages(null);
   const current = route.name === 'page' ? route.id : null;
+  const tree = useRef<HTMLUListElement>(null);
+  // A page sent to the bin (or moved, or folded away) fades where it was, the rows under it close ranks; one arriving settles in once they have made room.
+  useShownRows();
+  useListMotion(tree, { late: true });
 
   // The page on screen shows in the tree: every page above it opens.
   useEffect(() => {
@@ -191,7 +213,7 @@ export function PagesSection({ route, onNavigate }: { route: Route; onNavigate?:
   return (
     <>
       {roots.length > 0 ? (
-        <ul role="tree" aria-label={t('Pages')} className={styles.tree}>
+        <ul ref={tree} role="tree" aria-label={t('Pages')} className={styles.tree}>
           {roots.map((id, index) => (
             <TreeRow key={id} id={id} depth={0} current={current} tabStop={current ? id === current : index === 0} onNavigate={onNavigate} />
           ))}

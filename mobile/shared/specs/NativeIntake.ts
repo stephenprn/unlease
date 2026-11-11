@@ -14,6 +14,11 @@ export interface SharedPayload {
   /** Absolute paths of images copied into app storage. */
   files: string[];
   mimeType: string;
+  /**
+   * The sharing shortcut the share came through (Direct Share, Carnet's: `collection:<id>`); empty or
+   * absent for a share through the app itself, and in the apps that publish none.
+   */
+  shortcutId?: string;
 }
 
 export interface Spec extends TurboModule {

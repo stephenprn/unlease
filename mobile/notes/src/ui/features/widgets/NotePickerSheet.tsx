@@ -14,7 +14,7 @@ import { bodyText } from '@unlease/notes/services/noteBody';
 import { useSearch } from '@app/hooks/useBoard';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
-import { AppText, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '../../components';
+import { AppText, EmptyLine, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
@@ -62,12 +62,8 @@ export function NotePickerSheet({ visible, current, title, onDismiss, onPick }: 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher une note')} returnKeyType="search" autoCorrect={false} accessibilityLabel={t('Rechercher une note')} />
       </View>
-      <SheetScroll contentContainerStyle={styles.body}>
-        {ids.length === 0 ? (
-          <AppText variant="meta" style={styles.empty}>
-            {query.trim() ? t('Aucune note ne correspond.') : t('Aucune note pour l’instant.')}
-          </AppText>
-        ) : null}
+      <SheetScroll top={false} contentContainerStyle={styles.body}>
+        {ids.length === 0 ? <EmptyLine glyph={query.trim() ? 'search' : 'note'} text={query.trim() ? t('Aucune note ne correspond.') : t('Aucune note pour l’instant.')} slot={24} gap={16} style={styles.empty} /> : null}
         {ids.map(id => (
           <NoteRow
             key={id}
@@ -111,7 +107,7 @@ const NoteRow = memo(function NoteRowView({ id, current, onPress }: { id: string
 });
 
 const styles = StyleSheet.create({
-  // The field and the empty line on the sheet's column, under its title.
+  // The field on the sheet's column, under its title; the empty line's glyph in the rows' slot, its words on their column.
   search: { marginHorizontal: SHEET_INSET, marginBottom: 8 },
   body: { paddingBottom: 8 },
   empty: { marginHorizontal: SHEET_INSET, marginTop: 8 },

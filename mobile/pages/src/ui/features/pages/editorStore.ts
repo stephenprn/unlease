@@ -8,9 +8,10 @@
 import { create } from 'zustand';
 
 import { RICH_KINDS, type Block } from '@unlease/pages/models/blocks';
+import { togglesAbove } from '@unlease/pages/services/blocks';
 import type { Marks, Run } from '@unlease/core/services/richText';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { usePagesUiStore } from '@app/store/pagesUi';
+import { setToggleOpen, usePagesUiStore } from '@app/store/pagesUi';
 
 import type { EmojiQuery, MentionAsk } from './inline';
 
@@ -67,7 +68,12 @@ export function flushAll(): void {
   for (const handle of handles.values()) handle.flush();
 }
 
+/**
+ * The caret asked for in a block, which takes it once drawn. The toggles it sits in open first (Tab
+ * nested it under a closed one, an undo put it back there), or it would never be drawn to take it.
+ */
 export function focusBlock(id: string, at: FocusAt): void {
+  for (const toggle of togglesAbove(useLibraryStore.getState().blocks, id)) setToggleOpen(toggle, true);
   tick += 1;
   useEditorStore.setState({ focusRequest: { id, at, tick } });
 }

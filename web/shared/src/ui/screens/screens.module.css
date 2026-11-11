@@ -125,6 +125,8 @@
   padding: 10px 12px;
   border-radius: var(--cut-field);
   background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
   color: var(--ink);
 }
 
@@ -200,10 +202,21 @@
 }
 
 /* "Votre serveur": one row per setting, its dot on its title's line. */
+/* « Votre serveur »: its rows 6 in from every edge of the sheet (its own 6 above and below them), the first's and the last's outer corners concentric with it (`--row-outer`). */
 .setupTasks {
   margin: 0;
-  padding: 6px 0;
+  padding: 0;
   list-style: none;
+}
+
+.setupTasks > li:first-child > button {
+  border-top-left-radius: var(--row-outer, var(--cut-tab));
+  border-top-right-radius: var(--row-outer, var(--cut-tab));
+}
+
+.setupTasks > li:last-child > button {
+  border-bottom-left-radius: var(--row-outer, var(--cut-tab));
+  border-bottom-right-radius: var(--row-outer, var(--cut-tab));
 }
 
 .setupTaskDot {
@@ -382,7 +395,6 @@
 }
 
 .setupIntro > p {
-  max-width: 62ch;
   color: var(--ink-muted);
 }
 

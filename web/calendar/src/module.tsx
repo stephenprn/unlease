@@ -11,11 +11,11 @@ import { PERIOD_VIEWS, stepDay, VIEW_KEYS, VIEW_NAMES, type CalendarView } from 
 import { instantToDay } from '@unlease/calendar/services/time';
 import { CALENDAR_SETTINGS_PLACES } from '@unlease/calendar/services/settingsPlaces';
 
-import type { AppModule } from '@shared/modules';
+import type { AppModule, ShortcutGroup } from '@shared/modules';
 import { navigate, type Route } from '@shared/ui/router';
 import { CALENDAR_ADMIN_SECTIONS } from './admin';
 import { refreshNotifications } from './app/push';
-import { emptyBin } from './app/store/actions';
+import { binnedEvents, emptyBin } from './app/store/actions';
 import { closePeek, closeQuick, setImportFile, useCalendarUi } from './app/store/calendarUi';
 import { usePrefsStore } from './app/store/prefs';
 import { calendarData } from './data';
@@ -33,6 +33,29 @@ function shown(route: Route): { view: CalendarView; day: string } | null {
 }
 
 const VIEW_OF_KEY = Object.fromEntries(Object.entries(VIEW_KEYS).map(([view, key]) => [key, view as CalendarView]));
+
+/** Each view under its name in the shortcuts dialog (French: read where shown), « Aujourd'hui » last. */
+const VIEW_TITLES: Readonly<Record<CalendarView, string>> = {
+  day: tx('Jour'),
+  threeDays: tx('3 jours'),
+  week: tx('Semaine'),
+  month: tx('Mois'),
+  year: tx('Année'),
+  schedule: tx('Planning'),
+  today: tx('Aujourd’hui : la journée d’un coup d’œil'),
+};
+
+/** Its keys in the shortcuts dialog beyond its commands' (C, T): the calendar's (`onKey`). */
+const CALENDAR_SHORTCUTS: readonly ShortcutGroup[] = [
+  {
+    title: tx('Dans l’agenda'),
+    rows: [
+      [['J'], tx('Période suivante')],
+      [['K'], tx('Période précédente')],
+      ...(Object.keys(VIEW_TITLES) as CalendarView[]).map(view => [[VIEW_KEYS[view].toUpperCase()], VIEW_TITLES[view]] as const),
+    ],
+  },
+];
 
 export const calendarModule: AppModule = {
   id: 'calendar',
@@ -107,16 +130,11 @@ export const calendarModule: AppModule = {
     navigate(paths.import);
     return true;
   },
-  shortcuts: [
-    { keys: 'C', label: tx('Créer un événement') },
-    { keys: 'T', label: tx('Aujourd’hui') },
-    { keys: 'J / K', label: tx('Période suivante, précédente') },
-    { keys: 'D X W M Y A', label: tx('Jour, 3 jours, semaine, mois, année, planning') },
-    { keys: 'O', label: tx('Aujourd’hui : la journée d’un coup d’œil') },
-  ],
+  shortcuts: CALENDAR_SHORTCUTS,
 
   settingsSections: CALENDAR_SETTINGS,
   emptyBin: () => emptyBin(),
+  binCount: () => binnedEvents().length,
   adminSections: CALENDAR_ADMIN_SECTIONS,
   settingsPlaces: CALENDAR_SETTINGS_PLACES,
 };

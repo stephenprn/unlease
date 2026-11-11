@@ -21,6 +21,7 @@ import { useBlobUrl } from '@shared/app/media/images';
 import { reanalyzeLink, setLinkDone } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
 import { useCanRead } from '../../../app/store/prefs';
+import { useServerFeature } from '@shared/app/store/serverSettings';
 import { showUndo } from '@shared/app/store/ui';
 import controls from '@shared/ui/components/controls.module.css';
 import { Icon } from '@shared/ui/components/Icon';
@@ -47,7 +48,10 @@ export function toggleDone(id: string): void {
 
 function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen: (id: string) => void }) {
   const link = useLibraryStore(s => s.links[id]);
+  // How its reading stands (unknown counts as on: a link saved meanwhile waits for the server)…
   const reading = useCanRead();
+  // …and what may be asked of Claude, once the server has said it has a key.
+  const claude = useServerFeature('claude');
   const kept = useBlobUrl(link?.imageIds[0]);
   // A picture that would not load (a site refusing to be shown elsewhere): the kind's glyph instead, never an empty frame.
   const [lost, setLost] = useState<string | null>(null);
@@ -127,13 +131,13 @@ function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen
           <p className={`${styles.failed} t-meta`}>
             <Icon name="alert" size={14} />
             <span className={styles.failedText}>{link.error ? t(link.error) : t('Lecture impossible')}</span>
-            {reading ? (
+            {claude ? (
               <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)}>
                 {t('Réessayer')}
               </button>
             ) : null}
           </p>
-        ) : unread && reading ? (
+        ) : unread && claude ? (
           <p className={`${styles.skipped} t-meta`}>
             <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)} aria-label={t('Lire {title}', { title })}>
               {t('Lire la page')}

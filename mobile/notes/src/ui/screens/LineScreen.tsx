@@ -25,14 +25,15 @@ import { useLines } from '@app/hooks/useLines';
 import { addLinks, moveLink, readLinks, restoreNotes, setPinned, trashLines, trashNotes } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectLineView, setLineView, useLineViewStore } from '@app/store/lineViewStore';
-import { selectCanRead, selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { showSnack } from '@shared/app/store/uiStore';
 import { selectSorting, useCaptureStore } from '@app/store/captureStore';
 import { readClipboard } from '@shared/platform/clipboard';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, EmptyState, Ground, GroundSlice, Icon, IconButton, Menu, Organic, TopBar } from '../components';
+import { AppText, Button, EmptyState, Ground, GroundSlice, Icon, IconButton, Menu, Organic, ScrollEdges, settleIn, TopBar, usePullToSync } from '../components';
 import { CollectionHeader } from '../features/lines/CollectionHeader';
 import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineSheet';
 import { EditLineSheet } from '../features/lines/EditLineSheet';
@@ -66,6 +67,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   const { id } = route.params;
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // A pull asks for a sync, as on the board.
+  const pullToSync = usePullToSync();
   const line = useLibraryStore(s => s.notes[id]);
   const view = useLineViewStore(selectLineView(id));
   const { open, done, total, toDo, all, unread, failed, priceDrop, priced, skipped } = useLibraryStore(
@@ -102,7 +105,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         return !!link && sortable(link) && (id !== INBOX_ID || link.filedBy !== 'person');
       }).length,
   );
-  const reading = useSettingsStore(selectCanRead);
+  // Claude's offers (« Tout lire », « Vérifier les liens », « Ranger Non classé », its facts) once the server said it has a key.
+  const reading = useServerFeature('claude');
   const sorting = useCaptureStore(selectSorting);
   const otherLines = useLines().some(other => other.id !== id && other.id !== INBOX_ID);
   const [url, setUrl] = useState('');
@@ -195,6 +199,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   return (
     <View style={styles.screen}>
       <Ground />
+      {/* Its edges soften; the top one under the status bar's band, where the head goes as it scrolls away. */}
+      <ScrollEdges insetTop={insets.top}>
       <Animated.FlatList
         data={rows}
         onScroll={onScroll}
@@ -202,6 +208,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         keyExtractor={row => (row.kind === 'link' ? row.id : 'done-heading')}
         itemLayoutAnimation={ROW_MOVE}
         skipEnteringExitingAnimations
+        refreshControl={pullToSync}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View>
@@ -236,7 +243,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
               </Organic>
             ) : (
             <>
-            <Organic style={[styles.add, problem ? styles.addInvalid : null]}>
+            <Organic frost style={[styles.add, problem ? styles.addInvalid : null]}>
               <TextInput
                 value={url}
                 onChangeText={text => {
@@ -307,14 +314,16 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
             ) : null}
             {all > 0 && rows.length === 0 ? <FilteredEmpty filter={view.filter} collection={shownTitle(line)} onClear={() => setLineView(id, { ...view, filter: 'all' })} /> : null}
             {all === 0 ? (
-              // The web's dashed panel: what comes here, where the links will be.
-              <Organic outline="panel" style={styles.empty}>
-                <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
-                  {inbox
-                    ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
-                    : t('Aucun lien pour l’instant. Partagez un lien depuis une autre app ou collez-le ici : Claude y rangera aussi ceux qui lui correspondent.')}
-                </AppText>
-              </Organic>
+              // The web's dashed panel: what comes here, where the links will be. It settles in, so a collection that fills at once never shows it.
+              <Animated.View entering={settleIn}>
+                <Organic outline="panel" style={styles.empty}>
+                  <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
+                    {inbox
+                      ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
+                      : t('Aucun lien pour l’instant. Partagez un lien depuis une autre app ou collez-le ici : Claude y rangera aussi ceux qui lui correspondent.')}
+                  </AppText>
+                </Organic>
+              </Animated.View>
             ) : null}
           </View>
         }
@@ -341,6 +350,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         ItemSeparatorComponent={Separator}
         contentContainerStyle={styles.list}
       />
+      </ScrollEdges>
       {/* The head scrolls away; the status bar keeps a strip of wall to sit on. */}
       <Animated.View pointerEvents="none" style={[styles.statusBand, { height: insets.top }, bandStyle]}>
         <GroundSlice top={0} />
@@ -352,7 +362,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
           { label: t('Modifier la collection'), icon: 'edit', onPress: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onPress: () => setModulesOpen(true) },
           // What Claude reads on its links: « Non classé » reads each by its kind.
-          ...(inbox ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', { collection: id }) }]),
+          ...(inbox || !reading ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', { collection: id }) }]),
           ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onPress: () => setReviewing(true) }] : []),
           ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onPress: sortInboxOnSlip }] : []),
           {

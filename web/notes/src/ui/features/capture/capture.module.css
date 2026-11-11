@@ -8,6 +8,8 @@
   padding: 0 4px 0 14px;
   border-radius: var(--cut-field);
   background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
   box-shadow: inset 0 0 0 1.5px var(--edge);
   transition: box-shadow var(--duration-short) var(--ease-standard);
 }

@@ -35,6 +35,7 @@ import { setCollectionView } from '../../../app/store/pages';
 import { onBeforePause } from '@shared/app/sync/loop';
 import { Button } from '@shared/ui/components/Button';
 import { Emblem, EmblemStone } from '@shared/ui/components/Emblem';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { OutlineLift } from '@shared/ui/components/Outline';
@@ -330,7 +331,7 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
             {rows}
           </ul>
         ) : (
-          <p className={`${styles.embedEmpty} t-meta`}>{t('Aucun lien à faire dans cette collection.')}</p>
+          <EmptyLine className={styles.embedEmpty} text={t('Aucun lien à faire dans cette collection.')} />
         )}
       </div>
     </OutlineLift>

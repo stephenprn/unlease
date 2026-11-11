@@ -5,7 +5,7 @@
  * `unlease-contacts://` links open a contact, the form, the favourites and a label.
  */
 import { Linking } from 'react-native';
-import { act } from 'react-test-renderer';
+import { act, type ReactTestInstance } from 'react-test-renderer';
 import type { NavigationState, PartialState } from '@react-navigation/native';
 
 import { syncedTypes } from '@shared/app/store/library';
@@ -13,11 +13,17 @@ import { setServer, setServerApps, useSettingsStore } from '@shared/app/store/se
 import { createContact, createLabel, type ContactDraft } from '@app/store/actions';
 import { linking, listPath } from '@ui/navigation/RootNavigator';
 import { navigationRef } from '@ui/navigation/navigationRef';
+import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 
 import { state as suite, __reset as resetSuite } from '../../../../../shared/__mocks__/NativeSuiteLink';
 import { answer, boot, fakeFetch, inputs, pressableWithText, pressables, SETTINGS, settle, textOf, unmountAll } from './harness';
 
 jest.useFakeTimers();
+
+/** The text inside one element (Réglages' scroll: the drawer under the list names the Administration too). */
+function textIn(node: ReactTestInstance): string {
+  return node.children.map(child => (typeof child === 'string' ? child : textIn(child))).join(' ');
+}
 
 const person = (firstName: string, lastName: string, more: Partial<ContactDraft> = {}): ContactDraft => ({
   firstName,
@@ -145,6 +151,20 @@ describe('Contacts, its root', () => {
     await act(async () => {
       (navigationRef.navigate as (...args: unknown[]) => void)('Settings');
     });
+    await settle();
+    // Réglages: the address book's own first, the look one row, the Administration last.
+    const overview = textIn(tree.root.findByType(SettingsScroll));
+    const order = ['Trier par', 'Anniversaires', 'Apparence', 'Langue', 'Données', 'Administration'].map(words => overview.indexOf(words));
+    expect(order.every(at => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(overview).not.toContain('Palettes');
+    // The row opens « Apparence »'s page: the theme there, the colours and the ground under it.
+    await act(async () => {
+      pressables(tree, 'Apparence')[0]!.props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Appearance');
+    for (const words of ['Grain du papier', 'Palettes', 'Couleurs unies']) expect(textOf(tree)).toContain(words);
     await act(async () => {
       pressables(tree, 'Sombre')[0]!.props.onPress();
     });
@@ -177,6 +197,8 @@ describe('Contacts, its root', () => {
     expect(leaf(linking.getStateFromPath!('favorites', linking.config))).toMatchObject({ name: 'Contacts', params: { filter: 'favorites' } });
     expect(leaf(linking.getStateFromPath!('label/xyz', linking.config))).toMatchObject({ name: 'Contacts', params: { label: 'xyz' } });
     expect(leaf(linking.getStateFromPath!('', linking.config))).toMatchObject({ name: 'Contacts' });
+    // The launcher's shortcut « Rechercher »: the list, its search strip taking the keyboard.
+    expect(leaf(linking.getStateFromPath!('search', linking.config))).toMatchObject({ name: 'Contacts', params: { capture: 'search' } });
 
     let id = '';
     jest.spyOn(Linking, 'getInitialURL').mockImplementation(async () => `unlease-contacts://contact/${id}`);

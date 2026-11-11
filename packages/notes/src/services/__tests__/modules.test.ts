@@ -1,10 +1,10 @@
 import { INBOX_ID, type LinkItem } from '../../models/entities';
-import { DEFAULT_MODULES } from '../../models/modules';
+import { DEFAULT_MODULES, LINK_MODULES } from '../../models/modules';
 import { linkFromRecord } from '../../sync/entities';
 import { parseOfferRequest, parseOfferResponse } from '../../sync/offers';
 import type { Fields } from '@unlease/core/sync/record';
 import { parseRecipeResponse } from '../../sync/recipe';
-import { directionsUrl, lineModules, linkModules, marketplaceSearches, moduleCost, moduleMissing, seerrPageUrl, seerrSearchUrl, sensCritiqueUrl, withModule } from '../modules';
+import { directionsUrl, lineModules, linkModules, marketplaceSearches, moduleCost, moduleMissing, moduleOffered, seerrPageUrl, seerrSearchUrl, sensCritiqueUrl, withModule } from '../modules';
 import { offerDetails, offerGap, rangeText } from '../offers';
 
 const link = (fields: Fields = {}): LinkItem =>
@@ -45,6 +45,14 @@ describe('a collection’s modules', () => {
     expect(linkModules(link({ kind: 'recipe', price: null, currency: null }), works, { server: false, reading: false, seerr: false, pages: false, agenda: false })).toEqual(['servings']);
     expect(moduleMissing('seerr', { server: true, reading: true, seerr: false, pages: true, agenda: false })).toBe('Il faut relier Seerr dans l’administration');
     expect(moduleCost('ask', 'claude-opus-5-5', value => `${value} $`)).toBe('Environ 0.05 $ par question, davantage avec le web');
+  });
+
+  it('offers in « Modules » only what the Administration has set up: Claude’s and Seerr’s once they are', () => {
+    const none = { reading: false, seerr: false };
+    expect(LINK_MODULES.filter(module => moduleOffered(module, none))).toEqual(['pricewatch', 'servings', 'groceries', 'cooking', 'senscritique', 'directions', 'archive']);
+    expect(moduleOffered('agenda', { reading: true, seerr: false })).toBe(true);
+    expect(moduleOffered('seerr', { reading: true, seerr: false })).toBe(false);
+    expect(LINK_MODULES.every(module => moduleOffered(module, { reading: true, seerr: true }))).toBe(true);
   });
 });
 

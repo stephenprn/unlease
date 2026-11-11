@@ -10,9 +10,10 @@
  */
 import React, { useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LayoutAnimationConfig, LinearTransition } from 'react-native-reanimated';
+import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { t, tc } from '@unlease/core/i18n';
+import { LINE_COLOR_NAMES, type LineColor } from '@unlease/design/colors';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -21,25 +22,28 @@ import { contactName } from '@unlease/contacts/services/names';
 import { placeFromLine, type Place } from '@unlease/core/sync/places';
 import { resolveContact } from '@unlease/contacts/services/duplicates';
 import { EVENT_LIMITS, labelNameTaken } from '@unlease/calendar/models/events';
-import { asksScope, blankDraft, draftOf, handedDescription, handedUrl, keepLength, type EditScope, type EventDraft } from '@unlease/calendar/services/editing';
+import { asksScope, blankDraft, draftOf, handedDescription, handedRule, handedUrl, keepLength, type EditScope, type EventDraft } from '@unlease/calendar/services/editing';
 import { clockWords, REMINDER_CHOICES, reminderWords, weekdayDay } from '@unlease/calendar/services/eventText';
+import { eventColor } from '@unlease/calendar/services/colors';
 import { findOccurrence } from '@unlease/calendar/services/occurrences';
 import { cleanEventUrl, readsAsEventUrl } from '@unlease/calendar/services/links';
 import { choiceOf, choiceWords, describeRule, parseRule } from '@unlease/calendar/services/recurrence';
 import { addDays, addMinutes, clockPart, deviceZone, isDay, today as todayOf } from '@unlease/calendar/services/time';
 import { addEvent, createLabel, saveEvent } from '@app/store/actions';
+import { handedGuests } from '@app/handedEvent';
 import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { pickEventDocument, pickEventPhoto } from '@app/eventFiles';
 import { later } from '@app/later';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AnimatedOrganic, AppText, Button, Ground, Icon, IconButton, LABEL_CHIP, LABEL_FIELD, LabelChips, LineColorPicker, ListRow, Organic, PlaceSearchHost, RevealScrollView, searchPlace, SwitchMark, Tappable, TextField, TopBar, useForm, useUnsaved, type LabelChipItem } from '@shared/ui/components';
-import { accelerate, decelerate, duration, standard } from '@shared/ui/theme/motion';
+import { AnimatedOrganic, AppText, Button, FormMessage, Ground, Icon, IconButton, LABEL_CHIP, LABEL_FIELD, LabelChips, LineColorPicker, ListRow, Organic, placedRow, PlaceSearchHost, RevealScrollView, RowPanel, searchPlace, Sheet, SwitchMark, Tappable, TextField, TopBar, useForm, usePanelRowCorners, useUnsaved, type LabelChipItem, type RowPlace } from '@shared/ui/components';
+import { listIn, listMove, listOut } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { DayPickerSheet } from '../features/calendar/DayPickerSheet';
+import { paintOf } from '../features/calendar/paint';
 import { ContactPickerSheet } from '../features/event/ContactPickerSheet';
 import { PersonChip } from '../features/event/People';
 import { ReminderSheet } from '../features/event/ReminderSheet';
@@ -50,19 +54,21 @@ import { TimeSheet } from '../features/event/TimeSheet';
 import { ZoneSheet } from '../features/event/ZoneSheet';
 import type { ScreenProps } from '../navigation/types';
 
-type Sheet = 'startDay' | 'endDay' | 'startTime' | 'endTime' | 'zone' | 'repeat' | 'reminder' | 'guests' | 'address' | null;
+type Sheet = 'startDay' | 'endDay' | 'startTime' | 'endTime' | 'zone' | 'repeat' | 'reminder' | 'guests' | 'address' | 'color' | null;
 
 const WHEN = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
 /** A reminder added settles in, one removed fades where it was, and what follows closes ranks (Carnet's checklist rows). */
-const ROW_IN = FadeIn.duration(duration.medium).easing(decelerate);
-const ROW_OUT = FadeOut.duration(100).easing(accelerate);
-const ROW_MOVE = LinearTransition.duration(duration.medium).easing(standard);
+const ROW_IN = listIn;
+const ROW_OUT = listOut;
+const ROW_MOVE = listMove;
 
 /** A row of the form: its glyph, what it holds, a tap to change it. */
-function Field({ icon, children, onPress, label }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; label?: string }) {
+function Field({ icon, children, onPress, label, place }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; label?: string; place?: RowPlace | null }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // Its panel tells its first and last rows where they lie: their press follows its corners.
+  const shape = usePanelRowCorners(place);
   const body = (
     <>
       <View style={styles.fieldIcon}>
@@ -74,9 +80,32 @@ function Field({ icon, children, onPress, label }: { icon: GlyphName; children: 
   // A row with nothing to change reads as content, never as a control put out of reach.
   if (!onPress) return <View style={styles.field}>{body}</View>;
   return (
-    <Tappable onPress={onPress} style={styles.field} accessibilityRole="button" accessibilityLabel={label}>
+    <Tappable onPress={onPress} style={[styles.field, shape]} accessibilityRole="button" accessibilityLabel={label}>
       {body}
     </Tappable>
+  );
+}
+placedRow(Field);
+
+/**
+ * The event's colour as one line, as Google Calendar's: the colour it will be painted in (its own, its
+ * labels', or the default) on a pebble in the glyph's slot, then its name; a press opens the swatches.
+ */
+function ColorLine({ own, shown, onPress }: { own: LineColor | null; shown: LineColor | null; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  const words = own ? LINE_COLOR_NAMES[own] : shown ? t('Couleur de ses libellés') : t('Couleur par défaut');
+  return (
+    <View style={styles.choiceRow}>
+      <Tappable onPress={onPress} style={styles.choice} accessibilityRole="button" accessibilityLabel={t('Couleur : {name}', { name: words })}>
+        <View style={styles.fieldIcon}>
+          <Organic pebble={2} style={[styles.colorStone, { backgroundColor: paintOf(theme, shown).fill }]} />
+        </View>
+        <AppText variant="body" numberOfLines={1} style={styles.grow}>
+          {words}
+        </AppText>
+      </Tappable>
+    </View>
   );
 }
 
@@ -166,7 +195,9 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
     const base = blankDraft(start, end, params.tz || zone, isDay(start) ? prefs.allDayReminders : prefs.reminders);
     // Any app may open this link: its words are only words, its address only the web's.
     const text = handedDescription([params.description, params.notes], params.link);
-    return { occurrence: null, draft: { ...base, title: params.title ?? '', place: params.place ?? '', url: handedUrl(params.url), description: text } };
+    // Another app's repeat and guests: a rule this build reads, contacts still in the address book.
+    const handed = { rrule: handedRule(params.rrule), contactIds: handedGuests(params.guests, useLibraryStore.getState().people.contacts) };
+    return { occurrence: null, draft: { ...base, title: params.title ?? '', place: params.place ?? '', url: handedUrl(params.url), description: text, ...handed } };
     // The form reads its start once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -280,7 +311,13 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={editing ? t('Modifier l’événement') : t('Nouvel événement')} closes onBack={() => navigation.goBack()} actions={<Button label={t('Enregistrer')} small onPress={save} style={styles.saveButton} />} />
+      <TopBar title={editing ? t('Modifier l’événement') : t('Nouvel événement')} closes onBack={() => navigation.goBack()} actions={<Button label={t('Enregistrer')} small busy={form.busy} onPress={save} style={styles.saveButton} />} />
+      {/* Sent with problems, how many is said by the action, as every form does (`FormMessage`). */}
+      {form.message ? (
+        <View style={styles.message}>
+          <FormMessage message={form.message} />
+        </View>
+      ) : null}
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
         {/* A place typed brings its field up, its suggestions dropping under it above the keyboard. */}
         <RevealScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -288,7 +325,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
           <LayoutAnimationConfig skipEntering>
             <TextField kind="text" value={draft.title} onChangeText={title => set({ title })} placeholder={t('Ajouter un titre')} accessibilityLabel={t('Titre')} style={styles.title} returnKeyType="done" maxLength={EVENT_LIMITS.title} autoFocus={!editing && !draft.title} />
 
-            <Organic outline="card" style={styles.panel}>
+            <RowPanel outline="card" style={styles.panel}>
               <ListRow
                 title={t('Toute la journée')}
                 icon="clock"
@@ -325,7 +362,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
               <Field icon="refresh" onPress={() => setSheet('repeat')} label={t('Répéter')}>
                 <AppText variant="body">{repeatWords}</AppText>
               </Field>
-            </Organic>
+            </RowPanel>
 
             {/* The place is a row as the guests are: a press looks for it over the whole screen, the form never moving. */}
             <Animated.View layout={ROW_MOVE}>
@@ -407,14 +444,9 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                   />
                 </View>
               </Animated.View>
-              {/* Its glyph leads it, as every row of the form (the web's too); the swatches say what they are, so no word over them. */}
-              <Animated.View layout={ROW_MOVE} style={styles.labelsRow}>
-                <View style={[styles.fieldIcon, styles.colorsGlyph]}>
-                  <Icon name="palette" size={22} color={theme.color.inkMuted} />
-                </View>
-                <View style={styles.grow}>
-                  <LineColorPicker value={draft.color} onChange={color => set({ color })} allowNone flush accessibilityLabel={t('Couleur')} />
-                </View>
+              {/* One line, as Google Calendar's: the swatches open in a sheet, so fifteen of them never take the form's room. */}
+              <Animated.View layout={ROW_MOVE}>
+                <ColorLine own={draft.color} shown={eventColor({ color: draft.color, labelIds: draft.labelIds, feedId: null }, labelRecords, {})} onPress={() => setSheet('color')} />
               </Animated.View>
             </AnimatedOrganic>
 
@@ -500,6 +532,21 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
           setEnd(end <= draft.start ? `${addDays(draft.start, 1)}T${clock}` : end);
         }}
       />
+      <Sheet visible={sheet === 'color'} onDismiss={() => setSheet(null)} title={t('Couleur')}>
+        {/* A pick is the answer: the sheet goes with it, as Google Calendar's. */}
+        <View style={styles.colorSheet}>
+          <LineColorPicker
+            value={draft.color}
+            onChange={color => {
+              set({ color });
+              setSheet(null);
+            }}
+            allowNone
+            noneLabel={t('Couleur de ses libellés')}
+            accessibilityLabel={t('Couleur')}
+          />
+        </View>
+      </Sheet>
       <ZoneSheet visible={sheet === 'zone'} zone={draft.timeZone || zone} onDismiss={() => setSheet(null)} onZone={timeZone => set({ timeZone })} />
       <RepeatSheet visible={sheet === 'repeat'} start={draft.start} rrule={draft.rrule} today={today} weekStart={prefs.weekStart} onDismiss={() => setSheet(null)} onRule={rrule => set({ rrule })} />
       <ReminderSheet visible={sheet === 'reminder'} allDay={allDay} chosen={draft.reminders} replacing={replacing} onDismiss={() => setSheet(null)} onPick={pickReminder} />
@@ -524,10 +571,12 @@ const makeStyles = (theme: Theme) =>
     fill: { flex: 1 },
     content: { padding: 12, paddingBottom: 64, gap: 14 },
     saveButton: { marginRight: 8 },
+    message: { paddingHorizontal: 16, paddingBottom: 8 },
     problem: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginLeft: 56, marginRight: 16, marginBottom: 6 },
     problemGlyph: { marginTop: 1 },
     title: { fontSize: 22 },
-    panel: { paddingVertical: 6, backgroundColor: theme.color.paper },
+    // Its rows 6 in from its every edge (theirs 2 and its 4), as from its sides.
+    panel: { paddingVertical: 4, backgroundColor: theme.color.paper },
     // The day and the time on the text column of the rows around (a list row's: 6 in, 10, a 24 glyph, 16).
     // The day and the time a little apart, and each line from the next, so two presses never touch.
     whenLine: { flexDirection: 'row', alignItems: 'center', gap: GEOMETRY.rowGap, marginLeft: 48, marginRight: 6, marginVertical: GEOMETRY.rowGap / 2 },
@@ -548,8 +597,9 @@ const makeStyles = (theme: Theme) =>
     labelsGlyph: { height: LABEL_CHIP, justifyContent: 'center' },
     // The glyph centres on the field a first label is named in.
     labelsGlyphNaming: { height: LABEL_FIELD },
-    // The palette on the swatches' first row (40 and their 2 of margin).
-    colorsGlyph: { height: 44, justifyContent: 'center' },
+    // The colour's pebble in the glyph's slot, a little under the glyphs' size so it reads as a mark, not a button.
+    colorStone: { width: 22, height: 20 },
+    colorSheet: { paddingHorizontal: 8, paddingBottom: 8 },
     people: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
     // The contact's address at the row's end, beside the place's own press.
     placeRow: { flexDirection: 'row', alignItems: 'center', paddingRight: 8 },

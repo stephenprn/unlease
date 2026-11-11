@@ -41,7 +41,8 @@
  * An outlined container (`OutlinedBox`): its paint clipped to its outline. Rows sit `--row-inset` (6)
  * inside it: a row touching its top or its foot takes `--row-outer` on those two corners, concentric
  * with the outline as drawn at this size (`--outline-radius`, the kind's radius until a short box caps
- * it), so its hover and press follow the curve instead of cutting a tighter one inside it.
+ * it), so its hover and press follow the curve instead of cutting a tighter one inside it. Every
+ * measured outline sets both itself (`cornerVars`); this is the panel's until it is measured.
  */
 .box {
   --row-outer: max(0px, calc((var(--outline-radius, 22px) - var(--row-inset, 6px)) * var(--corner-scale)));

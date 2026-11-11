@@ -11,6 +11,7 @@ import { loadLayout } from './store/layoutStore';
 import { loadLineViews } from './store/lineViewStore';
 import { loadLibrary } from './store/libraryStore';
 import { startMentionNames } from './mentionNames';
+import { startShareShortcuts } from './shareShortcuts';
 import { startPhotoUploads } from './sync/photoUploads';
 import { startWidgets } from './widgets';
 
@@ -40,6 +41,8 @@ export function bootstrap(): BootResult {
     startLauncherIcon();
     // The home-screen widgets follow the library from here, wherever JavaScript runs.
     startWidgets();
+    // Its collections in the share sheet's first row, kept to those links were last filed into.
+    startShareShortcuts();
     booted = true;
     return { ok: true };
   } catch (error) {

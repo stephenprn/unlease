@@ -137,7 +137,7 @@ const PageRow = memo(function PageRow({ id, now }: { id: string; now: number }) 
 
 /** Under a keyboard, the keys that fill the pages. */
 const PAGE_KEYS = [
-  { key: 'P', label: tx('nouvelle page') },
+  { key: 'C', label: tx('nouvelle page') },
   { key: '/', label: tx('blocs, dans une page') },
   { key: '?', label: tx('raccourcis') },
 ] as const;
@@ -148,15 +148,18 @@ const EMPTY_TEXT = tx('Une page tient des titres, des listes, des tableaux, du c
 function PagesSearch({ query }: { query: string }) {
   const hits = usePageSearch(query);
   const found = hits.length;
+  const summary = searchSummary(query, found, settingsFound(query));
   return (
     <div className={styles.home}>
       {/* As on the phone: the settings the words name, above the pages. */}
       <SettingsMatches query={query} />
-      <h1 className={`${screens.resultCount} t-meta`} aria-live="polite">
-        {searchSummary(query, found, settingsFound(query))}
+      {/* The count, a line of meta over the results; nothing found, the empty state says it (and what the
+          search looks through, as in every app), and this line stays for a screen reader alone, still
+          announcing as words are typed. */}
+      <h1 className={found === 0 ? 'sr-only' : `${screens.resultCount} t-meta`} aria-live="polite">
+        {summary}
       </h1>
-      {/* As in every app: under nothing found, what the search looks through. */}
-      {found === 0 ? <p className={`${screens.resultHint} t-meta`}>{APP_WORDS.pages.searchHint}</p> : null}
+      {found === 0 ? <EmptyState scene="search" title={summary} text={APP_WORDS.pages.searchHint} /> : null}
       <PageResults hits={hits} query={query} />
     </div>
   );
@@ -184,12 +187,12 @@ function PagesHome() {
     <div className={styles.home}>
       {narrow ? <SyncNotice /> : null}
       <h1 className="sr-only">{t('Pages')}</h1>
-      <ComposerStrip label={t('Créer une page…')} shortcut="P" onCreate={() => openNewPage(null)} />
+      <ComposerStrip label={t('Créer une page…')} shortcut="C" onCreate={() => openNewPage(null)} />
       {roots.length === 0 ? (
         <EmptyState
           scene="notes"
           title={t('Aucune page pour l’instant')}
-          // Wide, the create strip right above (its P at its end) and the keys under say how one is made; on a phone the pebble at the foot is out of the way, so a line points to it.
+          // Wide, the create strip right above (its C at its end) and the keys under say how one is made; on a phone the pebble at the foot is out of the way, so a line points to it.
           text={narrow ? `${t(EMPTY_TEXT)} ${t('Le bouton +, en bas, en crée une.')}` : t(EMPTY_TEXT)}
           keys={narrow ? undefined : PAGE_KEYS.map(item => ({ ...item, label: t(item.label) }))}
         />

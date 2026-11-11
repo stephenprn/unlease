@@ -26,15 +26,15 @@ import { useLines } from '../../app/hooks/useLines';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { addLinks, readLinks, restoreNotes, setPinned, trashLines, trashNotes } from '../../app/store/actions';
 import { useLibraryStore, type LibraryState } from '../../app/store/library';
-import { useCanRead } from '../../app/store/prefs';
 import { setLineView, useLineView } from '../../app/store/lineViews';
-import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { selectServerSettings, useServerFeature, useServerSettingsStore } from '@shared/app/store/serverSettings';
 import { showError, showSnack, showUndo } from '@shared/app/store/ui';
 import { useForm } from '@shared/ui/components/useForm';
 import { BoundInput, FieldProblem } from '../features/BoundInput';
 import { selectSorting, useNotesUiStore } from '../../app/store/notesUi';
 import { openLink } from '../commands';
 import { Button } from '@shared/ui/components/Button';
+import { settleIn } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Menu } from '@shared/ui/components/Menu';
@@ -96,7 +96,8 @@ export function LineScreen({ id }: { id: string }) {
         return !!link && sortable(link) && (id !== INBOX_ID || link.filedBy !== 'person');
       }).length,
   );
-  const reading = useCanRead();
+  // Claude's offers (reading, sorting, its facts) only once the server has said it has a key.
+  const reading = useServerFeature('claude');
   // Its links noted before the last change to its own facts (« Ce que Claude relève »).
   const stale = useLibraryStore(
     useShallow(s => {
@@ -262,7 +263,7 @@ export function LineScreen({ id }: { id: string }) {
         )}
 
         {all === 0 ? (
-          <OutlinedBox kind="panel" className={`${styles.empty} t-body`}>
+          <OutlinedBox kind="panel" className={`${styles.empty} ${settleIn} t-body`}>
             {inbox
               ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
               : t('Aucun lien pour l’instant. Collez une adresse ici, ou n’importe où sur cette page : Claude y rangera aussi ceux qui lui correspondent.')}
@@ -308,7 +309,7 @@ export function LineScreen({ id }: { id: string }) {
           { label: t('Modifier la collection'), icon: 'edit', onSelect: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onSelect: () => setModules(true) },
           // What Claude notes on its links: « Non classé » reads each link by its kind.
-          ...(inbox ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(id)) }]),
+          ...(inbox || !reading ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(id)) }]),
           ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onSelect: () => setReviewing(true) }] : []),
           ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onSelect: sortInboxOnSlip }] : []),
           {

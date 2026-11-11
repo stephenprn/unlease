@@ -1,7 +1,8 @@
 /**
  * The link modules' sheets as the web's dialogs: their actions pinned at the foot (« Chercher à
  * nouveau », « Ouvrir la page »; « Annuler » where a choice is made), and the kitchen's timers as
- * pills of the slip, « Terminé » once rung.
+ * pills of the slip, « Terminé » once rung. The modules that ask Claude, in « Modules » and under a
+ * link, only once the server said it has a key.
  */
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -10,10 +11,12 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
 import { ThemeProvider } from '@shared/ui/theme/ThemeProvider';
-import { addLink, createLine, ensureInbox, updateLink } from '@app/store/actions';
+import { addLink, createLine, ensureInbox, setLineModules, updateLink } from '@app/store/actions';
 import { startTimer, stopTimer, useKitchenStore } from '@app/store/kitchen';
-import { loadLibrary, resetLibrary } from '@app/store/libraryStore';
+import { loadLibrary, resetLibrary, useLibraryStore } from '@app/store/libraryStore';
+import { ModulesSheet } from '@ui/features/lines/ModulesSheet';
 import { CoverageSheet } from '@ui/features/links/CoverageSheet';
+import { ModuleBar } from '@ui/features/links/ModuleBar';
 import { KitchenTimers } from '@ui/features/links/KitchenTimers';
 import { RecapSheet } from '@ui/features/links/RecapSheet';
 
@@ -90,6 +93,33 @@ describe('the modules’ sheets', () => {
     expect(labels(tree)).toEqual(expect.arrayContaining(['Annuler', 'Résumer']));
     await press(tree, 'Annuler');
     expect(dismissed).toHaveBeenCalled();
+  });
+});
+
+describe('the modules that ask Claude', () => {
+  it('are listed in « Modules » and shown under a link only once the server said Claude has a key', async () => {
+    const id = link('article');
+    const line = useLibraryStore.getState().links[id]!.noteId;
+    setLineModules(line, ['coverage', 'ask', 'archive', 'directions']);
+    for (const reading of [null, false]) {
+      useSettingsStore.setState({ reading });
+      const sheet = await render(<ModulesSheet id={line} visible onDismiss={() => undefined} />);
+      expect(labels(sheet)).toEqual(expect.arrayContaining(['Y aller', 'Garder une copie', 'En cuisine']));
+      expect(labels(sheet)).not.toContain('Autres regards');
+      expect(labels(sheet)).not.toContain('Demander à Claude');
+      expect(labels(sheet)).not.toContain('Codes promo');
+      const bar = await render(<ModuleBar id={id} onOpen={() => undefined} />);
+      expect(labels(bar)).not.toContain('Autres regards');
+      expect(labels(bar)).not.toContain('Demander à Claude');
+    }
+    // Picked while hidden, they stay picked.
+    expect(useLibraryStore.getState().notes[line]!.modules).toEqual(['coverage', 'ask', 'archive', 'directions']);
+
+    useSettingsStore.setState({ reading: true });
+    const sheet = await render(<ModulesSheet id={line} visible onDismiss={() => undefined} />);
+    expect(labels(sheet)).toEqual(expect.arrayContaining(['Autres regards', 'Demander à Claude', 'Codes promo', 'Y aller']));
+    const bar = await render(<ModuleBar id={id} onOpen={() => undefined} />);
+    expect(labels(bar)).toEqual(expect.arrayContaining(['Autres regards', 'Demander à Claude']));
   });
 });
 

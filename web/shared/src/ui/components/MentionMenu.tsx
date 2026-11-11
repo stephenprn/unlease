@@ -9,6 +9,7 @@ import { Fragment, useLayoutEffect, useRef, useState } from 'react';
 
 import type { GlyphName } from '@unlease/design/glyphs';
 
+import { EmptyLine } from './EmptyLine';
 import { Floating } from './Floating';
 import { Icon } from './Icon';
 import styles from './mentionMenu.module.css';
@@ -87,7 +88,7 @@ export function MentionMenu({ anchor, rows, active, onActive, label, listLabel, 
   return (
     <Floating anchor={anchor} label={label} className={styles.panel} id={id}>
       {rows.length === 0 ? (
-        <p className={`${styles.empty} t-meta`}>{empty}</p>
+        <EmptyLine text={empty} glyph="info" className={styles.empty} />
       ) : (
         <div ref={list} className={styles.list} role="listbox" aria-label={listLabel ?? label}>
           {rows.map((row, index) => (

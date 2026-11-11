@@ -8,6 +8,7 @@ import {
   groundReads,
   isDefaultAppearance,
   launcherPalette,
+  lookWords,
   markColors,
   PALETTE_COLORS,
   paletteOf,
@@ -270,3 +271,14 @@ describe('the launcher’s icon', () => {
   });
 });
 
+describe('the look in words', () => {
+  it('says the look out of the box once, not its palette and ground both named Carnet', () => {
+    expect(lookWords('system', DEFAULT_APPEARANCE)).toBe('Thème du système · apparence d’origine');
+  });
+
+  it('names the colours and the ground for what they are', () => {
+    const { primary, accent } = PALETTE_COLORS.carnet;
+    expect(lookWords('dark', { primary, accent, ground: { kind: 'preset', key: GROUND_PRESETS.find(key => key !== 'carnet')! } })).toMatch(/^Thème sombre · couleurs Carnet · fond \S/);
+    expect(lookWords('light', { primary: '#123456', accent, ground: { kind: 'color', color: '#abcdef' } })).toBe('Thème clair · couleurs sur mesure · fond uni sur mesure');
+  });
+});

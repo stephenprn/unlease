@@ -8,13 +8,13 @@ import { useId } from 'react';
 import { t } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
 import { MODULE_DESCRIPTIONS, MODULE_FITS, MODULE_GROUPS, MODULE_ICONS, MODULE_NAMES } from '@unlease/notes/models/modules';
-import { lineModules, moduleCost, moduleMissing, withModule } from '@unlease/notes/services/modules';
+import { lineModules, moduleCost, moduleMissing, moduleOffered, withModule } from '@unlease/notes/services/modules';
 
 import { setLineModules } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { selectServerSettings, useServerFeature, useServerSettingsStore } from '@shared/app/store/serverSettings';
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
-import { useCanRead, useSeerr } from '../../../app/store/prefs';
+import { useSeerr } from '../../../app/store/prefs';
 import { useServerRuns } from '@shared/app/apps';
 import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { DialogFrame } from '@shared/ui/components/Dialog';
@@ -35,7 +35,8 @@ export function ModulesDialog({ id, open, onDismiss }: { id: string; open: boole
 function ModulesBody({ id, titleId, onDismiss }: { id: string; titleId: string; onDismiss: () => void }) {
   const line = useLibraryStore(s => s.notes[id]);
   const server = useSettingsStore(selectServer);
-  const reading = useCanRead();
+  // Claude's modules once the server has said it has a key (Seerr's once it gave Seerr's address).
+  const reading = useServerFeature('claude');
   const seerr = useSeerr();
   const model = useServerSettingsStore(selectServerSettings)?.analysis.model ?? 'claude-opus-5-5';
   const pages = useServerRuns('pages');
@@ -43,11 +44,13 @@ function ModulesBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
   if (!line) return null;
   const on = lineModules(line);
   const can = { server: server !== null, reading, seerr, pages, agenda };
+  // What leans on a service the Administration has not set up (Claude, Seerr) is not offered (one picked stays picked); a group left with none goes too.
+  const groups = MODULE_GROUPS.map(group => ({ ...group, modules: group.modules.filter(module => moduleOffered(module, can)) })).filter(group => group.modules.length > 0);
 
   return (
     <DialogFrame kind="list" title={t('Modules')} titleId={titleId} onClose={onDismiss} className={styles.modulesFrame}>
       <p className={`${styles.choiceLead} t-body`}>{t('Les modules choisis apparaissent sur les liens de {collection} qui s’y prêtent.', { collection: shownTitle(line) })}</p>
-      {MODULE_GROUPS.map(group => (
+      {groups.map(group => (
         <section key={group.title} className={styles.moduleGroup} aria-label={t(group.title)}>
           <h3 className={`${styles.moduleGroupTitle} t-section`}>{t(group.title)}</h3>
           {group.modules.map(module => {

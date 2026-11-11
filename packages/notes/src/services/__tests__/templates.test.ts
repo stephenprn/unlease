@@ -2,6 +2,7 @@ import { setLocale } from '@unlease/core/i18n';
 import type { Fields } from '@unlease/core/sync/record';
 import { isValidField } from '@unlease/core/sync/schema';
 import { EN_TEMPLATES } from '../../i18n/en/templates';
+import { SUGGESTED_COLLECTIONS } from '../../models/collections';
 import { INBOX_ID, LINK_KINDS, type LinkItem, type Note } from '../../models/entities';
 import { KIND_TEMPLATES, TEMPLATE_FIELD_TYPES, TEMPLATE_LIMITS, type LinkTemplate, type TemplateField } from '../../models/templates';
 import { linkFromRecord, linkTemplateFields, linkTemplateFromRecord, noteFromRecord } from '../../sync/entities';
@@ -26,6 +27,9 @@ import {
   readingSignature,
   sameFields,
   shownFieldType,
+  startingFacts,
+  starterFacts,
+  starterTemplateId,
   suggestedFields,
   templateProblems,
   templateSignature,
@@ -279,5 +283,65 @@ describe('the fields Claude reads', () => {
     ]);
     expect(promptFieldLines([field('a', 'Accords', { type: 'yesno', hint: 'Avec quoi\n  le boire,\nsi la page le dit' })])).toEqual(['- Accords (yes or no, in the message’s language): Avec quoi le boire, si la page le dit']);
     expect(promptFieldLines([])).toEqual([]);
+  });
+});
+
+describe('the starter collections’ own facts', () => {
+  const fold = (text: string): string => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
+  it('give every starter a list it can keep: within the limits, ids and names once each, known types', () => {
+    for (const starter of SUGGESTED_COLLECTIONS) {
+      const facts = starter.facts;
+      expect(facts.length > 0, starter.id).toBe(true);
+      expect(facts.length, starter.id).toBeLessThanOrEqual(TEMPLATE_LIMITS.fields);
+      expect(new Set(facts.map(each => each.id)).size, starter.id).toBe(facts.length);
+      expect(new Set(facts.map(each => fold(each.name))).size, starter.id).toBe(facts.length);
+      for (const fact of facts) expect(TEMPLATE_FIELD_TYPES, fact.id).toContain(fact.type);
+      // What the sync keeps, whole, in either language.
+      expect(isTemplateFields(starterFacts(starter.id)), starter.id).toBe(true);
+      expect(parseTemplateFields(starterFacts(starter.id))).toEqual(starterFacts(starter.id));
+      setLocale('en');
+      expect(isTemplateFields(starterFacts(starter.id)), starter.id).toBe(true);
+      setLocale('fr');
+    }
+  });
+
+  it('reuse a kind’s words where they share its id, so facts already read keep matching', () => {
+    const kinds = new Map(LINK_KINDS.flatMap(kind => KIND_TEMPLATES[kind]).map(preset => [preset.id, preset.name] as const));
+    for (const starter of SUGGESTED_COLLECTIONS) {
+      for (const fact of starter.facts) if (kinds.has(fact.id)) expect(fact.name, `${starter.id} ${fact.id}`).toBe(kinds.get(fact.id));
+    }
+  });
+
+  it('have every name and hint in English', () => {
+    for (const starter of SUGGESTED_COLLECTIONS) {
+      for (const fact of starter.facts) {
+        expect(Object.hasOwn(EN_TEMPLATES, fact.name), fact.name).toBe(true);
+        expect(Object.hasOwn(EN_TEMPLATES, fact.hint), fact.hint).toBe(true);
+      }
+    }
+    expect(starterFacts('line-restos')!.slice(0, 2).map(each => each.name)).toEqual(['Cuisine', 'Quartier']);
+    setLocale('en');
+    expect(starterFacts('line-restos')!.slice(0, 2)).toEqual([
+      { id: 'cuisine', name: 'Cuisine', type: 'text', hint: 'The kind of food' },
+      { id: 'neighbourhood', name: 'Neighbourhood', type: 'text', hint: 'The neighbourhood and the city' },
+    ]);
+    expect(starterFacts('line-films')!.find(each => each.id === 'rating')!.name).toBe('Rating');
+  });
+
+  it('are kept under a fixed id of their own, never a kind’s, and only a starter has them', () => {
+    expect(starterTemplateId('line-restos')).toBe('facts-line-restos');
+    for (const starter of SUGGESTED_COLLECTIONS) {
+      expect(isValidField('note', 'templateId', starterTemplateId(starter.id))).toBe(true);
+      expect(kindOfTemplateId(starterTemplateId(starter.id))).toBeNull();
+    }
+    expect(starterFacts('0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b')).toBeNull();
+    expect(starterFacts(INBOX_ID)).toBeNull();
+  });
+
+  it('are what a starter’s own list starts from, whatever its links; any other collection starts from its kind’s', () => {
+    expect(startingFacts({}, ['product'], 'line-voyages')).toEqual(starterFacts('line-voyages'));
+    expect(startingFacts({}, ['film'], 'vins')).toEqual(presetFields('film'));
+    expect(startingFacts({}, [])).toEqual([]);
   });
 });

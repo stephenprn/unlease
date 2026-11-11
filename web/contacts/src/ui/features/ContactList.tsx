@@ -5,7 +5,7 @@
  * each group when the list is long enough to look one up. A face is the box that picks its row,
  * under a pointer and while a pick is on; the selection bar acts on what is picked.
  */
-import { Fragment, memo, useMemo } from 'react';
+import { Fragment, memo, useMemo, useRef } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import type { Contact } from '@unlease/contacts/models/contacts';
@@ -15,12 +15,14 @@ import { setFavorite } from '../../app/store/actions';
 import { pickRange, toggleSelected, useContactsUi } from '../../app/store/contactsUi';
 import { useContactsStore } from '../../app/store/library';
 import { useSortOrder } from '../../app/store/prefs';
+import { useQuery } from '@shared/app/store/search';
 import { showUndo } from '@shared/app/store/ui';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelMark } from '@shared/ui/components/LabelMark';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { Link, navigate } from '@shared/ui/router';
+import { useListMotion } from '@shared/ui/useListMotion';
 import styles from '../contacts.module.css';
 import { paths } from '../routes';
 import { Avatar } from './Avatar';
@@ -41,7 +43,7 @@ const ContactRow = memo(function ContactRow({ id, order, picking, run }: { id: s
   const phone = contact.phones.find(entry => entry.number.trim())?.number ?? '';
   const worn = contact.labelIds.map(labelId => labels[labelId]).filter(label => label && label.deletedAt === null);
   return (
-    <li className={styles.row} data-picked={picked || undefined} data-picking={picking || undefined}>
+    <li className={styles.row} data-motion={id} data-picked={picked || undefined} data-picking={picking || undefined}>
       <button type="button" className={styles.pick} role="checkbox" aria-checked={picked} aria-label={t('Sélectionner {name}', { name })} onClick={event => (event.shiftKey ? pickRange(run, id) : toggleSelected(id))}>
         <Avatar contact={contact} size={40} />
         <span className={styles.pickBox}>
@@ -112,7 +114,7 @@ function SectionRows({ section, order, picking }: { section: ListSection; order:
     <>
       {groups.map(group => (
         <Fragment key={group.letter}>
-          <h3 className={`${styles.letter} t-label`}>
+          <h3 className={`${styles.letter} t-title`} data-motion={`letter:${group.letter}`}>
             <span className={styles.letterName}>{group.letter}</span>
           </h3>
           <ul className={styles.group} aria-label={group.letter}>
@@ -126,14 +128,21 @@ function SectionRows({ section, order, picking }: { section: ListSection; order:
   );
 }
 
+/** More contacts than this coming or going at once (a whole pick binned, an import): the list just changes. */
+const MOVING_AT_MOST = 40;
+
 export function ContactList({ sections }: { sections: readonly ListSection[] }) {
   const order = useSortOrder();
   const picking = useContactsUi(s => s.selection.size > 0);
+  const query = useQuery();
   const shown = sections.filter(section => section.contacts.length > 0);
+  const root = useRef<HTMLDivElement>(null);
+  // A contact deleted, unstarred from the favourites or binned with others fades where it was, the rest (and the letters) close ranks; one put back settles in. A search typed, another order or another list is drawn anew.
+  useListMotion(root, { scene: `${query}|${order}|${sections.map(section => section.id).join(',')}`, most: MOVING_AT_MOST, late: true });
   return (
-    <>
+    <div ref={root} className={styles.lists}>
       {shown.map((section, index) => (
-        <section key={section.id} aria-label={section.title ?? t('Contacts')}>
+        <section key={section.id} aria-label={section.title ?? t('Contacts')} data-motion={`section:${section.id}`}>
           {section.title ? (
             <h2 className={`${styles.sectionHead} t-section`}>
               {section.title}
@@ -153,6 +162,6 @@ export function ContactList({ sections }: { sections: readonly ListSection[] }) 
           </OutlinedBox>
         </section>
       ))}
-    </>
+    </div>
   );
 }

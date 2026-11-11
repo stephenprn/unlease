@@ -8,16 +8,17 @@
  * Beside them, what the page says when Claude could read some of its links now (« Tout lire »),
  * and when its filter keeps nothing (« Tout afficher »).
  */
-import React, { memo } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import React, { memo, useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { t } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
-import { SHAPES } from '@unlease/design/shapes';
+import { concentric, CORNER_CAP, RADII, SHAPES } from '@unlease/design/shapes';
 import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineView } from '@unlease/notes/services/lineView';
 
-import { AppText, Button, Icon, Organic, Sheet, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, Icon, Organic, settleIn, Sheet, SheetScroll, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -137,30 +138,42 @@ export function LineViewSheets({ open, view, counts, priced, onChange, onDismiss
 export function ReadAllBanner({ text, action, onRead, style }: { text: string; action: string; onRead: () => void; style?: StyleProp<ViewStyle> }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // Its button stands in its right corners, 8 in: its corners there concentric with the banner's as drawn (a short sheet's are capped), the others a button's.
+  const [corner, setCorner] = useState<number | null>(null);
+  const measure = (event: LayoutChangeEvent): void => {
+    const { width, height } = event.nativeEvent.layout;
+    setCorner(concentric(Math.min(RADII.panel, CORNER_CAP * Math.min(width, height)), BANNER_END));
+  };
   return (
-    <Organic style={[styles.banner, style]} accessibilityLiveRegion="polite">
+    <Organic style={[styles.banner, style]} onLayout={measure} accessibilityLiveRegion="polite">
       <Icon name="sparkle" size={20} color={theme.color.inkMuted} />
       <AppText variant="meta" color={theme.color.ink} style={styles.fill}>
         {text}
       </AppText>
-      <Button kind="tonal" small label={action} onPress={onRead} />
+      <Button kind="tonal" small label={action} onPress={onRead} style={corner === null ? undefined : { borderTopRightRadius: corner, borderBottomRightRadius: corner }} />
     </Organic>
   );
 }
 
-/** The filter keeps none of the collection's links: what it looked for, and the way back to all (the empty collection's dashed sheet). */
+/** The filter keeps none of the collection's links: what it looked for, and the way back to all (the empty collection's dashed sheet). It settles in as that sheet does, afresh for another filter. */
 export function FilteredEmpty({ filter, collection, onClear }: { filter: LineFilter; collection: string; onClear: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  const sentence = emptyFilterSentence(filter, collection);
   return (
-    <Organic outline="panel" style={styles.empty}>
-      <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
-        {emptyFilterSentence(filter, collection)}
-      </AppText>
-      <Button kind="text" small label={t('Tout afficher')} onPress={onClear} />
-    </Organic>
+    <Animated.View key={sentence} entering={settleIn} accessibilityLiveRegion="polite">
+      <Organic outline="panel" style={styles.empty}>
+        <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
+          {sentence}
+        </AppText>
+        <Button kind="text" small label={t('Tout afficher')} onPress={onClear} />
+      </Organic>
+    </Animated.View>
   );
 }
+
+/** How far the banner's button stands in from its end, its top and its foot. */
+const BANNER_END = 8;
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -173,7 +186,7 @@ const makeStyles = (theme: Theme) =>
     fill: { flex: 1 },
     tick: { width: 20, alignItems: 'center' },
     // In the add strip's margins, as the bin's banner sits in its place.
-    banner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 12, marginTop: 4, marginBottom: 4, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, backgroundColor: theme.color.paperHigh, ...corners(SHAPES.panel) },
+    banner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 12, marginTop: 4, marginBottom: 4, paddingLeft: 14, paddingRight: BANNER_END, paddingVertical: BANNER_END, backgroundColor: theme.color.paperHigh, ...corners(SHAPES.panel) },
     // Dashed in the outline's ink (the empty collection's).
     empty: { alignItems: 'center', gap: 10, marginHorizontal: 12, marginTop: 12, paddingHorizontal: 28, paddingTop: 28, paddingBottom: 20, borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.color.outline },
     emptyText: { textAlign: 'center' },

@@ -23,11 +23,12 @@ import { deleteLink, moveLink, reanalyzeLink, saveTypedText, setLinkDone } from 
 import { useLibraryStore } from '@app/store/libraryStore';
 import { useShallow } from 'zustand/react/shallow';
 import { selectCanRead, selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { showSnack } from '@shared/app/store/uiStore';
 import { onBeforePause } from '@shared/app/sync/syncManager';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, EmptyState, Ground, Icon, IconButton, Menu, Organic, Stamp, TextField, TopBar, stampWord } from '../components';
+import { AppText, Button, EdgeScrollView, EmptyState, Ground, Icon, IconButton, Menu, Organic, Stamp, stampWord, TextField, TopBar } from '../components';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { KIND_ICONS } from '../features/links/kindIcon';
@@ -54,7 +55,10 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
   const [parting, setParting] = useState<LinkItem | undefined>(undefined);
   const link = parting ?? live;
   const line = useLibraryStore(s => (link ? s.notes[link.noteId] : undefined));
+  // What its reading says (unknown counts as read: a pending link waits for the server)…
   const reading = useSettingsStore(selectCanRead);
+  // …and what Claude may be asked here (read again, its facts): once the server said it has a key.
+  const claude = useServerFeature('claude');
   // Where its facts are chosen (« Ce que Claude relève »: its collection's page, else its kind's usual facts), and whether it was noted before they changed.
   const fiche = useLibraryStore(
     useShallow(s => {
@@ -179,11 +183,11 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
   );
 
   // What became of the reading, and the way on: one panel, its action under the words.
-  const action = reading
+  const action = claude
     ? unread || failed
       ? { label: unread ? t('Lire la page') : t('Réessayer'), run: () => reanalyzeLink(id) }
       : null
-    : unread
+    : !reading && unread
       ? // With a server, what is missing is the key: straight to that section (the web's).
         { label: t('Administration'), run: () => navigation.navigate('Admin', { section: server ? 'reading' : 'server' }) }
       : null;
@@ -243,7 +247,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
         }
       />
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
+        <EdgeScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
           {pictureLost ? null : kept.length > 0 ? (
             <Gallery blobIds={kept} fallback={link.imageUrl} width={width} height={pictureHeight} onLost={() => setLostPicture(pictures)} />
           ) : link.imageUrl ? (
@@ -298,7 +302,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
                     <AppText variant="meta" style={styles.flex}>
                       {t('Lu avant le dernier changement de ses informations.')}
                     </AppText>
-                    {reading ? <Button kind="text" small label={t('Relire')} onPress={() => reanalyzeLink(id)} style={styles.staleAction} /> : null}
+                    {claude ? <Button kind="text" small label={t('Relire')} onPress={() => reanalyzeLink(id)} style={styles.staleAction} /> : null}
                   </View>
                 ) : null}
               </View>
@@ -329,7 +333,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
               <AppText variant="meta">{dates}</AppText>
             </View>
           </View>
-        </ScrollView>
+        </EdgeScrollView>
       </KeyboardAvoidingView>
 
       {/* The two things done here, under the thumb; it steps aside while the note is typed. */}
@@ -362,9 +366,9 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
               ),
           },
           { label: t('Partager'), icon: 'share', onPress: () => Share.share({ message: link.url, title: link.title || undefined }).catch(() => {}) },
-          ...(reading ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onPress: () => reanalyzeLink(id) }] : []),
+          ...(claude ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onPress: () => reanalyzeLink(id) }] : []),
           // Where its facts are chosen: its collection's page, or its kind's usual facts (« Non classé »'s link of no kind has none).
-          ...(fiche.collection || (fiche.kind && fiche.kind !== 'other')
+          ...(claude && (fiche.collection || (fiche.kind && fiche.kind !== 'other'))
             ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', fiche.collection ? { collection: fiche.collection } : { kind: fiche.kind! }) }]
             : []),
           {

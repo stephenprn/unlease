@@ -10,6 +10,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.bridge.WritableMap
+import com.stephenprn.unlease.launch.IntentExtras
 import com.stephenprn.unlease.specs.NativeIntakeSpec
 import java.io.File
 import java.lang.ref.WeakReference
@@ -17,15 +18,21 @@ import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
-/** As JavaScript receives it: the cards already copied into the app's cache (the grant lapses). */
-data class Share(val id: String, val subject: String, val files: List<String>, val mimeType: String)
+/**
+ * As JavaScript receives it: the cards already copied into the app's cache (the grant lapses), or
+ * another app's « Créer un contact » ([IntakeModule.INSERT], its extras as JSON in `text`).
+ */
+data class Share(val id: String, val subject: String, val files: List<String>, val mimeType: String, val text: String = "")
 
 /**
  * Contacts' side of the Intake spec (`mobile/shared/specs/NativeIntake.ts`): a contact card (`.vcf`)
  * shared to the app (WhatsApp's « Partager le contact », Android's own contacts, a file manager's
  * « Ouvrir avec ») is copied into the cache and parked in [pending] until JavaScript takes it, and
  * also emitted as `onShare` while the module is alive (JavaScript dedupes by id). A card sent as
- * text (`BEGIN:VCARD…` in EXTRA_TEXT) is written to a file the same way.
+ * text (`BEGIN:VCARD…` in EXTRA_TEXT) is written to a file the same way. Another app's « Créer un
+ * contact » or « Ajouter à un contact » (the dialer's, Messages', a mail app's: INSERT, INSERT_OR_EDIT)
+ * is parked the same way, its extras as they came (`ContactsContract.Intents.Insert`), for the new
+ * contact's form to open filled with them (`app/handedContact.ts`).
  */
 class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIntakeSpec(reactContext) {
 
@@ -58,6 +65,8 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
     private val CARD_TYPES = setOf("text/x-vcard", "text/vcard", "text/directory")
     /** A card larger than this is no address book a phone shares. */
     private const val MAX_BYTES = 20L * 1024 * 1024
+    /** A share's `mimeType` when it is another app's new contact (`platform/intake.ts`, HANDED_CONTACT). */
+    const val INSERT = "x-unlease/contact-insert"
 
     private val pending = AtomicReference<Share?>(null)
     @Volatile private var live: WeakReference<IntakeModule>? = null
@@ -65,6 +74,11 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
 
     fun receive(context: Context, intent: Intent?) {
       if (intent == null) return
+      // Only a contact's types reach here with these (the manifest's filters): nothing is written until the form is saved.
+      if (intent.action == Intent.ACTION_INSERT || intent.action == Intent.ACTION_INSERT_OR_EDIT) {
+        park(Share(UUID.randomUUID().toString(), "", emptyList(), INSERT, IntentExtras.toJson(intent).toString()))
+        return
+      }
       val type = (intent.type ?: "").lowercase()
       val uris: List<Uri>
       var text = ""
@@ -99,10 +113,14 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
           files += target.absolutePath
         }
         if (files.isEmpty()) return@execute
-        val share = Share(UUID.randomUUID().toString(), subject, files, type.ifEmpty { "text/x-vcard" })
-        pending.set(share)
-        live?.get()?.deliver(share)
+        park(Share(UUID.randomUUID().toString(), subject, files, type.ifEmpty { "text/x-vcard" }))
       }
+    }
+
+    /** Kept until JavaScript takes it (after the first run, if the app is not set up yet), and sent at once to a live module. */
+    private fun park(share: Share) {
+      pending.set(share)
+      live?.get()?.deliver(share)
     }
 
     private fun copyBounded(input: java.io.InputStream, out: java.io.OutputStream) {
@@ -130,7 +148,7 @@ class IntakeModule(private val reactContext: ReactApplicationContext) : NativeIn
     private fun toMap(share: Share?): WritableMap =
         Arguments.createMap().apply {
           putString("id", share?.id ?: "")
-          putString("text", "")
+          putString("text", share?.text ?: "")
           putString("subject", share?.subject ?: "")
           putString("mimeType", share?.mimeType ?: "")
           putArray("files", Arguments.createArray().apply { share?.files?.forEach { pushString(it) } })

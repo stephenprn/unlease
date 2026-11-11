@@ -16,6 +16,7 @@ import { addDays, daysBetween, monthGrid, partsOf, weekdayOf } from '@unlease/ca
 import { useColorOf } from '../../app/hooks/useItems';
 import { anchorOf, openPeek, openQuick } from '../../app/store/calendarUi';
 import { usePrefsStore } from '../../app/store/prefs';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { navigate } from '@shared/ui/router';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from '../calendar.module.css';
@@ -33,6 +34,8 @@ export function MonthView({ day, items, today }: { day: string; items: readonly 
   const twelveHours = usePrefsStore(s => s.twelveHours);
   const weekNumbers = usePrefsStore(s => s.weekNumbers);
   const narrow = useMedia(NARROW);
+  // The weeks fade and blur under the weekdays' heads as far as they run on.
+  const monthEdges = useScrollEdges({ top: true });
   const colorOf = useColorOf();
   const dragged = useRef(false);
   const [over, setOver] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export function MonthView({ day, items, today }: { day: string; items: readonly 
           <span key={each}>{narrow ? narrowWeekday(weekdayOf(each)) : shortWeekday(weekdayOf(each))}</span>
         ))}
       </div>
-      <div className={styles.month} style={{ gridTemplateRows: `repeat(${weeks.length}, minmax(96px, 1fr))` }}>
+      <div ref={monthEdges} className={styles.month} style={{ gridTemplateRows: `repeat(${weeks.length}, minmax(96px, 1fr))` }}>
         {weeks.map((week, row) => {
           const layout = rows[row]!;
           return (

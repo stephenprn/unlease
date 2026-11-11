@@ -16,11 +16,12 @@ import { shownFieldAnswer, suggestedFields } from '@unlease/notes/services/templ
 
 import { addField, moveField } from '../../../app/templates';
 import { Button } from '@shared/ui/components/Button';
+import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { SelectField } from '@shared/ui/components/SelectField';
 import { TextField } from '@shared/ui/components/TextField';
 import type { FieldBinding } from '@shared/ui/components/useForm';
-import { useListMotion } from '../note/useListMotion';
+import { useListMotion } from '@shared/ui/useListMotion';
 import { FIELD_TYPE_GLYPHS, answerOptions } from './fieldTypes';
 import styles from './templates.module.css';
 
@@ -185,7 +186,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
   return (
     <div className={styles.facts}>
       {fields.length === 0 ? (
-        <p className={`${styles.empty} t-body`}>{t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')}</p>
+        <EmptyLine text={t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')} className={styles.empty} />
       ) : (
         <ul ref={list} className={styles.factList} aria-label={t('Informations')}>
           {fields.map(field => {

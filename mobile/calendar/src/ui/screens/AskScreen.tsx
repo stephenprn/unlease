@@ -2,12 +2,12 @@
  * « Demander à Claude »: a question about the calendar (« Quand ai-je vu Paul ? », « Qu'ai-je cette
  * semaine ? »), answered from the events of the three months past and the year ahead, built on the
  * phone (`askContext`); the conversation lasts while the screen is open. Off until the Administration
- * turns it on. As the web's panel: what Claude reads said first, questions to start from while the
+ * turns it on: reached by its address while the server says it is off, it goes back to the calendar. As the web's panel: what Claude reads said first, questions to start from while the
  * conversation is empty, « Nouvelle conversation » once it is not, the question waiting with Claude's
  * reading line, and the field at the foot with its arrow.
  */
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { getLocale, t } from '@unlease/core/i18n';
 import { ASK_STARTERS, askContext } from '@unlease/calendar/services/ask';
@@ -20,9 +20,10 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { askCalendar } from '@app/sync/transport';
 import { later } from '@app/later';
 import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useServerFeatureState } from '@shared/app/hooks/useServerFeature';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { AppText, Button, FormMessage, Ground, IconButton, Organic, ReadingTrack, Tappable, TextField, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, FormMessage, Ground, IconButton, Organic, ReadingTrack, Tappable, TextField, TopBar } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -46,6 +47,15 @@ export function calendarContext(now: number): string {
 export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
   const styles = useThemedStyles(makeStyles);
   const server = useSettingsStore(selectServer);
+  const claude = useServerFeatureState('claude');
+  const offered = useSettingsStore(s => s.calendarAsk);
+  // Its address (`unlease-agenda://ask`) while the server has said no (no key, or the questions off): the calendar, as the drawer shows no « Demander à Claude ».
+  const off = claude === 'off' || (claude === 'on' && !offered);
+  useEffect(() => {
+    if (!off) return;
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.replace('Calendar');
+  }, [off, navigation]);
   const [question, setQuestion] = useState('');
   const [turns, setTurns] = useState<readonly CalendarAskTurn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -74,7 +84,7 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
       <Ground />
       <TopBar title={t('Demander à Claude')} onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {!server ? <AppText variant="body">{t('Reliez un serveur pour poser des questions sur votre agenda.')}</AppText> : null}
           {server ? (
             <View style={styles.head}>
@@ -95,11 +105,11 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
           ) : null}
           {turns.map((turn, index) => (
             <View key={index} style={styles.turn}>
-              <View style={styles.question}>
+              <Organic style={styles.question}>
                 <AppText variant="body" selectable>
                   {turn.question}
                 </AppText>
-              </View>
+              </Organic>
               <Organic outline="card" style={styles.answer}>
                 <AppText variant="body" selectable>
                   {turn.answer}
@@ -109,9 +119,9 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
           ))}
           {busy ? (
             <View style={styles.turn}>
-              <View style={styles.question}>
+              <Organic style={styles.question}>
                 <AppText variant="body">{question}</AppText>
-              </View>
+              </Organic>
               <View style={styles.waiting} accessibilityLiveRegion="polite">
                 <ReadingTrack width={72} />
                 <AppText variant="meta" style={styles.fill}>
@@ -121,7 +131,7 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
             </View>
           ) : null}
           <FormMessage message={error} />
-        </ScrollView>
+        </EdgeScrollView>
         {server ? (
           <View style={styles.ask}>
             <View style={styles.field}>

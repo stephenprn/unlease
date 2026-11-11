@@ -15,6 +15,10 @@ export const EN_SHARED: Dictionary = {
   'Ouvrir l’agenda': 'Open the calendar',
   'Pages, contacts, événements, notes, collections, liens et dates': 'Pages, contacts, events, notes, collections, links and dates',
   'Événement': 'Event',
+  // « [[ » with nothing typed and no other page (both clients)
+  'Aucune autre page pour l’instant.': 'No other page yet.',
+  // A select column's options, none yet (both clients)
+  'Tapez le nom d’une option pour la créer.': 'Type an option’s name to create it.',
   // A code block's language search finding none (both clients)
   'Aucun langage ne correspond.': 'No language matches.',
   // A link's or an embed's address that cannot be read (both clients)

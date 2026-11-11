@@ -8,7 +8,7 @@ import { AppShell } from '@shared/ui/AppShell';
 import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
 import { MapsSheets } from '@shared/ui/features/maps/MapsSheets';
 import { linking, RootNavigator } from '@ui/navigation/RootNavigator';
-import { navigate, navigationRef } from '@ui/navigation/navigationRef';
+import { navigate, navigationRef, push } from '@ui/navigation/navigationRef';
 
 import { bootstrap } from '../bootstrap';
 import { listenForShares } from '../intake';
@@ -16,11 +16,11 @@ import { listenForShares } from '../intake';
 /** A birthday notification pressed: its contact (asking how to wish it, from its « Message » on the day). */
 const openContact = (id: string, wish?: boolean): void => navigate('Contact', wish ? { id, wish: true } : { id });
 
-/** Above every screen: the sync follows the app in and out of the foreground; a shared card opens the import; birthdays are kept armed. */
+/** Above every screen: the sync follows the app in and out of the foreground; a shared card opens the import, another app's « Créer un contact » the form; birthdays are kept armed. */
 function Overlays(): React.ReactElement {
   useAppLifecycle();
   const onboarded = useSettingsStore(selectOnboarded);
-  useEffect(() => (onboarded ? listenForShares(() => navigate('Import', { source: 'shared' })) : undefined), [onboarded]);
+  useEffect(() => (onboarded ? listenForShares({ import: () => navigate('Import', { source: 'shared' }), create: handed => push('Edit', { handed }) }) : undefined), [onboarded]);
   useBirthdayAlerts(openContact);
   return (
     <>
