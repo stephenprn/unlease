@@ -33,6 +33,7 @@ All notable changes to Unlease are written here: the server and every app share 
 ### Fixed
 
 - Carnet no longer takes numbers ("96.8", "2.7"), file names ("photo.jpg") or names typed without a space ("M.Dupont") for web addresses: a Keep note listing them is imported as a note again, not offered as a collection of links. An address written without `https://` must now look like a site (`zara.com/fr`, `www.example.org`, `monsite.studio`).
+- In Agenda's small months (the navigation's calendar and the year view on the web, the year view on Android), the dot under a busy day no longer touches its number: on Android it no longer covers it.
 
 ## [0.1.1] - 2026-11-11
 

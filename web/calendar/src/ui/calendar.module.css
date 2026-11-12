@@ -708,7 +708,8 @@
   position: relative;
   aspect-ratio: 1;
   max-height: 32px;
-  padding: 0;
+  /* Every number (and its pebble) a little above the cell's middle, the same in every row: its dot keeps room below it. */
+  padding: 0 0 3px;
   border: 0;
   border-radius: 50%;
   outline-offset: 0;
@@ -725,16 +726,17 @@
   opacity: 0.6;
 }
 
-/* Its hover, the day shown and today lie on its pebble, a little inside the cell, so neighbours never touch. */
+/* Its hover, the day shown and today lie on its pebble, a little inside the cell, so neighbours never touch; lifted with the number, it stays round around it. */
 .miniDay::before {
-  inset: 3px;
+  inset: 2px 3px 4px;
 }
 
+/* The dot sits under the number, at the pebble's foot, clear of the digits. */
 .miniDay[data-busy]::after {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: 5px;
+  bottom: 1px;
   width: 4px;
   height: 4px;
   margin-left: -2px;

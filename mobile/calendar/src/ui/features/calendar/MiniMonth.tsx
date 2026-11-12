@@ -12,6 +12,11 @@ import { monthGrid } from '@unlease/calendar/services/time';
 import { AppText, Tappable } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { VARIANTS } from '@shared/ui/theme/typography';
+
+/** A busy day's dot: its side, and its room under the number's line (the digits' foot lies a little above the line's). */
+const DOT = 4;
+const DOT_GAP = 1;
 
 export interface MiniMonthProps {
   /** Any day of the month. */
@@ -35,7 +40,11 @@ function MiniMonthComponent({ month, weekStart, today, chosen = null, marked, on
   const inMonth = month.slice(0, 7);
   // Each day presses on its own pebble, a little inside its cell: a press never meets a neighbour's, nor the chosen day's.
   const inset = cell >= 30 ? 3 : 2;
-  const pebble = { width: cell - 2 * inset, height: cell - 2 * inset, margin: inset };
+  const side = cell - 2 * inset;
+  // The dot sits under the number, never on it: where the pebble is too small to hold both (the year's), the row grows under it.
+  const dotTop = (side + VARIANTS.label.lineHeight) / 2 + DOT_GAP;
+  const below = marked ? Math.max(0, Math.ceil(dotTop + DOT + 1 - side - inset)) : 0;
+  const pebble = { width: side, height: side, margin: inset, marginBottom: inset + below };
   return (
     <View style={styles.month}>
       {titled ? (
@@ -76,7 +85,7 @@ function MiniMonthComponent({ month, weekStart, today, chosen = null, marked, on
                 >
                   {Number(day.slice(8, 10))}
                 </AppText>
-                {marked?.has(day) && !isChosen ? <View style={[styles.dot, { bottom: 4 - inset, backgroundColor: theme.color.inkMuted }]} /> : null}
+                {marked?.has(day) && !isChosen ? <View style={[styles.dot, { top: dotTop, backgroundColor: theme.color.inkMuted }]} /> : null}
               </Tappable>
             );
           })}
@@ -94,6 +103,6 @@ const makeStyles = (_theme: Theme) =>
     title: { paddingHorizontal: 8, paddingVertical: 6, alignSelf: 'flex-start' },
     row: { flexDirection: 'row' },
     cell: { alignItems: 'center', justifyContent: 'center' },
-    // Where it lay in the cell, inside the day's pebble.
-    dot: { position: 'absolute', width: 4, height: 4, borderRadius: 2 },
+    // Centred under the number, inside the day's pebble or just under it.
+    dot: { position: 'absolute', width: DOT, height: DOT, borderRadius: DOT / 2 },
   });
