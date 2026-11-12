@@ -38,6 +38,8 @@ export function NavList({ route, onNavigate }: NavListProps) {
   const Foot = admin || off ? undefined : module.NavFoot;
   // Its rows fade and blur under the header (or the drawer's brand) and the foot, as the page's content does.
   const edges = useScrollEdges({ top: true });
+  // A page of Réglages the app's own row marks (Agenda's import): one row chosen, never two.
+  const settings = route.name === 'settings' && !(Foot && route.page !== null && module.navMarks?.includes(route.page));
   return (
     <nav className={styles.nav} aria-label={t('Navigation')}>
       <div key={admin ? 'admin' : 'app'} ref={edges} className={styles.navMain}>
@@ -45,7 +47,7 @@ export function NavList({ route, onNavigate }: NavListProps) {
       </div>
       <div className={styles.navFoot}>
         {Foot ? <Foot route={route} onNavigate={go} /> : null}
-        <NavRow to={paths.settings} label={t('Réglages')} leading={<NavGlyph name="settings" />} current={route.name === 'settings' && route.page === null} within={route.name === 'settings' && route.page !== null} onNavigate={go} />
+        <NavRow to={paths.settings} label={t('Réglages')} leading={<NavGlyph name="settings" />} current={settings && route.page === null} within={settings && route.page !== null} onNavigate={go} />
         <NavRow to={paths.admin} label={t('Administration')} leading={<NavGlyph name={ADMIN_GLYPH} />} current={admin && route.section === null} within={admin && route.section !== null} onNavigate={go} />
       </div>
     </nav>

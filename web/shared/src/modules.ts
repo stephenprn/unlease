@@ -15,7 +15,7 @@ import { APPS, type AppId } from '@unlease/core/apps';
 import type { StatusLine } from '@unlease/core/services/admin';
 import type { ErasePart } from '@unlease/core/services/erase';
 import type { Matcher, SearchDoc, SearchPart } from '@unlease/core/services/searchIndex';
-import type { SettingsPlace } from '@unlease/core/services/settingsSearch';
+import type { SettingsPage, SettingsPlace } from '@unlease/core/services/settingsSearch';
 import type { SpotMeta } from '@unlease/core/services/spotlight';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import type { LineColor } from '@unlease/design/colors';
@@ -229,6 +229,8 @@ export interface AppModule {
   readonly Nav: ComponentType<{ readonly route: Route; readonly onNavigate: () => void }>;
   /** The navigation's foot, above the shell's Réglages and Administration: its archive, its bin. */
   readonly NavFoot?: ComponentType<{ readonly route: Route; readonly onNavigate: () => void }>;
+  /** Réglages' pages its navigation marks itself (Agenda's « Importer un agenda »): there, Réglages' row is not marked too. */
+  readonly navMarks?: readonly SettingsPage[];
   /** The header's actions beside the search, wide (« Classer un lien », « Nouvelle page »). */
   readonly HeaderActions?: ComponentType<{ readonly route: Route }>;
   /** What the search strip holds on a phone-sized window, before the sync's dot (the board's layout). */

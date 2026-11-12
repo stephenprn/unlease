@@ -2,6 +2,11 @@
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_SHARED: Dictionary = {
+  // The import, from the navigation and « Autres agendas »
+  'Importer un agenda': 'Import a calendar',
+  'Importer un fichier .ics': 'Import an .ics file',
+  'Ses événements sont copiés dans votre agenda, une fois.': 'Its events are copied into your calendar, once.',
+  'Depuis un fichier': 'From a file',
   // Repeats
   'premier': 'first',
   'deuxième': 'second',

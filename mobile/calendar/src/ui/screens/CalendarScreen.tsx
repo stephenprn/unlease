@@ -201,6 +201,7 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
       showView('schedule');
     } else if (place === 'labels') navigation.navigate('Labels');
     else if (place === 'feeds') navigation.navigate('Feeds');
+    else if (place === 'import') navigation.navigate('Import');
     else if (place === 'ask') navigation.navigate('Ask');
     else if (place === 'trash') navigation.navigate('Trash');
     else if (place === 'settings') navigation.navigate('Settings');

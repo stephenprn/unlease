@@ -3,9 +3,10 @@
  * at a glance) as a place of its own over the calendar's views, a grid of six tiles; the labels (each narrows the calendar to its events); the calendars one subscribes to
  * and the holidays, each shown or hidden on every device, with what the other apps bring (birthdays,
  * Carnet's reminders, Pages' days, the weather) as toggles, two a row, shown or not on this phone (a
- * long press on either offers « Afficher uniquement celui-ci », and « Tout afficher »); Claude (while
- * the server offers the questions and has a key), the bin,
- * the settings (where the import is) and the Administration at the foot; the suite's other apps under
+ * long press on either offers « Afficher uniquement celui-ci », and « Tout afficher »); « Importer un
+ * agenda » (a file comes often to a calendar: an invitation, a ticket, a club's season), Claude (while
+ * the server offers the questions and has a key), the bin, the settings and the Administration at the
+ * foot; the suite's other apps under
  * them (`NavDrawer`). What the top bar already does (a day, the search) is not repeated here.
  */
 import React, { memo, useMemo, useState } from 'react';
@@ -37,7 +38,7 @@ import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
-export type DrawerPlace = `view:${CalendarView}` | `label:${string}` | 'labels' | 'feeds' | 'ask' | 'trash' | 'settings' | 'admin';
+export type DrawerPlace = `view:${CalendarView}` | `label:${string}` | 'labels' | 'feeds' | 'import' | 'ask' | 'trash' | 'settings' | 'admin';
 
 export interface DrawerProps {
   readonly open: boolean;
@@ -222,6 +223,7 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
           ))}
         </View>
         <DrawerDivider />
+        <DrawerItem label={t('Importer un agenda')} icon="download" onPress={() => onPlace('import')} />
         {ask ? <DrawerItem label={t('Demander à Claude')} icon="sparkle" onPress={() => onPlace('ask')} /> : null}
         <DrawerItem label={t('Corbeille')} icon="trash" onPress={() => onPlace('trash')} />
         <DrawerItem label={t('Réglages')} icon="settings" onPress={() => onPlace('settings')} />

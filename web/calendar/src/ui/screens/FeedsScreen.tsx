@@ -2,7 +2,8 @@
  * « Autres agendas »: the calendars subscribed to by their address (Google's « Adresse secrète au
  * format iCal », any iCalendar address), read by the server and kept read-only here, each shown or
  * hidden on every device, renamed, coloured, read again now or unsubscribed; the public holidays
- * (set in the Administration) among them.
+ * (set in the Administration) among them. A file rather than an address goes to the import, its
+ * events copied once (`paths.importer`).
  */
 import { useMemo, useState } from 'react';
 
@@ -24,7 +25,7 @@ import { FormMessage } from '@shared/ui/components/FormMessage';
 import { TextField } from '@shared/ui/components/TextField';
 import { useForm } from '@shared/ui/components/useForm';
 import { PageHead } from '@shared/ui/navigation/PageHead';
-import { adminPath, Link } from '@shared/ui/router';
+import { adminPath, Link, navigate, paths as shellPaths } from '@shared/ui/router';
 import { refreshFeed } from '../../app/api';
 import { addFeed, deleteFeed, renameFeed, setFeedColor, setFeedHidden } from '../../app/store/actions';
 import { useCalendarStore } from '../../app/store/library';
@@ -130,6 +131,13 @@ export function FeedsScreen() {
           </Button>
         </div>
       </form>
+      {/* The other way a calendar comes: a file, its events copied once, not followed. */}
+      <div className={styles.feedsImport}>
+        <p className="t-meta">{t('Un fichier .ics plutôt qu’une adresse ? Ses événements sont copiés dans votre agenda, une fois.')}</p>
+        <Button kind="tonal" icon="download" onClick={() => navigate(shellPaths.importer)}>
+          {t('Importer un fichier .ics')}
+        </Button>
+      </div>
       {live.length === 0 ? (
         <EmptyState scene="reminders" title={t('Aucun autre agenda')} text={t('Les agendas auxquels vous vous abonnez, et les jours fériés, apparaissent ici.')} />
       ) : (

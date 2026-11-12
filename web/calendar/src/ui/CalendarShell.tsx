@@ -1,8 +1,9 @@
 /**
  * Agenda's places as the shell draws them, and its frame: the navigation (Google Agenda's side:
  * the month in small, « Mes agendas » with one's own events and each label ticked or not,
- * « Autres agendas » with the subscriptions and the holidays, what the other apps add; the bin at its
- * foot: the import and the export are in Réglages, as on the phone), « Ajouter en quelques mots »
+ * « Autres agendas » with the subscriptions and the holidays, what the other apps add; « Importer un
+ * agenda » and the bin at its foot, as on the phone: a file comes often to a calendar, an invitation, a
+ * ticket, a club's season; the export stays in Réglages), « Ajouter en quelques mots »
  * beside the search, the tab's title of each place.
  */
 import { useEffect, useMemo, useRef, useState, type AnimationEvent } from 'react';
@@ -339,7 +340,13 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
 }
 
 export function CalendarNavFoot({ route, onNavigate }: { route: Route; onNavigate: () => void }) {
-  return <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={route.name === 'agendaTrash'} onNavigate={onNavigate} />;
+  return (
+    <>
+      {/* Réglages' import page: this row is the chosen place there, Réglages the one it lies within. */}
+      <NavRow to={shellPaths.importer} label={t('Importer un agenda')} leading={<NavGlyph name="download" />} current={route.name === 'settings' && route.page === 'import'} onNavigate={onNavigate} />
+      <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={route.name === 'agendaTrash'} onNavigate={onNavigate} />
+    </>
+  );
 }
 
 /** What a few words open: the form, filled with what was read (`readQuickAdd`), or Claude's reading of them. */

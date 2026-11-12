@@ -5,7 +5,7 @@
  * server reads each address, every few hours; its events are read-only here (« Dupliquer » makes one's
  * own). An address that cannot be read, or one already followed, is said under its field. A calendar
  * linked from a website (`webcal://`) opens here with its address in the field: subscribed only once
- * « S'abonner » is pressed.
+ * « S'abonner » is pressed. A file rather than an address goes to the import, its events copied once.
  */
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
@@ -107,6 +107,10 @@ export function FeedsScreen({ navigation, route }: ScreenProps<'Feeds'>) {
                 <Button label={t('S’abonner')} icon="plus" disabled={!url.trim()} onPress={() => later(form.submit(add))} />
               </View>
             </View>
+          </Section>
+          {/* The other way a calendar comes: a file, its events copied once, not followed. */}
+          <Section title={t('Depuis un fichier')}>
+            <ListRow icon="download" title={t('Importer un fichier .ics')} supporting={t('Ses événements sont copiés dans votre agenda, une fois.')} onPress={() => navigation.navigate('Import')} />
           </Section>
           {order.length > 0 ? (
             <Section title={t('Vos agendas')}>

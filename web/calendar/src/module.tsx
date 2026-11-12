@@ -84,6 +84,8 @@ export const calendarModule: AppModule = {
 
   Nav: CalendarNav,
   NavFoot: CalendarNavFoot,
+  // Its foot's « Importer un agenda » is the chosen row on Réglages' import page.
+  navMarks: ['import'],
   HeaderActions: CalendarHeaderActions,
   BottomBar: CalendarBottomBar,
   searchHome: HOME,

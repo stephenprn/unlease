@@ -1711,6 +1711,24 @@ li.person {
   gap: 8px;
 }
 
+/* « Autres agendas »: a file rather than an address, under the form and apart from it by a hairline; its words, then its button at the end (under them on a narrow window). */
+.feedsImport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+  padding: 16px 4px 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.feedsImport p {
+  flex: 1 1 280px;
+  margin: 0;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
 /* « ⌘ + Entrée », under a pointer on a wide window: on a narrow one it would push the buttons onto lines of their own. */
 .formHint {
   align-self: center;
