@@ -3,12 +3,13 @@
  * `/notes/facts/<collection>` and `/notes/facts/kind-recipe`): a full-screen form, as Material's: × to
  * leave (asking first when something changed, `useUnsaved`), « Enregistrer » at the bar's end.
  *
- * A collection's asks one thing first: « Les informations habituelles » (each link gets those of its
- * kind; the kinds its links have are listed, each opening its usual facts) or « Les informations de
- * cette collection » (one list for every link here, starting from a starter's own facts, else the
+ * A collection's asks one thing first: « Informations adaptatives » (each link gets those of its
+ * kind; the kinds its links have are listed, each opening its usual facts) or « Informations
+ * personnalisées » (one list for every link here, starting from a starter's own facts, else the
  * usual facts of its most frequent kind). A kind's is that list alone, with « Rétablir celles de Claude » under it while it
  * is changed. The facts are rows (each opens its sheet: name, what Claude notes in it, the answer's
- * shape; moved or removed there), « Ajouter une information » and suggestions one tap away, then a
+ * shape; moved or removed there; a trash at the row's end removes it in one press, the slip putting it
+ * back), « Ajouter une information » and suggestions one tap away, then a
  * preview on one link. Saved, links read before the change can all be read again from the well at
  * the top. Opened with an old template's id, it shows the first collection noting with it.
  */
@@ -50,7 +51,7 @@ import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
 import { useServerFeatureState } from '@shared/app/hooks/useServerFeature';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmblemStone, EmptyLine, EmptyState, FormMessage, Ground, Icon, RevealScrollView, Tappable, TopBar, useForm, useUnsaved } from '../components';
+import { AppText, Button, EmblemStone, EmptyLine, EmptyState, FormMessage, Ground, Icon, IconButton, RevealScrollView, Tappable, TopBar, useForm, useUnsaved } from '../components';
 import { Section } from '@shared/ui/features/settings/Section';
 import { ReadAllBanner } from '../features/lines/LineRefine';
 import { KIND_ICONS } from '../features/links/kindIcon';
@@ -207,6 +208,14 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     // No « Annuler »: the server starts reading at once (a collection's « Tout lire »).
     if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
   };
+  // A fact taken off in one press, from its row: nothing is saved yet, and the slip puts it back where it was.
+  const remove = (field: TemplateField): void => {
+    const index = fields.findIndex(each => each.id === field.id);
+    if (index < 0) return;
+    setFields(before => before.filter(each => each.id !== field.id));
+    const put = (): void => setFields(before => (before.some(each => each.id === field.id) ? before : [...before.slice(0, index), field, ...before.slice(index)]));
+    showSnack(t('« {name} » supprimée', { name: field.name || t('Information sans nom') }), { label: tc('undo', 'Annuler'), run: put }, { tone: 'success' });
+  };
   const add = (field: TemplateField): void => setFields(before => [...before, { ...field, id: before.some(each => each.id === field.id) ? newFieldId(before) : field.id }]);
 
   const changed = kind ? changedKindTemplate(templates, kind) !== null : false;
@@ -261,8 +270,8 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
                 </AppText>
               </View>
               <View accessibilityRole="radiogroup" accessibilityLabel={t('Ce que Claude relève')} style={styles.choices}>
-                <SourceChoice chosen={!own} mark={<Icon name="sparkle" size={24} color={!own ? theme.color.onActionContainer : theme.color.ink} />} title={t('Les informations habituelles')} meta={t('Chaque lien a celles de son type : la marque d’un produit, le réalisateur d’un film…')} onPress={() => choose(false)} />
-                <SourceChoice chosen={own} mark={<EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={16} width={28} height={25} />} title={t('Les informations de cette collection')} meta={t('Les mêmes sur chaque lien, celles que vous choisissez.')} onPress={() => choose(true)} />
+                <SourceChoice chosen={!own} mark={<Icon name="sparkle" size={24} color={!own ? theme.color.onActionContainer : theme.color.ink} />} title={t('Informations adaptatives')} meta={t('Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…')} onPress={() => choose(false)} />
+                <SourceChoice chosen={own} mark={<EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={16} width={28} height={25} />} title={t('Informations personnalisées')} meta={t('Celles que vous choisissez, les mêmes sur chaque lien d’ici.')} onPress={() => choose(true)} />
               </View>
             </>
           )}
@@ -280,6 +289,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
                   metaLine
                   error={problems.fields[field.id] ?? null}
                   onPress={() => setSheet({ open: true, fieldId: field.id })}
+                  trailing={<IconButton icon="trash" label={t('Supprimer « {name} »', { name: field.name || t('Information sans nom') })} color={theme.color.inkMuted} size={20} onPress={() => remove(field)} style={styles.rowTrash} />}
                 />
               ))}
               {full ? (
@@ -385,6 +395,8 @@ const makeStyles = (theme: Theme) =>
     },
     choiceMark: { width: 28, alignItems: 'center' },
     choiceChosen: { backgroundColor: theme.color.actionContainer, borderColor: theme.color.focus, borderWidth: 1.5 },
+    // The row's trash, its pebble inside the row's 56 (a 48 target, 4 over the row's padding each way) and on its end.
+    rowTrash: { marginVertical: -4, marginRight: -6 },
     // A line in the panel, on the rows' glyphs.
     line: { paddingHorizontal: 16, paddingVertical: 12 },
     // The suggestions, on the rows' glyphs, under « Ajouter une information ».

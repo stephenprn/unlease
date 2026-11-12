@@ -2,9 +2,9 @@
  * « Ce que Claude relève » for one collection, or the usual facts of one kind of link
  * (`/notes/facts/<collection>`, `/notes/facts/kind-recipe`).
  *
- * A collection's page asks one thing first: « Les informations habituelles » (each link gets those of
+ * A collection's page asks one thing first: « Informations adaptatives » (each link gets those of
  * its kind; « Types de liens ici » lists the kinds its links have, each opening its usual facts) or
- * « Les informations de cette collection » (one list for every link here, edited right there, starting from a starter's
+ * « Informations personnalisées » (one list for every link here, edited right there, starting from a starter's
  * own facts, else the usual facts of its most frequent kind). A kind's page is that list alone, with « Rétablir celles de
  * Claude » while it is changed. Either way the facts read as they will on a link (`FactRows`), a
  * preview on one link sits beside them on a wide window (under them otherwise), and « Enregistrer »
@@ -313,8 +313,8 @@ function SourceChoice({ own, onChoose, stone }: { own: boolean; onChoose: (own: 
         next?.focus();
       }}
     >
-      {choice(false, <Icon name="sparkle" size={24} />, t('Les informations habituelles'), t('Chaque lien a celles de son type : la marque d’un produit, le réalisateur d’un film…'))}
-      {choice(true, stone, t('Les informations de cette collection'), t('Les mêmes sur chaque lien, celles que vous choisissez.'))}
+      {choice(false, <Icon name="sparkle" size={24} />, t('Informations adaptatives'), t('Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…'))}
+      {choice(true, stone, t('Informations personnalisées'), t('Celles que vous choisissez, les mêmes sur chaque lien d’ici.'))}
     </div>
   );
 }

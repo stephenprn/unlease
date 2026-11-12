@@ -18,7 +18,7 @@ export interface SuggestedCollection {
   readonly emblem: Emblem;
   readonly color: LineColor;
   /**
-   * What Claude notes on its links (« Les informations de cette collection »), chosen as it is made:
+   * What Claude notes on its links (« Informations personnalisées »), chosen as it is made:
    * a kind's fields where they mean the same (their ids and words, so facts already read keep
    * matching), and what this collection needs besides. `TEMPLATE_LIMITS.fields` at most.
    */

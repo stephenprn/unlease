@@ -1,8 +1,8 @@
 /**
  * The facts Claude notes, as an editor shows them: each a line that reads as it will on a link (its
  * name, what Claude notes in it, the shape of the answer when it is not « quelques mots »), which opens
- * in place to be changed (its name, what Claude notes in it, « Réponse », « Supprimer l'information »),
- * one at a time. A grip drags a fact elsewhere (or Alt+↑/↓ anywhere on it). Under them « Ajouter une
+ * in place to be changed (its name, what Claude notes in it, « Réponse »), one at a time; its trash, at
+ * the row's end, takes it off in one press (the slip puts it back). A grip drags a fact elsewhere (or Alt+↑/↓ anywhere on it). Under them « Ajouter une
  * information » and « Suggestions », the usual facts the list has not (those of its links' kinds
  * first), each added in one press; at eight both go and a line says so. A fact with a problem stays open, so the form can show
  * it and take the focus there. The rows move as the checklist's do (`useListMotion`).
@@ -15,9 +15,10 @@ import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templ
 import { shownFieldAnswer, suggestedFields } from '@unlease/notes/services/templates';
 
 import { addField, moveField } from '../../../app/templates';
-import { Button } from '@shared/ui/components/Button';
+import { showUndo } from '@shared/app/store/ui';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
+import { IconButton } from '@shared/ui/components/IconButton';
 import { SelectField } from '@shared/ui/components/SelectField';
 import { TextField } from '@shared/ui/components/TextField';
 import type { FieldBinding } from '@shared/ui/components/useForm';
@@ -104,9 +105,20 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
     [fields, onChange],
   );
 
-  const remove = (id: string): void => {
-    onChange(fields.filter(field => field.id !== id));
-    setOpenId(null);
+  // A fact taken off in one press, from its row's trash: nothing is saved yet, and the slip puts it back where it was.
+  const latest = useRef(fields);
+  useLayoutEffect(() => {
+    latest.current = fields;
+  });
+  const remove = (field: TemplateField): void => {
+    const index = fields.findIndex(each => each.id === field.id);
+    if (index < 0) return;
+    onChange(fields.filter(each => each.id !== field.id));
+    if (openId === field.id) setOpenId(null);
+    showUndo(t('« {name} » supprimée', { name: field.name.trim() || t('Information sans nom') }), () => {
+      const now = latest.current;
+      if (!now.some(each => each.id === field.id)) onChange([...now.slice(0, index), field, ...now.slice(index)]);
+    });
   };
 
   const add = (suggestion?: TemplateField): void => {
@@ -223,20 +235,23 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                   <Icon name="grip" size={18} />
                 </button>
                 <div className={styles.factBox}>
-                  <button
-                    type="button"
-                    className={styles.factHead}
-                    aria-expanded={open}
-                    aria-controls={open ? bodyId : undefined}
-                    onClick={() => setOpenId(open && problems[field.id] === undefined ? null : field.id)}
-                  >
-                    <Icon name={FIELD_TYPE_GLYPHS[field.type]} size={20} className={styles.factGlyph} />
-                    <span className={styles.factText}>
-                      <span className={`${styles.factName} t-body-strong`}>{label}</span>
-                      {summary && !open ? <span className={`${styles.factMeta} t-meta`}>{summary}</span> : null}
-                    </span>
-                    <Icon name="chevronDown" size={20} className={styles.factChevron} />
-                  </button>
+                  <div className={styles.factTop}>
+                    <button
+                      type="button"
+                      className={styles.factHead}
+                      aria-expanded={open}
+                      aria-controls={open ? bodyId : undefined}
+                      onClick={() => setOpenId(open && problems[field.id] === undefined ? null : field.id)}
+                    >
+                      <Icon name={FIELD_TYPE_GLYPHS[field.type]} size={20} className={styles.factGlyph} />
+                      <span className={styles.factText}>
+                        <span className={`${styles.factName} t-body-strong`}>{label}</span>
+                        {summary && !open ? <span className={`${styles.factMeta} t-meta`}>{summary}</span> : null}
+                      </span>
+                      <Icon name="chevronDown" size={20} className={styles.factChevron} />
+                    </button>
+                    <IconButton icon="trash" size={20} label={t('Supprimer « {name} »', { name: label })} className={styles.factTrash} onClick={() => remove(field)} />
+                  </div>
                   {open ? (
                     <div id={bodyId} className={styles.factBody}>
                       <TextField
@@ -266,19 +281,14 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                           event.currentTarget.form?.requestSubmit();
                         }}
                       />
-                      <div className={styles.factFoot}>
-                        <SelectField
-                          className={styles.factAnswer}
-                          label={t('Réponse')}
-                          value={field.type}
-                          options={options}
-                          icon={FIELD_TYPE_GLYPHS[field.type]}
-                          onChange={type => set(field.id, { type })}
-                        />
-                        <Button kind="dangerText" small icon="trash" onClick={() => remove(field.id)}>
-                          {t('Supprimer l’information')}
-                        </Button>
-                      </div>
+                      <SelectField
+                        className={styles.factAnswer}
+                        label={t('Réponse')}
+                        value={field.type}
+                        options={options}
+                        icon={FIELD_TYPE_GLYPHS[field.type]}
+                        onChange={type => set(field.id, { type })}
+                      />
                     </div>
                   ) : null}
                 </div>

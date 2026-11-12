@@ -316,7 +316,22 @@
   background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
+/* Its line, then its trash at the end, outside the line's press. */
+.factTop {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.factTrash {
+  flex: none;
+  color: var(--ink-muted);
+}
+
 .factHead {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -385,22 +400,11 @@
   padding: 4px 12px 14px 38px;
 }
 
-/* « Réponse » and « Supprimer l'information » on one line, the latter at its end. */
-.factFoot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px 16px;
-}
-
+/* « Réponse », as wide as its longest answer needs. */
 .factAnswer {
-  flex: 0 1 240px;
-  min-width: 200px;
-}
-
-.factFoot > button {
-  margin-right: -8px;
+  align-self: flex-start;
+  width: 240px;
+  max-width: 100%;
 }
 
 /* What Claude notes in it: a field's height until it wraps, then as tall as its words (200 at most). */

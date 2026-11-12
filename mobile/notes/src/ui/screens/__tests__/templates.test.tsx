@@ -218,7 +218,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
     await pressMenu(tree, 'Ce que Claude relève');
     expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Template', params: { collection: ids.vins } });
     expect(textOf(tree)).toContain('Sur les liens de Vins');
-    expect(pressable(tree, 'Les informations habituelles, Chaque lien a celles de son type : la marque d’un produit, le réalisateur d’un film…').props.accessibilityState).toMatchObject({ checked: true });
+    expect(pressable(tree, 'Informations adaptatives, Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…').props.accessibilityState).toMatchObject({ checked: true });
     // Its links are products: the product's usual facts.
     expect(textOf(tree)).toContain('Marque, Couleur, Taille(s), Matière, Modèle, Disponibilité');
 
@@ -254,7 +254,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
   it('takes its own facts from its links’ usual ones, a fact shaped in its sheet, saved whole and undone from the slip', async () => {
     const tree = await boot();
     await go('Template', { collection: ids.vins! });
-    await press(tree, 'Les informations de cette collection, Les mêmes sur chaque lien, celles que vous choisissez.');
+    await press(tree, 'Informations personnalisées, Celles que vous choisissez, les mêmes sur chaque lien d’ici.');
     expect(textOf(tree)).toContain('Disponibilité');
     await press(tree, 'Ajouter une information');
     // A fact needs its name.
@@ -265,11 +265,18 @@ describe('a collection’s « Ce que Claude relève »', () => {
     await press(tree, 'un nombre');
     await press(tree, 'Ajouter');
     expect(textOf(tree)).toContain('L’année de la récolte · un nombre');
+    // A fact taken off from its row's trash, and put back by the slip where it was; another taken off for good.
+    await press(tree, 'Supprimer « Couleur »');
+    expect(() => pressable(tree, 'Supprimer « Couleur »')).toThrow();
+    const removed = useUiStore.getState().snack!;
+    expect(removed).toMatchObject({ message: '« Couleur » supprimée', action: { label: 'Annuler' } });
+    await act(async () => removed.action!.run());
+    await press(tree, 'Supprimer « Matière »');
 
     await press(tree, 'Enregistrer');
     const template = own(ids.vins!)!;
     expect(template).toMatchObject({ name: 'Vins', kind: null, deletedAt: null });
-    expect(template.fields.map(field => field.name)).toEqual(['Marque', 'Couleur', 'Taille(s)', 'Matière', 'Modèle', 'Disponibilité', 'Millésime']);
+    expect(template.fields.map(field => field.name)).toEqual(['Marque', 'Couleur', 'Taille(s)', 'Modèle', 'Disponibilité', 'Millésime']);
     const snack = useUiStore.getState().snack!;
     expect(snack).toMatchObject({ message: 'Informations enregistrées', action: { label: 'Annuler' } });
     await act(async () => snack.action!.run());
@@ -283,7 +290,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
     const template = own(ids.vins!)!.id;
     await go('Template', { collection: ids.vins! });
     expect(textOf(tree)).toContain('Domaine');
-    await press(tree, 'Les informations habituelles, Chaque lien a celles de son type : la marque d’un produit, le réalisateur d’un film…');
+    await press(tree, 'Informations adaptatives, Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…');
     await press(tree, 'Enregistrer');
     expect(own(ids.vins!)).toBeNull();
     expect(useLibraryStore.getState().linkTemplates[template]!.deletedAt).not.toBeNull();

@@ -70,7 +70,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Ce que Claude relève' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sur les liens de Vins/ })).toBeInTheDocument();
     const choices = screen.getByRole('radiogroup', { name: 'Ce que Claude relève' });
-    expect(within(choices).getByRole('radio', { name: /^Les informations habituelles/ })).toHaveAttribute('aria-checked', 'true');
+    expect(within(choices).getByRole('radio', { name: /^Informations adaptatives/ })).toHaveAttribute('aria-checked', 'true');
     // Its links are products: the product's usual facts, opening them.
     const usual = screen.getByRole('region', { name: 'Types de liens ici' });
     const product = within(usual).getByRole('button', { name: /^Article/ });
@@ -82,7 +82,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
 
   it('takes its own facts, starting from its links’ usual ones, changed in place and saved whole, undoably', async () => {
     render(<FactsEditScreen part={wines} />);
-    await userEvent.click(screen.getByRole('radio', { name: /^Les informations de cette collection/ }));
+    await userEvent.click(screen.getByRole('radio', { name: /^Informations personnalisées/ }));
     // Its links' kind's usual facts, to change rather than write from nothing.
     expect(factNames()).toEqual(['Marque', 'Couleur', 'Taille(s)', 'Matière', 'Modèle', 'Disponibilité']);
     // A fact reads as one line, and opens in place.
@@ -96,11 +96,15 @@ describe('a collection’s « Ce que Claude relève »', () => {
     await userEvent.type(name, 'Domaine');
     await userEvent.click(screen.getByRole('button', { name: 'Réponse' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'plusieurs valeurs' }));
-    // Removing the others, then one added from nothing, and a suggestion in one press.
+    // Removing the others from their rows' trash (one put back by the slip), then one added from nothing, and a suggestion in one press.
     for (const other of ['Couleur', 'Taille(s)', 'Matière', 'Modèle', 'Disponibilité']) {
-      await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${other.replace(/[()]/g, '\\$&')}`) }));
-      await userEvent.click(screen.getByRole('button', { name: 'Supprimer l’information' }));
+      await userEvent.click(screen.getByRole('button', { name: `Supprimer « ${other} »` }));
     }
+    expect(factNames()).toEqual(['Domaine']);
+    expect(useUiStore.getState().snack).toMatchObject({ message: '« Disponibilité » supprimée', action: { label: 'Annuler' } });
+    act(() => useUiStore.getState().snack!.action!.run());
+    expect(factNames()).toEqual(['Domaine', 'Disponibilité']);
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer « Disponibilité »' }));
     expect(factNames()).toEqual(['Domaine']);
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter une information' }));
     expect(screen.getByLabelText('Nom de l’information')).toHaveFocus();
@@ -151,7 +155,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
     saveCollectionFacts(wines, WINE);
     const template = own(wines)!.id;
     render(<FactsEditScreen part={wines} />);
-    await userEvent.click(screen.getByRole('radio', { name: /^Les informations habituelles/ }));
+    await userEvent.click(screen.getByRole('radio', { name: /^Informations adaptatives/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
     expect(own(wines)).toBeNull();
     expect(state().linkTemplates[template]!.deletedAt).not.toBeNull();
@@ -180,7 +184,7 @@ describe('a collection’s « Ce que Claude relève »', () => {
 
   it('asks before leaving with changes', async () => {
     render(<FactsEditScreen part={wines} />);
-    await userEvent.click(screen.getByRole('radio', { name: /^Les informations de cette collection/ }));
+    await userEvent.click(screen.getByRole('radio', { name: /^Informations personnalisées/ }));
     act(() => navigate('/notes'));
     expect(await screen.findByRole('alertdialog', { name: 'Abandonner les modifications ?' })).toBeInTheDocument();
     expect(location.pathname).toBe(`/notes/facts/${wines}`);
