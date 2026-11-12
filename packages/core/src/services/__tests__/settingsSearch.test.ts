@@ -87,9 +87,9 @@ describe('the settings a search finds', () => {
     // Carnet's reminders are a row of the web's Réglages: the phone rings them, and says nothing there.
     expect(first('rappels', 'notes', 'web')).toBe('notes-reminders');
     expect(found('rappels', 'notes', 'phone')).not.toContain('notes-reminders');
-    // The Keep import: its own section on the web, a row of « Données » on the phone.
+    // The Keep import: its wizard, its own page on the web and its own screen on the phone.
     expect(findSettings(placesFor('notes', 'web', NOTES_SETTINGS_PLACES), 'keep')[0]).toMatchObject({ section: 'import', within: null });
-    expect(findSettings(placesFor('notes', 'phone', NOTES_SETTINGS_PLACES), 'keep')[0]).toMatchObject({ section: 'data', within: 'Données' });
+    expect(findSettings(placesFor('notes', 'phone', NOTES_SETTINGS_PLACES), 'keep')[0]).toMatchObject({ section: 'import', within: null });
     expect(first('raccourcis', 'notes', 'web')).toBe('shortcuts');
     expect(found('raccourcis', 'notes', 'phone')).toEqual([]);
     expect(first('anniversaires', 'contacts', 'phone')).toBe('contacts-birthdays');
