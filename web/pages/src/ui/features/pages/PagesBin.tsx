@@ -19,7 +19,9 @@ import { Button } from '@shared/ui/components/Button';
 import { Confirm } from '@shared/ui/components/Dialog';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
+import { navigate } from '@shared/ui/router';
 import { useListMotion } from '@shared/ui/useListMotion';
+import { paths } from '../../routes';
 import styles from './pages.module.css';
 
 const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: number; onDelete: (id: string) => void }) {
@@ -39,7 +41,7 @@ const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: nu
         icon="restore"
         onClick={() => {
           const undo = restorePage(id);
-          showUndo(t('Page restaurée'), undo);
+          showUndo(t('Page restaurée'), undo, { label: t('Voir la page'), run: () => navigate(paths.page(id)) });
         }}
       >
         {t('Restaurer')}

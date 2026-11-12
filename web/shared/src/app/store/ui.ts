@@ -16,6 +16,8 @@ export interface Snack {
   readonly message: string;
   readonly tone: SnackTone;
   readonly action?: { readonly label: string; readonly run: () => void };
+  /** A second way on, before the action: where the thing put back now is (« Voir la page » beside « Annuler »). */
+  readonly also?: { readonly label: string; readonly run: () => void };
   /** Claude at work: the slip stays until its answer replaces it. */
   readonly sticky?: boolean;
 }
@@ -46,9 +48,15 @@ export const useUiStore = create<UiState>(() => INITIAL);
 
 let snackId = 0;
 
-export function showSnack(message: string, action?: Snack['action'], options: { readonly sticky?: boolean; readonly tone?: SnackTone } = {}): number {
+export function showSnack(
+  message: string,
+  action?: Snack['action'],
+  options: { readonly sticky?: boolean; readonly tone?: SnackTone; readonly also?: Snack['also'] } = {},
+): number {
   snackId += 1;
-  useUiStore.setState({ snack: { id: snackId, message, tone: options.tone ?? 'info', ...(action ? { action } : {}), ...(options.sticky ? { sticky: true } : {}) } });
+  useUiStore.setState({
+    snack: { id: snackId, message, tone: options.tone ?? 'info', ...(action ? { action } : {}), ...(options.also ? { also: options.also } : {}), ...(options.sticky ? { sticky: true } : {}) },
+  });
   return snackId;
 }
 
@@ -62,9 +70,9 @@ export function showWarning(message: string, action?: Snack['action']): number {
   return showSnack(message, action, { tone: 'warning' });
 }
 
-/** A change made, and the way back. */
-export function showUndo(message: string, undo: () => void): void {
-  showSnack(message, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+/** A change made, and the way back; `also`, where to go and see it (a page restored: « Voir la page »). */
+export function showUndo(message: string, undo: () => void, also?: Snack['also']): void {
+  showSnack(message, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success', ...(also ? { also } : {}) });
 }
 
 export function dismissSnack(id: number): void {

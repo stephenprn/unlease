@@ -19,7 +19,7 @@ import { EmptyState } from '@shared/ui/components/EmptyState';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { PageHead } from '@shared/ui/navigation/PageHead';
-import { Link } from '@shared/ui/router';
+import { Link, navigate } from '@shared/ui/router';
 import { useListMotion } from '@shared/ui/useListMotion';
 import styles from '../contacts.module.css';
 import { Avatar } from '../features/Avatar';
@@ -39,7 +39,7 @@ const BinRow = memo(function BinRow({ contact, now, onDelete }: { contact: Conta
         </span>
       </Link>
       <span className={styles.rowEnd}>
-        <IconButton icon="restore" label={t('Restaurer {name}', { name })} shape={1} onClick={() => showUndo(t('Contact restauré'), restoreContacts([contact.id]))} />
+        <IconButton icon="restore" label={t('Restaurer {name}', { name })} shape={1} onClick={() => showUndo(t('Contact restauré'), restoreContacts([contact.id]), { label: t('Voir le contact'), run: () => navigate(paths.contact(contact.id)) })} />
         <IconButton icon="trash" label={t('Supprimer définitivement {name}', { name })} shape={2} onClick={() => onDelete(contact.id)} />
       </span>
     </li>

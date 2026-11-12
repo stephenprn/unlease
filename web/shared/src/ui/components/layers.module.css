@@ -655,6 +655,11 @@
 .snack[data-action] .snackMessage {
   margin-right: 4px;
 }
+
+/* Two chips: a little apart, as the chip stands from the slip's edge. */
+.snackAction + .snackAction {
+  margin-left: -6px;
+}
 /* habits-garden's toast action: its own chip on the slip, edged in cream. */
 .snackAction {
   flex: none;

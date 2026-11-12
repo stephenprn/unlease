@@ -34,6 +34,7 @@ export const EN_WEB: Dictionary = {
   'Tout sélectionner': 'Select all',
   'Contacts restaurés': 'Contacts restored',
   'Contact restauré': 'Contact restored',
+  'Voir le contact': 'See the contact',
   'Supprimer définitivement': 'Delete forever',
   'Retirés des favoris': 'Removed from favourites',
   'Ajoutés aux favoris': 'Added to favourites',

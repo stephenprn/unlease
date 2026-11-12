@@ -120,6 +120,7 @@ export const EN_WEB: Dictionary = {
   'Un libellé range vos événements et leur donne sa couleur ; décochez-le dans la navigation pour cacher ses événements.': 'A label sorts your events and gives them its colour; untick it in the navigation to hide its events.',
   'Une date écrite dans une page de {app}': 'A date written in a page of {app}',
   'Voir le {day}': 'See {day}',
+  'Voir l’événement': 'See the event',
   'Vos événements, à l’adresse ci-dessous.': 'Your events, at the address below.',
   'Votre agenda (sans les agendas abonnés) à une adresse secrète au format iCalendar, en lecture seule : collez-la dans Google Agenda (Autres agendas, « À partir de l’URL »), Apple Calendrier ou Thunderbird pour y voir vos événements. Qui a l’adresse voit vos événements : « Nouvelle adresse » invalide l’ancienne.': 'Your calendar (without the calendars you subscribe to) at a secret iCalendar address, read-only: paste it into Google Calendar (Other calendars, “From URL”), Apple Calendar or Thunderbird to see your events there. Anyone with the address sees your events: “New address” disables the old one.',
   'Votre ville': 'Your city',

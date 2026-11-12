@@ -18,10 +18,12 @@ import { EmptyState } from '@shared/ui/components/EmptyState';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { PageHead } from '@shared/ui/navigation/PageHead';
+import { navigate } from '@shared/ui/router';
 import { useListMotion } from '@shared/ui/useListMotion';
 import { binnedEvents, deleteEventForGood, emptyBin, restore } from '../../app/store/actions';
 import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
+import { paths } from '../routes';
 
 export function TrashScreen() {
   const events = useCalendarStore(s => s.events);
@@ -54,7 +56,7 @@ export function TrashScreen() {
                       </span>
                     </span>
                     <span className={styles.rowTools}>
-                      <Button kind="tonal" icon="restore" small onClick={() => showUndo(t('Événement restauré'), restore(event))}>
+                      <Button kind="tonal" icon="restore" small onClick={() => showUndo(t('Événement restauré'), restore(event), { label: t('Voir l’événement'), run: () => navigate(paths.event(event.id)) })}>
                         {t('Restaurer')}
                       </Button>
                       <IconButton icon="trash" label={t('Supprimer définitivement {name}', { name: title })} compact onClick={() => setDeleting(event)} />

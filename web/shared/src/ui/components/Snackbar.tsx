@@ -1,6 +1,7 @@
 /**
  * The snackbar, on the slip: one line of what happened and, for
- * anything destructive, "Annuler". It leaves after four seconds (ten with an
+ * anything destructive, "Annuler" (after a second way on when there is one:
+ * « Voir la page » for a page put back). It leaves after four seconds (ten with an
  * action, so it can be read and reached; a sticky one, Claude at work, waits
  * up to two minutes for its answer), and waits while the pointer or the
  * keyboard is on it. Swiped sideways, as Android's snackbars are, it is thrown
@@ -125,7 +126,7 @@ function Slip({ shown, leaving, onHeld }: { shown: Snack; leaving: boolean; onHe
       className={styles.snack}
       data-surface="slip"
       data-tone={shown.tone}
-      data-action={shown.action ? '' : undefined}
+      data-action={shown.action || shown.also ? '' : undefined}
       data-state={leaving ? 'closed' : 'open'}
       inert={leaving}
       aria-hidden={leaving || undefined}
@@ -140,18 +141,21 @@ function Slip({ shown, leaving, onHeld }: { shown: Snack; leaving: boolean; onHe
     >
       <Icon name={TONE_GLYPHS[shown.tone]} size={20} className={styles.snackGlyph} />
       <p className={`${styles.snackMessage} t-body`}>{shown.message}</p>
-      {shown.action ? (
-        <button
-          type="button"
-          className={`${styles.snackAction} t-label`}
-          onClick={() => {
-            shown.action?.run();
-            dismissSnack(shown.id);
-          }}
-        >
-          {shown.action.label}
-        </button>
-      ) : null}
+      {[shown.also, shown.action].map((action, index) =>
+        action ? (
+          <button
+            key={index}
+            type="button"
+            className={`${styles.snackAction} t-label`}
+            onClick={() => {
+              action.run();
+              dismissSnack(shown.id);
+            }}
+          >
+            {action.label}
+          </button>
+        ) : null,
+      )}
     </div>
   );
 }
