@@ -63,6 +63,7 @@ import { Collage } from '../components/Collage';
 import { StepTrail } from '../components/StepTrail';
 import { settleIn } from '../components/EmptyLine';
 import { ColorsSection, GroundSection } from '../features/appearance/AppearanceSections';
+import { CheckMark } from '../components/Checkbox';
 import { Icon } from '../components/Icon';
 import { OutlinedBox, OutlineLift, useOutline } from '../components/Outline';
 import { FormMessage } from '../components/FormMessage';
@@ -394,7 +395,7 @@ function AppsStep({ server, settings }: { server: ServerConfig; settings: Server
                 <span className="t-body">{choice.description}</span>
                 {last && !choice.locked ? <span className="t-meta">{t('Le serveur fait toujours tourner au moins une application.')}</span> : null}
               </span>
-              {choice.soon ? null : <Icon name={choice.checked ? 'boxChecked' : 'box'} size={26} />}
+              {choice.soon ? null : <CheckMark checked={choice.checked} />}
             </button>
           </li>
         );

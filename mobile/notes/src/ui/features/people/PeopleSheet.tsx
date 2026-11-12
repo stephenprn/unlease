@@ -13,7 +13,7 @@ import { contactName, workLine } from '@unlease/contacts/services/names';
 import { PEOPLE_MAX } from '@unlease/notes/sync/types';
 import { useNotePeople, usePeopleFound } from '@app/hooks/useNotePeople';
 
-import { EmptyLine, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '../../components';
+import { CheckMark, EmptyLine, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '../../components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { PersonFace } from './PersonFace';
 
@@ -21,14 +21,13 @@ import { PersonFace } from './PersonFace';
 const SHOWN = 60;
 
 function Row({ contact, on, onToggle }: { contact: Contact; on: boolean; onToggle: () => void }) {
-  const theme = useTheme();
   const detail = workLine(contact) || contact.phones[0]?.number || contact.emails[0]?.address || undefined;
   return (
     <ListRow
       title={contactName(contact)}
       supporting={detail}
       leading={<PersonFace contact={contact} size={40} />}
-      trailing={<Icon name={on ? 'boxChecked' : 'box'} size={24} color={on ? theme.color.inkMuted : theme.color.ink} />}
+      trailing={<CheckMark checked={on} />}
       onPress={onToggle}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: on }}

@@ -637,15 +637,10 @@ textarea.hintInput {
   color: var(--danger);
 }
 
-/* A checkbox glyph: ink when open, ink-muted when ticked, never matcha. */
+/* A row's checkbox, in its own slot. */
 .box {
   flex: none;
   display: flex;
-  color: var(--ink);
-}
-
-[aria-checked='true'] > .box {
-  color: var(--ink-muted);
 }
 
 .reviewTitle {

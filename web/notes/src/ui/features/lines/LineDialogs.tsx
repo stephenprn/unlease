@@ -25,7 +25,7 @@ import { useServerFeature } from '@shared/app/store/serverSettings';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { Emblem } from '@shared/ui/components/Emblem';
-import { Icon } from '@shared/ui/components/Icon';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Layer } from '@shared/ui/components/Layer';
 import { TextField } from '@shared/ui/components/TextField';
 import { useForm } from '@shared/ui/components/useForm';
@@ -148,7 +148,7 @@ function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProp
       {offerFill ? (
         <button type="button" role="checkbox" aria-checked={fill} className={styles.fillOption} onClick={() => setFill(!fill)}>
           <span className={styles.box}>
-            <Icon name={fill ? 'boxChecked' : 'box'} size={20} />
+            <CheckMark checked={fill} />
           </span>
           <span className={styles.moveText}>
             <span className="t-body">{t('Y ranger les liens de Non classé qui lui correspondent')}</span>

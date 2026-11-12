@@ -20,7 +20,7 @@ import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { Emblem } from '@shared/ui/components/Emblem';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
-import { Icon } from '@shared/ui/components/Icon';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Layer } from '@shared/ui/components/Layer';
 import { ReadingTrack } from '../links/ReadingTrack';
 import styles from './lines.module.css';
@@ -37,7 +37,7 @@ function ReviewRow({ move, kept, onToggle, index }: { move: SortMove; kept: bool
   return (
     <button type="button" role="checkbox" aria-checked={kept} aria-label={t('{title}, vers {collection}', { title, collection: destination })} className={`${styles.moveRow} ${styles.arriving}`} style={{ '--arrive': index } as CSSProperties} onClick={onToggle}>
       <span className={styles.box}>
-        <Icon name={kept ? 'boxChecked' : 'box'} size={20} />
+        <CheckMark checked={kept} />
       </span>
       <span className={styles.moveText}>
         <span className={`${styles.reviewTitle} t-body-strong`}>{title}</span>

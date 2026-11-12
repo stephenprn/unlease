@@ -179,7 +179,7 @@ function Lead({ block, siblings, index }: { block: Block; siblings: readonly str
     case 'todo':
       return (
         <View style={[styles.lead, styles.box, { height: lineHeightOf(block.kind) }]}>
-          <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} compact onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
+          <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} compact recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
         </View>
       );
     case 'toggle':

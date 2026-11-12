@@ -229,7 +229,7 @@ function Content({ block, depth, siblings, index }: { block: Block; depth: numbe
         <>
           <div className={styles.line} data-checked={block.checked || undefined}>
             <span className={styles.todoBox}>
-              <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
+              <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
             </span>
             <div className={styles.main}>
               <BlockText block={block} />

@@ -32,6 +32,7 @@ import { useBlobUrl } from '@shared/app/media/images';
 import { useLibraryStore, type LibraryState } from '../../../app/store/library';
 import { EmblemStone } from '@shared/ui/components/Emblem';
 import { Highlight } from '@shared/ui/components/Highlight';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Icon } from '@shared/ui/components/Icon';
 import { LabelMark, LabelTag } from '@shared/ui/components/LabelMark';
 import { OutlineEdge, OutlineRing, PebbleEdge, outlineD, outlineVars } from '@shared/ui/components/Outline';
@@ -220,7 +221,7 @@ const CardChecklist = memo(function CardChecklist({ noteId, query }: { noteId: s
     <ul>
       {rows.map((text, index) => (
         <li key={index} className={styles.checkRow}>
-          <Icon name="box" size={16} />
+          <CheckMark checked={false} size={14} className={styles.cardBox} />
           <span className={`${styles.checkText} t-card-body`}>
             <Highlight text={text} query={query} />
           </span>

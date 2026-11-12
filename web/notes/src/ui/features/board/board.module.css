@@ -184,6 +184,11 @@
   color: var(--ink-muted);
 }
 
+/* The note's open box, drawn small in the glyph's 16 so the words keep their place. */
+.cardBox {
+  margin: 0 1px;
+}
+
 .checkText {
   min-width: 0;
   overflow: hidden;

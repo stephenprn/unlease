@@ -32,7 +32,7 @@ export const CORNER_CAP = 0.3;
  * the same (`--corner-scale` on the web).
  */
 export const RADII = {
-  /** A detail inside text: a key, inline code, a mention, a table's option. */
+  /** A detail inside text: a key, inline code, a mention, a table's option; a checkbox's box. */
   detail: 5,
   /** A small control, 32 high or less (a chevron, a crumb, a block's gutter button). */
   small: 9,
@@ -96,6 +96,8 @@ export const SHAPES = {
   small: all(RADII.small),
   /** A detail inside text: a key, inline code, a mention, an option in a table. */
   detail: all(RADII.detail),
+  /** A checkbox's box (`checkbox.ts`), 18 across. */
+  check: all(RADII.detail),
   /** A dot (the sync dot, a picture's page dots): a circle. */
   dot: ['50%', '50%', '50%', '50%'],
 } as const satisfies Record<string, Corners>;

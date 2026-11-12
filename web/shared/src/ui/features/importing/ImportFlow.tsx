@@ -308,7 +308,7 @@ function PreviewItem({ entry, choice, extra }: { entry: PreviewEntry; choice?: P
     <li className={styles.item} data-off={!on || undefined}>
       {choice && can ? (
         <span className={styles.itemBox}>
-          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Importer {item}', { item: entry.title })} size={22} />
+          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Importer {item}', { item: entry.title })} />
         </span>
       ) : (
         <Icon name={entry.glyph as GlyphName} size={22} />

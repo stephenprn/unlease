@@ -25,7 +25,7 @@ import { matchRanges } from '@unlease/core/services/search';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
-import { AnimatedOrganic, AppText, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
+import { AnimatedOrganic, AppText, CheckMark, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
 import { accelerate, decelerate, duration, listPressDelay, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -206,7 +206,9 @@ const CardChecklist = memo(function CardChecklistView({ noteId, row, query }: { 
     <View>
       {rows.map((text, index) => (
         <View key={index} style={[checklistStyles.row, { height: row }]}>
-          <Icon name="box" size={16} color={theme.color.inkMuted} />
+          <View style={checklistStyles.box}>
+            <CheckMark checked={false} size={14} />
+          </View>
           <AppText variant="cardBody" numberOfLines={1} style={checklistStyles.text} highlight={matchRanges(text, query)}>
             {text}
           </AppText>
@@ -313,6 +315,8 @@ const makeStyles = (theme: Theme) =>
 
 const checklistStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  /** The open box drawn small in the glyph's 16, so the words keep the place the wall sized them for. */
+  box: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1 },
 });
 

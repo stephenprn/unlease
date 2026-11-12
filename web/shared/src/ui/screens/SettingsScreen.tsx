@@ -24,6 +24,7 @@ import { useServerFeature } from '../../app/store/serverSettings';
 import { setShortcutsOpen, showSnack } from '../../app/store/ui';
 import { theApp } from '../../modules';
 import { Confirm } from '../components/Dialog';
+import { CheckMark } from '../components/Checkbox';
 import { Icon } from '../components/Icon';
 import { Segmented } from '../components/Segmented';
 import { LookPebbles } from '../features/appearance/AppearanceSections';
@@ -109,7 +110,7 @@ export function SettingsScreen() {
           const last = on && languages.length === 1;
           return (
             <button key={language.id} type="button" role="checkbox" aria-checked={on} aria-disabled={last || undefined} className={styles.row} lang={language.id} onClick={() => !last && setLanguage(language.id, !on)}>
-              <Icon name={on ? 'boxChecked' : 'box'} size={24} />
+              <CheckMark checked={on} recede={last} />
               <span className={`${styles.rowText} t-body`}>{language.name}</span>
             </button>
           );

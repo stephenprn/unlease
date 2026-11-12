@@ -17,7 +17,7 @@ import { useContactsStore } from '../../app/store/library';
 import { useSortOrder } from '../../app/store/prefs';
 import { useQuery } from '@shared/app/store/search';
 import { showUndo } from '@shared/app/store/ui';
-import { Icon } from '@shared/ui/components/Icon';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelMark } from '@shared/ui/components/LabelMark';
 import { OutlinedBox } from '@shared/ui/components/Outline';
@@ -47,7 +47,7 @@ const ContactRow = memo(function ContactRow({ id, order, picking, run }: { id: s
       <button type="button" className={styles.pick} role="checkbox" aria-checked={picked} aria-label={t('Sélectionner {name}', { name })} onClick={event => (event.shiftKey ? pickRange(run, id) : toggleSelected(id))}>
         <Avatar contact={contact} size={40} />
         <span className={styles.pickBox}>
-          <Icon name={picked ? 'boxChecked' : 'box'} size={24} />
+          <CheckMark checked={picked} />
         </span>
       </button>
       <Link to={paths.contact(id)} className={styles.rowLink} ariaLabel={name}>

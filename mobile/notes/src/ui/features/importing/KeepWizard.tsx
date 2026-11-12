@@ -68,10 +68,10 @@ import {
   useImportHost,
   type ImportWizardProps,
 } from '@shared/ui/features/importing/ImportFlow';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
-import { AppText, Button, EmptyLine, FormMessage, Icon, ListRow, Segmented, TextField, useForm, type Form } from '../../components';
+import { AppText, Button, CheckMark, EmptyLine, FormMessage, ListRow, Segmented, TextField, useForm, type Form } from '../../components';
 
 export interface KeepWizardProps extends ImportWizardProps {
   /** « Voir le tableau » once done (Réglages' screen; the first run has its own way on). */
@@ -304,7 +304,6 @@ interface ChoicesBodyProps {
 /** The choices step's sheets: the notes of one link, the lists of links and their lines without one, the archive. */
 function KeepChoicesBody({ plan, choices, reading, costEach, strayKinds, strayUrls, form, onChoices, onStrayKind, onStrayUrl }: ChoicesBodyProps) {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   // Only what comes in asks anything: not a note here already, left out by its box, or archived and left aside.
   const comes = (note: ImportedNote): boolean => keepNoteComes(note, knownHere, choices);
   const singles = singleLinkNotes(plan).filter(comes);
@@ -364,8 +363,7 @@ function KeepChoicesBody({ plan, choices, reading, costEach, strayKinds, strayUr
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
                 onPress={() => toggleList(note.source)}
-                // A checkbox is a glyph: the cushion box, ink while open, the second ink once ticked.
-                leading={<Icon name={on ? 'boxChecked' : 'box'} size={24} color={on ? theme.color.inkMuted : theme.color.ink} />}
+                leading={<CheckMark checked={on} />}
               />
             );
           })}

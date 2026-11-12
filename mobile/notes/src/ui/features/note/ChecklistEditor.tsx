@@ -433,7 +433,7 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
         <View style={styles.gripSpace} />
       )}
       <View style={styles.box}>
-        <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Cocher {item}', { item: item.text }) : t('Cocher l’élément')} disabled={!editable} />
+        <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Cocher {item}', { item: item.text }) : t('Cocher l’élément')} disabled={!editable} recede />
       </View>
       <TextInput
         ref={ref => {
@@ -498,7 +498,7 @@ const DoneRow = memo(function DoneRowView({ id, editable }: { id: string; editab
     <View style={styles.row}>
       <View style={styles.gripSpace} />
       <View style={styles.box}>
-        <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} />
+        <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} recede />
       </View>
       <AppText variant="editorBody" color={theme.color.inkMuted} style={styles.doneText}>
         {item.text}

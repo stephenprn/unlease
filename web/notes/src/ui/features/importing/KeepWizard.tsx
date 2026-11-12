@@ -304,7 +304,7 @@ export function KeepWizard({ embedded = false, onFlow, onImported }: ImportWizar
               {lists.map(note => (
                 <li key={note.key} className={settings.row}>
                   <span className={styles.box}>
-                    <Checkbox checked={choices.collections.has(note.source)} onToggle={() => toggleList(note)} label={keepListBoxLabel(note)} size={22} />
+                    <Checkbox checked={choices.collections.has(note.source)} onToggle={() => toggleList(note)} label={keepListBoxLabel(note)} />
                   </span>
                   <span className={settings.rowText}>
                     <span className="t-body">{keepNoteName(note)}</span>

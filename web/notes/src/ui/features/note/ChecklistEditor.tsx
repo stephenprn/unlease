@@ -440,6 +440,7 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
         }}
         label={t('Cocher « {item} »', { item: value || t('élément vide') })}
         disabled={!editable}
+        recede
       />
       <textarea
         ref={setRef}
@@ -486,6 +487,7 @@ const DoneRow = memo(function DoneRow({ id, editable }: { id: string; editable: 
         }}
         label={t('Décocher « {item} »', { item: item.text || t('élément vide') })}
         disabled={!editable}
+        recede
       />
       <span className={`${styles.doneText} t-editor-body`}>{item.text}</span>
       {editable ? (

@@ -22,7 +22,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { keepScreenOn } from '@platform/screen';
 
-import { AppText, Button, EdgeScrollView, footEdge, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
+import { AppText, Button, CheckMark, EdgeScrollView, footEdge, Ground, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
 import { KitchenTimers } from '../features/links/KitchenTimers';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { servingsLine, ServingsStepper, useServings } from '../features/links/Servings';
@@ -249,7 +249,7 @@ function IngredientRow({ text, ticked, onToggle }: { text: string; ticked: boole
   const styles = useThemedStyles(makeStyles);
   return (
     <Tappable onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked: ticked }} accessibilityLabel={text} style={styles.ingredient}>
-      <Icon name={ticked ? 'boxChecked' : 'box'} size={24} color={ticked ? theme.color.inkMuted : theme.color.ink} />
+      <CheckMark checked={ticked} recede />
       <AppText variant="editorBody" color={ticked ? theme.color.inkMuted : undefined} style={styles.fill}>
         {text}
       </AppText>

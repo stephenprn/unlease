@@ -34,7 +34,7 @@ import { setCollectionView } from '@app/store/pages';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmblemStone, EmptyLine, Grain, Icon, IconButton, Organic, Segmented, Tappable } from '@shared/ui/components';
+import { AppText, Button, CheckMark, EmblemStone, EmptyLine, Grain, Icon, IconButton, Organic, Segmented, Tappable } from '@shared/ui/components';
 import type { SegmentedOption } from '@shared/ui/components/Segmented';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -227,7 +227,9 @@ function NoteEmbed({ id }: { id: string }) {
           <View style={styles.items}>
             {items.slice(0, NOTE_ITEMS).map((text, index) => (
               <View key={`${index}:${text}`} style={styles.item}>
-                <Icon name="box" size={20} color={theme.color.ink} />
+                <View style={styles.itemBox}>
+                  <CheckMark checked={false} />
+                </View>
                 <AppText variant="body" style={styles.flex}>
                   {text}
                 </AppText>
@@ -457,6 +459,8 @@ const makeStyles = (theme: Theme) =>
     noteHead: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
     items: { gap: 6, paddingRight: 10 },
     item: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    /** The open box in the glyph's 20, centred on the item's first line. */
+    itemBox: { width: 20, height: 23, alignItems: 'center', justifyContent: 'center' },
     collection: { paddingTop: 6, paddingBottom: 8 },
     // Its stone 16 in, on the links' pictures under it (Carnet's rows: inset 6, padded 10).
     collectionHead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 8, minHeight: 56 },

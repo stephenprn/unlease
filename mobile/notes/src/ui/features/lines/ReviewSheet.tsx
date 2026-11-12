@@ -18,7 +18,7 @@ import { applyReview, reviewLine } from '@app/sorting';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, Emblem, EmptyLine, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, CheckMark, Emblem, EmptyLine, FormFoot, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
@@ -143,7 +143,6 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
 
 /** The row is the checkbox: the link, where it would go, and that collection's cut-out. */
 function MoveRow({ move, kept, onToggle }: { move: SortMove; kept: boolean; onToggle: () => void }) {
-  const theme = useTheme();
   const link = useLibraryStore(s => s.links[move.link]);
   const target = useLibraryStore(s => s.notes[move.to]);
   if (!link) return null;
@@ -151,7 +150,7 @@ function MoveRow({ move, kept, onToggle }: { move: SortMove; kept: boolean; onTo
   const destination = move.to === INBOX_ID ? t(INBOX_TITLE) : (target?.title ?? '');
   return (
     <Tappable onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked: kept }} accessibilityLabel={t('{link}, vers {collection}', { link: title, collection: destination })} style={styles.row}>
-      <Icon name={kept ? 'boxChecked' : 'box'} size={22} color={kept ? theme.color.inkMuted : theme.color.ink} />
+      <CheckMark checked={kept} />
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" numberOfLines={2}>
           {title}

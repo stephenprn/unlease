@@ -21,7 +21,7 @@ import { addToChecklist } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, Button, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, CheckMark, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { navigate } from '../../navigation/navigationRef';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
@@ -158,10 +158,9 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
 
 /** The row is the checkbox: an ingredient as the recipe writes it. */
 function IngredientRow({ text, ticked, onToggle }: { text: string; ticked: boolean; onToggle: () => void }) {
-  const theme = useTheme();
   return (
     <Tappable onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked: ticked }} accessibilityLabel={text} style={styles.row}>
-      <Icon name={ticked ? 'boxChecked' : 'box'} size={22} color={ticked ? theme.color.inkMuted : theme.color.ink} />
+      <CheckMark checked={ticked} />
       <AppText variant="body" style={styles.rowText}>
         {text}
       </AppText>

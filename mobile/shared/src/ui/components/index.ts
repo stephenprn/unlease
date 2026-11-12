@@ -1,7 +1,7 @@
 export { AppText } from './AppText';
 export { BinList, BinRow, type BinListProps, type BinRowProps } from './BinList';
 export { Button } from './Button';
-export { Checkbox } from './Checkbox';
+export { Checkbox, CheckMark } from './Checkbox';
 export { Collage } from './Collage';
 export { Dialog } from './Dialog';
 export { Emblem, EmblemStone } from './Emblem';

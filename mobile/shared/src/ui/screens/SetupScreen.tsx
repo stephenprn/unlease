@@ -65,7 +65,7 @@ import { connectedSibling, findSiblings, type Sibling } from '@shared/app/suiteL
 import { checkServer, fetchAdminStatus, saveServerSettings, SyncError, type Health } from '@shared/app/sync/transport';
 import { startSync, stopSync } from '@shared/app/sync/syncManager';
 
-import { AppText, Button, Collage, Dialog, EdgeScrollView, footEdge, FormMessage, Ground, Icon, ListRow, Organic, PanelTappable, placedRow, TextField, useForm, type RowPlace } from '../components';
+import { AppText, Button, CheckMark, Collage, Dialog, EdgeScrollView, footEdge, FormMessage, Ground, Icon, ListRow, Organic, PanelTappable, placedRow, TextField, useForm, type RowPlace } from '../components';
 import { useKeyboardVisible } from '../components/useKeyboardVisible';
 import { BACKUP_INFO, BackupSection } from '../features/admin/BackupSection';
 import { ClaudeSection, type ClaudeExtra } from '../features/admin/ClaudeSection';
@@ -451,7 +451,6 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
  */
 function AppCard({ choice, last, busy, onPress, place }: { choice: SetupAppChoice; last: boolean; busy: boolean; onPress: () => void; place?: RowPlace | null }) {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const fixed = choice.soon || choice.locked || last;
   return (
     <PanelTappable
@@ -476,7 +475,7 @@ function AppCard({ choice, last, busy, onPress, place }: { choice: SetupAppChoic
       </View>
       {choice.soon ? null : (
         <View style={styles.appBox}>
-          <Icon name={choice.checked ? 'boxChecked' : 'box'} size={26} color={choice.checked ? theme.color.inkMuted : theme.color.ink} />
+          <CheckMark checked={choice.checked} />
         </View>
       )}
     </PanelTappable>

@@ -40,7 +40,7 @@ import { selectServer, useSettingsStore, type ServerConfig } from '../../app/sto
 import { showSnack } from '../../app/store/uiStore';
 import { flushNow, pullNow, requestSync } from '../../app/sync/syncManager';
 import { checkServer, fetchAdminStatus, startBackup, SyncError } from '../../app/sync/transport';
-import { AppText, Button, EdgeScrollView, FormFoot, Ground, Icon, ListRow, TextField, TopBar, useForm } from '../components';
+import { AppText, Button, CheckMark, EdgeScrollView, FormFoot, Ground, Icon, ListRow, TextField, TopBar, useForm } from '../components';
 import { SwitchRow } from '../features/appearance/SwitchRow';
 import { StatusRow } from '../features/admin/StatusRow';
 import { Section } from '../features/settings/Section';
@@ -168,7 +168,7 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
                 key={part.id}
                 title={part.title}
                 supporting={empty ? t('Rien à effacer') : part.detail}
-                leading={<Icon name={on ? 'boxChecked' : 'box'} size={24} color={empty ? theme.color.inkFaint : theme.color.ink} />}
+                leading={<CheckMark checked={on} />}
                 trailing={<Icon name={part.glyph as GlyphName} size={22} color={theme.color.inkMuted} />}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on, disabled: empty }}

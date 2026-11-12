@@ -23,6 +23,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - On Android, what is pinned at the foot of a screen or a sheet (a form's buttons, the note editor's bar, Pages' block bar, a question's field) now meets what scrolls above it with a clear line, instead of the content fading out above it.
 - On Android, Contacts' letters stand in a column at the list's left, beside each letter's first person: the letter stays at the top while its people scroll, then leaves with the last of them. It no longer flickers over the rows or cuts the panels while you scroll.
 - Building an Android app from source (`npm run android`, or `assembleDevRelease` for a release-like build) now makes a separate dev app, "Carnet Dev" and so on, with a striped icon. It installs beside the app you use instead of replacing it, never reads its connection, and doesn't answer its links. Connect it to a server of your own.
+- Checkboxes look like checkboxes in every app, on the web and on Android: a crisp box that fills once ticked, with the tick cut through so the note's colour shows in it, instead of a small outlined icon. A done item (a checklist's, a to-do, an ingredient cooked) fills in grey and steps back with its words; a choice (what to import, erase or share) fills in ink.
 
 ## [0.1.1] - 2026-11-11
 

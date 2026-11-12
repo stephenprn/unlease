@@ -18,7 +18,7 @@ import { ownApp } from '@shared/app/store/library';
 import { applyLookTo, useSettingsStore } from '@shared/app/store/settingsStore';
 import { selectLookShareOpen, setLookShareOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
 
-import { AppText, Button, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, CheckMark, FormFoot, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { BrandMark } from '../../icons/BrandMark';
 import { corners } from '../../theme/shape';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -112,7 +112,7 @@ function LookShareBody({ others, onClose }: { others: readonly AppId[]; onClose:
             return (
               <Tappable key={app} onPress={() => toggle(app)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={APPS[app].name} style={styles.row}>
                 <View style={styles.slot}>
-                  <Icon name={on ? 'boxChecked' : 'box'} size={22} color={on ? theme.color.inkMuted : theme.color.ink} />
+                  <CheckMark checked={on} />
                 </View>
                 <BrandMark app={app} size={28} />
                 <AppText variant="body" style={styles.name}>

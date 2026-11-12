@@ -17,7 +17,7 @@ import { theApp } from '../../../modules';
 import { BrandMark } from '../../components/BrandMark';
 import { Button } from '../../components/Button';
 import { DialogFrame } from '../../components/Dialog';
-import { Icon } from '../../components/Icon';
+import { CheckMark } from '../../components/Checkbox';
 import { Layer } from '../../components/Layer';
 import styles from './appearance.module.css';
 
@@ -115,7 +115,7 @@ function LookShareBody({ titleId, onClose }: { titleId: string; onClose: () => v
         const on = !left.has(app);
         return (
           <button key={app} type="button" role="checkbox" aria-checked={on} className={styles.lookRow} onClick={() => toggle(app)}>
-            <Icon name={on ? 'boxChecked' : 'box'} size={24} />
+            <CheckMark checked={on} />
             <BrandMark app={app} size={28} />
             <span className={`${styles.lookName} t-body`}>{APPS[app].name}</span>
           </button>

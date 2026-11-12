@@ -1051,11 +1051,6 @@ textarea.noteInput {
   flex: none;
 }
 
-/* A checkbox glyph: ink when open, ink-muted when ticked, never matcha. */
-.choiceDone {
-  color: var(--ink-muted);
-}
-
 .choiceText {
   flex: 1;
   min-width: 0;

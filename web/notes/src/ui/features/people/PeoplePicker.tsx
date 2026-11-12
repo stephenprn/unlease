@@ -13,7 +13,7 @@ import { PEOPLE_MAX } from '@unlease/notes/sync/types';
 
 import { useNotePeople, usePeopleFound } from '../../../app/hooks/useNotePeople';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
-import { Icon } from '@shared/ui/components/Icon';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Popover } from '@shared/ui/components/Popover';
 import inputs from '@shared/ui/components/controls.module.css';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
@@ -42,8 +42,8 @@ function Row({ contact, on, onToggle }: { contact: Contact; on: boolean; onToggl
         <span className="t-body">{contactName(contact)}</span>
         {detail ? <span className="t-meta">{detail}</span> : null}
       </span>
-      <span className={styles.rowCheck} data-on={on || undefined}>
-        <Icon name={on ? 'boxChecked' : 'box'} size={22} />
+      <span className={styles.rowCheck}>
+        <CheckMark checked={on} />
       </span>
     </label>
   );

@@ -185,11 +185,6 @@
 .rowCheck {
   flex: none;
   display: inline-flex;
-  color: var(--ink);
-}
-
-.rowCheck[data-on] {
-  color: var(--ink-muted);
 }
 
 .divider {

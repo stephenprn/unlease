@@ -39,7 +39,7 @@ import { flushNow, requestSync } from '../../app/sync/loop';
 import { checkServer, fetchAdminStatus, startBackup, SyncError } from '../../app/sync/transport';
 import { theApp } from '../../modules';
 import { Button } from '../components/Button';
-import { SwitchMark } from '../components/Checkbox';
+import { CheckMark, SwitchMark } from '../components/Checkbox';
 import { EmptyLine } from '../components/EmptyLine';
 import { FormMessage } from '../components/FormMessage';
 import { Icon } from '../components/Icon';
@@ -171,7 +171,7 @@ export function EraseScreen() {
           const on = !empty && chosen.has(part.id);
           return (
             <button key={part.id} type="button" role="checkbox" aria-checked={on} aria-disabled={empty || undefined} className={styles.row} onClick={() => !empty && toggle(part.id)}>
-              <Icon name={on ? 'boxChecked' : 'box'} size={24} />
+              <CheckMark checked={on} />
               <span className={styles.rowText}>
                 <span className="t-body">{part.title}</span>
                 <span className="t-meta">{empty ? t('Rien à effacer') : part.detail}</span>

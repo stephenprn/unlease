@@ -21,7 +21,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { useServerFeature } from '@shared/app/hooks/useServerFeature';
 import { selectSorting, useCaptureStore } from '@app/store/captureStore';
 
-import { AppText, Button, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
+import { AppText, Button, CheckMark, Emblem, FormFoot, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { CollectionPreview } from './CollectionPreview';
@@ -119,7 +119,7 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
         </View>
         {offerFill ? (
           <Tappable onPress={() => setFill(!fill)} accessibilityRole="checkbox" accessibilityState={{ checked: fill }} accessibilityLabel={t('Y ranger les liens de Non classé qui lui correspondent')} style={styles.fill}>
-            <Icon name={fill ? 'boxChecked' : 'box'} size={22} color={fill ? theme.color.inkMuted : theme.color.ink} />
+            <CheckMark checked={fill} />
             <View style={styles.previewText}>
               <AppText variant="body">{t('Y ranger les liens de Non classé qui lui correspondent')}</AppText>
               <AppText variant="meta">{inboxLinks === 1 ? t('Claude choisit parmi le lien de Non classé.') : t('Claude choisit parmi les {count} liens de Non classé.', { count: inboxLinks })}</AppText>

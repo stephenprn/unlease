@@ -16,6 +16,7 @@ import { selectFactor, selectTimers, startTimer, useKitchenStore } from '../../.
 import { useLibraryStore } from '../../../app/store/library';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
 import { Segmented } from '@shared/ui/components/Segmented';
@@ -166,7 +167,7 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
           return (
             <li key={`${row}-${ingredient}`}>
               <button type="button" role="checkbox" aria-checked={done} className={styles.choice} data-done={done || undefined} onClick={() => toggle(row)}>
-                <Icon name={done ? 'boxChecked' : 'box'} size={20} className={done ? styles.choiceDone : undefined} />
+                <CheckMark checked={done} recede />
                 <span className="t-body">{scaleIngredient(ingredient, factor)}</span>
               </button>
             </li>

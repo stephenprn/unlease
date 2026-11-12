@@ -20,6 +20,7 @@ import { useLibraryStore } from '../../../app/store/library';
 import { showSnack } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
+import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
 import { navigate } from '@shared/ui/router';
@@ -111,7 +112,7 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
             return (
               <li key={`${index}-${ingredient}`} className={styles.arriving} style={{ '--arrive': index } as CSSProperties}>
                 <button type="button" role="checkbox" aria-checked={on} className={styles.choice} onClick={() => toggle(index)}>
-                  <Icon name={on ? 'boxChecked' : 'box'} size={20} className={on ? styles.choiceDone : undefined} />
+                  <CheckMark checked={on} />
                   <span className="t-body">{ingredient}</span>
                 </button>
               </li>
