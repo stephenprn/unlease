@@ -21,6 +21,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - On the web, Contacts' and Agenda's import pages moved to Settings › Import (`/contacts/settings/import`, `/agenda/settings/import`); their former addresses lead there.
 - In Agenda, importing a file brings back its events that are in the bin, instead of counting them as already there.
 - On Android, what is pinned at the foot of a screen or a sheet (a form's buttons, the note editor's bar, Pages' block bar, a question's field) now meets what scrolls above it with a clear line, instead of the content fading out above it.
+- On Android, Contacts' letters stand in a column at the list's left, beside each letter's first person: the letter stays at the top while its people scroll, then leaves with the last of them. It no longer flickers over the rows or cuts the panels while you scroll.
 - Building an Android app from source (`npm run android`, or `assembleDevRelease` for a release-like build) now makes a separate dev app, "Carnet Dev" and so on, with a striped icon. It installs beside the app you use instead of replacing it, never reads its connection, and doesn't answer its links. Connect it to a server of your own.
 
 ## [0.1.1] - 2026-11-11

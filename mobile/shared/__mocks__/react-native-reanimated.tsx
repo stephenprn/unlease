@@ -45,6 +45,16 @@ export const useAnimatedProps = <T,>(factory: () => T): T => factory();
 
 export const useDerivedValue = <T,>(factory: () => T): { value: T } => ({ value: factory() });
 
+/** A reaction reads what it watches after each render and reacts, the value before it first null, as on the UI thread. */
+export function useAnimatedReaction<T>(prepare: () => T, react: (value: T, before: T | null) => void): void {
+  const before = React.useRef<T | null>(null);
+  React.useEffect(() => {
+    const value = prepare();
+    react(value, before.current);
+    before.current = value;
+  });
+}
+
 /** A scroll handler that does nothing: the list still scrolls, nothing reads the offset. */
 export const useAnimatedScrollHandler = (): (() => void) => () => {};
 

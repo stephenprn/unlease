@@ -1,19 +1,18 @@
 /**
  * Contacts' home, laid out as the suite's homes are (the search strip, the bottom bar whose pebble
  * makes a contact) with Google Contacts' list: the favourites in a row of faces, the week's
- * birthdays, then everyone under their letter (the heading stays at the top while its letter
- * scrolls), and the letters down the edge to jump. The drawer narrows it to the favourites or a
- * label. Back ends a search, then a narrowed list, then leaves the app.
+ * birthdays, then everyone on their letter's panel, the letter in a column at the left (it holds at
+ * the top while its people scroll), and the letters down the right edge to jump. The drawer narrows
+ * it to the favourites or a label. Back ends a search, then a narrowed list, then leaves the app.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, FlatList, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, runOnJS, useAnimatedReaction, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { APP_WORDS } from '@unlease/core/appWords';
 import { t } from '@unlease/core/i18n';
-import { GEOMETRY } from '@unlease/design/palette';
 import { plural } from '@unlease/core/services/format';
 import { searchSummary } from '@unlease/core/services/searchWords';
 import { groupLetter } from '@unlease/contacts/services/names';
@@ -23,19 +22,20 @@ import { selectSortOrder, useContactsUiStore } from '@app/store/contactsUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectDrawerOpen, setDrawerOpen, useUiStore } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EmptyState, FAB_CLEARANCE, FabMenu, Ground, GroundSlice, LabelTag, ScrollEdges, SearchHeader, SyncLine, useArrivals, usePullToSync } from '@shared/ui/components';
+import { AppText, Button, EmptyState, FAB_CLEARANCE, FabMenu, Ground, LabelTag, ScrollEdges, SearchHeader, SyncLine, useArrivals, usePullToSync } from '@shared/ui/components';
 import { decelerate, duration, listIn, listMove } from '@shared/ui/theme/motion';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
-import { ContactRow, placeOf, ROW_HEIGHT, rowHeight, type PanelPlace } from '../features/contacts/ContactRow';
+import { ContactRow, faceCentre, PANEL_EDGE, placeOf, ROW_HEIGHT, rowHeight, type PanelPlace } from '../features/contacts/ContactRow';
 import { BirthdayLine, FavoritesStrip } from '../features/contacts/HomeExtras';
-import { LetterRail, RAIL_WIDTH } from '../features/contacts/LetterRail';
+import { LETTER_HEIGHT, LETTER_PIN, LetterColumn, type ColumnMark } from '../features/contacts/LetterColumn';
+import { LetterRail } from '../features/contacts/LetterRail';
 import { Drawer, type DrawerPlace } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
 
-/** The letter (26) and the room over it that parts one panel from the next. */
-const HEADING_HEIGHT = 52;
+/** The ground that parts one letter's panel from the next, as wide as the panels' edge. */
+const GROUP_GAP = PANEL_EDGE;
 /** A narrowed list's title and what the search found settle in as they change. */
 const HEAD_IN = FadeIn.duration(duration.medium).easing(decelerate);
 
@@ -49,7 +49,6 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
   };
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const searching = query.trim().length > 0;
@@ -65,13 +64,13 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
   const pullToSync = usePullToSync();
   const list = useRef<FlatList<Item>>(null);
   const headerHeight = useRef(0);
-  // The letter pinned at the list's top lies on the ground's slice there; the others on the ground itself.
-  const [stuck, setStuck] = useState<string | null>(null);
-  const stuckRef = useRef<string | null>(null);
-  // The letter picked on the rail stays lit there until the list is moved by hand (at the list's end, its heading cannot reach the top).
+  // Where the list stands and how tall its header is, on the UI thread: the letters' column follows them frame by frame.
+  const scroll = useSharedValue(0);
+  const headerSize = useSharedValue(-1);
+  // The letter holding the column's top, lit on the rail.
+  const [topLetter, setTopLetter] = useState<string | null>(null);
+  // The letter picked on the rail stays lit there until the list is moved by hand (at the list's end, its people cannot reach the top).
   const [picked, setPicked] = useState<string | null>(null);
-  const [listTop, setListTop] = useState(0);
-  const listBox = useRef<React.ComponentRef<typeof View>>(null);
 
   // The launcher's shortcut « Rechercher » arrives as a `capture` param: the strip takes the keyboard, once.
   const [searchFocus, setSearchFocus] = useState(0);
@@ -96,10 +95,9 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     }, [searching, narrowed, navigation]),
   );
 
-  const { items, sticky, letters, letterIndex, offsets, lengths } = useMemo(() => {
+  const { items, letters, letterIndex, offsets, lengths, marks } = useMemo(() => {
     const contacts = useLibraryStore.getState().contacts;
     const out: Item[] = [];
-    const stickyAt: number[] = [];
     const found: string[] = [];
     const at: number[] = [];
     // Each letter's people make a panel (what a search finds, one); each row knows its place in it.
@@ -114,7 +112,6 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     }
     for (const group of groups) {
       if (group.letter !== null) {
-        stickyAt.push(out.length);
         found.push(group.letter);
         at.push(out.length);
         out.push({ kind: 'letter', letter: group.letter });
@@ -125,13 +122,49 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     const lengths: number[] = [];
     let offset = 0;
     for (const item of out) {
-      const length = item.kind === 'letter' ? HEADING_HEIGHT : rowHeight(item.place);
+      const length = item.kind === 'letter' ? GROUP_GAP : rowHeight(item.place);
       starts.push(offset);
       lengths.push(length);
       offset += length;
     }
-    return { items: out, sticky: stickyAt, letters: found, letterIndex: at, offsets: starts, lengths };
+    // Each letter beside its first person's face, and beside its last one's: it holds between the two.
+    const besideFace = (index: number): number => {
+      const item = out[index];
+      return (starts[index] ?? 0) + (item?.kind === 'contact' ? faceCentre(item.place) : 0) - LETTER_HEIGHT / 2;
+    };
+    const columnMarks: ColumnMark[] = found.map((letter, i) => {
+      const firstRow = at[i]! + 1;
+      const lastRow = (at[i + 1] ?? out.length) - 1;
+      return { letter, first: besideFace(firstRow), last: besideFace(lastRow) };
+    });
+    return { items: out, letters: found, letterIndex: at, offsets: starts, lengths, marks: columnMarks };
   }, [ids, order, searching, labelGone]);
+
+  // The letter holding the column's top (the last to reach its pin), for the rail: on the UI thread, with the scroll.
+  useAnimatedReaction(
+    () => {
+      if (headerSize.value < 0) return null;
+      const shift = headerSize.value - scroll.value;
+      let at = -1;
+      for (let i = 0; i < marks.length; i += 1) {
+        if (marks[i]!.first + shift <= LETTER_PIN + 0.5) at = i;
+        else break;
+      }
+      return at >= 0 ? marks[at]!.letter : null;
+    },
+    (letter, before) => {
+      if (letter !== before) runOnJS(setTopLetter)(letter);
+    },
+    [marks],
+  );
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: event => {
+      scroll.value = event.contentOffset.y;
+    },
+    onBeginDrag: () => {
+      runOnJS(setPicked)(null);
+    },
+  });
   // Someone arriving while the list is shown (made, brought back by « Annuler », synced in) settles in once the others
   // have made room; another list (a label, the favourites, a search typed) is shown whole. One leaving goes, the rest
   // close ranks: a list of hundreds drops rows out of its window as it scrolls, so no row plays an exit.
@@ -157,6 +190,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     <View
       onLayout={(event: LayoutChangeEvent) => {
         headerHeight.current = event.nativeEvent.layout.height;
+        headerSize.value = event.nativeEvent.layout.height;
       }}
     >
       <SyncLine />
@@ -220,17 +254,15 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
         localText={t('Pas de serveur : les contacts restent sur ce téléphone.')}
       />
-      <View ref={listBox} style={styles.fill} onLayout={() => listBox.current?.measureInWindow((_x, y) => setListTop(y))}>
-        {/* The pinned letter paints the ground over the list's top: rows soften under it, not under the search strip. */}
-        <ScrollEdges insetTop={stuck ? HEADING_HEIGHT : 0}>
+      <View style={styles.fill}>
+        <ScrollEdges>
         <Animated.FlatList
           ref={list}
           data={items}
           itemLayoutAnimation={searching ? undefined : listMove}
           skipEnteringExitingAnimations
           keyExtractor={item => (item.kind === 'letter' ? `letter-${item.letter}` : item.id)}
-          stickyHeaderIndices={sticky.map(index => index + 1)}
-          // Android's default clipping, with sticky letters coming back after a search, makes Fabric insert a view out of range (« addViewAt » crash).
+          // Android's default clipping once made Fabric insert a view out of range as a search ended (« addViewAt » crash).
           removeClippedSubviews={false}
           getItemLayout={(_, index) => ({ length: lengths[index] ?? ROW_HEIGHT, offset: headerHeight.current + (offsets[index] ?? 0), index })}
           keyboardShouldPersistTaps="handled"
@@ -239,28 +271,12 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
           ListHeaderComponent={header}
           ListEmptyComponent={empty}
           contentContainerStyle={{ paddingBottom: FAB_CLEARANCE + insets.bottom }}
-          scrollEventThrottle={32}
-          onScrollBeginDrag={() => setPicked(null)}
-          onScroll={event => {
-            const y = event.nativeEvent.contentOffset.y;
-            let pinned: string | null = null;
-            for (let i = 0; i < letterIndex.length; i += 1) {
-              if (headerHeight.current + (offsets[letterIndex[i]!] ?? 0) <= y + 0.5) pinned = letters[i]!;
-              else break;
-            }
-            if (pinned !== stuckRef.current) {
-              stuckRef.current = pinned;
-              setStuck(pinned);
-            }
-          }}
+          scrollEventThrottle={16}
+          onScroll={onScroll}
           renderItem={({ item }) =>
             item.kind === 'letter' ? (
-              <View style={styles.heading} accessibilityRole="header">
-                {item.letter === stuck ? <GroundSlice top={listTop} /> : null}
-                <AppText variant="title" color={theme.color.action} style={styles.letter}>
-                  {item.letter}
-                </AppText>
-              </View>
+              // The ground between two panels; TalkBack reads it as the letter's heading (the column only shows it).
+              <View style={styles.gap} accessible accessibilityRole="header" accessibilityLabel={item.letter} />
             ) : (
               <Animated.View entering={arrived.has(item.id) ? listIn : undefined}>
                 <ContactRow id={item.id} order={order} detail={searching} railed={!searching} place={item.place} onOpen={openContact} />
@@ -270,9 +286,10 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
           refreshControl={pullToSync}
         />
         </ScrollEdges>
+        <LetterColumn marks={marks} scroll={scroll} header={headerSize} />
         {!searching ? <LetterRail
             letters={letters}
-            current={picked ?? stuck}
+            current={picked ?? topLetter}
             onLetter={index => {
               setPicked(letters[index] ?? null);
               list.current?.scrollToOffset({ offset: headerHeight.current + (offsets[letterIndex[index] ?? 0] ?? 0), animated: false });
@@ -299,9 +316,6 @@ const makeStyles = (theme: Theme) =>
     notice: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
     // The rows' glyphs and the group's name on the faces' column (20), the rows' 16 and 4 more.
     settings: { paddingHorizontal: 4 },
-    // A letter's heading: the letter, large, in the primary, over the panel its people lie on (Google Contacts' grouped list), with
-    // nothing else: the panel's edge parts one letter from the next. It lies on the ground's own wall while it holds the top: what
-    // scrolls under it never shows through. The letter on the heads' column above it (20), 8 in from the panel's edge.
-    heading: { height: HEADING_HEIGHT, justifyContent: 'flex-end', paddingLeft: 20, paddingRight: RAIL_WIDTH + GEOMETRY.rowGap + 8, paddingBottom: 8 },
-    letter: { minWidth: 12 },
+    // Between two letters' panels: the ground alone (the letters stand in their column, `LetterColumn`).
+    gap: { height: GROUP_GAP },
   });
