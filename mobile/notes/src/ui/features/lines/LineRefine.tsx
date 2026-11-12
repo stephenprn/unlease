@@ -1,6 +1,7 @@
 /**
- * A collection's order and filter (`notes/services/lineView`), the web's in the phone's way: two
- * quiet buttons at the list's end, each saying what is applied (in the matcha wash while set apart
+ * A collection's layout, order and filter (`notes/services/lineView`), the web's in the phone's way:
+ * the layout from its glyph in the head's top bar (`LAYOUT_GLYPHS`; its sheet names each with what
+ * it is for), two quiet buttons at the list's end, each saying what is applied (in the matcha wash while set apart
  * from the default) and opening a sheet of choices, the chosen one ticked. A filter that keeps
  * nothing, and an order by price with fewer than two prices, wait in the second ink. The sheets
  * are mounted at the screen's root (`LineViewSheets`), the buttons in the list's head.
@@ -16,14 +17,17 @@ import { t } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
 import { concentric, CORNER_CAP, RADII, SHAPES } from '@unlease/design/shapes';
-import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineView } from '@unlease/notes/services/lineView';
+import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_LAYOUT_HINTS, LINE_LAYOUT_NAMES, LINE_LAYOUTS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineLayout, type LineView } from '@unlease/notes/services/lineView';
 
 import { AppText, Button, Icon, Organic, settleIn, Sheet, SheetScroll, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
-export type LineViewSheet = 'filter' | 'sort';
+export type LineViewSheet = 'layout' | 'filter' | 'sort';
+
+/** Each layout's glyph, on its button and in its sheet (the web's switch). */
+export const LAYOUT_GLYPHS: Readonly<Record<LineLayout, GlyphName>> = { list: 'thumbRows', gallery: 'grid', mosaic: 'masonry', table: 'table' };
 
 /** 40 high (48 with its slop), as the web's under a finger. */
 const REFINE_SLOP = { top: 4, bottom: 4, left: 2, right: 2 } as const;
@@ -60,8 +64,8 @@ function LineRefineBarComponent({ view, onOpen }: LineRefineBarProps) {
 
 export const LineRefineBar = memo(LineRefineBarComponent);
 
-/** A choice in the sheet: the suite's list row (56, the words 16 in), its count and its tick at the end; one with nothing to show waits in the second ink. */
-function ChoiceRow({ title, count, chosen, disabled, onPress }: { title: string; count?: number; chosen: boolean; disabled: boolean; onPress: () => void }) {
+/** A choice in the sheet: the suite's list row (56, the words 16 in), its count and its tick at the end; one with nothing to show waits in the second ink. A layout's leads with its glyph and says under its name what it is for. */
+function ChoiceRow({ title, hint, icon, count, chosen, disabled, onPress }: { title: string; hint?: string; icon?: GlyphName; count?: number; chosen: boolean; disabled: boolean; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
@@ -75,9 +79,17 @@ function ChoiceRow({ title, count, chosen, disabled, onPress }: { title: string;
       accessibilityState={{ selected: chosen, disabled }}
       style={styles.choice}
     >
-      <AppText variant="body" color={disabled ? theme.color.inkMuted : undefined} style={styles.fill}>
-        {title}
-      </AppText>
+      {icon ? <Icon name={icon} size={24} color={chosen ? theme.color.focus : theme.color.inkMuted} /> : null}
+      {hint ? (
+        <View style={styles.fill}>
+          <AppText variant="body">{title}</AppText>
+          <AppText variant="meta">{hint}</AppText>
+        </View>
+      ) : (
+        <AppText variant="body" color={disabled ? theme.color.inkMuted : undefined} style={styles.fill}>
+          {title}
+        </AppText>
+      )}
       {count !== undefined ? <AppText variant="meta">{String(count)}</AppText> : null}
       <View style={styles.tick}>{chosen ? <Icon name="check" size={20} color={theme.color.focus} /> : null}</View>
     </Tappable>
@@ -101,6 +113,21 @@ export function LineViewSheets({ open, view, counts, priced, onChange, onDismiss
   };
   return (
     <>
+      <Sheet visible={open === 'layout'} onDismiss={onDismiss} title={t('Afficher comme')}>
+        <SheetScroll>
+          {LINE_LAYOUTS.map(layout => (
+            <ChoiceRow
+              key={layout}
+              icon={LAYOUT_GLYPHS[layout]}
+              title={LINE_LAYOUT_NAMES[layout]}
+              hint={LINE_LAYOUT_HINTS[layout]}
+              chosen={layout === view.layout}
+              disabled={false}
+              onPress={() => choose({ ...view, layout })}
+            />
+          ))}
+        </SheetScroll>
+      </Sheet>
       <Sheet visible={open === 'filter'} onDismiss={onDismiss} title={t('Afficher')}>
         <SheetScroll>
           {LINE_FILTERS.map(filter => (

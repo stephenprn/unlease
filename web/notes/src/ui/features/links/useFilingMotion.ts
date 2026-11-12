@@ -3,7 +3,8 @@
  * closing ranks: the phone's `ROW_MOVE`, 250 ms on standard after 150 ms. What arrives (the
  * heading, a link just added) fades in once they have made room.
  *
- * The rows (`data-flip`, a stable key each) are measured as the store changes, before React moves
+ * The rows (`data-flip`, a stable key each: a row, a tile of the gallery or the mosaic, a table's
+ * line) are measured as the store changes, before React moves
  * them, and played from where they stood (FLIP), so a row caught mid-move starts from where it
  * is. A list drawn whole (the page opening) just appears; Reduce Motion keeps only the fade, as the
  * stylesheet keeps no transform transition then.
@@ -17,12 +18,22 @@ const ARRIVE = 'opacity var(--duration-medium) var(--ease-decelerate) var(--dura
 
 const still = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/** Each row's top, from the list's own top: scrolling, or a head growing above, moves nothing. */
-function measure(list: HTMLElement): Map<string, number> {
-  const top = list.getBoundingClientRect().top;
-  const tops = new Map<string, number>();
-  for (const row of list.querySelectorAll<HTMLElement>('[data-flip]')) tops.set(row.dataset.flip ?? '', row.getBoundingClientRect().top - top);
-  return tops;
+interface Spot {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Where each row (a tile, a table's line) stands from the list's own corner: scrolling, or a head growing above, moves nothing. */
+function spotOf(row: Element, origin: DOMRect): Spot {
+  const box = row.getBoundingClientRect();
+  return { x: box.left - origin.left, y: box.top - origin.top };
+}
+
+function measure(list: HTMLElement): Map<string, Spot> {
+  const origin = list.getBoundingClientRect();
+  const spots = new Map<string, Spot>();
+  for (const row of list.querySelectorAll<HTMLElement>('[data-flip]')) spots.set(row.dataset.flip ?? '', spotOf(row, origin));
+  return spots;
 }
 
 /** The inline transition goes once the move has played, so the row's own (its hover) comes back. */
@@ -35,7 +46,7 @@ function settle(event: TransitionEvent): void {
 
 /** `order` says, from the store, how the list is laid out: when it changes, the rows move. */
 export function useFilingMotion(list: RefObject<HTMLElement | null>, order: (state: LibraryState) => string): void {
-  const before = useRef<Map<string, number> | null>(null);
+  const before = useRef<Map<string, Spot> | null>(null);
 
   useEffect(
     () =>
@@ -62,7 +73,7 @@ export function useFilingMotion(list: RefObject<HTMLElement | null>, order: (sta
       row.style.transform = '';
       row.style.opacity = '';
     }
-    const top = root.getBoundingClientRect().top;
+    const origin = root.getBoundingClientRect();
     const moving = !still();
     const played: HTMLElement[] = [];
     for (const row of rows) {
@@ -72,12 +83,14 @@ export function useFilingMotion(list: RefObject<HTMLElement | null>, order: (sta
         played.push(row);
         continue;
       }
-      const offset = was - (row.getBoundingClientRect().top - top);
-      if (!moving || Math.abs(offset) < 0.5) {
+      const now = spotOf(row, origin);
+      const dx = was.x - now.x;
+      const dy = was.y - now.y;
+      if (!moving || (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5)) {
         row.style.transition = '';
         continue;
       }
-      row.style.transform = `translateY(${offset}px)`;
+      row.style.transform = `translate(${dx}px, ${dy}px)`;
       played.push(row);
     }
     if (played.length === 0) return;

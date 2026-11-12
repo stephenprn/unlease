@@ -1,4 +1,4 @@
-/** English for a collection's order and filter, « Tout lire », and what a link's row says of its price and note (both clients and `notes/services/lineView`, `linkRow`). Keys are the French exactly as written in `t()` / `tx()`, single-quoted, one per line. */
+/** English for a collection's layout, order and filter, « Tout lire », and what a link's row says of its price and note (both clients and `notes/services/lineView`, `linkRow`). Keys are the French exactly as written in `t()` / `tx()`, single-quoted, one per line. */
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_LINE_VIEWS: Dictionary = {
@@ -25,4 +25,14 @@ export const EN_LINE_VIEWS: Dictionary = {
   'Tout lire': 'Read all',
   'Tout réessayer': 'Retry all',
   'Votre note : {note}': 'Your note: {note}',
+  'Galerie': 'Gallery',
+  'Mosaïque': 'Mosaic',
+  'Tableau': 'Table',
+  'Une ligne par lien, son image en petit': 'A row per link, its picture small',
+  'Les images en grand, pour comparer d’un coup d’œil': 'The pictures large, to compare at a glance',
+  'Les images à leurs proportions, comme un tableau d’inspiration': 'The pictures at their own proportions, like a mood board',
+  'Une colonne par information, pour comparer en détail': 'A column per detail, to compare closely',
+  'Affichage : {layout}': 'Layout: {layout}',
+  'Afficher comme': 'Show as',
+  'Ajouté': 'Added',
 };

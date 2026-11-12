@@ -1,14 +1,15 @@
 /**
  * Carnet's drawer, in the suite's frame (`NavDrawer`): every place in the app (the board, reminders,
- * collections, labels, the archive), the bin, the settings and the Administration at the foot, and
+ * collections and labels each by name as on the web's navigation (`navOrder`), the archive), the bin, the settings and the Administration at the foot, and
  * the suite's other apps under them (`NavDrawer`).
  */
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { asLineColor } from '@unlease/design/colors';
 import { t } from '@unlease/core/i18n';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
+import { collectionsByName, labelsByName } from '@unlease/notes/services/navOrder';
 import type { BoardView } from '@app/hooks/useBoard';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -50,9 +51,11 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
   const allLines = useLines();
   // As on the board: "Non classé" shows only while a link waits in it.
   const inboxHolds = useLibraryStore(s => (s.linksByNote[INBOX_ID] ?? []).some(lid => !!s.links[lid] && !s.links[lid]!.done));
-  const lines = inboxHolds ? allLines : allLines.filter(line => line.id !== INBOX_ID);
+  // By name in the interface's language (the app is drawn afresh in another).
+  const lines = useMemo(() => collectionsByName(inboxHolds ? allLines : allLines.filter(line => line.id !== INBOX_ID)), [allLines, inboxHolds]);
   const labelOrder = useLibraryStore(s => s.labelOrder);
-  const labels = useLibraryStore(s => s.labels);
+  const labelMap = useLibraryStore(s => s.labels);
+  const labels = useMemo(() => labelsByName(labelOrder, labelMap), [labelOrder, labelMap]);
 
   return (
     <NavDrawer open={open} app="notes" onClose={onClose}>
@@ -73,13 +76,11 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
       <DrawerItem label={t('Nouvelle collection')} icon="plus" onPress={onNewLine} />
       <DrawerDivider />
       <DrawerHeading title={t('Labels')} action={{ label: t('Modifier'), accessibilityLabel: t('Modifier les labels'), onPress: onLabels }} />
-      {labelOrder.map(id => {
-        const label = labels[id];
-        if (!label) return null;
-        const view: BoardView = `label:${id}`;
-        return <DrawerItem key={`label-${id}`} label={label.name} selected={current === view} onPress={() => onView(view)} leading={<LabelTag color={label.color} size={20} />} wash={theme.line[label.color].tint} />;
+      {labels.map(label => {
+        const view: BoardView = `label:${label.id}`;
+        return <DrawerItem key={`label-${label.id}`} label={label.name} selected={current === view} onPress={() => onView(view)} leading={<LabelTag color={label.color} size={20} />} wash={theme.line[label.color].tint} />;
       })}
-      {labelOrder.length === 0 ? <DrawerItem label={t('Créer un label')} icon="tag" onPress={onLabels} /> : null}
+      {labels.length === 0 ? <DrawerItem label={t('Créer un label')} icon="tag" onPress={onLabels} /> : null}
       <DrawerDivider />
       <DrawerItem label={t('Archives')} icon="archive" selected={current === 'archive'} onPress={() => onView('archive')} />
       <DrawerDivider />

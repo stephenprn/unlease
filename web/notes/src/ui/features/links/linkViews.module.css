@@ -1,0 +1,706 @@
+/*
+ * A collection's other layouts (`LineLayout`): its links as a gallery of pictures alike, a mosaic of
+ * them at their own proportions, or a table on one sheet of paper. A row's own anatomy (its frame,
+ * its words, the stamp) is `links.module.css`'s; here what changes with the layout.
+ */
+
+/* ── gallery and mosaic ──────────────────────────────────────────────────── */
+
+/* The pictures alike, as many a line as fit: two on a phone-sized window. */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(176px, calc(50% - 8px)), 1fr));
+  gap: 28px 16px;
+  margin-top: 12px;
+}
+
+/* Edge to edge in columns, each picture at its height. */
+.mosaic {
+  column-width: 200px;
+  column-gap: 12px;
+  margin-top: 12px;
+}
+
+.mosaic > .tile {
+  break-inside: avoid;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 719px) {
+  .mosaic {
+    column-width: auto;
+    column-count: 2;
+    column-gap: 8px;
+  }
+  .mosaic > .tile {
+    margin-bottom: 8px;
+  }
+  .gallery {
+    gap: 22px 12px;
+  }
+}
+
+/* « Déjà faits », over the done ones, as over the rows. */
+.heading {
+  padding: 28px 2px 0;
+}
+
+/* Across the gallery's grid. */
+.headingWide {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+}
+
+/* Its foot, then the mosaic of the done ones. */
+.mosaic + .heading {
+  padding-top: 16px;
+}
+
+.heading + .mosaic {
+  margin-top: 12px;
+}
+
+.tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The whole tile opens the link; only its buttons rise above it. */
+.hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--cut-frame);
+}
+
+.hit:focus-visible {
+  outline-offset: 3px;
+}
+
+.frameSpot {
+  position: relative;
+}
+
+/* Over the tile's link, letting presses through to it but on its own buttons (the mosaic's « Réessayer »). */
+.frame {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  /* Its own outline; its edge (`OutlineEdge`) in the outline ink lies over the picture, as a row's frame. */
+  --edge-color: var(--outline);
+  clip-path: var(--outline-clip, none);
+  border-radius: var(--cut-frame);
+  background: var(--paper-high);
+  color: var(--ink-muted);
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+
+.frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale var(--duration-medium) var(--ease-decelerate);
+}
+
+/* A picture lies on cream paper, as a row's does. */
+.frame[data-picture] {
+  background: var(--paper);
+  isolation: isolate;
+}
+
+.frame[data-picture] img {
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+/* Under the pointer the picture comes a little closer inside its frame, never past it. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tile:hover .frame[data-picture] img {
+    scale: 1.035;
+  }
+}
+
+.tile[data-done] .frame {
+  opacity: 0.55;
+}
+
+/* The stamp on the picture, centred, a little larger on a large frame. */
+.stampSpot {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tile[data-shape='gallery'] .stampSpot > * {
+  scale: 1.2;
+}
+
+/* The stamp and the page, on paper over the picture's corner, under a pointer or the keyboard. A finger stamps from the link's panel. */
+.actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  display: flex;
+  padding: 2px;
+  border-radius: var(--cut-chip);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .tile:hover .actions,
+  .tile:focus-within .actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none) {
+  .actions {
+    display: none;
+  }
+}
+
+/* Under the picture, a row's words: where it comes from and what it costs, then what it is. */
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 2px;
+}
+
+.overline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.ellipsis {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overline > .ellipsis {
+  flex: 1;
+}
+
+.price {
+  flex: none;
+  color: var(--ink);
+}
+
+.priceChange {
+  flex: none;
+  margin-right: -4px;
+  white-space: nowrap;
+  color: var(--ok);
+}
+
+.priceChange svg {
+  margin-right: 1px;
+  vertical-align: -2px;
+}
+
+.priceChange[data-direction='up'],
+.tile[data-done] .priceChange,
+.line[data-done] .priceChange {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.title {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.tile[data-done] .title,
+.tile[data-done] .wordsTitle,
+.tile[data-done] .price,
+.title[data-address],
+.wordsTitle[data-address] {
+  color: var(--ink-muted);
+}
+
+/* Its reading, or what stopped it, under the title on one line. */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 18px;
+  margin: 2px 0 0;
+  color: var(--ink-muted);
+}
+
+.failed {
+  gap: 6px;
+}
+
+.failed > svg {
+  flex: none;
+  color: var(--danger);
+}
+
+.retry {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  pointer-events: auto;
+  min-height: 28px;
+  margin: -5px 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--link);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.retryAlone {
+  margin-left: -8px;
+}
+
+@media (hover: hover) {
+  .retry:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+}
+
+.retry:active {
+  background: color-mix(in srgb, var(--link) 12%, transparent);
+}
+
+/* ── the mosaic's pieces ── */
+
+/* A link without a picture: a sheet of its words among the pictures, as tall as they are. */
+.tile[data-words] .frame {
+  aspect-ratio: auto;
+  align-items: stretch;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 14px 16px;
+}
+
+.wordsMark {
+  margin-bottom: 6px;
+  color: var(--ink-muted);
+}
+
+/* Its actions lie on its corner: the kind's glyph keeps clear of them only under a pointer, so the words go right to the edge. */
+.wordsTitle {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+/* What it costs, on a paper tag in the picture's corner. */
+.priceTag {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: var(--cut-detail);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+/*
+ * Its words on paper rising from the picture's foot under a pointer or the keyboard; cut by the
+ * frame's own outline, so its foot follows the picture's corners. Held up while the link is read or
+ * could not be.
+ */
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  background: color-mix(in srgb, var(--paper) 95%, transparent);
+  box-shadow: inset 0 1px 0 var(--hairline);
+  translate: 0 100%;
+  transition: translate var(--duration-medium) var(--ease-decelerate);
+}
+
+.caption[data-held] {
+  translate: 0 0;
+}
+
+.captionTitle {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) {
+  .tile:hover .caption,
+  .tile:focus-within .caption {
+    translate: 0 0;
+  }
+  .tile:hover .priceTag,
+  .tile:focus-within .priceTag {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caption {
+    translate: 0 0;
+    opacity: 0;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+  .caption[data-held] {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .tile:hover .caption,
+  .tile:focus-within .caption {
+    opacity: 1;
+  }
+}
+
+/* ── table ───────────────────────────────────────────────────────────────── */
+
+/* One sheet of paper under the lines, in the add strip's measure. */
+.tableSheet {
+  margin-top: 8px;
+  background: var(--paper);
+}
+
+.tableScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline) transparent;
+}
+
+.tableScroll:focus {
+  outline: none;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.headCell,
+.cell,
+.lead,
+.lineEnd {
+  padding: 0 12px;
+  height: 56px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: var(--paper);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.headCell {
+  height: 44px;
+  color: var(--ink-muted);
+  font-weight: normal;
+}
+
+.numeric {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Its title held at the left while the rest slides under it: a hairline at that edge once they do. */
+.lead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 28%;
+  min-width: 220px;
+  max-width: 320px;
+  padding-left: 10px;
+  font-weight: normal;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.tableScroll[data-under] .lead {
+  box-shadow: inset -1px 0 0 var(--hairline);
+}
+
+.headCell.lead {
+  padding-left: 14px;
+}
+
+.leadInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  max-width: 300px;
+}
+
+/* The picture small, in a frame's cut and its edge. */
+.thumb {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: var(--cut-detail);
+  background: var(--paper-high);
+  box-shadow: inset 0 0 0 1px var(--outline);
+  color: var(--ink-muted);
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+
+.thumb[data-picture] {
+  background: var(--paper);
+  isolation: isolate;
+  box-shadow: none;
+  outline: 1px solid var(--outline);
+  outline-offset: -1px;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--picture-blend);
+  opacity: var(--picture-opacity);
+}
+
+.lineAlert {
+  flex: none;
+  margin-right: -6px;
+  color: var(--danger);
+}
+
+.lineTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.lineTitle[data-address] {
+  color: var(--ink-muted);
+}
+
+.lineTitle:focus-visible {
+  outline-offset: 2px;
+  border-radius: var(--cut-detail);
+}
+
+.cell {
+  color: var(--ink-muted);
+}
+
+.fact {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+.noteCell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+.priceCell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.cellReading {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cellFailed {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  color: var(--danger);
+}
+
+.line {
+  cursor: pointer;
+}
+
+.line:last-child > * {
+  border-bottom: 0;
+}
+
+/* The line under the pointer, its held title included. */
+@media (hover: hover) {
+  .line:hover > * {
+    background: color-mix(in srgb, var(--ink) 5%, var(--paper));
+  }
+}
+
+.line:active > * {
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+}
+
+.line[data-done] .thumb {
+  opacity: 0.55;
+}
+
+.line[data-done] .lineTitle,
+.line[data-done] .priceCell,
+.line[data-done] .fact {
+  color: var(--ink-muted);
+}
+
+/* A head that orders: quiet, in the matcha wash while it orders the table. */
+.headButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) {
+  .headButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+}
+
+.headButton[data-active] {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+/* The stamp and the page at the line's end, under a pointer or the keyboard. */
+.lineEnd {
+  width: 1%;
+  padding: 0 6px;
+}
+
+.lineActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (hover: hover) {
+  .lineActions {
+    opacity: 0;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+  .line:hover .lineActions,
+  .line:focus-within .lineActions {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .stampAction {
+    display: none;
+  }
+}
+
+/* « Déjà faits », across the table. */
+.groupCell {
+  position: sticky;
+  left: 0;
+  padding: 22px 14px 8px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper);
+  text-align: start;
+  font-weight: normal;
+}
+
+.groupLabel {
+  position: sticky;
+  left: 14px;
+}
+
+@media (max-width: 719px) {
+  .lead {
+    min-width: 0;
+    width: 200px;
+    max-width: 200px;
+  }
+  .leadInner {
+    max-width: 180px;
+  }
+}

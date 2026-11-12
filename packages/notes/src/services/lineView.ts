@@ -1,8 +1,9 @@
 /**
- * How a collection's page lays its links out on this device: in which order (the collection's own,
- * the newest saved first, or by price either way) and which ones (all, those not read yet, those
- * whose page could not be read, those whose price dropped). The same on both clients; each keeps
- * the choice per collection on the device, never synced.
+ * How a collection's page lays its links out on this device: as what (rows, a gallery of their
+ * pictures, a mosaic of them at their own proportions, a table of their facts), in which order (the
+ * collection's own, the newest saved first, or by price either way) and which ones (all, those not
+ * read yet, those whose page could not be read, those whose price dropped). The same on both
+ * clients; each keeps the choice per collection on the device, never synced.
  *
  * The links done stay under « Déjà faits »: the order and the filter apply within each group, and
  * the done group's own order is the last stamped first.
@@ -16,12 +17,39 @@ export type LineSort = (typeof LINE_SORTS)[number];
 export const LINE_FILTERS = ['all', 'unread', 'failed', 'priceDrop'] as const;
 export type LineFilter = (typeof LINE_FILTERS)[number];
 
+/**
+ * What the links are drawn as: `list`, a row each (the picture small, the words beside it);
+ * `gallery`, their pictures large and alike (4:5) in a grid, the words under each, to compare at a
+ * glance; `mosaic`, their pictures at their own proportions, edge to edge in columns, a moodboard
+ * (a link without one is a sheet of its words); `table`, a line each with a column per fact
+ * Claude read (`lineColumns` in `./lineTable`), to compare them side by side.
+ */
+export const LINE_LAYOUTS = ['list', 'gallery', 'mosaic', 'table'] as const;
+export type LineLayout = (typeof LINE_LAYOUTS)[number];
+
 export interface LineView {
   readonly sort: LineSort;
   readonly filter: LineFilter;
+  readonly layout: LineLayout;
 }
 
-export const DEFAULT_LINE_VIEW: LineView = { sort: 'own', filter: 'all' };
+export const DEFAULT_LINE_VIEW: LineView = { sort: 'own', filter: 'all', layout: 'list' };
+
+/** What each layout is called, in the menu and in its button's name. */
+export const LINE_LAYOUT_NAMES: Readonly<Record<LineLayout, string>> = localized({
+  list: tx('Liste'),
+  gallery: tx('Galerie'),
+  mosaic: tx('Mosaïque'),
+  table: tx('Tableau'),
+});
+
+/** What each layout is for, under its name where there is room (the phone's sheet). */
+export const LINE_LAYOUT_HINTS: Readonly<Record<LineLayout, string>> = localized({
+  list: tx('Une ligne par lien, son image en petit'),
+  gallery: tx('Les images en grand, pour comparer d’un coup d’œil'),
+  mosaic: tx('Les images à leurs proportions, comme un tableau d’inspiration'),
+  table: tx('Une colonne par information, pour comparer en détail'),
+});
 
 /** What each order is called, in the menu and on its button. */
 export const LINE_SORT_NAMES: Readonly<Record<LineSort, string>> = localized({
@@ -139,14 +167,15 @@ export function arrangeLine(links: readonly LinkItem[], view: LineView): LineArr
   };
 }
 
-export const isDefaultLineView = (view: LineView): boolean => view.sort === DEFAULT_LINE_VIEW.sort && view.filter === DEFAULT_LINE_VIEW.filter;
+export const isDefaultLineView = (view: LineView): boolean => view.sort === DEFAULT_LINE_VIEW.sort && view.filter === DEFAULT_LINE_VIEW.filter && view.layout === DEFAULT_LINE_VIEW.layout;
 
 /** A view as stored on a device, read back: anything this version does not know is the default. */
 export function readLineView(raw: unknown): LineView {
   const value = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
   const sort = (LINE_SORTS as readonly unknown[]).includes(value.sort) ? (value.sort as LineSort) : DEFAULT_LINE_VIEW.sort;
   const filter = (LINE_FILTERS as readonly unknown[]).includes(value.filter) ? (value.filter as LineFilter) : DEFAULT_LINE_VIEW.filter;
-  return { sort, filter };
+  const layout = (LINE_LAYOUTS as readonly unknown[]).includes(value.layout) ? (value.layout as LineLayout) : DEFAULT_LINE_VIEW.layout;
+  return { sort, filter, layout };
 }
 
 /** Every collection's view as stored (`{ [collectionId]: view }`), only those set apart from the default. */

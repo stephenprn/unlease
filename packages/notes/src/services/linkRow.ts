@@ -68,7 +68,7 @@ export const FACT_LABELS: Record<LinkKind, readonly string[]> = {
 };
 
 /** Said elsewhere on the row or on the link's page: never a fact of its own. */
-const NEVER_FACTS = new Set(['source', 'site', 'prix', 'price']);
+export const NEVER_FACTS = new Set(['source', 'site', 'prix', 'price']);
 const UNAVAILABLE = /[ée]puis[ée]|rupture|indisponible|plus disponible|sold out|out of stock/i;
 const GENERIC_SITE = /^(?:home|accueil|homepage|welcome|bienvenue|official (?:site|store|shop|website)|site officiel|boutique(?: officielle| en ligne)?|shop|store)$/i;
 

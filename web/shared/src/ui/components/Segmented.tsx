@@ -3,7 +3,9 @@
  * one matcha. The matcha pebble is one piece that slides to the segment chosen, so the choice is
  * seen moving; the tick and the inks change hands as it passes the middle of its way. A radio
  * group: arrows (and Home, End) move the choice. A value none of the options holds (Agenda's
- * « Aujourd'hui », beside the calendar's views) shows none chosen.
+ * « Aujourd'hui », beside the calendar's views) shows none chosen. `compact`, each a glyph alone
+ * (its name its accessible name and its tooltip), smaller, the chosen one's glyph in matcha in place
+ * of the tick: a view switch over a list (a collection's layouts).
  */
 import { memo, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 
@@ -26,6 +28,8 @@ export interface SegmentedProps<T extends string> {
   readonly label: string;
   /** While a change is on its way (a server saving it): the choice holds still, and keeps its focus. */
   readonly disabled?: boolean;
+  /** Glyphs alone, named by their tooltips: every option needs its `icon`. */
+  readonly compact?: boolean;
 }
 
 /** Half the pebble's slide (`--duration-medium`): the tick and the inks change hands there. */
@@ -33,7 +37,7 @@ const HALFWAY_MS = 125;
 
 const STEPS: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
-function SegmentedComponent<T extends string>({ options, value, onChange, label, disabled = false }: SegmentedProps<T>) {
+function SegmentedComponent<T extends string>({ options, value, onChange, label, disabled = false, compact = false }: SegmentedProps<T>) {
   const group = useRef<HTMLDivElement>(null);
   const found = options.findIndex(option => option.value === value);
   const none = found < 0;
@@ -62,7 +66,7 @@ function SegmentedComponent<T extends string>({ options, value, onChange, label,
   return (
     <div
       ref={group}
-      className={styles.segmented}
+      className={compact ? `${styles.segmented} ${styles.segmentedCompact}` : styles.segmented}
       style={{ '--segments': options.length, '--at': chosen } as CSSProperties}
       role="radiogroup"
       aria-label={label}
@@ -82,10 +86,18 @@ function SegmentedComponent<T extends string>({ options, value, onChange, label,
             data-value={option.value}
             data-shown={shown || undefined}
             className={`${styles.segment} t-label`}
+            aria-label={compact ? option.label : undefined}
+            data-tip={compact ? option.label : undefined}
             onClick={() => !disabled && choose(index)}
           >
-            {shown ? <Icon name="check" size={18} /> : option.icon ? <Icon name={option.icon} size={18} /> : null}
-            <span className={styles.segmentLabel}>{option.label}</span>
+            {compact && option.icon ? (
+              <Icon name={option.icon} size={20} />
+            ) : (
+              <>
+                {shown ? <Icon name="check" size={18} /> : option.icon ? <Icon name={option.icon} size={18} /> : null}
+                <span className={styles.segmentLabel}>{option.label}</span>
+              </>
+            )}
           </button>
         );
       })}

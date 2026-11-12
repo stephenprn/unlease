@@ -4,6 +4,14 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Added
+
+- In Carnet, a collection can be shown four ways, on the web and on Android, kept per collection on each device: **List** (a row per link, as before), **Gallery** (the pictures large and alike, to compare at a glance), **Mosaic** (the pictures at their own proportions, like a mood board, with their prices on a tag) and **Table** (a line per link with its site, price, the date it was saved, your note, and a column for each detail Claude reads on most of its links, such as the brand, the colour or the director; the price and date headers sort it). On the web the layouts are the four icons over the links; on Android the icon beside the collection's menu.
+
+### Changed
+
+- In Carnet's navigation (the web's sidebar and the Android drawer), collections and labels are listed by name, in alphabetical order for your language, with "Unsorted" last, instead of following the order of the board.
+
 ## [0.1.2] - 2026-11-12
 
 ### Added

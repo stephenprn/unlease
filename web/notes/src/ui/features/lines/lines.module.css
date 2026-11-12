@@ -119,6 +119,11 @@
   padding: 20px 24px 120px;
 }
 
+/* Pictures and columns take a wider page than rows do. */
+.page:is([data-layout='gallery'], [data-layout='mosaic'], [data-layout='table']) {
+  max-width: 1120px;
+}
+
 /* The add strip, as on the phone: field paper cut like the search strip, edged in outline; matcha while typed in. */
 .add {
   display: flex;
@@ -752,13 +757,18 @@ textarea.hintInput {
 
 /* ── a collection's order and filter, « Tout lire » ───────────────────────── */
 
-/* At the list's end, over the prices: what is applied, quiet until set apart from the default (the search's refine buttons). */
+/* The layouts at the list's start, over the pictures; at its end, over the prices, what is applied, quiet until set apart from the default (the search's refine buttons). */
 .refine {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--row-gap);
   margin-top: 12px;
+}
+
+/* Pushes the order and the filter to the end, and lets them wrap under the layouts on a narrow page. */
+.refineFill {
+  flex: 1 0 0;
 }
 
 .refineButton {

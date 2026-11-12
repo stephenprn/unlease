@@ -401,6 +401,9 @@ export const ICONS = {
   apps: { line: form(null, dots([[5.4, 5.6, 1.9], [12, 5.2, 1.9], [18.6, 5.6, 1.9], [5.2, 12, 1.9], [12, 12, 1.9], [18.8, 12, 1.9], [5.4, 18.4, 1.9], [12, 18.8, 1.9], [18.6, 18.4, 1.9]])) },
   grid: { line: form([pillow(3.8, 3.8, 7.2, 7.2, 1.8, 0.25), pillow(13, 3.8, 7.2, 7.2, 1.8, 0.25), pillow(3.8, 13, 7.2, 7.2, 1.8, 0.25), pillow(13, 13, 7.2, 7.2, 1.8, 0.25)]) },
   rows: { line: form([pillow(4, 4.6, 16, 5.6, 2.2, 0.45), pillow(4, 13.8, 16, 5.6, 2.2, 0.45)]) },
+  // A collection's layouts: rows each led by its picture, and pictures at their own heights in two columns.
+  thumbRows: { line: form([pillow(3.6, 4, 6.8, 6.8, 1.8, 0.25), wave(13.6, 7.4, 20.4, 7.4, 0.5), pillow(3.6, 13.2, 6.8, 6.8, 1.8, 0.25), wave(13.6, 16.6, 20.4, 16.6, 0.5)]) },
+  masonry: { line: form([pillow(3.6, 3.6, 7.2, 9.8, 1.8, 0.25), pillow(3.6, 15.6, 7.2, 4.8, 1.6, 0.2), pillow(13.2, 3.6, 7.2, 4.8, 1.6, 0.2), pillow(13.2, 10.6, 7.2, 9.8, 1.8, 0.25)]) },
   sun: {
     line: form([
       breathe(12, 12, 4.2, 0.12),

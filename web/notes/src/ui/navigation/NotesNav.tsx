@@ -1,14 +1,16 @@
 /**
  * Carnet's navigation (Keep's side): the notes and the reminders, the collections by their
- * cut-outs, the labels by their tags, each section folding shut on its title; at the foot, the
- * archive and the bin. Drawn in the shell's frame (`NavList`).
+ * cut-outs, the labels by their tags, each section folding shut on its title, each by name
+ * (`navOrder`: « Non classé » last); at the foot, the archive and the bin. Drawn in the shell's
+ * frame (`NavList`).
  */
-import { memo, type ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
+import { collectionsByName, labelsByName } from '@unlease/notes/services/navOrder';
 
 import { useLines } from '../../app/hooks/useLines';
 import { resetBoard } from '../../app/store/board';
@@ -54,9 +56,12 @@ interface NavProps {
 }
 
 export function NotesNav({ route, onNavigate }: NavProps) {
-  const lines = useLines();
+  const all = useLines();
   const labelOrder = useLibraryStore(s => s.labelOrder);
-  const labels = useLibraryStore(s => s.labels);
+  const labelMap = useLibraryStore(s => s.labels);
+  // By name in the interface's language (the app is drawn afresh in another).
+  const lines = useMemo(() => collectionsByName(all), [all]);
+  const labels = useMemo(() => labelsByName(labelOrder, labelMap), [labelOrder, labelMap]);
   const go = (): void => {
     resetBoard();
     onNavigate();
@@ -112,13 +117,11 @@ export function NotesNav({ route, onNavigate }: NavProps) {
           </Link>
         }
       >
-        {labelOrder.map(id => {
-          const label = labels[id];
-          if (!label) return null;
-          const to = pathForView(`label:${id}`);
+        {labels.map(label => {
+          const to = pathForView(`label:${label.id}`);
           return (
             <NavRow
-              key={id}
+              key={label.id}
               to={to}
               label={label.name}
               leading={
@@ -132,7 +135,7 @@ export function NotesNav({ route, onNavigate }: NavProps) {
             />
           );
         })}
-        {labelOrder.length === 0 ? <NavRow to={paths.labels} label={t('Créer un label')} leading={<NavGlyph name="tag" />} current={false} onNavigate={go} /> : null}
+        {labels.length === 0 ? <NavRow to={paths.labels} label={t('Créer un label')} leading={<NavGlyph name="tag" />} current={false} onNavigate={go} /> : null}
       </NavFold>
     </>
   );

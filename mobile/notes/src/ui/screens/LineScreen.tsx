@@ -1,11 +1,12 @@
 /**
- * One collection: its head, a field to add a link to it, the links to do, then the done ones. Over
- * the rows, the order and the filter this phone keeps for the collection (`lineView`), and « Tout
+ * One collection: its head, a field to add a link to it, the links to do, then the done ones, as
+ * rows, a gallery, a mosaic or a table (`LineLayout`, from its glyph in the head's top bar). Over
+ * them, the order and the filter this phone keeps for the collection (`lineView`), and « Tout
  * lire » while Claude could read links kept unread here, else « Tout relire » for those
  * read before the last change to its own facts (« Ce que Claude relève »).
  */
 import React, { useMemo, useState } from 'react';
-import { Keyboard, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, LinearTransition, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -15,7 +16,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { t, tc, tx } from '@unlease/core/i18n';
 import { formatPrice, formatUsd, plural, totalPrice } from '@unlease/core/services/format';
 import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
-import { arrangeLine, DEFAULT_LINE_VIEW } from '@unlease/notes/services/lineView';
+import { arrangeLine, DEFAULT_LINE_VIEW, LINE_LAYOUT_NAMES } from '@unlease/notes/services/lineView';
 import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { sortable } from '@unlease/notes/services/sorting';
 import { collectionTemplate, linksReadBefore } from '@unlease/notes/services/templates';
@@ -37,13 +38,16 @@ import { AppText, Button, EmptyState, Ground, GroundSlice, Icon, IconButton, Men
 import { CollectionHeader } from '../features/lines/CollectionHeader';
 import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineSheet';
 import { EditLineSheet } from '../features/lines/EditLineSheet';
-import { FilteredEmpty, LineRefineBar, LineViewSheets, ReadAllBanner, type LineViewSheet } from '../features/lines/LineRefine';
+import { FilteredEmpty, LAYOUT_GLYPHS, LineRefineBar, LineViewSheets, ReadAllBanner, type LineViewSheet } from '../features/lines/LineRefine';
 import { ModulesSheet } from '../features/lines/ModulesSheet';
 import { readAgainWords } from '../features/templates/templateWords';
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { ReviewSheet } from '../features/lines/ReviewSheet';
 import { sortDeletedLinksOnSlip, sortInboxOnSlip } from '../features/lines/sortingSlips';
 import { LinkRow } from '../features/links/LinkRow';
+import { LinkMosaic } from '../features/links/LinkMosaic';
+import { LinkTable } from '../features/links/LinkTable';
+import { LinkTile, TILE_INSET } from '../features/links/LinkTile';
 import type { ScreenProps } from '../navigation/types';
 import { decelerate, duration, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
@@ -51,8 +55,26 @@ import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { variantStyle } from '@shared/ui/theme/typography';
 
-/** `ruled`: a link row with another link under it, so a rule between them (never beside "Déjà faits", the web's). */
-type Row = { kind: 'link'; id: string; ruled: boolean } | { kind: 'heading'; title: string };
+/**
+ * `ruled`: a link row with another link under it, so a rule between them (never beside "Déjà faits", the web's).
+ * The other layouts: a gallery's line of two tiles, a group's mosaic, the whole table.
+ */
+type Row =
+  | { kind: 'link'; id: string; ruled: boolean }
+  | { kind: 'heading'; title: string }
+  | { kind: 'pair'; key: string; ids: readonly string[] }
+  | { kind: 'mosaic'; key: string; ids: readonly string[] }
+  | { kind: 'table'; open: readonly string[]; done: readonly string[] };
+
+/** A gallery's two tiles a line, their pictures 12 apart (each tile's press veil running 6 round them). */
+const pairs = (ids: readonly string[]): Row[] => {
+  const out: Row[] = [];
+  for (let at = 0; at < ids.length; at += 2) out.push({ kind: 'pair', key: `pair-${ids[at]}`, ids: ids.slice(at, at + 2) });
+  return out;
+};
+const MOSAIC_GAP = 8;
+
+const rowKey = (row: Row): string => (row.kind === 'link' ? row.id : row.kind === 'heading' ? 'done-heading' : row.kind === 'table' ? 'table' : row.key);
 
 /** A stamped link files itself under "Déjà faits" (and back) once its stamp has landed; the others close ranks. */
 const ROW_MOVE = LinearTransition.duration(duration.medium).easing(standard).delay(duration.short);
@@ -130,14 +152,27 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
 
   const openIds = useMemo(() => (open ? open.split(',') : []), [open]);
   const doneIds = useMemo(() => (done ? done.split(',') : []), [done]);
-  const rows: Row[] = useMemo(
-    () => [
-      ...openIds.map((lid, index) => ({ kind: 'link' as const, id: lid, ruled: index < openIds.length - 1 })),
-      ...(doneIds.length > 0 ? [{ kind: 'heading' as const, title: t('Déjà faits · {count}', { count: doneIds.length }) }] : []),
-      ...doneIds.map((lid, index) => ({ kind: 'link' as const, id: lid, ruled: index < doneIds.length - 1 })),
-    ],
-    [openIds, doneIds],
-  );
+  const { width: screen } = useWindowDimensions();
+  const layout = view.layout;
+  const rows: Row[] = useMemo(() => {
+    const heading: Row[] = doneIds.length > 0 ? [{ kind: 'heading', title: t('Déjà faits · {count}', { count: doneIds.length }) }] : [];
+    switch (layout) {
+      case 'gallery':
+        return [...pairs(openIds), ...heading, ...pairs(doneIds)];
+      case 'mosaic':
+        return [...(openIds.length > 0 ? [{ kind: 'mosaic' as const, key: 'mosaic-open', ids: openIds }] : []), ...heading, ...(doneIds.length > 0 ? [{ kind: 'mosaic' as const, key: 'mosaic-done', ids: doneIds }] : [])];
+      case 'table':
+        return openIds.length + doneIds.length > 0 ? [{ kind: 'table', open: openIds, done: doneIds }] : [];
+      default:
+        return [
+          ...openIds.map((lid, index) => ({ kind: 'link' as const, id: lid, ruled: index < openIds.length - 1 })),
+          ...heading,
+          ...doneIds.map((lid, index) => ({ kind: 'link' as const, id: lid, ruled: index < doneIds.length - 1 })),
+        ];
+    }
+  }, [layout, openIds, doneIds]);
+  // The gallery's tile, its picture 12 in from the screen's edge as the add strip is, 12 from its neighbour's.
+  const tileWidth = (screen - 2 * TILE_INSET) / 2;
 
   if (!line || line.deletedAt !== null) {
     // Gone while open (deleted on another device): a way back, never a blank screen.
@@ -181,6 +216,12 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   };
   const cost = formatUsd(toRead * CLAUDE_COST_PER_LINK[model]);
 
+  /** Held, a link (a row, a tile, a table's line) moves to another collection. */
+  const moveFrom = (lid: string): void => {
+    Keyboard.dismiss();
+    setMoving(lid);
+  };
+
   /** The collection goes to the bin; its links where the person said. */
   const remove = (fate: LinksFate) => {
     const ids = [...(useLibraryStore.getState().linksByNote[id] ?? [])];
@@ -205,7 +246,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         data={rows}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        keyExtractor={row => (row.kind === 'link' ? row.id : 'done-heading')}
+        keyExtractor={rowKey}
         itemLayoutAnimation={ROW_MOVE}
         skipEnteringExitingAnimations
         refreshControl={pullToSync}
@@ -222,6 +263,17 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
               onBack={() => navigation.goBack()}
               actions={
                 trashed ? null : (
+                  <>
+                  {all > 0 ? (
+                    <IconButton
+                      icon={LAYOUT_GLYPHS[layout]}
+                      label={t('Affichage : {layout}', { layout: LINE_LAYOUT_NAMES[layout] })}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setRefining('layout');
+                      }}
+                    />
+                  ) : null}
                   <IconButton
                     icon="more"
                     label={t('Plus d’actions')}
@@ -231,6 +283,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                       setMenu(true);
                     }}
                   />
+                  </>
                 )
               }
             />
@@ -328,7 +381,19 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
           </View>
         }
         renderItem={({ item, separators }) =>
-          item.kind === 'heading' ? (
+          item.kind === 'pair' ? (
+            <View style={styles.pair}>
+              {item.ids.map(lid => (
+                <LinkTile key={lid} id={lid} shape="gallery" width={tileWidth - 2 * TILE_INSET} onOpen={open => navigation.navigate('Link', { id: open })} onLongPress={moveFrom} />
+              ))}
+            </View>
+          ) : item.kind === 'mosaic' ? (
+            <View style={styles.mosaic}>
+              <LinkMosaic ids={item.ids} width={screen - 24} gap={MOSAIC_GAP} onOpen={open => navigation.navigate('Link', { id: open })} onLongPress={moveFrom} />
+            </View>
+          ) : item.kind === 'table' ? (
+            <LinkTable open={item.open} done={item.done} sort={view.sort} priced={priced} onSort={sort => setLineView(id, { ...view, sort })} onOpen={open => navigation.navigate('Link', { id: open })} onLongPress={moveFrom} />
+          ) : item.kind === 'heading' ? (
             <Animated.View entering={HEADING_IN}>
               <AppText variant="section" style={styles.heading} accessibilityRole="header">
                 {item.title}
@@ -340,10 +405,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
               onPressIn={separators.highlight}
               onPressOut={separators.unhighlight}
               onOpen={lid => navigation.navigate('Link', { id: lid })}
-              onLongPress={lid => {
-                Keyboard.dismiss();
-                setMoving(lid);
-              }}
+              onLongPress={moveFrom}
             />
           )
         }
@@ -459,6 +521,9 @@ const makeStyles = (theme: Theme) =>
     trashBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 12, marginTop: 14, marginBottom: 8, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: theme.color.paperHigh, ...corners(SHAPES.panel) },
     trashText: { flex: 1 },
     heading: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 },
+    // A gallery's line: its tiles' veils 6 in from the screen's edge, so their pictures stand at the add strip's 12.
+    pair: { flexDirection: 'row', paddingHorizontal: TILE_INSET, marginTop: 10 },
+    mosaic: { paddingHorizontal: 12, marginTop: 12 },
     // From the rows' text (6 + 10 + 76 + 14) to the add strip's edge, so the frames read as one column (the web's).
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: theme.color.hairline, marginLeft: 106, marginRight: 12 },
     separatorAside: { opacity: 0 },

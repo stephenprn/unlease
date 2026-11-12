@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { freshLibrary } from '@test/library';
-import { addLink, createLine, saveCollectionFacts, setLinkDone, updateLink } from '../../app/store/actions';
+import { addLink, createLabel, createLine, saveCollectionFacts, setLinkDone, updateLink } from '../../app/store/actions';
+import { useLineViewsStore } from '../../app/store/lineViews';
+import { NotesNav } from '../navigation/NotesNav';
 import { getRecord } from '@shared/app/store/records';
 import { useLibraryStore } from '../../app/store/library';
 import { setServer } from '@shared/app/store/settings';
@@ -182,6 +184,60 @@ describe('a collection page', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
     expect(useLibraryStore.getState().notes[line]).toMatchObject({ title: 'Garde-robe', emblem: 'oiseau', code: 'M', color: 'magenta' });
     expect(screen.getByRole('heading', { level: 1, name: 'Garde-robe' })).toBeInTheDocument();
+  });
+
+  it('lays its links out as a gallery, a mosaic or a table, kept for the collection on this browser', async () => {
+    const user = userEvent.setup();
+    // A fact on two of the links: a column of its own in the table.
+    updateLink(done, { attributes: [{ label: 'Couleur', value: 'Bordeaux' }] });
+    render(<LineScreen id={line} />);
+    const layouts = screen.getByRole('radiogroup', { name: 'Afficher comme' });
+    expect(within(layouts).getByRole('radio', { name: 'Liste' })).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(within(layouts).getByRole('radio', { name: 'Galerie' }));
+    expect(useLineViewsStore.getState().views[line]).toEqual({ sort: 'own', filter: 'all', layout: 'gallery' });
+    const gallery = screen.getByRole('list', { name: 'Liens de Mode' });
+    // A tile named as its row is; the done one under « Déjà faits », in the same grid.
+    expect(within(gallery).getByRole('link', { name: /^Veste en laine bouillie, Atelier Nord, 189/ })).toBeInTheDocument();
+    expect(within(gallery).getByRole('heading', { name: 'Déjà faits · 1' })).toBeInTheDocument();
+    expect(within(gallery).getByText('Page protégée contre les robots')).toBeInTheDocument();
+
+    await user.click(within(layouts).getByRole('radio', { name: 'Mosaïque' }));
+    // The done ones are a mosaic of their own, under their heading.
+    expect(screen.getByRole('list', { name: 'Liens de Mode' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Déjà faits · 1' })).toBeInTheDocument();
+
+    await user.click(within(layouts).getByRole('radio', { name: 'Tableau' }));
+    const table = screen.getByRole('table', { name: 'Liens de Mode' });
+    expect(within(table).getByRole('columnheader', { name: 'Couleur' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: 'Camel' })).toBeInTheDocument();
+    expect(within(table).getByRole('rowheader', { name: /Veste en laine bouillie/ })).toBeInTheDocument();
+    // A head orders the table, as the order's button does: the price up, then down, then the collection's own.
+    await user.click(within(table).getByRole('button', { name: 'Prix' }));
+    expect(useLineViewsStore.getState().views[line]).toEqual({ sort: 'priceUp', filter: 'all', layout: 'table' });
+    expect(within(table).getByRole('columnheader', { name: 'Prix' })).toHaveAttribute('aria-sort', 'ascending');
+    await user.click(within(table).getByRole('button', { name: 'Ajouté' }));
+    expect(useLineViewsStore.getState().views[line]).toEqual({ sort: 'added', filter: 'all', layout: 'table' });
+    expect(within(table).getByRole('columnheader', { name: 'Ajouté' })).toHaveAttribute('aria-sort', 'descending');
+  });
+});
+
+describe('the navigation', () => {
+  beforeEach(async () => {
+    await freshLibrary();
+  });
+
+  it('lists the collections and the labels by name, « Non classé » last, however the board is ordered', () => {
+    for (const title of ['Vins', 'écoles', 'Achats']) createLine({ title });
+    addLink('https://example.org/a', { noteId: 'inbox' });
+    for (const name of ['Travail', 'Perso', 'Idées']) createLabel(name);
+    render(<NotesNav route={{ name: 'board', view: 'notes' }} onNavigate={() => {}} />);
+    const names = screen.getAllByRole('link').map(link => link.textContent ?? '');
+    const at = (name: string): number => names.findIndex(text => text.startsWith(name));
+    expect([at('Achats'), at('écoles'), at('Vins'), at('Non classé')]).toEqual([...[at('Achats'), at('écoles'), at('Vins'), at('Non classé')]].sort((a, b) => a - b));
+    expect(at('Achats')).toBeGreaterThan(-1);
+    expect(at('Idées')).toBeLessThan(at('Perso'));
+    expect(at('Perso')).toBeLessThan(at('Travail'));
   });
 });
 

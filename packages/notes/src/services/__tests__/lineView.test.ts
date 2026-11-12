@@ -22,7 +22,7 @@ import {
 const link = (id: string, fields: Fields = {}): LinkItem =>
   linkFromRecord({ type: 'link', id, fields: { noteId: 'mode', url: `https://exemple.fr/${id}`, status: 'ready', createdAt: 1, deletedAt: null, ...fields }, clocks: {} });
 const ids = (links: readonly LinkItem[]): string[] => links.map(item => item.id);
-const view = (sort: LineView['sort'], filter: LineView['filter'] = 'all'): LineView => ({ sort, filter });
+const view = (sort: LineView['sort'], filter: LineView['filter'] = 'all', layout: LineView['layout'] = 'list'): LineView => ({ sort, filter, layout });
 
 // The collection's own order: as the library lists them (by position).
 const LINKS = [
@@ -111,14 +111,17 @@ describe('a collection’s order and filter', () => {
   });
 
   it('reads a stored view back, and forgets one back to the default', () => {
-    expect(readLineView({ sort: 'priceDown', filter: 'unread' })).toEqual({ sort: 'priceDown', filter: 'unread' });
-    expect(readLineView({ sort: 'byMood', filter: 42 })).toEqual(DEFAULT_LINE_VIEW);
+    // A view stored before layouts reads as a list.
+    expect(readLineView({ sort: 'priceDown', filter: 'unread' })).toEqual({ sort: 'priceDown', filter: 'unread', layout: 'list' });
+    expect(readLineView({ sort: 'own', filter: 'all', layout: 'gallery' })).toEqual(view('own', 'all', 'gallery'));
+    expect(readLineView({ sort: 'byMood', filter: 42, layout: 'carousel' })).toEqual(DEFAULT_LINE_VIEW);
     expect(readLineView(null)).toEqual(DEFAULT_LINE_VIEW);
-    expect(readLineViews({ a: { sort: 'added' }, b: { sort: 'own', filter: 'all' }, c: 'x' })).toEqual({ a: { sort: 'added', filter: 'all' } });
+    expect(readLineViews({ a: { sort: 'added' }, b: { sort: 'own', filter: 'all' }, c: 'x', d: { layout: 'table' } })).toEqual({ a: view('added'), d: view('own', 'all', 'table') });
     expect(readLineViews([1, 2])).toEqual({});
     const views = withLineView({}, 'mode', view('priceUp'));
-    expect(views).toEqual({ mode: { sort: 'priceUp', filter: 'all' } });
+    expect(views).toEqual({ mode: view('priceUp') });
     expect(withLineView(views, 'mode', DEFAULT_LINE_VIEW)).toEqual({});
+    expect(withLineView({}, 'mode', view('own', 'all', 'mosaic'))).toEqual({ mode: view('own', 'all', 'mosaic') });
   });
 
   it('names the orders and filters, and what an empty filter leaves', () => {

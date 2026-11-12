@@ -1,5 +1,5 @@
 /**
- * A collection's page laid out as this phone keeps it: its order and filter (remembered per
+ * A collection's page laid out as this phone keeps it: its layout, order and filter (remembered per
  * collection, never synced), « Tout lire » while Claude could read links kept unread, and what a
  * row says of a price that moved and of the owner's note.
  */
@@ -110,8 +110,8 @@ describe('a collection’s order and filter', () => {
 
     await press(tree, 'Ordre : Ordre de la collection');
     await press(tree, 'Prix croissant');
-    expect(useLineViewStore.getState().views[ids.mode!]).toEqual({ sort: 'priceUp', filter: 'all' });
-    expect(readPreferences().lineViews).toEqual({ [ids.mode!]: { sort: 'priceUp', filter: 'all' } });
+    expect(useLineViewStore.getState().views[ids.mode!]).toEqual({ sort: 'priceUp', filter: 'all', layout: 'list' });
+    expect(readPreferences().lineViews).toEqual({ [ids.mode!]: { sort: 'priceUp', filter: 'all', layout: 'list' } });
     expect(order()[1]).toBeLessThan(order()[0]!);
 
     await press(tree, 'Liens affichés : Tous les liens');
@@ -126,7 +126,7 @@ describe('a collection’s order and filter', () => {
 
   it('says what a filter that keeps nothing looked for, and shows all again', async () => {
     const tree = await boot();
-    await act(async () => setLineView(ids.films!, { sort: 'own', filter: 'priceDrop' }));
+    await act(async () => setLineView(ids.films!, { sort: 'own', filter: 'priceDrop', layout: 'list' }));
     await openLine(ids.films!);
     expect(textOf(tree)).toContain('Aucun prix en baisse dans Films pour l’instant.');
     expect(textOf(tree)).not.toContain('Le Dernier Quai');
@@ -173,5 +173,38 @@ describe('a link row', () => {
     expect(textOf(tree)).not.toContain('Camel');
     // The pull keeps its facts.
     expect(textOf(tree)).toContain('Marine');
+  });
+});
+
+describe('a collection’s layouts', () => {
+  it('shows its links as a gallery, a mosaic or a table from the head’s glyph, and remembers it', async () => {
+    const tree = await boot();
+    await openLine(ids.mode!);
+    await press(tree, 'Affichage : Liste');
+    expect(textOf(tree)).toContain('Les images en grand, pour comparer d’un coup d’œil');
+    await press(tree, 'Galerie');
+    expect(useLineViewStore.getState().views[ids.mode!]).toEqual({ sort: 'own', filter: 'all', layout: 'gallery' });
+    // Each link a tile, named as its row is; a tile pressed opens the link's page.
+    expect(pressable(tree, 'Veste en laine, atelier.fr, 189\u00a0€, Avant 215\u00a0€ · en baisse aujourd’hui, Votre note : « En M. Voir en boutique avant. »')).toBeTruthy();
+    expect(textOf(tree)).toContain('Pull col roulé');
+
+    await press(tree, 'Affichage : Galerie');
+    await press(tree, 'Mosaïque');
+    expect(textOf(tree)).toContain('89,90\u00a0€');
+
+    await press(tree, 'Affichage : Mosaïque');
+    await press(tree, 'Tableau');
+    // A column for the fact its links carry, one for the owner's note.
+    expect(textOf(tree)).toContain('Couleur');
+    expect(textOf(tree)).toContain('Votre note');
+    expect(textOf(tree)).toContain('Camel');
+    // Its price's head orders it.
+    await press(tree, 'Prix');
+    expect(useLineViewStore.getState().views[ids.mode!]).toEqual({ sort: 'priceUp', filter: 'all', layout: 'table' });
+    expect(readPreferences().lineViews).toEqual({ [ids.mode!]: { sort: 'priceUp', filter: 'all', layout: 'table' } });
+
+    // Another collection keeps its own.
+    await openLine(ids.films!);
+    expect(pressable(tree, 'Affichage : Liste')).toBeTruthy();
   });
 });

@@ -1,12 +1,13 @@
 /**
  * One collection: its head, a field to add a link straight into it, the links to do, then the
  * ones done, stamped, at the foot under "Déjà faits". One list, as on the phone, so a link
- * stamped (or put back) files itself there rather than leaving one list for another. Over the
- * rows, the order and the filter this browser keeps for the collection (`lineView`), and « Tout
+ * stamped (or put back) files itself there rather than leaving one list for another. The links
+ * are rows, a gallery, a mosaic or a table (`LineLayout`). Over them, the layout, the order and the
+ * filter this browser keeps for the collection (`lineView`), and « Tout
  * lire » while Claude could read links kept unread here, else « Tout relire » for the links read
  * before the last change to the collection's own facts (« Ce que Claude relève »).
  */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
@@ -49,6 +50,9 @@ import { MoveDialog } from '../features/lines/MoveDialog';
 import { ReviewDialog } from '../features/lines/ReviewDialog';
 import { sortDeletedLinksOnSlip, sortInboxOnSlip } from '../features/lines/sortingSlips';
 import { LinkRow } from '../features/links/LinkRow';
+import { LinkTable } from '../features/links/LinkTable';
+import { LinkTile } from '../features/links/LinkTile';
+import views from '../features/links/linkViews.module.css';
 import { useFilingMotion } from '../features/links/useFilingMotion';
 import { navigate } from '@shared/ui/router';
 import { paths } from '../routes';
@@ -117,7 +121,10 @@ export function LineScreen({ id }: { id: string }) {
   const [picking, setPicking] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const more = useRef<HTMLButtonElement>(null);
-  const list = useRef<HTMLUListElement>(null);
+  const list = useRef<HTMLElement | null>(null);
+  const holdList = useCallback((node: HTMLElement | null) => {
+    list.current = node;
+  }, []);
   const openIds = useMemo(() => (open ? open.split(',') : []), [open]);
   const doneIds = useMemo(() => (done ? done.split(',') : []), [done]);
   const order = useCallback((s: LibraryState) => orderOf(s, id, view), [id, view]);
@@ -186,18 +193,59 @@ export function LineScreen({ id }: { id: string }) {
       sortDeletedLinksOnSlip(ids, trashLines([id], INBOX_ID), tx('Collection supprimée'));
     }
   };
+  const doneHeading = t('Déjà faits · {count}', { count: doneIds.length });
+  const listLabel = t('Liens de {collection}', { collection: shownTitle(line) });
   // One flat run of keyed rows: a row changing sides is moved, never remounted, so its stamp lands.
   const rows = [
     ...openIds.map(lid => <LinkRow key={lid} id={lid} now={now} onOpen={openLink} />),
     ...(doneIds.length > 0
       ? [
           <li key="done-heading" className={styles.heading} data-flip="done-heading">
-            <h2 className="t-section">{t('Déjà faits · {count}', { count: doneIds.length })}</h2>
+            <h2 className="t-section">{doneHeading}</h2>
           </li>,
         ]
       : []),
     ...doneIds.map(lid => <LinkRow key={lid} id={lid} now={now} onOpen={openLink} />),
   ];
+  const tiles = (ids: readonly string[], shape: 'gallery' | 'mosaic'): ReactNode[] => ids.map(lid => <LinkTile key={lid} id={lid} now={now} shape={shape} onOpen={openLink} />);
+  const links: ReactNode =
+    rows.length === 0 ? null : view.layout === 'gallery' ? (
+      // One grid, as the rows are one list: a tile stamped files itself under « Déjà faits » and moves there.
+      <ul ref={holdList} className={views.gallery} aria-label={listLabel}>
+        {tiles(openIds, 'gallery')}
+        {doneIds.length > 0 ? (
+          <li key="done-heading" className={`${views.heading} ${views.headingWide}`} data-flip="done-heading">
+            <h2 className="t-section">{doneHeading}</h2>
+          </li>
+        ) : null}
+        {tiles(doneIds, 'gallery')}
+      </ul>
+    ) : view.layout === 'mosaic' ? (
+      // Columns cannot hold a heading across them: the done ones are a mosaic of their own.
+      <div ref={holdList}>
+        {openIds.length > 0 ? (
+          <ul className={views.mosaic} aria-label={listLabel}>
+            {tiles(openIds, 'mosaic')}
+          </ul>
+        ) : null}
+        {doneIds.length > 0 ? (
+          <>
+            <h2 className={`${views.heading} t-section`} data-flip="done-heading">
+              {doneHeading}
+            </h2>
+            <ul className={views.mosaic} aria-label={doneHeading}>
+              {tiles(doneIds, 'mosaic')}
+            </ul>
+          </>
+        ) : null}
+      </div>
+    ) : view.layout === 'table' ? (
+      <LinkTable tableRef={holdList} open={openIds} done={doneIds} now={now} sort={view.sort} priced={priced} label={listLabel} onSort={sort => setLineView(id, { ...view, sort })} onOpen={openLink} />
+    ) : (
+      <ul ref={holdList} className={styles.list} aria-label={listLabel}>
+        {rows}
+      </ul>
+    );
 
   return (
     <div className={styles.screen}>
@@ -217,7 +265,7 @@ export function LineScreen({ id }: { id: string }) {
           )
         }
       />
-      <div className={styles.page}>
+      <div className={styles.page} data-layout={view.layout}>
         {trashed ? (
           <OutlinedBox kind="panel" edge={false} className={`${styles.trashBanner} t-meta`}>
             <span>{t('Une collection dans la corbeille ne peut pas être modifiée.')}</span>
@@ -291,13 +339,9 @@ export function LineScreen({ id }: { id: string }) {
           />
         ) : null}
         {/* Only where there is something to order or pick: never over a single link, unless this browser keeps a view for it. */}
-        {all >= 2 || filtered || view.sort !== DEFAULT_LINE_VIEW.sort ? <LineRefine view={view} counts={{ all, unread, failed, priceDrop }} priced={priced} onChange={next => setLineView(id, next)} /> : null}
+        {all >= 2 || filtered || view.sort !== DEFAULT_LINE_VIEW.sort || view.layout !== DEFAULT_LINE_VIEW.layout ? <LineRefine view={view} counts={{ all, unread, failed, priceDrop }} priced={priced} onChange={next => setLineView(id, next)} /> : null}
         {all > 0 && rows.length === 0 ? <FilteredEmpty filter={view.filter} collection={shownTitle(line)} onClear={() => setLineView(id, { ...view, filter: 'all' })} /> : null}
-        {rows.length > 0 ? (
-          <ul ref={list} className={styles.list} aria-label={t('Liens de {collection}', { collection: shownTitle(line) })}>
-            {rows}
-          </ul>
-        ) : null}
+        {links}
       </div>
 
       <Menu

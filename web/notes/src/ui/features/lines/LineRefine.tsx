@@ -1,6 +1,7 @@
 /**
- * A collection's order and filter (`notes/services/lineView`), over its links: two quiet buttons
- * at the list's end, each saying what is applied and opening the app's menu, the choice ticked (the
+ * A collection's layout, order and filter (`notes/services/lineView`), over its links: the layouts
+ * as glyphs in a small segmented track at the list's start (one press, each named by its tooltip),
+ * and two quiet buttons at the list's end, each saying what is applied and opening the app's menu, the choice ticked (the
  * search's refine buttons, in the matcha wash while set apart from the default). A filter that
  * keeps nothing, and an order by price with fewer than two prices, wait in the second ink.
  *
@@ -11,7 +12,7 @@ import { useRef, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
-import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineView } from '@unlease/notes/services/lineView';
+import { emptyFilterSentence, LINE_FILTER_NAMES, LINE_FILTERS, LINE_LAYOUT_NAMES, LINE_LAYOUTS, LINE_SORT_NAMES, LINE_SORTS, type LineFilter, type LineLayout, type LineView } from '@unlease/notes/services/lineView';
 
 import { Button } from '@shared/ui/components/Button';
 import { settleIn } from '@shared/ui/components/EmptyLine';
@@ -19,7 +20,11 @@ import controls from '@shared/ui/components/controls.module.css';
 import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { OutlinedBox } from '@shared/ui/components/Outline';
+import { Segmented } from '@shared/ui/components/Segmented';
 import styles from './lines.module.css';
+
+/** Each layout's glyph, in its switch (the same on the phone's sheet). */
+export const LAYOUT_GLYPHS: Readonly<Record<LineLayout, GlyphName>> = { list: 'thumbRows', gallery: 'grid', mosaic: 'masonry', table: 'table' };
 
 const tick = (chosen: boolean) => (chosen ? undefined : <span className={controls.menuBlank} aria-hidden="true" />);
 
@@ -64,6 +69,14 @@ export function LineRefine({ view, counts, priced, onChange }: LineRefineProps) 
   }));
   return (
     <div className={styles.refine}>
+      <Segmented
+        compact
+        options={LINE_LAYOUTS.map(layout => ({ value: layout, label: LINE_LAYOUT_NAMES[layout], icon: LAYOUT_GLYPHS[layout] }))}
+        value={view.layout}
+        onChange={layout => onChange({ ...view, layout })}
+        label={t('Afficher comme')}
+      />
+      <span className={styles.refineFill} />
       <RefineButton icon="eye" value={LINE_FILTER_NAMES[view.filter]} label={t('Liens affichés : {filter}', { filter: LINE_FILTER_NAMES[view.filter] })} items={filters} active={view.filter !== 'all'} />
       <RefineButton icon="sort" value={LINE_SORT_NAMES[view.sort]} label={t('Ordre : {order}', { order: LINE_SORT_NAMES[view.sort] })} items={sorts} active={view.sort !== 'own'} />
     </div>
