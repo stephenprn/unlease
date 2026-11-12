@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.util.SizeF
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -110,7 +111,7 @@ class CountdownWidgetProvider : AgendaWidgetProvider() {
       }
     }
     views.setContentDescription(R.id.countdown_open, listOf(count.words, title, count.line).filter { it.isNotEmpty() }.joinToString(", "))
-    views.setOnClickPendingIntent(R.id.countdown_open, WidgetIntents.open(context, "unlease-agenda://${count.open}", id))
+    views.setOnClickPendingIntent(R.id.countdown_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://${count.open}", id))
     return views
   }
 }

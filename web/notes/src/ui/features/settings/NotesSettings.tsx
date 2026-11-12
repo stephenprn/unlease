@@ -1,12 +1,12 @@
 /**
  * Carnet's part of the Réglages, in DESIGN's order as on the phone: its own section first (« Carnet »:
- * how the board lays out, where the reminders ring), cleaning the links already saved (a row of
- * « Données »), and the Keep import, done once, after « Données ».
+ * how the board lays out, where the reminders ring), then cleaning the links already saved (a row of
+ * « Données »). The Keep import is the shell's « Importer » row (`importer`, `KeepWizard`).
  */
 import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { APP_NAME } from '@unlease/notes/brand';
-import { KEEP_SETTINGS_SECTION, NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
+import { NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
 
 import { cleanSavedLinks, trackedLinkIds } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
@@ -17,7 +17,6 @@ import { Segmented } from '@shared/ui/components/Segmented';
 import { Section } from '@shared/ui/features/settings/Section';
 import styles from '@shared/ui/features/settings/settings.module.css';
 import type { SettingsSection } from '@shared/modules';
-import { KeepImport } from './KeepImport';
 
 /** The board's layout, the section's first: Mur or Liste. */
 function BoardLayout() {
@@ -83,16 +82,7 @@ function CleanLinksRow() {
   );
 }
 
-function ImportSection() {
-  return (
-    <Section title={t('Importer depuis Google Keep')} id={KEEP_SETTINGS_SECTION}>
-      <KeepImport />
-    </Section>
-  );
-}
-
 export const NOTES_SETTINGS: readonly SettingsSection[] = [
   { id: 'notes', Body: NotesSection },
   { id: 'links', Body: CleanLinksRow, place: 'data' },
-  { id: 'import', Body: ImportSection, place: 'last' },
 ];

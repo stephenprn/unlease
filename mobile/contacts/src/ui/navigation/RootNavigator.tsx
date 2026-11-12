@@ -3,8 +3,8 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 
-import { APP_SCHEME } from '@unlease/contacts/brand';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
+import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { BirthdaysScreen } from '../screens/BirthdaysScreen';
@@ -12,6 +12,7 @@ import { ContactScreen } from '../screens/ContactScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { DuplicatesScreen } from '../screens/DuplicatesScreen';
 import { EditContactScreen } from '../screens/EditContactScreen';
+import { EraseScreen } from '../screens/EraseScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { LabelsScreen } from '../screens/LabelsScreen';
 import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
@@ -40,7 +41,7 @@ export function listPath(path: string): string {
  * `settings`, `admin`, `search` (the list's search, the launcher's shortcut); nothing after the scheme is the list.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [`${APP_SCHEME}://`],
+  prefixes: [`${appScheme('contacts')}://`],
   config: {
     // A contact opened from outside lies on the list, so Back and its arrow lead somewhere.
     initialRouteName: 'Contacts',
@@ -86,6 +87,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
+      <Stack.Screen name="Erase" component={EraseScreen} options={DEEPER} />
     </Stack.Navigator>
   );
 }

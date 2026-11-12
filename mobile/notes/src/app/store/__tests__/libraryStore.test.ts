@@ -12,12 +12,14 @@ import {
   addLink,
   addLinks,
   convertToChecklist,
+  convertToCollection,
   createLabel,
   createNote,
   deleteForever,
   deleteLabel,
   duplicateNote,
   ensureInbox,
+  eraseData,
   isEmptyNote,
   mergeIntoPrevious,
   readSkippedLinks,
@@ -320,5 +322,70 @@ describe('an address saved once per collection', () => {
     addLink('https://example.com/ancien', { noteId: films });
     addLinks(['https://example.com/a', 'https://example.com/b'], { noteId: films });
     expect(state().linksByNote[films]!.map(id => state().links[id]!.url)).toEqual(['https://example.com/a', 'https://example.com/b', 'https://example.com/ancien']);
+  });
+});
+
+describe('« Transformer en collection »', () => {
+  it('makes a checklist of addresses a collection in one batch, first among the collections, and takes it back', () => {
+    useSettingsStore.setState({ reading: false });
+    const older = createLine({ title: 'Films' });
+    const list = createNote({ kind: 'checklist', title: 'Cadeaux', color: 'green' });
+    addCheck(list, 'Lampe https://example.com/lampe');
+    const ticked = addCheck(list, 'https://example.com/livre');
+    toggleCheck(ticked);
+    const pending = countPending();
+    const done = convertToCollection(list);
+    if (done.status !== 'ok') throw new Error(done.status);
+    const collection = state().notes[done.collectionId]!;
+    expect(collection).toMatchObject({ kind: 'links', title: 'Cadeaux', color: 'green' });
+    expect(collection.position < state().notes[older]!.position).toBe(true);
+    expect((state().linksByNote[done.collectionId] ?? []).map(id => [state().links[id]!.url, state().links[id]!.comment, state().links[id]!.done, state().links[id]!.status])).toEqual([
+      ['https://example.com/lampe', 'Lampe', false, 'skipped'],
+      ['https://example.com/livre', '', true, 'skipped'],
+    ]);
+    expect(state().notes[list]!.trashedAt).not.toBeNull();
+    // The collection and its two links wait to be sent (the note, written here, was waiting already).
+    expect(countPending()).toBe(pending + 3);
+    done.undo();
+    expect(state().notes[done.collectionId]!.deletedAt).not.toBeNull();
+    expect(state().linksByNote[done.collectionId]).toBeUndefined();
+    expect(state().notes[list]!.trashedAt).toBeNull();
+  });
+
+  it('refuses a list with items that are not links, and writes nothing', () => {
+    const list = createNote({ kind: 'checklist', title: 'Courses' });
+    addCheck(list, 'https://example.com/a');
+    addCheck(list, 'du pain');
+    const pending = countPending();
+    expect(convertToCollection(list)).toEqual({ status: 'notLinks', lines: ['du pain'] });
+    expect(countPending()).toBe(pending);
+    expect(state().notes[list]!.trashedAt).toBeNull();
+  });
+});
+
+describe('« Effacer des données »', () => {
+  it('erases the parts chosen in one batch, « Non classé » kept, and counts what went', () => {
+    const label = createLabel('Perso');
+    const note = createNote({ kind: 'text', title: 'Idée' });
+    setLabels(note, [label]);
+    const list = createNote({ kind: 'checklist', title: 'Courses' });
+    addCheck(list, 'lait');
+    const films = createLine({ title: 'Films' });
+    addLink('https://example.com/dune', { noteId: films });
+    addLink('https://example.com/vrac', { noteId: INBOX_ID });
+
+    expect(eraseData(new Set(['labels']))).toBe(1);
+    expect(state().labels[label]!.deletedAt).not.toBeNull();
+    expect(state().notes[note]!.labelIds).toEqual([]);
+
+    expect(eraseData(new Set(['notes', 'collections']))).toBe(5);
+    expect(state().notes[note]!.deletedAt).not.toBeNull();
+    expect(state().notes[films]!.deletedAt).not.toBeNull();
+    // « Non classé » and its links stay until they are chosen.
+    expect(state().notes[INBOX_ID]!.deletedAt).toBeNull();
+    expect(state().linksByNote[INBOX_ID]).toHaveLength(1);
+    expect(eraseData(new Set(['inbox']))).toBe(1);
+    expect(state().linksByNote[INBOX_ID]).toBeUndefined();
+    expect(state().notes[INBOX_ID]!.deletedAt).toBeNull();
   });
 });

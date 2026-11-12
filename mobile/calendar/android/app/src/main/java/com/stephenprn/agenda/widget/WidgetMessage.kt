@@ -3,6 +3,7 @@ package com.stephenprn.agenda.widget
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 
 /**
@@ -13,7 +14,7 @@ internal object WidgetMessage {
   /** Not drawn yet (just placed or restored, the app never opened since): a tap opens the app, which hands it over. */
   fun waiting(context: Context): RemoteViews =
       message(context, context.getString(R.string.widget_waiting), null).apply {
-        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "unlease-agenda://"))
+        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
       }
 
   /** A countdown with no event chosen (its placing left half way): a tap opens the picker. */

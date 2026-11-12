@@ -1,12 +1,14 @@
 /**
  * Carnet's web app: everything it brings to the shell (`shared/modules`). Notes, checklists,
- * drawings, collections of links and their modules, labels, the capture links, the Keep import, the
- * kitchen's timers, its bin.
+ * drawings, collections of links and their modules, labels, the capture links, the Keep import's
+ * wizard, the kitchen's timers, its bin, and « Effacer des données ».
  */
 import { t, tx } from '@unlease/core/i18n';
+import { eraseParts } from '@unlease/notes/services/erase';
+import { KEEP_SOURCE, KEEP_WIZARD_WORDS } from '@unlease/notes/services/keepImport';
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 
-import { emptyTrash, trashedNoteIds } from './app/store/actions';
+import { emptyTrash, eraseData, trashedNoteIds } from './app/store/actions';
 import { resetBoard } from './app/store/board';
 import { useLibraryStore } from './app/store/library';
 import { openCapture } from './app/store/notesUi';
@@ -15,6 +17,7 @@ import { NOTES_ADMIN_SECTIONS } from './admin';
 import { notesData } from './data';
 import { handleCaptureRoute } from './ui/captureRoute';
 import { classifyClipboard, newChecklist, newDrawing, newNote, newTitledNote } from './ui/commands';
+import { KeepWizard } from './ui/features/importing/KeepWizard';
 import { NOTES_SPOT_KINDS } from './ui/features/spotlight/kinds';
 import { NOTES_SETTINGS } from './ui/features/settings/NotesSettings';
 import { ReadingExtras } from './ui/features/settings/ReadingExtras';
@@ -114,6 +117,8 @@ export const notesModule: AppModule = {
   onDropFiles: onNotesDrop,
 
   settingsSections: NOTES_SETTINGS,
+  importer: { source: () => KEEP_SOURCE, meta: () => KEEP_WIZARD_WORDS.importerMeta, Wizard: KeepWizard },
+  erase: { parts: () => eraseParts(useLibraryStore.getState()), run: chosen => eraseData(chosen) },
   emptyBin: () => emptyTrash(),
   binCount: () => trashedNoteIds().length,
   adminSections: NOTES_ADMIN_SECTIONS,

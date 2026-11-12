@@ -3,7 +3,8 @@
  * (`/agenda/event/<id>?at=<occurrence>`, the address other apps' references open: `suitePlaces`),
  * its form, a new event's (`/agenda/new?start=…&title=…`, prefilled by a quick add, Claude or
  * Carnet's « Ajouter à l'agenda »), a birthday, the labels, a label's events, the subscriptions, the
- * import, the bin. `/agenda` itself opens on the view and the day chosen last.
+ * bin. `/agenda` itself opens on the view and the day chosen last. The import is Réglages' page
+ * (`/agenda/settings/import`, the shell's `paths.importer`): its old address, `/agenda/import`, leads there.
  */
 import type { CalendarView } from '@unlease/calendar/services/eventText';
 
@@ -82,6 +83,7 @@ export const paths = {
   labels: `${HOME}/labels`,
   label: (id: string): string => `${HOME}/label/${part(id)}`,
   feeds: `${HOME}/feeds`,
+  /** The import's old address: it leads to Réglages' (`@shared/ui/router`'s `paths.importer`). */
   import: `${HOME}/import`,
   trash: `${HOME}/trash`,
 } as const;

@@ -23,7 +23,10 @@ import {
   type EventChange,
   type EventDraft,
 } from '@unlease/calendar/services/editing';
-import type { ImportPlan } from '@unlease/calendar/services/importing';
+import { erasedCount } from '@unlease/core/services/erase';
+import { calendarEraseChanges } from '@unlease/calendar/services/erase';
+import type { IcsCalendar } from '@unlease/calendar/services/ics';
+import { forgetImport, importChanges, importedEvents, trashImported, type ImportPlan } from '@unlease/calendar/services/importing';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
 import { feedFields, labelFields } from '@unlease/calendar/sync/entities';
 
@@ -150,13 +153,35 @@ export function markEventFileUploaded(fileId: string): void {
   if (changes.length > 0) writeLocal(changes);
 }
 
-/** An import's plan, one batch: how many events it wrote. */
+/** An import's plan, one batch (its labels, its events, the series it completes): how many events came. */
 export function writeImport(plan: ImportPlan, now: number = Date.now()): number {
-  writeLocal(
-    plan.creates.map(entry => ({ type: 'calendarEvent', id: entry.id, patch: entry.fields })),
-    now,
-  );
-  return plan.creates.length;
+  const changes = importChanges(plan);
+  if (changes.length > 0) writeLocal(changes, now);
+  return plan.count;
+}
+
+/** « Annuler » on an import's slip: what it wrote, gone, as if the files had never come. */
+export function undoImport(plan: ImportPlan, now: number = Date.now()): void {
+  writeLocal(forgetImport(plan, now), now);
+}
+
+/** « Retirer ces événements »: the events a file brought here before, to the bin with their exceptions; how many, and the undo. */
+export function removeImported(calendar: IcsCalendar, now: number = Date.now()): { readonly count: number; readonly undo: Undo } {
+  const all = Object.values(events());
+  const found = importedEvents(calendar, all);
+  if (found.length === 0) return { count: 0, undo: () => undefined };
+  return { count: found.length, undo: writeWithUndo(trashImported(found, all, now), now) };
+}
+
+// ── erasing ────────────────────────────────────────────────────────────────
+
+/** « Effacer des données »: the parts chosen, tombstoned as one batch (a label erased taken off the events that stay); how many records went. */
+export function eraseCalendar(chosen: ReadonlySet<string>, now: number = Date.now()): number {
+  const { events: all, calendarLabels, feeds } = useLibraryStore.getState();
+  const library = { events: all, labels: calendarLabels, feeds };
+  const changes = calendarEraseChanges(library, chosen, now);
+  if (changes.length > 0) writeLocal(changes, now);
+  return erasedCount(changes);
 }
 
 // ── labels ─────────────────────────────────────────────────────────────────

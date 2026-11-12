@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.MainActivity
 
 /** Where a widget's taps go: a page of the app, the quick window, a website, or a tick. */
@@ -31,7 +32,7 @@ internal object WidgetIntents {
     val intent =
         Intent(context, QuickActivity::class.java)
             // One PendingIntent per widget and mode: the data only tells them apart.
-            .setData(Uri.parse("carnet://quick/$mode/$widgetId"))
+            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://quick/$mode/$widgetId"))
             .putExtra(QuickActivity.EXTRA_MODE, mode)
             .putExtra(QuickActivity.EXTRA_TARGET, target)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
@@ -60,7 +61,7 @@ internal object WidgetIntents {
       PendingIntent.getBroadcast(
           context,
           widgetId,
-          tickIntent(context, widgetId).setData(Uri.parse("carnet://tick/$checkId/$checked")).putExtras(tickFill(checkId, checked)),
+          tickIntent(context, widgetId).setData(Uri.parse("${BuildConfig.APP_SCHEME}://tick/$checkId/$checked")).putExtras(tickFill(checkId, checked)),
           IMMUTABLE,
       )
 

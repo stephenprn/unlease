@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.contacts.BuildConfig
 import com.stephenprn.contacts.R
 import org.json.JSONObject
 
@@ -35,7 +36,7 @@ class CallsWidgetProvider : ContactsWidgetProvider() {
     } else {
       views.setImageViewResource(R.id.calls_mark, R.drawable.wgen_g_star)
     }
-    val list = WidgetIntents.open(context, "unlease-contacts://${data.optString("open").ifEmpty { "favorites" }}")
+    val list = WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://${data.optString("open").ifEmpty { "favorites" }}")
     views.setOnClickPendingIntent(R.id.calls_open, list)
     views.setOnClickPendingIntent(R.id.calls_empty_open, list)
     views.setTextViewText(R.id.calls_empty_text, context.getString(if (label) R.string.widget_calls_empty_label else R.string.widget_calls_empty_favorites))

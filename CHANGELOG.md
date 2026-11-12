@@ -4,6 +4,24 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Added
+
+- Every app's import is now a step-by-step wizard, on the web and on Android: where the data comes from and how to get it, then a preview of everything the file holds with what will become of each item (new, completed, already here, or left out and why), filtered and searchable, then the choices that need you, each with its default and its cost, then the import and a report of what came in and what was left out. Nothing is written before "Import". It opens from Settings › Data, and the first run now offers it as an optional step ("Your data", skipped with "Later") while the app holds nothing yet.
+- Pages imports a Notion export ("Markdown & CSV" `.zip`) or Markdown files and folders (Obsidian…), as nested pages with their pictures, files, callouts, toggles, tasks, tables and links between them; Notion's databases become tables. The pages go under a new page, at the top of the tree or inside a page you pick, optionally kept out of Claude's reach, and "Undo" takes the whole import back. On Android, Pages reads `.md` files; a Notion `.zip` is imported from the web.
+- Carnet's Keep import lets you untick notes one by one, and choose whether Keep's archived notes stay archived, go on the board or stay in Keep.
+- Contacts' import lets you leave people out one by one, choose which of Google's labels to keep, whether to complete the contacts you have, take the photos and keep Google's favourites; a person read twice, or with nothing to know them by, says so; "Undo" takes the import back, leaving alone what you changed since.
+- Agenda imports several `.ics` files at once, or Google's `.zip` export on the web; it can keep only the events to come or those of the last year, file each calendar under a label of its name, and take the file's reminders, none or your own; a series already imported takes the dates the file changed since.
+- "Erase data" at the foot of Settings › Data, in every app, on the web and on Android: tick the parts to erase (in Agenda your own events, imported events, subscriptions and labels apart; in Carnet notes, collections, the links in Uncategorised, labels and the facts Claude notes; in Contacts people, favourites and labels; in Pages your pages and the journal), then type your server's token again and the word DELETE ("SUPPRIMER" in French). When your server backs up to S3, a backup runs first and must succeed. What is erased leaves every device and the server, without going through the bin.
+- In Carnet, "Convert to collection" in a list's menu, on the web and on Android: each item's link becomes one of the collection's links, the words beside it its comment, a ticked item a done link, and the list goes to the bin ("Undo" brings it back). If some items are not links, it says which.
+- In Agenda, on the web and on Android, an import can be taken back: "Undo" on the message that follows it removes everything it added, and picking the same `.ics` file again later offers "Remove these events", which moves the events it brought in to the bin (asked first, even those changed since, and with its own "Undo").
+
+### Changed
+
+- Carnet's Keep import turns a note that is mostly links into a collection too (a list of 50 links with one line of plain text no longer stays a note): each line without a link is kept as the comment of the link above it, dropped, or replaced by a link you paste, line by line in the wizard.
+- On the web, Contacts' and Agenda's import pages moved to Settings › Import (`/contacts/settings/import`, `/agenda/settings/import`); their former addresses lead there.
+- In Agenda, importing a file brings back its events that are in the bin, instead of counting them as already there.
+- Building an Android app from source (`npm run android`, or `assembleDevRelease` for a release-like build) now makes a separate dev app, "Carnet Dev" and so on, with a striped icon. It installs beside the app you use instead of replacing it, never reads its connection, and doesn't answer its links. Connect it to a server of your own.
+
 ## [0.1.1] - 2026-11-11
 
 ### Added

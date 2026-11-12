@@ -345,12 +345,12 @@ describe('the settings', () => {
     expect(location.pathname).toBe('/notes/admin');
   });
 
-  it('put the app’s own first, the look on one row, the data, what is done once, and the Administration last', () => {
+  it('put the app’s own first, the look on one row, the data (the import first, the erase last), and the Administration last', () => {
     render(<SettingsScreen />);
     // The page's sheets, each named by its title or by its one row.
     const page = screen.getByRole('heading', { level: 1, name: 'Réglages' }).parentElement!.parentElement!;
     const names = [...page.querySelectorAll(':scope > section')].map(section => document.getElementById(section.getAttribute('aria-labelledby') ?? '')?.textContent);
-    expect(names).toEqual(['Carnet', 'Apparence', 'Langue', 'Données', 'Importer depuis Google Keep', 'Administration']);
+    expect(names).toEqual(['Carnet', 'Apparence', 'Langue', 'Données', 'Administration']);
     // The board's layout is Carnet's own now, beside its reminders; the look is on its own page.
     const own = screen.getByRole('region', { name: 'Carnet' });
     expect(within(own).getByRole('radiogroup', { name: 'Disposition du tableau' })).toBeInTheDocument();

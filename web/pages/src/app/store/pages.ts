@@ -11,6 +11,9 @@ import { comparePositions, indexBetween, placeAt } from '@unlease/core/services/
 import { createId } from '@unlease/core/services/ids';
 import type { BlockDraft } from '@unlease/pages/services/pageText';
 import type { PageTemplate } from '@unlease/pages/services/templates';
+import { importChanges, importUndoChanges, type ImportPlan, type ImportWritten } from '@unlease/pages/services/importing';
+import { pagesEraseChanges } from '@unlease/pages/services/erase';
+import { erasedCount } from '@unlease/core/services/erase';
 import { concatRich, markupToPlain, parseRich, richFromPlain, richLength, serializeRich } from '@unlease/core/services/richText';
 import { convertCell, distinctTexts, emptyCell, optionsFor } from '@unlease/pages/services/table';
 import { blockFields, blockFromRecord, type NewBlockFields } from '@unlease/pages/sync/entities';
@@ -771,6 +774,14 @@ export function setBlockFile(page: PageId, id: string, file: BlockFile): void {
   commit(page, [{ type: 'block', id, patch: { ...file, uploaded: false, url: null } }]);
 }
 
+/**
+ * A file of an import (`importPages`) kept on this device for its block: it uploads with the next
+ * sync. Not a step of the page's undo: the import's slip takes the whole import back.
+ */
+export function setImportedFile(id: string, file: BlockFile): void {
+  writeLocal([{ type: 'block', id, patch: { ...file, uploaded: false, url: null } }]);
+}
+
 /** Every block showing this file: the server has it now. */
 export function markBlockFileUploaded(fileId: string): void {
   const { blocks } = state();
@@ -864,4 +875,33 @@ export function resizeColumns(page: PageId, ratios: readonly { readonly id: stri
     page,
     ratios.map(({ id, ratio }) => ({ type: 'block' as const, id, patch: { ratio: Math.round(Math.max(0.05, Math.min(20, ratio)) * 1000) / 1000 } })),
   );
+}
+
+// ── an import, and erasing ─────────────────────────────────────────────────
+
+/**
+ * The pages an import brings (`pages/services/importing`, planned just before against the pages as
+ * they are), as one batch: no step of any page's undo (undoing it would erase pages for good), its
+ * slip takes it back whole (`undoImport`). Returns what was written, the files to attach after.
+ */
+export function importPages(plan: ImportPlan, now: number = Date.now()): ImportWritten {
+  const { blocks, blocksByParent } = state();
+  const written = importChanges(plan, { blocks, blocksByParent }, now);
+  writeLocal(
+    written.changes.map(change => ({ type: change.type, id: change.id, patch: { ...change.patch } })),
+    now,
+  );
+  return written;
+}
+
+/** An import taken back: every block it made, gone for good on every device. */
+export function undoImport(created: readonly string[], now: number = Date.now()): void {
+  writeLocal(importUndoChanges(created, now), now);
+}
+
+/** « Effacer des données »: every block of the parts chosen (`pages/services/erase`), as one batch; how many went. */
+export function erasePages(chosen: ReadonlySet<string>, now: number = Date.now()): number {
+  const changes = pagesEraseChanges(state(), chosen, now);
+  writeLocal(changes, now);
+  return erasedCount(changes);
 }

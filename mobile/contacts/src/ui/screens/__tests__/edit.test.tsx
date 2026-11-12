@@ -321,14 +321,21 @@ describe('Contacts, its form', () => {
     const tree = await boot({ onboarded: true });
     await settle();
     expect(navigationRef.getCurrentRoute()?.name).toBe('Import');
-    expect(textOf(tree)).toMatch(/2\scontacts lus/);
+    // Straight to its preview: everyone read, with what becomes of them.
+    expect(textOf(tree)).toMatch(/2\spersonnes lues/);
+    expect(textOf(tree)).toContain('Hugo Garnier');
     expect(media.removed).toContain('/cache/shared-in/card.vcf');
 
     await act(async () => {
-      pressableWithText(tree, 'Importer').props.onPress();
+      pressableWithText(tree, 'Continuer').props.onPress();
     });
     await settle();
-    expect(textOf(tree)).toContain('Import terminé');
+    expect(textOf(tree)).toContain('Amis');
+    await act(async () => {
+      pressableWithText(tree, 'Importer 2\u00a0contacts').props.onPress();
+    });
+    await settle();
+    expect(textOf(tree)).toContain('Vos contacts sont là');
     const { contacts, labels, liveContacts } = useLibraryStore.getState();
     expect(liveContacts).toHaveLength(2);
     const friends = Object.values(labels).find(label => label.name === 'Amis')!;

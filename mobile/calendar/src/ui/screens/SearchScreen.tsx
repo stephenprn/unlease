@@ -16,12 +16,18 @@ import { nameOf } from '@app/mentionNames';
 import { useLibraryStore } from '@app/store/libraryStore';
 
 import { AppText, EdgeFlatList, EmptyLine, EmptyState, Ground, ListRow, SearchHeader } from '@shared/ui/components';
-import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
+import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { ScreenProps } from '../navigation/types';
 
 export function SearchScreen({ navigation }: ScreenProps<'Search'>) {
+  // A setting a search found: its screen, with its section where that screen takes one (the import's and the erase's take none).
+  const openSettingsPlace = (place: PhoneSettingsPlace): void => {
+    const screen = settingsScreenOf(place);
+    if (screen === 'Import' || screen === 'Erase') navigation.navigate(screen);
+    else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
+  };
   const styles = useThemedStyles(makeStyles);
   const events = useLibraryStore(s => s.events);
   const feeds = useLibraryStore(s => s.feeds);
@@ -47,7 +53,7 @@ export function SearchScreen({ navigation }: ScreenProps<'Search'>) {
               <SettingsMatches
                 query={query}
                 own={CALENDAR_SETTINGS_PLACES}
-                onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
+                onOpen={place => openSettingsPlace(place)}
               />
               {found.length > 0 ? (
                 <View style={styles.search}>

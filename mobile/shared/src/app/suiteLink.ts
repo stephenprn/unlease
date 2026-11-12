@@ -20,15 +20,8 @@ import { parseAppearance, type Appearance } from '@unlease/design/appearance';
 import { shareWithSiblings, siblingHoldings } from '@shared/platform/suiteLink';
 
 import { ownApp } from './store/library';
+import { appPackage } from './variant';
 import { followGrain, followLocale, followLook, readLookOffer, useSettingsStore, type GrainChoice, type LocaleChoice, type LookOffer, type ServerConfig } from './store/settingsStore';
-
-/** Each app's applicationId: the signed builds of the suite. Append only (the next apps' ids are kept for them). */
-export const SUITE_PACKAGES: Readonly<Record<AppId, string>> = {
-  notes: 'com.stephenprn.carnet',
-  pages: 'com.stephenprn.pages',
-  calendar: 'com.stephenprn.agenda',
-  contacts: 'com.stephenprn.contacts',
-};
 
 /** What a sibling app holds, as this app can use it. */
 export interface Sibling {
@@ -79,11 +72,12 @@ export function parseLookOffer(value: string): LookOffer | null {
   }
 }
 
-const appOfPackage = (name: string): AppId | undefined => APP_IDS.find(id => SUITE_PACKAGES[id] === name);
+/** The app a sibling's applicationId is, in this build (a dev build's siblings are the other dev builds). */
+const appOfPackage = (name: string): AppId | undefined => APP_IDS.find(id => appPackage(id) === name);
 
 /** The other apps of the suite on this phone, in the suite's order, those that hold something. */
 export async function findSiblings(own: AppId = ownApp()): Promise<Sibling[]> {
-  const others = APP_IDS.filter(id => id !== own).map(id => SUITE_PACKAGES[id]);
+  const others = APP_IDS.filter(id => id !== own).map(appPackage);
   const found: Sibling[] = [];
   for (const holding of await siblingHoldings(others)) {
     const app = appOfPackage(holding.packageName);

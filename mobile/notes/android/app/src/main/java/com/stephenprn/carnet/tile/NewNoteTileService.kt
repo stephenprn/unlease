@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.MainActivity
 
 /**
@@ -39,6 +40,6 @@ class NewNoteTileService : TileService() {
   }
 
   private companion object {
-    const val NEW_NOTE = "carnet://capture/note"
+    val NEW_NOTE = "${BuildConfig.APP_SCHEME}://capture/note"
   }
 }

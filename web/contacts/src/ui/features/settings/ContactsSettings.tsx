@@ -3,8 +3,8 @@
  * or by last name), the « Indicatif par défaut »: the country whose calling code a number written
  * without its `+` takes (a contact's page shows and dials it with it, WhatsApp needs it, a new number
  * in the form starts with it). (An address offers Google Maps and OpenStreetMap where it is shown: no
- * maps to choose here.) In « Données », as on the phone: the import (its page) and the export of
- * every contact as one `.vcf`.
+ * maps to choose here.) In « Données », as on the phone: the export of every contact as one `.vcf`,
+ * under the import (the shell's row, opening the wizard).
  */
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -20,9 +20,7 @@ import { SelectField } from '@shared/ui/components/SelectField';
 import { Section } from '@shared/ui/features/settings/Section';
 import styles from '@shared/ui/features/settings/settings.module.css';
 import type { SettingsSection } from '@shared/modules';
-import { navigate } from '@shared/ui/router';
 import contacts from '../../contacts.module.css';
-import { paths } from '../../routes';
 import { callingCountries, callingCountry } from '../callingCodes';
 import { exportContacts } from '../exporting';
 
@@ -71,7 +69,7 @@ function ContactsSection() {
   );
 }
 
-/** « Données »'s import and export, the phone's rows: the import comes in (`download`), the export goes out (`upload`). */
+/** « Données »'s export, the phone's row: it goes out (`upload`). The import is the shell's row, above it (`AppModule.importer`). */
 function ContactsData() {
   const live = useLiveContacts();
   const exportAll = (): void => {
@@ -80,14 +78,6 @@ function ContactsData() {
   };
   return (
     <>
-      <button type="button" className={styles.row} onClick={() => navigate(paths.import)}>
-        <Icon name="download" size={24} />
-        <span className={styles.rowText}>
-          <span className="t-body">{t('Importer')}</span>
-          <span className="t-meta">{t('Un fichier exporté de Google Contacts (.vcf ou .csv)')}</span>
-        </span>
-        <Icon name="chevronRight" size={20} />
-      </button>
       {live.length > 0 ? (
         <button type="button" className={styles.row} onClick={exportAll}>
           <Icon name="upload" size={24} />

@@ -3,6 +3,7 @@ package com.stephenprn.agenda.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 
 /**
@@ -24,7 +25,7 @@ class NextWidgetProvider : AgendaWidgetProvider() {
       views.setTextViewText(R.id.next_when, "")
       views.setTextViewText(R.id.next_place, "")
       WidgetKit.tint(context, views, R.id.next_stripe, R.color.wgen_hairline)
-      views.setOnClickPendingIntent(R.id.next_open, WidgetIntents.open(context, "unlease-agenda://"))
+      views.setOnClickPendingIntent(R.id.next_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
       return views
     }
     WidgetType.title(context, views, R.id.next_title_image, R.id.next_title, next.optString("title"), WidgetType.Face.TITLE, width - 40f, 2, R.color.wgen_ink)

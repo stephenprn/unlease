@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 import java.time.LocalDate
 import java.time.ZoneId
@@ -112,7 +113,7 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
       views.setTextViewText(R.id.today_more, if (tomorrow == null) "" else "${day.data.optString("tomorrowTitle")} · ${tomorrow.optString("title")}")
       WidgetKit.tint(context, views, R.id.today_stripe, if (tomorrow == null) R.color.wgen_hairline else WidgetKit.pigment(tomorrow.optString("color")))
       val open = tomorrow?.optString("open")
-      views.setOnClickPendingIntent(R.id.today_open, if (open.isNullOrEmpty()) WidgetIntents.open(context, "unlease-agenda://today", id) else WidgetIntents.route(context, open))
+      views.setOnClickPendingIntent(R.id.today_open, if (open.isNullOrEmpty()) WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://today", id) else WidgetIntents.route(context, open))
       return views
     }
     val runs = running(first, now)
@@ -135,8 +136,8 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
     val weather = day.data.optString("weather")
     views.setTextViewText(R.id.today_weather, weather)
     views.setViewVisibility(R.id.today_weather, if (weather.isEmpty()) View.GONE else View.VISIBLE)
-    views.setOnClickPendingIntent(R.id.today_open, WidgetIntents.open(context, "unlease-agenda://today", id))
-    views.setOnClickPendingIntent(R.id.today_add, WidgetIntents.open(context, "unlease-agenda://new", 1))
+    views.setOnClickPendingIntent(R.id.today_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://today", id))
+    views.setOnClickPendingIntent(R.id.today_add, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://new", 1))
 
     val out = mutableListOf<Pair<Long, RemoteViews>>()
     for (row in day.rows) out += WidgetKit.key(row.optString("key")) to item(context, row, words, now)
@@ -198,7 +199,7 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
         Intent(context, TodayWidgetProvider::class.java)
             .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
             // One alarm per widget: the data only tells them apart.
-            .setData(Uri.parse("unlease-agenda://widget-today/$id"))
+            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://widget-today/$id"))
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
     return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
   }

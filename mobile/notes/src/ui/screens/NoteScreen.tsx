@@ -16,6 +16,7 @@ import { useMinute } from '@shared/app/hooks/useMinute';
 import { pickInto } from '@app/media';
 import {
   convertToChecklist,
+  convertToCollection,
   convertToText,
   canDuplicate,
   deleteForever,
@@ -38,6 +39,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { onBeforePause } from '@shared/app/sync/syncManager';
 import { contactPlace, eventPlace, openInApp } from '@shared/app/openApp';
 import { mentionName } from '@unlease/notes/services/noteMentions';
+import { canBecomeCollection, listConvertedMessage, notLinksWords } from '@unlease/notes/services/listToCollection';
 
 import { noteBackdrop, patternBackdrop } from '@unlease/design/backgrounds';
 import { isRuledPattern } from '@unlease/design/colors';
@@ -107,6 +109,14 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
   const [sheet, setSheet] = useState<Sheets>(reminder ? 'reminder' : null);
   const [menu, setMenu] = useState(false);
   const [confirmForever, setConfirmForever] = useState(false);
+  /** « Transformer en collection » refused: which items are not links. */
+  const [refusal, setRefusal] = useState<ReturnType<typeof notLinksWords> | null>(null);
+  const closeRefusal = useCallback(() => setRefusal(null), []);
+  // A checklist with an item, or a text note with a line, may become a collection (a text note's typed words count too).
+  const convertible = useLibraryStore(s => {
+    const current = s.notes[id];
+    return !!current && canBecomeCollection(current, s);
+  });
   /** Deleted for good from here: the screen leaves without announcing it. */
   const [leaving, setLeaving] = useState(false);
   const [title, setTitle] = useState(note?.title ?? '');
@@ -230,6 +240,35 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     const undo = setArchived(id, !note.archived);
     back();
     showSnack(note.archived ? t('Note désarchivée') : t('Note archivée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+  };
+
+  /**
+   * « Transformer en collection »: every item an address, a collection of them takes the note's place
+   * (the note to the bin), opened over it; else the items that are not links, said in a dialog.
+   */
+  const toCollection = () => {
+    flushTitle(title);
+    flushBody();
+    const outcome = convertToCollection(id);
+    if (outcome.status === 'notLinks') {
+      setRefusal(notLinksWords(note.kind, outcome.lines));
+      return;
+    }
+    if (outcome.status !== 'ok') return;
+    navigation.replace('Line', { id: outcome.collectionId });
+    showSnack(
+      listConvertedMessage(outcome.title, outcome.links),
+      {
+        label: tc('undo', 'Annuler'),
+        run: () => {
+          outcome.undo();
+          // Still on the collection: the note comes back in its place.
+          const route = navigationRef.isReady() ? navigationRef.getCurrentRoute() : undefined;
+          if (route?.name === 'Line' && (route.params as { id?: string } | undefined)?.id === outcome.collectionId) navigationRef.dispatch(StackActions.replace('Note', { id }));
+        },
+      },
+      { tone: 'success' },
+    );
   };
 
   const deleteNow = () => {
@@ -428,6 +467,10 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                 if (copy) showSnack(t('Note dupliquée'), { label: t('Ouvrir'), run: () => navigationRef.isReady() && navigationRef.dispatch(StackActions.push('Note', { id: copy })) }, { tone: 'success' });
               },
             },
+            // A checklist's items, or a text note's lines, all addresses: a collection of them.
+            ...(note.kind === 'text' || note.kind === 'checklist'
+              ? [{ label: t('Transformer en collection'), icon: 'collections' as const, disabled: !(convertible || (note.kind === 'text' && body.text.trim().length > 0)), onPress: toCollection }]
+              : []),
             { label: t('Supprimer'), icon: 'trash', onPress: trash, danger: true },
           ]}
         />
@@ -505,6 +548,17 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           onCancel={() => setConfirmForever(false)}
           onConfirm={deleteNow}
         />
+        {/* « Transformer en collection » refused: which items are not links, and one « OK ». */}
+        <Dialog visible={refusal !== null} title={refusal?.title ?? ''} message={refusal?.message} confirmLabel={t('OK')} cancelLabel={null} onConfirm={closeRefusal} onCancel={closeRefusal}>
+          <View style={styles.refusal}>
+            {(refusal?.items ?? []).map((item, index) => (
+              <AppText key={`${index}:${item}`} variant="body" numberOfLines={2}>
+                {`• ${item}`}
+              </AppText>
+            ))}
+            {refusal?.more ? <AppText variant="meta">{refusal.more}</AppText> : null}
+          </View>
+        </Dialog>
       </View>
     </NoteHistoryContext.Provider>
   );
@@ -519,6 +573,8 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.paper },
     fill: { flex: 1 },
+    // The items that are not links, one a line under the refusal's message.
+    refusal: { gap: 4 },
     // At least as tall as the screen, so a ruled paper runs on to its foot; the sheet cuts it.
     content: { flexGrow: 1, overflow: 'hidden' },
     text: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 8 },

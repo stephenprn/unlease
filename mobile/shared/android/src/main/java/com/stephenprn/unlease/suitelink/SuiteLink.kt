@@ -4,11 +4,12 @@ import android.content.Context
 
 /**
  * What this app hands its siblings of the suite (its server's address, its token, its appearance, its grain, its language, the look it sent):
- * kept in private preferences, served by [SuiteProvider] to apps signed by the same key only.
+ * kept in private preferences, served by [SuiteProvider] to apps signed by the same key only: the
+ * manifests guard it with the signature permission `com.stephenprn.unlease.permission.SUITE`, and a dev
+ * build with `com.stephenprn.unlease.dev.permission.SUITE` (`${suiteSuffix}`, dev-builds.gradle), so a
+ * dev build and a released one never read each other.
  */
 object SuiteLink {
-  /** The permission guarding every app's provider; `signature`: only the suite's own signer holds it. */
-  const val PERMISSION = "com.stephenprn.unlease.permission.SUITE"
   const val PATH = "link"
   /** Append only: an older sibling serves the first ones alone, and a reader asks each by its name. */
   val COLUMNS = arrayOf("server", "token", "appearance", "grain", "locale", "look")

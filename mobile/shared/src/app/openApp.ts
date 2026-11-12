@@ -1,6 +1,6 @@
 /**
  * A place in another app of the suite (a page of Pages from Carnet, a note of Carnet from Pages):
- * opened in that app when it is installed on this phone (its scheme, `APPS.<id>.scheme`), else in the
+ * opened in that app when it is installed on this phone (its scheme, `appScheme(id)`), else in the
  * suite's web app on the server (`<server>/<web path>`).
  */
 import { Linking } from 'react-native';
@@ -10,6 +10,7 @@ import { t } from '@unlease/core/i18n';
 
 import { useSettingsStore } from './store/settingsStore';
 import { showSnack } from './store/uiStore';
+import { appScheme } from './variant';
 
 export interface SuitePlace {
   /** After the app's scheme: `page/<id>` opens `unlease-pages://page/<id>`; '' its home. */
@@ -53,7 +54,7 @@ export function appHome(app: AppId): SuitePlace {
 export async function openInApp(app: AppId, place: SuitePlace): Promise<boolean> {
   try {
     // Android answers only for the apps the manifest names (`<queries>`): the suite's are there.
-    await Linking.openURL(`${APPS[app].scheme}://${place.phone}`);
+    await Linking.openURL(`${appScheme(app)}://${place.phone}`);
     return true;
   } catch {
     // Not installed here: the web app on the server, when there is one.

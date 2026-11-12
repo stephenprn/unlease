@@ -3,6 +3,7 @@ package com.stephenprn.carnet.widget
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.R
 
 /** A widget that cannot show its notes: not chosen yet, not handed over yet, or gone. One line and what a tap does. */
@@ -19,7 +20,7 @@ internal object WidgetMessage {
   /** Chosen, but the app has not drawn it yet (just restored, or never opened since): a tap opens the app, which hands it over. */
   fun waiting(context: Context): RemoteViews =
       message(context, context.getString(R.string.widget_waiting), null).apply {
-        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "carnet://"))
+        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
       }
 
   /** Its collection, label or note is gone: another one is a tap away. */

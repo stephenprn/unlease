@@ -16,7 +16,7 @@ import { resetReminders } from '@shared/platform/reminders';
 import { agendaIn, itemsOn } from '../agenda';
 import { giftIdeas } from '../gifts';
 import { keepAlarmsFresh, reconcileAlarms, REFRESH_MINUTES } from '../reminders';
-import { addEvent, deleteLabel, createLabel, writeImport } from '../store/actions';
+import { addEvent, deleteLabel, createLabel, removeImported, undoImport, writeImport } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore, writeLocal } from '../store/libraryStore';
 
 const now = Date.now();
@@ -129,5 +129,22 @@ describe('labels and imports', () => {
     const calendar = parseIcs(file);
     expect(writeImport(planImport(calendar, Object.values(useLibraryStore.getState().events), now))).toBe(1);
     expect(planImport(calendar, Object.values(useLibraryStore.getState().events), now).creates).toHaveLength(0);
+  });
+
+  it('takes an import back, on its slip or later from the same file', () => {
+    const file = ['BEGIN:VCALENDAR', 'BEGIN:VEVENT', 'UID:b@test', 'DTSTART;VALUE=DATE:20261231', 'SUMMARY:Réveillon', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    const calendar = parseIcs(file);
+    const kept = () => Object.values(useLibraryStore.getState().events).filter(event => event.uid === 'b@test' && event.deletedAt === null);
+    const plan = planImport(calendar, Object.values(useLibraryStore.getState().events), now);
+    writeImport(plan);
+    undoImport(plan);
+    // Taken back whole: not even in the bin, and the file comes again.
+    expect(kept()).toHaveLength(0);
+    expect(writeImport(planImport(calendar, Object.values(useLibraryStore.getState().events), now))).toBe(1);
+    const { count, undo } = removeImported(calendar);
+    expect(count).toBe(1);
+    expect(kept()[0]!.trashedAt).not.toBeNull();
+    undo();
+    expect(kept()[0]!.trashedAt).toBeNull();
   });
 });

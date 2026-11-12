@@ -7,9 +7,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Linking } from 'react-native';
 
-import { APPS, type AppId } from '@unlease/core/apps';
+import type { AppId } from '@unlease/core/apps';
 
 import { useSettingsStore } from '../store/settingsStore';
+import { appScheme } from '../variant';
 
 export function useAppReachable(app: AppId): boolean {
   return useReachableApps([app]).length > 0;
@@ -39,7 +40,7 @@ function useInstalledSet(key: string): ReadonlySet<AppId> {
   useEffect(() => {
     let live = true;
     const asked = key ? (key.split(',') as AppId[]) : [];
-    Promise.all(asked.map(app => Linking.canOpenURL(`${APPS[app].scheme}://`).then(answer => (answer ? app : null), () => null)))
+    Promise.all(asked.map(app => Linking.canOpenURL(`${appScheme(app)}://`).then(answer => (answer ? app : null), () => null)))
       .then(answers => {
         if (live) setInstalled(new Set(answers.filter((app): app is AppId => app !== null)));
       })

@@ -13,8 +13,10 @@ export type RootStackParamList = {
   Birthdays: undefined;
   /** « Gérer les libellés ». */
   Labels: undefined;
-  /** From Google or the phone; `shared`: the card shared to the app, read already (`importStore`). */
+  /** The import's wizard, from Google or the phone; `shared`: the card shared to the app, read already (`importStore`), on its preview. */
   Import: { readonly source?: 'shared' } | undefined;
+  /** « Effacer des données », from Réglages › Données. */
+  Erase: undefined;
   /** « Doublons »: the contacts that are one person, to merge. */
   Duplicates: undefined;
   Trash: undefined;

@@ -1,6 +1,6 @@
 /**
  * Contact cards shared to the app (WhatsApp's « Partager le contact », a `.vcf` opened from a file
- * manager): read, then shown on the import screen to confirm, never written without asking. Another
+ * manager): read, then shown on the import's preview to confirm, never written without asking. Another
  * app's « Créer un contact » (the dialer's, Messages'): the new contact's form, filled with what it
  * handed (`handedContact`), saved or left by the person. Both wait for the first run to be done.
  */
@@ -40,12 +40,12 @@ async function receive(share: Share, arrivals: Arrivals): Promise<void> {
   }
   if (share.files.length === 0) return;
   handled.add(share.id);
-  const read = await readSharedFiles(share.files);
+  const read = await readSharedFiles(share.files, share.subject);
   if (read.status !== 'ok') {
     if (read.status === 'error') showSnack(read.message, undefined, { tone: 'error' });
     return;
   }
-  setPendingImport({ source: 'shared', contacts: read.contacts, name: share.subject });
+  setPendingImport(read.read);
   arrivals.import();
 }
 

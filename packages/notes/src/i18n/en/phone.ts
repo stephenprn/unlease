@@ -80,10 +80,6 @@ export const EN_PHONE: Dictionary = {
   'Exportez, téléchargez le fichier .zip, puis choisissez-le ici.': 'Export, download the .zip file, then choose it here.',
   'note importée': 'note imported',
   'notes importées': 'notes imported',
-  'Importer depuis Keep': 'Import from Keep',
-  'Dans cette archive': 'In this archive',
-  '{notes} de la corbeille de Keep seront ignorées': '{notes} from Keep’s bin will be skipped',
-  '{notes} de la corbeille de Keep sera ignorée': '{notes} from Keep’s bin will be skipped',
   'label': 'label',
   'labels': 'labels',
   'fichier illisible': 'unreadable file',
@@ -91,7 +87,6 @@ export const EN_PHONE: Dictionary = {
   '{notes} qu’un lien': '{notes} only a link',
   'Transformer en liens': 'Turn into links',
   'Importer': 'Import',
-  'Depuis Google Takeout': 'From Google Takeout',
   'Choisir l’archive': 'Choose the archive',
   'Créer un label': 'Create a label',
   'Enregistrer': 'Save',
@@ -200,7 +195,6 @@ export const EN_PHONE: Dictionary = {
   'Mur': 'Wall',
   'Liste': 'List',
   'Importer depuis Google Keep': 'Import from Google Keep',
-  'Archive Google Takeout (.zip)': 'Google Takeout archive (.zip)',
   'Google Keep': 'Google Keep',
   'Nettoyer les liens enregistrés': 'Clean saved links',
   '{links} des paramètres de suivi (utm, fbclid…) : ils seront retirés, le reste de l’adresse est gardé.': '{links} tracking parameters (utm, fbclid…): they will be removed, the rest of the address is kept.',
@@ -238,7 +232,6 @@ export const EN_PHONE: Dictionary = {
   'Ce lien n’a pas de prix': 'This link has no price',
 
   // Google Keep import: what the notes made of links become, and the summary
-  'Rien de nouveau dans cette archive.': 'Nothing new in this archive.',
   'Laissé de côté': 'Left out',
   '{notes} : ignorées, rien ne sera doublé': '{notes}: skipped, nothing will be doubled',
   '{notes} de liens': '{notes} of links',
@@ -255,5 +248,4 @@ export const EN_PHONE: Dictionary = {
   'Note gardée telle quelle': 'Kept as a note',
   '{note} en collection': '{note} as a collection',
   'Photos : {done} sur {total}': 'Photos: {done} of {total}',
-  'Les notes importées gardent leur date, leur couleur, leurs labels, leur mise en forme et leurs photos. Importer la même archive une seconde fois ne double rien. Rien n’est envoyé ailleurs que sur votre serveur.': 'Imported notes keep their date, colour, labels, formatting and photos. Importing the same archive a second time doubles nothing. Nothing is sent anywhere but your server.',
 };

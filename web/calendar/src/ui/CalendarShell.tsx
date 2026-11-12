@@ -5,7 +5,7 @@
  * foot: the import and the export are in Réglages, as on the phone), « Ajouter en quelques mots »
  * beside the search, the tab's title of each place.
  */
-import { useMemo, useRef, useState, type AnimationEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type AnimationEvent } from 'react';
 
 import { APPS } from '@unlease/core/apps';
 import { getLocale, t } from '@unlease/core/i18n';
@@ -27,7 +27,7 @@ import { PebbleEdge } from '@shared/ui/components/Outline';
 import { isApple } from '@shared/ui/dom';
 import { NavFold, NavGlyph, NavRow, navStyles } from '@shared/ui/navigation/NavParts';
 import shell from '@shared/ui/navigation/shell.module.css';
-import { navigate, type Arrival, type Route } from '@shared/ui/router';
+import { navigate, paths as shellPaths, type Arrival, type Route } from '@shared/ui/router';
 import { usePresence } from '@shared/ui/components/presence';
 import { askParse } from '../app/api';
 import { useItems, LAYER_COLORS } from '../app/hooks/useItems';
@@ -43,12 +43,17 @@ import { CalendarScreen } from './screens/CalendarScreen';
 import { EditEventScreen, NewEventScreen } from './screens/EditScreen';
 import { EventScreen } from './screens/EventScreen';
 import { FeedsScreen } from './screens/FeedsScreen';
-import { ImportScreen } from './screens/ImportScreen';
 import { LabelScreen } from './screens/LabelScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
 import { TrashScreen } from './screens/TrashScreen';
 import { MiniMonth } from './views/MiniMonth';
 
+
+/** The import's old address (`/agenda/import`): the import is Réglages' page now, the address replaced by its own. */
+function MovedImport() {
+  useEffect(() => navigate(shellPaths.importer, { replace: true }), []);
+  return null;
+}
 
 export function CalendarScreens({ route }: { route: Route }) {
   switch (route.name) {
@@ -69,7 +74,7 @@ export function CalendarScreens({ route }: { route: Route }) {
     case 'agendaFeeds':
       return <FeedsScreen />;
     case 'agendaImport':
-      return <ImportScreen />;
+      return <MovedImport />;
     case 'agendaTrash':
       return <TrashScreen />;
     default:

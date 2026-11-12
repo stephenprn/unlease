@@ -16,7 +16,7 @@ import { EmptyState } from '@shared/ui/components/EmptyState';
 import { SyncNotice } from '@shared/ui/navigation/Header';
 import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
 import { PageHead } from '@shared/ui/navigation/PageHead';
-import { navigate, type Route } from '@shared/ui/router';
+import { navigate, paths as shellPaths, type Route } from '@shared/ui/router';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import screens from '@shared/ui/screens/screens.module.css';
 import styles from '../contacts.module.css';
@@ -24,7 +24,6 @@ import { ContactList, type ListSection } from '../features/ContactList';
 import { BirthdayLine, FavoritesStrip } from '../features/HomeExtras';
 import { openNewContact } from '../features/newContact';
 import { visibleContacts } from '../features/visible';
-import { paths } from '../routes';
 
 const EMPTY_TEXT = tx('Créez un contact, ou importez ceux de Google : sur contacts.google.com, « Exporter », puis déposez le fichier ici.');
 
@@ -35,7 +34,7 @@ function NoContactsYet({ labelId }: { labelId?: string }) {
       <Button icon="personPlus" onClick={() => openNewContact('', labelId ? [labelId] : undefined)}>
         {t('Créer un contact')}
       </Button>
-      <Button kind="text" icon="download" onClick={() => navigate(paths.import)}>
+      <Button kind="text" icon="download" onClick={() => navigate(shellPaths.importer)}>
         {t('Importer des contacts')}
       </Button>
     </EmptyState>

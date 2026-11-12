@@ -234,3 +234,8 @@ gradle.taskGraph.whenReady { graph ->
         "Try it on your own phone, never hand it to anyone: anyone can sign an update with that key."
     )
 }
+
+// The dev builds beside the released apps: `debug` and `devRelease` are `<applicationId>.dev`, signed
+// with the debug key, named « … Dev », answering `unlease-contacts-dev://` (mobile/shared/android/dev-builds.gradle).
+ext.suiteScheme = "unlease-contacts"
+apply from: "${rootDir}/../../shared/android/dev-builds.gradle"

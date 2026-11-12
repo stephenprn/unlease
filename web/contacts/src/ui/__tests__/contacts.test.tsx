@@ -261,8 +261,15 @@ describe('Contacts’ web app', () => {
     expect(screen.queryByRole('link', { name: 'Importer' })).toBeNull();
     expect(screen.getByRole('button', { name: /^Exporter/ })).toHaveTextContent('1 contact dans un fichier .vcf');
     await user.click(screen.getByRole('button', { name: /^Importer/ }));
-    await waitFor(() => expect(location.pathname).toBe('/contacts/import'));
+    await waitFor(() => expect(location.pathname).toBe('/contacts/settings/import'));
     expect(screen.getByRole('heading', { level: 1, name: 'Importer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Depuis Google Contacts' })).toBeInTheDocument();
+  });
+
+  it('sends the import’s old address to its page in Réglages', async () => {
+    open('/contacts/import');
+    render(<App />);
+    await waitFor(() => expect(location.pathname).toBe('/contacts/settings/import'));
   });
 
   it('picks contacts and acts on them all: a label, the favourites', async () => {
@@ -310,8 +317,10 @@ describe('Contacts’ web app', () => {
     act(() => {
       document.body.dispatchEvent(drop);
     });
-    await waitFor(() => expect(location.pathname).toBe('/contacts/import'));
+    await waitFor(() => expect(location.pathname).toBe('/contacts/settings/import'));
+    // Straight to its preview, the file read.
     expect(await screen.findByText('1 nouveau contact')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Ce que contient le fichier' })).toBeInTheDocument();
   });
 
   it('lists a label’s contacts and the labels in the navigation, with their counts', () => {
@@ -327,22 +336,44 @@ describe('Contacts’ web app', () => {
     expect(nav.length).toBeGreaterThan(0);
   });
 
-  it('imports a small vCard: shows what it will do, then writes it', async () => {
+  it('imports a small vCard through its wizard: the preview, the choices, one batch, and the way back', async () => {
     const user = userEvent.setup();
-    person('Léa Martin', { emails: [{ id: 'e1', address: 'lea@example.org', kind: 'home', label: '' }] });
-    open('/contacts/import');
+    const lea = person('Léa Martin', { emails: [{ id: 'e1', address: 'lea@example.org', kind: 'home', label: '' }] });
+    open('/contacts/settings/import');
     render(<App />);
-    const vcf = ['BEGIN:VCARD', 'VERSION:3.0', 'N:Martin;Léa;;;', 'EMAIL:lea@example.org', 'TEL;TYPE=CELL:06 12 34 56 78', 'END:VCARD', 'BEGIN:VCARD', 'VERSION:3.0', 'N:Roux;Julien;;;', 'CATEGORIES:Travail', 'END:VCARD', ''].join('\r\n');
-    const file = new File([vcf], 'contacts.vcf', { type: 'text/vcard' });
-    await user.upload(screen.getByLabelText('Fichier de contacts'), file);
-    expect(await screen.findByText('1 nouveau contact')).toBeInTheDocument();
+    const vcf = [
+      'BEGIN:VCARD', 'VERSION:3.0', 'N:Martin;Léa;;;', 'EMAIL:lea@example.org', 'TEL;TYPE=CELL:06 12 34 56 78', 'END:VCARD',
+      'BEGIN:VCARD', 'VERSION:3.0', 'N:Roux;Julien;;;', 'CATEGORIES:Travail,Imported on 3/12/2024', 'END:VCARD',
+      'BEGIN:VCARD', 'VERSION:3.0', 'NOTE:Rappeler', 'END:VCARD',
+      'BEGIN:VCARD', 'VERSION:3.0', 'N:Morel;Inès;;;', 'END:VCARD', '',
+    ].join('\r\n');
+    await user.upload(screen.getByLabelText('Fichier de contacts'), new File([vcf], 'contacts.vcf', { type: 'text/vcard' }));
+    // The preview: counted, then every person with what becomes of them.
+    expect(await screen.findByText('4 personnes lues')).toBeInTheDocument();
+    expect(screen.getByText('2 nouveaux contacts')).toBeInTheDocument();
     expect(screen.getByText('1 contact déjà là, complété')).toBeInTheDocument();
     expect(screen.getByText('1 libellé à créer')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Importer' }));
-    expect(await screen.findByText('Import terminé')).toBeInTheDocument();
+    expect(screen.getByText('Complète Léa Martin : 1 numéro')).toBeInTheDocument();
+    expect(screen.getByText('Ni nom, ni numéro, ni e-mail : rien pour le reconnaître')).toBeInTheDocument();
+    // Inès left out by her box: the counts follow.
+    await user.click(screen.getByRole('checkbox', { name: 'Importer Inès Morel' }));
+    expect(screen.getByText('1 nouveau contact')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    // The choices: Google's import marker is left out at first.
+    expect(screen.getByRole('switch', { name: /^Travail/ })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /^Imported on/ })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /^Compléter les contacts déjà là/ })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('button', { name: /^Importer 1\scontact$/ }));
+    expect(await screen.findByRole('heading', { name: 'Vos contacts sont là' })).toBeInTheDocument();
     const people = Object.values(state().contacts);
     expect(people.map(contact => contact.firstName).sort()).toEqual(['Julien', 'Léa']);
-    expect(people.find(contact => contact.firstName === 'Léa')!.phones.map(phone => phone.number)).toEqual(['06 12 34 56 78']);
+    expect(state().contacts[lea]!.phones.map(phone => phone.number)).toEqual(['06 12 34 56 78']);
     expect(Object.values(state().labels).map(label => label.name)).toEqual(['Travail']);
+    // Taken back: Julien and the label gone, Léa as she was.
+    await user.click(screen.getByRole('button', { name: 'Annuler l’import' }));
+    expect(await screen.findByRole('heading', { level: 2, name: 'Import annulé' })).toBeInTheDocument();
+    expect(people.filter(contact => state().contacts[contact.id]!.deletedAt === null).map(contact => contact.firstName)).toEqual(['Léa']);
+    expect(state().contacts[lea]!.phones).toEqual([]);
+    expect(Object.values(state().labels).every(label => label.deletedAt !== null)).toBe(true);
   });
 });

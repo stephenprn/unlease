@@ -1,0 +1,103 @@
+/*
+ * A way through in steps (the first run, an import's wizard): stones on a thread across the column,
+ * the step open a leaf on its matcha stone, those done ticked, those ahead a bare edge. Pebbles mark
+ * state only: the steps' names sit under them.
+ */
+.trail {
+  --stone: 30px;
+  display: grid;
+  grid-template-columns: repeat(var(--steps, 3), minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trail li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+/* The thread from the stone before, stopping short of both: walked in matcha, ahead in the edge's ink. */
+.trail li + li::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--stone) / 2 - 1px);
+  right: calc(50% + var(--stone) / 2 + 8px);
+  left: calc(-50% + var(--stone) / 2 + 8px);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--edge);
+}
+
+.trail li:is([data-state='done'], [data-state='here']) + li:is([data-state='done'], [data-state='here'])::before {
+  background: var(--focus);
+}
+
+.trail li[data-state='here'] {
+  color: var(--ink);
+}
+
+.trail li[data-state='here'] .stone {
+  --edge-color: var(--focus);
+  --edge-width: 2px;
+}
+
+.trail li[data-state='ahead'] {
+  color: var(--ink-faint);
+}
+
+.stone {
+  position: relative;
+  display: flex;
+  width: var(--stone);
+  height: var(--stone);
+  --edge-color: var(--edge);
+  --edge-width: 1.5px;
+}
+
+.stoneFill {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.trail li[data-state='done'] .stoneFill {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+.trail li[data-state='here'] .stoneFill {
+  background: var(--action-container);
+  animation: stone-set var(--duration-long) var(--ease-decelerate) both;
+}
+
+.stoneLeaf {
+  width: 13px;
+  height: 13px;
+  background: var(--leaf);
+}
+
+@keyframes stone-set {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trail li[data-state='here'] .stoneFill {
+    animation-name: fade-in;
+  }
+}
+
+/* A smaller trail (an import's wizard on a settings page): the same stones, closer. */
+.trail[data-size='small'] {
+  --stone: 24px;
+}

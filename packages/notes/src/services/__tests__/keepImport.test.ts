@@ -11,19 +11,29 @@ import { TEXT_LIMITS } from '../../sync/types';
 import { htmlLines, keepFormattedLines } from '../keepHtml';
 import {
   alreadyImported,
+  canLeaveOut,
+  defaultKeepChoices,
+  keepCountLines,
   keepFileFinder,
   keepId,
+  keepImportCount,
+  keepLinksToRead,
   keepNoteId,
   keepPlanToRecords,
+  keepPreview,
   keepReportLines,
   linkListNotes,
   parseKeepLabels,
   parseKeepNote,
   planKeepImport,
   singleLinkNotes,
+  strayKey,
+  strayListNotes,
+  strayProblems,
   type ImportOptions,
   type KeepLibrary,
   type KeepPlan,
+  type StrayChoice,
 } from '../keepImport';
 import { bodyText, noteLines } from '../noteBody';
 
@@ -443,3 +453,162 @@ describe('into records', () => {
   });
 });
 
+
+/** Counts are written with a no-break space before their noun: plain spaces, to compare. */
+const plain = (lines: readonly string[]): string[] => lines.map(line => line.replace(/\u00a0/g, ' '));
+
+describe('lists made mostly of links', () => {
+  /** Fifty addresses and one line that holds none, a third of the way down. */
+  const fifty = (): string => {
+    const lines = Array.from({ length: 50 }, (_, index) => `https://example.org/page${index}`);
+    lines.splice(17, 0, 'À lire avant mai');
+    return lines.join('\n');
+  };
+  const plan = () => planKeepImport([{ name: 'Lectures.json', text: keep({ title: 'Lectures', textContent: fifty() }) }]);
+  const collectionOf = (strays: Map<string, StrayChoice>) => {
+    const result = keepPlanToRecords(plan(), options({ collections: new Set(['Lectures.json']), strays }));
+    const collection = notesOf(result.records).find(note => note.kind === 'links')!;
+    const links = linksOf(result.records)
+      .filter(link => link.noteId === collection.id)
+      .sort((a, b) => (a.position < b.position ? -1 : 1));
+    return { result, collection, links };
+  };
+
+  it('can become a collection, its line without an address kept with its place', () => {
+    const note = plan().notes[0]!;
+    expect(note.links).toHaveLength(50);
+    expect(note.strays).toEqual([{ text: 'À lire avant mai', done: false, line: 17, link: 16, before: false, at: 17 }]);
+    expect(linkListNotes(plan())).toHaveLength(1);
+    expect(strayListNotes(plan())).toHaveLength(1);
+  });
+
+  it('joins the line to the comment of the link above it, by default', () => {
+    const { links, result } = collectionOf(new Map());
+    expect(links).toHaveLength(50);
+    expect(links[16]).toMatchObject({ url: 'https://example.org/page16', comment: 'À lire avant mai' });
+    expect(result.report).toMatchObject({ collections: 1, links: 50, straysKept: 1, straysDropped: 0, straysLinked: 0 });
+    expect(plain(keepReportLines(result.report).imported)).toContain('1 ligne sans lien gardée en commentaire');
+  });
+
+  it('drops the line when asked', () => {
+    const note = plan().notes[0]!;
+    const { links, result } = collectionOf(new Map([[strayKey(note, note.strays[0]!), { kind: 'drop' }]]));
+    expect(links).toHaveLength(50);
+    expect(links.every(link => link.comment === '')).toBe(true);
+    expect(result.report).toMatchObject({ straysKept: 0, straysDropped: 1 });
+    expect(plain(keepReportLines(result.report).skipped)).toContain('1 ligne sans lien retirée');
+  });
+
+  it('puts a link typed in its place, the line’s words its comment', () => {
+    const note = plan().notes[0]!;
+    const { links, result } = collectionOf(new Map([[strayKey(note, note.strays[0]!), { kind: 'link', url: 'example.com/mai' }]]));
+    expect(links).toHaveLength(51);
+    expect(links.map(link => link.url).slice(16, 19)).toEqual(['https://example.org/page16', 'https://example.com/mai', 'https://example.org/page17']);
+    expect(links[17]).toMatchObject({ comment: 'À lire avant mai', filedBy: 'person' });
+    expect(result.report).toMatchObject({ links: 51, straysLinked: 1 });
+    // Its id is drawn from the line, the others' from their own place: an import again finds them all.
+    const again = collectionOf(new Map([[strayKey(note, note.strays[0]!), { kind: 'link', url: 'example.com/mai' }]]));
+    expect(again.links.map(link => link.id)).toEqual(links.map(link => link.id));
+  });
+
+  it('keeps the words when the address typed is none, and joins one the list holds already', () => {
+    const note = plan().notes[0]!;
+    const key = strayKey(note, note.strays[0]!);
+    expect(collectionOf(new Map([[key, { kind: 'link', url: 'pas une adresse' }]])).links[16]!.comment).toBe('À lire avant mai');
+    const twin = collectionOf(new Map([[key, { kind: 'link', url: 'https://example.org/page40' }]]));
+    expect(twin.links).toHaveLength(50);
+    expect(twin.links.find(link => link.url === 'https://example.org/page40')!.comment).toBe('À lire avant mai');
+    expect(strayProblems(plan(), { singleLinks: true, collections: new Set(['Lectures.json']), strays: new Map([[key, { kind: 'link', url: '' }]]) })[key]).toBe('Saisissez l’adresse du lien.');
+    expect(strayProblems(plan(), { singleLinks: true, collections: new Set(['Lectures.json']), strays: new Map([[key, { kind: 'link', url: 'example.org' }]]) })[key]).toBeNull();
+  });
+
+  it('joins a line that comes before every link to the first one', () => {
+    const heading = planKeepImport([{ name: 'h.json', text: keep({ textContent: 'Idées de sorties\nhttps://example.org/a commentaire\nhttps://example.org/b' }) }]);
+    const note = heading.notes[0]!;
+    expect(note.strays).toEqual([{ text: 'Idées de sorties', done: false, line: 0, link: 0, before: true, at: 0 }]);
+    const links = linksOf(keepPlanToRecords(heading, options({ collections: new Set(['h.json']) })).records);
+    expect(links.map(link => link.comment)).toEqual(['Idées de sorties\ncommentaire', '']);
+  });
+
+  it('leaves a note under the threshold a note, and one link with words a note too', () => {
+    // Two addresses in five lines: prose with links.
+    const prose = parsed(keep({ textContent: 'Rendez-vous lundi\nhttps://example.org/a\nPrendre le dossier\nhttps://example.org/b\nAppeler Marc' }));
+    expect(prose.links).toBeNull();
+    expect(prose.strays).toEqual([]);
+    expect(parsed(keep({ textContent: 'Le garage\nhttps://example.org/garage' })).links).toBeNull();
+    // One address twice and a line: a single link is never made of a list with words.
+    expect(parsed(keep({ textContent: 'https://example.org/a\nhttps://example.org/a\nmot' })).links).toBeNull();
+  });
+});
+
+describe('the wizard’s preview', () => {
+  const NOW = 1_800_000_000_000;
+  const files = () =>
+    planKeepImport([
+      { name: 'Courses.json', text: keep({ title: 'Courses', listContent: [{ text: 'lait', isChecked: true }, { text: 'pain', isChecked: false }], labels: [{ name: 'perso' }], isPinned: true }) },
+      { name: 'Lien.json', text: keep({ textContent: 'https://example.org/canape', createdTimestampUsec: CREATED + 1 }) },
+      { name: 'Films.json', text: keep({ title: 'Films', textContent: 'À voir\nhttps://example.org/a\nhttps://example.org/b', createdTimestampUsec: CREATED + 2 }) },
+      { name: 'Vieux.json', text: keep({ title: 'Vieux', textContent: 'Archivé', isArchived: true, createdTimestampUsec: CREATED + 3 }) },
+      { name: 'Jeté.json', text: keep({ title: 'Jeté', isTrashed: true, textContent: 'x' }) },
+      { name: 'Vide.json', text: keep({ createdTimestampUsec: CREATED + 4 }) },
+      { name: 'cassé.json', text: '{' },
+    ]);
+  const context = (known: (type: 'note' | 'link', id: string) => boolean = () => false) => ({ known, reading: true, now: NOW });
+
+  it('lists every note with what it becomes, then every file left out and why', () => {
+    const plan = files();
+    const entries = keepPreview(plan, context(), defaultKeepChoices(plan));
+    expect(entries.map(entry => [entry.title, entry.fate, entry.glyph])).toEqual([
+      ['Courses', 'new', 'checklist'],
+      ['Films', 'new', 'collections'],
+      ['example.org/canape', 'new', 'link'],
+      ['Vieux', 'new', 'note'],
+      ['Jeté', 'skip', 'trash'],
+      ['Note vide', 'skip', 'note'],
+      ['cassé.json', 'skip', 'alert'],
+    ]);
+    const [courses, films, canape, vieux, jete] = entries.map(entry => ({ ...entry, detail: plain([entry.detail])[0]!, why: plain([entry.why ?? ''])[0], note: plain([entry.note ?? ''])[0] }));
+    expect(courses!.detail).toMatch(/^Liste de 2 éléments, dont 1 coché · /);
+    expect(courses!.note).toBe('Labels : perso · Épinglée');
+    expect(films).toMatchObject({ why: 'Devient une collection de 2 liens', note: '1 ligne sans lien : à choisir ensuite' });
+    expect(canape).toMatchObject({ why: 'Devient un lien que Claude lit et range', detail: expect.stringMatching(/^Lien vers example\.org · /) });
+    expect(vieux).toMatchObject({ detail: expect.stringMatching(/^Note · Archivé · /), note: 'Archivée' });
+    expect(jete!.why).toBe('Dans la corbeille de Keep');
+    expect(canLeaveOut(entries[0]!)).toBe(true);
+    expect(canLeaveOut(entries[4]!)).toBe(false);
+  });
+
+  it('follows the choices: here already, archived left out, a list kept a note', () => {
+    const plan = files();
+    const courses = plan.notes.find(note => note.title === 'Courses')!;
+    const choices = { ...defaultKeepChoices(plan), collections: new Set<string>(), archived: 'skip' as const };
+    const entries = keepPreview(plan, context((type, id) => type === 'note' && id === keepNoteId(courses)), choices);
+    expect(entries.find(entry => entry.title === 'Courses')).toMatchObject({ fate: 'same', why: 'Déjà importée : rien ne sera doublé' });
+    expect(entries.find(entry => entry.title === 'Vieux')).toMatchObject({ fate: 'skip' });
+    expect(entries.find(entry => entry.title === 'Films')).toMatchObject({ fate: 'new', glyph: 'note', why: 'Reste une note, ses liens dans le texte' });
+    expect(keepImportCount(plan, () => false, choices)).toBe(3);
+    expect(keepImportCount(plan, () => false, { ...choices, left: new Set([courses.key]) })).toBe(2);
+  });
+
+  it('counts what the export holds', () => {
+    const plan = files();
+    const lines = keepCountLines(plan, 1);
+    expect(plain(lines.map(line => line.text))).toEqual(['4 notes', '2 notes faites de liens', '1 label', '0 photo', '2 notes laissées de côté', '1 fichier illisible']);
+    expect(plain([lines[0]!.meta ?? ''])).toEqual(['Dont 1 liste · 1 note déjà importée : ignorées, rien ne sera doublé']);
+    expect(keepLinksToRead(plan, () => false, defaultKeepChoices(plan))).toEqual({ singles: 1, lists: 2 });
+  });
+
+  it('honours the archive’s choice and the notes left out', () => {
+    const plan = files();
+    const base = { ...defaultKeepChoices(plan) };
+    const onBoard = notesOf(keepPlanToRecords(plan, options({ ...base, archived: 'board' })).records).find(note => note.title === 'Vieux')!;
+    expect(onBoard.archived).toBe(false);
+    const skipped = keepPlanToRecords(plan, options({ ...base, archived: 'skip' }));
+    expect(notesOf(skipped.records).some(note => note.title === 'Vieux')).toBe(false);
+    expect(plain(keepReportLines(skipped.report).skipped)).toContain('1 note archivée laissée de côté');
+    const courses = plan.notes.find(note => note.title === 'Courses')!;
+    const left = keepPlanToRecords(plan, options({ ...base, left: new Set([courses.key]) }));
+    expect(notesOf(left.records).some(note => note.title === 'Courses')).toBe(false);
+    expect(plain(keepReportLines(left.report).skipped)).toContain('1 note décochée dans l’aperçu');
+  });
+});

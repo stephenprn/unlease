@@ -12,6 +12,7 @@ import { EN_WEB_PAGES_INLINE } from './webPagesInline';
 import { EN_SHARED } from './shared';
 import { EN_TEMPLATES } from './templates';
 import { EN_REORDER } from './reorder';
+import { EN_IMPORTING } from './importing';
 
 export const PAGES_ENGLISH: Dictionary = {
   ...EN_SHARED,
@@ -22,4 +23,5 @@ export const PAGES_ENGLISH: Dictionary = {
   ...EN_ASK,
   ...EN_TEMPLATES,
   ...EN_REORDER,
+  ...EN_IMPORTING,
 };

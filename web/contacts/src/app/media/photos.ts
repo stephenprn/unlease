@@ -53,17 +53,24 @@ export interface PhotosOutcome {
   readonly taken: number;
   /** Links the server could not fetch, or not asked for (no server). */
   readonly missed: number;
+  /** The photos worn now, by contact: what « Annuler » takes back. */
+  readonly worn: ReadonlyMap<string, string>;
 }
 
 /**
  * The photos an import's plan takes, after its batch: bytes kept here for the upload, links fetched
  * by the server (skipped without one); then every contact that still has no photo wears its own, in
- * one batch.
+ * one batch. `onProgress` counts them as they come.
  */
-export async function takeImportPhotos(writes: readonly PlannedWrite[], now: number = Date.now()): Promise<PhotosOutcome> {
+export async function takeImportPhotos(writes: readonly PlannedWrite[], onProgress?: (done: number, total: number) => void, now: number = Date.now()): Promise<PhotosOutcome> {
   const wanted = writes.filter((write): write is PlannedWrite & { photo: ImportedPhoto } => write.photo !== null);
   const found: { contactId: string; photo: PhotoFields }[] = [];
   let missed = 0;
+  let done = 0;
+  const step = (): void => {
+    done += 1;
+    onProgress?.(done, wanted.length);
+  };
   const links: { contactId: string; url: string }[] = [];
   for (const write of wanted) {
     const photo = write.photo;
@@ -71,6 +78,7 @@ export async function takeImportPhotos(writes: readonly PlannedWrite[], now: num
       const mime = normalizeMime(photo.mime || 'image/jpeg');
       if (!ALLOWED.has(mime)) {
         missed += 1;
+        step();
         continue;
       }
       try {
@@ -82,10 +90,12 @@ export async function takeImportPhotos(writes: readonly PlannedWrite[], now: num
       } catch {
         missed += 1;
       }
+      step();
     } else if (photo.kind === 'url') {
       links.push({ contactId: write.id, url: photo.url });
     } else {
       missed += 1;
+      step();
     }
   }
   const server = useSettingsStore.getState().server;
@@ -101,13 +111,15 @@ export async function takeImportPhotos(writes: readonly PlannedWrite[], now: num
         } catch {
           missed += 1;
         }
+        step();
       }
     };
     await Promise.all(Array.from({ length: Math.min(AT_ONCE, links.length) }, worker));
   } else {
     missed += links.length;
+    links.forEach(() => step());
   }
-  const taken = found.length > 0 ? setPhotos(found) : 0;
-  if (taken > 0) requestSync();
-  return { taken, missed };
+  const worn = found.length > 0 ? setPhotos(found) : [];
+  if (worn.length > 0) requestSync();
+  return { taken: worn.length, missed, worn: new Map(worn.map(({ contactId, photo }) => [contactId, photo.photoId!])) };
 }

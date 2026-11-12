@@ -104,9 +104,10 @@ describe('the settings a search finds', () => {
     expect(first('emoji', 'pages', 'web')).toBe('search-languages');
   });
 
-  it('puts the look’s sections on « Apparence »’s page, every other on the overview', () => {
+  it('puts the look’s sections on « Apparence »’s page, the import and the erase on their own, every other on the overview', () => {
     expect([SETTINGS_SECTIONS.appearance, SETTINGS_SECTIONS.colors, SETTINGS_SECTIONS.ground].map(settingsPageOf)).toEqual(['appearance', 'appearance', 'appearance']);
-    expect([SETTINGS_SECTIONS.language, SETTINGS_SECTIONS.data, 'notes', 'import', null].map(settingsPageOf)).toEqual([null, null, null, null, null]);
+    expect([SETTINGS_SECTIONS.import, SETTINGS_SECTIONS.erase].map(settingsPageOf)).toEqual(['import', 'erase']);
+    expect([SETTINGS_SECTIONS.language, SETTINGS_SECTIONS.data, 'notes', null].map(settingsPageOf)).toEqual([null, null, null, null]);
   });
 
   it('says where each place is', () => {

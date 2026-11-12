@@ -106,6 +106,8 @@ export function parseRoute(path: string): Route {
   if (clean === '/') return { name: 'home' };
   if (clean === `${appHome}/settings`) return { name: 'settings', page: null };
   if (clean === `${appHome}/settings/appearance`) return { name: 'settings', page: 'appearance' };
+  if (clean === `${appHome}/settings/import`) return { name: 'settings', page: 'import' };
+  if (clean === `${appHome}/settings/erase`) return { name: 'settings', page: 'erase' };
   if (clean === `${appHome}/admin`) return { name: 'admin', section: null };
   if (clean.startsWith(`${appHome}/admin/`)) {
     const admin = /^\/([\w-]+)$/.exec(clean.slice(`${appHome}/admin`.length));
@@ -132,6 +134,14 @@ export const paths = {
   /** « Apparence », Réglages' page for the look: the theme, the paper's grain, the colours, the ground. */
   get appearance(): string {
     return `${appHome}/settings/appearance`;
+  },
+  /** The app's import wizard (`AppModule.importer`). */
+  get importer(): string {
+    return `${appHome}/settings/import`;
+  },
+  /** « Effacer des données » (`AppModule.erase`). */
+  get erase(): string {
+    return `${appHome}/settings/erase`;
   },
   get admin(): string {
     return `${appHome}/admin`;

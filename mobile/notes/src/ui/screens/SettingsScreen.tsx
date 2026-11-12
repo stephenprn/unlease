@@ -2,8 +2,8 @@
  * Carnet's Réglages, in every app's order: Carnet's own first (the board's layout, then what keeps the
  * reminders from ringing on time, only while something does), « Apparence » (one row opening its own
  * page: the theme, the paper's grain, the colours and the ground), the language, the data (the Keep
- * import first), and the way to the Administration last (the server, Claude's reading of links,
- * backups and files).
+ * import first, « Effacer des données » last), and the way to the Administration last (the server,
+ * Claude's reading of links, backups and files).
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,6 +12,7 @@ import { APP_NAME } from '@unlease/notes/brand';
 import { t, tc } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
+import { KEEP_WIZARD_WORDS } from '@unlease/notes/services/keepImport';
 import { plural } from '@unlease/core/services/format';
 import { cleanSavedLinks, emptyTrash, trackedLinkIds } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -20,7 +21,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { makerBatterySettings } from '@platform/notifications';
 
 import { AppText, Dialog, Ground, ListRow, Segmented, TopBar } from '../components';
-import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -69,9 +70,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
         <LanguageSection />
 
-        {/* Imports first, as in every app's Données (Contacts', Agenda's): the Keep import is one row, named once. */}
+        {/* Imports first, as in every app's Données (Contacts', Agenda's): the Keep import is one row, opening its wizard; erasing last. */}
         <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
-          <ListRow icon="download" title={t('Importer depuis Google Keep')} supporting={t('Archive Google Takeout (.zip)')} onPress={() => navigation.navigate('Import')} />
+          <ListRow icon="download" title={t('Importer')} supporting={KEEP_WIZARD_WORDS.importerMeta} onPress={() => navigation.navigate('Import')} />
           <ListRow
             icon="broom"
             title={t('Nettoyer les liens enregistrés')}
@@ -96,6 +97,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             supporting={binned > 0 ? t('{notes} dans la corbeille', { notes: plural(binned, 'note') }) : t('La corbeille est vide.')}
             onPress={binned > 0 ? () => setConfirmTrash(true) : undefined}
           />
+          <EraseEntryRow app="notes" onOpen={() => navigation.navigate('Erase')} />
         </Section>
 
         {/* What is set once and rarely, last. */}

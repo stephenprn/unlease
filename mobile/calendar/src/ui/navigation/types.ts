@@ -44,8 +44,10 @@ export type RootStackParamList = {
   Labels: undefined;
   /** The calendars one subscribes to, and the holidays'; `url`: an address in the form, to subscribe to once the person says so (a `webcal://` link). */
   Feeds: { readonly url?: string } | undefined;
-  /** An `.ics` file to import; `shared`: the one shared to the app, read already (`importStore`). */
+  /** The import wizard; `shared`: files shared or opened with the app, read already (`importStore`), on its preview. */
   Import: { readonly source?: 'shared' } | undefined;
+  /** « Effacer des données »: Agenda's parts, erased for good. */
+  Erase: undefined;
   Trash: undefined;
   /** « Demander à Claude » about the calendar. */
   Ask: undefined;

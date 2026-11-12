@@ -35,10 +35,15 @@ export interface SettingsMatchesProps {
   readonly style?: StyleProp<ViewStyle>;
 }
 
-/** The screen a place opens, with its `section`: the Administration's, « Apparence »'s page (the look's sections, `settingsPageOf`), or Réglages'. */
-export function settingsScreenOf(place: PhoneSettingsPlace): 'Admin' | 'Appearance' | 'Settings' {
+/**
+ * The screen a place opens: the Administration's, « Apparence »'s page (the look's sections,
+ * `settingsPageOf`), the import's or the erase's own screen, or Réglages'. Those of a page take
+ * the place's `section` (`settingsParams`); the import's and the erase's take none.
+ */
+export function settingsScreenOf(place: PhoneSettingsPlace): 'Admin' | 'Appearance' | 'Settings' | 'Import' | 'Erase' {
   if (place.area === 'admin') return 'Admin';
-  return settingsPageOf(place.section) === 'appearance' ? 'Appearance' : 'Settings';
+  const page = settingsPageOf(place.section);
+  return page === 'appearance' ? 'Appearance' : page === 'import' ? 'Import' : page === 'erase' ? 'Erase' : 'Settings';
 }
 
 /** How many settings the words name (the search's summary says « Rien d'autre » under them). */

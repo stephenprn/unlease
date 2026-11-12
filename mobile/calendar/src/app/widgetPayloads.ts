@@ -21,6 +21,7 @@ import { birthdayTitle, clockWords, dayDistance, monthTitle, narrowWeekday, time
 import { findOccurrence, hiddenFeedIds, occurrencesIn, type Occurrence } from '@unlease/calendar/services/occurrences';
 import { searchEvents } from '@unlease/calendar/services/search';
 import { addDays, addMonths, dayToInstant, monthGrid, startOfMonth, today } from '@unlease/calendar/services/time';
+import { appScheme } from '@shared/app/variant';
 
 import { agendaIn, itemsOn, LAYER_COLORS, type AgendaItem } from './agenda';
 import { nameOf } from './mentionNames';
@@ -109,9 +110,9 @@ function asWidgetItem(item: AgendaItem, day: string, twelve: boolean): WidgetIte
     case 'birthday':
       return { key: item.key, title: birthdayTitle(item.birthday.name, item.birthday.age), time: t('Toute la journée'), place: '', color: LAYER_COLORS.birthday, open: `birthday/${encodeURIComponent(item.birthday.contactId)}`, endAt: end };
     case 'reminder':
-      return { key: item.key, title: item.reminder.title || t('Sans titre'), time: clockWords(formatClock(item.reminder.at), twelve), place: '', color: LAYER_COLORS.reminder, open: `carnet://note/${encodeURIComponent(item.reminder.noteId)}`, endAt: item.reminder.at + 30 * 60_000 };
+      return { key: item.key, title: item.reminder.title || t('Sans titre'), time: clockWords(formatClock(item.reminder.at), twelve), place: '', color: LAYER_COLORS.reminder, open: `${appScheme('notes')}://note/${encodeURIComponent(item.reminder.noteId)}`, endAt: item.reminder.at + 30 * 60_000 };
     case 'page':
-      return { key: item.key, title: item.page.title || t('Sans titre'), time: item.page.time ? clockWords(item.page.time, twelve) : t('Toute la journée'), place: '', color: LAYER_COLORS.page, open: `unlease-pages://page/${encodeURIComponent(item.page.pageId)}`, endAt: end };
+      return { key: item.key, title: item.page.title || t('Sans titre'), time: item.page.time ? clockWords(item.page.time, twelve) : t('Toute la journée'), place: '', color: LAYER_COLORS.page, open: `${appScheme('pages')}://page/${encodeURIComponent(item.page.pageId)}`, endAt: end };
   }
 }
 

@@ -81,8 +81,12 @@ function readBirthdayCell(value: string): string | null {
   return typed ? writeBirthday(typed) : null;
 }
 
-/** Every row of a Google (or Outlook) contacts CSV, in order; a row holding no name, number nor email is left out. */
-export function parseGoogleCsv(text: string): ImportedContact[] {
+/**
+ * Every row of a Google (or Outlook) contacts CSV, in order; a row holding no name, number nor email
+ * is left out, unless `anonymous` asks for those holding something else (an address, a note), so the
+ * import's preview can say why they stay out. A row holding nothing at all is never read.
+ */
+export function parseGoogleCsv(text: string, { anonymous = false }: { readonly anonymous?: boolean } = {}): ImportedContact[] {
   const [header, ...rows] = parseCsv(text);
   if (!header) return [];
   const index = new Map(header.map((name, at) => [name.trim().toLowerCase(), at]));
@@ -170,6 +174,7 @@ export function parseGoogleCsv(text: string): ImportedContact[] {
       labels,
     };
     if (contact.firstName || contact.lastName || contact.company || phones.length > 0 || emails.length > 0) out.push(contact);
+    else if (anonymous && (contact.note || contact.birthday || contact.photo || addresses.length > 0 || labels.length > 0)) out.push(contact);
   }
   return out;
 }

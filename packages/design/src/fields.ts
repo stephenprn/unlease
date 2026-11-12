@@ -38,6 +38,8 @@ export type FieldKind =
   | 'search'
   /** What a machine reads: a bucket, a region, a key's id, a library's name. */
   | 'code'
+  /** A word typed to confirm what cannot be undone (« SUPPRIMER »): every letter a capital, never corrected. */
+  | 'confirmWord'
   /** Another service's key or password: hidden until shown, never kept by a password manager. */
   | 'secret'
   /** The person's own server: kept with its token by a password manager. */
@@ -117,6 +119,7 @@ const SPECS: Record<FieldKind, Spec> = {
   time: { keyboard: KEYBOARDS.words, capitals: 'none', corrected: false },
   search: { keyboard: KEYBOARDS.search, capitals: 'none', corrected: false },
   code: { keyboard: KEYBOARDS.machine, capitals: 'none', corrected: false },
+  confirmWord: { keyboard: KEYBOARDS.words, capitals: 'characters', corrected: false },
   secret: { keyboard: KEYBOARDS.machine, capitals: 'none', corrected: false, hidden: true },
   serverAddress: { keyboard: KEYBOARDS.url, capitals: 'none', corrected: false, own: 'username' },
   serverToken: { keyboard: KEYBOARDS.machine, capitals: 'none', corrected: false, own: 'password', hidden: true },

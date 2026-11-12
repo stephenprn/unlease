@@ -8,6 +8,7 @@ import android.text.style.StrikethroughSpan
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.R
 import org.json.JSONObject
 
@@ -43,7 +44,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
     val wash = data.optString("wash").takeIf { it.isNotEmpty() && it != "null" }
     WidgetKit.wash(views, android.R.id.background, wash)
     WidgetKit.wash(views, R.id.note_fade, wash)
-    views.setOnClickPendingIntent(R.id.note_open, WidgetIntents.open(context, "carnet://note/$target"))
+    views.setOnClickPendingIntent(R.id.note_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://note/$target"))
     views.setTextViewText(R.id.note_empty, context.getString(if (list) R.string.widget_note_empty_list else R.string.widget_note_empty_text))
 
     val rows = if (list) checklist(context, id, data) else lines(context, target, data)
@@ -96,7 +97,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
       WidgetKit.key("$target:$index") to
           widgetViews(context, R.layout.widget_note_line).apply {
             setTextViewText(R.id.line, lines.optString(index))
-            WidgetKit.route(context, this, R.id.line, "carnet://note/$target")
+            WidgetKit.route(context, this, R.id.line, "${BuildConfig.APP_SCHEME}://note/$target")
           }
     }
   }

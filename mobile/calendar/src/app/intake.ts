@@ -1,7 +1,7 @@
 /**
  * What other apps hand Agenda, each opened once the first run is done, never written without the
  * person: calendar files shared or opened with it (an invitation's `.ics`, a ticket, Google's export),
- * read then shown on the import screen to confirm; another app's « Ajouter à l'agenda », the new
+ * read then shown on the import wizard's preview to confirm; another app's « Ajouter à l'agenda », the new
  * event's form filled (`handedEvent`); a calendar linked from a website (`webcal://`), the
  * subscriptions' form with its address; words selected elsewhere, quick add with them; « open the
  * calendar at » an instant, the day it falls on.
@@ -78,7 +78,7 @@ async function receive(share: Share, arrivals: Arrivals): Promise<void> {
   if (read.status === 'error') showSnack(read.message, undefined, { tone: 'error' });
   else if (read.status === 'empty') showSnack(t('Aucun événement dans ce fichier.'), undefined, { tone: 'warning' });
   else {
-    setPendingImport({ calendar: read.calendar, name: share.subject });
+    setPendingImport({ files: read.files });
     arrivals.import();
   }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.util.SizeF
 import android.widget.RemoteViews
+import com.stephenprn.contacts.BuildConfig
 import com.stephenprn.contacts.R
 
 /**
@@ -32,6 +33,6 @@ class AddWidgetProvider : ContactsWidgetProvider() {
       }
 
   private companion object {
-    const val NEW = "unlease-contacts://new"
+    val NEW = "${BuildConfig.APP_SCHEME}://new"
   }
 }

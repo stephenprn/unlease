@@ -3,14 +3,15 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 
-import { APP_SCHEME } from '@unlease/calendar/brand';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
+import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { AskScreen } from '../screens/AskScreen';
 import { BirthdayScreen } from '../screens/BirthdayScreen';
 import { CalendarScreen } from '../screens/CalendarScreen';
 import { EditEventScreen } from '../screens/EditEventScreen';
+import { EraseScreen } from '../screens/EraseScreen';
 import { EventScreen } from '../screens/EventScreen';
 import { FeedsScreen } from '../screens/FeedsScreen';
 import { ImportScreen } from '../screens/ImportScreen';
@@ -30,7 +31,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * `import`, `trash`, `search`, `ask`, `settings`, `admin`; nothing after the scheme is the calendar.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [`${APP_SCHEME}://`],
+  prefixes: [`${appScheme('calendar')}://`],
   config: {
     // An event opened from outside lies on the calendar, so Back and its arrow lead somewhere.
     initialRouteName: 'Calendar',
@@ -79,6 +80,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Ask" component={AskScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Erase" component={EraseScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
     </Stack.Navigator>
   );

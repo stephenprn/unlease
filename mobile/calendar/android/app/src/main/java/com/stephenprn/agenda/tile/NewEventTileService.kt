@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.MainActivity
 import com.stephenprn.agenda.R
 
@@ -31,7 +32,7 @@ class NewEventTileService : TileService() {
   }
 
   private fun open() {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("unlease-agenda://new"), this, MainActivity::class.java)
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("${BuildConfig.APP_SCHEME}://new"), this, MainActivity::class.java)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
       // From Android 14 an activity starts from a tile only through a PendingIntent.

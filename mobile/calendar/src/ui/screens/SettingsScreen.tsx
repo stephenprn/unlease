@@ -4,7 +4,7 @@
  * places open in, then what keeps the reminders from ringing on the minute, only while something
  * does); then « Apparence » (one row opening its own page: the theme, the paper's grain, the colours
  * and the ground), the language, the import and the export of one's events as an `.ics`, the other
- * calendars and the bin, and the way to the Administration last.
+ * calendars, the bin and « Effacer des données », and the way to the Administration last.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -31,7 +31,7 @@ import { makerBatterySettings } from '@platform/notifications';
 import { AppText, Dialog, Ground, Icon, ListRow, PickerField, Segmented, Sheet, SheetScroll, TopBar } from '@shared/ui/components';
 import { SwitchRow } from '@shared/ui/features/appearance/SwitchRow';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
-import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -127,6 +127,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           <ListRow icon="upload" title={t('Exporter')} supporting={own > 0 ? t('{events} dans un fichier .ics', { events: plural(own, 'événement') }) : t('Aucun événement à exporter.')} onPress={own > 0 ? () => later(exportAll()) : undefined} />
           <ListRow icon="calendar" title={t('Autres agendas')} supporting={t('Vos abonnements et les jours fériés')} onPress={() => navigation.navigate('Feeds')} />
           <ListRow icon="trash" title={t('Vider la corbeille')} supporting={binned > 0 ? t('{events} dans la corbeille', { events: plural(binned, 'événement') }) : t('La corbeille est vide.')} onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined} />
+          <EraseEntryRow app="calendar" onOpen={() => navigation.navigate('Erase')} />
         </Section>
 
         {/* What is set once and rarely, last. */}

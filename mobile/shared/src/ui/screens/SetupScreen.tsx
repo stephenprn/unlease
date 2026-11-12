@@ -35,7 +35,9 @@ import {
   setupAppChoices,
   setupFieldHelp,
   setupForward,
+  setupImportShown,
   setupProgress,
+  setupRestored,
   setupServerShown,
   setupStartedEmpty,
   setupSteps,
@@ -53,6 +55,7 @@ import {
   type SetupTask,
   type SetupTaskLine,
 } from '@unlease/core/services/setup';
+import { setupImportLead } from '@unlease/core/services/importFlow';
 import type { AdminStatus } from '@unlease/core/sync/admin';
 import { useAdmin, useBackups } from '@shared/app/hooks/useAdmin';
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -73,6 +76,7 @@ import type { AppAdminSection } from './AdminScreen';
 import { SEERR_INFO, SeerrSection } from '../features/admin/SeerrSection';
 import { HOLIDAYS_INFO, HolidaysSection } from '../features/admin/HolidaysSection';
 import { SetupRestore } from '../features/admin/SetupRestore';
+import { ImportHost, type ImportWizardProps } from '../features/importing/ImportFlow';
 import { toneColor } from '../features/admin/StatusRow';
 import { InfoBubble, InfoButton, useInfoBubble } from '../features/settings/InfoBubble';
 import { Section } from '../features/settings/Section';
@@ -83,7 +87,7 @@ import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
 
 /** Every step in order, a row opened from "Votre serveur" one deeper: to tell going on from going back. */
-const ORDER: readonly SetupStep[] = ['server', 'apps', 'checklist', 'appearance'];
+const ORDER: readonly SetupStep[] = ['server', 'apps', 'checklist', 'import', 'appearance'];
 const depth = (step: SetupStep, task: SetupTask | null): number => ORDER.indexOf(step) * 2 + (task ? 1 : 0);
 
 /** A step comes in with a short shift and a fade, from the left going back. */
@@ -112,9 +116,18 @@ export interface SetupScreenProps {
   readonly claudeExtra?: ClaudeExtra;
   /** The app's own Administration sections: those it asks Claude for (`claude`, Pages' questions) follow Claude's key, as on the web. */
   readonly appSections?: readonly AppAdminSection[];
+  /** The app's import (`core/services/importFlow`), offered as a step while the app holds nothing. */
+  readonly importer?: SetupImporter;
 }
 
-export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScreenProps) {
+/** An app's import, as the first run offers it. */
+export interface SetupImporter {
+  /** What it reads, named (« Google Keep »), for the step's lead. */
+  readonly source: () => string;
+  readonly Wizard: React.ComponentType<ImportWizardProps>;
+}
+
+export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }: SetupScreenProps) {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const server = useSettingsStore(selectServer);
@@ -135,9 +148,25 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
   const [settingUp, setSettingUp] = useState(false);
   const [siblings, setSiblings] = useState<readonly Sibling[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
-  const { step, task } = place;
   const serverSetup = settingUp || setupServerShown(server !== null, serverDone);
-  const steps = setupSteps(server !== null, serverSetup);
+  // Whether the app's import is offered, decided once its records are counted (none yet: offered), kept for the whole setup.
+  const [importOffer, setImportOffer] = useState<{ readonly url: string | null; readonly shown: boolean } | null>(null);
+  const offered = setupImportShown(app, importer !== undefined, server !== null, admin.status);
+  const offerKey = server?.url ?? null;
+  useEffect(() => {
+    if (offered !== null && importOffer?.url !== offerKey) setImportOffer({ url: offerKey, shown: offered });
+  }, [offered, offerKey, importOffer]);
+  // Not counted yet, while the import step is the one asked for: it waits there rather than flashing the next one.
+  const importPending = importer !== undefined && importOffer?.url !== offerKey;
+  // A backup brought back during this setup holds the app's data already: nothing to import.
+  const importShown = !setupRestored(admin.status) && ((importOffer?.url === offerKey && importOffer.shown) || (importPending && place.step === 'import'));
+  // The import's wizard is past its first step: its own foot leads.
+  const [importing, setImporting] = useState(false);
+  const [imported, setImported] = useState(false);
+  const steps = setupSteps(server !== null, serverSetup, importShown);
+  // A step this setup turned out not to have (the import, for an app that holds something): on to the next one there is.
+  const step = steps.includes(place.step) ? place.step : place.step === 'server' ? 'server' : 'appearance';
+  const task = step === place.step ? place.task : null;
   const enabled = admin.settings?.apps.enabled ?? NO_APPS;
   const backups = useBackups(server, admin.settings?.backup.configured === true, admin.backupsVersion, focused && task === 'restore');
 
@@ -207,13 +236,15 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
     useCallback(() => {
       if (step === 'server') return undefined;
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        // The import's wizard goes back a step itself.
+        if (step === 'import' && importing) return false;
         if (held) return true;
         if (task) go('checklist');
         else go(previous);
         return true;
       });
       return () => subscription.remove();
-    }, [step, task, previous, held, go]),
+    }, [step, task, previous, held, go, importing]),
   );
 
   const [finishing, setFinishing] = useState(false);
@@ -277,6 +308,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
         </>
       );
     }
+    if (step === 'import') return importPending ? <AppText variant="meta" style={styles.note}>{t('Lecture de vos données…')}</AppText> : null;
     if (!server) return null;
     if (step === 'apps') {
       const shownApps = enabled.includes(app) ? enabled : [...enabled, app];
@@ -340,7 +372,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
         </>
       );
     }
-    const set = step === 'appearance' ? !isDefaultAppearance(appearance) : true;
+    const set = step === 'appearance' ? !isDefaultAppearance(appearance) : step === 'import' ? imported : true;
     return (
       <>
         <Button kind="text" label={t('Retour')} disabled={held} onPress={() => go(previous)} />
@@ -359,7 +391,8 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
     const done = health.setup !== false;
     setServerDone(done);
     setServerApps(health.apps);
-    go(setupSteps(true, setupServerShown(true, done))[1] ?? 'appearance');
+    // A server set up already: the import when the app holds nothing there, else straight to the look.
+    go(done ? 'import' : 'apps');
   };
 
   return (
@@ -367,7 +400,17 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
       <Ground />
       <LayoutAnimationConfig skipExiting>
         {step === 'server' ? (
-          <Welcome app={app} siblings={siblings} onConnected={connected} onLater={() => go('appearance')} />
+          <Welcome app={app} siblings={siblings} onConnected={connected} onLater={() => go('import')} />
+        ) : step === 'import' && importer && !importPending ? (
+          // The wizard is the step's whole body: the setup's head above its title, the setup's foot under its first and last steps.
+          <Animated.View key="import" entering={place.back ? STEP_BACK : STEP_ON} style={styles.fill}>
+            <ImportHost value={{ embedded: true, head: <StepHead app={app} steps={steps} step={step} task={null} status={admin.status} importSource={importer.source()} />, foot: foot(), top: insets.top }}>
+              <importer.Wizard
+                onFlow={setImporting}
+                onImported={() => setImported(true)}
+              />
+            </ImportHost>
+          </Animated.View>
         ) : (
           // Scrolls below the status bar, not under it (the ground still lies behind the bar).
           <EdgeScrollView key={`${step}:${task ?? ''}`} style={{ marginTop: insets.top }} contentContainerStyle={[styles.content, { paddingTop: 24 }]} keyboardShouldPersistTaps="handled">
@@ -379,7 +422,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections }: SetupScre
         )}
       </LayoutAnimationConfig>
 
-      {step !== 'server' && !keyboard ? <View style={[styles.foot, { paddingBottom: insets.bottom + 12 }]}>{foot()}</View> : null}
+      {step !== 'server' && !(step === 'import' && importer && !importPending) && !keyboard ? <View style={[styles.foot, { paddingBottom: insets.bottom + 12 }]}>{foot()}</View> : null}
 
       <Dialog
         visible={confirmation !== null}
@@ -465,11 +508,11 @@ placedRow(TaskRow);
  * web, then the steps), the title of the step or of the row opened (with its "how it works" when it
  * has one), and what it is for.
  */
-function StepHead({ app, steps, step, task, status }: { app: AppId; steps: readonly SetupStep[]; step: SetupStep; task: SetupTask | null; status: AdminStatus | null }) {
+function StepHead({ app, steps, step, task, status, importSource }: { app: AppId; steps: readonly SetupStep[]; step: SetupStep; task: SetupTask | null; status: AdminStatus | null; importSource?: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const bubble = useInfoBubble();
-  const words = task ? setupTaskWords(task, status) : SETUP_WORDS[step];
+  const words = task ? setupTaskWords(task, status) : step === 'import' && importSource ? { ...SETUP_WORDS.import, lead: setupImportLead(importSource) } : SETUP_WORDS[step];
   const info = task ? INFO[task] : undefined;
   const index = steps.indexOf(step);
   return (
@@ -677,6 +720,7 @@ const makeStyles = (theme: Theme) =>
     // Under a hairline, as a form's foot (`FormFoot`).
     foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline },
     reset: { alignSelf: 'center' },
+    fill: { flex: 1 },
     note: { paddingHorizontal: 16 },
     sibling: { alignSelf: 'stretch', gap: 12, padding: 16 },
     // A card of « Vos applications »: a list row's inset and press cut, the app's mark leading, its box at the end.

@@ -42,11 +42,12 @@ export interface CalendarUiState {
   /** The quick form's draft as « Plus d'options » leaves it, for the new event's form to open on. */
   readonly handed: EventDraft | null;
   readonly scopeAsk: ScopeAsk | null;
-  readonly importFile: File | null;
+  /** Calendar files given anywhere (dropped on Agenda): the import reads them at once. */
+  readonly importFiles: readonly File[] | null;
   readonly askOpen: boolean;
 }
 
-const INITIAL: CalendarUiState = { peek: null, quick: null, handed: null, scopeAsk: null, importFile: null, askOpen: false };
+const INITIAL: CalendarUiState = { peek: null, quick: null, handed: null, scopeAsk: null, importFiles: null, askOpen: false };
 
 let quickOpenings = 0;
 
@@ -65,7 +66,7 @@ export const setQuickTimes = (start: string, end: string): void => useCalendarUi
 export const closeQuick = (): void => useCalendarUi.setState({ quick: null });
 /** What « Plus d'options » carries to the new event's form (null once it has taken it). */
 export const handDraft = (draft: EventDraft | null): void => useCalendarUi.setState({ handed: draft });
-export const setImportFile = (file: File | null): void => useCalendarUi.setState({ importFile: file });
+export const setImportFiles = (importFiles: readonly File[] | null): void => useCalendarUi.setState({ importFiles });
 export const setAskOpen = (askOpen: boolean): void => useCalendarUi.setState({ askOpen });
 
 /** Asks which events of a series a change is for; null when the person cancels. */

@@ -31,7 +31,7 @@ import { requestTitleFocus, setExpanded } from '@app/store/pagesUi';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
 
 import { AppText, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, Icon, ListRow, SearchHeader, Sheet, SyncLine, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
-import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
+import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
 import { Drawer } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
 import { listIn, listMove, listOut, listPressDelay } from '@shared/ui/theme/motion';
@@ -161,6 +161,12 @@ function usePageResults(query: string) {
 }
 
 export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
+  // A setting a search found: its screen, with its section where that screen takes one (the import's and the erase's take none).
+  const openSettingsPlace = (place: PhoneSettingsPlace): void => {
+    const screen = settingsScreenOf(place);
+    if (screen === 'Import' || screen === 'Erase') navigation.navigate(screen);
+    else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
+  };
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -237,7 +243,7 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
             <SettingsMatches
               query={query}
               own={PAGES_SETTINGS_PLACES}
-              onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
+              onOpen={place => openSettingsPlace(place)}
             />
             {/* The count over the results; as in every app, nothing found is the search's empty state: what it looks through under the count. */}
             {results.length === 0 ? (

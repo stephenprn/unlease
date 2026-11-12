@@ -1,0 +1,138 @@
+// ---------------------------------------------------------------------------
+// The dev builds, beside the released apps (mobile/README.md, « Dev builds »).
+//
+// `debug` (JavaScript from Metro) and `devRelease` (bundled JavaScript, Hermes optimised: a release
+// to try) are other apps than the released ones: `com.stephenprn.<app>.dev`, « Carnet Dev », their
+// launcher icon striped, signed with React Native's debug key. One phone holds both, and a dev build
+// never reaches a released app:
+//   - Android refuses it over a released app (another package, and another key were the id the same);
+//   - its siblings are the other dev builds: the SuiteLink permission is
+//     `com.stephenprn.unlease.dev.permission.SUITE` and its `<queries>` name the `.dev` packages
+//     (`${suiteSuffix}` in the manifests; SuiteLinkModule also checks a sibling's key);
+//   - its links answer `carnet-dev://`, `unlease-pages-dev://`… (`${appScheme}` in the manifest,
+//     `BuildConfig.APP_SCHEME` and `SCHEME_SUFFIX` in Kotlin, `appScheme` in JavaScript), so a released
+//     app's link never opens it, nor asks which one.
+// Its server is a local one (adb reverse, http://localhost:8080), never the released apps'.
+//
+// Applied at the end of each app's app/build.gradle, after its release signing, with
+// `ext.suiteScheme` set to its released scheme (APPS.<id>.scheme, packages/core/src/apps.ts).
+// ---------------------------------------------------------------------------
+
+def releasedScheme = project.ext.suiteScheme
+def devIdSuffix = ".dev"
+def devSchemeSuffix = "-dev"
+def devNameSuffix = " Dev"
+
+/** What makes a build type a dev build. */
+def devBuild = { buildType ->
+    buildType.applicationIdSuffix = devIdSuffix
+    buildType.versionNameSuffix = "-dev"
+    buildType.signingConfig = android.signingConfigs.debug
+    buildType.manifestPlaceholders.putAll([suiteSuffix: devIdSuffix, appScheme: releasedScheme + devSchemeSuffix])
+    buildType.buildConfigField("String", "APP_SCHEME", "\"${releasedScheme}${devSchemeSuffix}\"")
+    buildType.buildConfigField("String", "SCHEME_SUFFIX", "\"${devSchemeSuffix}\"")
+}
+
+android.buildFeatures.buildConfig = true
+android.defaultConfig.manifestPlaceholders.putAll([suiteSuffix: "", appScheme: releasedScheme])
+android.defaultConfig.buildConfigField("String", "APP_SCHEME", "\"${releasedScheme}\"")
+android.defaultConfig.buildConfigField("String", "SCHEME_SUFFIX", "\"\"")
+
+// React Native's plugin makes `debugOptimized` from `debug` (initWith), so it is a dev build too.
+devBuild(android.buildTypes.debug)
+
+def devRelease = android.buildTypes.create("devRelease")
+devRelease.initWith(android.buildTypes.release)
+devBuild(devRelease)
+// The libraries have debug and release only.
+devRelease.matchingFallbacks.add("release")
+// React Native's plugin sets this placeholder for debug and release only; the dev server is plain http.
+devRelease.manifestPlaceholders.put("usesCleartextTraffic", "true")
+
+// ---------------------------------------------------------------------------
+// The dev builds' resources, over main's: the shared stripe (shared/android/src/dev/res), and what
+// is written from the app's own resources at each build (build/generated/unlease/devRes), so it never
+// drifts from them:
+//   - the names Android shows outside the app (`app_name`, every `android:label` of the manifest
+//     that says the app's name), in every language, « Carnet » becoming « Carnet Dev »;
+//   - the static shortcuts (res/xml/shortcuts.xml), aimed at the `.dev` package and scheme (resource
+//     XML takes no manifest placeholder);
+//   - the launcher icon's foreground and monochrome layers, the stripe over each (a layer-list over
+//     the released drawable, kept under `<name>_released`), so the icon tells them apart, themed or not.
+// ---------------------------------------------------------------------------
+
+def sharedDevRes = "${rootDir}/../../shared/android/src/dev/res"
+def devRes = layout.buildDirectory.dir("generated/unlease/devRes").get().asFile
+def mainRes = file("src/main/res")
+def mainManifest = file("src/main/AndroidManifest.xml")
+def launcherLayers = [ic_launcher_foreground: "unlease_dev_stripe", ic_launcher_monochrome: "unlease_dev_stripe_monochrome"]
+
+android.sourceSets.getByName("debug").res.srcDirs += [sharedDevRes, devRes]
+android.sourceSets.maybeCreate("devRelease").res.srcDirs += [sharedDevRes, devRes]
+
+def generateDevResources = tasks.register("generateDevResources") {
+    description = "Writes the dev builds' names, shortcuts and launcher layers from the app's own resources."
+    inputs.file(mainManifest)
+    inputs.files(fileTree(mainRes) {
+        include "values*/strings.xml", "xml/shortcuts.xml"
+        launcherLayers.keySet().each { include "drawable/${it}.xml" }
+    })
+    inputs.property("scheme", releasedScheme)
+    outputs.dir(devRes)
+    doLast {
+        project.delete(devRes)
+        def write = { String path, String text ->
+            def target = new File(devRes, path)
+            target.parentFile.mkdirs()
+            target.setText(text, "UTF-8")
+        }
+        def escape = { String text -> java.util.regex.Pattern.quote(text) }
+
+        // The names shown outside the app.
+        def strings = new File(mainRes, "values/strings.xml").getText("UTF-8")
+        def nameMatch = strings =~ /<string name="app_name"[^>]*>([^<]+)<\/string>/
+        if (!nameMatch.find()) throw new GradleException("res/values/strings.xml has no app_name")
+        def appName = nameMatch.group(1).trim()
+        def labels = (mainManifest.getText("UTF-8") =~ /android:label="@string\/(\w+)"/).collect { it[1] } as Set
+        labels << "app_name"
+        def named = ~/(?<![\w-])${escape(appName)}(?![\w-])/
+        mainRes.eachDirMatch(~/values.*/) { dir ->
+            def file = new File(dir, "strings.xml")
+            if (!file.exists()) return
+            def overrides = []
+            (file.getText("UTF-8") =~ /(?s)<string name="(\w+)"([^>]*)>(.*?)<\/string>/).each { all, name, attributes, text ->
+                if (labels.contains(name) && named.matcher(text).find()) {
+                    overrides << "    <string name=\"${name}\"${attributes}>${text.replaceAll(named, java.util.regex.Matcher.quoteReplacement(appName + devNameSuffix))}</string>"
+                }
+            }
+            if (overrides) {
+                write("${dir.name}/strings.xml", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!-- GENERATED by mobile/shared/android/dev-builds.gradle: the dev build's names. -->\n<resources>\n${overrides.join("\n")}\n</resources>\n")
+            }
+        }
+
+        // The static shortcuts, aimed at this build.
+        def shortcuts = new File(mainRes, "xml/shortcuts.xml")
+        if (shortcuts.exists()) {
+            def text = shortcuts.getText("UTF-8")
+                .replaceAll(/android:targetPackage="([\w.]+)"/, "android:targetPackage=\"\$1${devIdSuffix}\"")
+                .replace("android:data=\"${releasedScheme}://", "android:data=\"${releasedScheme}${devSchemeSuffix}://")
+            write("xml/shortcuts.xml", text.replaceFirst(/<shortcuts /, "<!-- GENERATED by mobile/shared/android/dev-builds.gradle from res/xml/shortcuts.xml: aimed at the dev build. -->\n<shortcuts "))
+        }
+
+        // The launcher icon's layers, striped.
+        launcherLayers.each { layer, stripe ->
+            def released = new File(mainRes, "drawable/${layer}.xml")
+            if (!released.exists()) return
+            write("drawable/${layer}_released.xml", released.getText("UTF-8"))
+            write("drawable/${layer}.xml", """<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERATED by mobile/shared/android/dev-builds.gradle: the released layer, striped. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/${layer}_released" />
+    <item android:drawable="@drawable/${stripe}" />
+</layer-list>
+""")
+        }
+    }
+}
+
+tasks.named("preBuild") { dependsOn(generateDevResources) }

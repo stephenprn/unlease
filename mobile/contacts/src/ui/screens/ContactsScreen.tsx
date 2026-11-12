@@ -27,7 +27,7 @@ import { AppText, Button, EmptyState, FAB_CLEARANCE, FabMenu, Ground, GroundSlic
 import { decelerate, duration, listIn, listMove } from '@shared/ui/theme/motion';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
+import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
 import { ContactRow, placeOf, ROW_HEIGHT, rowHeight, type PanelPlace } from '../features/contacts/ContactRow';
 import { BirthdayLine, FavoritesStrip } from '../features/contacts/HomeExtras';
 import { LetterRail, RAIL_WIDTH } from '../features/contacts/LetterRail';
@@ -42,6 +42,12 @@ const HEAD_IN = FadeIn.duration(duration.medium).easing(decelerate);
 type Item = { readonly kind: 'letter'; readonly letter: string } | { readonly kind: 'contact'; readonly id: string; readonly place: PanelPlace };
 
 export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
+  // A setting a search found: its screen, with its section where that screen takes one (the import's and the erase's take none).
+  const openSettingsPlace = (place: PhoneSettingsPlace): void => {
+    const screen = settingsScreenOf(place);
+    if (screen === 'Import' || screen === 'Erase') navigation.navigate(screen);
+    else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
+  };
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -175,7 +181,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
           query={query}
           own={CONTACTS_SETTINGS_PLACES}
           style={styles.settings}
-          onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
+          onOpen={place => openSettingsPlace(place)}
         />
       ) : null}
       {/* Nothing found says it in the empty place under it. */}

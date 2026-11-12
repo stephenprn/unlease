@@ -6,14 +6,16 @@
 import { t, tx } from '@unlease/core/i18n';
 import { isUploadableImage } from '@unlease/pages/services/media';
 import { PAGES_SETTINGS_PLACES } from '@unlease/pages/services/settingsPlaces';
+import { pagesEraseParts } from '@unlease/pages/services/erase';
 
 import { pagesProjection, useBlocksStore } from './app/store/blocks';
 import { resetPageHistory } from './app/store/pageHistory';
-import { createPage, emptyPagesBin, markBlockFileUploaded, trashedPages } from './app/store/pages';
+import { createPage, emptyPagesBin, erasePages, markBlockFileUploaded, trashedPages } from './app/store/pages';
 import { loadPagesUi } from './app/store/pagesUi';
 import { navigate } from '@shared/ui/router';
 import { MOD_KEY, type AppData, type AppModule, type ShortcutGroup } from '@shared/modules';
 import { PAGES_ADMIN_SECTIONS } from './admin';
+import { PagesImport } from './ui/features/importing/PagesImport';
 import { openNewPage } from './ui/features/pages/PageTree';
 import { PAGES_SPOT_KINDS } from './ui/features/spotlight/kinds';
 import { PagesBottomBar, PagesHeaderActions, PagesNav, PagesNavFoot, pagesOpened, pagesPathOf, PagesShellScreen, pagesStillThere, usePagesTitle } from './ui/PagesShell';
@@ -85,6 +87,8 @@ export const pagesModule: AppModule = {
 
   emptyBin: () => emptyPagesBin(),
   binCount: () => trashedPages().length,
+  importer: { source: () => 'Notion', meta: () => t('Un export de Notion, ou des fichiers Markdown (Obsidian…)'), Wizard: PagesImport },
+  erase: { parts: () => pagesEraseParts(useBlocksStore.getState()), run: chosen => erasePages(chosen) },
   adminSections: PAGES_ADMIN_SECTIONS,
   settingsPlaces: PAGES_SETTINGS_PLACES,
 };

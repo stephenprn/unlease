@@ -5,17 +5,19 @@
  */
 import { t, tx } from '@unlease/core/i18n';
 import { isLive } from '@unlease/contacts/models/contacts';
+import { eraseParts } from '@unlease/contacts/services/erase';
 import { CONTACTS_SETTINGS_PLACES } from '@unlease/contacts/services/settingsPlaces';
 
-import { binnedContacts, emptyContactsBin, trashContacts } from './app/store/actions';
+import { binnedContacts, emptyContactsBin, eraseContacts, trashContacts } from './app/store/actions';
 import { clearSelection, setImportFile, useContactsUi } from './app/store/contactsUi';
 import { useContactsStore } from './app/store/library';
 import { showUndo } from '@shared/app/store/ui';
 import type { AppModule, ShortcutGroup, SpotLabel } from '@shared/modules';
-import { navigate } from '@shared/ui/router';
+import { navigate, paths as shellPaths } from '@shared/ui/router';
 import { contactsData } from './data';
 import { contactsBackTo, ContactsBottomBar, ContactsHeaderActions, ContactsNav, ContactsNavFoot, contactsOpened, contactsPathOf, ContactsScreen, contactsStillThere, useContactsTitle } from './ui/ContactsShell';
 import { exportContacts } from './ui/features/exporting';
+import { ContactsImport } from './ui/features/importing/ContactsImport';
 import { openNewContact } from './ui/features/newContact';
 import { ContactsHeaderCover, useSelecting } from './ui/features/SelectionBar';
 import { CONTACTS_SETTINGS } from './ui/features/settings/ContactsSettings';
@@ -79,7 +81,7 @@ export const contactsModule: AppModule = {
   spotLabels,
   commands: [
     { title: tx('Créer un contact'), icon: 'personPlus', key: 'c', run: () => openNewContact() },
-    { title: tx('Importer des contacts'), icon: 'download', run: () => navigate(paths.import) },
+    { title: tx('Importer des contacts'), icon: 'download', run: () => navigate(shellPaths.importer) },
     { title: tx('Exporter tous les contacts'), icon: 'upload', run: () => exportContacts(Object.values(useContactsStore.getState().contacts).filter(isLive)) },
     { title: tx('Anniversaires'), icon: 'cake', run: () => navigate(paths.birthdays) },
   ],
@@ -102,17 +104,27 @@ export const contactsModule: AppModule = {
     return true;
   },
   shortcuts: CONTACTS_SHORTCUTS,
-  // A vCard or a CSV dropped anywhere: the import page reads it.
+  // A vCard or a CSV dropped anywhere: the import's wizard reads it, straight to its preview.
   onDropFiles: files => {
     const file = files.find(each => /\.(vcf|vcard|csv)$/i.test(each.name) || /vcard|csv/i.test(each.type));
     if (!file) return false;
     setImportFile(file);
-    navigate(paths.import);
+    navigate(shellPaths.importer);
     return true;
   },
 
   settingsSections: CONTACTS_SETTINGS,
   emptyBin: () => emptyContactsBin(),
   binCount: () => binnedContacts().length,
+  importer: {
+    // A product's name, the same in every language.
+    source: () => 'Google Contacts',
+    meta: () => t('Un fichier exporté de Google Contacts (.vcf ou .csv)'),
+    Wizard: ContactsImport,
+  },
+  erase: {
+    parts: () => eraseParts(useContactsStore.getState()),
+    run: chosen => eraseContacts(chosen),
+  },
   settingsPlaces: CONTACTS_SETTINGS_PLACES,
 };

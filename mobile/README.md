@@ -11,6 +11,42 @@ phone layer. Three folders:
 | `calendar/` | Agenda (`com.stephenprn.agenda`, `unlease-agenda://`): the schedule, the day, three days, the week, the month and the year; events with their repeats, exceptions, reminders (notifications), labels, guests, mentions, files and zones; subscriptions and holidays (read by the server); contacts' birthdays (call, SMS, WhatsApp, gift ideas), Carnet's reminders and Pages' days as layers; quick add, search, Claude's answers, `.ics` import and export; four widgets (schedule, month, next event, a countdown to an event chosen) | `(cd calendar && npm install)` |
 | `contacts/` | Contacts (`com.stephenprn.contacts`, `unlease-contacts://`): the address book, favourites, labels, birthdays, calls, SMS and WhatsApp, imports (Google's export, the phone's own contacts, a `.vcf` shared to it), the bin, two widgets (quick calls, a new contact) | `(cd contacts && npm install)` |
 
+## Dev builds
+
+`npm run android` (the `debug` build, its JavaScript from Metro) and `./gradlew assembleDevRelease`
+(`devRelease`: the JavaScript bundled and Hermes optimised, as in a release, to try one) make another
+app than the released one: `com.stephenprn.<app>.dev`, named « Carnet Dev », its launcher icon
+striped, signed with React Native's debug key (`shared/android/dev-builds.gradle`, which every app
+applies). One phone keeps both, and the dev build never reaches the released one:
+
+- Android refuses it over a released app (another package, and another key);
+- its siblings are the other dev builds: SuiteLink's permission is
+  `com.stephenprn.unlease.dev.permission.SUITE` and its `<queries>` name the `.dev` packages, so it
+  never reads a released app's server or token;
+- its links answer `carnet-dev://`, `unlease-pages-dev://`, `unlease-contacts-dev://`,
+  `unlease-agenda-dev://`, so a released app's link never opens it, nor asks which app should.
+
+Give it a server of its own, never the one the released apps use: `npm run dev -w server` with its own
+`UNLEASE_DATA_DIR`, reached from the phone through `adb reverse tcp:8080 tcp:8080` (its address in the
+setup: `http://localhost:8080`; a dev build allows plain http), and Metro through
+`adb reverse tcp:8081 tcp:8081`.
+
+```bash
+(cd mobile/notes && npm start)                            # Metro, for the debug build
+(cd mobile/notes && npm run android)                      # the debug build (run-android --appIdSuffix dev)
+(cd mobile/notes/android && ./gradlew assembleDevRelease) # app/build/outputs/apk/devRelease/app-devRelease.apk
+```
+
+After a change under `shared/` alone, run `./gradlew app:createBundleDevReleaseJsAndAssets --rerun`
+first: the bundle task watches the app's folder, not `shared/`, and would keep the old JavaScript.
+
+So the code never writes a package or a scheme of the suite out: JavaScript asks `appPackage(id)` and
+`appScheme(id)` (`shared/src/app/variant.ts`, from the native `SuiteLink.ownPackage()`), Kotlin
+`BuildConfig.APP_SCHEME` (and `SCHEME_SUFFIX` for another app's), a manifest `${suiteSuffix}` and
+`${appScheme}`. Resource XML takes no placeholder: the script writes the dev build's static shortcuts,
+its names (`app_name` and every label of the manifest that says it, in every language) and its launcher
+layers from the app's own, at each build (`build/generated/unlease/devRes`).
+
 ## How the shared layer is built
 
 `shared/` has no `node_modules`: each app builds it with its own install, so a bare import in a
@@ -96,15 +132,17 @@ its time, and an app takes a sibling's later one at start and whenever it comes 
 that time so nothing echoes back (`followSiblings`: `grainAt`, `localeAt`). The look (the theme, the
 colours and the ground, taken whole) is each app's: « Appliquer aux autres » hands on a `lookOffer`
 naming the apps ticked (`applyLookTo`), which each takes the same way when it was sent after its own
-choice (`lookAt`); which apps are installed is asked of their schemes (`useInstalledApps`). Builds signed with different keys cannot be installed side by side
-(the permission is declared by both). A place in another app opens there when it is installed
+choice (`lookAt`); which apps are installed is asked of their schemes (`useInstalledApps`). A dev build
+declares a permission of its own (`com.stephenprn.unlease.dev.permission.SUITE`), so it installs beside
+a released one and neither reads the other ([Dev builds](#dev-builds)). A place in another app opens there when it is installed
 (`openInApp` with `pagePlace(id)`: `unlease-pages://page/<id>`, `#block-<id>` for a block; or
 `notesPlace('note' | 'line' | 'link', id)`: `carnet://note/<id>`; or `contactPlace(id)`:
 `unlease-contacts://contact/<id>`; or `eventPlace(id)`: `unlease-agenda://event/<id>`, and
-`newEventPlace(query)`: Agenda's form filled, `unlease-agenda://new?…`), else in the web app on the server.
+`newEventPlace(query)`: Agenda's form filled, `unlease-agenda://new?…`; each scheme `-dev` in a dev
+build), else in the web app on the server.
 Every drawer lists, under « Applications », each other app of the suite while it can be opened
-(`NavDrawer`, `useReachableApps`: installed, or run by the server). Debug builds of every app are signed with the same `debug.keystore` (copied in each
-app), so they install side by side; release builds share the upload key (`keystore.properties`, the same
+(`NavDrawer`, `useReachableApps`: installed, or run by the server). The dev builds of every app are signed with the same `debug.keystore` (copied in each
+app), so they read each other; release builds share the upload key (`keystore.properties`, the same
 in every app). Without it a release build refuses to run, since React Native's debug key is public:
 `./gradlew assembleRelease -PallowDebugSigning` builds one signed with it anyway, for your own phone only
 (`docs/RELEASING.md`, *Signing the APKs*).
@@ -120,16 +158,19 @@ in every app). Without it a release build refuses to run, since React Native's d
 4. Its root: `AppShell` with its navigator; its first run `SetupScreen app="<id>"`, its Administration
    `AdminScreen app="<id>"` with its own sections.
 5. Android: start from an app's `android/` (Pages' is the smallest), with its own `namespace` and
-   `applicationId`, `rootProject.name`, `MainActivity`'s component name (its `app.json` name). The
+   `applicationId`, `rootProject.name`, `MainActivity`'s component name (its `app.json` name), and
+   `shared/android/dev-builds.gradle` applied at the end of its `app/build.gradle` with its scheme
+   (`ext.suiteScheme`, [Dev builds](#dev-builds)). The
    shared source sets and codegen as above, the shared packages registered in its
    `MainApplication` (Media, Haptics, Connectivity, Organic, Clipboard, SuiteLink, LauncherIcon;
    MapApps where it opens places, with a `<queries>` for `geo:`), and in its manifest
-   the SUITE permission (declared and used), the `SuiteProvider`, the `FileProvider`
-   (`<applicationId>.files`, the camera), the `<queries>` naming every app of the suite, its scheme's
-   intent filter, and no LAUNCHER filter on `MainActivity`: the two marks of the launcher's entries
+   the SUITE permission (declared and used, `com.stephenprn.unlease${suiteSuffix}.permission.SUITE`),
+   the `SuiteProvider` (read with it), the `FileProvider` (`<applicationId>.files`, the camera), the
+   `<queries>` naming every app of the suite (`com.stephenprn.<app>${suiteSuffix}`), its scheme's
+   intent filter (`${appScheme}`), and no LAUNCHER filter on `MainActivity`: the two marks of the launcher's entries
    right after it, which the generator fills (step 6). Its `android` script names the activity to
-   start (`react-native run-android --main-activity .MainActivity`), and its notifications' taps
-   `launchActivity()` (`@shared/platform/launcherIcon`), never `'default'`. Add its applicationId to `SUITE_PACKAGES` (`shared/src/app/suiteLink.ts`) and to
+   start and the dev build's suffix (`react-native run-android --main-activity .MainActivity --appIdSuffix dev`), and its notifications' taps
+   `launchActivity()` (`@shared/platform/launcherIcon`), never `'default'`. Add its applicationId to `SUITE_PACKAGES` (`shared/src/app/variant.ts`) and to
    every app's `<queries>`; its folder to `PHONE_APPS` (`tools/release/version.mjs`, which keeps its
    `versionName` and `versionCode` with the others) and to the matrices of `.github/workflows/ci.yml`
    and `android.yml`.
@@ -143,8 +184,8 @@ in every app). Without it a release build refuses to run, since React Native's d
 ## Testing notifications' timing
 
 A notification late on a device is mostly Android holding it: these put a phone (or an emulator) in
-the states that do, `<pkg>` being `com.stephenprn.agenda`, `com.stephenprn.carnet` or
-`com.stephenprn.contacts`.
+the states that do, `<pkg>` being a dev build's `com.stephenprn.agenda.dev`, `com.stephenprn.carnet.dev`
+or `com.stephenprn.contacts.dev` (try these on a released app only on a phone whose data you can lose).
 
 ```bash
 adb shell dumpsys alarm | grep -A3 <pkg>                  # the alarms armed: exact ones say "window=0"

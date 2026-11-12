@@ -17,6 +17,8 @@ class SuiteLinkModule(private val reactContext: ReactApplicationContext) : Nativ
     worker.execute { SuiteLink.store(reactContext, server, token, appearance, grain, locale, look) }
   }
 
+  override fun ownPackage(): String = reactContext.packageName
+
   override fun siblings(packages: ReadableArray, promise: Promise) {
     val names = (0 until packages.size()).mapNotNull { packages.getString(it) }.filter { it != reactContext.packageName }.distinct()
     worker.execute {

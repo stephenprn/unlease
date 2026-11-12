@@ -33,6 +33,8 @@ import shell from './navigation/shell.module.css';
 import { adminPath, navigate, parseRoute, paths, settingsPagePath, useLocation, type Arrival, type Route } from './router';
 import { AdminScreen } from './screens/AdminScreen';
 import { AppearanceScreen } from './screens/AppearanceScreen';
+import { EraseScreen } from './screens/EraseScreen';
+import { ImportScreen } from './screens/ImportScreen';
 import { AppOffScreen } from './screens/AppOffScreen';
 import { NotFound } from './screens/NotFound';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -106,7 +108,7 @@ function pathOf(route: Route): string {
 function Page({ route, module }: { route: Route; module: AppModule | null }) {
   switch (route.name) {
     case 'settings':
-      return route.page === 'appearance' ? <AppearanceScreen /> : <SettingsScreen />;
+      return route.page === 'appearance' ? <AppearanceScreen /> : route.page === 'import' ? <ImportScreen /> : route.page === 'erase' ? <EraseScreen /> : <SettingsScreen />;
     case 'admin':
       return <AdminScreen route={route} />;
     case 'home':
@@ -130,6 +132,8 @@ function useTabTitle(module: AppModule | null, page: Route, route: Route): strin
     return section ? `${section.title} · ${t('Administration')} · ${name}` : `${t('Administration')} · ${name}`;
   }
   if (page.name === 'settings' && page.page === 'appearance') return `${t('Apparence')} · ${t('Réglages')} · ${name}`;
+  if (page.name === 'settings' && page.page === 'import') return `${t('Importer')} · ${t('Réglages')} · ${name}`;
+  if (page.name === 'settings' && page.page === 'erase') return `${t('Effacer des données')} · ${t('Réglages')} · ${name}`;
   const title = (module ? own : null) ?? (page.name === 'settings' ? t('Réglages') : null);
   return title ? `${title} · ${name}` : name;
 }

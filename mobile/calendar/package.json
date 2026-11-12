@@ -10,7 +10,7 @@
   },
   "private": true,
   "scripts": {
-    "android": "react-native run-android --main-activity .MainActivity",
+    "android": "react-native run-android --main-activity .MainActivity --appIdSuffix dev",
     "start": "react-native start",
     "lint": "eslint --flag v10_config_lookup_from_file src __mocks__ jest.setup.js App.tsx index.js ../shared/src ../shared/specs ../shared/__mocks__",
     "test": "jest src",

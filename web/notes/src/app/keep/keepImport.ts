@@ -1,23 +1,26 @@
 /**
  * Moving in from Google Keep, in the browser: drop the Takeout .zip (or several, or the Keep
- * folder's files themselves), read its Keep folder, show what is in it and ask what the notes made
- * of links become, then write it all as one batch of records. The parsing and the records are
- * core's (`notes/services/keepImport`), shared with the phone; this file only reads the archive
- * and stores the photos.
+ * folder's files themselves), read its Keep folder, then (once the wizard has shown every note and
+ * asked what the notes made of links become) write it all as one batch of records. The parsing,
+ * the preview and the records are the package's (`notes/services/keepImport`), shared with the
+ * phone; this file only reads the archive and stores the photos.
  *
  * Photos are kept in IndexedDB as this browser's own files, so the sync loop uploads them like any
  * photo added here.
  */
-import { t } from '@unlease/core/i18n';
 import {
   alreadyImported,
   isKeepDataFile,
+  KEEP_WIZARD_WORDS,
   keepFileFinder,
   keepPlanToRecords,
   planKeepImport,
+  type KeepChoices,
   type KeepPlan,
   type KeepReport,
 } from '@unlease/notes/services/keepImport';
+
+export type { KeepChoices } from '@unlease/notes/services/keepImport';
 
 import { imageSize, normalizeMime } from '../media/attach';
 import { storeFile } from '@shared/app/media/files';
@@ -33,14 +36,6 @@ export interface PreparedImport {
   readonly plan: KeepPlan;
   /** The export's other files (photos), by their path in it. */
   readonly files: ReadonlyMap<string, Uint8Array>;
-}
-
-/** What the person chose for the notes made of links. */
-export interface KeepChoices {
-  /** Notes of one address become links Claude files. */
-  readonly singleLinks: boolean;
-  /** The link lists (by `source`) that become collections. */
-  readonly collections: ReadonlySet<string>;
 }
 
 const basename = (path: string): string => path.split('/').pop() ?? path;
@@ -64,7 +59,7 @@ export async function readKeepArchive(input: Blob | readonly (File | Blob)[]): P
     try {
       for (const [path, data] of Object.entries(await unzipKeep(bytes))) entries.set(path, data);
     } catch {
-      throw new KeepImportError(t('Archive illisible : choisissez le fichier .zip téléchargé depuis Google Takeout.'));
+      throw new KeepImportError(KEEP_WIZARD_WORDS.unreadableArchive);
     }
   }
   const decoder = new TextDecoder();
@@ -75,17 +70,17 @@ export async function readKeepArchive(input: Blob | readonly (File | Blob)[]): P
     else if (!/\.html?$/i.test(path)) files.set(path, bytes);
   }
   if (!data.some(file => /\.json$/i.test(file.name))) {
-    throw new KeepImportError(t('Aucune note Keep dans cette archive. Exportez « Keep » depuis Google Takeout.'));
+    throw new KeepImportError(KEEP_WIZARD_WORDS.noKeepNotes);
   }
   return { plan: planKeepImport(data), files };
 }
 
-/** Whether a record with this id is in this browser's library, live or deleted. */
-const known = (type: string, id: string): boolean => getRecord(type, id) !== undefined;
+/** Whether a record with this id is in this browser's library, live or deleted: an earlier import's (here, or on another device once synced). */
+export const knownHere = (type: string, id: string): boolean => getRecord(type, id) !== undefined;
 
 /** Notes an earlier import (here or on another device, once synced) brought already. */
 export function alreadyHere(plan: KeepPlan): number {
-  return alreadyImported(plan, known);
+  return alreadyImported(plan, knownHere);
 }
 
 export async function runKeepImport(
@@ -98,10 +93,9 @@ export async function runKeepImport(
     node: clockNode(),
     now,
     library: useLibraryStore.getState(),
-    known,
+    known: knownHere,
     reading: readingEnabled(),
-    singleLinks: choices.singleLinks,
-    collections: choices.collections,
+    ...choices,
     findFile: keepFileFinder(prepared.files.keys()),
   });
   writeImported(result.records, now);

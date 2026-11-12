@@ -15,10 +15,12 @@ import { setQuery } from '@shared/app/store/search';
 import { setOnboarded } from '@shared/app/store/settings';
 import { App } from '@shared/ui/App';
 import { initHistory } from '@shared/ui/router';
+import { planImport } from '@unlease/calendar/services/importing';
+import { readImportFiles } from '../../app/importFiles';
 import { addEvent, applyImport } from '../../app/store/actions';
-import { openQuick } from '../../app/store/calendarUi';
+import { openQuick, setImportFiles } from '../../app/store/calendarUi';
 import { useCalendarStore } from '../../app/store/library';
-import { readCalendarFile } from '../screens/ImportScreen';
+import { calendarModule } from '../../module';
 import { parseCalendarRoute } from '../routes';
 
 const state = () => useCalendarStore.getState();
@@ -240,12 +242,101 @@ describe('Agenda’s web app', () => {
   it('imports a calendar file once', async () => {
     const ics = ['BEGIN:VCALENDAR', 'X-WR-CALNAME:Perso', 'BEGIN:VEVENT', 'UID:a@example.org', 'DTSTART;VALUE=DATE:20261224', 'DTEND;VALUE=DATE:20261226', 'SUMMARY:Noël', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
     const file = new File([ics], 'perso.ics', { type: 'text/calendar' });
-    const first = await readCalendarFile(file);
-    expect(first.name).toBe('Perso');
-    expect(applyImport(first.plan)).toBe(1);
-    const again = await readCalendarFile(file);
-    expect(again.plan.creates).toHaveLength(0);
-    expect(again.plan.skipped).toBe(1);
+    const plan = async () => planImport((await readImportFiles([file])).files, Object.values(state().events), Date.now());
+    const first = await readImportFiles([file, new File(['bonjour'], 'notes.txt')]);
+    expect(first.files.map(each => each.calendar.name)).toEqual(['Perso']);
+    expect(first.refused).toEqual([{ name: 'notes.txt', why: 'Ce fichier ne se lit pas comme un agenda.' }]);
+    expect(applyImport(await plan())).toBe(1);
+    const again = await plan();
+    expect(again.creates).toHaveLength(0);
+    expect(again.skipped).toBe(1);
+  });
+
+  it('leads the import’s old address to Réglages’ wizard', async () => {
+    open('/agenda/import');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Votre agenda Google' })).toBeInTheDocument();
+    expect(location.pathname).toBe('/agenda/settings/import');
+  });
+
+  it('imports through its wizard: the preview, the choices, the report, taken back on its slip or later', async () => {
+    const user = userEvent.setup();
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'X-WR-CALNAME:Perso',
+      'BEGIN:VEVENT',
+      'UID:a@example.org',
+      'DTSTART;VALUE=DATE:20261224',
+      'DTEND;VALUE=DATE:20261226',
+      'SUMMARY:Noël',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:b@example.org',
+      'DTSTART;VALUE=DATE:20200101',
+      'SUMMARY:Jour de l’an 2020',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:c@example.org',
+      'STATUS:CANCELLED',
+      'DTSTART;VALUE=DATE:20261231',
+      'SUMMARY:Réveillon annulé',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const file = new File([ics], 'perso.ics', { type: 'text/calendar' });
+    const live = () => Object.values(state().events).filter(event => event.deletedAt === null && event.trashedAt === null);
+    open('/agenda/settings/import');
+    render(<App />);
+    // A file dropped anywhere lands on the preview.
+    act(() => setImportFiles([file]));
+    expect(await screen.findByRole('heading', { name: 'Ce que contient le fichier' })).toBeInTheDocument();
+    const list = screen.getByRole('list', { name: 'Les événements du fichier' });
+    expect(within(list).getByText('Annulé dans le fichier')).toBeInTheDocument();
+    // The old one left out by its box.
+    await user.click(within(list).getByRole('checkbox', { name: 'Importer Jour de l’an 2020' }));
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    expect(await screen.findByRole('heading', { name: 'Vos choix' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Nom du libellé' })).toHaveValue('Perso');
+    expect(screen.getByRole('button', { name: /^Importer 1\s+événement$/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /À venir seulement/ }));
+    await user.click(screen.getByRole('button', { name: /^Importer 1\s+événement$/ }));
+    expect(await screen.findByRole('heading', { name: 'Import terminé' })).toBeInTheDocument();
+    expect(live().map(event => event.title)).toEqual(['Noël']);
+    const label = Object.values(state().labels).find(each => each.name === 'Perso')!;
+    expect(live()[0]!.labelIds).toEqual([label.id]);
+    expect(screen.getByRole('button', { name: 'Voir l’agenda' })).toBeInTheDocument();
+    // Taken back whole on its slip: nothing in the bin, the label gone too, and the file comes again.
+    await user.click(await screen.findByRole('button', { name: 'Annuler' }));
+    expect(Object.values(state().events).filter(event => event.deletedAt === null)).toHaveLength(0);
+    expect(state().labels[label.id]!.deletedAt).not.toBeNull();
+
+    applyImport(planImport((await readImportFiles([file])).files, Object.values(state().events), Date.now()));
+    await user.click(screen.getByRole('button', { name: 'Importer un autre fichier' }));
+    act(() => setImportFiles([file]));
+    expect(await screen.findByText(/^2\s+événements de ce fichier dans votre agenda$/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retirer ces événements' }));
+    const dialog = await screen.findByRole('alertdialog', { name: /^Retirer 2\s+événements \?$/ });
+    await user.click(within(dialog).getByRole('button', { name: 'Retirer' }));
+    expect(live()).toHaveLength(0);
+    expect(Object.values(state().events).filter(event => event.deletedAt === null && event.trashedAt !== null)).toHaveLength(2);
+    expect(screen.getByText(/^2\s+événements placés dans la corbeille$/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(live()).toHaveLength(2);
+  });
+
+  it('erases the parts chosen, its subscriptions kept', () => {
+    const own = addEvent({ ...blankDraft(`${today()}T10:00`, `${today()}T11:00`, 'Europe/Paris'), title: 'Dentiste' });
+    writeLocal([{ type: 'calendarFeed', id: 'club', patch: { kind: 'ics', name: 'Club', url: 'https://example.org/club.ics', color: 'sage', hidden: false, position: 'a0', refreshedAt: null, error: '', createdAt: 1, deletedAt: null } }]);
+    const parts = calendarModule.erase!.parts();
+    expect(parts.map(part => [part.id, part.count])).toEqual([
+      ['events', 1],
+      ['imported', 0],
+      ['subscriptions', 1],
+      ['labels', 0],
+    ]);
+    expect(calendarModule.erase!.run(new Set(['events']))).toBe(1);
+    expect(state().events[own]!.deletedAt).not.toBeNull();
+    expect(state().feeds.club!.deletedAt).toBeNull();
   });
 
   it('shows a contact’s birthday with the ways to wish it', async () => {

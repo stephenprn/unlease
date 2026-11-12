@@ -16,7 +16,6 @@ import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode,
 
 import { APPS, SELF_HOSTING_GUIDE, type AppId } from '@unlease/core/apps';
 import { DEFAULT_APPEARANCE, isDefaultAppearance } from '@unlease/design/appearance';
-import { pebbleTurn } from '@unlease/design/pebbles';
 import { LOCALE_NAMES, t } from '@unlease/core/i18n';
 import { formatMoment, restoreSummary, thawingLine, snapshotMeta } from '@unlease/core/services/admin';
 import {
@@ -30,8 +29,10 @@ import {
   setupAppChoices,
   setupFieldHelp,
   setupForward,
+  setupImportShown,
   setupNoBackupsMeta,
   setupProgress,
+  setupRestored,
   setupServerShown,
   setupStartedEmpty,
   setupTaskForward,
@@ -46,6 +47,7 @@ import {
   type SetupStep,
   type SetupTask,
 } from '@unlease/core/services/setup';
+import { setupImportLead } from '@unlease/core/services/importFlow';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 
 import { useMinute } from '../../app/hooks/useMinute';
@@ -58,10 +60,11 @@ import { theApp } from '../../modules';
 import { BrandMark } from '../components/BrandMark';
 import { Button } from '../components/Button';
 import { Collage } from '../components/Collage';
+import { StepTrail } from '../components/StepTrail';
 import { settleIn } from '../components/EmptyLine';
 import { ColorsSection, GroundSection } from '../features/appearance/AppearanceSections';
 import { Icon } from '../components/Icon';
-import { OutlinedBox, OutlineLift, PebbleEdge, useOutline } from '../components/Outline';
+import { OutlinedBox, OutlineLift, useOutline } from '../components/Outline';
 import { FormMessage } from '../components/FormMessage';
 import { TextField } from '../components/TextField';
 import { useForm } from '../components/useForm';
@@ -104,9 +107,22 @@ export function SetupScreen() {
   const status = admin.status;
   if (server && status && startedEmpty?.url !== server.url) setStartedEmpty({ url: server.url, empty: setupStartedEmpty(status) });
   const empty = server && startedEmpty?.url === server.url ? startedEmpty.empty : null;
+  // Whether the app's import is offered, decided once its records are counted (none yet: offered), kept for the whole setup.
+  const importer = app.importer;
+  const [importOffer, setImportOffer] = useState<{ readonly url: string | null; readonly shown: boolean } | null>(null);
+  const offered = setupImportShown(app.id, importer !== undefined, server !== null, status);
+  const offerKey = server?.url ?? null;
+  if (offered !== null && importOffer?.url !== offerKey) setImportOffer({ url: offerKey, shown: offered });
+  // Not counted yet, while the import step is the one asked for: it waits there rather than flashing the next one.
+  const importPending = importer !== undefined && importOffer?.url !== offerKey;
+  // A backup brought back during this setup holds the app's data already: nothing to import.
+  const importShown = !setupRestored(status) && ((importOffer?.url === offerKey && importOffer.shown) || (importPending && place.step === 'import'));
+  // The import's wizard is past its first step: its own foot leads, the setup's waits.
+  const [importing, setImporting] = useState(false);
+  const [imported, setImported] = useState(false);
 
   // The server's steps while its setup is not done (or not known yet); a device joining one set up skips them.
-  const steps = setupSteps(server !== null, setupServerShown(server !== null, serverDone));
+  const steps = setupSteps(server !== null, setupServerShown(server !== null, serverDone), importShown);
   // A step the server turned out to have done already: on to the next one there is.
   const step = steps.includes(place.step) ? place.step : place.step === 'server' ? 'server' : 'appearance';
   const task = step === place.step ? place.task : null;
@@ -120,12 +136,12 @@ export function SetupScreen() {
   };
 
   if (step === 'server') {
-    return <Welcome initial={server} onNext={done => go(done === false ? 'apps' : 'appearance')} />;
+    return <Welcome initial={server} onNext={done => go(done === false ? 'apps' : 'import')} />;
   }
 
   const index = steps.indexOf(step);
   const last = index === steps.length - 1;
-  const words = task ? setupTaskWords(task, status) : SETUP_WORDS[step];
+  const words = task ? setupTaskWords(task, status) : step === 'import' && importer ? { ...SETUP_WORDS.import, lead: setupImportLead(importer.source()) } : SETUP_WORDS[step];
   const restoring = status?.restore.running === true;
   // What the server sets waits for its settings; the appearance does not.
   const ready = server !== null && settings !== null;
@@ -164,6 +180,11 @@ export function SetupScreen() {
           )}
         </>
       );
+    }
+    if (step === 'import' && importer) {
+      if (importPending) return <p className="t-meta">{t('Lecture de vos données…')}</p>;
+      const { Wizard } = importer;
+      return <Wizard embedded onFlow={setImporting} onImported={() => setImported(true)} />;
     }
     if (!ready) return <p className="t-meta">{t('Lecture des réglages du serveur…')}</p>;
     if (step === 'apps') return <AppsStep server={server} settings={settings} />;
@@ -256,7 +277,9 @@ export function SetupScreen() {
         </>
       );
     }
-    const set = step === 'appearance' ? !isDefaultAppearance(appearance) : true;
+    // The import's own foot leads while it runs; the setup's comes back once it is done or set aside.
+    if (step === 'import' && importing) return null;
+    const set = step === 'appearance' ? !isDefaultAppearance(appearance) : step === 'import' ? imported : true;
     return (
       <>
         <Button kind="text" icon="back" onClick={() => go(previousSetupStep(steps, step))} disabled={restoring}>
@@ -288,34 +311,18 @@ export function SetupScreen() {
           </span>
         </div>
         {/* The way through, a stone per step on one thread: ticked once done, a leaf at the step open, bare ahead. */}
-        <ol className={styles.setupTrail} aria-label={t('Étapes')} style={{ '--steps': steps.length } as CSSProperties}>
-          {steps.map((entry, position) => {
-            const state = position < index ? 'done' : position === index ? 'here' : 'ahead';
-            return (
-              <li key={entry} data-state={state} aria-current={state === 'here' ? 'step' : undefined}>
-                <span className={styles.setupStone} aria-hidden="true">
-                  <span className={styles.setupStoneFill} data-pebble={pebbleTurn(position)} data-still>
-                    {state === 'done' ? <Icon name="check" size={16} /> : state === 'here' ? <span className={styles.setupStoneLeaf} data-pebble={pebbleTurn(position + 2)} data-still /> : null}
-                  </span>
-                  {state === 'done' ? null : <PebbleEdge turn={pebbleTurn(position)} />}
-                </span>
-                <span className={state === 'here' ? 't-meta-strong' : 't-meta'}>
-                  {SETUP_WORDS[entry].short}
-                  {state === 'done' ? <span className="sr-only">{` · ${t('Fait')}`}</span> : null}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <StepTrail steps={steps.map(entry => ({ id: entry, name: SETUP_WORDS[entry].short }))} current={index} label={t('Étapes')} />
       </header>
 
       <SetupIntro key={task ?? step} id={headingId} heading={heading} title={words.title} lead={words.lead} info={info} />
 
       {body()}
 
-      <nav className={styles.setupNav} aria-label={t('Mise en route')}>
-        {nav()}
-      </nav>
+      {step === 'import' && importing ? null : (
+        <nav className={styles.setupNav} aria-label={t('Mise en route')}>
+          {nav()}
+        </nav>
+      )}
     </main>
   );
 }

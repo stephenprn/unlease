@@ -71,6 +71,18 @@ function fakeServer(notes = 0, done = notes > 0) {
   return { sent, puts: () => sent.filter(request => request.path === '/api/settings' && request.method === 'PUT').map(request => request.body) };
 }
 
+/**
+ * On to the appearance: past the import (« Vos données », offered while the app holds nothing and has
+ * an importer), left for later, when this app's setup shows it.
+ */
+async function toAppearance(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  const heading = await screen.findByRole('heading', { name: /^(Vos données|Apparence)$/ });
+  if (heading.textContent === 'Vos données') {
+    await user.click(screen.getByRole('button', { name: 'Plus tard' }));
+    await screen.findByRole('heading', { name: 'Apparence' });
+  }
+}
+
 /** Connected to a new server, past its apps as they come, on "Votre serveur". */
 async function connect(user: ReturnType<typeof userEvent.setup>): Promise<void> {
   await user.type(screen.getByLabelText('Adresse du serveur'), 'https://unlease.test');
@@ -100,7 +112,7 @@ describe('the first run', () => {
     render(<SetupScreen />);
     await connect(user);
     expect(useSettingsStore.getState().onboarded).toBe(false);
-    expect(screen.getByText('Étape 3 sur 4', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Étape 3 sur 5', { exact: false })).toBeInTheDocument();
     // On a server that held nothing, bringing a backup back comes first.
     const rows = within(screen.getByRole('list', { name: 'Votre serveur' })).getAllByRole('button');
     expect(rows.map(row => row.textContent)).toEqual([
@@ -147,7 +159,7 @@ describe('the first run', () => {
     await user.click(screen.getByRole('button', { name: 'Plus tard' }));
     await screen.findByRole('heading', { name: 'Votre serveur' });
     await user.click(screen.getByRole('button', { name: 'Continuer' }));
-    await screen.findByRole('heading', { name: 'Apparence' });
+    await toAppearance(user);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     await waitFor(() => expect(useSettingsStore.getState().onboarded).toBe(true));
     expect(server.puts().at(-1)).toEqual({ setupDone: true });
@@ -259,7 +271,7 @@ describe('the first run', () => {
     const user = userEvent.setup();
     render(<SetupScreen />);
     await user.click(screen.getByRole('button', { name: 'Tout garder dans ce navigateur' }));
-    await screen.findByRole('heading', { name: 'Apparence' });
+    await toAppearance(user);
     expect(useSettingsStore.getState().onboarded).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Commencer' }));
     expect(useSettingsStore.getState()).toMatchObject({ onboarded: true, server: null, appearance: DEFAULT_APPEARANCE });
@@ -296,7 +308,7 @@ describe('the first run', () => {
     const user = userEvent.setup();
     render(<SetupScreen />);
     await user.click(screen.getByRole('button', { name: 'Tout garder dans ce navigateur' }));
-    await screen.findByRole('heading', { name: 'Apparence' });
+    await toAppearance(user);
     await user.click(screen.getByRole('radio', { name: 'Mimosa' }));
     await user.click(screen.getByRole('radio', { name: 'Opale' }));
     expect(useSettingsStore.getState().appearance).toMatchObject({ ...PALETTE_COLORS.mimosa, ground: { kind: 'preset', key: 'opale' } });

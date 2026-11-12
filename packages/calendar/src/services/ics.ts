@@ -29,10 +29,18 @@ export interface IcsEvent {
   readonly categories: readonly string[];
 }
 
+/** A VEVENT that could not be read: what it was called, and why (no start, or a start that is no date). */
+export interface IcsUnreadable {
+  readonly title: string;
+  readonly reason: 'noStart' | 'badStart';
+}
+
 export interface IcsCalendar {
   /** X-WR-CALNAME, '' when it has none. */
   readonly name: string;
   readonly events: readonly IcsEvent[];
+  /** The VEVENTs left out, unreadable (absent when there are none): an import says so. */
+  readonly unreadable?: readonly IcsUnreadable[];
 }
 
 interface Property {
@@ -162,7 +170,7 @@ export function durationMinutes(value: string): number | null {
   return sign === '-' ? -total : total;
 }
 
-/** Every VEVENT of a calendar file; what cannot be read is left out. */
+/** Every VEVENT of a calendar file; one that cannot be read is set aside, named (`unreadable`). */
 export function parseIcs(text: string): IcsCalendar {
   const lines = unfold(text);
   let name = '';
@@ -179,6 +187,7 @@ export function parseIcs(text: string): IcsCalendar {
     else if (property.name === 'X-WR-CALNAME' && !name) name = unescapeText(property.value).trim();
   }
   const events: IcsEvent[] = [];
+  const unreadable: IcsUnreadable[] = [];
   let current: Property[] | null = null;
   let alarm: Property[] | null = null;
   let alarms: Property[][] = [];
@@ -202,7 +211,8 @@ export function parseIcs(text: string): IcsCalendar {
         alarm = null;
       } else if (value === 'VEVENT' && current) {
         const event = readEvent(current, alarms, locations);
-        if (event) events.push(event);
+        if ('reason' in event) unreadable.push(event);
+        else events.push(event);
         current = null;
       } else if (current !== null && depth > 0) depth -= 1;
       continue;
@@ -210,20 +220,20 @@ export function parseIcs(text: string): IcsCalendar {
     if (alarm) alarm.push(property);
     else if (current && depth === 0) current.push(property);
   }
-  return { name, events };
+  return unreadable.length > 0 ? { name, events, unreadable } : { name, events };
 }
 
-function readEvent(properties: readonly Property[], alarms: readonly Property[][], locations: ReadonlyMap<string, string>): IcsEvent | null {
+function readEvent(properties: readonly Property[], alarms: readonly Property[][], locations: ReadonlyMap<string, string>): IcsEvent | IcsUnreadable {
   const one = (name: string): Property | undefined => properties.find(property => property.name === name);
   const text = (name: string): string => {
     const property = one(name);
     return property ? unescapeText(property.value).trim() : '';
   };
   const startProperty = one('DTSTART');
-  if (!startProperty) return null;
+  if (!startProperty) return { title: text('SUMMARY'), reason: 'noStart' };
   const firstZone = zoneOf(startProperty.params.TZID, locations);
   const start = readWhen(startProperty, firstZone, locations);
-  if (!start) return null;
+  if (!start) return { title: text('SUMMARY'), reason: 'badStart' };
   const zone = start.zone;
   let end: string | null = null;
   const endProperty = one('DTEND') ?? one('DUE');

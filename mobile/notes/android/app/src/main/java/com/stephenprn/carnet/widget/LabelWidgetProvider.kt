@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.R
 import org.json.JSONObject
 
@@ -27,9 +28,9 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
     WidgetType.title(context, views, R.id.label_name_image, R.id.label_name, data.optString("name"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 168f, 1, R.color.wgen_ink)
     views.setContentDescription(R.id.label_open, data.optString("name"))
     WidgetKit.tint(context, views, R.id.label_tag, WidgetRes.pigments[data.optString("color")] ?: R.color.wgen_pigment_grey)
-    views.setOnClickPendingIntent(R.id.label_open, WidgetIntents.open(context, "carnet://label/$target"))
-    views.setOnClickPendingIntent(R.id.label_new_list, WidgetIntents.open(context, "carnet://capture/checklist?label=$target"))
-    val newNote = WidgetIntents.open(context, "carnet://capture/note?label=$target")
+    views.setOnClickPendingIntent(R.id.label_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://label/$target"))
+    views.setOnClickPendingIntent(R.id.label_new_list, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/checklist?label=$target"))
+    val newNote = WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/note?label=$target")
     views.setOnClickPendingIntent(R.id.label_new_note, newNote)
     views.setOnClickPendingIntent(R.id.label_empty_add, newNote)
 
@@ -72,7 +73,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
         WidgetKit.wash(this, R.id.card, note.optString("wash").takeIf { it.isNotEmpty() && it != "null" })
         setContentDescription(R.id.card, title.ifEmpty { body.take(80) })
         // A collection opens on its own page, never as a note (JavaScript says which).
-        WidgetKit.route(context, this, R.id.card, "carnet://${note.optString("open").ifEmpty { "note/${note.optString("id")}" }}")
+        WidgetKit.route(context, this, R.id.card, "${BuildConfig.APP_SCHEME}://${note.optString("open").ifEmpty { "note/${note.optString("id")}" }}")
       }
 
   private fun dp(context: Context, value: Int): Int =

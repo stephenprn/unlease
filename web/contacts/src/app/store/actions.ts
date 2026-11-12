@@ -11,7 +11,8 @@ import { mergeField } from '@unlease/core/sync/textMerge';
 import { nextLineColor, type LineColor } from '@unlease/design/colors';
 import { CONTACT_LIMITS, CONTACTS_TEXT_LIMITS, isLive, type Contact } from '@unlease/contacts/models/contacts';
 import { mergeContacts } from '@unlease/contacts/services/duplicates';
-import type { ImportPlan } from '@unlease/contacts/services/importing';
+import { eraseChanges, erasedCount } from '@unlease/contacts/services/erase';
+import { forgetImport, type ImportPlan } from '@unlease/contacts/services/importing';
 import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entities';
 
 import { getRecord, writeLocal, type LocalChange } from '@shared/app/store/records';
@@ -191,16 +192,17 @@ export interface PhotoFields {
   readonly photoUploaded: boolean;
 }
 
-/** Photos taken after an import (each contact that still has none), in one batch. */
-export function setPhotos(photos: readonly { readonly contactId: string; readonly photo: PhotoFields }[], now: number = Date.now()): number {
-  const changes: LocalChange[] = photos
-    .filter(({ contactId }) => {
-      const contact = state().contacts[contactId];
-      return contact && contact.deletedAt === null && contact.photoId === null;
-    })
-    .map(({ contactId, photo }) => ({ type: 'contact', id: contactId, patch: { ...photo } }));
-  writeLocal(changes, now);
-  return changes.length;
+/** Photos taken after an import (each contact that still has none), in one batch: those worn. */
+export function setPhotos<T extends { readonly contactId: string; readonly photo: PhotoFields }>(photos: readonly T[], now: number = Date.now()): T[] {
+  const worn = photos.filter(({ contactId }) => {
+    const contact = state().contacts[contactId];
+    return contact && contact.deletedAt === null && contact.photoId === null;
+  });
+  if (worn.length > 0) writeLocal(
+    worn.map(({ contactId, photo }) => ({ type: 'contact', id: contactId, patch: { ...photo } })),
+    now,
+  );
+  return worn;
 }
 
 /** The server holds the photo now: every contact wearing it says so. */
@@ -281,6 +283,25 @@ export function applyImport(plan: ImportPlan, now: number = Date.now()): void {
     ],
     now,
   );
+}
+
+/**
+ * « Annuler » after an import (`forgetImport`): what it made goes, and the contacts it completed get
+ * back what they had where nothing changed since, its photos too (`photos`: contact to photo), in one
+ * batch.
+ */
+export function undoImport(plan: ImportPlan, photos: ReadonlyMap<string, string>, now: number = Date.now()): void {
+  const changes = forgetImport(plan, photos, state().contacts, now);
+  if (changes.length > 0) writeLocal(changes, now);
+}
+
+// ── « Effacer des données » ─────────────────────────────────────────────────
+
+/** The parts chosen erased for good, in one batch (`contacts/services/erase`); how many records went. */
+export function eraseContacts(chosen: ReadonlySet<string>, now: number = Date.now()): number {
+  const writes = eraseChanges(state(), chosen, now);
+  if (writes.length > 0) writeLocal(writes, now);
+  return erasedCount(writes);
 }
 
 /** Every live contact, for an export or an import's plan. */

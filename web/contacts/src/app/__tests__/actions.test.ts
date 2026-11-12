@@ -6,7 +6,8 @@ import { planImport, readContactsFile } from '@unlease/contacts/services/importi
 import { freshLibrary } from '@test/library';
 import { getRecord, mergeRemote } from '@shared/app/store/records';
 import { emptyDraft, draftOf } from '../drafts';
-import { applyImport, createLabel, deleteLabel, emptyContactsBin, markPhotoUploaded, restoreContacts, saveContact, setFavorite, setLabelOn, trashContacts } from '../store/actions';
+import { applyImport, createLabel, deleteLabel, emptyContactsBin, eraseContacts, markPhotoUploaded, restoreContacts, saveContact, setFavorite, setLabelOn, trashContacts } from '../store/actions';
+import { contactsModule } from '../../module';
 import { useContactsStore } from '../store/library';
 import { contactsData } from '../../data';
 
@@ -118,6 +119,24 @@ describe('Contacts’ actions', () => {
     expect(clocks.size).toBe(1);
     const again = planImport(Object.values(state().contacts), Object.values(state().labels), readContactsFile('contacts.vcf', VCARDS)!, { now: Date.now(), newId: () => createId() });
     expect(again).toMatchObject({ creates: [], updates: [], labels: [], unchanged: 2 });
+  });
+
+  it('erases the parts chosen in one batch: the contacts but the favourites, the labels off those who stay', () => {
+    const lea = saveContact(null, emptyDraft('Léa Martin'), { since: null, typed: '' });
+    const paul = saveContact(null, { ...emptyDraft('Paul Martin'), favorite: true }, { since: null, typed: '' });
+    const family = createLabel('Famille', [lea, paul]);
+    expect(contactsModule.erase!.parts().map(part => [part.id, part.count])).toEqual([
+      ['contacts', 1],
+      ['favorites', 1],
+      ['labels', 1],
+    ]);
+    expect(eraseContacts(new Set(['contacts', 'labels']))).toBe(2);
+    expect(state().contacts[lea]!.deletedAt).not.toBeNull();
+    expect(state().contacts[paul]).toMatchObject({ deletedAt: null, labelIds: [] });
+    expect(state().labels[family]!.deletedAt).not.toBeNull();
+    // One batch: what it wrote shares one clock.
+    const clock = (type: string, id: string, field: string): unknown => (getRecord(type, id)!.clocks as Record<string, unknown>)[field];
+    expect(new Set([clock('contact', lea, 'deletedAt'), clock('contact', paul, 'labelIds'), clock('contactLabel', family, 'deletedAt')]).size).toBe(1);
   });
 
   it('keeps a photo waiting for its upload as the contact’s, then marks it sent', () => {

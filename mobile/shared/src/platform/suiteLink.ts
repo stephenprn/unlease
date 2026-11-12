@@ -20,6 +20,15 @@ export interface SiblingHolding {
   readonly look: string;
 }
 
+/** This app's applicationId (`….dev` in a dev build); '' without the module (a test, an older native build). */
+export function ownPackage(): string {
+  try {
+    return NativeSuiteLink?.ownPackage?.() ?? '';
+  } catch {
+    return '';
+  }
+}
+
 export function shareWithSiblings(server: string, token: string, appearance: string, grain: string, locale: string, look: string): void {
   try {
     NativeSuiteLink?.share(server, token, appearance, grain, locale, look);

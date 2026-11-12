@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.R
 import org.json.JSONObject
 
@@ -61,14 +62,14 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
           pictures += image
         }
         setContentDescription(R.id.row_body, listOf(link.optString("title"), link.optString("source")).filter { it.isNotEmpty() }.joinToString(", "))
-        WidgetKit.route(context, this, R.id.row_body, "carnet://link/${link.optString("id")}")
+        WidgetKit.route(context, this, R.id.row_body, "${BuildConfig.APP_SCHEME}://link/${link.optString("id")}")
         WidgetKit.route(context, this, R.id.row_open, link.optString("url"))
       }
 
   private fun more(context: Context, target: String, done: String): RemoteViews =
       widgetViews(context, R.layout.widget_collection_more).apply {
         setTextViewText(R.id.more_done, done)
-        WidgetKit.route(context, this, R.id.more_open, "carnet://line/$target")
+        WidgetKit.route(context, this, R.id.more_open, "${BuildConfig.APP_SCHEME}://line/$target")
       }
 
   private companion object {

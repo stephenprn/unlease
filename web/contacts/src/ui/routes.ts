@@ -1,7 +1,8 @@
 /**
  * Contacts' places, all under `/contacts`: every contact, the favourites, the birthdays, a label's
- * contacts, the labels, the import, the duplicates, the bin, a contact (`/contacts/contact/<id>`, the address other
- * apps' references open: `suitePlaces`), its form, and a new contact's.
+ * contacts, the labels, the duplicates, the bin, a contact (`/contacts/contact/<id>`, the address other
+ * apps' references open: `suitePlaces`), its form, and a new contact's. The import is Réglages' page
+ * (`/contacts/settings/import`, the shell's `paths.importer`); its old address leads there.
  */
 import { decodePart, type Route } from '@shared/ui/router';
 
@@ -64,7 +65,6 @@ export const paths = {
   favorites: `${HOME}/favorites`,
   birthdays: `${HOME}/birthdays`,
   labels: `${HOME}/labels`,
-  import: `${HOME}/import`,
   duplicates: `${HOME}/duplicates`,
   trash: `${HOME}/trash`,
   newContact: `${HOME}/new`,

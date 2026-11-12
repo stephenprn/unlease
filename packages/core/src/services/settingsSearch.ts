@@ -25,25 +25,29 @@ export type SettingsClient = 'web' | 'phone';
  * `/<app>/settings/appearance#ground` for the look's, `settingsPageOf`), the phone's `section`. An
  * app's own are its own (`notes`, `calendar`). Never renamed: a search's results point at them.
  */
-export const SETTINGS_SECTIONS = { appearance: 'appearance', colors: 'colors', ground: 'ground', language: 'language', data: 'data' } as const;
+export const SETTINGS_SECTIONS = { appearance: 'appearance', colors: 'colors', ground: 'ground', language: 'language', data: 'data', import: 'import', erase: 'erase' } as const;
 
 /**
  * Réglages' pages besides its overview: « Apparence », the look's own (the theme and the paper's
  * grain, the colours, the ground), opened from its one row on the overview, as Android's settings
- * give a large group a page of its own. The web's `/<app>/settings/appearance`, the phone's screen.
+ * give a large group a page of its own; and the two of « Données » that are flows of their own, the
+ * import's wizard and « Effacer des données ». The web's `/<app>/settings/appearance`, the phone's
+ * screens.
  */
-export type SettingsPage = 'appearance';
+export type SettingsPage = 'appearance' | 'import' | 'erase';
 
-/** The sections on the look's page; every other is on the overview. */
+/** The sections on the look's page; the import's and the erase's are pages of their own; every other is on the overview. */
 const LOOK_SECTIONS: readonly string[] = [SETTINGS_SECTIONS.appearance, SETTINGS_SECTIONS.colors, SETTINGS_SECTIONS.ground];
 
 /** The page of Réglages a section sits on: « Apparence »'s for the look's, null for the overview. */
 export function settingsPageOf(section: string | null): SettingsPage | null {
+  if (section === SETTINGS_SECTIONS.import) return 'import';
+  if (section === SETTINGS_SECTIONS.erase) return 'erase';
   return section !== null && LOOK_SECTIONS.includes(section) ? 'appearance' : null;
 }
 
 /** A page's name, French (`tx`), as a place's second line says where it is. */
-const SETTINGS_PAGE_TITLES: Readonly<Record<SettingsPage, string>> = { appearance: tx('Apparence') };
+const SETTINGS_PAGE_TITLES: Readonly<Record<SettingsPage, string>> = { appearance: tx('Apparence'), import: tx('Importer'), erase: tx('Effacer des données') };
 
 /** A place a search finds. `G` is the glyph's name: the design system's, which the core does not know (each app's package types its own). */
 export interface SettingsPlace<G extends string = string> {
@@ -87,6 +91,7 @@ export const SHARED_SETTINGS_PLACES: readonly SettingsPlace[] = [
   shared({ id: 'data', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Données'), within: null, glyph: 'download', words: ['import', 'export', 'importer', 'exporter', 'data'] }),
   shared({ id: 'empty-bin', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Vider la corbeille'), within: tx('Données'), glyph: 'trash', words: ['poubelle', 'supprimer', 'trash', 'bin', 'empty', 'delete'] }),
   shared({ id: 'shortcuts', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Raccourcis clavier'), within: tx('Données'), glyph: 'keyboard', words: ['touches', 'shortcuts', 'keyboard', 'keys', 'hotkeys'], only: 'web' }),
+  shared({ id: 'erase', area: 'settings', section: SETTINGS_SECTIONS.erase, title: tx('Effacer des données'), within: tx('Données'), glyph: 'eraser', words: ['effacer', 'tout supprimer', 'remise a zero', 'reinitialiser', 'vider', 'erase', 'delete all', 'wipe', 'reset', 'clear'] }),
 
   shared({ id: 'admin', area: 'admin', section: null, title: tx('Administration'), within: null, glyph: 'server', words: ['admin', 'server settings'] }),
   shared({ id: 'admin-apps', area: 'admin', section: 'apps', title: tx('Applications'), within: null, glyph: 'apps', words: ['activer', 'desactiver', 'apps', 'enable', 'disable', 'turn on', 'turn off'] }),

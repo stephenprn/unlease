@@ -328,10 +328,6 @@ export const EN_WEB_FEATURES: Dictionary = {
   'photo': 'photo',
   'photos': 'photos',
   'Voir le tableau': 'View the board',
-  'Importer une autre archive': 'Import another archive',
-  'Dans cette archive': 'In this archive',
-  '{notes} de la corbeille de Keep seront ignorées': '{notes} from Keep’s bin will be skipped',
-  '{notes} de la corbeille de Keep sera ignorée': '{notes} from Keep’s bin will be skipped',
   'label': 'label',
   'labels': 'labels',
   'fichier illisible': 'unreadable file',
@@ -538,7 +534,7 @@ export const EN_WEB_FEATURES: Dictionary = {
   'Style': 'Style',
 
   // Google Keep import: what the notes made of links become, and the summary
-  'Rien de nouveau dans cette archive.': 'Nothing new in this archive.',
+  'Archive Google Takeout': 'Google Takeout archive',
   'Laissé de côté': 'Left out',
   '{notes} : ignorées, rien ne sera doublé': '{notes}: skipped, nothing will be doubled',
   '{notes} de liens': '{notes} of links',
@@ -554,8 +550,6 @@ export const EN_WEB_FEATURES: Dictionary = {
   'Collection de {links}': 'Collection of {links}',
   'Note gardée telle quelle': 'Kept as a note',
   '{note} en collection': '{note} as a collection',
-  'Photos : {done} sur {total}': 'Photos: {done} of {total}',
-  'Les notes importées gardent leur date, leur couleur, leurs labels, leur mise en forme et leurs photos. Importer la même archive une seconde fois ne double rien. Rien n’est envoyé ailleurs que sur votre serveur.': 'Imported notes keep their date, colour, labels, formatting and photos. Importing the same archive a second time doubles nothing. Nothing is sent anywhere but your server.',
   'Exportez, téléchargez le fichier .zip, puis déposez-le ici (ou les fichiers de son dossier Keep).': 'Export, download the .zip file, then drop it here (or the files of its Keep folder).',
   'Notes faites de liens': 'Notes made of links',
   'Ce moment est passé : choisissez un moment à venir.': 'That moment has passed: choose one still to come.',

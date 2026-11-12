@@ -21,6 +21,9 @@ import { PEOPLE_MAX, TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { replayPatch, type Direction, type EditStep } from '@unlease/notes/services/editHistory';
 import { finishChanges, type Finish } from '@unlease/notes/services/finishes';
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
+import { erasedCount } from '@unlease/core/services/erase';
+import { eraseChanges } from '@unlease/notes/services/erase';
+import { listToCollection, undoListToCollection } from '@unlease/notes/services/listToCollection';
 import { collectionTemplate, kindTemplateId, otherCollectionsOf, presetFields, sameFields, starterFacts, starterTemplateId } from '@unlease/notes/services/templates';
 
 import { getRecord, mergeRemote, useLibraryStore, writeLocal, type LibraryState, type LocalChange } from './libraryStore';
@@ -834,6 +837,33 @@ export function convertToText(noteId: string, now: number = Date.now()): void {
   const changes: LocalChange[] = [{ type: 'note', id: noteId, patch: { kind: 'text', body: bodyFromText(body, note.rich) } }];
   for (const id of ids) changes.push({ type: 'check', id, patch: { deletedAt: now } });
   write(changes, now);
+}
+
+/** What « Transformer en collection » did: the collection made, with the way back; or why it could not. */
+export type ConvertOutcome =
+  | { readonly status: 'empty' }
+  | { readonly status: 'notLinks'; readonly lines: readonly string[] }
+  | { readonly status: 'ok'; readonly collectionId: string; readonly title: string; readonly links: number; readonly undo: Undo };
+
+/**
+ * « Transformer en collection » (`notes/services/listToCollection`): a checklist, or a text note's
+ * lines, made a collection of links in one batch, first among the collections as a new one is, the
+ * note to the bin. Its undo erases the collection and its links and brings the note back as it was.
+ */
+export function convertToCollection(noteId: string, now: number = Date.now()): ConvertOutcome {
+  const note = state().notes[noteId];
+  if (!note) return { status: 'empty' };
+  const done = listToCollection(note, state(), { position: topPosition(), reading: readingEnabled(), now });
+  if (done.status !== 'ok') return done;
+  write(done.changes, now);
+  return { status: 'ok', collectionId: done.collectionId, title: done.title, links: done.links, undo: () => write(undoListToCollection(note, done, Date.now())) };
+}
+
+/** « Effacer des données » (`notes/services/erase`): the parts chosen erased as one batch; how many records went. */
+export function eraseData(chosen: ReadonlySet<string>, now: number = Date.now()): number {
+  const changes = eraseChanges(state(), chosen, now);
+  write(changes as LocalChange[], now);
+  return erasedCount(changes);
 }
 
 /** True when leaving the note should discard it, as Keep discards an empty note. */

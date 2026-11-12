@@ -11,26 +11,34 @@
  *   export imported twice, on this device or another, skips the notes already there instead of
  *   doubling them. A note deleted since stays deleted.
  * - A note whose every line (or item) holds an address can become links: one address, a link
- *   Claude files in « Non classé »; several, a collection of its own. The words around each
- *   address become its link's comment, a ticked item a done link. Links are planned as `addLinks`
- *   plans them (`notes/services/savedLinks`): once per collection, a reading copied from a link
- *   already saved at that address.
+ *   Claude files in « Non classé »; several, a collection of its own. A list whose lines are mostly
+ *   addresses (`mostlyLinks`: two in three) can become a collection too, each of its other lines
+ *   chosen in the wizard: the comment of the link above it (the default), left out, or replaced by a
+ *   link typed in its place. The words around each address become its link's comment, a ticked
+ *   item a done link (`services/lineLinks`). Links are planned as `addLinks` plans them
+ *   (`notes/services/savedLinks`): once per collection, a reading copied from a link already saved
+ *   at that address.
+ * - Every note of the export is previewed before anything is written (`keepPreview`): what it
+ *   becomes, or why it is left out.
  */
-import { getLocale, t } from '@unlease/core/i18n';
-import { plural } from '@unlease/core/services/format';
+import { getLocale, localized, t, tx } from '@unlease/core/i18n';
+import { formatDay, formatUsd, plural } from '@unlease/core/services/format';
+import type { ImportFate, PreviewEntry } from '@unlease/core/services/importFlow';
 import { asLineColor, nextLineColor, type LineColor } from '@unlease/design/colors';
+import type { GlyphName } from '@unlease/design/glyphs';
 import { formatHlc } from '@unlease/core/sync/hlc';
 import type { SyncRecord } from '@unlease/core/sync/record';
 import { createId } from '@unlease/core/services/ids';
 import { positionsBetween } from '@unlease/core/services/fractionalIndex';
 import { foldText } from '@unlease/core/services/search';
-import { extractUrls, normalizeUrl } from '@unlease/core/services/url';
+import { displayHost, extractUrls, normalizeUrl, prettyUrl } from '@unlease/core/services/url';
 
 import { nextEmblem } from '../models/collections';
-import { INBOX_ID, type Label, type LinkItem, type Note } from '../models/entities';
+import { INBOX_ID, shownTitle, type Label, type LinkItem, type Note } from '../models/entities';
 import { checkFields, labelFields, linkFields, linkFromRecord, noteFields } from '../sync/entities';
 import { TEXT_LIMITS } from '../sync/types';
 import { keepFormattedLines } from './keepHtml';
+import { freeTitle, listLinks, listName, mostlyLinks, shortLine, typedAddress, typedAddressProblem, type ListLink, type StrayLine } from './lineLinks';
 import { fitLines, serializeLines } from './noteBody';
 import { planLinks, savedAddresses, type LinkPlan } from './savedLinks';
 import type { Templates } from './templates';
@@ -70,16 +78,11 @@ const PHOTO_EXTENSIONS: Readonly<Record<string, string>> = {
   avif: 'image/avif',
 };
 
-/** One address in a note that can become links. */
-export interface KeepLink {
-  readonly url: string;
-  /** The words beside it on its line or item: the link's comment. */
-  readonly comment: string;
-  /** Keep's own preview of the page (its `WEBLINK` annotation), shown until Claude reads it. */
-  readonly title: string;
-  /** A ticked item: the link is done. */
-  readonly done: boolean;
-}
+/** One address in a note that can become links (`services/lineLinks`). */
+export type KeepLink = ListLink;
+
+/** A line of a list made mostly of links that holds none (`services/lineLinks`). */
+export type KeepStray = StrayLine;
 
 export interface ImportedNote {
   /** The JSON file's name in the export. */
@@ -103,8 +106,23 @@ export interface ImportedNote {
   readonly audio: number;
   /** Other attached files of a type a note does not hold. */
   readonly otherFiles: number;
-  /** Set when every line or item holds an address (and the note has no photo): it can become links. */
+  /** Set when every line or item holds an address, or two in three (and the note has no photo): it can become links. */
   readonly links: readonly KeepLink[] | null;
+  /** With `links`: the lines or items that hold no address (none when every one does). */
+  readonly strays: readonly KeepStray[];
+  /** Its first words, plain, for the preview (the body's, or the first items'). */
+  readonly words: string;
+}
+
+/** Why a file of the export becomes nothing. */
+export type KeepSkipReason = 'trashed' | 'empty' | 'unreadable';
+
+/** A file of the export left out, for the preview. */
+export interface KeepSkipped {
+  readonly source: string;
+  /** Its title or first words when it could be read (a note of Keep's bin), else empty. */
+  readonly title: string;
+  readonly reason: KeepSkipReason;
 }
 
 export interface KeepPlan {
@@ -116,6 +134,8 @@ export interface KeepPlan {
   /** Notes with nothing in them: skipped. */
   readonly empty: number;
   readonly unreadable: readonly string[];
+  /** Every file left out, in the export's order: the bin's, the empty ones, the unreadable ones. */
+  readonly skipped: readonly KeepSkipped[];
 }
 
 interface KeepJson {
@@ -144,58 +164,31 @@ const objects = (value: unknown): Record<string, unknown>[] =>
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-/** What may sit between an address and the words beside it: bullets, dashes, colons. */
-const SEPARATORS = /^[\s\-–—:|•·*>→]+|[\s\-–—:|•·*<←]+$/g;
-
-/** The addresses of one line, and its words without them; null without an address. */
-function lineLinks(line: string): { readonly urls: readonly string[]; readonly words: string } | null {
-  const urls = extractUrls(line);
-  if (urls.length === 0) return null;
-  let words = line;
-  for (const url of urls) words = words.split(url).join(' ');
-  // A bare domain is the whole line: no words beside it.
-  if (!/:\/\//.test(line)) words = '';
-  return { urls, words: words.replace(/\s+/g, ' ').replace(SEPARATORS, '').trim() };
-}
-
-/** The links of a note whose every line or item holds an address; null otherwise. */
-function linksOf(lines: readonly { readonly text: string; readonly done: boolean }[], previews: ReadonlyMap<string, string>): KeepLink[] | null {
-  const filled = lines.filter(line => line.text.trim().length > 0);
-  if (filled.length === 0) return null;
-  const links: KeepLink[] = [];
-  const byUrl = new Map<string, number>();
-  for (const line of filled) {
-    const found = lineLinks(line.text);
-    if (!found) return null;
-    for (const url of found.urls) {
-      const address = normalizeUrl(url);
-      const at = byUrl.get(address);
-      if (at !== undefined) {
-        // The same address twice: one link, both comments.
-        const kept = links[at]!;
-        const comment = [kept.comment, found.words].filter(Boolean).join('\n');
-        links[at] = { ...kept, comment, done: kept.done && line.done };
-        continue;
-      }
-      byUrl.set(address, links.length);
-      links.push({ url, comment: found.words, title: previews.get(address) ?? '', done: line.done });
-    }
-  }
-  return links;
-}
-
 /** Null when unreadable; 'trashed' for notes from Keep's bin, 'empty' for notes with nothing in them. */
 export function parseKeepNote(source: string, json: string): ImportedNote | 'trashed' | 'empty' | null {
+  const read = readKeepNote(source, json);
+  return read.kind === 'note' ? read.note : read.kind === 'unreadable' ? null : read.kind;
+}
+
+type KeepRead = { readonly kind: 'note'; readonly note: ImportedNote } | { readonly kind: 'trashed'; readonly title: string } | { readonly kind: 'empty' } | { readonly kind: 'unreadable' };
+
+/** The first words of a note left out of Keep's bin, so the preview names it. */
+function trashedTitle(raw: KeepJson): string {
+  const first = text(raw.title).trim() || text(raw.textContent).trim().split('\n')[0]?.trim() || objects(raw.listContent).map(entry => text(entry.text).trim()).find(Boolean) || '';
+  return shortLine(first, 80);
+}
+
+function readKeepNote(source: string, json: string): KeepRead {
   let raw: KeepJson;
   try {
     raw = JSON.parse(json) as KeepJson;
   } catch {
-    return null;
+    return { kind: 'unreadable' };
   }
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { kind: 'unreadable' };
   const looksLikeNote = ['textContent', 'listContent', 'title', 'createdTimestampUsec', 'userEditedTimestampUsec', 'attachments'].some(key => key in raw);
-  if (!looksLikeNote) return null;
-  if (raw.isTrashed === true) return 'trashed';
+  if (!looksLikeNote) return { kind: 'unreadable' };
+  if (raw.isTrashed === true) return { kind: 'trashed', title: trashedTitle(raw) };
 
   const title = text(raw.title).trim();
   let body = text(raw.textContent).replace(/\s+$/, '');
@@ -239,7 +232,7 @@ export function parseKeepNote(source: string, json: string): ImportedNote | 'tra
     .filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
     .map(name => name.trim());
 
-  if (!title && !body && checks.length === 0 && attachments.length === 0) return audio + otherFiles > 0 ? null : 'empty';
+  if (!title && !body && checks.length === 0 && attachments.length === 0) return audio + otherFiles > 0 ? { kind: 'unreadable' } : { kind: 'empty' };
 
   const created = usecToMs(raw.createdTimestampUsec);
   const editedAt = usecToMs(raw.userEditedTimestampUsec) ?? created ?? 0;
@@ -256,16 +249,14 @@ export function parseKeepNote(source: string, json: string): ImportedNote | 'tra
     }
   }
 
-  const links =
-    attachments.length > 0
-      ? null
-      : kind === 'checklist'
-        ? linksOf(checks.map(check => ({ text: check.text, done: check.checked })), previews)
-        : linksOf(body.split('\n').map(line => ({ text: line, done: false })), previews);
+  const items = kind === 'checklist' ? checks.map(check => ({ text: check.text, done: check.checked })) : body.split('\n').map(line => ({ text: line, done: false }));
+  // A note of photos stays a note; a list becomes links when its lines are all addresses, or (two at least) two in three.
+  const found = attachments.length > 0 ? null : listLinks(items, previews);
+  const links = found && (found.strays.length === 0 || mostlyLinks(found)) ? found.links : null;
 
   const key = raw.createdTimestampUsec !== undefined && created !== null ? `keep:${String(raw.createdTimestampUsec)}` : `keep:${source}:${title}:${body.slice(0, 200)}`;
 
-  return {
+  const note: ImportedNote = {
     source,
     key,
     kind,
@@ -283,7 +274,10 @@ export function parseKeepNote(source: string, json: string): ImportedNote | 'tra
     audio,
     otherFiles,
     links,
+    strays: links && found ? found.strays : [],
+    words: shortLine(kind === 'checklist' ? checks.map(check => check.text).join(', ') : body, 120),
   };
+  return { kind: 'note', note };
 }
 
 /** `Labels.txt`: one label per line (a JSON list of names, or of `{ name }`, is read too). */
@@ -323,6 +317,7 @@ export function planKeepImport(files: readonly { readonly name: string; readonly
   };
   let trashed = 0;
   let empty = 0;
+  const skipped: KeepSkipped[] = [];
   const keys = new Map<string, number>();
   // A stable order, so two notes with the same key get the same suffix in every export.
   const sorted = [...files].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
@@ -332,18 +327,25 @@ export function planKeepImport(files: readonly { readonly name: string; readonly
       continue;
     }
     if (!/\.json$/i.test(file.name)) continue;
-    const parsed = parseKeepNote(file.name, file.text);
-    if (parsed === 'trashed') trashed += 1;
-    else if (parsed === 'empty') empty += 1;
-    else if (parsed === null) unreadable.push(file.name);
-    else {
+    const read = readKeepNote(file.name, file.text);
+    if (read.kind === 'trashed') {
+      trashed += 1;
+      skipped.push({ source: file.name, title: read.title, reason: 'trashed' });
+    } else if (read.kind === 'empty') {
+      empty += 1;
+      skipped.push({ source: file.name, title: '', reason: 'empty' });
+    } else if (read.kind === 'unreadable') {
+      unreadable.push(file.name);
+      skipped.push({ source: file.name, title: '', reason: 'unreadable' });
+    } else {
+      const parsed = read.note;
       const seen = keys.get(parsed.key) ?? 0;
       keys.set(parsed.key, seen + 1);
       notes.push(seen === 0 ? parsed : { ...parsed, key: `${parsed.key}#${seen}` });
       parsed.labelNames.forEach(addLabel);
     }
   }
-  return { notes, labelNames: [...labels.values()], trashed, empty, unreadable };
+  return { notes, labelNames: [...labels.values()], trashed, empty, unreadable, skipped };
 }
 
 /** Notes of one address: each can become a link Claude files. */
@@ -354,6 +356,16 @@ export function singleLinkNotes(plan: KeepPlan): ImportedNote[] {
 /** Notes of several addresses: each can become a collection. */
 export function linkListNotes(plan: KeepPlan): ImportedNote[] {
   return plan.notes.filter(note => (note.links?.length ?? 0) > 1);
+}
+
+/** Notes of several addresses with lines that hold none: each such line asks what it becomes. */
+export function strayListNotes(plan: KeepPlan): ImportedNote[] {
+  return plan.notes.filter(note => (note.links?.length ?? 0) > 1 && note.strays.length > 0);
+}
+
+/** What names one line without an address across the wizard: its note's file and its place. */
+export function strayKey(note: Pick<ImportedNote, 'source'>, stray: Pick<KeepStray, 'line'>): string {
+  return `${note.source}#${stray.line}`;
 }
 
 /** What the export holds, before anything is chosen. */
@@ -372,8 +384,8 @@ export function keepPlanCounts(plan: KeepPlan): { readonly notes: number; readon
 /** The note's name in a list of choices: its title, else its first words. */
 export function keepNoteName(note: ImportedNote): string {
   if (note.title) return note.title;
-  const first = note.links?.find(link => link.comment)?.comment ?? note.links?.[0]?.title ?? '';
-  return first || (note.links?.[0] ? note.links[0].url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60) : t('Note sans titre'));
+  if (note.links) return listName(note.links) || t('Note sans titre');
+  return shortLine(note.words, 60) || t('Note sans titre');
 }
 
 // ── ids drawn from the Keep note ─────────────────────────────────────────────
@@ -460,7 +472,28 @@ export interface KeepLibrary {
   readonly linkTemplates?: Templates;
 }
 
-export interface ImportOptions {
+/** What becomes of a line without an address in a list made a collection: the comment of the link above it, nothing, or a link of its own. */
+export type StrayChoice = { readonly kind: 'comment' } | { readonly kind: 'drop' } | { readonly kind: 'link'; readonly url: string };
+
+/** What becomes of the notes archived in Keep: archived here too, on the board, or left out. */
+export const ARCHIVED_CHOICES = ['archive', 'board', 'skip'] as const;
+export type ArchivedChoice = (typeof ARCHIVED_CHOICES)[number];
+
+/** What the person decides in the wizard (`keepPlanToRecords`, `keepPreview`). */
+export interface KeepChoices {
+  /** Notes of one address become a link Claude files from « Non classé »; false: they stay notes. */
+  readonly singleLinks: boolean;
+  /** The notes of several addresses (by `source`) that become collections; the others stay notes. */
+  readonly collections: ReadonlySet<string>;
+  /** Each line without an address of a list made a collection (`strayKey`); absent: the comment of the link above. */
+  readonly strays?: ReadonlyMap<string, StrayChoice>;
+  /** The archived notes; absent: archived here too. */
+  readonly archived?: ArchivedChoice;
+  /** Notes left out one by one in the preview (by `key`). */
+  readonly left?: ReadonlySet<string>;
+}
+
+export interface ImportOptions extends KeepChoices {
   /** The importing device's clock node. */
   readonly node: string;
   readonly now: number;
@@ -469,12 +502,27 @@ export interface ImportOptions {
   readonly known: (type: 'note' | 'link', id: string) => boolean;
   /** The server reads links: new links wait for Claude; otherwise they are kept plain where they land. */
   readonly reading: boolean;
-  /** Notes of one address become a link Claude files from « Non classé »; false: they stay notes. */
-  readonly singleLinks: boolean;
-  /** The notes of several addresses (by `source`) that become collections; the others stay notes. */
-  readonly collections: ReadonlySet<string>;
   /** The export's file a photo's `filePath` names, or null when it is missing. */
   readonly findFile: (filePath: string) => string | null;
+}
+
+/** The choices the wizard starts from: every link list a collection, each stray line a comment, the archive kept as it is. */
+export function defaultKeepChoices(plan: KeepPlan): KeepChoices {
+  return { singleLinks: true, collections: new Set(linkListNotes(plan).map(note => note.source)), strays: new Map(), archived: 'archive', left: new Set() };
+}
+
+/** The address typed for each stray line to become a link, and what is wrong with it: the choices' form (`strayKey` names each field). */
+export function strayProblems(plan: KeepPlan, choices: KeepChoices): Record<string, string | null> {
+  const problems: Record<string, string | null> = {};
+  for (const note of strayListNotes(plan)) {
+    if (!choices.collections.has(note.source) || choices.left?.has(note.key)) continue;
+    for (const stray of note.strays) {
+      const key = strayKey(note, stray);
+      const choice = choices.strays?.get(key);
+      if (choice?.kind === 'link') problems[key] = typedAddressProblem(choice.url);
+    }
+  }
+  return problems;
 }
 
 /** What an import did, for the summary it ends on. */
@@ -498,6 +546,14 @@ export interface KeepReport {
   readonly otherFiles: number;
   /** Photos the JSON names but the export does not hold. */
   readonly missingPhotos: number;
+  /** Lines without an address in the lists made collections: joined to a link's comment, left out, or made links. */
+  readonly straysKept: number;
+  readonly straysDropped: number;
+  readonly straysLinked: number;
+  /** Notes archived in Keep left out, as chosen. */
+  readonly archivedLeft: number;
+  /** Notes left out one by one in the preview. */
+  readonly leftOut: number;
 }
 
 export interface ImportResult {
@@ -511,6 +567,66 @@ export interface ImportResult {
 /** Notes an earlier import brought already. */
 export function alreadyImported(plan: KeepPlan, known: (type: 'note', id: string) => boolean): number {
   return plan.notes.filter(note => known('note', keepNoteId(note))).length;
+}
+
+/**
+ * A list's links as its collection holds them, its lines without an address placed as chosen: each
+ * joins the comment of the link above it (or of the first, before every link), is left out, or
+ * becomes a link where it was, its words that link's comment. An address typed twice, or one the
+ * list holds already, is one link, its comments joined. `key` draws each link's id: an address of
+ * the list keeps its own (`link3`), one typed in a line's place takes the line's (`stray7`).
+ */
+export function collectionLinks(
+  note: Pick<ImportedNote, 'source' | 'links' | 'strays'>,
+  choices: ReadonlyMap<string, StrayChoice> | undefined,
+): { readonly links: readonly { readonly link: KeepLink; readonly key: string }[]; readonly kept: number; readonly dropped: number; readonly linked: number } {
+  const before = new Map<number, string[]>();
+  const after = new Map<number, string[]>();
+  const placed = new Map<number, { link: KeepLink; key: string }[]>();
+  const add = <T>(map: Map<number, T[]>, at: number, value: T): void => {
+    map.set(at, [...(map.get(at) ?? []), value]);
+  };
+  let kept = 0;
+  let dropped = 0;
+  let linked = 0;
+  for (const stray of note.strays) {
+    const choice = choices?.get(strayKey(note, stray));
+    if (choice?.kind === 'drop') {
+      dropped += 1;
+      continue;
+    }
+    const url = choice?.kind === 'link' ? typedAddress(choice.url) : null;
+    if (url) {
+      linked += 1;
+      add(placed, stray.at, { link: { url, comment: stray.text, title: '', done: stray.done }, key: `stray${stray.line}` });
+      continue;
+    }
+    // A comment (or an address that is none: nothing is lost).
+    kept += 1;
+    add(stray.before ? before : after, stray.link, stray.text);
+  }
+  const ordered: { link: KeepLink; key: string }[] = [];
+  (note.links ?? []).forEach((link, index) => {
+    ordered.push(...(placed.get(index) ?? []));
+    const comment = [...(before.get(index) ?? []), link.comment, ...(after.get(index) ?? [])].filter(Boolean).join('\n');
+    ordered.push({ link: { ...link, comment }, key: `link${index}` });
+  });
+  ordered.push(...(placed.get(note.links?.length ?? 0) ?? []));
+  // One link per address, as a list read twice would give.
+  const byAddress = new Map<string, number>();
+  const links: { link: KeepLink; key: string }[] = [];
+  for (const entry of ordered) {
+    const address = normalizeUrl(entry.link.url);
+    const at = byAddress.get(address);
+    if (at === undefined) {
+      byAddress.set(address, links.length);
+      links.push(entry);
+      continue;
+    }
+    const first = links[at]!;
+    links[at] = { ...first, link: { ...first.link, comment: [first.link.comment, entry.link.comment].filter(Boolean).join('\n'), done: first.link.done && entry.link.done } };
+  }
+  return { links, kept, dropped, linked };
 }
 
 export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): ImportResult {
@@ -545,6 +661,11 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
     audio: 0,
     otherFiles: 0,
     missingPhotos: 0,
+    straysKept: 0,
+    straysDropped: 0,
+    straysLinked: 0,
+    archivedLeft: 0,
+    leftOut: 0,
   };
 
   // Labels: a Keep label reuses the library's of the same name, case and accents aside.
@@ -566,9 +687,19 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
 
   // Newest first, pinned first: Takeout does not keep Keep's manual order.
   const fresh = plan.notes.filter(note => {
-    if (!options.known('note', keepNoteId(note))) return true;
-    report.already += 1;
-    return false;
+    if (options.known('note', keepNoteId(note))) {
+      report.already += 1;
+      return false;
+    }
+    if (options.left?.has(note.key)) {
+      report.leftOut += 1;
+      return false;
+    }
+    if (note.archived && options.archived === 'skip') {
+      report.archivedLeft += 1;
+      return false;
+    }
+    return true;
   });
   const ordered = [...fresh].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.editedAt - a.editedAt);
   const asSingle = (note: ImportedNote): boolean => options.singleLinks && note.links?.length === 1;
@@ -586,9 +717,9 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
     const address = normalizeUrl(link.url);
     saved.set(address, [...(saved.get(address) ?? []), link]);
   };
-  const collections: { id: string; emblem: string | null; color: LineColor | null }[] = Object.values(library.notes)
+  const collections: { id: string; title: string; emblem: string | null; color: LineColor | null }[] = Object.values(library.notes)
     .filter(note => note.kind === 'links' && note.deletedAt === null)
-    .map(note => ({ id: note.id, emblem: note.emblem, color: asLineColor(note.color) }));
+    .map(note => ({ id: note.id, title: shownTitle(note), emblem: note.emblem, color: asLineColor(note.color) }));
   const linkFieldsFor = (noteId: string, link: KeepLink, linkPlan: LinkPlan, extra: { autoFile: boolean; filedBy: LinkItem['filedBy']; position: string; createdAt: number; doneAt: number | null }) =>
     linkFields({
       noteId,
@@ -622,7 +753,8 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
     const id = keepNoteId(note);
     const position = noteKeys[index]!;
     if (asCollection(note)) {
-      const title = (note.title || keepNoteName(note)).slice(0, TEXT_LIMITS.note.title);
+      // A title no other collection goes by: Claude files links by their collection's title.
+      const title = freeTitle(note.title || keepNoteName(note), collections.map(line => line.title), TEXT_LIMITS.note.title);
       const emblem = nextEmblem(collections);
       const color = note.color ?? nextLineColor(collections.map(line => line.color));
       const fields = noteFields({
@@ -644,17 +776,20 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
       });
       const collection = record('note', id, fields, note.editedAt);
       records.push(collection);
-      collections.push({ id, emblem, color });
+      collections.push({ id, title, emblem, color });
       report.collections += 1;
-      const links = note.links!;
+      const { links, kept, dropped, linked } = collectionLinks(note, options.strays);
+      report.straysKept += kept;
+      report.straysDropped += dropped;
+      report.straysLinked += linked;
       const keys = positionsBetween(null, null, links.length);
-      links.forEach((link, at) => {
+      links.forEach(({ link, key }, at) => {
         const [linkPlan] = planLinks([link.url], id, saved, library.linkTemplates ? { templates: library.linkTemplates, notes: library.notes } : undefined);
         if (!linkPlan || linkPlan.existing !== null) {
           report.linksKnown += 1;
           return;
         }
-        const linkRecord = record('link', keepId(note.createdAt, `${note.key}#link${at}`), linkFieldsFor(id, link, linkPlan, { autoFile: false, filedBy: 'person', position: keys[at]!, createdAt: note.createdAt, doneAt: note.editedAt }), note.editedAt);
+        const linkRecord = record('link', keepId(note.createdAt, `${note.key}#${key}`), linkFieldsFor(id, link, linkPlan, { autoFile: false, filedBy: 'person', position: keys[at]!, createdAt: note.createdAt, doneAt: note.editedAt }), note.editedAt);
         records.push(linkRecord);
         addSaved(linkRecord);
         report.links += 1;
@@ -678,7 +813,7 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
           ...(note.rich ? { rich: true } : {}),
           color: note.color,
           pinned: note.pinned,
-          archived: note.archived,
+          archived: note.archived && options.archived !== 'board',
           trashedAt: null,
           labelIds: [...new Set(note.labelNames.map(name => labelIds.get(foldText(name.slice(0, 60)))).filter((value): value is string => !!value))],
           position,
@@ -760,6 +895,16 @@ export function keepPlanToRecords(plan: KeepPlan, options: ImportOptions): Impor
   return { records, uploads, report };
 }
 
+/** Whether an import wrote anything (the first run's step then counts as done). */
+export function keepImportWrote(report: KeepReport): boolean {
+  return report.notes + report.collections + report.links + report.labels + report.photos > 0;
+}
+
+/** The report's title: what happened, in a few words. */
+export function keepDoneTitle(report: KeepReport): string {
+  return keepImportWrote(report) ? t('Vos notes Keep sont arrivées') : t('Rien de nouveau dans cette archive');
+}
+
 /** The import's summary, a line each: what came in, then what was left out and why. */
 export function keepReportLines(report: KeepReport): { readonly imported: readonly string[]; readonly skipped: readonly string[] } {
   const imported: string[] = [];
@@ -776,7 +921,12 @@ export function keepReportLines(report: KeepReport): { readonly imported: readon
   if (report.links > 0) imported.push(plural(report.links, 'lien ajouté', 'liens ajoutés'));
   if (report.labels > 0) imported.push(plural(report.labels, 'label créé', 'labels créés'));
   if (report.photos > 0) imported.push(plural(report.photos, 'photo'));
+  if (report.straysLinked > 0) imported.push(plural(report.straysLinked, 'ligne sans lien remplacée par un lien', 'lignes sans lien remplacées par des liens'));
+  if (report.straysKept > 0) imported.push(plural(report.straysKept, 'ligne sans lien gardée en commentaire', 'lignes sans lien gardées en commentaire'));
   if (report.already > 0) skipped.push(plural(report.already, 'note déjà importée', 'notes déjà importées'));
+  if (report.leftOut > 0) skipped.push(plural(report.leftOut, 'note décochée dans l’aperçu', 'notes décochées dans l’aperçu'));
+  if (report.archivedLeft > 0) skipped.push(plural(report.archivedLeft, 'note archivée laissée de côté', 'notes archivées laissées de côté'));
+  if (report.straysDropped > 0) skipped.push(plural(report.straysDropped, 'ligne sans lien retirée', 'lignes sans lien retirées'));
   if (report.linksKnown > 0) skipped.push(plural(report.linksKnown, 'lien déjà enregistré', 'liens déjà enregistrés'));
   if (report.trashed > 0) skipped.push(plural(report.trashed, 'note de la corbeille de Keep', 'notes de la corbeille de Keep'));
   if (report.empty > 0) skipped.push(plural(report.empty, 'note vide', 'notes vides'));
@@ -785,4 +935,279 @@ export function keepReportLines(report: KeepReport): { readonly imported: readon
   if (report.missingPhotos > 0) skipped.push(plural(report.missingPhotos, 'photo absente de l’archive', 'photos absentes de l’archive'));
   if (report.unreadable > 0) skipped.push(plural(report.unreadable, 'fichier illisible', 'fichiers illisibles'));
   return { imported, skipped };
+}
+
+// ── the wizard: preview, counts, choices ─────────────────────────────────────
+
+/** What it reads, named: a product's name, the same in every language. */
+export const KEEP_SOURCE = 'Google Keep';
+
+/** The wizard's words both clients show (each adds its own way to the file: a drop zone, a button). */
+export const KEEP_WIZARD_WORDS = localized({
+  /** Réglages › Données' « Importer » row, its second line. */
+  importerMeta: tx('Vos notes, listes, labels et photos Google Keep, depuis Google Takeout'),
+  sourceTitle: tx('Depuis Google Keep'),
+  sourceLead: tx('Google Takeout exporte vos notes Keep dans un fichier .zip : l’import le lit ici, puis vous montre tout avant d’écrire quoi que ce soit.'),
+  takeoutDeselect: tx('Désélectionnez tout, puis cochez seulement « Keep ».'),
+  keeps: tx('Les notes importées gardent leur date, leur couleur, leurs labels, leur mise en forme et leurs photos. Importer la même archive une seconde fois ne double rien.'),
+  previewLabel: tx('Notes de l’archive'),
+  linksTitle: tx('Notes faites de liens'),
+  toLinks: tx('Transformer en liens'),
+  toCollections: tx('En faire des collections'),
+  straysTitle: tx('Lignes sans lien'),
+  straysLead: tx('Ces lignes des listes qui deviennent des collections ne contiennent pas d’adresse. Par défaut, chacune rejoint le commentaire du lien au-dessus.'),
+  strayUrl: tx('Adresse du lien'),
+  writing: tx('Écriture des notes…'),
+  board: tx('Voir le tableau'),
+  nothingToChoose: tx('Rien à choisir dans cette archive : chaque note arrive telle qu’elle est dans Keep.'),
+  takeoutPick: tx('Exportez, téléchargez le fichier .zip, puis choisissez-le ici.'),
+  takeoutDrop: tx('Exportez, téléchargez le fichier .zip, puis déposez-le ici (ou les fichiers de son dossier Keep).'),
+  unreadableArchive: tx('Archive illisible : choisissez le fichier .zip téléchargé depuis Google Takeout.'),
+  noKeepNotes: tx('Aucune note Keep dans cette archive. Exportez « Keep » depuis Google Takeout.'),
+});
+
+/** A list's box among the choices, read out. */
+export function keepListBoxLabel(note: ImportedNote): string {
+  return t('{note} en collection', { note: keepNoteName(note) });
+}
+
+/** What the preview reads besides the plan: what the library holds already, whether links are read, today. */
+export interface KeepPreviewContext {
+  readonly known: (type: 'note' | 'link', id: string) => boolean;
+  readonly reading: boolean;
+  readonly now: number;
+}
+
+/** Whether a Keep note is here already: an earlier import's note, or its link. */
+function isHere(note: ImportedNote, choices: KeepChoices, known: KeepPreviewContext['known']): boolean {
+  const id = keepNoteId(note);
+  return known('note', id) || (choices.singleLinks && note.links?.length === 1 && known('link', id));
+}
+
+/** The notes in the order they come in: pinned first, newest first (Takeout keeps no manual order). */
+function importOrder(notes: readonly ImportedNote[]): ImportedNote[] {
+  return [...notes].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.editedAt - a.editedAt);
+}
+
+/** What the note is in Keep, in a few words. */
+function keepKindWords(note: ImportedNote): string {
+  if (note.kind === 'checklist') {
+    const ticked = note.checks.filter(check => check.checked).length;
+    const items = plural(note.checks.length, 'élément');
+    return ticked > 0 ? t('Liste de {items}, dont {ticked}', { items, ticked: plural(ticked, 'coché', 'cochés') }) : t('Liste de {items}', { items });
+  }
+  if (note.words) return note.rich ? t('Note mise en forme') : t('Note');
+  return note.attachments.length > 0 ? t('Photo sans texte') : t('Note');
+}
+
+/**
+ * Every note of the export as the preview lists it, with the choices as they stand: what it is in
+ * Keep, what it becomes (a link, a collection, still a note) or why it is left out (here already,
+ * archived and left aside, Keep's bin, empty, unreadable). Its key is the note's `key`, the files
+ * left out `skip:<n>`.
+ */
+export function keepPreview(plan: KeepPlan, context: KeepPreviewContext, choices: KeepChoices): PreviewEntry[] {
+  const entries: PreviewEntry[] = importOrder(plan.notes).map(note => {
+    const single = note.links?.length === 1;
+    const list = (note.links?.length ?? 0) > 1;
+    const collection = list && choices.collections.has(note.source);
+    const asLink = single && choices.singleLinks;
+    let fate: ImportFate = 'new';
+    let why: string | undefined;
+    if (isHere(note, choices, context.known)) {
+      fate = 'same';
+      why = t('Déjà importée : rien ne sera doublé');
+    } else if (note.archived && choices.archived === 'skip') {
+      fate = 'skip';
+      why = t('Archivée dans Keep : laissée de côté, comme choisi');
+    } else if (asLink) {
+      why = context.reading ? t('Devient un lien que Claude lit et range') : t('Devient un lien dans Non classé');
+    } else if (collection) {
+      why = t('Devient une collection de {links}', { links: plural(collectionLinks(note, choices.strays).links.length, 'lien') });
+    } else if (single || list) {
+      why = t('Reste une note, ses liens dans le texte');
+    }
+    // A text's first words, when its title does not stand for them already (a list of addresses says nothing in its words).
+    const words = note.title && note.words && note.kind === 'text' && !note.links ? shortLine(note.words, 80) : null;
+    const detail = [asLink ? t('Lien vers {site}', { site: displayHost(note.links![0]!.url) }) : keepKindWords(note), words, formatDay(note.editedAt, context.now)].filter(Boolean).join(' · ');
+    const extras = [
+      note.labelNames.length > 0 ? t('Labels : {labels}', { labels: note.labelNames.join(', ') }) : null,
+      note.attachments.length > 0 ? plural(note.attachments.length, 'photo') : null,
+      note.pinned ? t('Épinglée') : null,
+      note.archived && choices.archived !== 'board' ? t('Archivée') : null,
+      note.audio > 0 ? plural(note.audio, 'enregistrement vocal non importé', 'enregistrements vocaux non importés') : null,
+      collection && note.strays.length > 0 ? plural(note.strays.length, 'ligne sans lien : à choisir ensuite', 'lignes sans lien : à choisir ensuite') : null,
+    ].filter(Boolean);
+    const glyph: GlyphName = asLink ? 'link' : collection ? 'collections' : note.kind === 'checklist' ? 'checklist' : !note.words && note.attachments.length > 0 ? 'image' : 'note';
+    return { key: note.key, title: keepNoteName(note), detail, fate, ...(why ? { why } : {}), glyph, ...(extras.length > 0 ? { note: extras.join(' · ') } : {}) };
+  });
+  plan.skipped.forEach((left, index) => {
+    const key = `skip:${index}`;
+    if (left.reason === 'trashed') entries.push({ key, title: left.title || t('Note sans titre'), detail: left.source, fate: 'skip', why: t('Dans la corbeille de Keep'), glyph: 'trash' });
+    else if (left.reason === 'empty') entries.push({ key, title: t('Note vide'), detail: left.source, fate: 'skip', why: t('Ni texte, ni liste, ni photo'), glyph: 'note' });
+    else entries.push({ key, title: left.source, detail: t('Fichier illisible'), fate: 'skip', why: t('Ce n’est pas une note Keep que l’import sait lire'), glyph: 'alert' });
+  });
+  return entries;
+}
+
+/** The note a preview's entry names (the files left out name none). */
+export function keepNotesByKey(plan: KeepPlan): ReadonlyMap<string, ImportedNote> {
+  return new Map(plan.notes.map(note => [note.key, note]));
+}
+
+/** Whether a preview's entry can be left out by its box: a note that would come in. */
+export function canLeaveOut(entry: Pick<PreviewEntry, 'key' | 'fate'>): boolean {
+  return entry.fate === 'new' && !entry.key.startsWith('skip:');
+}
+
+/** One line of the preview's counts: its glyph, the count, what it means. */
+export interface KeepCountLine {
+  readonly icon: GlyphName;
+  readonly text: string;
+  readonly meta: string | null;
+}
+
+/** What the export holds, counted, for the head of the preview. */
+export function keepCountLines(plan: KeepPlan, already: number): KeepCountLine[] {
+  const counts = keepPlanCounts(plan);
+  const checklists = plan.notes.filter(note => note.kind === 'checklist').length;
+  const formatted = plan.notes.filter(note => note.rich).length;
+  const kinds = [checklists > 0 ? plural(checklists, 'liste', 'listes') : null, formatted > 0 ? plural(formatted, 'mise en forme', 'mises en forme') : null].filter(Boolean);
+  const lines: KeepCountLine[] = [
+    {
+      icon: 'note',
+      text: plural(counts.notes, 'note'),
+      meta:
+        [kinds.length > 0 ? t('Dont {kinds}', { kinds: kinds.join(', ') }) : null, already > 0 ? t('{notes} : ignorées, rien ne sera doublé', { notes: plural(already, 'note déjà importée', 'notes déjà importées') }) : null]
+          .filter(Boolean)
+          .join(' · ') || null,
+    },
+  ];
+  const linkNotes = singleLinkNotes(plan).length + linkListNotes(plan).length;
+  if (linkNotes > 0) lines.push({ icon: 'link', text: plural(linkNotes, 'note faite de liens', 'notes faites de liens'), meta: t('Vous choisirez à l’étape suivante ce qu’elles deviennent.') });
+  lines.push({ icon: 'tag', text: plural(plan.labelNames.length, 'label'), meta: null });
+  lines.push({
+    icon: 'image',
+    text: plural(counts.photos, 'photo'),
+    meta:
+      [
+        counts.audio > 0 ? t('{recordings} : seul le texte transcrit est importé', { recordings: plural(counts.audio, 'enregistrement vocal', 'enregistrements vocaux') }) : null,
+        counts.otherFiles > 0 ? t('{files} : type non pris en charge', { files: plural(counts.otherFiles, 'fichier joint', 'fichiers joints') }) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') || null,
+  });
+  if (plan.trashed + plan.empty > 0) {
+    lines.push({
+      icon: 'trash',
+      text: plural(plan.trashed + plan.empty, 'note laissée de côté', 'notes laissées de côté'),
+      meta: [plan.trashed > 0 ? plural(plan.trashed, 'note de la corbeille de Keep', 'notes de la corbeille de Keep') : null, plan.empty > 0 ? plural(plan.empty, 'note vide', 'notes vides') : null].filter(Boolean).join(', '),
+    });
+  }
+  if (plan.unreadable.length > 0) {
+    lines.push({ icon: 'alert', text: plural(plan.unreadable.length, 'fichier illisible', 'fichiers illisibles'), meta: `${plan.unreadable.slice(0, 3).join(', ')}${plan.unreadable.length > 3 ? '…' : ''}` });
+  }
+  return lines;
+}
+
+/** Whether a note of the export comes in with these choices: not here already, not left out by its box nor as archived. */
+export function keepNoteComes(note: ImportedNote, known: KeepPreviewContext['known'], choices: KeepChoices): boolean {
+  return !isHere(note, choices, known) && !choices.left?.has(note.key) && !(note.archived && choices.archived === 'skip');
+}
+
+/** How many notes of the export come in with these choices (a link or a collection counting as its note). */
+export function keepImportCount(plan: KeepPlan, known: KeepPreviewContext['known'], choices: KeepChoices): number {
+  return plan.notes.filter(note => !isHere(note, choices, known) && !choices.left?.has(note.key) && !(note.archived && choices.archived === 'skip')).length;
+}
+
+/** How many links Claude would read: one per note made a link, those of the lists made collections, and the links typed in a line's place. */
+export function keepLinksToRead(plan: KeepPlan, known: KeepPreviewContext['known'], choices: KeepChoices): { readonly singles: number; readonly lists: number } {
+  let singles = 0;
+  let lists = 0;
+  for (const note of plan.notes) {
+    if (isHere(note, choices, known) || choices.left?.has(note.key) || (note.archived && choices.archived === 'skip')) continue;
+    if (note.links?.length === 1 && choices.singleLinks) singles += 1;
+    else if ((note.links?.length ?? 0) > 1 && choices.collections.has(note.source)) lists += collectionLinks(note, choices.strays).links.length;
+  }
+  return { singles, lists };
+}
+
+/** The import's button: what comes in, counted. */
+export function keepImportAction(count: number): string {
+  return count > 0 ? t('Importer {notes}', { notes: plural(count, 'note') }) : t('Importer');
+}
+
+/** The notes archived in Keep that would come in (the choice is asked only when there are some). */
+export function archivedCount(plan: KeepPlan, known: KeepPreviewContext['known'], choices: KeepChoices): number {
+  return plan.notes.filter(note => note.archived && !isHere(note, choices, known) && !choices.left?.has(note.key)).length;
+}
+
+/** The archive's choice: its words and its options. */
+export function archivedChoiceWords(count: number): { readonly title: string; readonly meta: string; readonly options: readonly { readonly value: ArchivedChoice; readonly label: string; readonly meta: string }[] } {
+  return {
+    title: t('Archives de Keep'),
+    meta: t('{notes} dans Keep : où les mettre ?', { notes: plural(count, 'note archivée', 'notes archivées') }),
+    options: [
+      { value: 'archive', label: t('Dans les archives, comme dans Keep'), meta: t('Elles restent à portée, hors du tableau.') },
+      { value: 'board', label: t('Sur le tableau'), meta: t('Avec les autres notes, archivables ensuite une à une.') },
+      { value: 'skip', label: t('Ne pas les importer'), meta: t('Elles restent dans Keep ; un nouvel import pourra les apporter.') },
+    ],
+  };
+}
+
+/** Each way a line without an address can go, as its choice offers it (short: three side by side). */
+export const STRAY_CHOICES = ['comment', 'drop', 'link'] as const;
+export type StrayChoiceKind = (typeof STRAY_CHOICES)[number];
+
+export function strayChoiceLabels(): Readonly<Record<StrayChoiceKind, string>> {
+  return { comment: t('Joindre'), drop: t('Retirer'), link: t('Lien') };
+}
+
+/** A line's choice, read out: the line named. */
+export function strayChoiceName(stray: KeepStray): string {
+  return t('Que devient « {line} » ?', { line: shortLine(stray.text, 60) });
+}
+
+/** What the chosen way does to that line, said under it. */
+export function strayChoiceMeta(note: ImportedNote, stray: KeepStray, kind: StrayChoiceKind): string {
+  if (kind === 'drop') return t('Cette ligne ne sera pas importée.');
+  if (kind === 'link') return t('Un lien à sa place, ces mots pour commentaire.');
+  const link = note.links?.[stray.link];
+  const name = link ? shortLine(link.comment.split('\n')[0] || link.title || prettyUrl(link.url, 40), 40) : '';
+  return stray.before ? t('Ajoutée au commentaire du premier lien, « {link} ».', { link: name }) : t('Ajoutée au commentaire du lien au-dessus, « {link} ».', { link: name });
+}
+
+/** The lists sheet's head: how many, what a collection keeps, and what Claude's reading costs. */
+export function keepListsWords(count: number, links: number, reading: boolean, costEach: number | null): { readonly title: string; readonly meta: string } {
+  const what = t('Chacune peut devenir une collection : le texte autour d’un lien devient son commentaire, un élément coché un lien fait. Sinon, elle reste une note.');
+  const cost =
+    links > 0
+      ? reading
+        ? costEach !== null
+          ? t('Claude lit {links} (environ {cost} en tout).', { links: plural(links, 'lien'), cost: formatUsd(costEach * links) })
+          : t('Claude lit {links}.', { links: plural(links, 'lien') })
+        : t('Les liens restent tels quels : la lecture par Claude est désactivée.')
+      : null;
+  return { title: t('{notes} de liens', { notes: plural(count, 'note faite', 'notes faites') }), meta: cost ? `${what} ${cost}` : what };
+}
+
+/** The single links' switch: how many, and what each costs. */
+export function keepSinglesWords(count: number, reading: boolean, costEach: number | null): { readonly title: string; readonly meta: string } {
+  return {
+    title: t('{notes} qu’un lien', { notes: plural(count, 'note ne contient', 'notes ne contiennent') }),
+    meta: reading
+      ? costEach !== null
+        ? t('En faire des liens que Claude lit et range (environ {cost} chacun).', { cost: formatUsd(costEach) })
+        : t('En faire des liens que Claude lit et range.')
+      : t('En faire des liens, gardés tels quels dans Non classé : la lecture par Claude est désactivée.'),
+  };
+}
+
+/** A list's row among the choices: made a collection, or kept a note. */
+export function keepListLine(note: ImportedNote, chosen: boolean, strays: ReadonlyMap<string, StrayChoice> | undefined): string {
+  if (!chosen) return t('Note gardée telle quelle');
+  const links = plural(collectionLinks(note, strays).links.length, 'lien');
+  return note.strays.length > 0
+    ? t('Collection de {links} · {lines}', { links, lines: plural(note.strays.length, 'ligne sans lien', 'lignes sans lien') })
+    : t('Collection de {links}', { links });
 }

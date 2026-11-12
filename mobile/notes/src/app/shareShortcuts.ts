@@ -12,11 +12,11 @@ import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { emblemShape } from '@unlease/design/emblems';
 import { LINES } from '@unlease/design/palette';
-import { APP_SLUG } from '@unlease/notes/brand';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { INBOX_ID, shownTitle, type Note } from '@unlease/notes/models/entities';
 import { onLauncherIconSwitch } from '@shared/app/launcherIcon';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
+import { appScheme } from '@shared/app/variant';
 import { COLLECTION_SHORTCUT, setSharingShortcuts, sharingShortcutsAvailable } from '@platform/shortcuts';
 
 import { linesOf } from './hooks/useLines';
@@ -67,7 +67,7 @@ export function sharingShortcut(line: Note) {
   return {
     id: `${PREFIX}${line.id}`,
     label: shownTitle(line).trim() || t('Sans titre'),
-    uri: `${APP_SLUG}://line/${line.id}`,
+    uri: `${appScheme('notes')}://line/${line.id}`,
     path: d,
     evenOdd: rule === 'evenodd',
     stone: swatch.tint,

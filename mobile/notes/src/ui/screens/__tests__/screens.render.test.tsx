@@ -506,11 +506,70 @@ describe('the board and the note as on the web', () => {
     await go('Note', { id: drawing });
     expect(menuItems().map(item => item.label)).toEqual(['Dupliquer', 'Supprimer']);
     await go('Note', { id: note });
-    expect(menuItems().map(item => item.label)).toEqual(['Partager', 'Dupliquer', 'Supprimer']);
+    expect(menuItems().map(item => item.label)).toEqual(['Partager', 'Dupliquer', 'Transformer en collection', 'Supprimer']);
     await act(async () => {
       menuItems().find(item => item.label === 'Dupliquer')!.onPress();
     });
     expect(useUiStore.getState().snack).toMatchObject({ message: 'Note dupliquée', action: { label: 'Ouvrir' }, tone: 'success' });
+  });
+
+  it('turns a list of addresses into a collection, says which lines are not links, and takes it back', async () => {
+    let list = '';
+    let mixed = '';
+    const tree = await boot(true, () => {
+      list = createNote({ kind: 'text', title: 'À lire', body: 'https://example.org/a Un article\nhttps://example.org/b' });
+      mixed = createNote({ kind: 'text', title: 'Courses', body: 'https://example.org/c\ndu pain' });
+      useUiStore.setState({ snack: null });
+    });
+    const menuItems = () => outermost(tree, props => Array.isArray(props.items) && (props.items as { label: string }[]).some(item => item.label === 'Dupliquer'))[0]!.props.items as { label: string; onPress: () => void; disabled?: boolean }[];
+    const convert = async () => {
+      await act(async () => {
+        menuItems().find(item => item.label === 'Transformer en collection')!.onPress();
+      });
+      await act(async () => {
+        jest.advanceTimersByTime(400);
+      });
+    };
+
+    // A line without an address: a dialog names it, with one « OK », and nothing changes.
+    await go('Note', { id: mixed });
+    await convert();
+    expect(textOf(tree)).toContain('Une ligne n’est pas un lien');
+    expect(textOf(tree)).toContain('Une collection ne contient que des liens. Modifiez ou supprimez cette ligne, puis réessayez :');
+    expect(textOf(tree)).toContain('du pain');
+    expect(useLibraryStore.getState().notes[mixed]!.trashedAt).toBeNull();
+    await act(async () => {
+      outermost(tree, props => props.accessibilityLabel === 'OK' && typeof props.onPress === 'function').pop()!.props.onPress();
+      jest.advanceTimersByTime(400);
+    });
+    expect(textOf(tree)).not.toContain('Une ligne n’est pas un lien');
+
+    // Every line an address: a collection of them, opened in the note's place, the note in the bin.
+    await go('Note', { id: list });
+    await convert();
+    const route = navigationRef.getCurrentRoute();
+    expect(route?.name).toBe('Line');
+    const collection = (route?.params as { id: string }).id;
+    const state = useLibraryStore.getState();
+    expect(state.notes[collection]).toMatchObject({ kind: 'links', title: 'À lire' });
+    expect((state.linksByNote[collection] ?? []).map(id => [state.links[id]!.url, state.links[id]!.comment, state.links[id]!.filedBy])).toEqual([
+      ['https://example.org/a', 'Un article', 'person'],
+      ['https://example.org/b', '', 'person'],
+    ]);
+    expect(state.notes[list]!.trashedAt).not.toBeNull();
+    const snack = useUiStore.getState().snack!;
+    expect(snack).toMatchObject({ message: `Collection « À lire » créée : ${plural(2, 'lien')}`, action: { label: 'Annuler' }, tone: 'success' });
+
+    // « Annuler »: the collection and its links gone, the note back, open again.
+    await act(async () => {
+      snack.action!.run();
+      jest.advanceTimersByTime(400);
+    });
+    const after = useLibraryStore.getState();
+    expect(after.notes[collection]!.deletedAt).not.toBeNull();
+    expect(after.linksByNote[collection]).toBeUndefined();
+    expect(after.notes[list]!.trashedAt).toBeNull();
+    expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Note', params: { id: list } });
   });
 
   it('says a reminder’s moment is gone when « Enregistrer » is pressed on it, never by a button that cannot be pressed', async () => {

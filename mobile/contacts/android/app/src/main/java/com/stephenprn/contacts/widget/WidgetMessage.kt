@@ -3,6 +3,7 @@ package com.stephenprn.contacts.widget
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.contacts.BuildConfig
 import com.stephenprn.contacts.R
 
 /** A widget that cannot show its contacts: not chosen yet, not handed over yet, or its label gone. One line and what a tap does. */
@@ -16,7 +17,7 @@ internal object WidgetMessage {
   /** Chosen, but the app has not drawn it yet (just restored, or never opened since): a tap opens the app, which hands it over. */
   fun waiting(context: Context): RemoteViews =
       message(context, context.getString(R.string.widget_waiting), null).apply {
-        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "unlease-contacts://"))
+        setOnClickPendingIntent(android.R.id.background, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
       }
 
   /** Its label is gone: other contacts are a tap away. */

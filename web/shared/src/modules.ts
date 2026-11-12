@@ -13,6 +13,7 @@ import type { ComponentType } from 'react';
 
 import { APPS, type AppId } from '@unlease/core/apps';
 import type { StatusLine } from '@unlease/core/services/admin';
+import type { ErasePart } from '@unlease/core/services/erase';
 import type { Matcher, SearchDoc, SearchPart } from '@unlease/core/services/searchIndex';
 import type { SettingsPlace } from '@unlease/core/services/settingsSearch';
 import type { SpotMeta } from '@unlease/core/services/spotlight';
@@ -72,6 +73,38 @@ export interface SettingsSection {
    * « Apparence » (the settings an app's own are those set most: Carnet's board, Agenda's calendar).
    */
   readonly place?: 'data' | 'last';
+}
+
+/** What an app's import wizard is handed: on Réglages' page, or as a step of the first run (`embedded`). */
+export interface ImportWizardProps {
+  /** In the first run: its title is the setup's, its foot the setup's once it is done or not begun. */
+  readonly embedded?: boolean;
+  /** It left its first step (true), or came back to it or ended (false): the first run hides its own foot meanwhile. */
+  readonly onFlow?: (inFlow: boolean) => void;
+  /** Something was written: the first run's step counts as done. */
+  readonly onImported?: () => void;
+}
+
+/**
+ * An app's import (`core/services/importFlow`): its wizard, opened from Réglages › Données
+ * (`/<app>/settings/import`) and offered by the first run while the app holds nothing.
+ */
+export interface AppImporter {
+  /** What it reads, named (« Google Keep »), for the first run's lead. */
+  readonly source: () => string;
+  /** Réglages › Données' row: its line under « Importer ». */
+  readonly meta: () => string;
+  readonly Wizard: ComponentType<ImportWizardProps>;
+}
+
+/**
+ * « Effacer des données » (`core/services/erase`): the app's parts, counted from its records as they
+ * are now, and the batch that erases those ticked.
+ */
+export interface AppErase {
+  readonly parts: () => readonly ErasePart[];
+  /** Writes the tombstones of the parts chosen, as one batch; how many records went. */
+  readonly run: (chosen: ReadonlySet<string>) => number;
 }
 
 /** One kind of spotlight document, the app's own (`note`, `collection`, `link`, `page`). */
@@ -230,6 +263,10 @@ export interface AppModule {
   readonly emptyBin?: () => number;
   /** How many things its bin holds: Réglages' « Vider la corbeille » says so, with nothing to press while it is empty. */
   readonly binCount?: () => number;
+  /** Its import: Réglages' row and page, and the first run's step. */
+  readonly importer?: AppImporter;
+  /** « Effacer des données », at the foot of Réglages › Données. */
+  readonly erase?: AppErase;
   /** Its own sections of the Administration, after the shared ones. */
   readonly adminSections?: readonly AdminSection[];
   /** Its own places of the Réglages and the Administration a search finds (its package's: Carnet's board layout, Seerr), after every app's (`core/services/settingsSearch`). */

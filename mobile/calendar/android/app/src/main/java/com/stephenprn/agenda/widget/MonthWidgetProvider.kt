@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 import org.json.JSONObject
 
@@ -22,7 +23,7 @@ class MonthWidgetProvider : AgendaWidgetProvider() {
     val month = all.firstOrNull { it.optString("month").take(7) == today.take(7) } ?: all.firstOrNull() ?: return WidgetMessage.waiting(context)
     val views = widgetViews(context, R.layout.widget_month)
     WidgetType.title(context, views, R.id.month_title_image, R.id.month_title, month.optString("title"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 40f, 1, R.color.wgen_ink)
-    views.setOnClickPendingIntent(R.id.month_open, WidgetIntents.open(context, "unlease-agenda://?view=month&day=$today"))
+    views.setOnClickPendingIntent(R.id.month_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://?view=month&day=$today"))
 
     views.removeAllViews(R.id.month_weekdays)
     val weekdays = data.optJSONArray("weekdays")
@@ -51,6 +52,6 @@ class MonthWidgetProvider : AgendaWidgetProvider() {
         setViewVisibility(R.id.cell_dot, if (busy) View.VISIBLE else View.INVISIBLE)
         if (busy) WidgetKit.tint(context, this, R.id.cell_dot, WidgetKit.pigment(cell.optString("color")))
         setContentDescription(R.id.cell, day)
-        setOnClickPendingIntent(R.id.cell, WidgetIntents.open(context, "unlease-agenda://day/$day", day.hashCode()))
+        setOnClickPendingIntent(R.id.cell, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://day/$day", day.hashCode()))
       }
 }

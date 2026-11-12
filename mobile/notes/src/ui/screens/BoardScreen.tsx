@@ -38,7 +38,7 @@ import { DeleteLineSheet, type LinksFate } from '../features/lines/DeleteLineShe
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { NewLineSheet } from '../features/lines/NewLineSheet';
 import { sortDeletedLinksOnSlip } from '../features/lines/sortingSlips';
-import { settingsFound, SettingsMatches, settingsScreenOf } from '@shared/ui/features/settings/SettingsMatches';
+import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
 import { Drawer } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -58,6 +58,12 @@ function viewTitle(view: BoardView, labelName: string | undefined): string | nul
 }
 
 export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
+  // A setting a search found: its screen, with its section where that screen takes one (the import's and the erase's take none).
+  const openSettingsPlace = (place: PhoneSettingsPlace): void => {
+    const screen = settingsScreenOf(place);
+    if (screen === 'Import' || screen === 'Erase') navigation.navigate(screen);
+    else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
+  };
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -270,7 +276,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         <SettingsMatches
           query={query}
           own={NOTES_SETTINGS_PLACES}
-          onOpen={place => navigation.navigate(settingsScreenOf(place), place.section ? { section: place.section } : undefined)}
+          onOpen={place => openSettingsPlace(place)}
         />
       ) : null}
       {/* The count over the results; as in every app, nothing found is the search's empty state: what it looks through under the count. */}

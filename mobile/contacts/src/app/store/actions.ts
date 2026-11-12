@@ -13,6 +13,7 @@ import { nextLineColor, type LineColor } from '@unlease/design/colors';
 import { CONTACT_LIMITS, CONTACTS_TEXT_LIMITS, emptyContact, type Contact } from '@unlease/contacts/models/contacts';
 import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entities';
 import type { ImportPlan } from '@unlease/contacts/services/importing';
+import { eraseChanges, erasedCount } from '@unlease/contacts/services/erase';
 import { mergeContacts } from '@unlease/contacts/services/duplicates';
 
 import { deviceRegion } from '../reach';
@@ -236,6 +237,15 @@ export function applyImport(plan: ImportPlan, now: number = Date.now()): void {
     ...plan.updates.filter(write => Object.keys(write.fields).length > 0).map(write => ({ type: 'contact', id: write.id, patch: write.fields })),
   ];
   if (changes.length > 0) writeLocal(changes, now);
+}
+
+// ── « Effacer des données » ─────────────────────────────────────────────────
+
+/** The parts chosen erased for good, in one batch (`contacts/services/erase`); how many records went. */
+export function eraseContacts(chosen: ReadonlySet<string>, now: number = Date.now()): number {
+  const writes = eraseChanges(useLibraryStore.getState(), chosen, now);
+  if (writes.length > 0) writeLocal(writes, now);
+  return erasedCount(writes);
 }
 
 // ── duplicates ──────────────────────────────────────────────────────────────

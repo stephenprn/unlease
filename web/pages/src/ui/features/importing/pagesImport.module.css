@@ -1,0 +1,39 @@
+/*
+ * Pages' import (`PagesImport.tsx`), on the wizard's sheets (`@shared/ui/features/importing`): a file
+ * refused under the drop zone, the page chosen to import into, the report's actions.
+ */
+
+/* What could not be read, its glyph with it, as a form's problem says it. */
+.problem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--danger);
+}
+
+.problem > svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.problemText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The page chosen to import into: its button under the radio that asked for it. */
+.inside {
+  flex-direction: row;
+  padding-top: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}

@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.R
 
 /**
@@ -52,7 +53,7 @@ class CaptureWidgetProvider : CarnetWidgetProvider() {
       }
 
   private fun link(context: Context, views: RemoteViews) {
-    for ((view, action) in ACTIONS) views.setOnClickPendingIntent(view, WidgetIntents.open(context, "carnet://capture/$action"))
+    for ((view, action) in ACTIONS) views.setOnClickPendingIntent(view, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/$action"))
   }
 
   private companion object {

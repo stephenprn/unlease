@@ -6,8 +6,8 @@
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { loadLocalFiles } from '@shared/data/repositories/fileRepository';
 import { bootstrap, resetBootstrap } from '@app/bootstrap';
-import { fromPhoneRow, planFor, readPhoneBook, runImport } from '@app/importing';
-import { createContact } from '@app/store/actions';
+import { fromPhoneRow, planFor, readPhoneBook, runImport, undoImport } from '@app/importing';
+import { createContact, createLabel, eraseContacts, setFavorite, setLabel } from '@app/store/actions';
 import { getRecord, resetLibrary, useLibraryStore } from '@app/store/libraryStore';
 
 import { state as phone, __reset as resetPhone } from '../../../../shared/__mocks__/NativePhoneContacts';
@@ -70,5 +70,32 @@ describe('importing the phone’s contacts', () => {
     // The photo came in a batch of its own, after the contacts'.
     const clocks = getRecord('contact', here)!.clocks as Record<string, string>;
     expect(clocks.photoId).not.toBe(clocks.emails);
+  });
+
+  it('takes an import back: what it made goes, who it completed gets back what they had', async () => {
+    const here = createContact({ firstName: 'Marc', lastName: 'Blanc', company: '', jobTitle: '', phones: [{ id: 'p1', number: '06 00 00 00 01', kind: 'mobile', label: '' }], emails: [], addresses: [], birthday: null, labelIds: [], favorite: false, photoId: null, photoMime: '', photoUploaded: false });
+    phone.contacts = [row('Inès', 'Morel', { phones: [{ value: '07 11 11 11 11', kind: 'mobile', label: '' }], labels: ['Voisins'] }), row('Marc', 'Blanc', { emails: [{ value: 'marc@example.org', kind: 'work', label: '' }], photo: 'content://photo/marc' })];
+    const plan = planFor(await readPhoneBook());
+    const report = await runImport(plan);
+    expect(useLibraryStore.getState().liveContacts).toHaveLength(2);
+    undoImport(plan, report.worn);
+    const { contacts, labels, liveContacts } = useLibraryStore.getState();
+    expect(liveContacts).toEqual([here]);
+    expect(contacts[here]).toMatchObject({ emails: [], photoId: null });
+    expect(Object.values(labels).every(label => label.deletedAt !== null)).toBe(true);
+  });
+
+  it('erases the contacts but the favourites, and the labels off those who stay', () => {
+    const blank = { company: '', jobTitle: '', phones: [], emails: [], addresses: [], birthday: null, labelIds: [], favorite: false, photoId: null, photoMime: '', photoUploaded: false };
+    const lea = createContact({ ...blank, firstName: 'Léa', lastName: 'Martin' });
+    const paul = createContact({ ...blank, firstName: 'Paul', lastName: 'Roy' });
+    setFavorite(paul, true);
+    const club = createLabel('Club');
+    setLabel([lea, paul], club, true);
+    expect(eraseContacts(new Set(['contacts', 'labels']))).toBe(2);
+    const { contacts, labels } = useLibraryStore.getState();
+    expect(contacts[lea]!.deletedAt).not.toBeNull();
+    expect(contacts[paul]).toMatchObject({ deletedAt: null, labelIds: [] });
+    expect(labels[club]!.deletedAt).not.toBeNull();
   });
 });

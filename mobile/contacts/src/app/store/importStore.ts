@@ -1,16 +1,9 @@
-/** An import read and waiting to be confirmed on the import screen (a card shared to the app, a file, the phone's contacts). */
+/** An import read before its screen opened (a card shared to the app), waiting there on its preview. */
 import { create } from 'zustand';
 
-import type { ImportedContact } from '@unlease/contacts/services/importing';
+import type { ImportRead } from '../importing';
 
-import type { ImportSource } from '../importing';
-
-export interface PendingImport {
-  readonly source: ImportSource;
-  readonly contacts: readonly ImportedContact[];
-  /** The file's name, when one was picked. */
-  readonly name: string;
-}
+export type PendingImport = ImportRead;
 
 export const useImportStore = create<{ readonly pending: PendingImport | null }>(() => ({ pending: null }));
 

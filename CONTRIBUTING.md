@@ -20,7 +20,7 @@ cp server/.env.example server/.env             # set UNLEASE_TOKEN and UNLEASE_D
 
 - The web apps: `npm run dev -w web`, then http://localhost:5173/notes (Carnet) and /pages (Pages). `?demo` runs them against a fake server inside the page (no server, no key, nothing spent).
 - Server: `npm run dev -w server`.
-- An Android app: `npm start` (Metro) and `npm run android` in `mobile/notes` or `mobile/pages`, on a device or emulator ([mobile/README.md](mobile/README.md)).
+- An Android app: `npm start` (Metro) and `npm run android` in `mobile/notes` or `mobile/pages`, on a device or emulator ([mobile/README.md](mobile/README.md)). It installs a dev build (« Carnet Dev », `com.stephenprn.carnet.dev`) beside the app you use, never over it: connect it to a server of your own ([mobile/README.md#dev-builds](mobile/README.md#dev-builds)).
 
 ## Where things go
 

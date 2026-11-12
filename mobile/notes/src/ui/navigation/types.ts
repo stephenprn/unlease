@@ -25,7 +25,10 @@ export type RootStackParamList = {
   Appearance: { readonly section?: string } | undefined;
   /** The Administration's home, or one of its sections (`server`, `reading`, `seerr`…). */
   Admin: { readonly section?: string } | undefined;
+  /** The Keep import's wizard, from Réglages › Données. */
   Import: undefined;
+  /** « Effacer des données », from Réglages › Données. */
+  Erase: undefined;
   /** « Ce que Claude relève »: the collections with their own facts, and each kind's usual ones. */
   Templates: undefined;
   /**

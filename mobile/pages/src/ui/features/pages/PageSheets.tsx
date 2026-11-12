@@ -440,8 +440,8 @@ function EmojiInsertHost() {
   );
 }
 
-/** A page offered as where to go: its icon, its title, the pages above it; the one it is in now on the wash, ticked. */
-function PageChoice({ title, icon, path, here, onPress }: { title: string; icon: string | null; path: string; here: boolean; onPress: () => void }) {
+/** A page offered as where to go (« Déplacer vers », the import's « Importer dans »): its icon, its title, the pages above it; the one it is in now on the wash, ticked. */
+export function PageChoice({ title, icon, path, here, onPress }: { title: string; icon: string | null; path: string; here: boolean; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const ink = here ? theme.color.onActionContainer : theme.color.ink;

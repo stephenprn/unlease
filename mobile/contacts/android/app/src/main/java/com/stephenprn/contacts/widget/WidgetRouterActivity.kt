@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import com.stephenprn.contacts.BuildConfig
 import com.stephenprn.contacts.MainActivity
 import com.stephenprn.contacts.phone.Calls
 import org.json.JSONObject
@@ -59,7 +60,7 @@ class WidgetRouterActivity : Activity() {
   }
 
   companion object {
-    private const val SCHEME = "unlease-contacts"
+    private val SCHEME = BuildConfig.APP_SCHEME
     /** Calls the contact's number on the widget. */
     const val CALL = "call"
     /** Opens the contact in the app (RootNavigator's `contact/<id>`). */

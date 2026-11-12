@@ -4,7 +4,7 @@
  * foot; the import and the export live in Réglages › Données, as on the phone), « Créer un contact » beside the search and as the pebble at the foot of a phone-sized
  * list, the tab's title of each place.
  */
-import { useRef, useState, type AnimationEvent } from 'react';
+import { useEffect, useRef, useState, type AnimationEvent } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { spotKey } from '@unlease/core/services/spotlight';
@@ -27,10 +27,15 @@ import { BirthdaysScreen } from './screens/BirthdaysScreen';
 import { ContactScreen } from './screens/ContactScreen';
 import { DuplicatesScreen } from './screens/DuplicatesScreen';
 import { EditContactScreen, NewContactScreen } from './screens/EditScreen';
-import { ImportScreen } from './screens/ImportScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
 import { ListScreen } from './screens/ListScreen';
 import { TrashScreen } from './screens/TrashScreen';
+
+/** The import's old address (`/contacts/import`): the wizard is Réglages' page now, and a file dropped there still lands on it. */
+function ImportMoved() {
+  useEffect(() => navigate(shellPaths.importer, { replace: true }), []);
+  return null;
+}
 
 export function ContactsScreen({ route }: { route: Route }) {
   switch (route.name) {
@@ -43,7 +48,7 @@ export function ContactsScreen({ route }: { route: Route }) {
     case 'contactsLabels':
       return <LabelsScreen />;
     case 'contactsImport':
-      return <ImportScreen />;
+      return <ImportMoved />;
     case 'contactsDuplicates':
       return <DuplicatesScreen />;
     case 'contactsTrash':
@@ -100,7 +105,7 @@ export function contactsPathOf(route: Route): string {
     case 'contactsLabels':
       return paths.labels;
     case 'contactsImport':
-      return paths.import;
+      return shellPaths.importer;
     case 'contactsDuplicates':
       return paths.duplicates;
     case 'contactsTrash':

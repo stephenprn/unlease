@@ -194,7 +194,7 @@ export function readVCardDate(value: string): string | null {
 const GOOGLE_STARRED = /^\*?\s*starred$/i;
 const GOOGLE_SYSTEM = /^\*?\s*(mycontacts|my contacts|friends_\w*|family_\w*|coworkers_\w*)$/i;
 
-function readCard(lines: readonly string[]): ImportedContact | null {
+function readCard(lines: readonly string[], anonymous: boolean): ImportedContact | null {
   const properties = lines.map(parseLine).filter((property): property is Property => property !== null);
   const labels = new Map<string, string>();
   for (const property of properties) if (property.name === 'X-ABLABEL' && property.group) labels.set(property.group, unescape(property.value).trim());
@@ -270,11 +270,17 @@ function readCard(lines: readonly string[]): ImportedContact | null {
   }
   if (!firstName && !lastName && formatted && formatted !== company) ({ firstName, lastName } = splitName(formatted));
   const contact: ImportedContact = { firstName, lastName, company, jobTitle, note, birthday, favorite, photo, phones, emails, addresses, labels: categories };
-  return firstName || lastName || company || phones.length > 0 || emails.length > 0 ? contact : null;
+  if (firstName || lastName || company || phones.length > 0 || emails.length > 0) return contact;
+  // Nothing to know them by: kept only when asked, and only when it holds something at all.
+  return anonymous && (note || birthday || photo || addresses.length > 0 || categories.length > 0) ? contact : null;
 }
 
-/** Every card of a `.vcf`, in order; what holds no name, number nor email is left out. */
-export function parseVCards(text: string): ImportedContact[] {
+/**
+ * Every card of a `.vcf`, in order; what holds no name, number nor email is left out, unless
+ * `anonymous` asks for those holding something else (an address, a note), so the import's preview
+ * can say why they stay out. A card holding nothing at all is never read.
+ */
+export function parseVCards(text: string, { anonymous = false }: { readonly anonymous?: boolean } = {}): ImportedContact[] {
   const out: ImportedContact[] = [];
   let card: string[] | null = null;
   for (const line of unfold(text.replace(/^\uFEFF/, ''))) {
@@ -282,7 +288,7 @@ export function parseVCards(text: string): ImportedContact[] {
     if (upper === 'BEGIN:VCARD') card = [];
     else if (upper === 'END:VCARD') {
       if (card) {
-        const contact = readCard(card);
+        const contact = readCard(card, anonymous);
         if (contact) out.push(contact);
       }
       card = null;

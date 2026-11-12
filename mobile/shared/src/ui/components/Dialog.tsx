@@ -30,8 +30,8 @@ export interface DialogProps {
   /** Under the message: a choice the confirmation depends on. */
   readonly children?: React.ReactNode;
   readonly confirmLabel: string;
-  /** « Annuler » unless the choice reads better named (« Continuer à modifier »). */
-  readonly cancelLabel?: string;
+  /** « Annuler » unless the choice reads better named (« Continuer à modifier »); null for a dialog that only tells (one « OK »: the confirm; the scrim and Back cancel it). */
+  readonly cancelLabel?: string | null;
   readonly danger?: boolean;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
@@ -72,7 +72,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
           ) : null}
           <OverlayFocus.Provider value={overlay.focus}>{children}</OverlayFocus.Provider>
           <View style={styles.actions}>
-            <Button kind="text" label={cancelLabel ?? t('Annuler')} onPress={onCancel} />
+            {cancelLabel === null ? null : <Button kind="text" label={cancelLabel ?? t('Annuler')} onPress={onCancel} />}
             <Button kind={danger ? 'danger' : 'filled'} label={confirmLabel} onPress={onConfirm} />
           </View>
         </AnimatedOrganic>

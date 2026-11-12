@@ -9,7 +9,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { APPS, type AppId } from '@unlease/core/apps';
 import { languageWords } from '@unlease/core/appWords';
+import { eraseRowWords } from '@unlease/core/services/erase';
 import { LOCALE_NAMES, LOCALES, t } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { lookWords } from '@unlease/design/appearance';
@@ -121,3 +123,9 @@ const makeStyles = (theme: Theme) =>
     look: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     pebble: { width: 24, height: 24, borderWidth: 1, borderColor: theme.color.hairline },
   });
+
+/** « Effacer des données », last in an app's « Données », in danger ink: its own screen asks what goes, the token and the word. */
+export function EraseEntryRow({ app, onOpen }: { app: AppId; onOpen: () => void }) {
+  const words = eraseRowWords(APPS[app].name);
+  return <ListRow icon="eraser" title={words.title} supporting={words.meta} danger onPress={onOpen} />;
+}

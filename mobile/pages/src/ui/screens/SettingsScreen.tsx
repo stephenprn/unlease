@@ -1,8 +1,9 @@
 /**
  * Pages' settings, in every app's order (Pages has none of its own yet): « Apparence » (one row
- * opening its own page: the theme, the paper's grain, the colours and the ground), the language, the
- * bin, and the way to the Administration last (the server, Claude, backups and files). What this
- * phone alone keeps; the server's settings are the Administration's.
+ * opening its own page: the theme, the paper's grain, the colours and the ground), the language,
+ * « Données » (the import first, the bin, « Effacer des données » last), and the way to the
+ * Administration last (the server, Claude, backups and files). What this phone alone keeps; the
+ * server's settings are the Administration's.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,7 +17,7 @@ import { emptyPagesBin } from '@app/store/pages';
 import { showSnack } from '@shared/app/store/uiStore';
 
 import { AppText, Dialog, Ground, ListRow, TopBar } from '@shared/ui/components';
-import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
@@ -38,13 +39,16 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
         <LanguageSection />
 
+        {/* Imports first, as in every app's Données; erasing last. */}
         <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
+          <ListRow icon="download" title={t('Importer')} supporting={t('Des fichiers Markdown (Obsidian…) ; l’export de Notion depuis le web')} onPress={() => navigation.navigate('Import')} />
           <ListRow
             icon="trash"
             title={t('Vider la corbeille')}
             supporting={binned > 0 ? t('{pages} dans la corbeille', { pages: plural(binned, 'page') }) : t('La corbeille est vide.')}
             onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined}
           />
+          <EraseEntryRow app="pages" onOpen={() => navigation.navigate('Erase')} />
         </Section>
 
         {/* What is set once and rarely, last. */}

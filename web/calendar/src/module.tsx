@@ -8,15 +8,18 @@
  */
 import { t, tx } from '@unlease/core/i18n';
 import { PERIOD_VIEWS, stepDay, VIEW_KEYS, VIEW_NAMES, type CalendarView } from '@unlease/calendar/services/eventText';
+import { calendarEraseParts } from '@unlease/calendar/services/erase';
 import { instantToDay } from '@unlease/calendar/services/time';
 import { CALENDAR_SETTINGS_PLACES } from '@unlease/calendar/services/settingsPlaces';
 
 import type { AppModule, ShortcutGroup } from '@shared/modules';
-import { navigate, type Route } from '@shared/ui/router';
+import { navigate, paths as shellPaths, type Route } from '@shared/ui/router';
 import { CALENDAR_ADMIN_SECTIONS } from './admin';
 import { refreshNotifications } from './app/push';
-import { binnedEvents, emptyBin } from './app/store/actions';
-import { closePeek, closeQuick, setImportFile, useCalendarUi } from './app/store/calendarUi';
+import { isCalendarFile } from './app/importFiles';
+import { binnedEvents, emptyBin, eraseCalendar } from './app/store/actions';
+import { closePeek, closeQuick, setImportFiles, useCalendarUi } from './app/store/calendarUi';
+import { useCalendarStore } from './app/store/library';
 import { usePrefsStore } from './app/store/prefs';
 import { calendarData } from './data';
 import { calendarBackTo, CalendarBottomBar, CalendarHeaderActions, CalendarNav, CalendarNavFoot, calendarOpened, calendarPathOf, CalendarScreens, calendarStillThere, quickAdd, useCalendarTitle } from './ui/CalendarShell';
@@ -24,6 +27,7 @@ import { CalendarOverlays } from './ui/features/Overlays';
 import { CALENDAR_SETTINGS } from './ui/features/settings/CalendarSettings';
 import { CALENDAR_SPOT_KINDS } from './ui/features/spotlight/kinds';
 import { exportCalendar } from './ui/features/exporting';
+import { CalendarImport } from './ui/features/importing/CalendarImport';
 import { CALENDAR_ROUTES, HOME, parseCalendarRoute, paths } from './ui/routes';
 
 /** The view and day on screen, when the calendar is. */
@@ -88,7 +92,7 @@ export const calendarModule: AppModule = {
   commands: [
     { title: tx('Créer un événement'), icon: 'plus', key: 'c', run: () => navigate(paths.newEvent()) },
     { title: tx('Aujourd’hui'), icon: 'calendar', key: 't', run: () => navigate(paths.view(usePrefsStore.getState().view, instantToDay(Date.now()))) },
-    { title: tx('Importer un agenda'), icon: 'download', run: () => navigate(paths.import) },
+    { title: tx('Importer un agenda'), icon: 'download', run: () => navigate(shellPaths.importer) },
     { title: tx('Exporter mon agenda'), icon: 'upload', run: exportCalendar },
     { title: tx('Autres agendas'), icon: 'calendar', run: () => navigate(paths.feeds) },
     // « Aujourd'hui » the view, told apart from « Aujourd'hui » the day (T) by what it is.
@@ -122,17 +126,29 @@ export const calendarModule: AppModule = {
     }
     return false;
   },
-  // An `.ics` dropped anywhere: the import page reads it.
+  // An `.ics` or Google's `.zip` dropped anywhere: the import reads it, straight to its preview.
   onDropFiles: files => {
-    const file = files.find(each => /\.ics$/i.test(each.name) || /calendar/i.test(each.type));
-    if (!file) return false;
-    setImportFile(file);
-    navigate(paths.import);
+    const calendars = files.filter(isCalendarFile);
+    if (calendars.length === 0) return false;
+    setImportFiles(calendars);
+    navigate(shellPaths.importer);
     return true;
   },
   shortcuts: CALENDAR_SHORTCUTS,
 
   settingsSections: CALENDAR_SETTINGS,
+  importer: {
+    source: () => t('Google Agenda'),
+    meta: () => t('Un fichier .ics : l’export de Google Agenda, une invitation'),
+    Wizard: CalendarImport,
+  },
+  erase: {
+    parts: () => {
+      const { events, labels, feeds } = useCalendarStore.getState();
+      return calendarEraseParts({ events, labels, feeds });
+    },
+    run: chosen => eraseCalendar(chosen),
+  },
   emptyBin: () => emptyBin(),
   binCount: () => binnedEvents().length,
   adminSections: CALENDAR_ADMIN_SECTIONS,

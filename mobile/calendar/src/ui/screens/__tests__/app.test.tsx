@@ -82,6 +82,12 @@ describe('Agenda, its root', () => {
     });
     await settle();
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://suite.test', token: 'jeton' });
+    // The import of Google Agenda's export is offered (« Vos données »), and can wait.
+    expect(textOf(tree)).toContain('Vos données');
+    await act(async () => {
+      pressableWithText(tree, 'Plus tard').props.onPress();
+    });
+    await settle();
     await act(async () => {
       pressableWithText(tree, 'Commencer').props.onPress();
     });

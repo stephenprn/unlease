@@ -1,12 +1,10 @@
-/** A calendar file read and waiting to be confirmed on the import screen (an `.ics` shared or opened, one picked). */
+/** Calendar files read and waiting for the import wizard (`.ics` shared or opened with Agenda): it takes them on its preview. */
 import { create } from 'zustand';
 
-import type { IcsCalendar } from '@unlease/calendar/services/ics';
+import type { ImportFile } from '@unlease/calendar/services/importing';
 
 export interface PendingImport {
-  readonly calendar: IcsCalendar;
-  /** The file's name or the share's subject. */
-  readonly name: string;
+  readonly files: readonly ImportFile[];
 }
 
 export const useImportStore = create<{ readonly pending: PendingImport | null }>(() => ({ pending: null }));

@@ -32,6 +32,7 @@ import { isLineColor, isNoteGradient, isRuledPattern } from '@unlease/design/col
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { cutNotice, formatEdited, formatReminder } from '@unlease/core/services/format';
 import { bodyText } from '@unlease/notes/services/noteBody';
+import { canBecomeCollection, listConvertedMessage } from '@unlease/notes/services/listToCollection';
 
 import { EventsMentioning } from '../events/EventsMentioning';
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -39,6 +40,7 @@ import { attachFiles } from '../../../app/media/attach';
 import {
   canDuplicate,
   convertToChecklist,
+  convertToCollection,
   convertToText,
   deleteForever,
   duplicateNote,
@@ -72,14 +74,16 @@ import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
 import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { currentPage, openNote } from '../../commands';
+import { paths } from '../../routes';
 import { isApple, isEditable } from '@shared/ui/dom';
-import { parseRoute } from '@shared/ui/router';
+import { navigate, parseRoute } from '@shared/ui/router';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { NoteFinishPicker } from './NoteFinishPicker';
 import { DrawingSheet } from '../drawing/DrawingSheet';
 import { ChecklistEditor } from './ChecklistEditor';
 import styles from './editor.module.css';
 import { LabelPicker } from './LabelPicker';
+import { NotLinksDialog } from './NotLinksDialog';
 import { PeopleChips } from '../people/PeopleChips';
 import { PeoplePicker } from '../people/PeoplePicker';
 import { PhotoGrid } from './PhotoGrid';
@@ -167,6 +171,13 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const [picker, setPicker] = useState<Picker>(null);
   const [dropping, setDropping] = useState(false);
   const [confirmForever, setConfirmForever] = useState(false);
+  /** « Transformer en collection » refused: the items that are not links. */
+  const [notLinks, setNotLinks] = useState<readonly string[] | null>(null);
+  // Whether the list holds something to make links of (its items, or its lines, as stored).
+  const convertible = useLibraryStore(s => {
+    const current = s.notes[id];
+    return !!current && canBecomeCollection(current, s);
+  });
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
   /** The text's words as they stand, unsaved ones included (the body saves itself). */
   const [bodyWords, setBodyWords] = useState<string | null>(null);
@@ -424,10 +435,44 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
       );
     },
   };
+  // A list of addresses (a checklist's items, or a text note's lines) made a collection: the note to the bin, the collection opened.
+  const toCollection: MenuItem = {
+    label: t('Transformer en collection'),
+    icon: 'collections',
+    // Nothing in it yet: nothing to make links of.
+    disabled: !convertible,
+    onSelect: () => {
+      flush('title');
+      flush('body');
+      const under = currentPage();
+      const outcome = convertToCollection(id);
+      if (outcome.status === 'notLinks') {
+        setNotLinks(outcome.lines);
+        return;
+      }
+      if (outcome.status !== 'ok') return;
+      part();
+      navigate(paths.line(outcome.collectionId), { replace: true });
+      showSnack(
+        listConvertedMessage(outcome.title, outcome.links),
+        {
+          label: tc('undo', 'Annuler'),
+          run: () => {
+            outcome.undo();
+            // Still on the collection's page: the note comes back in its place, over the page it was opened from.
+            if (currentPage() === paths.line(outcome.collectionId)) navigate(paths.note(id), { replace: true, background: under });
+            else openNote(id);
+          },
+        },
+        { tone: 'success' },
+      );
+    },
+  };
   const remove: MenuItem = { label: t('Supprimer'), icon: 'trash', danger: true, shortcut: '#', separatorBefore: true, onSelect: trash };
-  // The phone's order everywhere (its « Partager », « Dupliquer », « Supprimer »); a drawing has no words to copy. On a phone-sized
-  // window the checkboxes are added with the rest, under "Ajouter"; wider, where nothing else adds them, they come before « Supprimer ».
-  const menuItems: MenuItem[] = note.kind === 'drawing' ? [duplicate, remove] : narrow ? [copyText, duplicate, remove] : [copyText, duplicate, checkboxes, remove];
+  // The phone's order everywhere (its « Partager », « Dupliquer », « Transformer en collection », « Supprimer »); a drawing has no
+  // words to copy. On a phone-sized window the checkboxes are added with the rest, under "Ajouter"; wider, where nothing else adds
+  // them, they come before « Supprimer ».
+  const menuItems: MenuItem[] = note.kind === 'drawing' ? [duplicate, remove] : narrow ? [copyText, duplicate, toCollection, remove] : [copyText, duplicate, checkboxes, toCollection, remove];
 
   const pin = (
     <IconButton
@@ -734,6 +779,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             )}
           </div>
         </Popover>
+        <NotLinksDialog kind={note.kind} lines={notLinks} onClose={() => setNotLinks(null)} />
         <Confirm
           open={confirmForever}
           title={t('Supprimer définitivement ?')}

@@ -3,8 +3,9 @@
  * « Trier par », the country of the numbers written without their `+`, « Indicatif par défaut », the
  * maps app addresses open in, « Ouvrir les adresses dans », then the birthdays' notices and what keeps
  * them from ringing on time, only while something does); then « Apparence » (one row opening its own
- * page: the theme, the paper's grain, the colours and the ground), the language, the imports, the
- * export as a `.vcf` and the bin, and the way to the Administration last. What this phone alone
+ * page: the theme, the paper's grain, the colours and the ground), the language, the import (its
+ * wizard), the export as a `.vcf`, the bin and « Effacer des données », and the way to the
+ * Administration last. What this phone alone
  * keeps; the server's settings are the Administration's.
  */
 import React, { useState } from 'react';
@@ -26,7 +27,7 @@ import { makerBatterySettings } from '@platform/notifications';
 
 import { AppText, Dialog, Ground, ListRow, PickerField, Segmented, TopBar } from '@shared/ui/components';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
-import { AdminEntrySection, AppearanceEntrySection, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -109,6 +110,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             supporting={binned > 0 ? t('{contacts} dans la corbeille', { contacts: plural(binned, 'contact') }) : t('La corbeille est vide.')}
             onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined}
           />
+          <EraseEntryRow app="contacts" onOpen={() => navigation.navigate('Erase')} />
         </Section>
 
         {/* What is set once and rarely, last. */}

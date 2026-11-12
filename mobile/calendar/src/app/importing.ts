@@ -1,25 +1,34 @@
 /**
- * A calendar file to import: read (`parseIcs`) and planned against the events already here
- * (`planImport`: an event once, its exceptions with it), shown on the import screen to confirm,
- * written as one batch.
+ * Calendar files to import (one picked, or those shared or opened with Agenda): each read on its own
+ * (`parseIcs`), a calendar of the import wizard (`ui/features/importing`), which plans them against
+ * the events here and writes them as one batch once the person says so. The copies in the app's cache
+ * go once read.
  */
 import { t } from '@unlease/core/i18n';
-import { parseIcs, type IcsCalendar } from '@unlease/calendar/services/ics';
-import { readText } from '@shared/platform/media';
+import { parseIcs } from '@unlease/calendar/services/ics';
+import type { ImportFile } from '@unlease/calendar/services/importing';
+import { readText, removePath } from '@shared/platform/media';
 
-export type ReadOutcome = { readonly status: 'ok'; readonly calendar: IcsCalendar } | { readonly status: 'error'; readonly message: string } | { readonly status: 'empty' };
+export type ReadOutcome = { readonly status: 'ok'; readonly files: readonly ImportFile[] } | { readonly status: 'error'; readonly message: string } | { readonly status: 'empty' };
 
-/** The events of the files shared or opened, as one calendar. */
-export async function readCalendarFiles(paths: readonly string[]): Promise<ReadOutcome> {
-  const calendars: IcsCalendar[] = [];
-  for (const path of paths) {
+const baseName = (path: string): string => decodeURIComponent(path.split('/').pop() ?? '');
+
+/** The files at `paths` (their names as the picker showed them, when it did), each a calendar; the cache's copies removed. */
+export async function readCalendarFiles(paths: readonly string[], names: readonly string[] = []): Promise<ReadOutcome> {
+  const files: ImportFile[] = [];
+  let unreadable = false;
+  for (const [index, path] of paths.entries()) {
     try {
-      calendars.push(parseIcs(await readText(path)));
+      const text = await readText(path);
+      if (/BEGIN:VCALENDAR/i.test(text)) files.push({ fileName: names[index] || baseName(path), calendar: parseIcs(text) });
+      else unreadable = true;
     } catch {
-      return { status: 'error', message: t('Fichier illisible') };
+      unreadable = true;
+    } finally {
+      void removePath(path);
     }
   }
-  const events = calendars.flatMap(calendar => calendar.events);
-  if (events.length === 0) return calendars.length > 0 ? { status: 'empty' } : { status: 'error', message: t('Fichier illisible') };
-  return { status: 'ok', calendar: { name: calendars.find(calendar => calendar.name)?.name ?? '', events } };
+  const held = files.filter(file => file.calendar.events.length > 0 || (file.calendar.unreadable ?? []).length > 0);
+  if (held.length > 0) return { status: 'ok', files: held };
+  return files.length > 0 && !unreadable ? { status: 'empty' } : { status: 'error', message: t('Ce fichier ne se lit pas comme un agenda.') };
 }

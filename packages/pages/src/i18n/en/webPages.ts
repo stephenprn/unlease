@@ -310,4 +310,16 @@ export const EN_WEB_PAGES: Dictionary = {
   'Dupliquer le bloc': 'Duplicate the block',
   'Sélectionner le bloc': 'Select the block',
   'Annuler (Ctrl+Maj+Z : rétablir)': 'Undo (Ctrl+Shift+Z: redo)',
+  // The import's source, read in the browser (`PagesImport`, `exportFiles`)
+  'Un dossier ne se dépose pas ici : choisissez-le avec « Choisir un dossier », ou compressez-le en .zip.': 'A folder can’t be dropped here: pick it with “Choose a folder”, or compress it as a .zip.',
+  'Archive illisible : téléchargez-la à nouveau.': 'Unreadable archive: download it again.',
+  'Ni une archive .zip, ni un fichier Markdown ou CSV.': 'Neither a .zip archive nor a Markdown or CSV file.',
+  'Un export de Notion, ou des fichiers Markdown (Obsidian…)': 'A Notion export, or Markdown files (Obsidian…)',
+  'Choisissez le dossier de vos notes, un coffre Obsidian par exemple : ses sous-dossiers deviennent des sous-pages, ses images suivent. Quelques fichiers .md, ou un dossier compressé en .zip, se déposent aussi.': 'Choose the folder of your notes, an Obsidian vault for example: its sub-folders become sub-pages, its pictures come along. A few .md files, or a folder compressed as a .zip, can be dropped too.',
+  'Choisir un dossier': 'Choose a folder',
+  'Les fichiers à importer': 'The files to import',
+  'Déposez l’export .zip ou des fichiers .md': 'Drop the .zip export or .md files',
+  'Lecture des pages…': 'Reading the pages…',
+  'Export de Notion ou fichiers Markdown': 'Notion export or Markdown files',
+  'Dossier de notes': 'Folder of notes',
 };

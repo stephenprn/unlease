@@ -7,6 +7,54 @@ import type { MediaKind } from '../models/blocks';
 /** The largest file a page takes: Cloudflare refuses a bigger request on the way to the server. */
 export const MAX_FILE_BYTES = 100 * 1024 * 1024;
 
+/** The largest picture the server decodes (it makes its display copy). */
+export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+
+/** The types a file's extension names, for a file read with no type of its own (picked on the phone, taken from an archive). */
+const TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
+  pdf: 'application/pdf',
+  mp4: 'video/mp4',
+  m4v: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  mkv: 'video/x-matroska',
+  '3gp': 'video/3gpp',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  heic: 'image/heic',
+  avif: 'image/avif',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  ogg: 'audio/ogg',
+  wav: 'audio/wav',
+  txt: 'text/plain',
+  md: 'text/markdown',
+  csv: 'text/csv',
+  json: 'application/json',
+  zip: 'application/zip',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  odt: 'application/vnd.oasis.opendocument.text',
+  ods: 'application/vnd.oasis.opendocument.spreadsheet',
+};
+
+/** A file's type from its name's extension; `application/octet-stream` for one it does not name. */
+export function mimeFromName(name: string): string {
+  const extension = /\.([a-z0-9]{1,5})$/i.exec(name)?.[1]?.toLowerCase() ?? '';
+  return TYPES_BY_EXTENSION[extension] ?? 'application/octet-stream';
+}
+
 /** The image types the server reads (the attachment schema's). */
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/avif']);
 

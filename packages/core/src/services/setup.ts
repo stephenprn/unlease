@@ -9,10 +9,14 @@
  *    tickable), then `checklist` (« Votre serveur »: what the Administration sets, only what the chosen
  *    apps use, each row optional and opened on its own: a backup to bring back first when the server
  *    holds nothing, Claude, S3, Seafile, Seerr). Finishing marks the server set up.
- * 3. `appearance`: this device's colours and ground (kept with « Garder l’apparence d’origine »:
+ * 3. `import`: only for an app with an import whose records are none yet (on the server, or on this
+ *    device keeping everything to itself), its own wizard (`importFlow.ts`), skipped with « Plus
+ *    tard » (Réglages › Données keeps it).
+ * 4. `appearance`: this device's colours and ground (kept with « Garder l’apparence d’origine »:
  *    `isDefaultAppearance`; a phone app starts from its sibling's).
  *
- * A device joining a server already set up goes from its colours straight to its app.
+ * A device joining a server already set up goes from its colours straight to its app (by way of the
+ * import when its app holds nothing there yet).
  */
 import { APP_IDS, APPS, SUITE_NAME, SUITE_SLUG, isReadyApp, type AppId } from '../apps';
 import { APP_WORDS } from '../appWords';
@@ -21,7 +25,7 @@ import type { AdminStatus } from '../sync/admin';
 import { BACKUP_RECURRENCE_NAMES, CLAUDE_MODEL_NAMES, type BackupPatch, type ServerSettings } from '../sync/settings';
 import { restoreSummary } from './admin';
 
-export type SetupStep = 'server' | 'apps' | 'checklist' | 'appearance';
+export type SetupStep = 'server' | 'apps' | 'checklist' | 'import' | 'appearance';
 
 /** What "Votre serveur" lists, each opened from its row. */
 export type SetupTask = 'restore' | 'reading' | 'backup' | 'drive' | 'seerr' | 'holidays';
@@ -48,6 +52,11 @@ export const SETUP_WORDS: Record<SetupStep, SetupStepWords> = {
     title: tx('Votre serveur'),
     short: tx('Serveur'),
     lead: tx('Ce que votre serveur peut faire de plus, réglé une fois pour toutes les applications. Tout est facultatif, et se règle aussi plus tard dans l’Administration.'),
+  }),
+  import: localized({
+    title: tx('Vos données'),
+    short: tx('Données'),
+    lead: tx('Vous arrivez d’une autre application ? Importez vos données maintenant, ou plus tard depuis les Réglages. Rien n’est écrit avant que vous ayez tout vu.'),
   }),
   appearance: localized({
     title: tx('Apparence'),
@@ -171,9 +180,32 @@ export function setupServerShown(connected: boolean, serverDone: boolean | null)
   return connected && serverDone !== true;
 }
 
-/** The steps, in order: the server (or this device alone), the server's own when this device sets it up, then how the apps look here. */
-export function setupSteps(connected: boolean, serverSetup: boolean): SetupStep[] {
-  return connected && serverSetup ? ['server', 'apps', 'checklist', 'appearance'] : ['server', 'appearance'];
+/**
+ * The steps, in order: the server (or this device alone), the server's own when this device sets it
+ * up, the import when the app has one and holds nothing yet (`setupImportShown`), then how the apps
+ * look here.
+ */
+export function setupSteps(connected: boolean, serverSetup: boolean, importShown = false): SetupStep[] {
+  const steps: SetupStep[] = connected && serverSetup ? ['server', 'apps', 'checklist'] : ['server'];
+  if (importShown) steps.push('import');
+  steps.push('appearance');
+  return steps;
+}
+
+/** The server's count of an app's records (`AdminStatus.server`), for an app that has one. */
+const APP_COUNTS: Partial<Record<AppId, 'notes' | 'pages' | 'contacts' | 'events'>> = { notes: 'notes', pages: 'pages', contacts: 'contacts', calendar: 'events' };
+
+/**
+ * Whether the first run offers the app's import: it has one, and holds nothing yet: on the server, as
+ * its status counts (null while unknown: not offered, rather than offered then taken back), or, with
+ * no server, on this device, which a first run finds empty.
+ */
+export function setupImportShown(app: AppId, hasImport: boolean, connected: boolean, status: AdminStatus | null): boolean | null {
+  if (!hasImport) return false;
+  if (!connected) return true;
+  if (status === null) return null;
+  const key = APP_COUNTS[app];
+  return key ? status.server[key] === 0 : false;
 }
 
 /** The apps that use a task: Claude for those that ask it, Seerr for Carnet; S3, Seafile and a restore for all. */
@@ -244,6 +276,7 @@ export function setupTaskSet(task: SetupTask, settings: ServerSettings | null, s
 export function setupForward(step: SetupStep, set: boolean, last: boolean): string {
   if (last) return t('Commencer');
   if (step === 'appearance' && !set) return t('Garder l’apparence d’origine');
+  if (step === 'import' && !set) return t('Plus tard');
   return t('Continuer');
 }
 

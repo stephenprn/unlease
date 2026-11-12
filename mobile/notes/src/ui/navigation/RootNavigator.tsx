@@ -3,12 +3,13 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { LinkingOptions } from '@react-navigation/native';
 
-import { APP_SLUG } from '@unlease/notes/brand';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
+import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { BoardScreen } from '../screens/BoardScreen';
 import { CookingScreen } from '../screens/CookingScreen';
+import { EraseScreen } from '../screens/EraseScreen';
 import { ImportScreen } from '../screens/ImportScreen';
 import { LabelsScreen } from '../screens/LabelsScreen';
 import { LineScreen } from '../screens/LineScreen';
@@ -25,7 +26,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /** What notifications and the widgets open: `carnet://note/<id>`, `line/<id>`, `link/<id>`, `label/<id>`, `capture/<kind>` (`?label=<id>`). A page is Pages' (`unlease-pages://page/<id>`). */
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [`${APP_SLUG}://`],
+  prefixes: [`${appScheme('notes')}://`],
   config: {
     // A screen opened from outside (a widget, a notification) lies on the board, so Back and its arrow lead somewhere.
     initialRouteName: 'Board',
@@ -65,6 +66,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
       <Stack.Screen name="Import" component={ImportScreen} options={DEEPER} />
+      <Stack.Screen name="Erase" component={EraseScreen} options={DEEPER} />
       <Stack.Screen name="Templates" component={TemplatesScreen} options={DEEPER} />
       {/* A full-screen form, as a note opens. */}
       <Stack.Screen name="Template" component={TemplateScreen} />

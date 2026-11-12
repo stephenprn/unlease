@@ -13,6 +13,7 @@ import { useId, useState } from 'react';
 import { APPS, SUITE_NAME } from '@unlease/core/apps';
 import { languageWords } from '@unlease/core/appWords';
 import { LOCALE_NAMES, LOCALES, t } from '@unlease/core/i18n';
+import { eraseRowWords } from '@unlease/core/services/erase';
 import { plural } from '@unlease/core/services/format';
 import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { lookWords } from '@unlease/design/appearance';
@@ -116,6 +117,17 @@ export function SettingsScreen() {
       </Section>
 
       <Section title={t('Données')} id={SETTINGS_SECTIONS.data}>
+        {/* Imports first, wearing `download`; the app's exports and cleanings after. */}
+        {app.importer ? (
+          <button type="button" className={styles.row} onClick={() => navigate(paths.importer)}>
+            <Icon name="download" size={24} />
+            <span className={styles.rowText}>
+              <span className="t-body">{t('Importer')}</span>
+              <span className="t-meta">{app.importer.meta()}</span>
+            </span>
+            <Icon name="chevronRight" size={20} />
+          </button>
+        ) : null}
         {placed('data')}
         {/* The app's bin, when it has one: as on the phone, nothing to press while it is empty. */}
         {app.emptyBin && binned === 0 ? (
@@ -143,6 +155,17 @@ export function SettingsScreen() {
             <span className="t-meta">{t('Appuyez sur ? n’importe où pour les afficher.')}</span>
           </span>
         </button>
+        {/* Last, and in danger ink: its own page asks what goes, the token and the word. */}
+        {app.erase ? (
+          <button type="button" className={styles.row} onClick={() => navigate(paths.erase)}>
+            <Icon name="eraser" size={24} />
+            <span className={styles.rowText}>
+              <span className={`${styles.error} t-body`}>{eraseRowWords(APPS[app.id].name).title}</span>
+              <span className="t-meta">{eraseRowWords(APPS[app.id].name).meta}</span>
+            </span>
+            <Icon name="chevronRight" size={20} />
+          </button>
+        ) : null}
       </Section>
 
       {placed('last')}

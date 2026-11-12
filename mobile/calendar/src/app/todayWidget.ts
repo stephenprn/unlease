@@ -13,6 +13,7 @@ import { birthdayTitle, dayTitle, weekdayDay } from '@unlease/calendar/services/
 import { addDays, today as todayOf } from '@unlease/calendar/services/time';
 import { overdueWords, planToday, rowTimeWords, weatherPlaces, weatherWords, type DayItem, type DayRow } from '@unlease/calendar/services/today';
 import type { WeatherDay } from '@unlease/calendar/sync/routes';
+import { appScheme } from '@shared/app/variant';
 
 import type { LibraryState } from './store/libraryStore';
 import { gatherToday } from './today';
@@ -90,9 +91,9 @@ function openOf(item: DayItem): string {
     case 'birthday':
       return `birthday/${encodeURIComponent(item.birthday.contactId)}`;
     case 'reminder':
-      return `carnet://note/${encodeURIComponent(item.reminder.noteId)}`;
+      return `${appScheme('notes')}://note/${encodeURIComponent(item.reminder.noteId)}`;
     case 'page':
-      return `unlease-pages://page/${encodeURIComponent(item.page.pageId)}`;
+      return `${appScheme('pages')}://page/${encodeURIComponent(item.page.pageId)}`;
   }
 }
 
@@ -144,7 +145,7 @@ export function todayPayload(state: LibraryState, prefs: CalendarPrefs, now: num
       time: overdueWords(reminder, first, prefs.twelveHours),
       place: '',
       color: LAYER_COLORS.reminder,
-      open: `carnet://note/${encodeURIComponent(reminder.noteId)}`,
+      open: `${appScheme('notes')}://note/${encodeURIComponent(reminder.noteId)}`,
       allDay: false,
       moment: true,
       startAt: reminder.at,

@@ -5,6 +5,8 @@ export const state = {
   shared: null as { server: string; token: string; appearance: string; grain: string; locale: string; look: string } | null,
   siblings: [] as SiblingLink[],
   asked: [] as string[][],
+  /** The applicationId this build answers (`@shared/app/variant` reads it once, when first imported). */
+  ownPackage: '',
 };
 
 export function __reset(): void {
@@ -21,6 +23,7 @@ const NativeSuiteLink = {
     state.asked.push(packages);
     return { links: state.siblings.filter(link => packages.includes(link.packageName)) };
   },
+  ownPackage: (): string => state.ownPackage,
 };
 
 export default NativeSuiteLink;

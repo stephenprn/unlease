@@ -2,7 +2,7 @@
  * Agenda's part of the Réglages, this browser's own: the view it opens on, the week's first day,
  * weekends and week numbers, the hours' format, a new event's length and reminders, where the
  * weather is asked, and the reminders as this browser's notifications. In « Données », as on the
- * phone: the import (its page) and the export of one's events as one `.ics`.
+ * phone: the export of one's events as one `.ics`, after the import the shell lists first (`importer`).
  */
 import { useState } from 'react';
 
@@ -23,11 +23,9 @@ import { TextField } from '@shared/ui/components/TextField';
 import { Section } from '@shared/ui/features/settings/Section';
 import settings from '@shared/ui/features/settings/settings.module.css';
 import type { SettingsSection } from '@shared/modules';
-import { navigate } from '@shared/ui/router';
 import { disableNotifications, enableNotifications, pushSupported } from '../../../app/push';
 import { useCalendarStore } from '../../../app/store/library';
 import { savePrefs, usePrefsStore } from '../../../app/store/prefs';
-import { paths } from '../../routes';
 import { exportCalendar } from '../exporting';
 
 function Toggle({ on, onChange, title, meta, icon }: { on: boolean; onChange: (on: boolean) => void; title: string; meta: string; icon: Parameters<typeof Icon>[0]['name'] }) {
@@ -151,7 +149,7 @@ function CalendarSection() {
   );
 }
 
-/** « Données »'s import and export, the phone's rows: the import comes in (`download`), the export goes out (`upload`). */
+/** « Données »'s export, the phone's row: it goes out (`upload`), after the import that comes in (the shell's row). */
 function CalendarData() {
   const events = useCalendarStore(s => s.events);
   const own = Object.values(events).filter(event => event.deletedAt === null && event.trashedAt === null && isOwn(event) && !event.recurringId).length;
@@ -161,14 +159,6 @@ function CalendarData() {
   };
   return (
     <>
-      <button type="button" className={settings.row} onClick={() => navigate(paths.import)}>
-        <Icon name="download" size={24} />
-        <span className={settings.rowText}>
-          <span className="t-body">{t('Importer')}</span>
-          <span className="t-meta">{t('Un fichier .ics : l’export de Google Agenda, une invitation')}</span>
-        </span>
-        <Icon name="chevronRight" size={20} />
-      </button>
       {own > 0 ? (
         <button type="button" className={settings.row} onClick={exportAll}>
           <Icon name="upload" size={24} />

@@ -30,9 +30,11 @@ export interface MovePageDialogProps {
   readonly onPick: (pageId: string) => void;
   /** Offers the top level, among the pages of the home. */
   readonly onTop?: () => void;
+  /** Its title, when it is not a move (« Importer dans »). */
+  readonly title?: string;
 }
 
-export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTop }: MovePageDialogProps) {
+export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTop, title }: MovePageDialogProps) {
   const titleId = useId();
   const [query, setQuery] = useState('');
   // Read only while open; leaving, it keeps showing what it showed.
@@ -71,7 +73,7 @@ export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTo
 
   return (
     <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
-      <DialogFrame kind="list" title={t('Déplacer vers')} titleId={titleId} onClose={onDismiss}>
+      <DialogFrame kind="list" title={title ?? t('Déplacer vers')} titleId={titleId} onClose={onDismiss}>
         <input className={styles.pickerField} value={query} placeholder={t('Chercher une page')} aria-label={t('Chercher une page')} data-autofocus="" onChange={event => setQuery(event.target.value)} />
         {headed ? (
           <section className={styles.moveGroup} aria-labelledby={`${titleId}-recent`}>

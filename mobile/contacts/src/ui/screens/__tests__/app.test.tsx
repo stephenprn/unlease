@@ -11,6 +11,7 @@ import type { NavigationState, PartialState } from '@react-navigation/native';
 import { syncedTypes } from '@shared/app/store/library';
 import { setServer, setServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
 import { createContact, createLabel, type ContactDraft } from '@app/store/actions';
+import { useLibraryStore } from '@app/store/libraryStore';
 import { linking, listPath } from '@ui/navigation/RootNavigator';
 import { navigationRef } from '@ui/navigation/navigationRef';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -74,6 +75,12 @@ describe('Contacts, its root', () => {
     });
     await settle();
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://suite.test', token: 'jeton' });
+    // The app's import is offered (« Vos données »), and can wait.
+    expect(textOf(tree)).toContain('Vos données');
+    await act(async () => {
+      pressableWithText(tree, 'Plus tard').props.onPress();
+    });
+    await settle();
     await act(async () => {
       pressableWithText(tree, 'Commencer').props.onPress();
     });
@@ -211,5 +218,44 @@ describe('Contacts, its root', () => {
     expect(navigationRef.getCurrentRoute()).toMatchObject({ name: 'Contact', params: { id } });
     expect(textOf(tree)).toContain('Inès Moreau');
     expect(textOf(tree)).toContain('Architecte, Atelier Nord');
+  });
+
+  it('erases from Réglages › Données, its last row: the parts counted, the word typed, one batch', async () => {
+    let lea = '';
+    let paul = '';
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        lea = createContact(person('Léa', 'Martin'));
+        paul = createContact(person('Paul', 'Roy', { favorite: true }));
+      },
+    });
+    await act(async () => {
+      (navigationRef.navigate as (...a: unknown[]) => void)('Settings');
+    });
+    await settle();
+    await act(async () => {
+      pressableWithText(tree, 'Effacer des données').props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Erase');
+    const text = textOf(tree);
+    expect(text).toContain('1\u00a0contact hors favoris');
+    expect(text).toContain('1\u00a0contact en favori');
+    // The favourites kept: their box unticked.
+    await act(async () => {
+      pressableWithText(tree, 'Favoris').props.onPress();
+    });
+    await act(async () => {
+      inputs(tree, 'Pour confirmer, tapez SUPPRIMER')[0]!.props.onChangeText('SUPPRIMER');
+    });
+    await act(async () => {
+      pressableWithText(tree, 'Effacer 1\u00a0élément').props.onPress();
+    });
+    await settle();
+    const { contacts } = useLibraryStore.getState();
+    expect(contacts[lea]!.deletedAt).not.toBeNull();
+    expect(contacts[paul]!.deletedAt).toBeNull();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Contacts');
   });
 });

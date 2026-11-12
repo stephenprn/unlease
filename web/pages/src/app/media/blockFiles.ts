@@ -5,9 +5,9 @@
  */
 import { t } from '@unlease/core/i18n';
 import { createId } from '@unlease/core/services/ids';
-import { isUploadableImage, MAX_FILE_BYTES } from '@unlease/pages/services/media';
+import { isUploadableImage, MAX_FILE_BYTES, MAX_IMAGE_BYTES } from '@unlease/pages/services/media';
 
-import { setBlockFile } from '../store/pages';
+import { setBlockFile, setImportedFile, type BlockFile } from '../store/pages';
 import { useSettingsStore } from '@shared/app/store/settings';
 import { requestSync } from '@shared/app/sync/loop';
 import { downloadBlob } from '@shared/app/sync/transport';
@@ -15,22 +15,35 @@ import { imageSize, normalizeMime } from '@notes/app/media/attach';
 import { readStoredFile, storeFile } from '@shared/app/media/files';
 import { primeBlobUrl } from '@shared/app/media/images';
 
-/** The server's limit for a picture it decodes. */
-const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
-
 export type FileOutcome = 'ok' | 'empty' | 'too-large';
 
-export async function attachBlockFile(page: string, blockId: string, file: File, now: number = Date.now()): Promise<FileOutcome> {
+/** A file kept in this browser for a block (a picture shown from here at once), or why it is refused. */
+async function keepFile(file: File, now: number): Promise<{ readonly kept: BlockFile } | { readonly refused: Exclude<FileOutcome, 'ok'> }> {
   const mime = normalizeMime(file.type || 'application/octet-stream');
   const image = isUploadableImage(mime);
-  if (file.size === 0) return 'empty';
-  if (file.size > (image ? MAX_IMAGE_BYTES : MAX_FILE_BYTES)) return 'too-large';
+  if (file.size === 0) return { refused: 'empty' };
+  if (file.size > (image ? MAX_IMAGE_BYTES : MAX_FILE_BYTES)) return { refused: 'too-large' };
   const { width, height } = image ? await imageSize(file) : { width: 0, height: 0 };
   const fileId = createId(now);
   await storeFile(fileId, file, mime, now);
   // Shown from here at once: a picture, a video or a PDF (never a page the browser would run).
   if (image || mime.startsWith('video/') || mime === 'application/pdf') primeBlobUrl(fileId, file);
-  setBlockFile(page, blockId, { fileId, fileName: file.name || 'fichier', mime, bytes: file.size, width, height });
+  return { kept: { fileId, fileName: file.name || 'fichier', mime, bytes: file.size, width, height } };
+}
+
+export async function attachBlockFile(page: string, blockId: string, file: File, now: number = Date.now()): Promise<FileOutcome> {
+  const result = await keepFile(file, now);
+  if ('refused' in result) return result.refused;
+  setBlockFile(page, blockId, result.kept);
+  requestSync();
+  return 'ok';
+}
+
+/** A picture or a file an import brought (`pages/services/importing`), its bytes read from the export, kept for its block. */
+export async function attachImportedFile(blockId: string, bytes: Uint8Array, name: string, mime: string, now: number = Date.now()): Promise<FileOutcome> {
+  const result = await keepFile(new File([bytes as BlobPart], name, { type: mime }), now);
+  if ('refused' in result) return result.refused;
+  setImportedFile(blockId, result.kept);
   requestSync();
   return 'ok';
 }

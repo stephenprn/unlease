@@ -26,11 +26,13 @@
 
     <!-- The suite's link between its apps on one phone (mobile/shared, SuiteLink): only an app signed
          by the same key holds this permission, so only the suite's own apps read each other's
-         connection (the token is a secret). Every app of the suite declares it the same way. -->
+         connection (the token is a secret). Every app of the suite declares it the same way;
+         a dev build (debug, devRelease) its `.dev` one, and names the `.dev` siblings below, so it never
+         reads a released app (mobile/shared/android/dev-builds.gradle). -->
     <permission
-        android:name="com.stephenprn.unlease.permission.SUITE"
+        android:name="com.stephenprn.unlease${suiteSuffix}.permission.SUITE"
         android:protectionLevel="signature" />
-    <uses-permission android:name="com.stephenprn.unlease.permission.SUITE" />
+    <uses-permission android:name="com.stephenprn.unlease${suiteSuffix}.permission.SUITE" />
 
     <!-- Picker and camera are reached by intent: no storage or camera permission is held. -->
     <queries>
@@ -40,10 +42,10 @@
         <!-- The suite's apps, seen from this one: their providers (SuiteLink) and their links
              (unlease-pages://page/<id>). and Agenda's
              (unlease-agenda://event/<id>). -->
-        <package android:name="com.stephenprn.carnet" />
-        <package android:name="com.stephenprn.pages" />
-        <package android:name="com.stephenprn.contacts" />
-        <package android:name="com.stephenprn.agenda" />
+        <package android:name="com.stephenprn.carnet${suiteSuffix}" />
+        <package android:name="com.stephenprn.pages${suiteSuffix}" />
+        <package android:name="com.stephenprn.contacts${suiteSuffix}" />
+        <package android:name="com.stephenprn.agenda${suiteSuffix}" />
     </queries>
 
     <application
@@ -94,7 +96,7 @@
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="carnet" />
+            <data android:scheme="${appScheme}" />
         </intent-filter>
       </activity>
 
@@ -355,7 +357,7 @@
         android:name="com.stephenprn.unlease.suitelink.SuiteProvider"
         android:authorities="${applicationId}.suite"
         android:exported="true"
-        android:readPermission="com.stephenprn.unlease.permission.SUITE" />
+        android:readPermission="com.stephenprn.unlease${suiteSuffix}.permission.SUITE" />
 
       <!-- The reminders seen to after the system's changes (mobile/shared/android/src/reminders): each a
            protected broadcast only Android sends, so not exported. -->

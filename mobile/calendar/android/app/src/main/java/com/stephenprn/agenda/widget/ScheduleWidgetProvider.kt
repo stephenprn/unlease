@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
 import org.json.JSONObject
 
@@ -20,8 +21,8 @@ class ScheduleWidgetProvider : AgendaWidgetProvider() {
     val views = widgetViews(context, R.layout.widget_schedule)
     val width = WidgetType.widthDp(manager, id)
     WidgetType.title(context, views, R.id.schedule_title_image, R.id.schedule_title, data.optString("title"), WidgetType.Face.TITLE, width - 120f, 1, R.color.wgen_ink)
-    views.setOnClickPendingIntent(R.id.schedule_open, WidgetIntents.open(context, "unlease-agenda://"))
-    views.setOnClickPendingIntent(R.id.schedule_add, WidgetIntents.open(context, "unlease-agenda://new", 1))
+    views.setOnClickPendingIntent(R.id.schedule_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
+    views.setOnClickPendingIntent(R.id.schedule_add, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://new", 1))
     views.setTextViewText(R.id.schedule_empty, data.optString("empty").ifEmpty { context.getString(R.string.widget_nothing) })
 
     val today = WidgetKit.today()

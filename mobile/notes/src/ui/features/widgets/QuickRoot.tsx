@@ -13,6 +13,7 @@ import { extractUrls } from '@unlease/core/services/url';
 import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
+import { appScheme } from '@shared/app/variant';
 import { leaveQuick, pointWidget } from '@app/widgets';
 import { clearQuickScrim, quickClipboard, type WidgetKind } from '@platform/widgets';
 
@@ -100,7 +101,7 @@ function QuickLink({ target }: { target: string }) {
         onDismiss={dismiss}
         onAdded={added}
         onAdmin={() => {
-          Linking.openURL('carnet://admin').catch(() => undefined);
+          Linking.openURL(`${appScheme('notes')}://admin`).catch(() => undefined);
           leaveQuick(false);
         }}
       />

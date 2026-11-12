@@ -14,6 +14,10 @@ export type RootStackParamList = {
   Settings: { readonly section?: string } | undefined;
   /** Réglages' « Apparence » page, or one of its sections (`appearance`, `colors`, `ground`), from its row or a search. */
   Appearance: { readonly section?: string } | undefined;
+  /** Réglages › Données › « Importer »: Markdown files read as pages. */
+  Import: undefined;
+  /** Réglages › Données › « Effacer des données ». */
+  Erase: undefined;
   /** The Administration's home, or one of its sections (`server`, `reading`, `seerr`…). */
   Admin: { readonly section?: string } | undefined;
 };

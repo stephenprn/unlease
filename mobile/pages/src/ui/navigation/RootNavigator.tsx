@@ -3,11 +3,13 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 
-import { APP_SCHEME } from '@unlease/pages/brand';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
+import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { DrawingScreen } from '../screens/DrawingScreen';
+import { EraseScreen } from '../screens/EraseScreen';
+import { ImportScreen } from '../screens/ImportScreen';
 import { PageScreen } from '../screens/PageScreen';
 import { PagesScreen } from '../screens/PagesScreen';
 import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
@@ -40,11 +42,11 @@ export function capturePath(path: string): string {
 /**
  * What another app of the suite opens here (`openInApp`, Carnet's « Pages » row and its pages
  * cited in notes): `unlease-pages://page/<id>` (`#block-<id>` or `?block=<id>` for a block),
- * `trash`, `settings`, `admin`; nothing after the scheme is the home; `new` a new page and
+ * `trash`, `settings`, `import`, `admin`; nothing after the scheme is the home; `new` a new page and
  * `search` the home's search (the launcher's shortcuts).
  */
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [`${APP_SCHEME}://`],
+  prefixes: [`${appScheme('pages')}://`],
   config: {
     // A page opened from outside lies on the home, so Back and its arrow lead somewhere.
     initialRouteName: 'Pages',
@@ -53,6 +55,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Page: 'page/:id',
       Trash: 'trash',
       Settings: 'settings',
+      Import: 'import',
       Admin: 'admin/:section?',
     },
   },
@@ -76,6 +79,8 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
+      <Stack.Screen name="Import" component={ImportScreen} options={DEEPER} />
+      <Stack.Screen name="Erase" component={EraseScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />
     </Stack.Navigator>
   );

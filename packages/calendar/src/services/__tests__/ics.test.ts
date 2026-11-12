@@ -1,6 +1,6 @@
 import { parseRich } from '@unlease/core/services/richText';
 import { parseIcs, writeIcs } from '../ics';
-import { planImport } from '../importing';
+import { forgetImport, importedEvents, planImport, trashImported } from '../importing';
 import { feedDrafts, planFeed } from '../feeds';
 import { eventFromRecord } from '../../sync/entities';
 import type { CalendarEvent } from '../../models/events';
@@ -68,7 +68,29 @@ describe('iCalendar', () => {
     expect(exception.fields.recurringId).toBe('id1');
     const again = planImport(parseIcs(GOOGLE), plan.creates.map(entry => eventFromRecord({ type: 'calendarEvent', id: entry.id, fields: entry.fields, clocks: {} })), 1000);
     expect(again.creates).toHaveLength(0);
-    expect(again.skipped).toBe(4);
+    // Three lines here already: the series (its moved lesson folded under it), Christmas, the call.
+    expect(again.skipped).toBe(3);
+  });
+
+  it('takes an import back: whole on its slip, or the file’s events to the bin later', () => {
+    let n = 0;
+    const plan = planImport(parseIcs(GOOGLE), [], 1000, () => `id${(n += 1)}`);
+    expect(forgetImport(plan, 2000)).toEqual(plan.creates.map(entry => ({ type: 'calendarEvent', id: entry.id, patch: { deletedAt: 2000 } })));
+    const imported = plan.creates.map(entry => eventFromRecord({ type: 'calendarEvent', id: entry.id, fields: entry.fields, clocks: {} }));
+    const call = imported.find(event => event.uid === 'utc@google.com')!;
+    // The call already in the bin, a subscription serving it too, and one's own event beside them.
+    const here = [...imported.map(event => (event.id === call.id ? { ...event, trashedAt: 1500 } : event)), { ...call, id: 'served', feedId: 'feed1' }, { ...call, id: 'mine', uid: '' }];
+    const found = importedEvents(parseIcs(GOOGLE), here);
+    expect(found.map(event => event.uid).sort()).toEqual(['abc@google.com', 'noel@google.com']);
+    const changes = trashImported(found, here, 3000);
+    const exception = imported.find(event => event.recurringId !== null)!;
+    expect(changes.map(change => change.id).sort()).toEqual([...found.map(event => event.id), exception.id].sort());
+    expect(changes.every(change => change.patch.trashedAt === 3000)).toBe(true);
+    // In the bin, they are on their way out: the same file brings them back, but what a subscription serves.
+    const binned = here.map(event => (changes.some(change => change.id === event.id) ? { ...event, trashedAt: 3000 } : event));
+    const again = planImport(parseIcs(GOOGLE), binned, 4000);
+    expect(again.creates).toHaveLength(3);
+    expect(again.skipped).toBe(1);
   });
 
   it('takes the tracking off an imported event’s link', () => {

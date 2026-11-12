@@ -1,16 +1,19 @@
 /**
- * Keep import on the phone: pick the Takeout zip, preview it, ask what the notes made of links
- * become, then write one batch of records. The parsing and the records are core's
- * (`notes/services/keepImport`), shared with the web. Photos become this phone's local files, so
- * the sync loop uploads them like any other; the export's other files are removed.
+ * Keep import on the phone (its wizard, `ui/features/importing/KeepWizard`): pick the Takeout zip,
+ * preview every note, choose what the notes made of links become, then write one batch of records.
+ * The parsing, the preview and the records are the package's (`notes/services/keepImport`), shared
+ * with the web. Photos become this phone's local files, so the sync loop uploads them like any
+ * other; the export's other files are removed.
  */
 import { t } from '@unlease/core/i18n';
 import {
   alreadyImported,
   isKeepDataFile,
+  KEEP_WIZARD_WORDS,
   keepFileFinder,
   keepPlanToRecords,
   planKeepImport,
+  type KeepChoices,
   type KeepPlan,
   type KeepReport,
 } from '@unlease/notes/services/keepImport';
@@ -29,14 +32,6 @@ export interface PreparedImport {
   readonly images: ReadonlyMap<string, string>;
 }
 
-/** What the person chose for the notes made of links. */
-export interface KeepChoices {
-  /** Notes of one address become links Claude files. */
-  readonly singleLinks: boolean;
-  /** The link lists (by `source`) that become collections. */
-  readonly collections: ReadonlySet<string>;
-}
-
 export type PrepareOutcome = { readonly status: 'ok'; readonly prepared: PreparedImport } | { readonly status: 'cancelled' } | { readonly status: 'error'; readonly message: string };
 
 const basename = (path: string): string => path.split('/').pop() ?? path;
@@ -44,7 +39,7 @@ const basename = (path: string): string => path.split('/').pop() ?? path;
 export async function prepareKeepImport(): Promise<PrepareOutcome> {
   const archive = await pickKeepArchive();
   if (archive.status === 'cancelled') return { status: 'cancelled' };
-  if (archive.status !== 'ok') return { status: 'error', message: archive.message ? t(archive.message) : t('Archive illisible : choisissez le fichier .zip téléchargé depuis Google Takeout.') };
+  if (archive.status !== 'ok') return { status: 'error', message: archive.message ? t(archive.message) : KEEP_WIZARD_WORDS.unreadableArchive };
   const files: { name: string; text: string }[] = [];
   const images = new Map<string, string>();
   for (const entry of archive.entries) {
@@ -54,7 +49,7 @@ export async function prepareKeepImport(): Promise<PrepareOutcome> {
   }
   if (!files.some(file => /\.json$/i.test(file.name))) {
     await discardKeepImport({ dir: archive.dir, images });
-    return { status: 'error', message: t('Aucune note Keep dans cette archive. Exportez « Keep » depuis Google Takeout.') };
+    return { status: 'error', message: KEEP_WIZARD_WORDS.noKeepNotes };
   }
   return { status: 'ok', prepared: { plan: planKeepImport(files), dir: archive.dir, images } };
 }
@@ -65,12 +60,12 @@ export async function discardKeepImport(prepared: Pick<PreparedImport, 'dir' | '
   for (const path of prepared.images.values()) if (!keep.has(path)) await removePath(path);
 }
 
-/** Whether a record with this id is on this phone, live or deleted. */
-const known = (type: 'note' | 'link', id: string): boolean => getRecord(type as RecordType, id) !== undefined;
+/** Whether a record with this id is on this phone, live or deleted: an earlier import's (the preview's and the plan's). */
+export const knownHere = (type: 'note' | 'link', id: string): boolean => getRecord(type as RecordType, id) !== undefined;
 
 /** Notes an earlier import (here or on another device, once synced) brought already. */
 export function alreadyHere(plan: KeepPlan): number {
-  return alreadyImported(plan, known);
+  return alreadyImported(plan, knownHere);
 }
 
 export async function runKeepImport(prepared: PreparedImport, choices: KeepChoices, onProgress?: (done: number, total: number) => void, now: number = Date.now()): Promise<KeepReport> {
@@ -78,10 +73,9 @@ export async function runKeepImport(prepared: PreparedImport, choices: KeepChoic
     node: deviceNode(),
     now,
     library: useLibraryStore.getState(),
-    known,
+    known: knownHere,
     reading: readingEnabled(),
-    singleLinks: choices.singleLinks,
-    collections: choices.collections,
+    ...choices,
     findFile: keepFileFinder(prepared.images.keys()),
   });
   writeImported(result.records, now);

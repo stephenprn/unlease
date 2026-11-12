@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
+import com.stephenprn.carnet.BuildConfig
 import com.stephenprn.carnet.MainActivity
 
 /**
@@ -16,7 +17,7 @@ class WidgetRouterActivity : Activity() {
     val uri = intent?.data
     if (uri != null) {
       val next =
-          if (uri.scheme == "carnet") {
+          if (uri.scheme == BuildConfig.APP_SCHEME) {
             Intent(Intent.ACTION_VIEW, uri, this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
           } else if (uri.scheme == "https" || uri.scheme == "http") {
             Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -218,4 +218,11 @@ export const EN_PHONE_PAGES: Dictionary = {
   '{app} · vos documents, chez vous': '{app} · your documents, at home',
   'Toutes les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.': 'Every page in the bin will be deleted for good, on all your devices.',
   'Les pages de la corbeille sont supprimées au bout de {days} jours.': 'Pages in the bin are deleted after {days} days.',
+  // The import on the phone: Markdown files one at a time, Notion's .zip from the web (`PagesImport`, Réglages)
+  'Une archive .zip, comme l’export de Notion, s’importe depuis Pages sur le web pour l’instant.': 'A .zip archive, like Notion’s export, imports from Pages on the web for now.',
+  'Ni un fichier Markdown, ni un tableau CSV.': 'Neither a Markdown file nor a CSV table.',
+  'Choisissez un fichier .md : il devient une page, ses tâches, ses tableaux et ses liens compris. D’autres s’ajoutent à l’étape suivante.': 'Choose a .md file: it becomes a page, its tasks, tables and links included. More can be added at the next step.',
+  'Choisir un fichier Markdown': 'Choose a Markdown file',
+  'L’export de Notion est une archive .zip, avec ses sous-pages et ses images : importez-la depuis Pages sur le web, dans Réglages › Données › Importer. Les pages arrivent ensuite ici d’elles-mêmes.': 'Notion’s export is a .zip archive, with its sub-pages and pictures: import it from Pages on the web, in Settings › Data › Import. The pages then arrive here by themselves.',
+  'Des fichiers Markdown (Obsidian…) ; l’export de Notion depuis le web': 'Markdown files (Obsidian…); Notion’s export from the web',
 };

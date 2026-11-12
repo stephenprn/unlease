@@ -13,12 +13,13 @@ import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'rea
 
 import { DEFAULT_APPEARANCE, PALETTE_COLORS } from '@unlease/design/appearance';
 import { restoreSummary } from '@unlease/core/services/admin';
+import { keepImportAction } from '@unlease/notes/services/keepImport';
 import type { AdminStatus, RestoreReport } from '@unlease/core/sync/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { resetBootstrap } from '@app/bootstrap';
-import { resetLibrary } from '@app/store/libraryStore';
+import { resetLibrary, useLibraryStore } from '@app/store/libraryStore';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
 import { AppProviders } from '@app/providers/AppProviders';
 import { navigationRef } from '@ui/navigation/navigationRef';
@@ -203,7 +204,7 @@ describe('the first run', () => {
     expect(useSettingsStore.getState().onboarded).toBe(false);
 
     // The server's apps first: Carnet is this app, locked on; the others ticked or not. The head says whose setup it is, as on the web.
-    expect(textOf(tree)).toContain('Mise en route · Étape 2 sur 4');
+    expect(textOf(tree)).toContain('Mise en route · Étape 2 sur 5');
     expect(textOf(tree)).toContain('Vos applications');
     const carnet = pressables(tree, 'Carnet');
     expect(carnet).toHaveLength(0);
@@ -213,7 +214,7 @@ describe('the first run', () => {
     expect(puts()).toContainEqual({ apps: ['notes', 'pages'] });
     await press(tree, 'Continuer');
 
-    expect(textOf(tree)).toContain('Étape 3 sur 4');
+    expect(textOf(tree)).toContain('Étape 3 sur 5');
     expect(textOf(tree)).toContain('Votre serveur');
     // On a server that held nothing, bringing a backup back comes first; every row waits to be opened.
     for (const row of ['Retrouver vos données', 'Claude', 'Sauvegarde sur S3', 'Fichiers sur Seafile', 'Films et séries avec Seerr']) expect(pressables(tree, row)).toHaveLength(1);
@@ -265,8 +266,9 @@ describe('the first run', () => {
     expect(await pressBack()).toBe(true);
     expect(pressables(tree, 'Sauvegarde sur S3')).toHaveLength(1);
 
-    // How the apps look here comes last.
+    // The backup brought the notes back: no Keep import to offer, the appearance comes last.
     await press(tree, 'Continuer');
+    expect(textOf(tree)).not.toContain('Depuis Google Keep');
     expect(textOf(tree)).toContain('Étape 4 sur 4');
     expect(textOf(tree)).toContain('Palettes');
     await press(tree, 'Commencer');
@@ -314,7 +316,10 @@ describe('the first run', () => {
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
     // Nothing typed: the token was the sibling's.
     expect(calls.find(call => call.path === '/api/settings' && call.method === 'GET')).toBeDefined();
-    expect(textOf(tree)).toContain('Étape 2 sur 2');
+    // Carnet holds nothing on that server: its import first, left for later.
+    expect(textOf(tree)).toContain('Étape 2 sur 3');
+    await press(tree, 'Plus tard');
+    expect(textOf(tree)).toContain('Étape 3 sur 3');
     expect(textOf(tree)).toContain('Les couleurs de Pages sur ce téléphone, reprises ici.');
     expect(useSettingsStore.getState().appearance).toMatchObject(PALETTE_COLORS.sarcelle);
     await press(tree, 'Commencer');
@@ -370,7 +375,7 @@ describe('the first run', () => {
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
     // The server is still to set up: its apps come first.
     expect(textOf(tree)).toContain('Vos applications');
-    expect(textOf(tree)).toContain('Étape 2 sur 4');
+    expect(textOf(tree)).toContain('Étape 2 sur 5');
     expect(await pressBack()).toBe(true);
     expect(textOf(tree)).toContain('Se connecter');
     expect(fields(tree)[0]!.props.value).toBe('https://carnet.test');
@@ -411,7 +416,10 @@ describe('the first run', () => {
   it('lets a phone that keeps everything here choose its colours and its ground, then start', async () => {
     const tree = await boot(false);
     await press(tree, 'Tout garder sur ce téléphone');
-    expect(textOf(tree)).toContain('Étape 2 sur 2');
+    // An empty phone is offered the Keep import first.
+    expect(textOf(tree)).toContain('Étape 2 sur 3');
+    await press(tree, 'Plus tard');
+    expect(textOf(tree)).toContain('Étape 3 sur 3');
     expect(textOf(tree)).toContain('Palettes');
     expect(pressables(tree, 'Commencer')).toHaveLength(1);
 
@@ -440,5 +448,27 @@ describe('the first run', () => {
     expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
     // Kept for the next start.
     expect(readPreferences().appearance).toMatchObject({ primary: '#3A7BD5' });
+  });
+
+  it('imports from Keep as a step: the wizard’s own foot while it runs, the setup’s once it is done', async () => {
+    const tree = await boot(false);
+    await press(tree, 'Tout garder sur ce téléphone');
+    expect(textOf(tree)).toContain('Vous arrivez de Google Keep ?');
+    media.nextArchive = { status: 'ok', message: '', dir: '/cache/keep', entries: [{ name: 'Takeout/Keep/Idée.json', path: '/cache/keep/Idée.json', bytes: 10 }] };
+    media.texts = { '/cache/keep/Idée.json': JSON.stringify({ title: 'Idée', textContent: 'Un vélo cargo', createdTimestampUsec: 1_690_000_000_000_000, userEditedTimestampUsec: 1_700_000_000_000_000 }) };
+    await press(tree, 'Choisir l’archive');
+    // Past its first step, the wizard leads: no « Plus tard » from the setup.
+    expect(textOf(tree)).toContain('Ce que contient le fichier');
+    expect(pressables(tree, 'Plus tard')).toHaveLength(0);
+    await press(tree, 'Continuer');
+    expect(textOf(tree)).toContain('Vos choix');
+    await press(tree, keepImportAction(1));
+    await settle();
+    expect(textOf(tree)).toContain('Vos notes Keep sont arrivées');
+    // No way out of the first run from the report: the setup's own foot goes on.
+    expect(pressables(tree, 'Voir le tableau')).toHaveLength(0);
+    expect(Object.values(useLibraryStore.getState().notes).some(note => note.title === 'Idée')).toBe(true);
+    await press(tree, 'Continuer');
+    expect(textOf(tree)).toContain('Palettes');
   });
 });

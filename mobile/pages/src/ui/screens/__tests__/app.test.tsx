@@ -13,6 +13,7 @@ import { Linking } from 'react-native';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 import type { NavigationState, PartialState } from '@react-navigation/native';
 
+import type { AdminStatus } from '@unlease/core/sync/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import { linkFields, noteFields } from '@unlease/notes/sync/entities';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
@@ -43,6 +44,13 @@ const SETTINGS: ServerSettings = {
   seerr: { url: '', keyHint: null },
 };
 
+const ADMIN: AdminStatus = {
+  server: { version: '0.1.0', notes: 0, pages: 0, contacts: 0, events: 0, files: 0, fileBytes: 0 },
+  backup: { running: false, last: null, lastSuccessAt: null, nextAt: null },
+  drive: { running: false, files: 0, bytes: 0, waiting: 0, lastPassAt: null, error: null },
+  restore: { running: false, startedAt: null, finishedAt: null, error: null, report: null, thawing: false },
+};
+
 const answer = (body: unknown, code = 200) => ({ ok: code < 400, status: code, headers: { get: () => null }, json: async () => body });
 
 /** What the first run asks of the server; a sync waits forever (no records come). */
@@ -52,6 +60,8 @@ function fakeFetch(input: string) {
   if (url.pathname === '/api/health') return Promise.resolve(answer({ ok: true, analysis: false, version: '0.1.0', apps: SETTINGS.apps.enabled, setup: true }));
   if (url.pathname === '/api/settings') return Promise.resolve(answer(SETTINGS));
   if (url.pathname === '/api/usage') return Promise.resolve(answer({}));
+  // What the server holds: no page yet, so the first run offers the import.
+  if (url.pathname === '/api/admin') return Promise.resolve(answer(ADMIN));
   return Promise.resolve(answer({ error: 'not found' }, 404));
 }
 
@@ -143,6 +153,13 @@ describe('Pages, its root', () => {
     });
     await settle();
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
+    // No page on the server yet: the import is offered, its Markdown picked or left for later.
+    expect(textOf(tree)).toContain('Vous arrivez de Notion ?');
+    expect(textOf(tree)).toContain('Choisir un fichier Markdown');
+    await act(async () => {
+      pressableWithText(tree, 'Plus tard').props.onPress();
+    });
+    await settle();
     await act(async () => {
       pressableWithText(tree, 'Commencer').props.onPress();
     });

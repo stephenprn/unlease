@@ -1,0 +1,15 @@
+/* The items that are not links, quoted one by one under the dialog's message. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lines > li {
+  padding-left: 10px;
+  border-left: 2px solid var(--edge);
+  overflow-wrap: anywhere;
+}

@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.MainActivity
 
 /**
@@ -24,8 +25,8 @@ class WidgetRouterActivity : Activity() {
     try {
       when {
         uri == null -> Unit
-        uri.scheme == "unlease-agenda" -> startActivity(Intent(Intent.ACTION_VIEW, uri, this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
-        uri.scheme == null -> startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("unlease-agenda://$uri"), this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        uri.scheme == BuildConfig.APP_SCHEME -> startActivity(Intent(Intent.ACTION_VIEW, uri, this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        uri.scheme == null -> startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("${BuildConfig.APP_SCHEME}://$uri"), this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
         (uri.scheme ?: "") in SUITE_SCHEMES -> startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         else -> Unit
       }
@@ -37,7 +38,7 @@ class WidgetRouterActivity : Activity() {
   }
 
   private companion object {
-    /** The other apps of the suite a row may open (`APPS`' schemes): a note's reminder, a page's day. */
-    val SUITE_SCHEMES = setOf("carnet", "unlease-pages", "unlease-contacts")
+    /** The other apps of the suite a row may open (`APPS`' schemes, `-dev` in a dev build): a note's reminder, a page's day. */
+    val SUITE_SCHEMES = setOf("carnet", "unlease-pages", "unlease-contacts").map { it + BuildConfig.SCHEME_SUFFIX }.toSet()
   }
 }
