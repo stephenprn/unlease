@@ -576,9 +576,13 @@
 }
 
 /* Snackbar: one line of what happened and, for anything destructive, the way back. */
+/*
+ * Centred on the page, not the window: under a layer the scrollbar's room becomes the page's padding
+ * (layers.ts), and the window widens by it; the slip stays where the page's middle is, never sliding sideways.
+ */
 .snackHost {
   position: fixed;
-  left: 50%;
+  left: calc(50% - var(--locked-gutter, 0px) / 2);
   bottom: 24px;
   z-index: 3;
   transform: translateX(-50%);
@@ -675,7 +679,7 @@
 @media (max-width: 719px) {
   .snackHost {
     left: 12px;
-    right: 12px;
+    right: calc(12px + var(--locked-gutter, 0px));
     width: auto;
     max-width: none;
     transform: none;
