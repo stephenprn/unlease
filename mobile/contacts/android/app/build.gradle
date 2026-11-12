@@ -92,8 +92,8 @@ android {
         applicationId "com.stephenprn.contacts"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10199
-        versionName "0.1.1"
+        versionCode 10299
+        versionName "0.1.2"
     }
     signingConfigs {
         debug {

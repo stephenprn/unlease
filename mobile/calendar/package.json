@@ -1,6 +1,6 @@
 {
   "name": "@unlease/calendar-mobile",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Agenda for Android: the calendar of Unlease (events, repeats, reminders, labels, subscriptions, holidays, birthdays), in React Native.",
   "license": "MIT",
   "repository": {

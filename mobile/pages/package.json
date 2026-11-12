@@ -1,6 +1,6 @@
 {
   "name": "@unlease/pages-mobile",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pages for Android: the pages app of Unlease (its documents, tables and questions to Claude), in React Native.",
   "license": "MIT",
   "repository": {

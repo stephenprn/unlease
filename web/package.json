@@ -1,6 +1,6 @@
 {
   "name": "@unlease/web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Unlease's web apps, one per app (Carnet in notes/, Pages in pages/) on the shell they share (shared/), in React and Vite.",
   "license": "MIT",
   "repository": {

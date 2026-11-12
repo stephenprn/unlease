@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-12
+
 ### Added
 
 - Every app's import is now a step-by-step wizard, on the web and on Android: where the data comes from and how to get it, then a preview of everything the file holds with what will become of each item (new, completed, already here, or left out and why), filtered and searchable, then the choices that need you, each with its default and its cost, then the import and a report of what came in and what was left out. Nothing is written before "Import". It opens from Settings › Data, and the first run now offers it as an optional step ("Your data", skipped with "Later") while the app holds nothing yet.
@@ -107,6 +109,7 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/stephenprn/unlease/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/stephenprn/unlease/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/stephenprn/unlease/releases/tag/v0.1.0
