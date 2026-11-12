@@ -280,6 +280,12 @@ describe('notes made of links', () => {
     expect(parsed(keep({ textContent: 'Penser à appeler le garage\nhttps://example.org/garage' })).links).toBeNull();
     expect(parsed(keep({ textContent: 'https://example.org/a', attachments: [{ filePath: 'p.png', mimetype: 'image/png' }] })).links).toBeNull();
   });
+
+  it('never takes a list of numbers or files for addresses', () => {
+    expect(parsed(keep({ title: 'Poids', listContent: [{ text: '96.8', isChecked: false }, { text: '2.7', isChecked: false }, { text: '71.25', isChecked: true }] })).links).toBeNull();
+    expect(parsed(keep({ textContent: '96.8\n2.7\n3.1' })).links).toBeNull();
+    expect(parsed(keep({ textContent: 'photo.jpg\nfacture.pdf' })).links).toBeNull();
+  });
 });
 
 describe('the plan of an export', () => {

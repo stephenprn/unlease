@@ -5,13 +5,14 @@
  * never bigger). Bold takes the next family, italic leans, underline underlines.
  */
 import React, { memo, useMemo } from 'react';
-import type { TextStyle } from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 
 import type { HeadingLevel, NoteLine } from '@unlease/notes/services/noteBody';
 import { mentionName } from '@unlease/notes/services/noteMentions';
 import { dateShown } from '@unlease/core/services/dates';
 import { mentionText } from '@unlease/core/services/richDisplay';
-import type { AtomRun, Marks, Run } from '@unlease/core/services/richText';
+import type { AtomRun, Marks } from '@unlease/core/services/richText';
+import { linksInText, safeLink } from '@unlease/core/services/url';
 
 import { AppText } from '../../components';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
@@ -109,11 +110,60 @@ export function noteFieldStyle(theme: Theme): TextStyle {
   });
 }
 
-/** A line of text written in one run with no mark: its words, else null. */
-function plainWords(line: NoteLine): string | null {
+/** A line of text written in one run with no mark (and, in the editor, no address, drawn apart): its words, else null. */
+function plainWords(line: NoteLine, place: NotePlace): string | null {
   if (line.heading !== 0 || line.runs.length !== 1) return null;
   const run = line.runs[0]!;
-  return run.kind === 'text' && !run.marks.b && !run.marks.i && !run.marks.u ? run.text : null;
+  if (run.kind !== 'text' || run.marks.b || run.marks.i || run.marks.u) return null;
+  return place === 'editor' && linksInText(run.text).length > 0 ? null : run.text;
+}
+
+/**
+ * Words with their addresses drawn apart (`linksInText`): in a field, the words as plain text (they
+ * take the field's type) and each address in `style`; in a text, each address opens with `onOpen`.
+ */
+export function LinkedWords({ text, style, onOpen }: { text: string; style: StyleProp<TextStyle>; onOpen?: (href: string) => void }) {
+  const links = linksInText(text);
+  if (links.length === 0) return <>{text}</>;
+  const pieces: React.ReactNode[] = [];
+  let at = 0;
+  for (const link of links) {
+    if (link.start > at) pieces.push(text.slice(at, link.start));
+    const href = safeLink(link.href);
+    pieces.push(
+      <AppText key={link.start} style={style} onPress={onOpen && href ? () => onOpen(href) : undefined} accessibilityRole={onOpen ? 'link' : undefined}>
+        {text.slice(link.start, link.end)}
+      </AppText>,
+    );
+    at = link.end;
+  }
+  if (at < text.length) pieces.push(text.slice(at));
+  return <>{pieces}</>;
+}
+
+/** An address in the editor: the run's type in the link's ink, underlined, so it reads as one to open (`CaretLink`). */
+function linkStyle(theme: Theme, place: NotePlace, heading: HeadingLevel, marks: Marks): TextStyle {
+  return cached(theme, `${place}|${heading}|${marks.b ? 'b' : ''}${marks.i ? 'i' : ''}|link`, () => ({
+    ...noteRunStyle(theme, place, heading, marks),
+    color: theme.color.link,
+    textDecorationLine: 'underline' as const,
+  }));
+}
+
+/** A run's words, its addresses drawn as links (in the editor only: a card or an embed keeps its own look). */
+function RunWords({ text, place, heading, marks }: { text: string; place: NotePlace; heading: HeadingLevel; marks: Marks }) {
+  const theme = useTheme();
+  const links = place === 'editor' ? linksInText(text) : [];
+  if (links.length === 0) return <AppText style={noteRunStyle(theme, place, heading, marks)}>{text}</AppText>;
+  const pieces: React.ReactNode[] = [];
+  let at = 0;
+  for (const link of links) {
+    if (link.start > at) pieces.push(<AppText key={`w${at}`} style={noteRunStyle(theme, place, heading, marks)}>{text.slice(at, link.start)}</AppText>);
+    pieces.push(<AppText key={`l${link.start}`} style={linkStyle(theme, place, heading, marks)}>{text.slice(link.start, link.end)}</AppText>);
+    at = link.end;
+  }
+  if (at < text.length) pieces.push(<AppText key={`w${at}`} style={noteRunStyle(theme, place, heading, marks)}>{text.slice(at)}</AppText>);
+  return <>{pieces}</>;
 }
 
 /**
@@ -129,9 +179,6 @@ export function atomText(run: AtomRun): string {
 function atomStyle(theme: Theme, place: NotePlace, heading: HeadingLevel): TextStyle {
   return cached(theme, `${place}|${heading}|atom`, () => ({ ...noteRunStyle(theme, place, heading, {}), color: theme.color.link }));
 }
-
-const runStyle = (theme: Theme, place: NotePlace, heading: HeadingLevel, run: Run): TextStyle =>
-  run.kind === 'text' ? noteRunStyle(theme, place, heading, run.marks) : atomStyle(theme, place, heading);
 
 /**
  * One line's runs and the break after it. Android gives each nested text its own line height span,
@@ -151,17 +198,21 @@ const runStyle = (theme: Theme, place: NotePlace, heading: HeadingLevel, run: Ru
  */
 const LineRuns = memo(function LineRunsView({ line, place, next }: { line: NoteLine; place: NotePlace; next: HeadingLevel | null; names: number }) {
   const theme = useTheme();
-  const words = next === null ? null : plainWords(line);
+  const words = next === null ? null : plainWords(line, place);
   if (next !== null && (words !== null || line.runs.length === 0)) {
     return <AppText style={next > 0 ? headingBreakStyle(theme, place) : noteRunStyle(theme, place, 0, {})}>{`${words ?? ''}\n`}</AppText>;
   }
   return (
     <>
-      {line.runs.map((run, index) => (
-        <AppText key={index} style={runStyle(theme, place, line.heading, run)}>
-          {run.kind === 'text' ? run.text : atomText(run)}
-        </AppText>
-      ))}
+      {line.runs.map((run, index) =>
+        run.kind === 'text' ? (
+          <RunWords key={index} text={run.text} place={place} heading={line.heading} marks={run.marks} />
+        ) : (
+          <AppText key={index} style={atomStyle(theme, place, line.heading)}>
+            {atomText(run)}
+          </AppText>
+        ),
+      )}
       {next === null ? null : <AppText style={looseBreakStyle(theme, place, next > 0)}>{'\n'}</AppText>}
     </>
   );

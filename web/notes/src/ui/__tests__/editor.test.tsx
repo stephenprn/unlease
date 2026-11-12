@@ -293,4 +293,43 @@ describe('the editor on a phone (under 720px)', () => {
     tomorrow.setHours(9, 30, 0, 0);
     expect(state().notes[id]!.reminderAt).toBe(tomorrow.getTime());
   });
+
+  it('opens the address the caret stands on, from its row or with Ctrl+click', async () => {
+    const id = createNote({ kind: 'checklist', title: 'Idées' });
+    addCheck(id, 'Lampe https://example.org/lampe chez eux');
+    addCheck(id, '96.8');
+    render(<NoteEditor id={id} onClose={() => {}} />);
+    const items = () => screen.getAllByRole('textbox', { name: 'Texte de l’élément' }) as HTMLTextAreaElement[];
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    // The caret in the words: no row; on the address: its row, a link to a new tab.
+    act(() => {
+      items()[0]!.focus();
+      items()[0]!.setSelectionRange(2, 2);
+    });
+    fireEvent.keyUp(items()[0]!, { key: 'ArrowLeft' });
+    expect(screen.queryByRole('link', { name: /^Ouvrir/ })).toBeNull();
+    act(() => items()[0]!.setSelectionRange(12, 12));
+    fireEvent.keyUp(items()[0]!, { key: 'ArrowRight' });
+    const row = screen.getByRole('link', { name: 'Ouvrir example.org/lampe' });
+    expect(row).toHaveAttribute('href', 'https://example.org/lampe');
+    expect(row).toHaveAttribute('target', '_blank');
+
+    // A number is never an address.
+    act(() => {
+      items()[1]!.focus();
+      items()[1]!.setSelectionRange(2, 2);
+    });
+    fireEvent.keyUp(items()[1]!, { key: 'ArrowRight' });
+    expect(screen.queryByRole('link', { name: /^Ouvrir/ })).toBeNull();
+
+    // Ctrl+click on the address opens it at once.
+    act(() => {
+      items()[0]!.focus();
+      items()[0]!.setSelectionRange(20, 20);
+    });
+    fireEvent.click(items()[0]!, { ctrlKey: true });
+    expect(open).toHaveBeenCalledWith('https://example.org/lampe', '_blank', 'noopener,noreferrer');
+    open.mockRestore();
+  });
 });

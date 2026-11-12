@@ -4,7 +4,7 @@
  * empty one goes), a multi-line paste becomes several items, and × offers the item back.
  */
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Keyboard, Linking, StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { LayoutAnimationConfig, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
@@ -14,6 +14,7 @@ import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
+import { lineLinkAt } from '@unlease/core/services/url';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { addCheck, deleteCheck, mergeIntoPrevious, moveCheck, pasteChecks, saveTypedText, splitCheck, toggleCheck } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -23,6 +24,7 @@ import { haptic } from '@shared/platform/haptics';
 
 import { AnimatedOrganic, AppText, Checkbox, Grain, Icon, IconButton, Organic, Tappable } from '../../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
+import { LinkedWords } from './noteText';
 import { duration, listIn, listInAtOnce, listMove, listOut, spatial, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -58,9 +60,11 @@ export interface ChecklistEditorProps {
   readonly editable: boolean;
   /** For a checklist just created from the board. */
   readonly autoFocusFirst?: boolean;
+  /** The address the caret stands on in an item (null once it leaves it): the screen offers to open it (`CaretLink`). */
+  readonly onLinkAtCaret?: (href: string | null) => void;
 }
 
-function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: ChecklistEditorProps) {
+function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false, onLinkAtCaret }: ChecklistEditorProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { open, done } = useLibraryStore(
@@ -251,6 +255,7 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
                 onDrag={onDrag}
                 onDrop={onDrop}
                 onHold={onHold}
+                onLinkAtCaret={onLinkAtCaret}
                 rowY={rows.current.get(id)?.y ?? 0}
                 settleFrom={dropped?.id === id ? dropped.from : 0}
                 raised={held === id || dropped?.id === id ? paper : null}
@@ -327,6 +332,7 @@ interface CheckRowProps {
   readonly onDrop: (id: string, y: number) => void;
   /** Taken up (its id) or let go without a drop (null). */
   readonly onHold: (id: string | null) => void;
+  readonly onLinkAtCaret?: (href: string | null) => void;
   readonly rowY: number;
   /** Just dropped: how far from its new place it was let go; it settles in from there. */
   readonly settleFrom: number;
@@ -334,7 +340,12 @@ interface CheckRowProps {
   readonly raised: StyleProp<ViewStyle> | null;
 }
 
-const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, onMergeUp, onEmptyBackspace, onPasteLines, onDrag, onDrop, onHold, rowY, settleFrom, raised }: CheckRowProps) {
+/** An address in a ticked item, tapped: the browser, or a slip when nothing opens it. */
+const openAddress = (href: string): void => {
+  Linking.openURL(href).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+};
+
+const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, onMergeUp, onEmptyBackspace, onPasteLines, onDrag, onDrop, onHold, onLinkAtCaret, rowY, settleFrom, raised }: CheckRowProps) {
   // A long item wraps onto more lines, which stay still as one is added.
   const growing = useGrowingInput();
   const styles = useThemedStyles(makeStyles);
@@ -342,6 +353,18 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
   const item = useLibraryStore(s => s.checks[id]);
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState(item?.text ?? '');
+  // The address the caret stands on, told to the screen while the item holds the caret (`CaretLink`).
+  const typedNow = useRef(draft);
+  typedNow.current = draft;
+  const toldLink = useRef(false);
+  const tellLink = (): void => {
+    if (!onLinkAtCaret) return;
+    const { start, end } = selection.current;
+    const href = start === end ? lineLinkAt(typedNow.current, start) : null;
+    if (href === null && !toldLink.current) return;
+    toldLink.current = href !== null;
+    onLinkAtCaret(href);
+  };
   // The tick is drawn first, then the item leaves for the ticked group: it fades out ticked, one frame later.
   const [ticked, setTicked] = useState(false);
   const tick = useCallback(() => {
@@ -440,13 +463,13 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
           register(id, ref);
           growing.attach(ref);
         }}
-        value={draft}
         editable={editable}
         multiline
         submitBehavior="submit"
         onSubmitEditing={split}
         onSelectionChange={event => {
           selection.current = event.nativeEvent.selection;
+          tellLink();
         }}
         onChangeText={text => {
           if (text.includes('\n')) {
@@ -468,8 +491,15 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
           if (draft === '') onEmptyBackspace(id);
           else if (selection.current.start === 0 && selection.current.end === 0) onMergeUp(id, save(draft));
         }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onFocus={() => {
+          setFocused(true);
+          tellLink();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          if (toldLink.current) onLinkAtCaret?.(null);
+          toldLink.current = false;
+        }}
         placeholder={t('Élément')}
         placeholderTextColor={theme.color.inkFaint}
         selectionColor={theme.color.highlight}
@@ -478,7 +508,9 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
         style={[variantStyle(theme, 'editorBody'), styles.input]}
         maxLength={TEXT_LIMITS.check.text}
         accessibilityLabel={t('Texte de l’élément')}
-      />
+      >
+        <LinkedWords text={draft} style={styles.inputLink} />
+      </TextInput>
       {focused && editable ? <IconButton icon="close" label={t('Supprimer l’élément')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
     </AnimatedOrganic>
   );
@@ -501,7 +533,7 @@ const DoneRow = memo(function DoneRowView({ id, editable }: { id: string; editab
         <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} recede />
       </View>
       <AppText variant="editorBody" color={theme.color.inkMuted} style={styles.doneText}>
-        {item.text}
+        <LinkedWords text={item.text} style={styles.doneLink} onOpen={openAddress} />
       </AppText>
       {editable ? <IconButton icon="close" label={t('Supprimer l’élément')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
     </View>
@@ -516,6 +548,8 @@ const makeStyles = (theme: Theme) =>
     // The box's 44 target in the row's 48, centred on the item's first line (11 + 26 / 2), as the grip and the × are.
     box: { paddingVertical: 2 },
     input: { flex: 1, paddingTop: 11, paddingBottom: 11, paddingHorizontal: 4, color: theme.color.ink },
+    // An address in an item: the item's type in the link's ink, underlined (the screen opens it, `CaretLink`).
+    inputLink: { ...variantStyle(theme, 'editorBody'), color: theme.color.link, textDecorationLine: 'underline' },
     trailing: { width: 48 },
     // The add row's and the ticked group's press lie 2 in from their row's top and foot: the rows keep their pitch (a ruled paper's), the press keeps clear of the items next to it.
     addRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48 - GEOMETRY.rowGap, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
@@ -528,6 +562,8 @@ const makeStyles = (theme: Theme) =>
     doneSection: { marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline, paddingTop: 4 },
     doneHeader: { flexDirection: 'row', alignItems: 'center', minHeight: 48 - GEOMETRY.rowGap, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     doneText: { flex: 1, paddingTop: 11, paddingBottom: 11, paddingHorizontal: 4, textDecorationLine: 'line-through' },
+    // An address in a ticked item opens at a tap: the link's ink, still struck through with the item.
+    doneLink: { color: theme.color.link, textDecorationLine: 'underline line-through' },
   });
 
 export const ChecklistEditor = memo(ChecklistEditorComponent);

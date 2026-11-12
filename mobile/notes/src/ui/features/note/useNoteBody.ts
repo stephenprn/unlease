@@ -28,6 +28,7 @@ import { mentionName, mentionsVersion } from '@unlease/notes/services/noteMentio
 import { applyNoteEdit, backspaceHeading, offsetAfter, textChange, type NoteEdit } from '@unlease/notes/services/noteEdits';
 import { displayEdit, displayToModel, modelToDisplay, richDisplay, type RichDisplay } from '@unlease/core/services/richDisplay';
 import { displayMentionQuery } from '@unlease/core/services/mentionSearch';
+import { lineLinkAt } from '@unlease/core/services/url';
 import { insertRich, type Run } from '@unlease/core/services/richText';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { saveNoteLines } from '@app/store/actions';
@@ -107,6 +108,8 @@ export interface NoteBodyEditor {
   readonly range: TextRange | null;
   /** The mention the caret stands on or right after, while the field holds it: a way to open its person. */
   readonly mentionAtCaret: Ref | null;
+  /** The address the caret stands in or right against, while the field holds it: a way to open it (`CaretLink`). */
+  readonly linkAtCaret: string | null;
   /** « @word » the caret stands after while the field holds it (the « @ » where a word starts): who or what to mention; null otherwise. */
   readonly mentionQuery: MentionQuery | null;
   /** The person picked for the « @ »: a mention takes its place, the note becomes formatted. */
@@ -147,6 +150,7 @@ export function useNoteBody(id: string, note: { readonly body: string; readonly 
   const [range, setRange] = useState<TextRange | null>(null);
   const rangeShown = useRef<TextRange | null>(null);
   const [mentionAtCaret, setMentionAtCaret] = useState<Ref | null>(null);
+  const [linkAtCaret, setLinkAtCaret] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null);
   const mayMention = useRef(canMention);
   mayMention.current = canMention;
@@ -166,6 +170,9 @@ export function useNoteBody(id: string, note: { readonly body: string; readonly 
     const span = focused.current && at.start === at.end ? latest.current.display.spans.find(entry => entry.run.kind === 'mention' && at.start > entry.display && at.start <= entry.display + entry.length) : undefined;
     const target = span && span.run.kind === 'mention' ? span.run.target : null;
     setMentionAtCaret(current => (current?.type === target?.type && current?.id === target?.id ? current : target));
+    // The address the caret stands on, read in its line (an address never crosses one).
+    const href = focused.current && at.start === at.end ? lineLinkAt(latest.current.text, at.start) : null;
+    setLinkAtCaret(href);
     // « @word » just before the caret: the suggestions follow the word.
     const found = focused.current && at.start === at.end && mayMention.current() ? displayMentionQuery(latest.current.display, at.start) : null;
     const query = found ? { start: found.start, query: found.query } : null;
@@ -353,7 +360,7 @@ export function useNoteBody(id: string, note: { readonly body: string; readonly 
   );
 
   return useMemo(
-    () => ({ lines: shown.lines, text: shown.text, names: shown.names, range, mentionAtCaret, mentionQuery, mention, input, onChangeText, onSelectionChange, onFocus, onBlur, onKeyPress, takeSelection, format, flush }),
-    [shown, range, mentionAtCaret, mentionQuery, mention, onChangeText, onSelectionChange, onFocus, onBlur, onKeyPress, takeSelection, format, flush],
+    () => ({ lines: shown.lines, text: shown.text, names: shown.names, range, mentionAtCaret, linkAtCaret, mentionQuery, mention, input, onChangeText, onSelectionChange, onFocus, onBlur, onKeyPress, takeSelection, format, flush }),
+    [shown, range, mentionAtCaret, linkAtCaret, mentionQuery, mention, onChangeText, onSelectionChange, onFocus, onBlur, onKeyPress, takeSelection, format, flush],
   );
 }

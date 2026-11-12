@@ -48,6 +48,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { AppText, Button, Dialog, EdgeScrollView, EmptyState, footEdge, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
+import { CaretLink } from '../features/note/CaretLink';
 import { ChecklistEditor } from '../features/note/ChecklistEditor';
 import { FormatBar } from '../features/note/FormatBar';
 import { NoteColorSheet } from '../features/note/NoteColorSheet';
@@ -131,6 +132,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
   // A text note's body: its lines, formatted or plain, saved as they are typed (an edit from another device comes in there too).
   const body = useNoteBody(id, note, hasPeople, history);
   const flushBody = body.flush;
+  // The address the caret stands on in an item of the list (the body tells its own): a row over the bar opens it.
+  const [itemLink, setItemLink] = useState<string | null>(null);
   // « @word » typed: whom or what to mention rides on the keyboard, over the note's bar.
   const mentionRows = useMentionRows(body.mentionQuery?.query ?? null, body.mention);
 
@@ -214,6 +217,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
   const back = () => navigation.goBack();
   const noteLabels = note.labelIds.map(lid => labels[lid]).filter(l => !!l && l.deletedAt === null);
   const chipsShown = !keyboard && (note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0);
+  const caretLink = note.kind === 'text' ? body.linkAtCaret : note.kind === 'checklist' ? itemLink : null;
   const formatting = note.kind === 'text' && editable ? body.range : null;
 
   /** Saves what is typed; true when the note is empty, so leaving discards it and there is nothing to undo. */
@@ -356,16 +360,18 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
               ) : (
                 <View style={styles.writing}>
                   {ruled ? <View pointerEvents="none" style={[styles.paper, { top: -CHECK_RULE.pitch * RULED_REACH }, patternBackdrop(theme.mode, note.pattern, CHECK_RULE)]} /> : null}
-                  <ChecklistEditor noteId={id} editable={editable} autoFocusFirst={focus === 'check'} />
+                  <ChecklistEditor noteId={id} editable={editable} autoFocusFirst={focus === 'check'} onLinkAtCaret={setItemLink} />
                 </View>
               )}
             </View>
             {/* The events that mention the note, in Agenda. */}
             {keyboard ? null : <EventsMentioning type="note" id={id} />}
           </EdgeScrollView>
+          {/* The address the caret stands on: the footer's first row, a tap away from the browser. */}
+          {caretLink ? <CaretLink href={caretLink} /> : null}
           {/* What the note wears, at its foot above the bar that changes it, as on its card (aside while typing): the two are one footer, its edge on top. */}
           {chipsShown ? (
-            <View style={styles.chips}>
+            <View style={[styles.chips, caretLink ? styles.edgeless : null]}>
               {note.reminderAt !== null ? (
                 <Tappable onPress={() => openSheet('reminder')} disabled={!editable} ownDisabled hitSlop={CHIP_SLOP} style={[styles.chip, CHIP, { borderColor: theme.color.outline }]} accessibilityLabel={t('Modifier le rappel')}>
                   <Icon name="bell" size={16} color={note.reminderAt < now ? theme.color.danger : theme.color.inkMuted} />
@@ -390,7 +396,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             />
           ) : null}
           {/* Lifted onto the keyboard, the bar is already clear of the gesture bar: no second inset. */}
-          <View style={[chipsShown ? null : styles.toolbarEdge, { paddingBottom: keyboard ? 0 : insets.bottom }]}>
+          <View style={[chipsShown || caretLink ? null : styles.toolbarEdge, { paddingBottom: keyboard ? 0 : insets.bottom }]}>
             {/* Words selected in the text: the bar turns into their formatting in place, and back once nothing is selected. */}
             <View style={styles.toolbarSlot}>
               <LayoutAnimationConfig skipEntering>
@@ -589,6 +595,8 @@ const makeStyles = (theme: Theme) =>
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, ...footEdge(theme) },
     chip: { minHeight: 40, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6 },
     toolbarEdge: footEdge(theme),
+    // Under the caret's address, which draws the footer's edge.
+    edgeless: { borderTopWidth: 0 },
     // The note's actions and the selection's formatting take turns in it, laid over each other while one fades into the other.
     toolbarSlot: { height: 56 },
     toolbarRow: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },

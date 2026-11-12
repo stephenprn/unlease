@@ -3,7 +3,7 @@
  * and the real navigator.
  */
 import React from 'react';
-import { TextInput } from 'react-native';
+import { Linking, TextInput } from 'react-native';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
@@ -350,7 +350,7 @@ describe('a checklist typed as in Keep', () => {
       jest.advanceTimersByTime(100);
     });
     expect(texts()).toEqual(['pain', 'lait']);
-    expect(fields().map(field => field.props.value)).toEqual(['pain', 'lait']);
+    expect(fields().map(field => field.props.children.props.text)).toEqual(['pain', 'lait']);
     expect(setSelection).toHaveBeenLastCalledWith(0, 0);
 
     // The new item's caret is at its start: Backspace joins it to "pain", the caret where they meet.
@@ -361,7 +361,7 @@ describe('a checklist typed as in Keep', () => {
       jest.advanceTimersByTime(100);
     });
     expect(texts()).toEqual(['painlait']);
-    expect(fields().map(field => field.props.value)).toEqual(['painlait']);
+    expect(fields().map(field => field.props.children.props.text)).toEqual(['painlait']);
     expect(setSelection).toHaveBeenLastCalledWith(4, 4);
 
     await act(async () => {
@@ -376,6 +376,42 @@ describe('a checklist typed as in Keep', () => {
       useUiStore.getState().snack!.action!.run();
     });
     expect(texts()).toEqual(['painlait']);
+  });
+});
+
+describe('addresses in a note', () => {
+  it('draws them as links, and offers to open the one the caret stands on, never a number', async () => {
+    let list = '';
+    const tree = await boot(true, () => {
+      list = createNote({ kind: 'checklist', title: 'Idées' });
+      addCheck(list, 'Lampe https://example.org/lampe');
+      addCheck(list, '96.8');
+    });
+    await go('Note', { id: list });
+    const fields = () => outermost(tree, props => props.accessibilityLabel === 'Texte de l’élément' && props.onSubmitEditing !== undefined);
+    const row = () => tree.root.findAll(node => node.props.accessibilityLabel === 'Ouvrir example.org/lampe' && typeof node.props.onPress === 'function');
+    // The address in the item is drawn apart, in the link's ink.
+    expect(textOf(tree)).toContain('https://example.org/lampe');
+    await act(async () => {
+      fields()[0]!.props.onFocus();
+      fields()[0]!.props.onSelectionChange({ nativeEvent: { selection: { start: 2, end: 2 } } });
+    });
+    expect(row()).toHaveLength(0);
+    await act(async () => {
+      fields()[0]!.props.onSelectionChange({ nativeEvent: { selection: { start: 12, end: 12 } } });
+    });
+    expect(row().length).toBeGreaterThan(0);
+    const opened = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    await act(async () => row()[0]!.props.onPress());
+    expect(opened).toHaveBeenCalledWith('https://example.org/lampe');
+    opened.mockRestore();
+    // Another item, a number: the row goes.
+    await act(async () => {
+      fields()[0]!.props.onBlur();
+      fields()[1]!.props.onFocus();
+      fields()[1]!.props.onSelectionChange({ nativeEvent: { selection: { start: 2, end: 2 } } });
+    });
+    expect(row()).toHaveLength(0);
   });
 });
 

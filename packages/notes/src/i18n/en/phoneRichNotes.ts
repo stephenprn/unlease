@@ -3,6 +3,8 @@ import type { Dictionary } from '@unlease/core/i18n';
 
 export const EN_PHONE_RICH_NOTES: Dictionary = {
   'Effacer la mise en forme': 'Clear formatting',
+  // The address the caret stands on, in a row over the note's bar.
+  'Ouvrir {address}': 'Open {address}',
 
   // Mentioning a person (Contacts' records) in a note
   'Mentionner quelqu’un': 'Mention someone',

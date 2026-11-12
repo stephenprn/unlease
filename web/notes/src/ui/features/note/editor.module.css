@@ -211,6 +211,67 @@
   padding: 10px 20px 12px;
 }
 
+/*
+ * The address the caret stands on (`CaretLink`): a row over the note's foot, in link ink, its address
+ * cut to one line, the shorter way (Ctrl+click) said quietly at its end where a key can be held.
+ */
+.caretLink {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 2px 8px 0;
+  padding: 0 12px;
+  border-radius: var(--cut-tab);
+  color: var(--link);
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .caretLink:hover {
+    background: color-mix(in srgb, var(--link) 8%, transparent);
+  }
+
+  .caretLink:hover .caretLinkUrl {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.caretLink:active {
+  background: color-mix(in srgb, var(--link) 14%, transparent);
+}
+
+.caretLink:focus-visible {
+  outline-offset: -2px;
+}
+
+.caretLinkGlyph {
+  flex: none;
+}
+
+.caretLinkUrl {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caretLinkHint {
+  flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--ink-muted);
+}
+
+@media not ((hover: hover) and (pointer: fine)) {
+  .caretLinkHint {
+    display: none;
+  }
+}
+
 /* The reminder and the labels a note wears: capsules outlined in pencil. */
 .chip {
   display: inline-flex;

@@ -67,6 +67,8 @@ import { onBeforePause } from '@shared/app/sync/loop';
 import { Button } from '@shared/ui/components/Button';
 import { Confirm } from '@shared/ui/components/Dialog';
 import { Icon } from '@shared/ui/components/Icon';
+import { CaretLink } from './CaretLink';
+import { useCaretLink } from './useCaretLink';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { LabelMark } from '@shared/ui/components/LabelMark';
 import { Layer } from '@shared/ui/components/Layer';
@@ -190,6 +192,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const bodyApi = useRef<RichBodyHandle>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  // The address the caret stands on, in the title, the body or an item: a row to open it, and Ctrl+click (`useCaretLink`).
+  const [sheetElement, setSheetElement] = useState<HTMLDivElement | null>(null);
+  const caretHref = useCaretLink(sheetElement);
   const reminderAnchor = useRef<HTMLButtonElement>(null);
   const colorAnchor = useRef<HTMLButtonElement>(null);
   const labelsAnchor = useRef<HTMLButtonElement>(null);
@@ -584,7 +589,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             {note.pattern && !ruled ? <span className={styles.paperLayer} data-pattern={note.pattern} aria-hidden="true" /> : null}
             {/* A drawing's tools stay frosted at its foot (`.dock`): nothing fades or blurs over them. */}
             <div ref={scrollEdges} className={styles.scroll} data-docked={docked || undefined}>
-              <div className={styles.sheet} data-kind={note.kind}>
+              <div ref={setSheetElement} className={styles.sheet} data-kind={note.kind}>
               <PhotoGrid noteId={id} editable={editable} />
               <div className={styles.head}>
                 <textarea
@@ -645,6 +650,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
               <EventsMentioning type="note" id={id} className={styles.events} />
               </div>
             </div>
+            {caretHref ? <CaretLink href={caretHref} /> : null}
             {/* What the note wears, at its foot above the bar that changes it, as on its card: never lost mid-sheet or after the ticked items. */}
             {chipped ? (
               <div className={styles.chips}>

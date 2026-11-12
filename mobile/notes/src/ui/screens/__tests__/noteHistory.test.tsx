@@ -145,7 +145,7 @@ describe('undo and redo in the note editor', () => {
     });
     await press(tree, 'Annuler');
     expect(texts()).toEqual(['pain', 'lait']);
-    expect(fields()[1]!.props.value).toBe('lait');
+    expect(fields()[1]!.props.children.props.text).toBe('lait');
     await press(tree, 'Annuler');
     expect(texts()).toEqual(['painlait']);
     await press(tree, 'Rétablir');

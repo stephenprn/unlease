@@ -180,6 +180,56 @@ function isTrackingParam(lower: string, rule: SiteRule | undefined): boolean {
   return (rule.params?.includes(lower) ?? false) || (rule.prefixes?.some(prefix => lower.startsWith(prefix)) ?? false);
 }
 
+/** A label of a host name: letters (any script), figures, inner hyphens (and underscores, which some subdomains wear). */
+const HOST_LABEL = /^[\p{L}\p{N}_](?:[\p{L}\p{N}_-]{0,61}[\p{L}\p{N}_])?$/u;
+/** The last label: letters only ("fr", "com", "studio", "рф"), or its punycode. Never figures: "96.8" and "2.7" are numbers. */
+const TOP_LABEL = /^(?:\p{L}{2,24}|xn--[a-z0-9-]{1,59})$/iu;
+
+/** Four numbers of 0 to 255: an address on a local network ("192.168.1.20"). */
+function isIpv4(host: string): boolean {
+  const parts = host.split('.');
+  return parts.length === 4 && parts.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+}
+
+/** A host a link can reach: a domain with a top label of letters, an IPv4 address, or an IPv6 one in brackets. */
+export function isPlausibleHost(hostname: string): boolean {
+  const host = hostname.replace(/\.$/, '');
+  if (host.startsWith('[')) return /^\[[0-9a-f:.]+\]$/i.test(host) && host.includes(':');
+  if (isIpv4(host)) return true;
+  const labels = host.split('.');
+  return labels.length >= 2 && labels.every(label => HOST_LABEL.test(label)) && TOP_LABEL.test(labels[labels.length - 1]!);
+}
+
+/** Endings of files that read as top labels ("photo.jpg", "notes.txt"): written without a scheme, a file, not a site. */
+const FILE_ENDINGS = new Set([
+  'txt', 'md', 'pdf', 'doc', 'docx', 'odt', 'rtf', 'xls', 'xlsx', 'ods', 'csv', 'ppt', 'pptx', 'odp', 'key', 'pages', 'numbers',
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'tif', 'tiff', 'svg', 'raw', 'psd', 'ai',
+  'mp3', 'mp4', 'm4a', 'wav', 'flac', 'ogg', 'mov', 'avi', 'mkv', 'webm',
+  'zip', 'rar', 'gz', 'tar', 'dmg', 'exe', 'apk', 'iso',
+  'js', 'ts', 'tsx', 'jsx', 'py', 'rb', 'sh', 'json', 'yml', 'yaml', 'xml', 'html', 'htm', 'css', 'sql', 'log', 'ini', 'cfg', 'conf', 'kt', 'swift', 'java',
+]);
+/** Top labels common enough that a bare « Zara.com », capital and all, is a site. */
+const COMMON_TOPS = new Set([
+  'com', 'net', 'org', 'info', 'biz', 'io', 'co', 'me', 'tv', 'app', 'dev', 'ai', 'eu', 'fr', 'be', 'ch', 'lu', 'ca', 'uk', 'de', 'es', 'it', 'pt', 'nl', 'at', 'ie', 'pl', 'se', 'no', 'dk', 'fi', 'us', 'jp', 'cn', 'in', 'au', 'nz', 'br', 'mx', 'ar', 'ru', 'ma', 'tn', 'sn', 'ci', 're', 'gp', 'mq', 'nc', 'pf', 'shop', 'store', 'online', 'site', 'blog', 'news', 'xyz', 'gg', 'fm', 'ly', 'to', 'cc', 'gouv', 'edu', 'gov', 'paris', 'bzh', 'immo', 'art',
+]);
+
+/**
+ * A domain written without its scheme ("zara.com/fr", "www.example.org") as a link, or null. The
+ * text must look like a site, so that a number ("96.8"), a file ("photo.jpg") or a name typed without
+ * a space ("M.Dupont") is never one: a top label of letters that is not a file's ending, and a
+ * `www.`, a path, a common top label, or a host all in lower case.
+ */
+function bareDomain(value: string): string | null {
+  const match = /^((?:www\.)?[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)(\/\S*)?$/iu.exec(value);
+  if (!match) return null;
+  const host = match[1]!;
+  if (!isPlausibleHost(host)) return null;
+  const top = host.slice(host.lastIndexOf('.') + 1).toLowerCase();
+  if (FILE_ENDINGS.has(top)) return null;
+  const site = /^www\./i.test(host) || match[2] !== undefined || COMMON_TOPS.has(top) || host === host.toLowerCase();
+  return site ? `https://${value}` : null;
+}
+
 /** In order, without duplicates. */
 export function extractUrls(text: string): string[] {
   const seen = new Set<string>();
@@ -193,18 +243,71 @@ export function extractUrls(text: string): string[] {
   }
   if (found.length === 0) {
     // A bare domain ("zara.com/fr") counts only as the whole text, so prose is never a link.
-    const trimmed = text.trim();
-    if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(trimmed)) {
-      const withScheme = `https://${trimmed}`;
-      if (isHttpUrl(withScheme)) found.push(withScheme);
-    }
+    const bare = bareDomain(text.trim());
+    if (bare && isHttpUrl(bare)) found.push(bare);
   }
   return found;
 }
 
+/** A link found in text: where it stands (`end` excluded) and what it opens. */
+export interface TextLink {
+  readonly start: number;
+  readonly end: number;
+  readonly href: string;
+}
+
+/** `www.` written in prose: a link without its scheme. */
+const WWW_IN_TEXT = /(?<![\p{L}\p{N}@/.-])www\.[^\s<>"'«»“”]+/giu;
+
+/**
+ * The links written in a text, in order, where they stand: an address with its scheme, one starting
+ * with `www.`, and a bare domain when it is the whole text (`extractUrls`' rule, so prose never
+ * becomes a link). What a note's words show as links, and open.
+ */
+export function linksInText(text: string): TextLink[] {
+  const found: TextLink[] = [];
+  for (const match of text.matchAll(URL_IN_TEXT)) {
+    const candidate = trimTrailing(match[0]);
+    if (isHttpUrl(candidate)) found.push({ start: match.index, end: match.index + candidate.length, href: candidate });
+  }
+  for (const match of text.matchAll(WWW_IN_TEXT)) {
+    const candidate = trimTrailing(match[0]);
+    const href = `https://${candidate}`;
+    if (!found.some(link => match.index < link.end && link.start < match.index + candidate.length) && isHttpUrl(href)) {
+      found.push({ start: match.index, end: match.index + candidate.length, href });
+    }
+  }
+  if (found.length === 0) {
+    const trimmed = text.trim();
+    const bare = bareDomain(trimmed);
+    if (bare && isHttpUrl(bare)) {
+      const start = text.indexOf(trimmed);
+      found.push({ start, end: start + trimmed.length, href: bare });
+    }
+  }
+  return found.sort((a, b) => a.start - b.start);
+}
+
+/** The link the caret stands in or right against (`offset` from `start` to `end`), else null. */
+export function linkAt(text: string, offset: number): TextLink | null {
+  return linksInText(text).find(link => offset >= link.start && offset <= link.end) ?? null;
+}
+
+/**
+ * The address the caret stands on in a text of several lines, read in its own line (an address never
+ * crosses one, and a bare domain counts as the whole line), as a browser or a phone may open it
+ * (`safeLink`); null when there is none. What a note's editors offer to open.
+ */
+export function lineLinkAt(text: string, offset: number): string | null {
+  const from = text.lastIndexOf('\n', offset - 1) + 1;
+  const to = text.indexOf('\n', offset);
+  const link = linkAt(text.slice(from, to < 0 ? text.length : to), offset - from);
+  return link ? safeLink(link.href) : null;
+}
+
 export function isHttpUrl(value: string): boolean {
   const parsed = parseUrl(value);
-  return parsed !== null && (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.includes('.');
+  return parsed !== null && (parsed.protocol === 'http:' || parsed.protocol === 'https:') && isPlausibleHost(parsed.hostname);
 }
 
 /**
