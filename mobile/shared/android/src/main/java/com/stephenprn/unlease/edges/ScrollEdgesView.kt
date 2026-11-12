@@ -29,15 +29,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * What a vertical scroller holds, softened where it slides under something on screen: the content
- * dissolves over [length] on an eased curve (a cosine ease-in-out: a straight ramp shows where it
- * starts and ends, and a single blur stops on a line of its own, so there is none), so a row slides
- * under a still bar or a form's foot instead of being cut by it. An edge that is the
- * screen's own (within [SCREEN_SLACK] of the status bar, the gesture bar or the keyboard: the foot of
- * a page, of the drawer, of a sheet without actions) stays a plain cut: what goes there leaves the
- * screen, it slides under nothing. Each edge shows only while something lies beyond it, in step with
- * how much (Android's own fading edges, which React Native's ScrollView draws at full strength all
- * the time): at the top of a list its top is crisp, a list that fits has none.
+ * What a vertical scroller holds, softened where it slides under something on screen at its top: the
+ * content dissolves over [length] on an eased curve (a cosine ease-in-out: a straight ramp shows where
+ * it starts and ends, and a single blur stops on a line of its own, so there is none), so a row slides
+ * under a still bar or a sheet's title instead of being cut by it. A top that is the screen's own
+ * (within [SCREEN_SLACK] of the status bar) stays a plain cut: what goes there leaves the screen. The
+ * edge shows only while something lies beyond it, in step with how much (Android's own fading edges,
+ * which React Native's ScrollView draws at full strength all the time): at the top of a list it is
+ * crisp. The foot never fades: what lies under a scroller is a footer, which meets it with a hard line.
  *
  * It wraps the scroller (the first vertical `ScrollView` among its children: a FlatList's, a
  * SectionList's, one inside a pull-to-refresh) and draws its children itself: once into a
@@ -49,13 +48,11 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
 
   private var length = 24f * density
   private var topEdge = true
-  private var bottomEdge = true
   /** How far below the scroller's top its top strip stands: under a band that hides what scrolls beneath it (px). */
   private var insetTop = 0f
 
-  /** How far each edge shows, 0 to 1: what lies beyond it, over [length]. */
+  /** How far the top edge shows, 0 to 1: what lies above it, over [length]. */
   private var topStrength = 0f
-  private var bottomStrength = 0f
 
   private var scroller: ViewGroup? = null
   private val scrollerRect = Rect()
@@ -65,7 +62,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   private val caretRect = Rect()
 
   private val content: RenderNode? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) RenderNode("ScrollEdges") else null
-  /** What shows of the content across a strip, from its edge to its inner end, at full strength (the eased curve's samples). */
+  /** What shows of the content across the strip, from its edge to its inner end, at full strength (the eased curve's samples). */
   private val shown = FloatArray(EASE_STEPS) { i -> 0.5f - 0.5f * cos(PI.toFloat() * i / (EASE_STEPS - 1)) }
   private val colors = IntArray(EASE_STEPS)
   private val positions = FloatArray(EASE_STEPS) { i -> i / (EASE_STEPS - 1f) }
@@ -102,12 +99,6 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
 
   fun setInsetTop(dp: Float) {
     insetTop = max(0f, dp) * density
-    invalidate()
-  }
-
-  fun setBottomEdge(on: Boolean) {
-    bottomEdge = on
-    measure()
     invalidate()
   }
 
@@ -160,11 +151,10 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     return null
   }
 
-  /** Reads how much lies beyond each edge, and where the caret is; redraws only when that changes how they show. */
+  /** Reads how much lies above the top edge, and where the caret is; redraws only when that changes how it shows. */
   private fun measure() {
     val list = findScroller()
     var top = 0f
-    var bottom = 0f
     if (list != null) {
       keepCaretClear(list)
       // Every frame: React Native resizes the scroller (the keyboard's room) outside Android's layout pass.
@@ -175,14 +165,12 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
       val inner = list.getChildAt(0)
       val range = if (inner == null) 0 else max(0, inner.height - (list.height - list.paddingTop - list.paddingBottom))
       val y = list.scrollY.coerceIn(0, range)
-      if (topEdge && !atScreenEdge(list, top = true)) top = (y / length).coerceIn(0f, 1f)
-      if (bottomEdge && !atScreenEdge(list, top = false)) bottom = ((range - y) / length).coerceIn(0f, 1f)
+      if (topEdge && !atScreenTop(list)) top = (y / length).coerceIn(0f, 1f)
     }
     val (lineTop, lineBottom) = caretLine(list)
     val caretMoved = !sameLine(lineTop, caretTop) || !sameLine(lineBottom, caretBottom)
-    if (abs(top - topStrength) > 0.002f || abs(bottom - bottomStrength) > 0.002f || caretMoved) {
+    if (abs(top - topStrength) > 0.002f || caretMoved) {
       topStrength = top
-      bottomStrength = bottom
       caretTop = lineTop
       caretBottom = lineBottom
       invalidate()
@@ -194,11 +182,12 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   /**
    * The scroller keeps what it brings into view (the caret as one types, a field taking focus) clear
    * of its edges by the fade's length, as Android's own ScrollView does for its fading edges: its
-   * `computeScrollDeltaToGetChildRectOnScreen` keeps that room. Its own fade is never drawn: React
-   * Native's ScrollView draws one only from its `fadingEdgeLength` prop, unset here (strength 0/0).
+   * `computeScrollDeltaToGetChildRectOnScreen` keeps that room (at the foot too, so the line typed
+   * never sits on a footer's line). Its own fade is never drawn: React Native's ScrollView draws one
+   * only from its `fadingEdgeLength` prop, unset here (strength 0/0).
    */
   private fun keepCaretClear(list: ViewGroup) {
-    val room = if (topEdge || bottomEdge) length.toInt() else 0
+    val room = length.toInt()
     if (room <= 0) return
     if (!list.isVerticalFadingEdgeEnabled) list.isVerticalFadingEdgeEnabled = true
     if (list.verticalFadingEdgeLength != room) list.setFadingEdgeLength(room)
@@ -301,29 +290,19 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   }
 
   /**
-   * Whether this edge of the scroller is the screen's own: within [SCREEN_SLACK] of the status bar
-   * (top), or of the gesture bar or the keyboard, whichever is higher (bottom). What leaves there
-   * leaves the screen; nothing of the app lies over it.
+   * Whether the scroller's top is the screen's own: within [SCREEN_SLACK] of the status bar. What
+   * leaves there leaves the screen; nothing of the app lies over it.
    */
-  private fun atScreenEdge(list: View, top: Boolean): Boolean {
-    val root = rootView ?: return false
-    val insets = ViewCompat.getRootWindowInsets(this)
-    val bars = insets?.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-    val keyboard = insets?.getInsets(WindowInsetsCompat.Type.ime())
+  private fun atScreenTop(list: View): Boolean {
+    val bars = ViewCompat.getRootWindowInsets(this)?.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
     list.getLocationInWindow(location)
-    val slack = SCREEN_SLACK * density
-    return if (top) {
-      location[1] + insetTop <= (bars?.top ?: 0) + slack
-    } else {
-      val foot = root.height - max(bars?.bottom ?: 0, keyboard?.bottom ?: 0)
-      location[1] + list.height * list.scaleY >= foot - slack
-    }
+    return location[1] + insetTop <= (bars?.top ?: 0) + SCREEN_SLACK * density
   }
 
   override fun dispatchDraw(canvas: Canvas) {
     val node = content
     val list = findScroller()
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || node == null || list == null || !canvas.isHardwareAccelerated || (topStrength <= 0f && bottomStrength <= 0f)) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || node == null || list == null || !canvas.isHardwareAccelerated || topStrength <= 0f) {
       super.dispatchDraw(canvas)
       return
     }
@@ -338,7 +317,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
       node.endRecording()
     }
 
-    // Where the scroller lies here: the strips stand on its own edges.
+    // Where the scroller lies here: the strip stands on its own top.
     list.getDrawingRect(scrollerRect)
     try {
       offsetDescendantRectToMyCoords(list, scrollerRect)
@@ -350,53 +329,42 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     }
     val listTop = (scrollerRect.top + insetTop).coerceIn(0f, h.toFloat())
     val listBottom = scrollerRect.bottom.toFloat().coerceIn(listTop, h.toFloat())
-    val strip = min(length, (listBottom - listTop) / 2f)
     // Never over the line being typed on: a strip it reaches stops at it (what is left of it, or none).
-    var topEnd = listTop + strip
-    var bottomStart = listBottom - strip
+    var topEnd = listTop + min(length, listBottom - listTop)
     if (!caretTop.isNaN() && caretTop < topEnd && caretBottom > listTop) topEnd = max(listTop, min(topEnd, caretTop))
-    if (!caretBottom.isNaN() && caretBottom > bottomStart && caretTop < listBottom) bottomStart = min(listBottom, max(bottomStart, caretBottom))
-    val showTop = topStrength > 0f && topEnd - listTop >= MIN_STRIP * density
-    val showBottom = bottomStrength > 0f && listBottom - bottomStart >= MIN_STRIP * density
-    val top = if (showTop) topEnd else 0f
-    val bottom = if (showBottom) bottomStart else h.toFloat()
+    if (topEnd - listTop < MIN_STRIP * density) {
+      canvas.drawRenderNode(node)
+      return
+    }
 
-    // What lies between the strips (and outside the scroller), as it is.
+    // What lies around the strip (above it, outside the scroller, and under it), as it is.
     canvas.save()
-    canvas.clipRect(0f, 0f, w.toFloat(), top)
-    if (showTop) canvas.clipOutRect(0f, listTop, w.toFloat(), top)
+    canvas.clipRect(0f, 0f, w.toFloat(), topEnd)
+    canvas.clipOutRect(0f, listTop, w.toFloat(), topEnd)
     canvas.drawRenderNode(node)
     canvas.restore()
     canvas.save()
-    canvas.clipRect(0f, top, w.toFloat(), bottom)
-    canvas.drawRenderNode(node)
-    canvas.restore()
-    canvas.save()
-    canvas.clipRect(0f, bottom, w.toFloat(), h.toFloat())
-    if (showBottom) canvas.clipOutRect(0f, bottom, w.toFloat(), listBottom)
+    canvas.clipRect(0f, topEnd, w.toFloat(), h.toFloat())
     canvas.drawRenderNode(node)
     canvas.restore()
 
-    if (showTop) drawStrip(canvas, node, listTop, topEnd, topStrength, fromTop = true)
-    if (showBottom) drawStrip(canvas, node, bottomStart, listBottom, bottomStrength, fromTop = false)
+    drawStrip(canvas, node, listTop, topEnd, topStrength)
   }
 
   /**
-   * One edge: the content through a mask that keeps all of it at the strip's inner end and less of it
+   * The top edge: the content through a mask that keeps all of it at the strip's foot and less of it
    * toward the edge on the eased curve, by [strength] (at full strength, none at the edge).
    */
-  private fun drawStrip(canvas: Canvas, node: RenderNode, y0: Float, y1: Float, strength: Float, fromTop: Boolean) {
+  private fun drawStrip(canvas: Canvas, node: RenderNode, y0: Float, y1: Float, strength: Float) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || y1 <= y0) return
     val w = width.toFloat()
-    val edge = if (fromTop) y0 else y1
-    val inner = if (fromTop) y1 else y0
     val layer = canvas.saveLayer(0f, y0, w, y1, null)
     canvas.save()
     canvas.clipRect(0f, y0, w, y1)
     canvas.drawRenderNode(node)
     canvas.restore()
     for (i in 0 until EASE_STEPS) colors[i] = alpha(1f - strength * (1f - shown[i]))
-    mask.shader = LinearGradient(0f, edge, 0f, inner, colors, positions, Shader.TileMode.CLAMP)
+    mask.shader = LinearGradient(0f, y0, 0f, y1, colors, positions, Shader.TileMode.CLAMP)
     canvas.drawRect(0f, y0, w, y1, mask)
     mask.shader = null
     canvas.restoreToCount(layer)
@@ -406,16 +374,15 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
 
   companion object {
     /**
-     * How near the screen's edge a scroller's edge is still the screen's own (dp): the room a page
-     * or a sheet keeps above the gesture bar (the drawer's 12, a sheet's 16), never a bar's height
-     * (a top bar's 64, a sheet's handle's 28, a form's foot).
+     * How near the status bar a scroller's top is still the screen's own (dp), never a bar's height
+     * (a top bar's 64, a sheet's handle's 28).
      */
     private const val SCREEN_SLACK = 24f
 
     /** How many samples of the eased curve a strip's mask holds: enough that no step shows. */
     private const val EASE_STEPS = 9
 
-    /** Shorter than this (dp), what is left of a strip past the caret's line is not drawn: it would be a cut. */
+    /** Shorter than this (dp), what is left of the strip above the caret's line is not drawn: it would be a cut. */
     private const val MIN_STRIP = 6f
   }
 }

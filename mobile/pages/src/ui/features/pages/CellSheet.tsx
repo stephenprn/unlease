@@ -18,9 +18,10 @@ import { CELL_FORMATS, columnType, isoDay, parseDay, readCellInput } from '@unle
 import { useLibraryStore } from '@app/store/libraryStore';
 import { setCell, setColumnOptions } from '@app/store/pages';
 
-import { AppText, Button, EmptyLine, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
+import { AppText, Button, EmptyLine, footEdge, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import type { Theme } from '@shared/ui/theme/theme';
 import { MonthCalendar } from './MonthCalendar';
 import { cellAddress, chosenOptions, draftOf, OPEN_LABELS, OptionChip } from './TableParts';
 import type { TableSheetRequest } from './TableSheetStore';
@@ -201,14 +202,15 @@ function CellSheetComponent({ visible, request, onDismiss }: { visible: boolean;
   );
 }
 
-const makeStyles = () =>
+const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     // The field, the month and their buttons on the sheet's column, with its title.
     body: { gap: 12, paddingHorizontal: SHEET_INSET, paddingBottom: 4 },
     fill: { flexShrink: 1 },
     longField: { maxHeight: 220, textAlignVertical: 'top' },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    foot: { paddingHorizontal: SHEET_INSET, paddingTop: 8 },
+    // Under the options, a footer: its edge across the sheet.
+    foot: { paddingHorizontal: SHEET_INSET, paddingTop: 8, ...footEdge(theme) },
     spacer: { flex: 1 },
     options: { paddingVertical: 4 },
     // A list row's geometry (inset 6, padded 10): the chips start on the sheet's column (24 from its edge), the words of « Créer » at 64 after their +.

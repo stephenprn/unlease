@@ -35,7 +35,7 @@ import { mix } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import type { GlyphName } from '@unlease/design/glyphs';
 
-import { AppText, Button, Checkbox, EdgeScrollView, EmptyLine, Icon, ListRow, Organic, Tappable, TextField } from '../../components';
+import { AppText, Button, Checkbox, EdgeScrollView, EmptyLine, footEdge, Icon, ListRow, Organic, Tappable, TextField } from '../../components';
 import { useKeyboardVisible } from '../../components/useKeyboardVisible';
 import { SwitchRow } from '../appearance/SwitchRow';
 import { Section } from '../settings/Section';
@@ -424,8 +424,8 @@ const makeStyles = (theme: Theme) =>
     progress: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, marginBottom: 4 },
     mark: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     dot: { width: 6, height: 6, ...corners(SHAPES.dot) },
-    // Under a hairline, as a form's foot (`FormFoot`), the way back at its start and the way on at its end.
-    foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline },
+    // Under a footer's edge, as a form's foot (`FormFoot`), the way back at its start and the way on at its end.
+    foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 12, ...footEdge(theme) },
     footEnd: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 8, flexShrink: 1 },
     flex: { flex: 1 },
     block: { paddingHorizontal: 16, paddingVertical: 12, gap: 10 },

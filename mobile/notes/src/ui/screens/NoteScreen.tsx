@@ -45,7 +45,7 @@ import { noteBackdrop, patternBackdrop } from '@unlease/design/backgrounds';
 import { isRuledPattern } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
 
-import { AppText, Button, Dialog, EdgeScrollView, EmptyState, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
+import { AppText, Button, Dialog, EdgeScrollView, EmptyState, footEdge, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { ChecklistEditor } from '../features/note/ChecklistEditor';
@@ -213,6 +213,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
   };
   const back = () => navigation.goBack();
   const noteLabels = note.labelIds.map(lid => labels[lid]).filter(l => !!l && l.deletedAt === null);
+  const chipsShown = !keyboard && (note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0);
   const formatting = note.kind === 'text' && editable ? body.range : null;
 
   /** Saves what is typed; true when the note is empty, so leaving discards it and there is nothing to undo. */
@@ -362,8 +363,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             {/* The events that mention the note, in Agenda. */}
             {keyboard ? null : <EventsMentioning type="note" id={id} />}
           </EdgeScrollView>
-          {/* What the note wears, at its foot above the bar that changes it, as on its card (aside while typing). */}
-          {!keyboard && (note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0) ? (
+          {/* What the note wears, at its foot above the bar that changes it, as on its card (aside while typing): the two are one footer, its edge on top. */}
+          {chipsShown ? (
             <View style={styles.chips}>
               {note.reminderAt !== null ? (
                 <Tappable onPress={() => openSheet('reminder')} disabled={!editable} ownDisabled hitSlop={CHIP_SLOP} style={[styles.chip, CHIP, { borderColor: theme.color.outline }]} accessibilityLabel={t('Modifier le rappel')}>
@@ -389,7 +390,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             />
           ) : null}
           {/* Lifted onto the keyboard, the bar is already clear of the gesture bar: no second inset. */}
-          <View style={[styles.toolbar, { paddingBottom: keyboard ? 0 : insets.bottom, borderTopColor: theme.color.hairline }]}>
+          <View style={[chipsShown ? null : styles.toolbarEdge, { paddingBottom: keyboard ? 0 : insets.bottom }]}>
             {/* Words selected in the text: the bar turns into their formatting in place, and back once nothing is selected. */}
             <View style={styles.toolbarSlot}>
               <LayoutAnimationConfig skipEntering>
@@ -585,9 +586,9 @@ const makeStyles = (theme: Theme) =>
     paper: { position: 'absolute', left: -16, right: -16, bottom: 0 },
     // A press anywhere under the text writes at its end.
     body: { flexGrow: 1, paddingVertical: 8, paddingHorizontal: 0, minHeight: 200, color: theme.color.ink },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, ...footEdge(theme) },
     chip: { minHeight: 40, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6 },
-    toolbar: { borderTopWidth: StyleSheet.hairlineWidth },
+    toolbarEdge: footEdge(theme),
     // The note's actions and the selection's formatting take turns in it, laid over each other while one fades into the other.
     toolbarSlot: { height: 56 },
     toolbarRow: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },

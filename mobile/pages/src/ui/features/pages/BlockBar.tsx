@@ -22,10 +22,10 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { indentBlocks, nudgeBlocks, outdentBlocks } from '@app/store/pages';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, GroundSlice, ICON_PEBBLE, IconButton, MentionSuggestions, Tappable } from '@shared/ui/components';
+import { AppText, footEdge, GroundSlice, ICON_PEBBLE, IconButton, MentionSuggestions, Tappable } from '@shared/ui/components';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { accelerate, decelerate, duration } from '@shared/ui/theme/motion';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { toggleFlag } from './blockKeys';
 import { openDateSheet } from './DateSheet';
@@ -56,7 +56,6 @@ const EMOJI_OFFERED = 8;
 
 function BlockBarComponent() {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const { page, readOnly } = usePageContext();
   const id = useEditorStore(s => s.focused);
   const range = useEditorStore(s => (s.selection && s.selection.start !== s.selection.end ? s.selection : null));
@@ -133,7 +132,7 @@ function BlockBarComponent() {
       <View
         ref={barRef}
         onLayout={measureBar}
-        style={[styles.bar, { borderTopColor: theme.color.hairline, height: BLOCK_BAR_HEIGHT + (keyboard ? 0 : insets.bottom), paddingBottom: keyboard ? 0 : insets.bottom }]}
+        style={[styles.bar, { height: BLOCK_BAR_HEIGHT + (keyboard ? 0 : insets.bottom), paddingBottom: keyboard ? 0 : insets.bottom }]}
         accessibilityRole="toolbar"
         accessibilityLabel={formatting ? t('Mise en forme') : emoji ? t('Emojis') : t('Actions du bloc')}
       >
@@ -203,7 +202,7 @@ function BlockBarComponent() {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    bar: { height: BLOCK_BAR_HEIGHT, borderTopWidth: StyleSheet.hairlineWidth, backgroundColor: theme.color.wall, justifyContent: 'center', overflow: 'hidden' },
+    bar: { height: BLOCK_BAR_HEIGHT, ...footEdge(theme), backgroundColor: theme.color.wall, justifyContent: 'center', overflow: 'hidden' },
     row: { alignItems: 'center', gap: 2, paddingHorizontal: 6, minWidth: '100%', justifyContent: 'center' },
     // An icon button's pebble, an emoji in place of its glyph.
     emojiGlyph: { fontSize: 24, lineHeight: 30, textAlign: 'center', color: theme.color.ink },

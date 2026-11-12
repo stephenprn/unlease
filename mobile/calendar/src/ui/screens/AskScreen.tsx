@@ -23,7 +23,7 @@ import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore'
 import { useServerFeatureState } from '@shared/app/hooks/useServerFeature';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { AppText, Button, EdgeScrollView, FormMessage, Ground, IconButton, Organic, ReadingTrack, Tappable, TextField, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, footEdge, FormMessage, Ground, IconButton, Organic, ReadingTrack, Tappable, TextField, TopBar } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -160,6 +160,6 @@ const makeStyles = (theme: Theme) =>
     waiting: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     answer: { padding: 14, backgroundColor: theme.color.paper },
     // The field on the conversation's 16, the arrow's pebble ending on it (its slot's 4 inside the 12).
-    ask: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 16, paddingRight: 12, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline },
+    ask: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 16, paddingRight: 12, paddingVertical: 12, ...footEdge(theme) },
     field: { flex: 1 },
   });

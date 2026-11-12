@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import { CONTACT_LIMITS } from '@unlease/contacts/models/contacts';
 
-import { Button, FormFoot, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '@shared/ui/components';
+import { Button, footEdge, FormFoot, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
@@ -54,7 +54,7 @@ export function KindSheet({ visible, kinds, names, value, onChange, onDismiss }:
       <View style={styles.own}>
         <TextField kind="text" label={t('Personnalisé')} value={own} onChangeText={setOwn} placeholder={t('Bureau Lyon, Maison de vacances…')} maxLength={CONTACT_LIMITS.entryLabel} returnKeyType="done" onSubmitEditing={keepOwn} />
       </View>
-      {/* The foot stands on the column by itself: outside the field's box, which insets it already. */}
+      {/* The field's box above draws the footer's edge already. */}
       <View style={styles.ownFoot}>
         <FormFoot edge={false}>
           {/* Nothing to use until a name is typed. */}
@@ -67,8 +67,8 @@ export function KindSheet({ visible, kinds, names, value, onChange, onDismiss }:
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    // On the sheet's column, as the suite's other sheets' fields, its hairline as wide as the field (as a form's foot's).
-    own: { marginHorizontal: SHEET_INSET, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline },
+    // The footer under the kinds: the field on the sheet's column, its edge across the sheet (as a form's foot's).
+    own: { paddingHorizontal: SHEET_INSET, paddingTop: 12, ...footEdge(theme) },
     // The field's gap to its foot.
     ownFoot: { paddingTop: 4 },
   });

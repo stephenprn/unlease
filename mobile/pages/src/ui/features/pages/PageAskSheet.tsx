@@ -37,7 +37,7 @@ import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, Icon, IconButton, Organic, Segmented, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable, TextField } from '@shared/ui/components';
+import { AppText, Button, footEdge, Icon, IconButton, Organic, Segmented, Sheet, SHEET_INSET, SheetScroll, SwitchMark, Tappable, TextField } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -355,8 +355,8 @@ const makeStyles = (theme: Theme) =>
     sourceNumber: { minWidth: 22, height: 22, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.actionContainer, ...corners(SHAPES.detail) },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
     private: { gap: 12, alignItems: 'flex-start', paddingHorizontal: SHEET_INSET, paddingBottom: 16 },
-    // On the sheet's column, its hairline as wide as it: the field on the conversation's start, its send pebble ending on its end.
-    composer: { gap: 2, marginHorizontal: SHEET_INSET, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.color.hairline },
+    // A footer under the conversation (its edge across the sheet): the field on the conversation's start, its send pebble ending on its end.
+    composer: { gap: 2, paddingHorizontal: SHEET_INSET, paddingTop: 10, ...footEdge(theme) },
     // Its send pebble at the field's foot, centred on its first line.
     composeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
     send: { marginBottom: 2 },

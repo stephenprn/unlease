@@ -28,7 +28,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { onBeforePause } from '@shared/app/sync/syncManager';
 import { copyText } from '@shared/platform/clipboard';
 
-import { AppText, Button, EdgeScrollView, EmptyState, Ground, Icon, IconButton, Menu, Organic, Stamp, stampWord, TextField, TopBar } from '../components';
+import { AppText, Button, EdgeScrollView, EmptyState, footEdge, Ground, Icon, IconButton, Menu, Organic, Stamp, stampWord, TextField, TopBar } from '../components';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { MoveSheet } from '../features/lines/MoveSheet';
 import { KIND_ICONS } from '../features/links/kindIcon';
@@ -540,6 +540,6 @@ const makeStyles = (theme: Theme) =>
     factLabel: { width: 110, paddingTop: 3.5 },
     comment: { minHeight: 96, textAlignVertical: 'top' },
     details: { gap: 4 },
-    bar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: PICTURE_MARGIN, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.color.hairline },
+    bar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: PICTURE_MARGIN, paddingTop: 12, ...footEdge(theme) },
     primary: { flex: 1 },
   });

@@ -1,12 +1,13 @@
 /**
- * A scroller's edges, softened where content slides under something on screen (both clients: the
+ * A scroller's top edge, softened where content slides under something on screen (both clients: the
  * web's `useScrollEdges`): it dissolves over `EDGE_FADE` on an eased curve, no blur, so a row slides
- * under a still bar, a sheet's title or a form's foot instead of being cut there. An edge that is
- * the screen's own (the foot of a page, of the drawer, of a sheet without actions, the status bar,
- * the keyboard) stays a plain cut: Android finds it from where the scroller lies. A list in a card of
- * its own (a popover) turns both off (`top`, `bottom`). Each edge shows in step with how much lies
- * beyond it, so the top of a list and a list that fits stay crisp. A list right under a search field
- * turns its top off (the field is no bar). Android draws it around the scroller (`ScrollEdgesView`).
+ * under a still bar or a sheet's title instead of being cut there. An edge that is the screen's own
+ * (the status bar) stays a plain cut: Android finds it from where the scroller lies. A list in a card
+ * of its own (a popover) or right under a search field (the field is no bar) turns it off (`top`).
+ * It shows in step with how much lies beyond it, so the top of a list stays crisp. Its foot never
+ * fades: what lies under a scroller on the phone (a form's actions, a toolbar, a composer) is a footer,
+ * and a footer meets what scrolls with a hard line at its top (`footEdge`, as `FormFoot` draws it), never a
+ * dissolve. Android draws it around the scroller (`ScrollEdgesView`).
  *
  * `ScrollEdges` wraps any vertical scroller (an `Animated.FlatList`, a list in a pull-to-refresh);
  * `EdgeScrollView`, `EdgeFlatList` and `EdgeSectionList` are the plain ones already wrapped, taking
@@ -29,14 +30,12 @@ import {
 
 import { ScrollEdgesNativeView } from '@shared/platform/scrollEdges';
 
-/** How long an edge's fade is, the web's `--edge-fade` too. */
+/** How long the top edge's fade is, the web's `--edge-fade` too. */
 export const EDGE_FADE = 24;
 
 export interface EdgeProps {
   /** Soften the top edge where it lies under something (default); off for a list whose top is its own card's. */
   readonly top?: boolean;
-  /** Soften the bottom edge where it lies over something (default); off for a list whose foot is its own card's. */
-  readonly bottom?: boolean;
   /** Where the top edge stands below the scroller's own top, under a band that hides what scrolls beneath it (the status bar's). */
   readonly insetTop?: number;
 }
@@ -48,9 +47,9 @@ export interface ScrollEdgesProps extends ViewProps, EdgeProps {
 /** A scroller, as a ScrollView is laid out by default: it fills what its column leaves it and gives way when there is less. */
 const FILL: ViewStyle = { flexGrow: 1, flexShrink: 1 };
 
-export function ScrollEdges({ top = true, bottom = true, insetTop = 0, style, children, ...rest }: ScrollEdgesProps) {
+export function ScrollEdges({ top = true, insetTop = 0, style, children, ...rest }: ScrollEdgesProps) {
   return (
-    <ScrollEdgesNativeView collapsable={false} length={EDGE_FADE} top={top} bottom={bottom} insetTop={insetTop} style={[FILL, style]} {...rest}>
+    <ScrollEdgesNativeView collapsable={false} length={EDGE_FADE} top={top} insetTop={insetTop} style={[FILL, style]} {...rest}>
       {children}
     </ScrollEdgesNativeView>
   );
@@ -109,28 +108,28 @@ export function splitScrollStyle(style: StyleProp<ViewStyle>): { readonly outer:
   return { outer: outer as ViewStyle, inner: inner as ViewStyle };
 }
 
-export function EdgeScrollView({ style, top, bottom, insetTop, ref, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof ScrollView>> }) {
+export function EdgeScrollView({ style, top, insetTop, ref, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof ScrollView>> }) {
   const { outer, inner } = splitScrollStyle(style);
   return (
-    <ScrollEdges style={outer} top={top} bottom={bottom} insetTop={insetTop}>
+    <ScrollEdges style={outer} top={top} insetTop={insetTop}>
       <ScrollView ref={ref} style={inner} {...rest} />
     </ScrollEdges>
   );
 }
 
-export function EdgeFlatList<T>({ style, top, bottom, insetTop, ref, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
+export function EdgeFlatList<T>({ style, top, insetTop, ref, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
   const { outer, inner } = splitScrollStyle(style);
   return (
-    <ScrollEdges style={outer} top={top} bottom={bottom} insetTop={insetTop}>
+    <ScrollEdges style={outer} top={top} insetTop={insetTop}>
       <FlatList<T> ref={ref} style={inner} {...rest} />
     </ScrollEdges>
   );
 }
 
-export function EdgeSectionList<T, S>({ style, top, bottom, insetTop, ref, ...rest }: SectionListProps<T, S> & EdgeProps & { readonly ref?: React.Ref<SectionList<T, S>> }) {
+export function EdgeSectionList<T, S>({ style, top, insetTop, ref, ...rest }: SectionListProps<T, S> & EdgeProps & { readonly ref?: React.Ref<SectionList<T, S>> }) {
   const { outer, inner } = splitScrollStyle(style);
   return (
-    <ScrollEdges style={outer} top={top} bottom={bottom} insetTop={insetTop}>
+    <ScrollEdges style={outer} top={top} insetTop={insetTop}>
       <SectionList<T, S> ref={ref} style={inner} {...rest} />
     </ScrollEdges>
   );

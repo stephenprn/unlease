@@ -65,7 +65,7 @@ import { connectedSibling, findSiblings, type Sibling } from '@shared/app/suiteL
 import { checkServer, fetchAdminStatus, saveServerSettings, SyncError, type Health } from '@shared/app/sync/transport';
 import { startSync, stopSync } from '@shared/app/sync/syncManager';
 
-import { AppText, Button, Collage, Dialog, EdgeScrollView, FormMessage, Ground, Icon, ListRow, Organic, PanelTappable, placedRow, TextField, useForm, type RowPlace } from '../components';
+import { AppText, Button, Collage, Dialog, EdgeScrollView, footEdge, FormMessage, Ground, Icon, ListRow, Organic, PanelTappable, placedRow, TextField, useForm, type RowPlace } from '../components';
 import { useKeyboardVisible } from '../components/useKeyboardVisible';
 import { BACKUP_INFO, BackupSection } from '../features/admin/BackupSection';
 import { ClaudeSection, type ClaudeExtra } from '../features/admin/ClaudeSection';
@@ -717,8 +717,8 @@ const makeStyles = (theme: Theme) =>
     // A list row's shape (inset 6, its press cut like a tab), its dot on the title's 23 dp line.
     task: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 10, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     taskDot: { width: 10, height: 10, alignSelf: 'flex-start', marginTop: 6.5, ...corners(SHAPES.dot) },
-    // Under a hairline, as a form's foot (`FormFoot`).
-    foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline },
+    // Under a footer's edge, as a form's foot (`FormFoot`).
+    foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 12, ...footEdge(theme) },
     reset: { alignSelf: 'center' },
     fill: { flex: 1 },
     note: { paddingHorizontal: 16 },

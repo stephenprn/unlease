@@ -22,7 +22,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { keepScreenOn } from '@platform/screen';
 
-import { AppText, Button, EdgeScrollView, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
+import { AppText, Button, EdgeScrollView, footEdge, Ground, Icon, IconButton, Organic, Segmented, Tappable, TopBar } from '../components';
 import { KitchenTimers } from '../features/links/KitchenTimers';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { servingsLine, ServingsStepper, useServings } from '../features/links/Servings';
@@ -277,7 +277,7 @@ const makeStyles = (theme: Theme) =>
     // A list row's: the box 16 in, the words at 56.
     ingredient: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: -10, paddingHorizontal: 10, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     notice: { gap: 12, alignItems: 'flex-start', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: theme.color.paperHigh },
-    foot: { gap: 10, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.color.hairline },
+    foot: { gap: 10, paddingHorizontal: 16, paddingTop: 12, ...footEdge(theme) },
     turns: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     next: { flex: 1 },
   });

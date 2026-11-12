@@ -39,7 +39,7 @@ export { useForm, type FieldBinding, type Form, type FormOptions } from './useFo
 export { useUnsaved, type Unsaved } from './useUnsaved';
 export { useArrivals } from './useArrivals';
 export { PULL_SPIN_MS, usePullToSync } from './usePullToSync';
-export { FormFoot } from './FormFoot';
+export { footEdge, FormFoot } from './FormFoot';
 export { FormMessage } from './FormMessage';
 export { PickerField, type PickerFieldProps } from './PickerField';
 export { TopBar } from './TopBar';

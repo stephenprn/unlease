@@ -5,7 +5,7 @@ import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.views.view.ReactViewGroup
 import com.facebook.react.views.view.ReactViewManager
 
-/** `ScrollEdgesView`: a View around a vertical scroller whose edges dissolve while it runs on past them ([ScrollEdgesView]). */
+/** `ScrollEdgesView`: a View around a vertical scroller whose top edge dissolves while it runs on past it ([ScrollEdgesView]). */
 class ScrollEdgesViewManager : ReactViewManager() {
   override fun getName(): String = NAME
 
@@ -24,11 +24,6 @@ class ScrollEdgesViewManager : ReactViewManager() {
   @ReactProp(name = "insetTop", defaultFloat = 0f)
   fun setInsetTop(view: ReactViewGroup, inset: Float) {
     (view as ScrollEdgesView).setInsetTop(inset)
-  }
-
-  @ReactProp(name = "bottom", defaultBoolean = true)
-  fun setBottom(view: ReactViewGroup, bottom: Boolean) {
-    (view as ScrollEdgesView).setBottomEdge(bottom)
   }
 
   companion object {

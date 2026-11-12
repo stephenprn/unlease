@@ -423,7 +423,7 @@ function withRoom(style: StyleProp<ViewStyle>, extend: number): StyleProp<ViewSt
  * A sheet's scrolling body: it shrinks with the panel, so every field stays reachable above the
  * keyboard, and pulled down from its top it moves the sheet (no stretch at its ends: the sheet is what gives).
  */
-export function SheetScroll({ style, ref: own, top, bottom, contentContainerStyle, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof Animated.ScrollView>> }) {
+export function SheetScroll({ style, ref: own, top, contentContainerStyle, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof Animated.ScrollView>> }) {
   const body = useSheetBody();
   const { ref, onScroll } = useBodyScroll(body, own as React.Ref<never>);
   const room = useFootRoom();
@@ -442,14 +442,14 @@ export function SheetScroll({ style, ref: own, top, bottom, contentContainerStyl
   );
   // Its ends soften under the handle and the foot while it runs on past them (`ScrollEdges`).
   return (
-    <ScrollEdges style={outer} top={top} bottom={bottom} onLayout={room.onLayout}>
+    <ScrollEdges style={outer} top={top} onLayout={room.onLayout}>
       {body ? <GestureDetector gesture={body.gesture}>{scroll}</GestureDetector> : scroll}
     </ScrollEdges>
   );
 }
 
 /** A sheet's long list (a picker of notes, emojis, zones): `SheetScroll`'s hand-over, virtualized. */
-export function SheetFlatList<T>({ style, data, ref: own, top, bottom, contentContainerStyle, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
+export function SheetFlatList<T>({ style, data, ref: own, top, contentContainerStyle, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
   const body = useSheetBody();
   const { ref, onScroll } = useBodyScroll(body, own as React.Ref<never>);
   const room = useFootRoom();
@@ -468,7 +468,7 @@ export function SheetFlatList<T>({ style, data, ref: own, top, bottom, contentCo
     />
   );
   return (
-    <ScrollEdges style={outer} top={top} bottom={bottom} onLayout={room.onLayout}>
+    <ScrollEdges style={outer} top={top} onLayout={room.onLayout}>
       {body ? <GestureDetector gesture={body.gesture}>{list}</GestureDetector> : list}
     </ScrollEdges>
   );
