@@ -11,6 +11,7 @@ import { AppState } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { openReminderSetting, remindersHealth, type RemindersHealth } from '@shared/platform/reminders';
+import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
 
 import { ListRow } from '../../components';
 import { Section } from './Section';
@@ -25,6 +26,8 @@ export interface ReminderHealthProps {
 export function ReminderHealthSection({ wanted = true, makerSettings }: ReminderHealthProps) {
   const [health, setHealth] = useState<RemindersHealth | null>(null);
   const [maker, setMaker] = useState<(() => void) | null>(null);
+  // With a server, « Synchronisation en arrière-plan » names the battery's « Restreinte », the notifications included.
+  const server = useSettingsStore(selectServer);
 
   const refresh = useCallback(() => {
     remindersHealth().then(setHealth, () => setHealth(null));
@@ -48,7 +51,7 @@ export function ReminderHealthSection({ wanted = true, makerSettings }: Reminder
   if (!health.exactAlarms) {
     rows.push(<ListRow key="exact" icon="clock" title={t('Rappels à l’heure approximative')} supporting={t('Autorisez « Alarmes et rappels » pour qu’ils sonnent à la minute près.')} onPress={() => void openReminderSetting('exactAlarms')} />);
   }
-  if (health.backgroundRestricted) {
+  if (health.backgroundRestricted && !server) {
     rows.push(
       <ListRow key="battery" icon="alert" title={t('Batterie « Restreinte »')} supporting={t('Android retient les notifications tant que l’application est fermée : dans « Batterie », choisissez « Optimisée » ou « Sans restriction ».')} onPress={() => void openReminderSetting('battery')} />,
     );

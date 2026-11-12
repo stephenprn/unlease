@@ -22,6 +22,7 @@ import { makerBatterySettings } from '@platform/notifications';
 
 import { AppText, Dialog, Ground, ListRow, Segmented, TopBar } from '../components';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -65,6 +66,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           </View>
         </Section>
         {/* Only while something keeps the reminders from ringing on the minute: else nothing to say. */}
+        <BackgroundSyncSection />
+
         <ReminderHealthSection makerSettings={makerBatterySettings} />
 
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />

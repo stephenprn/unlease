@@ -18,6 +18,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 
 import { AppText, Dialog, Ground, ListRow, TopBar } from '@shared/ui/components';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
@@ -36,6 +37,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <BackgroundSyncSection />
+
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
         <LanguageSection />
 

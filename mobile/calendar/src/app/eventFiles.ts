@@ -129,11 +129,18 @@ export async function uploadPendingEventFiles(config: ServerConfig): Promise<voi
   }
 }
 
+/** Files kept here that `uploadPendingEventFiles` would still send: the sync counts them as waiting. */
+function filesWaiting(): number {
+  const live = new Set<string>();
+  for (const event of Object.values(useLibraryStore.getState().events)) if (event.deletedAt === null) for (const file of event.files) live.add(file.id);
+  return loadLocalFiles().filter(local => !local.uploaded && !refused.has(local.id) && live.has(local.id)).length;
+}
+
 let added = false;
 
 /** Once, at start (bootstrap): after each exchange, the events' files kept here go up. */
 export function startFileUploads(): void {
   if (added) return;
   added = true;
-  addSyncTask({ run: uploadPendingEventFiles, restart: () => refused.clear() });
+  addSyncTask({ run: uploadPendingEventFiles, restart: () => refused.clear(), pending: filesWaiting });
 }

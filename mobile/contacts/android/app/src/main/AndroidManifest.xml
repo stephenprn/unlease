@@ -355,5 +355,15 @@
         android:name="app.notifee.core.NotificationReceiverActivity"
         android:exported="false"
         tools:replace="android:exported" />
+
+      <!-- Sync with the app closed (mobile/shared/android, backgroundsync): a network coming up, the
+           watch's own intent only this app sends, and a restart or an update, protected broadcasts
+           only Android sends, so not exported. -->
+      <receiver android:name="com.stephenprn.unlease.backgroundsync.SyncReceiver" android:exported="false">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        </intent-filter>
+      </receiver>
     </application>
 </manifest>

@@ -76,13 +76,20 @@ export async function uploadPendingPhotos(config: ServerConfig): Promise<void> {
   }
 }
 
+/** Photos kept here that `uploadPendingPhotos` would still send: the sync counts them as waiting. */
+function photosWaiting(): number {
+  const live = new Set<string>();
+  for (const contact of Object.values(useLibraryStore.getState().contacts)) if (contact.photoId && contact.deletedAt === null) live.add(contact.photoId);
+  return loadLocalFiles().filter(file => !file.uploaded && !refused.has(file.id) && live.has(file.id)).length;
+}
+
 let added = false;
 
 /** Once, at start (bootstrap): after each exchange, the photos kept here go up. */
 export function startPhotoUploads(): void {
   if (added) return;
   added = true;
-  addSyncTask({ run: uploadPendingPhotos, restart: () => refused.clear() });
+  addSyncTask({ run: uploadPendingPhotos, restart: () => refused.clear(), pending: photosWaiting });
 }
 
 /** A photo just written to a contact: the sync may send it now. */

@@ -189,7 +189,7 @@ describe('the board head and the drawer', () => {
     const tree = await boot(true);
     // Alone on the phone by choice: nothing to say.
     expect(textOf(tree)).not.toContain('Pas de serveur');
-    const waiting = `Hors ligne : ${plural(3, 'modification')} en attente.`;
+    const waiting = `Serveur injoignable : ${plural(3, 'modification')} en attente, à l’abri sur ce téléphone.`;
     await act(async () => {
       setSyncState({ phase: 'offline', pending: 3, message: 'Serveur injoignable' });
     });

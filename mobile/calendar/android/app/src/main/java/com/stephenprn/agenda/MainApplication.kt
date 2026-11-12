@@ -9,6 +9,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.stephenprn.agenda.intake.IntakePackage
 import com.stephenprn.agenda.widget.WidgetsPackage
 import com.stephenprn.unlease.clipboard.ClipboardPackage
+import com.stephenprn.unlease.backgroundsync.BackgroundSyncPackage
 import com.stephenprn.unlease.connectivity.ConnectivityPackage
 import com.stephenprn.unlease.haptics.HapticsPackage
 import com.stephenprn.unlease.textfields.TextFieldsPackage
@@ -32,6 +33,7 @@ class MainApplication : Application(), ReactApplication {
           add(HapticsPackage())
           add(TextFieldsPackage())
           add(ConnectivityPackage())
+          add(BackgroundSyncPackage())
           add(OrganicPackage())
           add(ClipboardPackage())
           add(SuiteLinkPackage())

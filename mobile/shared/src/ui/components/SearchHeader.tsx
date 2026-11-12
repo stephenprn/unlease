@@ -52,8 +52,13 @@ function syncText(phase: SyncPhase, pending: number, lastSync: number | null, me
       return localText;
     case 'unauthorized':
       return t('Le serveur refuse le jeton. Vérifiez les réglages.');
-    case 'offline':
-      return pending > 0 ? t('Hors ligne : {changes} en attente.', { changes: plural(pending, 'modification') }) : message ? t('Hors ligne ({message}).', { message: t(message) }) : t('Hors ligne.');
+    case 'offline': {
+      // Why, what waits (and that it is safe here), and since when: a server reached only at home or
+      // through a VPN is out of reach for hours, and the person should know nothing is lost meanwhile.
+      const reason = message ? t(message) : t('Hors ligne');
+      const waiting = pending > 0 ? t('{reason} : {changes} en attente, à l’abri sur ce téléphone.', { reason, changes: plural(pending, 'modification') }) : message ? t('Hors ligne ({message}).', { message: reason }) : t('Hors ligne.');
+      return lastSync ? `${waiting} ${t('Dernière synchronisation {when}.', { when: formatRelative(lastSync, Date.now()) })}` : waiting;
+    }
     case 'syncing':
       return pending > 0 ? t('Envoi de {changes}…', { changes: plural(pending, 'modification') }) : t('Synchronisation…');
     default:
@@ -136,12 +141,13 @@ function SyncLineComponent() {
   const phase = useSyncStore(selectSyncPhase);
   const pending = useSyncStore(selectPendingCount);
   const message = useSyncStore(selectSyncMessage);
+  const lastSync = useSyncStore(selectLastSync);
   const [held, setHeld] = useState(phase);
   if (phase !== 'syncing' && phase !== held) setHeld(phase);
   if (held !== 'offline' && held !== 'unauthorized') return null;
   return (
     <AppText variant="meta" color={held === 'unauthorized' ? theme.color.danger : undefined} style={styles.syncLine}>
-      {syncText(held, pending, null, message, null, '')}
+      {syncText(held, pending, lastSync, message, null, '')}
     </AppText>
   );
 }

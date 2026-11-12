@@ -196,3 +196,20 @@ adb shell cmd appops set <pkg> RUN_ANY_IN_BACKGROUND ignore # the battery's « R
 adb shell am force-stop <pkg>                              # every alarm gone: the next start arms them again
 adb shell cmd jobscheduler run -f <pkg> <job-id>           # the hourly refresh now (`dumpsys jobscheduler | grep <pkg>` for its id)
 ```
+
+## Testing the background sync
+
+Every app syncs with the app closed (`docs/ARCHITECTURE.md`, *Sync with the app closed*). To see it
+on a dev build (`<pkg>` as above, `com.stephenprn.pages.dev` too), connected to a local server
+through `adb reverse tcp:8080 tcp:8080`:
+
+```bash
+adb shell dumpsys jobscheduler | grep -A4 <pkg>            # its work: the 15-minute period, and a pending "soon" run
+adb reverse --remove tcp:8080                              # the server out of reach: write something, leave the app
+adb logcat --pid=$(adb shell pidof <pkg>) | grep -i "syncTask\|WM-"   # the run, then its retries with a doubling wait
+adb reverse tcp:8080 tcp:8080                              # back in reach: the next retry (or the period) sends it
+adb shell cmd jobscheduler run -f <pkg> <job-id>           # a run now, rather than waiting
+```
+
+The sync dot (and Administration › Serveur) then says « Synchronisé il y a … » for the run that got
+through, the app still closed.

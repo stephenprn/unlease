@@ -3,6 +3,7 @@ import { APPS } from '@unlease/core/apps';
 import { setMentionNamer } from '@unlease/notes/services/noteMentions';
 import { openDatabase } from '@shared/data/db/database';
 import { loadSettings } from '@shared/app/store/settingsStore';
+import { startBackgroundSync } from '@shared/app/sync/syncManager';
 import { loadMapsChoice } from '@shared/app/store/mapsStore';
 import { startLauncherIcon } from '@shared/app/launcherIcon';
 import { startSuiteLink } from '@shared/app/suiteLink';
@@ -40,6 +41,8 @@ export function bootstrap(): BootResult {
     startSuiteLink();
     // The launcher's icon in this app's primary, switched once the app has left the screen.
     startLauncherIcon();
+    // Sync with the app closed: after its files' uploads, which say what is left to send.
+    startBackgroundSync();
     booted = true;
     return { ok: true };
   } catch (error) {

@@ -16,6 +16,7 @@ import { requestSync, startSync, stopSync } from '@shared/app/sync/syncManager';
 import { Button, FormMessage, ListRow, TextField, useForm } from '../../components';
 import type { AdminOverlays } from './overlays';
 import { StatusRow } from './StatusRow';
+import { BackgroundSyncRows } from '../settings/BackgroundSyncRows';
 
 export const SERVER_INFO = tx(
   'Le serveur garde les données de vos applications et les synchronise entre vos appareils. Il fait le reste aussi : Claude, la sauvegarde sur S3, vos fichiers sur Seafile, une fois reliés.',
@@ -64,7 +65,7 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
       : phase === 'unauthorized'
         ? t('Le serveur refuse ce jeton.')
         : phase === 'offline'
-          ? `${t('Hors ligne')}${pending > 0 ? ` · ${t('{changes} en attente', { changes: plural(pending, 'modification') })}` : ''}${message ? ` · ${t(message)}` : ''}`
+          ? [t('Hors ligne'), pending > 0 ? t('{changes} en attente', { changes: plural(pending, 'modification') }) : '', message ? t(message) : '', lastSync ? t('Synchronisé {when}', { when: formatRelative(lastSync, Date.now()) }) : ''].filter(Boolean).join(' · ')
           : phase === 'syncing'
             ? t('Synchronisation…')
             : `${lastSync ? t('Synchronisé {when}', { when: formatRelative(lastSync, Date.now()) }) : t('Connecté')}${clock ? ` · ${clock}` : ''}`;
@@ -93,6 +94,8 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
           ) : null}
         </View>
       </View>
+      {/* What Android holds back of the sync with the app closed, with what fixes it. */}
+      {server ? <BackgroundSyncRows /> : null}
       {server ? (
         <ListRow
           icon="cloudOff"

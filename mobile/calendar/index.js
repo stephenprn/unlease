@@ -10,6 +10,7 @@ import { addCalendarEnglish } from '@unlease/calendar/i18n';
 
 import App from './App';
 import { name as appName } from './app.json';
+import { runSyncTask } from './src/app/syncTask';
 import { QuickProviders } from './src/app/providers/QuickProviders';
 import { QUICK_WINDOW } from './src/app/widgets';
 import { onBackgroundEvent } from './src/platform/notifications';
@@ -27,3 +28,6 @@ AppRegistry.registerComponent(QUICK_WINDOW, () => QuickProviders);
 // The reminders seen to with the app closed: every hour, and after a restart, an update, a change of
 // time, zone or language (mobile/shared/android/src/reminders, RemindersRefresh).
 AppRegistry.registerHeadlessTask('remindersTask', () => runRemindersTask);
+// Sync with the app closed: every quarter of an hour, soon after changes are left unsent, and soon
+// after a network, a VPN's too, comes up (mobile/shared/android, backgroundsync).
+AppRegistry.registerHeadlessTask('syncTask', () => runSyncTask);

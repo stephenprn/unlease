@@ -2,6 +2,11 @@
  * The foreground sync loop: always either a push or a long-poll the server holds open.
  * A local write aborts the long-poll and pushes (debounced); a refused token stops the loop.
  * Going to the background ends the loop, but what was just written still goes out.
+ *
+ * With the app closed, WorkManager runs the app's `syncTask` (`syncInBackground`): every quarter of
+ * an hour, soon after the app leaves with changes unsent (retried until the server takes them), and
+ * soon after a network, a VPN's too, comes up (`@shared/platform/backgroundSync`). Nothing written
+ * here is ever dropped: a change stays pending, on the phone, until the server has answered for it.
  */
 import { t } from '@unlease/core/i18n';
 import { syncOnce, type SyncStore } from '@unlease/core/sync/engine';
@@ -11,6 +16,7 @@ import { countPending, pendingRecords } from '@shared/data/repositories/recordRe
 import { readSyncState, writeSyncState } from '@shared/data/repositories/stateRepository';
 import { markAllFilesPending } from '@shared/data/repositories/fileRepository';
 import { onOnline } from '@shared/platform/connectivity';
+import { configureBackgroundSync, noteBackgroundSync, syncSoonInBackground, type BackgroundOutcome } from '@shared/platform/backgroundSync';
 
 import { activeLibrary, syncedTypes } from '../store/library';
 import { setSyncState, useSyncStore } from '../store/syncStore';
@@ -24,6 +30,12 @@ const MAX_BACKOFF_MS = 60_000;
 const QUICK_ANSWER_MS = 1_000;
 /** The last push on the way to the background: Android may freeze the app soon after. */
 const FLUSH_TIMEOUT_MS = 15_000;
+/** One exchange with the app closed, many changes at once included; the files going up have their own limits. */
+const BACKGROUND_TIMEOUT_MS = 90_000;
+/** A background run after changes are left unsent: after the last push on the way out has had its chance. */
+const SOON_AFTER_LEAVING_S = 20;
+/** A change written with the app closed (a widget's tick, a notification's answer): a few in a row are one run. */
+const SOON_AFTER_WRITE_S = 5;
 
 /** The types the cursor was pulled with, as one value: another list (an app turned on, a newer build) pulls again from 0. */
 const typesKey = (): string => syncedTypes().join(',');
@@ -75,6 +87,8 @@ function parseMark(value: string | null): ServerMark | null {
 export interface SyncTask {
   run(config: ServerConfig): Promise<void>;
   restart?(): void;
+  /** Files kept here that `run` would still send: counted with the changes waiting. */
+  pending?(): number;
 }
 
 const tasks: SyncTask[] = [];
@@ -85,6 +99,32 @@ export function addSyncTask(task: SyncTask): () => void {
     const index = tasks.indexOf(task);
     if (index >= 0) tasks.splice(index, 1);
   };
+}
+
+/** Changes the server has not taken: records, and the files the apps still have to send. */
+export function pendingCount(): number {
+  let files = 0;
+  for (const task of tasks) files += task.pending?.() ?? 0;
+  return countPending() + files;
+}
+
+/** When a sync last got through, kept across starts: « synchronisé il y a 3 h » holds while offline. */
+function storedLastSync(): number | null {
+  const value = Number(readSyncState('lastSyncAt'));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+/** An exchange (and the files after it) got through. */
+function markSynced(): void {
+  const at = Date.now();
+  writeSyncState('lastSyncAt', String(at));
+  setSyncState({ phase: 'synced', lastSyncAt: at, pending: pendingCount(), message: null });
+}
+
+/** What failed, in words: an exchange cut short by its own limit is a server that did not answer. */
+function failureMessage(error: unknown): string {
+  if (error instanceof SyncError && error.kind === 'aborted') return t('Le serveur ne répond pas');
+  return error instanceof Error ? error.message : t('Serveur injoignable');
 }
 
 let running = false;
@@ -116,7 +156,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 export function requestSync(): void {
-  setSyncState({ pending: countPending() });
+  setSyncState({ pending: pendingCount() });
   if (!running) {
     // In the background, a write (an editor's last save, a reminder answered from its notification) still goes out.
     if (paused) {
@@ -161,22 +201,18 @@ async function loop(myGeneration: number): Promise<void> {
       // A wait answered at once with nothing (a server stopping, a proxy that holds nothing) is not news: no tight loop.
       if (waitMs > 0 && outcome.pulled === 0 && outcome.pushed === 0 && Date.now() - started < QUICK_ANSWER_MS) await sleep(QUICK_ANSWER_MS);
       for (const task of tasks) await task.run(config);
-      setSyncState({ phase: 'synced', lastSyncAt: Date.now(), pending: countPending(), message: null });
+      markSynced();
     } catch (error) {
       if (error instanceof SyncError && error.kind === 'aborted') continue;
       if (error instanceof SyncError && error.kind === 'unauthorized') {
-        setSyncState({ phase: 'unauthorized', message: error.message, pending: countPending() });
+        setSyncState({ phase: 'unauthorized', message: error.message, pending: pendingCount() });
         running = false;
         return;
       }
       // A server that says when to come back (stopping to restart) is believed; the doubling starts again after.
       const hinted = error instanceof SyncError ? error.retryAfterMs : null;
       backoff = hinted !== null ? Math.min(MAX_BACKOFF_MS, Math.max(1_000, hinted)) : backoff === 0 ? 2_000 : Math.min(MAX_BACKOFF_MS, backoff * 2);
-      setSyncState({
-        phase: 'offline',
-        pending: countPending(),
-        message: error instanceof Error ? error.message : t('Serveur injoignable'),
-      });
+      setSyncState({ phase: 'offline', pending: pendingCount(), message: failureMessage(error) });
       await sleep(backoff);
       if (hinted !== null) backoff = 1_000;
     } finally {
@@ -189,19 +225,22 @@ async function loop(myGeneration: number): Promise<void> {
 export function startSync(): void {
   stopSync();
   if (!useSettingsStore.getState().server) {
-    setSyncState({ phase: 'local', pending: countPending(), message: null });
+    setSyncState({ phase: 'local', pending: pendingCount(), message: null });
     return;
   }
   running = true;
   generation += 1;
   for (const task of tasks) task.restart?.();
-  // The network is back: a wait for the next retry ends now.
+  // A network came (a VPN, home's Wi-Fi): a wait for the next retry ends now, and a long-poll held
+  // over the network that was there before (its connection likely dead) is asked again over this one.
   connectivity ??= onOnline(() => {
-    if (running && useSyncStore.getState().phase === 'offline') wake?.();
+    if (!running) return;
+    if (waitingOnServer) inFlight?.abort();
+    else if (useSyncStore.getState().phase === 'offline') wake?.();
   });
   unsubscribe ??= activeLibrary().onLocalWrite(requestSync);
   refreshReading();
-  setSyncState({ pending: countPending(), phase: useSyncStore.getState().phase === 'local' ? 'syncing' : useSyncStore.getState().phase });
+  setSyncState({ pending: pendingCount(), lastSyncAt: useSyncStore.getState().lastSyncAt ?? storedLastSync(), phase: useSyncStore.getState().phase === 'local' ? 'syncing' : useSyncStore.getState().phase });
   loop(generation).catch(() => {
     running = false;
   });
@@ -253,6 +292,68 @@ export function flushNow(): Promise<void> {
 }
 
 /**
+ * The app's `syncTask`, run by WorkManager with the app closed or in the background: one exchange
+ * (what waits goes, what other devices wrote comes), then the files kept here go up. `retry` while
+ * anything is left unsent, so the worker tries again with a growing wait; a refused token is not
+ * retried (the Administration has to put it right). In front, the loop has it all already.
+ */
+export async function syncInBackground(): Promise<BackgroundOutcome> {
+  // One exchange at a time: another may have started while this one waited for the last.
+  while (flushing) await flushing.catch(() => undefined);
+  const config = useSettingsStore.getState().server;
+  if (!config || running) return 'done';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), BACKGROUND_TIMEOUT_MS);
+  const work = (async (): Promise<BackgroundOutcome> => {
+    try {
+      await syncOnce(store, transportFor(config), { node: activeLibrary().deviceNode(), waitMs: 0, signal: controller.signal });
+      clearTimeout(timer);
+      for (const task of tasks) await task.run(config);
+      markSynced();
+      return countPending() > 0 ? 'retry' : 'done';
+    } catch (error) {
+      if (error instanceof SyncError && error.kind === 'unauthorized') {
+        setSyncState({ phase: 'unauthorized', message: error.message, pending: pendingCount() });
+        return 'done';
+      }
+      setSyncState({ phase: 'offline', pending: pendingCount(), message: failureMessage(error) });
+      // A pull that failed with nothing to send waits for the next period.
+      return pendingCount() > 0 ? 'retry' : 'done';
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
+  const settled = work.then(() => undefined);
+  flushing = settled;
+  void settled.finally(() => {
+    if (flushing === settled) flushing = null;
+  });
+  return work;
+}
+
+let watching = false;
+
+/**
+ * Once, at start (each app's bootstrap, wherever JavaScript runs): the background sync follows the
+ * server's setting, hears what waits and when a sync last got through, and a change written with
+ * the app closed (a widget, a notification) gets a run of its own.
+ */
+export function startBackgroundSync(): void {
+  if (watching) return;
+  watching = true;
+  if (useSyncStore.getState().lastSyncAt === null) setSyncState({ lastSyncAt: storedLastSync(), pending: pendingCount() });
+  configureBackgroundSync(useSettingsStore.getState().server !== null);
+  useSettingsStore.subscribe(state => configureBackgroundSync(state.server !== null));
+  noteBackgroundSync(useSyncStore.getState().pending, useSyncStore.getState().lastSyncAt);
+  useSyncStore.subscribe(state => noteBackgroundSync(state.pending, state.lastSyncAt));
+  activeLibrary().onLocalWrite(() => {
+    if (running || !useSettingsStore.getState().server) return;
+    setSyncState({ pending: pendingCount() });
+    syncSoonInBackground(SOON_AFTER_WRITE_S);
+  });
+}
+
+/**
  * One exchange outside the loop with nothing needed to send: what other devices wrote, for the app
  * running headless (its reminders seen to with the app closed). The loop, when it runs, has it already.
  */
@@ -268,8 +369,12 @@ function exchangeNow(): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FLUSH_TIMEOUT_MS);
   flushing = syncOnce(store, transportFor(config), { node: activeLibrary().deviceNode(), waitMs: 0, signal: controller.signal })
-    .then(() => setSyncState({ phase: 'synced', lastSyncAt: Date.now(), pending: countPending(), message: null }))
-    .catch(() => setSyncState({ pending: countPending() }))
+    .then(() => markSynced())
+    .catch(() => {
+      setSyncState({ pending: pendingCount() });
+      // Still unsent: the background sync takes it from here, once the server can be reached.
+      if (pendingCount() > 0) syncSoonInBackground();
+    })
     .finally(() => {
       clearTimeout(timer);
       flushing = null;
@@ -288,5 +393,8 @@ export function pauseSync(): Promise<void> {
   const listening = running || paused;
   halt(listening);
   paused = listening;
+  // Changes or files left to send: a background run follows, retried until the server takes them,
+  // should the last push below fail or Android stop the app before it ends.
+  if (listening && pendingCount() > 0) syncSoonInBackground(SOON_AFTER_LEAVING_S);
   return listening ? flushNow() : Promise.resolve();
 }

@@ -7,7 +7,16 @@ import { readSyncState, writeSyncState } from '@shared/data/repositories/stateRe
 import { createNote, ensureInbox, updateNote } from '../../store/actions';
 import { loadLibrary, resetLibrary } from '../../store/libraryStore';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
-import { flushNow, onBeforePause, pauseSync, startSync, stopSync } from '@shared/app/sync/syncManager';
+import { useSyncStore } from '@shared/app/store/syncStore';
+import { addSyncTask, flushNow, onBeforePause, pauseSync, pendingCount, startBackgroundSync, startSync, stopSync, syncInBackground } from '@shared/app/sync/syncManager';
+import { syncSoonInBackground } from '@shared/platform/backgroundSync';
+
+jest.mock('@shared/platform/backgroundSync', () => ({
+  configureBackgroundSync: jest.fn(),
+  noteBackgroundSync: jest.fn(),
+  syncSoonInBackground: jest.fn(),
+  reportBackgroundSync: jest.fn(),
+}));
 
 const json = (value: unknown, status = 200) => ({ ok: status < 300, status, json: async () => value }) as unknown as Response;
 const requests: SyncRequest[] = [];
@@ -20,6 +29,8 @@ beforeEach(() => {
   ensureInbox();
   requests.length = 0;
   useSettingsStore.setState({ server: { url: 'https://carnet.test', token: 'jeton' }, reading: null });
+  (syncSoonInBackground as jest.Mock).mockClear();
+  useSyncStore.setState({ phase: 'local', lastSyncAt: null, pending: 0, message: null });
   jest.spyOn(global, 'fetch').mockImplementation(async (url, init) => {
     if (!String(url).endsWith('/api/sync')) return json({});
     const body = JSON.parse(String(init?.body)) as SyncRequest;
@@ -137,5 +148,89 @@ describe('the record types this app syncs', () => {
     createNote({ kind: 'text', title: 'trois' });
     await flushNow();
     expect(requests[2]!.since).toBe(0);
+  });
+});
+
+/** The network as when the server is out of reach (not home, the VPN off): every request fails. */
+const unreachable = () => (global.fetch as jest.Mock).mockImplementation(async () => {
+  throw new TypeError('Network request failed');
+});
+
+describe('with the app closed (the background sync)', () => {
+  it('sends what waits, says it is done, and keeps when it got through', async () => {
+    const id = createNote({ kind: 'text', title: 'écrit hors ligne' });
+    expect(await syncInBackground()).toBe('done');
+    expect(pushed(id, 'écrit hors ligne')).toBe(true);
+    expect(countPending()).toBe(0);
+    const at = useSyncStore.getState().lastSyncAt;
+    expect(at).not.toBeNull();
+    // Kept across starts: « synchronisé il y a 3 h » holds while offline.
+    expect(Number(readSyncState('lastSyncAt'))).toBe(at);
+    expect(useSyncStore.getState().phase).toBe('synced');
+  });
+
+  it('keeps every change while the server is out of reach, and asks to be tried again', async () => {
+    unreachable();
+    const id = createNote({ kind: 'text', title: 'à garder' });
+    expect(await syncInBackground()).toBe('retry');
+    expect(countPending()).toBeGreaterThan(0);
+    expect(useSyncStore.getState()).toMatchObject({ phase: 'offline', message: 'Serveur injoignable' });
+    // The VPN comes up: the next run sends it.
+    (global.fetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) => {
+      requests.push(JSON.parse(String(init?.body)) as SyncRequest);
+      return json({ records: [], cursor: 0, more: false, serverTime: Date.now() });
+    });
+    expect(await syncInBackground()).toBe('done');
+    expect(pushed(id, 'à garder')).toBe(true);
+    expect(countPending()).toBe(0);
+  });
+
+  it('does not retry a pull that failed with nothing to send, nor a refused token', async () => {
+    await flushNow();
+    unreachable();
+    expect(countPending()).toBe(0);
+    expect(await syncInBackground()).toBe('done');
+    (global.fetch as jest.Mock).mockImplementation(async () => json({ error: 'unauthorized' }, 401));
+    createNote({ kind: 'text', title: 'jeton refusé' });
+    expect(await syncInBackground()).toBe('done');
+    expect(useSyncStore.getState().phase).toBe('unauthorized');
+    // Never dropped: it waits for the token to be put right.
+    expect(countPending()).toBeGreaterThan(0);
+  });
+
+  it('leaves it to the loop when the app is in front', async () => {
+    startSync();
+    await until(() => countPending() === 0);
+    const before = requests.length;
+    expect(await syncInBackground()).toBe('done');
+    expect(requests.slice(before).every(request => (request.wait ?? 0) > 0)).toBe(true);
+  });
+
+  it('asks for a background run when the app leaves with changes the last push could not send', async () => {
+    startSync();
+    await until(() => countPending() === 0);
+    await pauseSync();
+    expect(syncSoonInBackground).not.toHaveBeenCalled();
+    startSync();
+    await until(() => useSyncStore.getState().phase === 'synced');
+    unreachable();
+    createNote({ kind: 'text', title: 'en partant' });
+    await pauseSync();
+    expect(countPending()).toBeGreaterThan(0);
+    expect(syncSoonInBackground).toHaveBeenCalled();
+  });
+
+  it('asks for a background run after a change written with the app closed (a widget, a notification)', () => {
+    startBackgroundSync();
+    createNote({ kind: 'text', title: 'depuis un widget' });
+    expect(syncSoonInBackground).toHaveBeenCalledWith(5);
+  });
+
+  it('counts the files still to send with the changes waiting', () => {
+    const before = pendingCount();
+    const remove = addSyncTask({ run: async () => undefined, pending: () => 2 });
+    expect(pendingCount()).toBe(before + 2);
+    remove();
+    expect(pendingCount()).toBe(before);
   });
 });

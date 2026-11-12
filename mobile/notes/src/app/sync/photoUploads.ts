@@ -10,6 +10,12 @@ import { useLibraryStore } from '../store/libraryStore';
 /** Photos the server refused (not an image it can read, too large): not retried until the next start. */
 const refused = new Set<string>();
 
+/** Photos kept here that `uploadPhotos` would still send: the sync counts them as waiting. */
+function photosWaiting(): number {
+  const { attachments } = useLibraryStore.getState();
+  return loadLocalFiles().filter(file => !file.uploaded && !refused.has(file.id) && attachments[file.id]?.deletedAt === null).length;
+}
+
 async function uploadPhotos(config: ServerConfig): Promise<void> {
   const { attachments } = useLibraryStore.getState();
   for (const file of loadLocalFiles()) {
@@ -34,5 +40,5 @@ let added = false;
 export function startPhotoUploads(): void {
   if (added) return;
   added = true;
-  addSyncTask({ run: uploadPhotos, restart: () => refused.clear() });
+  addSyncTask({ run: uploadPhotos, restart: () => refused.clear(), pending: photosWaiting });
 }

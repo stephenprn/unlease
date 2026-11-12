@@ -43,3 +43,8 @@ export function resetReminders(): void {
   stopped = null;
   fresh = null;
 }
+
+/** Whether this app rings (Carnet, Contacts, Agenda register the Reminders module; Pages does not). */
+export function appRings(): boolean {
+  return NativeReminders != null;
+}

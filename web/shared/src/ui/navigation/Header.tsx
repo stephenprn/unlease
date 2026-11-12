@@ -41,10 +41,15 @@ export function syncText(phase: SyncPhase, pending: number, lastSync: number | n
       return t('Pas de serveur : tout reste dans ce navigateur.');
     case 'unauthorized':
       return t('Le serveur refuse le jeton. Vérifiez-le dans l’administration.');
-    case 'offline':
-      return pending > 0
-        ? t('Hors ligne : {changes} en attente.', { changes: plural(pending, 'modification') })
-        : message ? t('Hors ligne ({reason}).', { reason: t(message) }) : t('Hors ligne.');
+    case 'offline': {
+      // Why, what waits (and that it is safe here), and since when: a server reached only at home or
+      // through a VPN is out of reach for hours, and the person should know nothing is lost meanwhile.
+      const reason = message ? t(message) : t('Hors ligne');
+      const waiting = pending > 0
+        ? t('{reason} : {changes} en attente, à l’abri dans ce navigateur.', { reason, changes: plural(pending, 'modification') })
+        : message ? t('Hors ligne ({reason}).', { reason }) : t('Hors ligne.');
+      return lastSync ? `${waiting} ${t('Dernière synchronisation {when}.', { when: formatRelative(lastSync, now) })}` : waiting;
+    }
     case 'syncing':
       return pending > 0 ? t('Envoi de {changes}…', { changes: plural(pending, 'modification') }) : t('Synchronisation…');
     default:

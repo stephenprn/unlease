@@ -9,12 +9,13 @@ import { mergeRecord, writeFields, type Fields, type SyncRecord } from '@unlease
 import { freshLibrary } from '@test/library';
 import { storeFile, storedFileIds } from '../../media/files';
 import { addAttachment, createNote, updateNote } from '@notes/app/store/actions';
-import { acknowledge, countPending, deviceNode, mergeRemote, pendingRecords, readCursor, readSyncedTypes, writeCursor } from '@shared/app/store/records';
+import { acknowledge, countPending, deviceNode, mergeRemote, pendingRecords, readCursor, readLastSync, readSyncedTypes, writeCursor } from '@shared/app/store/records';
+import { syncText } from '@shared/ui/navigation/Header';
 import { useLibraryStore } from '@notes/app/store/library';
 import { useServerSettingsStore } from '../../store/serverSettings';
 import { setServer, setServerApps, useSettingsStore } from '../../store/settings';
 import { useSyncStore } from '../../store/syncStatus';
-import { configureSync, startSync, stopSync } from '../loop';
+import { configureSync, pauseSync, startSync, stopSync } from '../loop';
 import { createTransport, fetchServerSettings, saveServerSettings, SyncError } from '../transport';
 
 const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
@@ -207,6 +208,44 @@ describe('the sync loop', () => {
     startSync();
     await vi.waitFor(() => expect(useSyncStore.getState().phase).toBe('offline'));
     expect(useSyncStore.getState().pending).toBeGreaterThan(0);
+  });
+
+  it('keeps when a sync last got through, and says it with what waits while the server is out of reach', async () => {
+    startSync();
+    await vi.waitFor(() => expect(useSyncStore.getState().phase).toBe('synced'));
+    const at = useSyncStore.getState().lastSyncAt;
+    expect(at).not.toBeNull();
+    expect(readLastSync()).toBe(at);
+    stopSync();
+    // Away from home, the VPN off: the change waits, said safe here, with the last sync beside it.
+    server.failWith = new SyncError('network', 'Serveur injoignable');
+    createNote({ kind: 'text', title: 'Hors du réseau' });
+    startSync();
+    await vi.waitFor(() => expect(useSyncStore.getState().phase).toBe('offline'));
+    const { phase, pending, lastSyncAt, message } = useSyncStore.getState();
+    const text = syncText(phase, pending, lastSyncAt, message, null, at! + 60 * 60_000);
+    expect(text).toContain('Serveur injoignable : ');
+    expect(text).toContain('en attente, à l’abri dans ce navigateur.');
+    expect(text).toContain('Dernière synchronisation ');
+  });
+
+  it('keeps trying from a hidden tab while changes wait, and sends them once the server answers', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval'] });
+    try {
+      server.failWith = new SyncError('network', 'Serveur injoignable');
+      const id = createNote({ kind: 'text', title: 'Onglet caché' });
+      startSync();
+      await vi.waitFor(() => expect(useSyncStore.getState().phase).toBe('offline'));
+      await pauseSync();
+      expect(countPending()).toBeGreaterThan(0);
+      // Home again: the next minute's try gets through, the tab still hidden.
+      server.failWith = null;
+      vi.advanceTimersByTime(60_000);
+      await vi.waitFor(() => expect(server.records.get(`note:${id}`)?.record.fields.title).toBe('Onglet caché'));
+      await vi.waitFor(() => expect(countPending()).toBe(0));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('uploads photos added here, then marks them uploaded and forgets the local copy', async () => {

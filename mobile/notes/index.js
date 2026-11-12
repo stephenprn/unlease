@@ -11,6 +11,7 @@ import { addNotesEnglish } from '@unlease/notes/i18n';
 
 import App from './App';
 import { name as appName } from './app.json';
+import { runSyncTask } from './src/app/syncTask';
 import { handleBackgroundEvent } from './src/app/backgroundEvents';
 import { QuickProviders } from './src/app/providers/QuickProviders';
 import { QUICK_WINDOW, WIDGET_TASK } from './src/app/widgets';
@@ -29,3 +30,6 @@ AppRegistry.registerComponent(QUICK_WINDOW, () => QuickProviders);
 AppRegistry.registerHeadlessTask(WIDGET_TASK, () => runWidgetTask);
 // The reminders seen to with the app closed (mobile/shared/android/src/reminders, RemindersRefresh).
 AppRegistry.registerHeadlessTask('remindersTask', () => runRemindersTask);
+// Sync with the app closed: every quarter of an hour, soon after changes are left unsent, and soon
+// after a network, a VPN's too, comes up (mobile/shared/android, backgroundsync).
+AppRegistry.registerHeadlessTask('syncTask', () => runSyncTask);

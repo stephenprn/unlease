@@ -106,6 +106,8 @@ let syncedTypes: readonly string[] | null = null;
 let syncedSchema: string | null = null;
 /** The server's head and run from the last answer that named them (`ServerMark`). */
 let mark: ServerMark | null = null;
+/** When a sync last got through, kept with the records: « synchronisé il y a 3 h » holds offline, across reloads. */
+let lastSync: number | null = null;
 let persister: Persister | null = null;
 let channel: BroadcastChannel | null = null;
 const localWriteListeners = new Set<() => void>();
@@ -275,6 +277,7 @@ function clearMemory(): void {
   syncedTypes = null;
   syncedSchema = null;
   mark = null;
+  lastSync = null;
   persister = null;
   channel?.close();
   channel = null;
@@ -306,6 +309,7 @@ export async function loadLibrary({ db, name, now = Date.now() }: LoadOptions): 
   mark = parseMark(stored.meta.get('mark') ?? null);
   clockOffset = Number(stored.meta.get('clockOffset') ?? '0') || 0;
   epoch = stored.meta.get('epoch') ?? null;
+  lastSync = Number(stored.meta.get('lastSyncAt') ?? '0') || null;
 
   const all: SyncRecord[] = [];
   for (const row of stored.rows) {
@@ -573,6 +577,15 @@ function parseTypes(value: string | null): readonly string[] | null {
   if (value === null) return null;
   const types = value.split(',').filter(type => /^[a-z][a-z0-9-]{0,31}$/.test(type));
   return [...new Set(types)].sort();
+}
+
+export function readLastSync(): number | null {
+  return lastSync;
+}
+
+export function writeLastSync(at: number): void {
+  lastSync = at;
+  persister?.setMeta('lastSyncAt', String(at));
 }
 
 export function readMark(): ServerMark | null {

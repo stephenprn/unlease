@@ -229,6 +229,11 @@ On a LAN only, the web apps work over plain HTTP from a browser on that LAN (wit
 
 The Android apps trust only the certificate authorities Android ships with, not one you made yourself: give the server a certificate from a public authority for a name you own (Let's Encrypt's DNS challenge issues one for a name that only your LAN resolves), or use Tailscale's.
 
+Away from home with the VPN off, every app keeps working on what it holds: what you write waits on the device, and nothing is dropped however long the server stays out of reach. The sync dot turns amber and says how many changes wait, that they are safe on this device, and when the last sync got through. Then:
+
+- **On Android**, each app sends what waits even while it is closed: soon after you leave it, again with a growing wait until the server takes it, every 15 minutes while a network is there, and a few seconds after any network comes up, your VPN included. Photos and files go up the same way. A battery set to « Restreinte » (the app's page in Android's settings, **Battery**), Data Saver on mobile data, a maker's battery saver or a force stop holds that back until you open the app again. Each app tells you when it is held back: a message when you open it (once a day), and « Synchronisation en arrière-plan » in its Réglages and in Administration › Serveur, whose rows open the right page of Android's settings and say what to choose (« Optimisée » or « Sans restriction » for the battery; unrestricted data usage for Data Saver).
+- **In a browser**, an app sends what waits while it is open, and from a hidden tab every minute and when the network comes back; a closed tab keeps it (the browser is asked to keep the apps' storage for good) and sends it the next time you open the app.
+
 ## Without internet access
 
 The server needs nothing from the internet to run: no account, no licence check; it reaches out only for the features listed below. Bring the image in from a machine that has internet, the same release as the two files:

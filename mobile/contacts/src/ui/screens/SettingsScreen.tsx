@@ -28,6 +28,7 @@ import { makerBatterySettings } from '@platform/notifications';
 import { AppText, Dialog, Ground, ListRow, PickerField, Segmented, TopBar } from '@shared/ui/components';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
+import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -96,6 +97,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <Section title={t('Anniversaires')} anchor={BIRTHDAYS_SETTINGS_SECTION}>
           <BirthdayNotices />
         </Section>
+        <BackgroundSyncSection />
+
         <ReminderHealthSection wanted={birthdays.enabled} makerSettings={makerBatterySettings} />
 
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />

@@ -12,7 +12,9 @@
  * off from 2 s to a minute; a refused token stops the loop until the settings
  * change. A hidden tab stops altogether: a held request in a background tab
  * keeps a connection open for nobody, and the next visible moment catches up;
- * what was just typed is still sent on the way out (`pauseSync`).
+ * what was just typed is still sent on the way out (`pauseSync`), and while
+ * changes wait unsent a hidden tab tries again every minute and whenever the
+ * network comes back (a server reached only at home or through a VPN).
  */
 import { useEffect } from 'react';
 
@@ -37,10 +39,12 @@ import {
   pullTypes,
   readCursor,
   readEpoch,
+  readLastSync,
   readMark,
   readSyncedTypes,
   writeCursor,
   writeEpoch,
+  writeLastSync,
   writeMark,
 } from '../store/records';
 import { setServerHealth, setServerSettings } from '../store/serverSettings';
@@ -54,6 +58,8 @@ const FIRST_BACKOFF_MS = 2_000;
 const MAX_BACKOFF_MS = 60_000;
 /** A long-poll answered faster than this with nothing waits this long before the next. */
 const QUICK_ANSWER_MS = 1_000;
+/** A hidden tab with changes unsent tries again this often (a browser runs a hidden tab's timers once a minute at most). */
+const HIDDEN_RETRY_MS = 60_000;
 
 const store: SyncStore = {
   pendingRecords: limit => pendingRecords(limit),
@@ -113,6 +119,20 @@ function sleep(ms: number): Promise<void> {
       resolve();
     };
   });
+}
+
+/** An exchange (and the files after it) got through: the time is kept with the records. */
+function markSynced(): void {
+  const at = Date.now();
+  writeLastSync(at);
+  setSyncState({ phase: 'synced', lastSyncAt: at, pending: countPending(), message: null });
+}
+
+let hiddenRetry: ReturnType<typeof setInterval> | null = null;
+
+function stopHiddenRetry(): void {
+  if (hiddenRetry !== null) clearInterval(hiddenRetry);
+  hiddenRetry = null;
 }
 
 export function isSyncRunning(): boolean {
@@ -219,9 +239,7 @@ async function loop(myGeneration: number): Promise<void> {
       // A wait answered at once with nothing (a server stopping, a proxy that holds nothing) is not news: no tight loop.
       if (waitMs > 0 && outcome.pulled === 0 && outcome.pushed === 0 && Date.now() - started < QUICK_ANSWER_MS) await sleep(QUICK_ANSWER_MS);
       await uploadPending(config, myGeneration);
-      if (running && generation === myGeneration) {
-        setSyncState({ phase: 'synced', lastSyncAt: Date.now(), pending: countPending(), message: null });
-      }
+      if (running && generation === myGeneration) markSynced();
     } catch (error) {
       if (error instanceof SyncError && error.kind === 'aborted') continue;
       if (error instanceof SyncError && error.kind === 'unauthorized') {
@@ -249,6 +267,7 @@ async function loop(myGeneration: number): Promise<void> {
 /** Start (or restart) the loop: tab visible, or settings changed. */
 export function startSync(): void {
   stopSync();
+  if (useSyncStore.getState().lastSyncAt === null) setSyncState({ lastSyncAt: readLastSync() });
   if (!useSettingsStore.getState().server) {
     setSyncState({ phase: 'local', pending: countPending(), message: null });
     return;
@@ -303,6 +322,7 @@ function halt(keepListening: boolean): void {
 }
 
 export function stopSync(): void {
+  stopHiddenRetry();
   halt(false);
 }
 
@@ -323,7 +343,7 @@ export function flushNow(): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FLUSH_TIMEOUT_MS);
   flushing = syncOnce(store, typedTransport(transportFor(config, { keepalive: true })), { node: deviceNode(), waitMs: 0, signal: controller.signal })
-    .then(() => setSyncState({ phase: 'synced', lastSyncAt: Date.now(), pending: countPending(), message: null }))
+    .then(() => markSynced())
     .catch(() => setSyncState({ pending: countPending() }))
     .finally(() => {
       clearTimeout(timer);
@@ -345,6 +365,12 @@ export function pauseSync(): Promise<void> {
   const listening = running || paused;
   halt(listening);
   paused = listening;
+  // Changes that do not get through on the way out are tried again, hidden, until they do.
+  if (listening && hiddenRetry === null) {
+    hiddenRetry = setInterval(() => {
+      if (paused && countPending() > 0) void flushNow();
+    }, HIDDEN_RETRY_MS);
+  }
   return listening ? flushNow() : Promise.resolve();
 }
 
@@ -352,6 +378,7 @@ export function pauseSync(): Promise<void> {
 function onOnline(): void {
   if (running) wake?.();
   else if (document.visibilityState === 'visible') startSync();
+  else if (paused) void flushNow();
 }
 
 /** The network went away: drop the held request so the dot says so now, not in 45 s. */
@@ -374,7 +401,7 @@ export function useSyncLifecycle(): void {
     };
     const onPageHide = (): void => void pauseSync();
     if (document.visibilityState === 'visible') startSync();
-    else setSyncState({ pending: countPending(), phase: server ? useSyncStore.getState().phase : 'local' });
+    else setSyncState({ pending: countPending(), lastSyncAt: useSyncStore.getState().lastSyncAt ?? readLastSync(), phase: server ? useSyncStore.getState().phase : 'local' });
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('pagehide', onPageHide);
     window.addEventListener('online', onOnline);

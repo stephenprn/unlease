@@ -118,6 +118,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // Sync with the app closed (mobile/shared/android, backgroundsync); the other apps' version.
+    implementation("androidx.work:work-runtime:2.8.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

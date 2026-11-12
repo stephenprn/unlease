@@ -2,6 +2,7 @@
 import { APPS } from '@unlease/core/apps';
 import { openDatabase } from '@shared/data/db/database';
 import { loadSettings } from '@shared/app/store/settingsStore';
+import { startBackgroundSync } from '@shared/app/sync/syncManager';
 import { startLauncherIcon } from '@shared/app/launcherIcon';
 import { startSuiteLink } from '@shared/app/suiteLink';
 import { databaseDirectory } from '@shared/platform/storage';
@@ -43,6 +44,8 @@ export function bootstrap(): BootResult {
     startWidgets();
     // Its collections in the share sheet's first row, kept to those links were last filed into.
     startShareShortcuts();
+    // Sync with the app closed: after its files' uploads, which say what is left to send.
+    startBackgroundSync();
     booted = true;
     return { ok: true };
   } catch (error) {

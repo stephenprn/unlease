@@ -158,11 +158,19 @@ export async function uploadPendingPageFiles(config: ServerConfig): Promise<void
   }
 }
 
+/** Files kept here that `uploadPendingPageFiles` would still send: the sync counts them as waiting. */
+function filesWaiting(): number {
+  const { attachments, blocks } = useLibraryStore.getState();
+  const live = new Set<string>();
+  for (const block of Object.values(blocks)) if (block.fileId && block.deletedAt === null) live.add(block.fileId);
+  return loadLocalFiles().filter(file => !file.uploaded && !refused.has(file.id) && !attachments[file.id] && live.has(file.id)).length;
+}
+
 let added = false;
 
 /** Once, at start (bootstrap): after each exchange, the page files kept here go up. */
 export function startPageUploads(): void {
   if (added) return;
   added = true;
-  addSyncTask({ run: uploadPendingPageFiles, restart: () => refused.clear() });
+  addSyncTask({ run: uploadPendingPageFiles, restart: () => refused.clear(), pending: filesWaiting });
 }

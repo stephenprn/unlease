@@ -14,6 +14,7 @@ import { NavigationContainer, type InitialState, type LinkingOptions, type Navig
 import type { AppId } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
 import { selectLocale, useSettingsStore } from '@shared/app/store/settingsStore';
+import { useBackgroundSyncWarning } from '@shared/app/hooks/useBackgroundHealth';
 
 import { AppText, Snackbar } from './components';
 import { LookShareSheet } from './features/appearance/LookShare';
@@ -59,6 +60,12 @@ export interface AppShellProps<P extends object> {
   readonly onSettings?: () => void;
 }
 
+/** A slip, once a day at most, while Android holds back the sync with the app closed (`useBackgroundSyncWarning`). */
+function BackgroundSyncWarning({ enabled }: { readonly enabled: boolean }): null {
+  useBackgroundSyncWarning(enabled);
+  return null;
+}
+
 function Gate<P extends object>({ boot, app, linking, navigationRef, children, overlays, onSettings }: Omit<AppShellProps<P>, 'bootstrap'> & { boot: BootResult }): React.ReactElement {
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -99,6 +106,7 @@ function Gate<P extends object>({ boot, app, linking, navigationRef, children, o
       </View>
       {off ? <AppOffScreen app={app} onSettings={onSettings} /> : null}
       <Snackbar />
+      <BackgroundSyncWarning enabled={!off} />
     </NavigationContainer>
   );
 }

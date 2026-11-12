@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- To hear the network come back, so sync resumes at once. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- The background sync's network watch, registered again after a restart (SyncReceiver). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- The suite's link between its apps on one phone (mobile/shared, SuiteLink): only an app signed
          by the same key holds this permission, so only the suite's own apps read each other's
@@ -220,5 +222,15 @@
         android:authorities="${applicationId}.suite"
         android:exported="true"
         android:readPermission="com.stephenprn.unlease${suiteSuffix}.permission.SUITE" />
+
+      <!-- Sync with the app closed (mobile/shared/android, backgroundsync): a network coming up, the
+           watch's own intent only this app sends, and a restart or an update, protected broadcasts
+           only Android sends, so not exported. -->
+      <receiver android:name="com.stephenprn.unlease.backgroundsync.SyncReceiver" android:exported="false">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        </intent-filter>
+      </receiver>
     </application>
 </manifest>

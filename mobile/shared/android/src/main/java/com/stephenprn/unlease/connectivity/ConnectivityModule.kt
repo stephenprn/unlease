@@ -3,18 +3,23 @@ package com.stephenprn.unlease.connectivity
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.stephenprn.unlease.specs.NativeConnectivitySpec
 
-/** The default network coming and going: sync resumes the moment one reaches the internet again. */
+/**
+ * Networks coming and going: sync resumes the moment one is there instead of at its next retry.
+ * The default network reaching the internet, and any network coming up, a VPN's included (Android's
+ * default request leaves VPNs out): a server reached only through a VPN is tried the moment it comes.
+ */
 class ConnectivityModule(reactContext: ReactApplicationContext) : NativeConnectivitySpec(reactContext) {
-  private var callback: ConnectivityManager.NetworkCallback? = null
+  private val callbacks = mutableListOf<ConnectivityManager.NetworkCallback>()
 
   override fun start() {
-    if (callback != null) return
+    if (callbacks.isNotEmpty()) return
     val manager = reactApplicationContext.getSystemService(ConnectivityManager::class.java) ?: return
-    val listener =
+    val default =
         object : ConnectivityManager.NetworkCallback() {
           override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
             if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) emit(true)
@@ -22,8 +27,23 @@ class ConnectivityModule(reactContext: ReactApplicationContext) : NativeConnecti
 
           override fun onLost(network: Network) = emit(false)
         }
-    manager.registerDefaultNetworkCallback(listener)
-    callback = listener
+    val any =
+        object : ConnectivityManager.NetworkCallback() {
+          override fun onAvailable(network: Network) = emit(true)
+        }
+    val anyNetwork =
+        NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
+    try {
+      manager.registerDefaultNetworkCallback(default)
+      callbacks.add(default)
+      manager.registerNetworkCallback(anyNetwork, any)
+      callbacks.add(any)
+    } catch (_: Exception) {
+      // Too many requests: the sync's own retries still come.
+    }
   }
 
   private fun emit(online: Boolean) {
@@ -31,8 +51,9 @@ class ConnectivityModule(reactContext: ReactApplicationContext) : NativeConnecti
   }
 
   override fun invalidate() {
-    callback?.let { reactApplicationContext.getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(it) }
-    callback = null
+    val manager = reactApplicationContext.getSystemService(ConnectivityManager::class.java)
+    for (callback in callbacks) manager?.unregisterNetworkCallback(callback)
+    callbacks.clear()
     super.invalidate()
   }
 }

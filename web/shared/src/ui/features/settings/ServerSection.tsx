@@ -71,7 +71,7 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
       : phase === 'unauthorized'
         ? t('Le serveur refuse ce jeton.')
         : phase === 'offline'
-          ? [t('Hors ligne'), pending > 0 ? t('{changes} en attente', { changes: plural(pending, 'modification') }) : '', message ? t(message) : ''].filter(Boolean).join(' · ')
+          ? [t('Hors ligne'), pending > 0 ? t('{changes} en attente', { changes: plural(pending, 'modification') }) : '', message ? t(message) : '', lastSyncAt ? t('Synchronisé {when}', { when: formatRelative(lastSyncAt, now) }) : ''].filter(Boolean).join(' · ')
           : phase === 'syncing'
             ? t('Synchronisation…')
             : [lastSyncAt ? t('Synchronisé {when}', { when: formatRelative(lastSyncAt, now) }) : t('Connecté'), clock ? t(clock) : ''].filter(Boolean).join(' · ');
