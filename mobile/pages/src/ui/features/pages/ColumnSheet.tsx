@@ -8,7 +8,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { COLUMN_TYPE_NAMES, COLUMN_TYPES, TABLE_LIMITS, type SelectOption, type TableColumn } from '@unlease/pages/models/blocks';
 import { LINE_COLORS, LINE_COLOR_NAMES } from '@unlease/design/colors';
 import { createId } from '@unlease/core/services/ids';
@@ -59,9 +59,9 @@ function deleteColumnWithUndo(page: string, table: string, column: TableColumn):
   });
   deleteColumn(page, table, column.id);
   showSnack(
-    t('Colonne « {name} » supprimée', { name: column.name }),
+    t('Column “{name}” deleted', { name: column.name }),
     {
-      label: tc('undo', 'Annuler'),
+      label: t('Undo'),
       run: () =>
         commit(page, [
           { type: 'block', id: table, patch: { columns: columns.map(entry => ({ ...entry })) } },
@@ -88,7 +88,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
         <View key={option.id}>
           <View style={styles.optionRow}>
             <Tappable
-              accessibilityLabel={t('Couleur de {name} : {color}', { name: option.name, color: LINE_COLOR_NAMES[option.color] })}
+              accessibilityLabel={t('Colour of {name}: {color}', { name: option.name, color: LINE_COLOR_NAMES[option.color] })}
               accessibilityState={{ expanded: painting === option.id }}
               onPress={() => setPainting(painting === option.id ? null : option.id)}
               pebble={index}
@@ -97,7 +97,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
             <View style={styles.optionName}>
               <CommitField
                 initial={option.name}
-                accessibilityLabel={t('Nom de l’option')}
+                accessibilityLabel={t('Option name')}
                 maxLength={100}
                 returnKeyType="done"
                 onCommit={text => {
@@ -108,7 +108,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
                 }}
               />
             </View>
-            <IconButton icon="close" label={t('Supprimer l’option {name}', { name: option.name })} size={20} shape={index + 1} onPress={() => save(options.filter(other => other.id !== option.id))} />
+            <IconButton icon="close" label={t('Delete option {name}', { name: option.name })} size={20} shape={index + 1} onPress={() => save(options.filter(other => other.id !== option.id))} />
           </View>
           {painting === option.id ? (
             <View style={styles.palette}>
@@ -123,7 +123,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
           ) : null}
         </View>
       ))}
-      <Button kind="text" icon="plus" label={t('Ajouter une option')} style={styles.addOption} onPress={() => save([...options, { id: createId(), name: `Option ${options.length + 1}`, color: LINE_COLORS[options.length % LINE_COLORS.length]! }])} />
+      <Button kind="text" icon="plus" label={t('Add an option')} style={styles.addOption} onPress={() => save([...options, { id: createId(), name: `Option ${options.length + 1}`, color: LINE_COLORS[options.length % LINE_COLORS.length]! }])} />
     </View>
   );
 }
@@ -137,7 +137,7 @@ function ColumnEditor({ request, column, index, count, onDone }: { request: Colu
     <SheetScroll contentContainerStyle={styles.body}>
       <View style={styles.fields}>
         <CommitField
-          label={t('Nom')}
+          label={t('Name')}
           initial={column.name}
           maxLength={TABLE_LIMITS.name}
           returnKeyType="done"
@@ -149,7 +149,7 @@ function ColumnEditor({ request, column, index, count, onDone }: { request: Colu
         />
         {type === 'number' ? (
           <CommitField
-            label={t('Unité')}
+            label={t('Unit')}
             placeholder="€, kg, %, min…"
             initial={column.unit ?? ''}
             maxLength={TABLE_LIMITS.unit}
@@ -162,7 +162,7 @@ function ColumnEditor({ request, column, index, count, onDone }: { request: Colu
           />
         ) : null}
       </View>
-      <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Type de la colonne')}>
+      <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Column type')}>
         <AppText variant="section" style={styles.heading}>
           {t('Type')}
         </AppText>
@@ -182,18 +182,18 @@ function ColumnEditor({ request, column, index, count, onDone }: { request: Colu
         <View style={styles.divider} />
         <ListRow
           icon="plus"
-          title={t('Insérer une colonne à droite')}
+          title={t('Insert a column to the right')}
           onPress={() => {
             const added = addColumn(page, table, column.id, 'text');
             if (added) openTableSheet({ kind: 'column', page, table, column: added });
           }}
         />
-        {index > 0 ? <ListRow icon="back" title={t('Déplacer à gauche')} onPress={() => moveColumn(page, table, column.id, index - 1)} /> : null}
-        {index < count - 1 ? <ListRow icon="arrowRight" title={t('Déplacer à droite')} onPress={() => moveColumn(page, table, column.id, index + 1)} /> : null}
+        {index > 0 ? <ListRow icon="back" title={t('Move left')} onPress={() => moveColumn(page, table, column.id, index - 1)} /> : null}
+        {index < count - 1 ? <ListRow icon="arrowRight" title={t('Move right')} onPress={() => moveColumn(page, table, column.id, index + 1)} /> : null}
         {count > 1 ? (
           <ListRow
             icon="trash"
-            title={t('Supprimer la colonne')}
+            title={t('Delete column')}
             danger
             onPress={() => {
               onDone();
@@ -211,7 +211,7 @@ function ColumnSheetComponent({ visible, request, onDismiss }: { visible: boolea
   const index = columns && request ? columns.findIndex(entry => entry.id === request.column) : -1;
   const column = index >= 0 ? columns![index] : undefined;
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Colonne')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Column')} tall>
       {request && column ? <ColumnEditor key={column.id} request={request} column={column} index={index} count={columns!.length} onDone={onDismiss} /> : null}
     </Sheet>
   );

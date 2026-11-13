@@ -48,7 +48,7 @@ const EventMark = memo(function EventMark({ doc, large = false }: { doc: SearchD
 });
 
 function EventPreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher: Matcher }) {
-  if (doc.parts.length === 0) return <p className={`${spot.quiet} t-meta`}>{t('Rien d’autre que son titre')}</p>;
+  if (doc.parts.length === 0) return <p className={`${spot.quiet} t-meta`}>{t('Nothing but its title')}</p>;
   return (
     <div className={spot.pageBody}>
       {doc.parts.map((part, at) => (
@@ -68,12 +68,12 @@ const href = (doc: SearchDoc<SpotMeta>): string => {
 export const CALENDAR_SPOT_KINDS: readonly SpotKind[] = [
   {
     type: 'event',
-    label: tx('Événements'),
+    label: tx('Events'),
     docs,
-    title: doc => useCalendarStore.getState().events[doc.meta.id]?.title.trim() || doc.title || t('Sans titre'),
+    title: doc => useCalendarStore.getState().events[doc.meta.id]?.title.trim() || doc.title || t('Untitled'),
     facts: doc => {
       const item = shownOccurrence(doc.meta.id);
-      if (!item) return [t('Événement')];
+      if (!item) return [t('Event')];
       return [whenLine(item, Date.now(), false), ...(item.event.place.trim() ? [item.event.place.trim()] : []), ...(doc.meta.within ? [doc.meta.within] : [])];
     },
     href,

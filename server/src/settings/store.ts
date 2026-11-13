@@ -3,7 +3,7 @@
  * whether its first run is over, link reading
  * (the Claude key, the model, the monthly budget, with the environment as a
  * fallback: an app value wins, then the environment, then the default), the
- * questions about the pages, the S3 backup, the drive that holds the files and Seerr. They are read on every use,
+ * questions about the pages, the S3 backup, the drive that holds the files, Seerr and Immich. They are read on every use,
  * so a change applies without a restart. Secrets are stored as they are and
  * only their last characters leave the server.
  */
@@ -73,6 +73,12 @@ export interface SeerrConfig {
   readonly apiKey: string;
 }
 
+/** Immich, for the photos shown in pages and a contact's face: its address and its API key. */
+export interface ImmichConfig {
+  readonly url: string;
+  readonly apiKey: string;
+}
+
 /** The drive that holds the files; complete or absent. */
 export interface DriveConfig {
   readonly provider: DriveProvider;
@@ -94,6 +100,7 @@ const BUDGET = 'budgetUsd';
 const BACKUP_KEYS = ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secretAccessKey', 'recurrence', 'keep', 'storageClass'] as const;
 const DRIVE_KEYS = ['provider', 'url', 'token', 'folder', 'repoId', 'library', 'leaving'] as const;
 const SEERR_KEYS = ['url', 'apiKey'] as const;
+const IMMICH_KEYS = ['url', 'apiKey'] as const;
 
 const CALENDAR_COUNTRY = 'calendar.country';
 const CALENDAR_REGION = 'calendar.region';
@@ -319,6 +326,14 @@ export class SettingsStore {
     return typeof url === 'string' && url ? { url, apiKey: typeof apiKey === 'string' ? apiKey : '' } : null;
   }
 
+  /** Immich, or null when it is not linked (address and key both set). */
+  immich(): ImmichConfig | null {
+    const stored = this.stored();
+    const url = stored.get('immich.url');
+    const apiKey = stored.get('immich.apiKey');
+    return typeof url === 'string' && url && typeof apiKey === 'string' && apiKey ? { url, apiKey } : null;
+  }
+
   /** What the apps see: never a key, a secret or a token, only their last four characters. */
   view(): ServerSettings {
     const { apiKey, keySource, model, budgetUsd } = this.effective();
@@ -330,6 +345,7 @@ export class SettingsStore {
     const backup = this.backup();
     const drive = this.drive();
     const seerr = this.seerr();
+    const immich = this.immich();
     const recurrence = text('backup.recurrence');
     const keep = stored.get('backup.keep');
     return {
@@ -359,6 +375,7 @@ export class SettingsStore {
         leaving: drive?.leaving ?? false,
       },
       seerr: { url: seerr?.url ?? '', keyHint: seerr?.apiKey ? hintOf(seerr.apiKey) : null },
+      immich: { url: immich?.url ?? '', keyHint: immich ? hintOf(immich.apiKey) : null },
     };
   }
 
@@ -397,6 +414,17 @@ export class SettingsStore {
         if (value === undefined) continue;
         if (value) this.put.run(`seerr.${name}`, value);
         else this.remove.run(`seerr.${name}`);
+      }
+    });
+  }
+
+  /** Immich's settings, whole; null unlinks it. */
+  updateImmich(config: ImmichConfig | null): void {
+    transaction(this.db, () => {
+      for (const name of IMMICH_KEYS) {
+        const value = config?.[name];
+        if (value) this.put.run(`immich.${name}`, value);
+        else this.remove.run(`immich.${name}`);
       }
     });
   }

@@ -25,7 +25,7 @@ export function ReminderSheet({ visible, allDay, chosen, replacing = null, onDis
   const theme = useTheme();
   const choices = allDay ? REMINDER_CHOICES.allDay : REMINDER_CHOICES.timed;
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={replacing === null ? t('Ajouter un rappel') : t('Modifier le rappel')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={replacing === null ? t('Add a reminder') : t('Edit the reminder')}>
       <SheetScroll>
         {choices
           .filter(minutes => minutes === replacing || !chosen.includes(minutes))

@@ -53,7 +53,7 @@ export async function startApp(module: AppModule, { reads = [], demo }: StartOpt
   const result = await booting;
   afterBoot?.();
   if (!result.persistent) {
-    showWarning(t('Ce navigateur bloque le stockage : vos notes seront perdues au rechargement, sauf celles déjà envoyées au serveur.'));
+    showWarning(t('This browser blocks storage: your notes will be lost on reload, except those already sent to the server.'));
   }
   module.start?.();
   // Production only, never the demo (it starts afresh on each load): the shell that lets the installed app open without a network,

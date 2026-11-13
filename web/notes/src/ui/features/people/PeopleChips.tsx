@@ -25,7 +25,7 @@ export function PersonChip({ person }: { person: NotePerson }) {
       href={path ? browserPath(path) : undefined}
       target="_blank"
       rel="noopener"
-      aria-label={t('{name}, dans {app}', { name, app: APPS.contacts.name })}
+      aria-label={t('{name}, in {app}', { name, app: APPS.contacts.name })}
       onClick={event => event.stopPropagation()}
     >
       <PersonFace contact={person.contact} size={24} />
@@ -53,7 +53,7 @@ export const CardFaces = memo(function CardFaces({ ids, named = false }: { ids: 
   const names = people.map(person => contactName(person.contact)).join(', ');
   const shown = people.slice(0, 3);
   return (
-    <span className={styles.faces} role="img" aria-label={t('Personnes : {names}', { names })} data-tip={names}>
+    <span className={styles.faces} role="img" aria-label={t('People: {names}', { names })} data-tip={names}>
       {shown.map(person => (
         <PersonFace key={person.contact.id} contact={person.contact} size={22} />
       ))}

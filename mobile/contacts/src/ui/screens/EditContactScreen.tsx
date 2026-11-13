@@ -17,7 +17,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { createId } from '@unlease/core/services/ids';
 import { settleDate, typeDate } from '@unlease/core/services/dateTyping';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -45,6 +45,8 @@ import { KindSheet, type KindChoice } from '../features/contacts/KindSheet';
 import { callingCountry, CodeSheet } from '../features/contacts/RegionSheet';
 import type { ScreenProps } from '../navigation/types';
 import { later } from '@app/later';
+import { useServerFeature } from '@shared/app/hooks/useServerFeature';
+import { ImmichPeopleSheet } from '../features/contacts/ImmichPeopleSheet';
 
 const EMPTY_DRAFT: ContactDraft = { firstName: '', lastName: '', company: '', jobTitle: '', phones: [], emails: [], addresses: [], birthday: null, labelIds: [], favorite: false, photoId: null, photoMime: '', photoUploaded: false };
 
@@ -77,7 +79,7 @@ function CodeChip({ region, onPress }: { region: string | null; onPress: () => v
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable frost onPress={onPress} style={[styles.kind, styles.code]} accessibilityRole="button" accessibilityLabel={t('Indicatif : {country}', { country: region ? callingCountry(region) : t('Aucun indicatif') })}>
+    <Tappable frost onPress={onPress} style={[styles.kind, styles.code]} accessibilityRole="button" accessibilityLabel={t('Country code: {country}', { country: region ? callingCountry(region) : t('No country code') })}>
       <AppText variant="label" numberOfLines={1} style={styles.kindText}>
         {region ? `+${CALLING_CODES[region] ?? ''}` : '—'}
       </AppText>
@@ -106,7 +108,7 @@ function KindChip({ name, onPress }: { name: string; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable frost onPress={onPress} style={styles.kind} accessibilityRole="button" accessibilityLabel={t('Type : {kind}', { kind: name })}>
+    <Tappable frost onPress={onPress} style={styles.kind} accessibilityRole="button" accessibilityLabel={t('Type: {kind}', { kind: name })}>
       <AppText variant="label" numberOfLines={1} style={styles.kindText}>
         {name}
       </AppText>
@@ -174,6 +176,8 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
   // The row just added takes the cursor, as a new field is typed in at once.
   const [added, setAdded] = useState<string | null>(null);
   const [photoMenu, setPhotoMenu] = useState(false);
+  const [fromImmich, setFromImmich] = useState(false);
+  const immich = useServerFeature('immich');
   const saved = useRef(false);
   /** The photos picked in this form: those left unworn when it closes are dropped (`dropPhoto`). */
   const picks = useRef<string[]>([]);
@@ -278,9 +282,10 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
   };
 
   const photoItems: MenuItem[] = [
-    { label: t('Choisir une photo'), icon: 'image', onPress: () => later(choosePhoto('gallery')) },
-    { label: t('Prendre une photo'), icon: 'camera', onPress: () => later(choosePhoto('camera')) },
-    ...(draft.photoId ? [{ label: t('Retirer la photo'), icon: 'trash' as const, danger: true, onPress: removePhoto }] : []),
+    { label: t('Choose a photo'), icon: 'image', onPress: () => later(choosePhoto('gallery')) },
+    { label: t('Take a photo'), icon: 'camera', onPress: () => later(choosePhoto('camera')) },
+    ...(immich ? [{ label: t('From Immich…'), icon: 'people' as const, onPress: () => setFromImmich(true) }] : []),
+    ...(draft.photoId ? [{ label: t('Remove photo'), icon: 'trash' as const, danger: true, onPress: removePhoto }] : []),
   ];
 
   const kindEntry = kindTarget ? (draft[kindTarget.list] as readonly { id: string; kind: string; label: string }[]).find(entry => entry.id === kindTarget.id) : undefined;
@@ -290,10 +295,10 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar
-        title={editing ? t('Modifier le contact') : t('Créer un contact')}
+        title={editing ? t('Edit contact') : t('Create contact')}
         closes
         onBack={() => navigation.goBack()}
-        actions={<Button label={t('Enregistrer')} small busy={form.busy} onPress={() => later(form.submit(save))} style={styles.saveButton} />}
+        actions={<Button label={t('Save')} small busy={form.busy} onPress={() => later(form.submit(save))} style={styles.saveButton} />}
       />
       {form.message ? (
         <View style={styles.message}>
@@ -303,7 +308,7 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
         <RevealScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.photo}>
-            <Tappable onPress={() => setPhotoMenu(true)} accessibilityRole="button" accessibilityLabel={draft.photoId ? t('Changer la photo') : t('Ajouter une photo')} style={styles.photoTarget}>
+            <Tappable onPress={() => setPhotoMenu(true)} accessibilityRole="button" accessibilityLabel={draft.photoId ? t('Change photo') : t('Add photo')} style={styles.photoTarget}>
               <ContactAvatar contact={face} size={104} />
               <Organic pebble={3} style={styles.photoBadge}>
                 <Icon name="camera" size={18} color={theme.color.onAction} />
@@ -313,13 +318,13 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
 
           {/* Who it is, under the face that heads them: the fields' own names say it, no title above them. */}
           <View style={styles.group}>
-            <TextField kind="person" field={form.field('firstName')} label={t('Prénom')} value={draft.firstName} onChangeText={value => update('firstName', value)} maxLength={CONTACT_LIMITS.name} autoFocus={!editing} />
-            <TextField kind="person" field={form.field('lastName')} label={t('Nom de famille')} value={draft.lastName} onChangeText={value => update('lastName', value)} maxLength={CONTACT_LIMITS.name} />
-            <TextField kind="organization" field={form.field('company')} label={t('Entreprise')} value={draft.company} onChangeText={value => update('company', value)} maxLength={CONTACT_LIMITS.company} />
-            <TextField kind="text" field={form.field('jobTitle')} label={t('Fonction')} value={draft.jobTitle} onChangeText={value => update('jobTitle', value)} maxLength={CONTACT_LIMITS.jobTitle} />
+            <TextField kind="person" field={form.field('firstName')} label={t('First name')} value={draft.firstName} onChangeText={value => update('firstName', value)} maxLength={CONTACT_LIMITS.name} autoFocus={!editing} />
+            <TextField kind="person" field={form.field('lastName')} label={t('Last name')} value={draft.lastName} onChangeText={value => update('lastName', value)} maxLength={CONTACT_LIMITS.name} />
+            <TextField kind="organization" field={form.field('company')} label={t('Company')} value={draft.company} onChangeText={value => update('company', value)} maxLength={CONTACT_LIMITS.company} />
+            <TextField kind="text" field={form.field('jobTitle')} label={t('Job title')} value={draft.jobTitle} onChangeText={value => update('jobTitle', value)} maxLength={CONTACT_LIMITS.jobTitle} />
           </View>
 
-          <Group icon="phoneCall" title={t('Téléphones')}>
+          <Group icon="phoneCall" title={t('Phones')}>
             {draft.phones.map(phone => (
               <View key={phone.id} style={styles.entry}>
                 <CodeChip region={codeOf(phone.id)} onPress={() => setCodeTarget(phone.id)} />
@@ -330,49 +335,49 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     value={phone.number}
                     onChangeText={value => updateEntry('phones', phone.id, { number: value })}
                     onBlur={() => takeCode(phone)}
-                    placeholder={t('Numéro')}
-                    accessibilityLabel={t('Numéro')}
+                    placeholder={tc('phone', 'Number')}
+                    accessibilityLabel={tc('phone', 'Number')}
                     maxLength={CONTACT_LIMITS.number}
                     autoFocus={phone.id === added}
                   />
                 </View>
                 <KindChip name={phoneKindName(phone)} onPress={() => setKindTarget({ list: 'phones', id: phone.id })} />
-                <IconButton icon="close" label={t('Retirer ce numéro')} onPress={() => removeEntry('phones', phone.id)} />
+                <IconButton icon="close" label={t('Remove this number')} onPress={() => removeEntry('phones', phone.id)} />
               </View>
             ))}
-            {draft.phones.length < CONTACT_LIMITS.phones ? <Button label={t('Ajouter un numéro')} icon="plus" kind="text" onPress={() => {
+            {draft.phones.length < CONTACT_LIMITS.phones ? <Button label={t('Add number')} icon="plus" kind="text" onPress={() => {
                   const phone = newPhone('', draft.phones.length === 0 ? 'mobile' : 'home');
                   setAdded(phone.id);
                   update('phones', [...draft.phones, phone]);
                 }} style={styles.add} /> : null}
           </Group>
 
-          <Group icon="email" title={t('E-mails')}>
+          <Group icon="email" title={t('Emails')}>
             {draft.emails.map(entry => (
               <View key={entry.id} style={styles.entry}>
                 <View style={styles.entryField}>
-                  <TextField kind="email" field={form.field(`email:${entry.id}`)} value={entry.address} onChangeText={value => updateEntry('emails', entry.id, { address: value })} placeholder={t('Adresse e-mail')} accessibilityLabel={t('Adresse e-mail')} maxLength={CONTACT_LIMITS.email} autoFocus={entry.id === added} />
+                  <TextField kind="email" field={form.field(`email:${entry.id}`)} value={entry.address} onChangeText={value => updateEntry('emails', entry.id, { address: value })} placeholder={t('Email address')} accessibilityLabel={t('Email address')} maxLength={CONTACT_LIMITS.email} autoFocus={entry.id === added} />
                 </View>
                 <KindChip name={placeKindName(entry)} onPress={() => setKindTarget({ list: 'emails', id: entry.id })} />
-                <IconButton icon="close" label={t('Retirer cet e-mail')} onPress={() => removeEntry('emails', entry.id)} />
+                <IconButton icon="close" label={t('Remove this email')} onPress={() => removeEntry('emails', entry.id)} />
               </View>
             ))}
-            {draft.emails.length < CONTACT_LIMITS.emails ? <Button label={t('Ajouter un e-mail')} icon="plus" kind="text" onPress={() => {
+            {draft.emails.length < CONTACT_LIMITS.emails ? <Button label={t('Add email')} icon="plus" kind="text" onPress={() => {
                   const entry = newEmail(draft.emails.length === 0 ? 'home' : 'work');
                   setAdded(entry.id);
                   update('emails', [...draft.emails, entry]);
                 }} style={styles.add} /> : null}
           </Group>
 
-          <Group icon="mapPin" title={t('Adresses')}>
+          <Group icon="mapPin" title={t('Addresses')}>
             {draft.addresses.map((entry, index) => (
               <View key={entry.id} style={[styles.address, index > 0 ? styles.nextAddress : null]}>
                 <View style={styles.addressHead}>
                   <KindChip name={placeKindName(entry)} onPress={() => setKindTarget({ list: 'addresses', id: entry.id })} />
-                  <IconButton icon="close" label={t('Retirer cette adresse')} onPress={() => removeEntry('addresses', entry.id)} />
+                  <IconButton icon="close" label={t('Remove this address')} onPress={() => removeEntry('addresses', entry.id)} />
                 </View>
                 <PlaceField
-                  label={t('Rue')}
+                  label={t('Street')}
                   value={entry.street.split('\n')[0] ?? ''}
                   onChangeText={value => {
                     const rest = entry.street.split('\n').slice(1).join('\n');
@@ -384,50 +389,50 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     updateEntry('addresses', entry.id, { street: rest ? `${first}\n${rest}` : first, postalCode: place.postalCode, city: place.city, region: place.region, country: place.country });
                   }}
                   known={known}
-                  placeholder={t('Un numéro et une rue, un lieu, une ville…')}
-                  help={t('Choisir une adresse proposée remplit le code postal, la ville et le pays.')}
+                  placeholder={t('A number and a street, a place, a town…')}
+                  help={t('Picking a suggested address fills in the postcode, the town and the country.')}
                   autoFocus={entry.id === added}
                   field={form.field(`street:${entry.id}`)}
                 />
                 <TextField
                   kind="street"
                   field={form.field(`rest:${entry.id}`)}
-                  label={t('Complément')}
+                  label={t('Address line 2')}
                   value={entry.street.split('\n').slice(1).join('\n')}
                   onChangeText={value => {
                     const first = entry.street.split('\n')[0] ?? '';
                     updateEntry('addresses', entry.id, { street: value ? `${first}\n${value}` : first });
                   }}
-                  placeholder={t('Bâtiment, étage, code…')}
+                  placeholder={t('Building, floor, door code…')}
                   multiline={entry.street.split('\n').length > 2}
                   maxLength={CONTACT_LIMITS.addressLine}
                 />
                 <View style={styles.pair}>
                   <View style={styles.short}>
-                    <TextField kind="postalCode" field={form.field(`postalCode:${entry.id}`)} label={t('Code postal')} value={entry.postalCode} onChangeText={value => updateEntry('addresses', entry.id, { postalCode: value })} maxLength={CONTACT_LIMITS.addressPart} />
+                    <TextField kind="postalCode" field={form.field(`postalCode:${entry.id}`)} label={t('Postcode')} value={entry.postalCode} onChangeText={value => updateEntry('addresses', entry.id, { postalCode: value })} maxLength={CONTACT_LIMITS.addressPart} />
                   </View>
                   <View style={styles.fill}>
-                    <TextField kind="city" field={form.field(`city:${entry.id}`)} label={t('Ville')} value={entry.city} onChangeText={value => updateEntry('addresses', entry.id, { city: value })} maxLength={CONTACT_LIMITS.addressPart} />
+                    <TextField kind="city" field={form.field(`city:${entry.id}`)} label={t('City')} value={entry.city} onChangeText={value => updateEntry('addresses', entry.id, { city: value })} maxLength={CONTACT_LIMITS.addressPart} />
                   </View>
                 </View>
                 <View style={styles.pair}>
                   <View style={styles.fill}>
-                    <TextField kind="region" field={form.field(`region:${entry.id}`)} label={t('Région')} value={entry.region} onChangeText={value => updateEntry('addresses', entry.id, { region: value })} maxLength={CONTACT_LIMITS.addressPart} />
+                    <TextField kind="region" field={form.field(`region:${entry.id}`)} label={t('Region')} value={entry.region} onChangeText={value => updateEntry('addresses', entry.id, { region: value })} maxLength={CONTACT_LIMITS.addressPart} />
                   </View>
                   <View style={styles.fill}>
-                    <TextField kind="country" field={form.field(`country:${entry.id}`)} label={t('Pays')} value={entry.country} onChangeText={value => updateEntry('addresses', entry.id, { country: value })} maxLength={CONTACT_LIMITS.addressPart} />
+                    <TextField kind="country" field={form.field(`country:${entry.id}`)} label={t('Country')} value={entry.country} onChangeText={value => updateEntry('addresses', entry.id, { country: value })} maxLength={CONTACT_LIMITS.addressPart} />
                   </View>
                 </View>
               </View>
             ))}
-            {draft.addresses.length < CONTACT_LIMITS.addresses ? <Button label={t('Ajouter une adresse')} icon="plus" kind="text" onPress={() => {
+            {draft.addresses.length < CONTACT_LIMITS.addresses ? <Button label={t('Add address')} icon="plus" kind="text" onPress={() => {
                   const entry = newAddress(draft.addresses.length === 0 ? 'home' : 'work');
                   setAdded(entry.id);
                   update('addresses', [...draft.addresses, entry]);
                 }} style={styles.add} /> : null}
           </Group>
 
-          <Group icon="cake" title={t('Anniversaire')}>
+          <Group icon="cake" title={t('Birthday')}>
             <TextField
               kind="number"
               field={form.field('birthday')}
@@ -435,38 +440,52 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
               // Its separators are written as it is typed (« 27 » -> « 27/ »), so digits alone are enough.
               onChangeText={text => setBirthdayText(before => typeDate(before, text, dateOrder))}
               onBlur={() => setBirthdayText(before => settleDate(before))}
-              placeholder={monthFirst ? t('MM/JJ/AAAA') : t('JJ/MM/AAAA')}
-              accessibilityLabel={t('Anniversaire')}
+              placeholder={monthFirst ? t('MM/DD/YYYY') : t('DD/MM/YYYY')}
+              accessibilityLabel={t('Birthday')}
               keyboardType="number-pad"
               maxLength={12}
-              help={`${monthFirst ? t('MM/JJ/AAAA, année facultative') : t('JJ/MM/AAAA, année facultative')}${typed ? ` · ${formatBirthday(typed)}` : ''}`}
+              help={`${monthFirst ? t('MM/DD/YYYY, year optional') : t('DD/MM/YYYY, year optional')}${typed ? ` · ${formatBirthday(typed)}` : ''}`}
             />
           </Group>
 
-          <Group icon="tag" title={t('Libellés')}>
+          <Group icon="tag" title={t('Labels')}>
             <LabelChips
               labels={labels}
               chosen={draft.labelIds}
               onToggle={id => setDraft(before => ({ ...before, labelIds: before.labelIds.includes(id) ? before.labelIds.filter(other => other !== id) : [...before.labelIds, id] }))}
               onCreate={name => {
-                if (labelNameTaken(name)) return { problem: t('Ce libellé existe déjà : choisissez un autre nom.') };
+                if (labelNameTaken(name)) return { problem: t('This label already exists: choose another name.') };
                 const id = createLabel(name);
                 setDraft(before => ({ ...before, labelIds: [...before.labelIds, id] }));
                 return { id };
               }}
               maxLength={CONTACT_LIMITS.labelName}
-              words={{ add: t('Nouveau libellé'), placeholder: t('Nom du libellé'), field: t('Nom du nouveau libellé'), create: t('Créer le libellé') }}
+              words={{ add: t('New label'), placeholder: t('Label name'), field: t('New label’s name'), create: t('Create the label') }}
             />
-            <SwitchRow title={t('Favori')} supporting={t('En tête de la liste, et dans les appels rapides.')} value={draft.favorite} onChange={value => update('favorite', value)} />
+            <SwitchRow title={t('Favourite')} supporting={t('At the top of the list, and in quick calls.')} value={draft.favorite} onChange={value => update('favorite', value)} />
           </Group>
 
           <Group icon="note" title={t('Note')}>
-            <TextField kind="prose" field={form.field('note')} value={note} onChangeText={setNote} placeholder={t('Ce que vous voulez garder sur cette personne')} accessibilityLabel={t('Note')} multiline maxLength={CONTACTS_TEXT_LIMITS.contact.note} style={styles.note} />
+            <TextField kind="prose" field={form.field('note')} value={note} onChangeText={setNote} placeholder={t('Anything you want to keep about this person')} accessibilityLabel={t('Note')} multiline maxLength={CONTACTS_TEXT_LIMITS.contact.note} style={styles.note} />
           </Group>
         </RevealScrollView>
       </KeyboardAvoidingView>
 
       <Menu visible={photoMenu} items={photoItems} onDismiss={() => setPhotoMenu(false)} />
+      {immich ? (
+        <ImmichPeopleSheet
+          visible={fromImmich}
+          name={`${draft.firstName} ${draft.lastName}`.trim()}
+          onDismiss={() => setFromImmich(false)}
+          onChosen={photo => {
+            setFromImmich(false);
+            // The server holds it already: nothing kept here, nothing to send.
+            const previous = draft.photoId;
+            setDraft(before => ({ ...before, photoId: photo.id, photoMime: photo.mime, photoUploaded: true }));
+            if (previous && picks.current.includes(previous)) dropPhoto(previous);
+          }}
+        />
+      ) : null}
       <CodeSheet
         visible={codeTarget !== null}
         chosen={codeTarget ? codeOf(codeTarget) : null}

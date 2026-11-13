@@ -6,7 +6,7 @@
  */
 import { memo } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { LinkKind } from '@unlease/notes/models/entities';
 
 import styles from '@shared/ui/components/marks.module.css';
@@ -14,32 +14,32 @@ import styles from '@shared/ui/components/marks.module.css';
 export function stampWord(kind: LinkKind): string {
   switch (kind) {
     case 'product':
-      return t('Acheté');
+      return t('Bought');
     case 'film':
     case 'series':
     case 'video':
-      return t('Vu');
+      return t('Watched');
     case 'book':
     case 'article':
-      return t('Lu');
+      return t('Read');
     case 'music':
-      return t('Écouté');
+      return t('Heard');
     case 'game':
-      return t('Joué');
+      return t('Played');
     case 'restaurant':
     case 'place':
     case 'event':
-      return t('Visité');
+      return t('Visited');
     case 'recipe':
-      return t('Cuisiné');
+      return t('Cooked');
     default:
-      return t('Fait');
+      return tc('ticked', 'Done');
   }
 }
 
 function StampComponent({ kind, date, className }: { kind: LinkKind; date: string; className?: string }) {
   return (
-    <span className={[styles.stamp, className ?? ''].join(' ')} role="img" aria-label={t('{stamp} le {date}', { stamp: stampWord(kind), date })}>
+    <span className={[styles.stamp, className ?? ''].join(' ')} role="img" aria-label={t('{stamp} on {date}', { stamp: stampWord(kind), date })}>
       <span className={styles.stampWord} aria-hidden="true">
         {stampWord(kind).toUpperCase()}
       </span>

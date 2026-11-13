@@ -42,7 +42,7 @@ export type SheetModule = Extract<LinkModule, 'coupons' | 'cheaper' | 'secondhan
 const SHEET_MODULES: ReadonlySet<LinkModule> = new Set<SheetModule>(['coupons', 'cheaper', 'secondhand', 'groceries', 'ratings', 'recap', 'coverage', 'ask']);
 const isSheetModule = (module: LinkModule): module is SheetModule => SHEET_MODULES.has(module);
 
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 
 export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetModule) => void }) {
   const link = useLibraryStore(s => s.links[id]);
@@ -73,9 +73,9 @@ export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetMo
       .then(
         page => {
           setMade(page);
-          showSnack(t('Copie gardée dans {app}', { app: APPS.pages.name }), { label: t('Ouvrir'), run: () => void openInApp('pages', pagePlace(page)) }, { tone: 'success' });
+          showSnack(t('Copy kept in {app}', { app: APPS.pages.name }), { label: t('Open'), run: () => void openInApp('pages', pagePlace(page)) }, { tone: 'success' });
         },
-        (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('erreur inconnue'), undefined, { tone: 'error' }),
+        (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('unknown error'), undefined, { tone: 'error' }),
       )
       .finally(() => setCopying(false));
   };
@@ -85,7 +85,7 @@ export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetMo
     agendaQuery(id)
       .then(
         query => void openInApp('calendar', newEventPlace(query)),
-        (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('erreur inconnue'), undefined, { tone: 'error' }),
+        (error: unknown) => showSnack(error instanceof Error ? t(error.message) : t('unknown error'), undefined, { tone: 'error' }),
       )
       .finally(() => setDating(false));
   };
@@ -103,7 +103,7 @@ export function ModuleBar({ id, onOpen }: { id: string; onOpen: (module: SheetMo
     if (module === 'agenda') return <Button key={module} kind="tonal" small label={label} icon={icon} busy={dating} onPress={toAgenda} />;
     if (module === 'archive') {
       return copy ? (
-        <Button key={module} kind="tonal" small label={t('Voir la copie')} icon="page" onPress={() => void openInApp('pages', pagePlace(copy))} />
+        <Button key={module} kind="tonal" small label={t('See the copy')} icon="page" onPress={() => void openInApp('pages', pagePlace(copy))} />
       ) : (
         <Button key={module} kind="tonal" small label={label} icon={icon} busy={copying} onPress={keep} />
       );

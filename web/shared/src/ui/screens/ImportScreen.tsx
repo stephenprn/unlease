@@ -15,13 +15,13 @@ export function ImportScreen() {
   const Wizard = theApp().importer?.Wizard;
   return (
     <div className={styles.page}>
-      <PageHead title={t('Importer')} />
+      <PageHead title={t('Import')} />
       {Wizard ? (
         <Wizard />
       ) : (
-        <Section label={t('Importer')}>
+        <Section label={t('Import')}>
           <div className={styles.block}>
-            <EmptyLine size="body" text={t('Cette application n’importe rien pour l’instant.')} />
+            <EmptyLine size="body" text={t('This app imports nothing for now.')} />
           </div>
         </Section>
       )}

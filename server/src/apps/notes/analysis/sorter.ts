@@ -21,7 +21,7 @@ export type SortOutcome =
   | { readonly ok: true; readonly moves: readonly SortMove[]; readonly incomplete: string | null }
   | { readonly ok: false; readonly status: 409 | 502; readonly error: string };
 
-const BUDGET_SPENT = 'Budget mensuel atteint';
+const BUDGET_SPENT = 'Monthly budget reached';
 
 export interface LinkSorterOptions {
   readonly usage: UsageStore;
@@ -68,7 +68,7 @@ export class LinkSorter {
   async sort(request: SortRequest, signal: AbortSignal): Promise<SortOutcome> {
     const { usage } = this.options;
     const { model, budgetUsd } = this.options.analysis();
-    if (!model) return { ok: false, status: 409, error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' };
+    if (!model) return { ok: false, status: 409, error: 'Claude is not reading links: add a key in Administration.' };
     if (usage.spent(budgetUsd)) return { ok: false, status: 409, error: BUDGET_SPENT };
 
     const from = request.from === null ? null : request.targets.findIndex(target => target.id === request.from);
@@ -79,7 +79,7 @@ export class LinkSorter {
     let stop: string | null = null;
     const results = await inPool(batches, CONCURRENCY, async (links): Promise<SortMove[] | string | null> => {
       if (stop !== null) return null;
-      if (signal.aborted) return (stop = 'Claude a mis trop de temps');
+      if (signal.aborted) return (stop = 'Claude took too long');
       const hold = usage.hold(budgetUsd);
       if (!hold) return (stop = BUDGET_SPENT);
       const started = this.now();
@@ -88,9 +88,9 @@ export class LinkSorter {
         usage.record(SORT_TASK, { usage: answer.usage, ok: true, error: null, durationMs: this.now() - started });
         return movesFrom(answer.moves, links, request);
       } catch (error) {
-        if (signal.aborted) return (stop ??= 'Claude a mis trop de temps');
+        if (signal.aborted) return (stop ??= 'Claude took too long');
         if (!(error instanceof ModelError)) log.error('link sorting crashed', { error });
-        const message = error instanceof ModelError ? error.message : 'Erreur du tri';
+        const message = error instanceof ModelError ? error.message : 'Sorting error';
         usage.record(SORT_TASK, { usage: error instanceof ModelError ? error.usage : null, ok: false, error: message, durationMs: this.now() - started });
         return (stop ??= message);
       } finally {
@@ -100,9 +100,9 @@ export class LinkSorter {
 
     const answered = results.filter((result): result is SortMove[] => Array.isArray(result));
     const failure = results.find((result): result is string => typeof result === 'string') ?? null;
-    if (answered.length === 0) return { ok: false, status: failure === BUDGET_SPENT ? 409 : 502, error: failure ?? 'Erreur du tri' };
+    if (answered.length === 0) return { ok: false, status: failure === BUDGET_SPENT ? 409 : 502, error: failure ?? 'Sorting error' };
     const moves = answered.flat();
     log.info('links sorted', { task: request.task, links: request.links.length, moves: moves.length, ...(failure ? { incomplete: failure } : {}) });
-    return { ok: true, moves, incomplete: answered.length < batches.length ? (failure ?? 'Erreur du tri') : null };
+    return { ok: true, moves, incomplete: answered.length < batches.length ? (failure ?? 'Sorting error') : null };
   }
 }

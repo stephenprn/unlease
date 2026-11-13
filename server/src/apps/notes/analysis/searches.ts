@@ -31,7 +31,7 @@ const KEEP_MS = { coverage: 12 * HOUR_MS, ratings: 7 * 24 * HOUR_MS, recap: 30 *
 const DEADLINE_MS = 90_000;
 
 /** No key set, in Carnet's words (links are what is not read); every app's are `claude/outcome.ts`'s. */
-export const NO_KEY = 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.';
+export const NO_KEY = 'Claude is not reading links: add a key in Administration.';
 
 export interface LinkSearchesOptions {
   readonly usage: UsageStore;
@@ -165,7 +165,7 @@ export class LinkSearches {
       return { ok: true, answer };
     } catch (error) {
       if (!signal.aborted && !(error instanceof ModelError)) log.error('module search crashed', { task, error });
-      const message = signal.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la recherche';
+      const message = signal.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Search error';
       const spent = error instanceof ModelError ? error.usage : null;
       usage.record(task, { linkId: request.link.id, url, usage: signal.aborted ? withCutOffCall(spent, model.model) : spent, ok: false, error: message, durationMs: this.now() - started, result: null });
       return { ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message };

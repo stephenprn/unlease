@@ -68,7 +68,7 @@ function archiveSwiped(id: string): void {
   const note = useLibraryStore.getState().notes[id];
   if (!note) return;
   const archiving = !note.archived;
-  showUndo(archiving ? t('Note archivée') : t('Note désarchivée'), setArchived(id, archiving));
+  showUndo(archiving ? t('Note archived') : t('Note unarchived'), setArchived(id, archiving));
 }
 
 function WallComponent({ sections, layout, query, selection, now, onOpen, onSelect }: WallProps) {

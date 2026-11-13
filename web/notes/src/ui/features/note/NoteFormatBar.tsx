@@ -25,15 +25,15 @@ import styles from './richBody.module.css';
 export const FINGER = '(max-width: 719px) and (pointer: coarse)';
 
 const FLAGS: readonly { readonly flag: NoteFlag; readonly icon: GlyphName; readonly label: string; readonly key: string }[] = [
-  { flag: 'b', icon: 'bold', label: tx('Gras'), key: 'B' },
-  { flag: 'i', icon: 'italic', label: tx('Italique'), key: 'I' },
-  { flag: 'u', icon: 'underline', label: tx('Souligné'), key: 'U' },
+  { flag: 'b', icon: 'bold', label: tx('Bold'), key: 'B' },
+  { flag: 'i', icon: 'italic', label: tx('Italic'), key: 'I' },
+  { flag: 'u', icon: 'underline', label: tx('Underline'), key: 'U' },
 ];
 
 const HEADING_LOOKS: Readonly<Record<Exclude<HeadingLevel, 0>, { readonly icon: GlyphName; readonly label: string }>> = {
-  1: { icon: 'heading1', label: tx('Titre 1') },
-  2: { icon: 'heading2', label: tx('Titre 2') },
-  3: { icon: 'heading3', label: tx('Titre 3') },
+  1: { icon: 'heading1', label: tx('Heading 1') },
+  2: { icon: 'heading2', label: tx('Heading 2') },
+  3: { icon: 'heading3', label: tx('Heading 3') },
 };
 
 const keys = (letter: string): string => (isApple() ? `⌘${letter}` : `Ctrl+${letter}`);
@@ -102,7 +102,7 @@ function DockedBar({ children }: { children: ReactNode }) {
     <div
       className={styles.dockedBar}
       role="toolbar"
-      aria-label={t('Mise en forme')}
+      aria-label={t('Formatting')}
       data-keyboard={inset > 0 || undefined}
       style={{ bottom: inset }}
       // A press here keeps the selection, and the keyboard, in the text.
@@ -139,13 +139,13 @@ export function NoteFormatBar({ state, place, docked, onFlag, onHeading, onClear
         <IconButton key={level} icon={HEADING_LOOKS[level].icon} label={t(HEADING_LOOKS[level].label)} pressed={state.heading === level} shape={level + 2} size={size} compact={compact} onClick={() => onHeading(level)} />
       ))}
       <span className={styles.formatDivider} aria-hidden="true" />
-      <IconButton icon="eraser" label={t('Effacer la mise en forme')} shape={6} size={size} compact={compact} onClick={onClear} />
+      <IconButton icon="eraser" label={t('Clear formatting')} shape={6} size={size} compact={compact} onClick={onClear} />
     </>
   );
   if (docked) return <DockedBar>{buttons}</DockedBar>;
   if (!place) return null;
   return (
-    <Floating anchor={place.anchor} above={place.above} label={t('Mise en forme')} className={styles.formatBar} role="toolbar">
+    <Floating anchor={place.anchor} above={place.above} label={t('Formatting')} className={styles.formatBar} role="toolbar">
       {/* A press never takes the focus from the text (a browser may focus a button on its mouse down). */}
       <div className={styles.formatRow} onMouseDown={event => event.preventDefault()}>
         {buttons}

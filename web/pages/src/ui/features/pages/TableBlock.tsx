@@ -38,7 +38,7 @@ const NO_ROWS: readonly string[] = [];
 /** A row gone, with the way back (the phone's « Ligne supprimée » and « Annuler »): written back as a step of its own. */
 function deleteRowWithUndo(page: string, row: string): void {
   deleteBlocks(page, [row]);
-  showUndo(t('Ligne supprimée'), () => commit(page, [{ type: 'block', id: row, patch: { deletedAt: null } }]));
+  showUndo(t('Row deleted'), () => commit(page, [{ type: 'block', id: row, patch: { deletedAt: null } }]));
 }
 
 /** A column and its cells gone, with the way back: the columns and those cells written back as one step. */
@@ -50,7 +50,7 @@ function deleteColumnWithUndo(page: string, table: string, column: TableColumn):
     return row && column.id in row.cells ? [{ id, cells: row.cells }] : [];
   });
   deleteColumn(page, table, column.id);
-  showUndo(t('Colonne « {name} » supprimée', { name: column.name }), () =>
+  showUndo(t('Column “{name}” deleted', { name: column.name }), () =>
     commit(page, [{ type: 'block', id: table, patch: { columns: columns.map(entry => ({ ...entry })) } }, ...cells.map(row => ({ type: 'block' as const, id: row.id, patch: { cells: { ...row.cells } } }))]),
   );
 }
@@ -109,8 +109,8 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
       <input
         className={styles.pickerField}
         value={query}
-        placeholder={options.length > 0 ? t('Chercher ou créer une option') : t('Créer une option')}
-        aria-label={t('Chercher ou créer une option')}
+        placeholder={options.length > 0 ? t('Search or create an option') : t('Create an option')}
+        aria-label={t('Search or create an option')}
         data-autofocus=""
         onChange={event => setQuery(event.target.value)}
         onKeyDown={event => {
@@ -130,12 +130,12 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
         {query.trim() && !exact ? (
           <button type="button" className={styles.optionRow} onClick={create}>
             <Icon name="plus" size={16} />
-            {t('Créer « {name} »', { name: query.trim() })}
+            {t('Create “{name}”', { name: query.trim() })}
           </button>
         ) : null}
       </div>
       {/* As on the phone: no option yet, how one is made. */}
-      {options.length === 0 && !query.trim() ? <EmptyLine className={styles.optionsEmpty} text={t('Tapez le nom d’une option pour la créer.')} /> : null}
+      {options.length === 0 && !query.trim() ? <EmptyLine className={styles.optionsEmpty} text={t('Type an option’s name to create it.')} /> : null}
     </div>
   );
 }
@@ -219,7 +219,7 @@ const Cell = memo(function Cell({ page, table, rowId, column, value }: { page: s
   if (type === 'checkbox') {
     return (
       <td className={styles.cell} data-type={type}>
-        <Checkbox checked={value === true} label={value === true ? t('{name} : coché', { name: column.name }) : t('{name} : non coché', { name: column.name })} disabled={readOnly} onToggle={() => write(value !== true)} />
+        <Checkbox checked={value === true} label={value === true ? t('{name}: ticked', { name: column.name }) : t('{name}: not ticked', { name: column.name })} disabled={readOnly} onToggle={() => write(value !== true)} />
       </td>
     );
   }
@@ -272,7 +272,7 @@ const Cell = memo(function Cell({ page, table, rowId, column, value }: { page: s
     }
     // Left with something the type refuses: the cell keeps what it held, and the slip offers to go back to it.
     const kept = draft;
-    showError(format ? t('Ce n’est pas {expected} : la cellule n’a pas changé.', { expected: format.expected }) : t('La cellule n’a pas changé.'), { label: t('Corriger'), run: () => open(kept, true) });
+    showError(format ? t('That isn’t {expected}: the cell hasn’t changed.', { expected: format.expected }) : t('The cell hasn’t changed.'), { label: t('Fix'), run: () => open(kept, true) });
   };
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>): void => {
     // Shift+Enter writes a new line in a text cell; Enter closes every cell.
@@ -288,9 +288,9 @@ const Cell = memo(function Cell({ page, table, rowId, column, value }: { page: s
     }
   };
   const href = (type === 'url' || type === 'email' || type === 'phone') && typeof value === 'string' ? cellHref(type, value) : null;
-  const misfit = format && !cellFits(value, column) ? t('Ce n’est pas {expected}', { expected: format.expected }) : null;
+  const misfit = format && !cellFits(value, column) ? t('That isn’t {expected}', { expected: format.expected }) : null;
   const inline = editing && type !== 'select' && type !== 'multi';
-  const problem = refused && format ? t('Ce n’est pas {expected}. Exemple : {example}', { expected: format.expected, example: format.example }) : null;
+  const problem = refused && format ? t('That isn’t {expected}. Example: {example}', { expected: format.expected, example: format.example }) : null;
 
   return (
     <td className={styles.cell} data-type={type} data-editing={inline || undefined} data-refused={problem ? '' : undefined}>
@@ -356,7 +356,7 @@ const Cell = memo(function Cell({ page, table, rowId, column, value }: { page: s
             ref={cell}
             type="button"
             className={styles.cellButton}
-            aria-label={misfit ? t('{name} : {value} ({problem})', { name: column.name, value: cellText(value, column) || t('vide'), problem: misfit }) : t('{name} : {value}', { name: column.name, value: cellText(value, column) || t('vide') })}
+            aria-label={misfit ? t('{name}: {value} ({problem})', { name: column.name, value: cellText(value, column) || t('empty'), problem: misfit }) : t('{name}: {value}', { name: column.name, value: cellText(value, column) || t('empty') })}
             data-tip={misfit ?? undefined}
             onClick={begin}
             onKeyDown={event => {
@@ -371,7 +371,7 @@ const Cell = memo(function Cell({ page, table, rowId, column, value }: { page: s
         </>
       )}
       {href && !editing ? (
-        <a className={styles.cellOpen} href={href} target="_blank" rel="noopener noreferrer" aria-label={t('Ouvrir {title}', { title: cellText(value, column) })} data-tip={t('Ouvrir')}>
+        <a className={styles.cellOpen} href={href} target="_blank" rel="noopener noreferrer" aria-label={t('Open {title}', { title: cellText(value, column) })} data-tip={t('Open')}>
           <Icon name="external" size={14} />
         </a>
       ) : null}
@@ -405,7 +405,7 @@ const Row = memo(function Row({ page, table, id, columns }: { page: string; tabl
       ))}
       <td className={styles.rowEnd}>
         {readOnly ? null : (
-          <button type="button" className={styles.rowDelete} aria-label={t('Supprimer la ligne')} data-tip={t('Supprimer la ligne')} onClick={() => deleteRowWithUndo(page, id)}>
+          <button type="button" className={styles.rowDelete} aria-label={t('Delete row')} data-tip={t('Delete row')} onClick={() => deleteRowWithUndo(page, id)}>
             <Icon name="close" size={14} />
           </button>
         )}
@@ -430,7 +430,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
             type="button"
             className={styles.optionSwatch}
             data-line={option.color}
-            aria-label={t('Couleur de {name}', { name: option.name })}
+            aria-label={t('Colour of {name}', { name: option.name })}
             onClick={event => {
               swatch.current = event.currentTarget;
               setPainting(option.id);
@@ -439,25 +439,25 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
           <input
             className={styles.optionName}
             defaultValue={option.name}
-            aria-label={t('Nom de l’option')}
+            aria-label={t('Option name')}
             onBlur={event => {
               const name = event.target.value.trim().slice(0, 100);
               if (name && name !== option.name) save(options.map(other => (other.id === option.id ? { ...other, name } : other)));
             }}
           />
-          <button type="button" className={styles.optionRemove} aria-label={t('Supprimer l’option {name}', { name: option.name })} onClick={() => save(options.filter(other => other.id !== option.id))}>
+          <button type="button" className={styles.optionRemove} aria-label={t('Delete option {name}', { name: option.name })} onClick={() => save(options.filter(other => other.id !== option.id))}>
             <Icon name="close" size={14} />
           </button>
         </div>
       ))}
       <button type="button" className={styles.optionAdd} onClick={() => save([...options, { id: createId(), name: `Option ${options.length + 1}`, color: LINE_COLORS[options.length % LINE_COLORS.length]! }])}>
         <Icon name="plus" size={16} />
-        {t('Ajouter une option')}
+        {t('Add an option')}
       </button>
-      <Popover open={painted !== null} anchor={swatch} onDismiss={() => setPainting(null)} label={t('Couleur de l’option')} width={300} align="start">
+      <Popover open={painted !== null} anchor={swatch} onDismiss={() => setPainting(null)} label={t('Option colour')} width={300} align="start">
         <div className={styles.colorPopover}>
           <LineColorPicker
-            label={t('Couleur de l’option')}
+            label={t('Option colour')}
             value={painted?.color ?? null}
             onChange={(color: LineColor | null) => {
               if (painted && color) save(options.map(other => (other.id === painted.id ? { ...other, color } : other)));
@@ -504,13 +504,13 @@ function ColumnHead({ page, table, column, index, count }: { page: string; table
         <span className={styles.headName}>{column.name}</span>
         {type === 'number' && column.unit ? <span className={styles.headUnit}>{column.unit}</span> : null}
       </button>
-      {readOnly ? null : <span className={styles.resize} role="separator" aria-orientation="vertical" aria-label={t('Largeur de {name}', { name: column.name })} onPointerDown={resize} />}
-      <Popover open={open} anchor={head} onDismiss={() => setOpen(false)} label={t('Colonne {name}', { name: column.name })} width={300} align="start">
+      {readOnly ? null : <span className={styles.resize} role="separator" aria-orientation="vertical" aria-label={t('Width of {name}', { name: column.name })} onPointerDown={resize} />}
+      <Popover open={open} anchor={head} onDismiss={() => setOpen(false)} label={t('Column {name}', { name: column.name })} width={300} align="start">
         <div className={styles.columnPanel}>
           <input
             className={styles.pickerField}
             defaultValue={column.name}
-            aria-label={t('Nom de la colonne')}
+            aria-label={t('Column name')}
             data-autofocus=""
             maxLength={200}
             onBlur={event => {
@@ -522,7 +522,7 @@ function ColumnHead({ page, table, column, index, count }: { page: string; table
             }}
           />
           <span className={`${styles.panelLabel} t-meta-strong`}>{t('Type')}</span>
-          <div className={styles.typeList} role="radiogroup" aria-label={t('Type de la colonne')}>
+          <div className={styles.typeList} role="radiogroup" aria-label={t('Column type')}>
             {COLUMN_TYPES.map(choice => (
               <button key={choice} type="button" role="radio" aria-checked={choice === type} className={styles.typeChoice} onClick={() => changeColumnType(page, table, column.id, choice)}>
                 <Icon name={COLUMN_ICONS[choice]} size={18} />
@@ -533,7 +533,7 @@ function ColumnHead({ page, table, column, index, count }: { page: string; table
           </div>
           {type === 'number' ? (
             <label className={styles.unitField}>
-              <span className="t-meta-strong">{t('Unité')}</span>
+              <span className="t-meta-strong">{t('Unit')}</span>
               <input
                 className={styles.pickerField}
                 defaultValue={column.unit ?? ''}
@@ -557,18 +557,18 @@ function ColumnHead({ page, table, column, index, count }: { page: string; table
               }}
             >
               <Icon name="plus" size={18} />
-              {t('Insérer une colonne à droite')}
+              {t('Insert a column to the right')}
             </button>
             {index > 0 ? (
               <button type="button" className={styles.typeChoice} onClick={() => moveColumn(page, table, column.id, index - 1)}>
                 <Icon name="back" size={18} />
-                {t('Déplacer à gauche')}
+                {t('Move left')}
               </button>
             ) : null}
             {index < count - 1 ? (
               <button type="button" className={styles.typeChoice} onClick={() => moveColumn(page, table, column.id, index + 1)}>
                 <Icon name="arrowRight" size={18} />
-                {t('Déplacer à droite')}
+                {t('Move right')}
               </button>
             ) : null}
             {count > 1 ? (
@@ -581,7 +581,7 @@ function ColumnHead({ page, table, column, index, count }: { page: string; table
                 }}
               >
                 <Icon name="trash" size={18} />
-                {t('Supprimer la colonne')}
+                {t('Delete column')}
               </button>
             ) : null}
           </div>
@@ -612,7 +612,7 @@ function TableBlockComponent({ block }: { block: Block }) {
             ))}
             <th className={styles.rowEnd}>
               {readOnly ? null : (
-                <button type="button" className={styles.addColumn} aria-label={t('Ajouter une colonne')} data-tip={t('Ajouter une colonne')} onClick={() => addColumn(page, block.id)}>
+                <button type="button" className={styles.addColumn} aria-label={t('Add a column')} data-tip={t('Add a column')} onClick={() => addColumn(page, block.id)}>
                   <Icon name="plus" size={16} />
                 </button>
               )}
@@ -642,7 +642,7 @@ function TableBlockComponent({ block }: { block: Block }) {
           }}
         >
           <Icon name="plus" size={16} />
-          {t('Nouvelle ligne')}
+          {t('New row')}
         </button>
       )}
     </div>

@@ -43,8 +43,8 @@ function CouponRow({ coupon, price, index, now }: { coupon: Coupon; price: strin
     // No clipboard outside a secure page (an http:// server).
     const copied = navigator.clipboard?.writeText(coupon.code) ?? Promise.reject(new Error('no clipboard'));
     copied.then(
-      () => showSnack(t('Code {code} copié', { code: coupon.code }), undefined, { tone: 'success' }),
-      () => showError(t('Impossible de copier le code')),
+      () => showSnack(t('Code {code} copied', { code: coupon.code }), undefined, { tone: 'success' }),
+      () => showError(t('Couldn’t copy the code')),
     );
   };
   return (
@@ -68,7 +68,7 @@ function CouponRow({ coupon, price, index, now }: { coupon: Coupon; price: strin
           </p>
         ) : null}
       </div>
-      <IconButton icon="copy" label={t('Copier le code {code}', { code: coupon.code })} onClick={copy} />
+      <IconButton icon="copy" label={t('Copy the code {code}', { code: coupon.code })} onClick={copy} />
     </li>
   );
 }
@@ -89,7 +89,7 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -107,19 +107,19 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Claude cherche des codes promo pour {shop}…', { shop })}</p>
-        <p className="t-meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</p>
+        <p className="t-body">{t('Claude is looking for promo codes for {shop}…', { shop })}</p>
+        <p className="t-meta">{t('A web search often takes half a minute.')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Claude n’a pas pu chercher de codes : {reason}', { reason: t(phase.reason) })}
+        {t('Claude couldn’t look for codes: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
         {phase.answer.coupons.length === 0 ? (
-          <EmptyLine size="body" text={t('Aucun code en cours trouvé pour {shop}.', { shop })} />
+          <EmptyLine size="body" text={t('No current code found for {shop}.', { shop })} />
         ) : (
-          <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={t('Codes promo')}>
+          <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={t('Promo codes')}>
             {phase.answer.coupons.map((coupon, index) => (
               <CouponRow key={coupon.code} coupon={coupon} price={couponPrice(coupon, link)} index={index} now={now} />
             ))}
@@ -128,7 +128,7 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
         {phase.answer.tips.length > 0 ? (
           <section className={styles.couponTips} aria-labelledby={`${titleId}-tips`}>
             <h3 id={`${titleId}-tips`} className="t-section">
-              {t('Autres façons de payer moins')}
+              {t('Other ways to pay less')}
             </h3>
             <ul>
               {phase.answer.tips.map(tip => (
@@ -138,7 +138,7 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
                     <>
                       {' '}
                       <a href={tip.url} target="_blank" rel="noopener noreferrer">
-                        {t('Voir la page')}
+                        {t('See the page')}
                       </a>
                     </>
                   ) : null}
@@ -148,7 +148,7 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
           </section>
         ) : null}
         <p className="t-meta">
-          {t('Trouvé sur le web par Claude le {day} à {time}. Un code peut ne plus marcher au moment de payer.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
+          {t('Found on the web by Claude on {day} at {time}. A code may no longer work by the time you pay.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
         </p>
       </>
     );
@@ -157,21 +157,21 @@ function CouponsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
       <>
         {phase.kind === 'failed' ? (
           <Button kind="text" onClick={() => search(false)}>
-            {t('Réessayer')}
+            {t('Try again')}
           </Button>
         ) : (
           <Button kind="text" icon="refresh" onClick={() => search(true)}>
-            {t('Chercher à nouveau')}
+            {t('Search again')}
           </Button>
         )}
         <Button icon="external" href={link.url}>
-          {t('Ouvrir la page')}
+          {t('Open the page')}
         </Button>
       </>
     );
 
   return (
-    <DialogFrame title={t('Codes promo')} titleId={titleId} onClose={onDismiss} foot={foot} className={styles.couponsFrame}>
+    <DialogFrame title={t('Promo codes')} titleId={titleId} onClose={onDismiss} foot={foot} className={styles.couponsFrame}>
       {body}
     </DialogFrame>
   );

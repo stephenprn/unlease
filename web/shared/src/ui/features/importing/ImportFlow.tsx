@@ -69,7 +69,7 @@ export function ImportFrame({ step, embedded = false, title, lead, children, bac
       {embedded ? (
         <p className={`${styles.where} t-meta`}>{`${IMPORT_STEP_NAMES[step]} · ${importProgress(step)}`}</p>
       ) : (
-        <StepTrail small steps={IMPORT_STEPS.map(id => ({ id, name: IMPORT_STEP_NAMES[id] }))} current={index} label={t('Étapes de l’import')} />
+        <StepTrail small steps={IMPORT_STEPS.map(id => ({ id, name: IMPORT_STEP_NAMES[id] }))} current={index} label={t('Import steps')} />
       )}
       <div className={styles.intro}>
         <h2 ref={heading} tabIndex={-1} className="t-title">
@@ -79,7 +79,7 @@ export function ImportFrame({ step, embedded = false, title, lead, children, bac
       </div>
       {children}
       {back || forward ? (
-        <nav className={styles.foot} aria-label={t('Étapes de l’import')}>
+        <nav className={styles.foot} aria-label={t('Import steps')}>
           {back}
           {forward ? <span className={styles.footEnd}>{forward}</span> : null}
         </nav>
@@ -166,7 +166,7 @@ export function ImportDrop({ label, meta, accept, multiple = false, reading = fa
         aria-busy={reading || undefined}
       >
         <Icon name="upload" size={28} />
-        <span className="t-body-strong">{reading ? (readingLabel ?? t('Lecture du fichier…')) : label}</span>
+        <span className="t-body-strong">{reading ? (readingLabel ?? t('Reading the file…')) : label}</span>
         <span className="t-meta">{meta}</span>
         <OutlineEdge d={d} />
       </button>
@@ -247,7 +247,7 @@ export function ImportPreview({ entries, choice, extra, label }: ImportPreviewPr
   return (
     <ImportSheet label={label}>
       {counts.length > 1 ? (
-        <div className={styles.filters} role="radiogroup" aria-label={t('Filtrer l’aperçu')}>
+        <div className={styles.filters} role="radiogroup" aria-label={t('Filter the preview')}>
           <FilterChip checked={fate === null} label={IMPORT_WORDS.allFates} count={entries.length} onClick={() => pick(null)} />
           {counts.map(({ fate: each, count }) => (
             <FilterChip key={each} checked={fate === each} label={IMPORT_FATE_NAMES[each]} count={count} onClick={() => pick(each)} />
@@ -308,7 +308,7 @@ function PreviewItem({ entry, choice, extra }: { entry: PreviewEntry; choice?: P
     <li className={styles.item} data-off={!on || undefined}>
       {choice && can ? (
         <span className={styles.itemBox}>
-          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Importer {item}', { item: entry.title })} />
+          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Import {item}', { item: entry.title })} />
         </span>
       ) : (
         <Icon name={entry.glyph as GlyphName} size={22} />

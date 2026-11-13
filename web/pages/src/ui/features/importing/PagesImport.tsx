@@ -2,7 +2,8 @@
  * Pages' import (`AppModule.importer`, the shell's `/pages/settings/import` and the first run's
  * step), the four steps every app shares (`core/services/importFlow`):
  *
- * 1. Source: Notion's « Markdown & CSV » export (its steps), or Markdown from anywhere (a folder
+ * 1. Source: Notion's « Markdown & CSV » export (its steps; its HTML export dropped beside it for
+ *    the pages' icons), or Markdown from anywhere (a folder
  *    chosen whole, an Obsidian vault; `.md` files; a folder compressed); the zone takes them, read
  *    in this browser (`readExportFiles`), then as pages (`pages/services/importing`).
  * 2. Preview: what the export holds, counted, then every page in the tree's order, its place in it,
@@ -83,7 +84,7 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
         const next = readExport(found.files);
         setReading(false);
         if (Object.keys(next.pages).length === 0) {
-          setRefused([...found.refused, ...(found.files.length > 0 ? [{ name: files.length === 1 ? files[0]!.name : plural(files.length, 'fichier'), why: WORDS.noPages }] : [])]);
+          setRefused([...found.refused, ...(found.files.length > 0 ? [{ name: files.length === 1 ? files[0]!.name : plural(files.length, 'file'), why: WORDS.noPages }] : [])]);
           return;
         }
         setRefused(found.refused);
@@ -124,8 +125,8 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
     setProgress({ done: 0, total: written.files.length });
     for (const [index, job] of written.files.entries()) {
       if (undone.current) break;
-      // The read took the one folder everything sat in off every path (`ExportRead.root`); the bytes keep the export's own.
-      const data = files.bytes.get(job.asset.path) ?? (read?.root ? files.bytes.get(`${read.root}/${job.asset.path}`) : undefined);
+      // The read took the folders everything sat in off every path; the bytes keep the export's own (`ExportAsset.source`).
+      const data = files.bytes.get(job.asset.source);
       const outcome = data ? await attachImportedFile(job.blockId, data, job.asset.name, job.asset.mime) : 'empty';
       if (outcome === 'ok') attached += 1;
       else failed.push({ name: job.asset.name, why: fileRefusal(outcome, job.asset.kind === 'image') });
@@ -145,9 +146,9 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
       const final = planImport(read, { ...choices, containerTitle: choices.containerTitle.trim() || importContainerTitle(read, Date.now()) }, useBlocksStore.getState());
       const written = importPages(final);
       if (written.created.length > 0) {
-        showUndo(plural(written.pages, 'page importée', 'pages importées'), () => {
+        showUndo(plural(written.pages, 'page imported', 'pages imported'), () => {
           undone.current = true;
-          undoImport(written.created);
+          undoImport(written.created, written.iconed);
         });
         onImported?.();
       }
@@ -165,24 +166,24 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
         </ImportSheet>
         <ImportSheet title={WORDS.fromMarkdown}>
           <div className={settings.block}>
-            <p className="t-body">{t('Choisissez le dossier de vos notes, un coffre Obsidian par exemple : ses sous-dossiers deviennent des sous-pages, ses images suivent. Quelques fichiers .md, ou un dossier compressé en .zip, se déposent aussi.')}</p>
+            <p className="t-body">{t('Choose the folder of your notes, an Obsidian vault for example: its sub-folders become sub-pages, its pictures come along. A few .md files, or a folder compressed as a .zip, can be dropped too.')}</p>
             <div className={settings.buttons}>
               <Button kind="outlined" icon="upload" disabled={reading} onClick={() => folder.current?.click()}>
-                {t('Choisir un dossier')}
+                {t('Choose a folder')}
               </Button>
             </div>
           </div>
         </ImportSheet>
-        <ImportSheet label={t('Les fichiers à importer')}>
+        <ImportSheet label={t('The files to import')}>
           <div className={settings.block}>
             <ImportDrop
-              label={t('Déposez l’export .zip ou des fichiers .md')}
-              meta={t('ou cliquez pour les choisir')}
+              label={t('Drop the .zip export or .md files')}
+              meta={t('or click to choose them')}
               accept=".zip,.md,.markdown,.txt,.csv,application/zip,text/markdown,text/plain,text/csv"
               multiple
               reading={reading}
-              readingLabel={t('Lecture des pages…')}
-              inputLabel={t('Export de Notion ou fichiers Markdown')}
+              readingLabel={t('Reading the pages…')}
+              inputLabel={t('Notion export or Markdown files')}
               onFiles={take}
             />
             {refused.length > 0 ? (
@@ -191,7 +192,7 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
                 <span className={styles.problemText}>
                   {refused.map(file => (
                     <span key={file.name} className="t-body">
-                      {t('{file} : {why}', { file: file.name, why: file.why })}
+                      {t('{file}: {why}', { file: file.name, why: file.why })}
                     </span>
                   ))}
                 </span>
@@ -205,7 +206,7 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
           type="file"
           multiple
           hidden
-          aria-label={t('Dossier de notes')}
+          aria-label={t('Folder of notes')}
           onChange={event => {
             const files = [...(event.target.files ?? [])];
             event.target.value = '';
@@ -228,17 +229,17 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
         lead={WORDS.previewLead}
         back={
           <Button kind="text" onClick={restart}>
-            {t('Retour')}
+            {t('Back')}
           </Button>
         }
-        forward={<Button onClick={() => setStep('choices')}>{t('Continuer')}</Button>}
+        forward={<Button onClick={() => setStep('choices')}>{t('Continue')}</Button>}
       >
         <ImportSheet label={IMPORT_WORDS.previewTitle}>
           <div className={settings.block}>
             <ImportCounts
               lines={[
                 ...lines,
-                ...(refused.length > 0 ? [{ icon: 'alert' as const, text: plural(refused.length, 'fichier mis de côté', 'fichiers mis de côté'), meta: refused.map(file => t('{file} : {why}', { file: file.name, why: file.why })).join(' · ') }] : []),
+                ...(refused.length > 0 ? [{ icon: 'alert' as const, text: plural(refused.length, 'file set aside', 'files set aside'), meta: refused.map(file => t('{file}: {why}', { file: file.name, why: file.why })).join(' · ') }] : []),
               ]}
             />
             <p className="t-meta">{read.kind === 'notion' ? WORDS.readNotion : WORDS.readMarkdown}</p>
@@ -279,7 +280,7 @@ export function PagesImport({ embedded = false, onFlow, onImported }: ImportWiza
         lead={IMPORT_WORDS.choicesLead}
         back={
           <Button kind="text" onClick={() => setStep('preview')}>
-            {t('Retour')}
+            {t('Back')}
           </Button>
         }
         forward={

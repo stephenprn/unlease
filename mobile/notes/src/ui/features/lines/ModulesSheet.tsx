@@ -43,7 +43,7 @@ function ModulesBody({ id }: { id: string }) {
   return (
     <SheetScroll contentContainerStyle={styles.list}>
       <AppText variant="meta" style={styles.lead}>
-        {t('Les modules choisis apparaissent sur les liens de {collection} qui s’y prêtent.', { collection: shownTitle(line) })}
+        {t('The modules you pick show on the links of {collection} that they fit.', { collection: shownTitle(line) })}
       </AppText>
       {MODULE_GROUPS.map(group => ({ ...group, modules: group.modules.filter(module => moduleOffered(module, can)) }))
         .filter(group => group.modules.length > 0)

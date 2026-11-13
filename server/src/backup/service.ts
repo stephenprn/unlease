@@ -38,9 +38,9 @@ import { S3Client, S3Error, s3Problem } from './s3';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const RUNS_KEPT = 100;
-const STOPPED = 'Interrompue : le serveur s’est arrêté';
+const STOPPED = 'Interrupted: the server stopped';
 /** Said when the new snapshot does not sort last: nothing is deleted from S3 then. */
-const CLOCK_BEHIND = 'L’horloge du serveur semble en retard : les anciennes sauvegardes sont gardées';
+const CLOCK_BEHIND = 'The server’s clock seems to be behind: the older backups are kept';
 
 /** A run's own reason to stop, said as it is. */
 class RunError extends Error {}
@@ -51,7 +51,7 @@ function backupProblem(error: unknown): string {
   if (error instanceof S3Error) return s3Problem(error);
   if (error instanceof SeafileError) return `Seafile : ${seafileProblem(error)}`;
   if ((error as { name?: unknown } | null)?.name === 'AbortError') return STOPPED;
-  return 'Erreur du serveur pendant la sauvegarde (voir ses journaux)';
+  return 'Server error during the backup (see its logs)';
 }
 
 interface RunRow {
@@ -276,7 +276,7 @@ export class BackupService {
     // Moved elsewhere during the run: what it sends from now on would be counted at the wrong place.
     const stillThere = (): void => {
       const now = settings.backup();
-      if (!now || now.endpoint !== config.endpoint || now.bucket !== config.bucket || now.prefix !== config.prefix) throw new RunError('Les réglages S3 ont changé pendant la sauvegarde : elle reprendra au prochain essai');
+      if (!now || now.endpoint !== config.endpoint || now.bucket !== config.bucket || now.prefix !== config.prefix) throw new RunError('The S3 settings changed during the backup: it will resume on the next try');
     };
     let sent = 0;
     let skipped = 0;
@@ -336,7 +336,7 @@ export class BackupService {
       await client.put(`${snapshotsPrefix(config)}${name}`, await openAsBlob(archive), 'application/gzip', signal, config.storageClass);
       this.addSnapshot.run(name, startedAt);
       const pruned = await this.prune(client, config, name, filesInUse(apps, stored));
-      const unread = skipped > 0 ? `${plural(skipped, 'fichier illisible', 'fichiers illisibles')}, absent${skipped > 1 ? 's' : ''} de cette sauvegarde` : null;
+      const unread = skipped > 0 ? `${plural(skipped, 'unreadable file', 'unreadable files')}, absent${skipped > 1 ? 's' : ''} de cette sauvegarde` : null;
       const warning = [unread, pruned ? null : CLOCK_BEHIND].filter(Boolean).join(' · ') || null;
       this.finishRun.run(this.now(), 1, warning, name, bytes, sent, runId);
       log.info('backup sent to S3', { snapshot: name, bytes, filesSent: sent, skipped });

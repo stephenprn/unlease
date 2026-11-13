@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { isPeriodView, PERIOD_VIEWS, VIEW_NAMES, stepDay, viewDays, viewTitle, type CalendarView } from '@unlease/calendar/services/eventText';
 import { addDays, monthGrid, startOfMonth } from '@unlease/calendar/services/time';
 
@@ -91,33 +91,33 @@ export function CalendarScreen({ view: asked, day: dayAsked }: { view: CalendarV
   const viewChoices = PERIOD_VIEWS.map(each => ({ value: each as CalendarView, label: VIEW_NAMES[each] }));
   return (
     <div className={styles.calendar}>
-      <div className={styles.toolbar} role="toolbar" aria-label={t('Période affichée')}>
+      <div className={styles.toolbar} role="toolbar" aria-label={t('Period shown')}>
         <div className={styles.toolbarStart}>
           {isToday ? null : (
             <>
-              <Button kind="outlined" className={styles.todayButton} onClick={() => navigate(paths.view(view, today), { replace: true })} title={t('Aujourd’hui (T)')}>
-                {t('Aujourd’hui')}
+              <Button kind="outlined" className={styles.todayButton} onClick={() => navigate(paths.view(view, today), { replace: true })} title={t('Today (T)')}>
+                {t('Today')}
               </Button>
               <span className={styles.todayIcon}>
-                <IconButton icon="calendar" label={t('Aujourd’hui')} shortcut="T" onClick={() => navigate(paths.view(view, today), { replace: true })} />
+                <IconButton icon="calendar" label={t('Today')} shortcut="T" onClick={() => navigate(paths.view(view, today), { replace: true })} />
               </span>
               <span className={styles.stepBack}>
-                <IconButton icon="chevronRight" label={t('Période précédente')} shortcut="K" shape={1} onClick={() => stepView(view, day, -1)} />
+                <IconButton icon="chevronRight" label={t('Previous period')} shortcut="K" shape={1} onClick={() => stepView(view, day, -1)} />
               </span>
-              <IconButton icon="chevronRight" label={t('Période suivante')} shortcut="J" shape={2} onClick={() => stepView(view, day, 1)} />
+              <IconButton icon="chevronRight" label={t('Next period')} shortcut="J" shape={2} onClick={() => stepView(view, day, 1)} />
             </>
           )}
           <h1 className={`${styles.toolbarTitle} t-title`}>{viewTitle(view, showMonth, prefs.weekStart, prefs.hideWeekends)}</h1>
         </div>
         <div className={styles.toolbarEnd}>
-          {view === 'day' && pages ? <IconButton icon="pagePlus" label={t('Note du jour')} shape={3} onClick={() => void openDailyNote(day)} /> : null}
-          {ask ? <IconButton icon="sparkle" label={t('Demander à Claude')} hasPopup="dialog" shape={1} onClick={() => setAskOpen(true)} /> : null}
+          {view === 'day' && pages ? <IconButton icon="pagePlus" label={t('Today’s note')} shape={3} onClick={() => void openDailyNote(day)} /> : null}
+          {ask ? <IconButton icon="sparkle" label={t('Ask Claude')} hasPopup="dialog" shape={1} onClick={() => setAskOpen(true)} /> : null}
           {wide ? (
             <div className={styles.viewSwitch}>
-              <Segmented options={viewChoices} value={view} label={t('Vue')} onChange={next => navigate(paths.view(next, day))} />
+              <Segmented options={viewChoices} value={view} label={tc('layout', 'View')} onChange={next => navigate(paths.view(next, day))} />
             </div>
           ) : (
-            <ChoiceField value={view} choices={viewChoices} label={t('Vue')} shown={isToday ? VIEW_NAMES.today : undefined} onChange={next => navigate(paths.view(next, day))} />
+            <ChoiceField value={view} choices={viewChoices} label={tc('layout', 'View')} shown={isToday ? VIEW_NAMES.today : undefined} onChange={next => navigate(paths.view(next, day))} />
           )}
         </div>
       </div>

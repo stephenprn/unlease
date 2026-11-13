@@ -29,7 +29,7 @@ export function mentionsChanged(): void {
   version += 1;
 }
 
-const GONE: Readonly<Record<string, string>> = { contact: tx('Contact supprimé'), event: tx('Événement supprimé') };
+const GONE: Readonly<Record<string, string>> = { contact: tx('Contact deleted'), event: tx('Event deleted') };
 
 /** Its subject's name now, null when nobody names it here (gone, or this program holds no such records). */
 export function knownName(target: Ref): string | null {
@@ -46,5 +46,5 @@ export function mentionName(target: Ref): string {
   const name = namer(target);
   if (name !== null) return name;
   const gone = GONE[target.type];
-  return gone ? t(gone) : t('Indisponible ici');
+  return gone ? t(gone) : t('Not available here');
 }

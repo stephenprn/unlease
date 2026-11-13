@@ -6,7 +6,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { setLabelOn } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
@@ -21,10 +21,10 @@ export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean;
   const notes = useLibraryStore(s => s.notes);
   const live = order.map(id => labels[id]).filter(label => !!label && label.deletedAt === null);
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Labels des notes sélectionnées')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Labels of the selected notes')}>
       <SheetScroll>
         {live.length === 0 ? (
-          <EmptyLine glyph="tag" text={t('Aucun label. Créez-en depuis la page Labels.')} slot={24} gap={16} style={styles.empty} />
+          <EmptyLine glyph="tag" text={t('No labels. Create some from the Labels page.')} slot={24} gap={16} style={styles.empty} />
         ) : (
           live.map(label => {
             const wearing = ids.filter(id => notes[id]?.labelIds.includes(label!.id)).length;
@@ -42,7 +42,7 @@ export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean;
                 trailing={
                   some ? (
                     <AppText variant="meta" color={theme.color.inkMuted}>
-                      {t('{count} sur {total}', { count: wearing, total: ids.length })}
+                      {t('{count} of {total}', { count: wearing, total: ids.length })}
                     </AppText>
                   ) : undefined
                 }
@@ -50,7 +50,7 @@ export function BulkLabelsSheet({ visible, ids, onDismiss }: { visible: boolean;
                 accessibilityState={{ checked: all ? true : some ? 'mixed' : false }}
                 onPress={() => {
                   const undo = setLabelOn(ids, label!.id, !all);
-                  showSnack(all ? t('« {name} » retiré', { name: label!.name }) : t('« {name} » ajouté', { name: label!.name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+                  showSnack(all ? t('“{name}” removed', { name: label!.name }) : t('“{name}” added', { name: label!.name }), { label: t('Undo'), run: undo }, { tone: 'success' });
                 }}
               />
             );

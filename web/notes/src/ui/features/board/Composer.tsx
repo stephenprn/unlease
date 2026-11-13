@@ -49,10 +49,10 @@ export interface ComposerProps {
 function ComposerComponent({ onNote, onChecklist, onDrawing, onPhotos }: ComposerProps) {
   const input = useRef<HTMLInputElement>(null);
   return (
-    <ComposerStrip label={t('Créer une note…')} shortcut="C" onCreate={onNote}>
-      <IconButton icon="checklist" label={t('Nouvelle liste')} shortcut="L" onClick={onChecklist} />
-      <IconButton icon="draw" label={t('Nouveau dessin')} shortcut="D" shape={2} onClick={onDrawing} />
-      <IconButton icon="image" label={t('Nouvelle note avec photo')} onClick={() => input.current?.click()} />
+    <ComposerStrip label={t('Create a note…')} shortcut="C" onCreate={onNote}>
+      <IconButton icon="checklist" label={t('New list')} shortcut="L" onClick={onChecklist} />
+      <IconButton icon="draw" label={t('New drawing')} shortcut="D" shape={2} onClick={onDrawing} />
+      <IconButton icon="image" label={t('New note with photo')} onClick={() => input.current?.click()} />
       <input
         ref={input}
         type="file"

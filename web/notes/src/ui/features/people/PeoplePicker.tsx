@@ -69,7 +69,7 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
   return (
     <div ref={holder} className={styles.picker} tabIndex={-1}>
       {/* A sheet on a phone says what it holds; by its button, the field (« Chercher une personne ») does. */}
-      {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Personnes')}</h2> : null}
+      {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('People')}</h2> : null}
       <input
         ref={field}
         data-autofocus={narrow ? undefined : true}
@@ -81,13 +81,13 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
           event.preventDefault();
           if (others[0]) toggle(others[0]);
         }}
-        placeholder={t('Chercher une personne')}
-        aria-label={t('Chercher une personne')}
+        placeholder={t('Search for someone')}
+        aria-label={t('Search for someone')}
         type="search"
         autoComplete="off"
         spellCheck={false}
       />
-      <div data-scroller="" className={styles.list} role="group" aria-label={t('Personnes')}>
+      <div data-scroller="" className={styles.list} role="group" aria-label={t('People')}>
         {!typing && chosen.length > 0 ? (
           <>
             {chosen.map(person => (
@@ -100,7 +100,7 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
           <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
         ))}
         {others.length === 0 && (typing || chosen.length === 0) ? (
-          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')} className={styles.empty} />
+          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Nobody in your contacts goes by that name.') : t('No contacts yet.')} className={styles.empty} />
         ) : null}
       </div>
     </div>
@@ -112,7 +112,7 @@ export function PeoplePicker({ open, anchor, selected, onDismiss, onChange }: Pe
   // On a phone-sized window the sheet opens on its people with the keyboard down; the field is one tap away.
   const holder = useRef<HTMLDivElement>(null);
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Personnes')} width={340} initialFocus={narrow ? holder : undefined} rows>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('People')} width={340} initialFocus={narrow ? holder : undefined} rows>
       <PeopleList selected={selected} onChange={onChange} narrow={narrow} holder={holder} />
     </Popover>
   );

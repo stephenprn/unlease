@@ -522,7 +522,11 @@ function go(to: string, { replace = false, background }: NavigateOptions): void 
     step(here.base - here.index);
     return;
   }
-  if (`${appPath(location.pathname)}${location.search}` === to && here.background === background) return;
+  const shown = `${appPath(location.pathname)}${location.search}`;
+  if (shown === to && here.background === background) return;
+  // A place on the page shown (`#block-…`: a source Claude cited, a search's result): the page scrolls to it from where it is.
+  const hash = to.indexOf('#');
+  const onThisPage = hash >= 0 && to.slice(0, hash) === shown && here.background === background;
   // The entry the drawer (or a dialog) gave back as it closed to go here: the page takes it over.
   const takeOver = givenBack(here);
   // Where Back from the page will land keeps its scroll: the entry under a taken-over one shows the same page.
@@ -535,8 +539,8 @@ function go(to: string, { replace = false, background }: NavigateOptions): void 
   currentIndex = state.index;
   shownPage = pageOf(state);
   emit();
-  // A new page starts at its top; an overlay leaves the page under it where it was.
-  if (!background) window.scrollTo(0, 0);
+  // A new page starts at its top; an overlay leaves the page under it where it was, and so does a place on it.
+  if (!background && !onThisPage) window.scrollTo(0, 0);
 }
 
 /** Back when the previous entry is this app's; otherwise to `fallback`, without leaving. What is open over the page goes with it. */

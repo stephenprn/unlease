@@ -232,10 +232,10 @@ export function spanWords(minutes: number): string {
  * minutes up, so it never says « Dans 0 min ».
  */
 export function rowStateWords(row: Pick<DayRow, 'state' | 'startAt' | 'endAt'>, now: number, today: Day): string {
-  if (row.state === 'next') return t('Dans {span}', { span: spanWords(Math.ceil((row.startAt - now) / MINUTE)) });
+  if (row.state === 'next') return t('In {span}', { span: spanWords(Math.ceil((row.startAt - now) / MINUTE)) });
   if (row.state === 'now') {
-    if (row.endAt > dayToInstant(addDays(today, 1))) return t('En cours');
-    return t('Encore {span}', { span: spanWords(Math.ceil((row.endAt - now) / MINUTE)) });
+    if (row.endAt > dayToInstant(addDays(today, 1))) return t('Happening now');
+    return t('{span} left', { span: spanWords(Math.ceil((row.endAt - now) / MINUTE)) });
   }
   return '';
 }
@@ -245,21 +245,21 @@ export function rowStateWords(row: Pick<DayRow, 'state' | 'startAt' | 'endAt'>, 
  * before), « À partir de 22:00 » (going on past midnight), a reminder's or a page's moment.
  */
 export function rowTimeWords(row: Pick<DayRow, 'item' | 'allDay'>, day: Day, twelveHours = false): string {
-  if (row.allDay) return t('Toute la journée');
+  if (row.allDay) return t('All day');
   const item = row.item;
   switch (item.kind) {
     case 'event': {
       const occurrence = item.occurrence;
-      if (occurrence.firstDay < day) return t('Jusqu’à {clock}', { clock: clockWords(formatClock(occurrence.endAt), twelveHours) });
-      if (occurrence.lastDay > day) return t('À partir de {clock}', { clock: clockWords(formatClock(occurrence.startAt), twelveHours) });
+      if (occurrence.firstDay < day) return t('Until {clock}', { clock: clockWords(formatClock(occurrence.endAt), twelveHours) });
+      if (occurrence.lastDay > day) return t('From {clock}', { clock: clockWords(formatClock(occurrence.startAt), twelveHours) });
       return timeRange(occurrence, twelveHours);
     }
     case 'reminder':
       return clockWords(formatClock(item.reminder.at), twelveHours);
     case 'page':
-      return item.page.time ? clockWords(item.page.time, twelveHours) : t('Toute la journée');
+      return item.page.time ? clockWords(item.page.time, twelveHours) : t('All day');
     case 'birthday':
-      return t('Toute la journée');
+      return t('All day');
   }
 }
 
@@ -283,6 +283,6 @@ export function weatherPlaces(rows: readonly Pick<DayRow, 'item'>[], home: strin
 
 /** The day's weather in one line, the same on both clients and the widget: « Nuageux · 14° / 7° », and the rain from a 30 % chance (« · 40 % de pluie »). */
 export function weatherWords(day: WeatherDay): string {
-  const rain = day.rain >= 30 ? ` · ${t('{rain} % de pluie', { rain: Math.round(day.rain) })}` : '';
+  const rain = day.rain >= 30 ? ` · ${t('{rain}% chance of rain', { rain: Math.round(day.rain) })}` : '';
   return `${WEATHER_WORDS[weatherKind(day.code)]} · ${temperatures(day.max, day.min)}${rain}`;
 }

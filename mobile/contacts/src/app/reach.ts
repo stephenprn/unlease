@@ -30,7 +30,7 @@ async function open(url: string | null): Promise<boolean> {
     await Linking.openURL(url);
     return true;
   } catch {
-    showSnack(t('Aucune application de ce téléphone ne sait ouvrir ceci.'), undefined, { tone: 'error' });
+    showSnack(t('No app on this phone can open this.'), undefined, { tone: 'error' });
     return false;
   }
 }
@@ -58,7 +58,7 @@ export async function callNumber(number: string): Promise<void> {
     setCallAsked();
   }
   const placed = await placeCall(dialNumber(number, deviceRegion()));
-  if (placed === 'none') showSnack(t('Ce téléphone ne passe pas d’appels.'), undefined, { tone: 'warning' });
+  if (placed === 'none') showSnack(t('This phone doesn’t make calls.'), undefined, { tone: 'warning' });
 }
 
 export const textNumber = (number: string): Promise<boolean> => open(smsHref(number, deviceRegion()));
@@ -78,7 +78,7 @@ export async function wishWaysHere(contact: Contact): Promise<WishWay[]> {
 export async function whatsappChat(number: string): Promise<boolean> {
   const url = whatsappUrl(number, deviceRegion());
   if (!url) {
-    showSnack(t('Ajoutez l’indicatif du pays à ce numéro (+33…) pour l’ouvrir dans WhatsApp.'), undefined, { tone: 'warning' });
+    showSnack(t('Add the country code to this number (+44…) to open it in WhatsApp.'), undefined, { tone: 'warning' });
     return false;
   }
   return open(url);
@@ -98,7 +98,7 @@ export async function whatsappReach(number: string | null): Promise<WhatsappReac
 }
 
 export async function whatsappCall(uri: string, video: boolean): Promise<void> {
-  if (!(await openWhatsappCall(uri, video))) showSnack(t('WhatsApp n’a pas pu ouvrir l’appel.'), undefined, { tone: 'error' });
+  if (!(await openWhatsappCall(uri, video))) showSnack(t('WhatsApp couldn’t open the call.'), undefined, { tone: 'error' });
 }
 
 const fileName = (name: string): string => `${name.replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 60) || 'contact'}.vcf`;
@@ -106,7 +106,7 @@ const fileName = (name: string): string => `${name.replace(/[\\/:*?"<>|]+/g, ' '
 /** « Partager »: the contact's card, through the share sheet. */
 export async function shareContact(contact: Contact): Promise<void> {
   const labels: Readonly<Record<string, ContactLabel>> = useLibraryStore.getState().labels;
-  if (!(await shareText(fileName(contactName(contact)), VCARD, toVCard(contact, labels)))) showSnack(t('Impossible de partager ce contact.'), undefined, { tone: 'error' });
+  if (!(await shareText(fileName(contactName(contact)), VCARD, toVCard(contact, labels)))) showSnack(t('Couldn’t share this contact.'), undefined, { tone: 'error' });
 }
 
 /** Text as UTF-8 bytes (the save screen takes bytes). */

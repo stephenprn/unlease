@@ -62,7 +62,7 @@ const ViewTiles = memo(function ViewTiles({ chosen, onView }: { chosen: Calendar
   const go = useDrawerGo();
   const order: CalendarView[] = ['schedule', ...PERIOD_VIEWS.filter(each => each !== 'schedule')];
   return (
-    <View style={styles.tiles} accessibilityRole="radiogroup" accessibilityLabel={t('Vue')}>
+    <View style={styles.tiles} accessibilityRole="radiogroup" accessibilityLabel={tc('layout', 'View')}>
       {order.map(each => {
         const on = each === chosen;
         const ink = on ? theme.color.onActionContainer : theme.color.ink;
@@ -137,12 +137,12 @@ interface Held {
 
 /** `key` alone shown; the slip takes it back. */
 function onlyThis(key: string): void {
-  showSnack(t('Les autres agendas sont masqués'), { label: tc('undo', 'Annuler'), run: showOnlyCalendar(key) }, { tone: 'success' });
+  showSnack(t('Other calendars hidden'), { label: t('Undo'), run: showOnlyCalendar(key) }, { tone: 'success' });
 }
 
 /** What showed before (every calendar, when nothing is remembered); the slip takes it back. */
 function everyCalendar(): void {
-  showSnack(t('Les agendas sont de nouveau affichés'), { label: tc('undo', 'Annuler'), run: showAllCalendars() }, { tone: 'success' });
+  showSnack(t('Calendars shown again'), { label: t('Undo'), run: showAllCalendars() }, { tone: 'success' });
 }
 
 /** A calendar held down: its name, « Afficher uniquement celui-ci » unless it shows alone, « Tout afficher » while one shows alone (or none). */
@@ -157,8 +157,8 @@ function ShownSheet({ held, listed, onDismiss }: { held: Held | null; listed: Sh
   };
   return (
     <Sheet visible={held !== null} onDismiss={onDismiss} title={shown?.name}>
-      {choices.only && shown ? <ListRow icon="eye" title={t('Afficher uniquement celui-ci')} onPress={act(() => onlyThis(shown.key))} /> : null}
-      {choices.all ? <ListRow icon="restore" title={t('Tout afficher')} onPress={act(everyCalendar)} /> : null}
+      {choices.only && shown ? <ListRow icon="eye" title={t('Show only this one')} onPress={act(() => onlyThis(shown.key))} /> : null}
+      {choices.all ? <ListRow icon="restore" title={t('Show all')} onPress={act(everyCalendar)} /> : null}
     </Sheet>
   );
 }
@@ -175,10 +175,10 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
   const ask = useSettingsStore(selectCalendarAsk);
   const layers: { readonly key: Layer; readonly title: string }[] = [
     // Each named with the app it comes from, as on the web.
-    { key: 'birthdays', title: t('Anniversaires ({app})', { app: APPS.contacts.name }) },
-    { key: 'noteReminders', title: t('Rappels de {app}', { app: APPS.notes.name }) },
-    { key: 'pageDates', title: t('Dates des pages ({app})', { app: APPS.pages.name }) },
-    { key: 'weather', title: t('Météo') },
+    { key: 'birthdays', title: t('Birthdays ({app})', { app: APPS.contacts.name }) },
+    { key: 'noteReminders', title: t('{app} reminders', { app: APPS.notes.name }) },
+    { key: 'pageDates', title: t('Dates in pages ({app})', { app: APPS.pages.name }) },
+    { key: 'weather', title: t('Weather') },
   ];
   const flip = (key: Layer): void => setPrefs({ [key]: !prefs[key] } as Partial<CalendarPrefs>);
   // A calendar or a layer held down: « Afficher uniquement celui-ci », « Tout afficher » (a sheet; TalkBack's actions too).
@@ -186,7 +186,7 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
   const [holding, setHolding] = useState<Held | null>(null);
   const holdOf = (key: string, name: string): Hold => {
     const choices = shownChoices(listed, key);
-    const actions = [...(choices.only ? [{ name: 'only', label: t('Afficher uniquement celui-ci') }] : []), ...(choices.all ? [{ name: 'all', label: t('Tout afficher') }] : [])];
+    const actions = [...(choices.only ? [{ name: 'only', label: t('Show only this one') }] : []), ...(choices.all ? [{ name: 'all', label: t('Show all') }] : [])];
     if (actions.length === 0) return {};
     return {
       onLongPress: () => setHolding({ key, name }),
@@ -201,32 +201,32 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
         <DrawerItem label={VIEW_NAMES.today} icon={VIEW_GLYPHS.today} selected={!label && view === 'today'} onPress={() => onPlace('view:today')} />
         <ViewTiles chosen={label ? null : view} onView={each => onPlace(`view:${each}`)} />
         <DrawerDivider />
-        <DrawerHeading title={t('Libellés')} action={labelOrder.length > 0 ? { label: t('Modifier'), accessibilityLabel: t('Gérer les libellés'), onPress: () => onPlace('labels') } : undefined} />
+        <DrawerHeading title={t('Labels')} action={labelOrder.length > 0 ? { label: t('Edit'), accessibilityLabel: t('Manage labels'), onPress: () => onPlace('labels') } : undefined} />
         {labelOrder.map(id => {
           const each = labels[id];
           if (!each) return null;
           return <DrawerItem key={id} label={each.name} selected={label === id} onPress={() => onPlace(`label:${id}`)} leading={<LabelTag color={each.color} size={20} />} wash={theme.line[each.color].tint} />;
         })}
-        {labelOrder.length === 0 ? <DrawerItem label={t('Créer un libellé')} icon="tag" onPress={() => onPlace('labels')} /> : null}
+        {labelOrder.length === 0 ? <DrawerItem label={t('Create label')} icon="tag" onPress={() => onPlace('labels')} /> : null}
         <DrawerDivider />
-        <DrawerHeading title={t('Autres agendas')} action={{ label: t('Modifier'), accessibilityLabel: t('Gérer les abonnements'), onPress: () => onPlace('feeds') }} />
+        <DrawerHeading title={t('Other calendars')} action={{ label: t('Edit'), accessibilityLabel: t('Manage subscriptions'), onPress: () => onPlace('feeds') }} />
         {feedOrder.map(id => {
           const feed = feeds[id];
           if (!feed) return null;
-          const name = feedName(feed) || t('Agenda sans nom');
+          const name = feedName(feed) || t('Unnamed calendar');
           return <FeedRow key={id} id={id} name={name} color={feed.color} shown={!feed.hidden} onPress={() => updateFeed(id, { hidden: !feed.hidden })} hold={holdOf(feedKey(id), name)} />;
         })}
-        {feedOrder.length === 0 ? <DrawerItem label={t('S’abonner à un agenda')} icon="plus" onPress={() => onPlace('feeds')} /> : null}
-        <View style={styles.layers} accessibilityLabel={t('Des autres applications')}>
+        {feedOrder.length === 0 ? <DrawerItem label={t('Subscribe to a calendar')} icon="plus" onPress={() => onPlace('feeds')} /> : null}
+        <View style={styles.layers} accessibilityLabel={t('From the other apps')}>
           {layers.map(layer => (
             <LayerToggle key={layer.key} title={layer.title} icon={LAYER_GLYPHS[layer.key]} on={prefs[layer.key]} onPress={() => flip(layer.key)} hold={holdOf(layerKey(layer.key), layer.title)} />
           ))}
         </View>
         <DrawerDivider />
-        <DrawerItem label={t('Importer un agenda')} icon="download" onPress={() => onPlace('import')} />
-        {ask ? <DrawerItem label={t('Demander à Claude')} icon="sparkle" onPress={() => onPlace('ask')} /> : null}
-        <DrawerItem label={t('Corbeille')} icon="trash" onPress={() => onPlace('trash')} />
-        <DrawerItem label={t('Réglages')} icon="settings" onPress={() => onPlace('settings')} />
+        <DrawerItem label={t('Import a calendar')} icon="download" onPress={() => onPlace('import')} />
+        {ask ? <DrawerItem label={t('Ask Claude')} icon="sparkle" onPress={() => onPlace('ask')} /> : null}
+        <DrawerItem label={t('Bin')} icon="trash" onPress={() => onPlace('trash')} />
+        <DrawerItem label={t('Settings')} icon="settings" onPress={() => onPlace('settings')} />
         <DrawerItem label={t('Administration')} icon="server" onPress={() => onPlace('admin')} />
       </NavDrawer>
       {/* Over the drawer, which stays open: its switches show what changed. */}

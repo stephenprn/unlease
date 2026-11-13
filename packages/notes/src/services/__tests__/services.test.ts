@@ -205,8 +205,8 @@ describe('french formatting', () => {
     expect(formatEdited(new Date(2026, 9, 18, 9, 5).getTime(), now)).toBe('Modifiée à 09:05');
     expect(formatReminder(new Date(2026, 9, 19, 9, 0).getTime(), now)).toBe('Demain, 09:00');
     expect(formatReminder(new Date(2026, 9, 22, 18, 30).getTime(), now)).toBe('Jeudi, 18:30');
-    expect(plural(0, 'lien')).toBe('0 lien');
-    expect(plural(3, 'lien')).toBe('3 liens');
+    expect(plural(0, 'link')).toBe('0 lien');
+    expect(plural(3, 'link')).toBe('3 liens');
   });
 });
 

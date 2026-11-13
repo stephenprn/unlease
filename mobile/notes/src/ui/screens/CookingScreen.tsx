@@ -46,7 +46,7 @@ const SWIPE = 64;
 /** A step read from arm's length: the body's family, larger (21 on 32 on a phone; the web's 24 on 36). */
 const STEP_TYPE = { fontSize: 21, lineHeight: 32 } as const;
 
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 
 export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
   const { id } = route.params;
@@ -117,7 +117,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
         <View style={styles.waiting} accessibilityLiveRegion="polite">
           <ReadingTrack width={120} />
           <AppText variant="body" color={theme.color.inkMuted}>
-            {t('Lecture de la recette…')}
+            {t('Reading the recipe…')}
           </AppText>
         </View>
       );
@@ -126,9 +126,9 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
       return (
         <View style={styles.waiting}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('La recette n’a pas pu être lue : {reason}', { reason: phase.reason })}
+            {t('The recipe could not be read: {reason}', { reason: phase.reason })}
           </AppText>
-          <Button kind="text" label={t('Réessayer')} onPress={() => search(false)} style={styles.retry} />
+          <Button kind="text" label={t('Try again')} onPress={() => search(false)} style={styles.retry} />
         </View>
       );
     }
@@ -153,8 +153,8 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
             value={shown}
             onChange={setPart}
             options={[
-              { value: 'steps', label: t('Étapes') },
-              { value: 'ingredients', label: t('Ingrédients') },
+              { value: 'steps', label: t('Steps') },
+              { value: 'ingredients', label: t('Ingredients') },
             ]}
           />
         ) : null}
@@ -170,8 +170,8 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
           <>
             {count === 0 ? (
               <Organic outline="panel" style={styles.notice}>
-                <AppText variant="body">{t('Cette page ne donne pas ses étapes : suivez-la sur le site.')}</AppText>
-                <Button kind="tonal" label={t('Ouvrir la recette')} icon="external" onPress={() => open(link.url)} />
+                <AppText variant="body">{t('This page does not give its steps: follow it on the site.')}</AppText>
+                <Button kind="tonal" label={t('Open the recipe')} icon="external" onPress={() => open(link.url)} />
               </Organic>
             ) : null}
             {ingredients}
@@ -184,18 +184,18 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={link.title || linkShop(link)} closes onBack={() => navigation.goBack()} actions={<IconButton icon="external" label={t('Ouvrir la recette')} onPress={() => open(link.url)} />} />
+      <TopBar title={link.title || linkShop(link)} closes onBack={() => navigation.goBack()} actions={<IconButton icon="external" label={t('Open the recipe')} onPress={() => open(link.url)} />} />
       <View style={styles.fill}>{body()}</View>
       {stepping || timing ? (
         <View style={[styles.foot, { paddingBottom: insets.bottom + 12 }]}>
           <KitchenTimers linkId={id} />
           {stepping ? (
             <View style={styles.turns}>
-              <Button kind="text" label={t('Précédente')} accessibilityLabel={t('Étape précédente')} icon="back" disabled={at === 0} onPress={() => turn(-1)} />
+              <Button kind="text" label={t('Previous')} accessibilityLabel={t('Previous step')} icon="back" disabled={at === 0} onPress={() => turn(-1)} />
               {at < count - 1 ? (
-                <Button label={t('Suivante')} accessibilityLabel={t('Étape suivante')} icon="arrowRight" onPress={() => turn(1)} style={styles.next} />
+                <Button label={t('Next')} accessibilityLabel={t('Next step')} icon="arrowRight" onPress={() => turn(1)} style={styles.next} />
               ) : (
-                <Button label={t('Terminé')} icon="check" onPress={() => navigation.goBack()} style={styles.next} />
+                <Button label={t('Done')} icon="check" onPress={() => navigation.goBack()} style={styles.next} />
               )}
             </View>
           ) : null}
@@ -209,7 +209,7 @@ export function CookingScreen({ navigation, route }: ScreenProps<'Cooking'>) {
 function StepView({ id, step, index, count }: { id: string; step: RecipeStep; index: number; count: number }) {
   const styles = useThemedStyles(makeStyles);
   const timers = stepTimers(step.text);
-  const label = t('Étape {n}', { n: index + 1 });
+  const label = t('Step {n}', { n: index + 1 });
   const words: React.ReactNode[] = [];
   let cursor = 0;
   timers.forEach((timer, at) => {
@@ -225,7 +225,7 @@ function StepView({ id, step, index, count }: { id: string; step: RecipeStep; in
   return (
     <>
       <AppText variant="metaStrong">
-        {t('Étape {n} sur {total}', { n: index + 1, total: count })}
+        {t('Step {n} of {total}', { n: index + 1, total: count })}
         {step.section ? ` · ${step.section}` : ''}
       </AppText>
       <AppText variant="editorBody" style={styles.stepText}>
@@ -235,7 +235,7 @@ function StepView({ id, step, index, count }: { id: string; step: RecipeStep; in
         <View style={styles.timers}>
           {timers.map((timer, at) => {
             const written = step.text.slice(timer.start, timer.end).trim();
-            return <Button key={at} kind="tonal" small icon="clock" label={written} accessibilityLabel={t('Lancer un minuteur de {duration}', { duration: written })} onPress={() => startTimer(id, label, timer.seconds)} />;
+            return <Button key={at} kind="tonal" small icon="clock" label={written} accessibilityLabel={t('Start a {duration} timer', { duration: written })} onPress={() => startTimer(id, label, timer.seconds)} />;
           })}
         </View>
       ) : null}

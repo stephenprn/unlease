@@ -19,7 +19,7 @@ import { StatusRow } from './StatusRow';
 import { BackgroundSyncRows } from '../settings/BackgroundSyncRows';
 
 export const SERVER_INFO = tx(
-  'Le serveur garde les données de vos applications et les synchronise entre vos appareils. Il fait le reste aussi : Claude, la sauvegarde sur S3, vos fichiers sur Seafile, une fois reliés.',
+  'The server keeps your apps’ data and syncs it between your devices. It does the rest too: Claude, the backup to S3, your files on Seafile, once they are linked.',
 );
 
 export function ServerSection({ status, ask }: { status: AdminStatus | null; ask: AdminOverlays['ask'] }) {
@@ -35,8 +35,8 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
   // What the server refuses comes back under the field it concerns: the token, or the address.
   const form = useForm(
     {
-      address: url.trim() ? null : t('Saisissez l’adresse de votre serveur.'),
-      token: token.trim() ? null : t('Saisissez le jeton de votre serveur.'),
+      address: url.trim() ? null : t('Enter your server’s address.'),
+      token: token.trim() ? null : t('Enter your server’s token.'),
     },
     { order: ['address', 'token'], sendOnDone: () => connect() },
   );
@@ -49,10 +49,10 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
       setServer(normalized);
       setReading(health.analysis);
       startSync();
-      showSnack(health.analysis ? t('Connecté, avec Claude.') : t('Connecté, mais le serveur n’a pas de clé Claude.'), undefined, { tone: health.analysis ? 'success' : 'warning' });
+      showSnack(health.analysis ? t('Connected, with Claude.') : t('Connected, but the server has no Claude key.'), undefined, { tone: health.analysis ? 'success' : 'warning' });
       return true;
     } catch (failure) {
-      const refusal = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+      const refusal = failure instanceof Error ? t(failure.message) : t('Server unreachable');
       if (failure instanceof SyncError) form.fail(connectFailureField(failure.kind, failure.status), connectFailureMessage(failure.kind, refusal));
       else form.fail('address', refusal);
       return false;
@@ -61,14 +61,14 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
 
   const words =
     phase === 'local'
-      ? t('Non connecté : tout reste sur ce téléphone.')
+      ? t('Not connected: everything stays on this phone.')
       : phase === 'unauthorized'
-        ? t('Le serveur refuse ce jeton.')
+        ? t('The server refuses this token.')
         : phase === 'offline'
-          ? [t('Hors ligne'), pending > 0 ? t('{changes} en attente', { changes: plural(pending, 'modification') }) : '', message ? t(message) : '', lastSync ? t('Synchronisé {when}', { when: formatRelative(lastSync, Date.now()) }) : ''].filter(Boolean).join(' · ')
+          ? [t('Offline'), pending > 0 ? t('{changes} waiting', { changes: plural(pending, 'change') }) : '', message ? t(message) : '', lastSync ? t('Synced {when}', { when: formatRelative(lastSync, Date.now()) }) : ''].filter(Boolean).join(' · ')
           : phase === 'syncing'
-            ? t('Synchronisation…')
-            : `${lastSync ? t('Synchronisé {when}', { when: formatRelative(lastSync, Date.now()) }) : t('Connecté')}${clock ? ` · ${clock}` : ''}`;
+            ? t('Syncing…')
+            : `${lastSync ? t('Synced {when}', { when: formatRelative(lastSync, Date.now()) }) : t('Connected')}${clock ? ` · ${clock}` : ''}`;
   const tone: StatusTone = phase === 'synced' ? 'ok' : phase === 'unauthorized' ? 'danger' : phase === 'local' ? 'off' : 'waiting';
 
   return (
@@ -76,15 +76,15 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
       {/* The same head as every section's: the dot on the state's first line. */}
       <StatusRow line={{ tone, title: words, meta: server && status ? serverFacts(status.server) : '' }} />
       <View style={styles.fields}>
-        <TextField label={t('Adresse')} kind="serverAddress" value={url} onChangeText={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
-        <TextField label={t('Jeton')} kind="serverToken" value={token} onChangeText={setToken} field={form.field('token')} revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }} />
+        <TextField label={t('Address')} kind="serverAddress" value={url} onChangeText={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
+        <TextField label={t('Token')} kind="serverToken" value={token} onChangeText={setToken} field={form.field('token')} revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }} />
         <FormMessage message={form.message} />
         <View style={styles.row}>
-          <Button label={server ? t('Tester et enregistrer') : t('Se connecter')} icon="server" busy={form.busy} onPress={() => void form.submit(connect)} />
+          <Button label={server ? t('Test and save') : t('Connect')} icon="server" busy={form.busy} onPress={() => void form.submit(connect)} />
           {server ? (
             <Button
               kind="tonal"
-              label={t('Synchroniser')}
+              label={t('Sync')}
               icon="refresh"
               onPress={() => {
                 startSync();
@@ -99,13 +99,13 @@ export function ServerSection({ status, ask }: { status: AdminStatus | null; ask
       {server ? (
         <ListRow
           icon="cloudOff"
-          title={t('Se déconnecter du serveur')}
-          supporting={t('Tout reste sur ce téléphone.')}
+          title={t('Disconnect from the server')}
+          supporting={t('Everything stays on this phone.')}
           onPress={() =>
             ask({
-              title: t('Se déconnecter ?'),
-              message: t('Ce téléphone arrêtera de se synchroniser. Ce qu’il garde reste ici.'),
-              confirmLabel: t('Se déconnecter'),
+              title: t('Disconnect?'),
+              message: t('This phone will stop syncing. What it holds stays here.'),
+              confirmLabel: t('Disconnect'),
               run: () => {
                 stopSync();
                 setServer(null);

@@ -185,7 +185,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     else if (place === 'admin') navigation.navigate('Admin');
   };
 
-  const title = filter === 'favorites' ? t('Favoris') : labelInfo && !labelGone ? labelInfo.name : null;
+  const title = filter === 'favorites' ? t('Favourites') : labelInfo && !labelGone ? labelInfo.name : null;
   const header = (
     <View
       onLayout={(event: LayoutChangeEvent) => {
@@ -229,17 +229,17 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
 
   // A gone label says so first; then nothing found, as in every app: what the search looks through; then no contacts at all, in every list.
   const empty = labelGone ? (
-    <EmptyState scene="label" title={t('Ce libellé n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+    <EmptyState scene="label" title={t('This label no longer exists')} text={t('It was deleted, on this device or another.')} />
   ) : searching ? (
     <EmptyState scene="search" title={searchSummary(query, 0, settingsFound(query, CONTACTS_SETTINGS_PLACES))} text={APP_WORDS.contacts.searchHint} />
   ) : total === 0 ? (
-    <EmptyState scene="welcome" title={t('Aucun contact pour l’instant')} text={t('Le bouton +, en bas, en crée un. Vos contacts Google ou ceux de ce téléphone s’importent en une fois.')}>
-      <Button label={t('Importer des contacts')} icon="download" kind="tonal" onPress={() => navigation.navigate('Import')} />
+    <EmptyState scene="welcome" title={t('No contacts yet')} text={t('The + button below creates one. Your Google contacts, or this phone’s, import in one go.')}>
+      <Button label={t('Import contacts')} icon="download" kind="tonal" onPress={() => navigation.navigate('Import')} />
     </EmptyState>
   ) : filter === 'favorites' ? (
-    <EmptyState scene="label" title={t('Aucun favori')} text={t('L’étoile d’un contact le met ici, à portée de main, et dans le widget d’appels rapides du téléphone.')} />
+    <EmptyState scene="label" title={t('No favourites')} text={t('A contact’s star puts them here, within reach, and in the phone’s quick calls widget.')} />
   ) : (
-    <EmptyState scene="label" title={t('Personne avec ce libellé')} text={t('Ouvrez un contact et ajoutez-lui ce libellé.')} />
+    <EmptyState scene="label" title={t('No one with this label')} text={t('Open a contact and give them this label.')} />
   );
 
   return (
@@ -252,7 +252,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
         placeholder={APP_WORDS.contacts.search}
         focusKey={searchFocus}
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
-        localText={t('Pas de serveur : les contacts restent sur ce téléphone.')}
+        localText={t('No server: your contacts stay on this phone.')}
       />
       <View style={styles.fill}>
         <ScrollEdges>
@@ -296,7 +296,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
             }}
           /> : null}
       </View>
-      <FabMenu actions={[{ icon: 'plus', label: t('Créer un contact'), onPress: () => navigation.navigate('Edit', label ? { label } : filter === 'favorites' ? { favorite: true } : undefined) }]} />
+      <FabMenu actions={[{ icon: 'plus', label: t('Create contact'), onPress: () => navigation.navigate('Edit', label ? { label } : filter === 'favorites' ? { favorite: true } : undefined) }]} />
       <Drawer
         open={drawerOpen}
         current={current}

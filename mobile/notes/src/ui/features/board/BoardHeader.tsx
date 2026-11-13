@@ -42,7 +42,7 @@ function LineChipsComponent({ onOpenLine, onNewLine, selecting }: LineChipsProps
         {lines.map(line => (
           <LineChip key={line.id} id={line.id} onPress={onOpenLine} />
         ))}
-        <Tappable accessibilityLabel={t('Nouvelle collection')} onPress={onNewLine} style={styles.newLine}>
+        <Tappable accessibilityLabel={t('New collection')} onPress={onNewLine} style={styles.newLine}>
           <Icon name="plus" size={18} color={theme.color.link} />
           <AppText variant="label" color={theme.color.link}>
             {t('Collection')}
@@ -62,7 +62,7 @@ const LineChip = memo(function LineChipView({ id, onPress }: { id: string; onPre
   // A capsule of paper, its collection's emblem on its own stone at the left end.
   return (
     <Organic style={styles.chip}>
-      <Tappable accessibilityLabel={`${shownTitle(note)}, ${plural(count, 'lien')}`} onPress={() => onPress(id)} style={styles.chipPress}>
+      <Tappable accessibilityLabel={`${shownTitle(note)}, ${plural(count, 'link')}`} onPress={() => onPress(id)} style={styles.chipPress}>
         <EmblemStone id={id} emblem={collectionEmblem(id, note.emblem)} color={asLineColor(note.color)} size={21} width={36} height={32} />
         <AppText variant="label" numberOfLines={1} style={styles.chipName}>
           {shownTitle(note)}

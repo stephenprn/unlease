@@ -111,7 +111,7 @@ function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; ti
         if (!next.signal.aborted) setPhase({ kind: 'ready', question: asked, answer });
       },
       (error: unknown) => {
-        if (!next.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!next.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
   };
@@ -138,16 +138,16 @@ function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; ti
         foot={
           <>
             <Button kind="text" onClick={onCancel}>
-              {t('Annuler')}
+              {t('Cancel')}
             </Button>
             <Button type="submit" icon="sparkle" disabled={!asked}>
-              {t('Demander')}
+              {t('Ask')}
             </Button>
           </>
         }
       >
-        <TextField label={t('Votre question')} kind="prose" value={question} onChange={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} />
-        <div className={styles.moduleBar} aria-label={t('Questions pour commencer')} role="group">
+        <TextField label={t('Your question')} kind="prose" value={question} onChange={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} />
+        <div className={styles.moduleBar} aria-label={t('Questions to start with')} role="group">
           {askSuggestions(link.kind).map(suggestion => (
             <Button key={suggestion} kind="text" small onClick={() => setQuestion(suggestion)}>
               {suggestion}
@@ -155,7 +155,7 @@ function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; ti
           ))}
         </div>
         <button type="button" role="switch" aria-checked={web} className={styles.choice} onClick={() => setWeb(value => !value)}>
-          <span className={`${styles.choiceText} t-body`}>{t('Chercher aussi sur le web')}</span>
+          <span className={`${styles.choiceText} t-body`}>{t('Search the web too')}</span>
           <SwitchMark checked={web} />
         </button>
         <p className="t-meta">{moduleCost('ask', model, formatUsd)}</p>
@@ -167,11 +167,11 @@ function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; ti
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{web ? t('Claude lit la page et cherche sur le web…') : t('Claude lit la page…')}</p>
+        <p className="t-body">{web ? t('Claude is reading the page and searching the web…') : t('Claude is reading the page…')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Claude n’a pas pu répondre : {reason}', { reason: t(phase.reason) })}
+        {t('Claude could not answer: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
@@ -199,28 +199,28 @@ function AskBody({ id, titleId, onDismiss, onCancel, onDirty }: { id: string; ti
     phase.kind === 'asking' ? null : phase.kind === 'failed' ? (
       <>
         <Button kind="text" onClick={again}>
-          {t('Autre question')}
+          {t('Another question')}
         </Button>
-        <Button onClick={ask}>{t('Réessayer')}</Button>
+        <Button onClick={ask}>{t('Try again')}</Button>
       </>
     ) : (
       <>
         <Button kind="text" onClick={again}>
-          {t('Autre question')}
+          {t('Another question')}
         </Button>
         <Button
           kind="tonal"
           icon="note"
           onClick={() => {
             if (!addToLinkNote(id, `${phase.question}\n${phase.answer.answer}`)) {
-              showWarning(t('Votre note est trop longue pour y ajouter cette réponse.'));
+              showWarning(t('Your note is too long to add this answer to it.'));
               return;
             }
-            showSnack(t('Ajouté à votre note'), undefined, { tone: 'success' });
+            showSnack(t('Added to your note'), undefined, { tone: 'success' });
             close();
           }}
         >
-          {t('Ajouter à votre note')}
+          {t('Add to your note')}
         </Button>
       </>
     );

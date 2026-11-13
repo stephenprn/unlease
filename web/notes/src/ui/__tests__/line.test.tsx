@@ -32,7 +32,7 @@ describe('a collection page', () => {
     ready = addLink('https://www.atelier-nord.fr/veste', { noteId: line });
     updateLink(ready, { status: 'ready', title: 'Veste en laine bouillie', kind: 'product', siteName: 'Atelier Nord', price: 189, currency: 'EUR', attributes: [{ label: 'Couleur', value: 'Camel' }] });
     failed = addLink('https://boutique-fermee.fr/sac', { noteId: line });
-    updateLink(failed, { status: 'failed', error: 'Page protégée contre les robots' });
+    updateLink(failed, { status: 'failed', error: 'Page protected against robots' });
     done = addLink('https://www.atelier-nord.fr/echarpe', { noteId: line });
     updateLink(done, { status: 'ready', title: 'Écharpe en cachemire', kind: 'product', price: 75, currency: 'EUR' });
     setLinkDone(done, true, Date.UTC(2026, 9, 10, 12));

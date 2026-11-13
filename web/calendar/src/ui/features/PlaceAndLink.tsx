@@ -25,13 +25,13 @@ export function PlaceButton({ place }: { place: string }) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [menu, setMenu] = useState(false);
   const items: MenuItem[] = [
-    { label: t('Ouvrir dans {app}', { app: MAP_APP_NAMES.google }), icon: 'mapPin', onSelect: () => open(lineMapsUrl(place, 'google')) },
-    { label: t('Ouvrir dans {app}', { app: MAP_APP_NAMES.openstreetmap }), icon: 'globe', onSelect: () => open(lineMapsUrl(place, 'openstreetmap')) },
+    { label: t('Open in {app}', { app: MAP_APP_NAMES.google }), icon: 'mapPin', onSelect: () => open(lineMapsUrl(place, 'google')) },
+    { label: t('Open in {app}', { app: MAP_APP_NAMES.openstreetmap }), icon: 'globe', onSelect: () => open(lineMapsUrl(place, 'openstreetmap')) },
     {
-      label: t('Copier l’adresse'),
+      label: t('Copy the address'),
       icon: 'copy',
       separatorBefore: true,
-      onSelect: () => void copyText(place).then(ok => (ok ? showSnack(t('Adresse copiée'), undefined, { tone: 'success' }) : showError(t('Le navigateur refuse de copier')))),
+      onSelect: () => void copyText(place).then(ok => (ok ? showSnack(t('Address copied'), undefined, { tone: 'success' }) : showError(t('The browser won’t copy')))),
     },
   ];
   return (
@@ -40,7 +40,7 @@ export function PlaceButton({ place }: { place: string }) {
         <span className="t-body">{place}</span>
         <Icon name="chevronDown" size={16} />
       </button>
-      <Menu open={menu} anchor={anchor} onDismiss={() => setMenu(false)} items={items} label={t('Ouvrir le lieu')} align="start" />
+      <Menu open={menu} anchor={anchor} onDismiss={() => setMenu(false)} items={items} label={t('Open the place')} align="start" />
     </>
   );
 }

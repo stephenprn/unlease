@@ -24,7 +24,7 @@ import { theApp } from '../../../modules';
 import { AppMark } from '../../navigation/AppBrand';
 import styles from './settings.module.css';
 
-export const APPS_INFO = tx('Les applications que votre serveur fait tourner, pour tous vos appareils. Une application désactivée garde ses données : elles sont synchronisées et sauvegardées, et reviennent telles quelles quand vous la réactivez.');
+export const APPS_INFO = tx('The apps your server runs, for all your devices. An app turned off keeps its data: it is synced and backed up, and comes back as it was when you turn it on again.');
 
 /** Save the apps on: the server's answer is kept, and the next pull asks for their records. */
 export async function saveApps(server: ServerConfig, apps: readonly AppId[]): Promise<ServerSettings> {
@@ -52,9 +52,9 @@ export function AppsSection({ server, settings }: { server: ServerConfig | null;
     setBusy(id);
     try {
       await saveApps(server, next);
-      showSnack(next.includes(id) ? t('{app} activé sur le serveur', { app: APPS[id].name }) : t('{app} désactivé : ses données sont gardées', { app: APPS[id].name }), undefined, { tone: 'success' });
+      showSnack(next.includes(id) ? t('{app} turned on on the server', { app: APPS[id].name }) : t('{app} turned off: its data is kept', { app: APPS[id].name }), undefined, { tone: 'success' });
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Réglage refusé'));
+      showError(failure instanceof Error ? t(failure.message) : t('Setting refused'));
     } finally {
       setBusy(null);
     }
@@ -63,7 +63,7 @@ export function AppsSection({ server, settings }: { server: ServerConfig | null;
   const soon = APP_IDS.filter((id): boolean => !isReadyApp(id));
   return (
     <>
-      {!server ? <p className={`${styles.help} t-meta`}>{t('Reliez un serveur pour choisir les applications qu’il fait tourner.')}</p> : null}
+      {!server ? <p className={`${styles.help} t-meta`}>{t('Connect a server to choose the apps it runs.')}</p> : null}
       {ready.map(id => {
         const on = enabled.includes(id);
         // The last app on stays: a server always runs one.
@@ -82,18 +82,18 @@ export function AppsSection({ server, settings }: { server: ServerConfig | null;
             <AppMark app={id} size={32} />
             <span className={styles.rowText}>
               <span className="t-body">{APPS[id].name}</span>
-              <span className="t-meta">{last ? t('{words} · le serveur fait toujours tourner au moins une application', { words: APP_WORDS[id].tagline }) : APP_WORDS[id].description}</span>
+              <span className="t-meta">{last ? t('{words} · the server always runs at least one app', { words: APP_WORDS[id].tagline }) : APP_WORDS[id].description}</span>
             </span>
             <SwitchMark checked={on} />
           </button>
         );
       })}
-      {soon.length > 0 ? <p className={`${styles.help} t-meta-strong`}>{t('Bientôt disponible')}</p> : null}
+      {soon.length > 0 ? <p className={`${styles.help} t-meta-strong`}>{t('Coming soon')}</p> : null}
       <Confirm
         open={turningOff !== null}
-        title={t('Désactiver {app} ?', { app: APPS[own].name })}
-        message={t('Il ne s’ouvrira plus, ici ni sur vos autres appareils, tant qu’il est désactivé sur le serveur. Ses données sont gardées.')}
-        confirmLabel={t('Désactiver')}
+        title={t('Turn {app} off?', { app: APPS[own].name })}
+        message={t('It will not open, here or on your other devices, while it is off on the server. Its data is kept.')}
+        confirmLabel={t('Turn off')}
         danger
         onCancel={() => setTurningOff(null)}
         onConfirm={() => {

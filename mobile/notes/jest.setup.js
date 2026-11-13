@@ -4,7 +4,7 @@
  */
 require('react-native-gesture-handler/jestSetup');
 // As index.js does at start.
-require('@unlease/notes/i18n').addNotesEnglish();
+require('@unlease/notes/i18n').addNotesFrench();
 
 jest.mock('react-native-safe-area-context', () => {
   const inset = { top: 32, right: 0, bottom: 24, left: 0 };

@@ -7,7 +7,7 @@
 import { memo, useMemo, type ReactNode } from 'react';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { collectionsByName, labelsByName } from '@unlease/notes/services/navOrder';
@@ -69,13 +69,13 @@ export function NotesNav({ route, onNavigate }: NavProps) {
   return (
     <>
       <NavRow to={paths.board} label={t('Notes')} leading={<NavGlyph name="note" />} current={isCurrent(route, paths.board)} onNavigate={go} />
-      <NavRow to={pathForView('reminders')} label={t('Rappels')} leading={<NavGlyph name="bell" />} current={isCurrent(route, pathForView('reminders'))} onNavigate={go} />
+      <NavRow to={pathForView('reminders')} label={t('Reminders')} leading={<NavGlyph name="bell" />} current={isCurrent(route, pathForView('reminders'))} onNavigate={go} />
       <NavFold
         id="collections"
         title={t('Collections')}
         action={
-          <Link to={paths.lines} className={styles.headingAction} onNavigate={go} ariaLabel={t('Toutes les collections')}>
-            {t('Tout voir')}
+          <Link to={paths.lines} className={styles.headingAction} onNavigate={go} ariaLabel={t('All collections')}>
+            {t('See all')}
           </Link>
         }
       >
@@ -100,7 +100,7 @@ export function NotesNav({ route, onNavigate }: NavProps) {
           return line.id === INBOX_ID ? <InboxGate key={line.id}>{row}</InboxGate> : row;
         })}
         <NavAction
-          label={t('Nouvelle collection')}
+          label={t('New collection')}
           icon="plus"
           onClick={() => {
             onNavigate();
@@ -110,10 +110,10 @@ export function NotesNav({ route, onNavigate }: NavProps) {
       </NavFold>
       <NavFold
         id="labels"
-        title={t('Labels')}
+        title={tc('notes', 'Labels')}
         action={
-          <Link to={paths.labels} className={styles.headingAction} onNavigate={go} ariaLabel={t('Modifier les labels')}>
-            {t('Modifier')}
+          <Link to={paths.labels} className={styles.headingAction} onNavigate={go} ariaLabel={tc('notes', 'Edit labels')}>
+            {t('Edit')}
           </Link>
         }
       >
@@ -135,7 +135,7 @@ export function NotesNav({ route, onNavigate }: NavProps) {
             />
           );
         })}
-        {labels.length === 0 ? <NavRow to={paths.labels} label={t('Créer un label')} leading={<NavGlyph name="tag" />} current={false} onNavigate={go} /> : null}
+        {labels.length === 0 ? <NavRow to={paths.labels} label={t('Create a label')} leading={<NavGlyph name="tag" />} current={false} onNavigate={go} /> : null}
       </NavFold>
     </>
   );
@@ -149,8 +149,8 @@ export function NotesNavFoot({ route, onNavigate }: NavProps) {
   };
   return (
     <>
-      <NavRow to={pathForView('archive')} label={t('Archives')} leading={<NavGlyph name="archive" />} current={isCurrent(route, pathForView('archive'))} onNavigate={go} />
-      <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={isCurrent(route, paths.trash)} onNavigate={go} />
+      <NavRow to={pathForView('archive')} label={tc('place', 'Archive')} leading={<NavGlyph name="archive" />} current={isCurrent(route, pathForView('archive'))} onNavigate={go} />
+      <NavRow to={paths.trash} label={t('Bin')} leading={<NavGlyph name="trash" />} current={isCurrent(route, paths.trash)} onNavigate={go} />
     </>
   );
 }

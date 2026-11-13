@@ -15,12 +15,12 @@ import { closeTableSheet, deleteRowWithUndo, useTableSheets, type TableSheetRequ
 
 function RowSheet({ visible, request, onDismiss }: { visible: boolean; request: Extract<TableSheetRequest, { kind: 'row' }> | null; onDismiss: () => void }) {
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Ligne')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Row')}>
       {request ? (
         <>
           <ListRow
             icon="plus"
-            title={t('Insérer une ligne en dessous')}
+            title={t('Insert a row below')}
             onPress={() => {
               onDismiss();
               addRow(request.page, request.table, request.row);
@@ -28,7 +28,7 @@ function RowSheet({ visible, request, onDismiss }: { visible: boolean; request: 
           />
           <ListRow
             icon="trash"
-            title={t('Supprimer la ligne')}
+            title={t('Delete row')}
             danger
             onPress={() => {
               onDismiss();

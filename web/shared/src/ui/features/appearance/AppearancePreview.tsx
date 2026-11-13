@@ -70,12 +70,12 @@ function Mini({ look, mode }: { look: Look; mode: Mode }) {
 function AppearancePreviewComponent({ look, className }: { look: Look; className?: string }) {
   const shown = useShownMode();
   return (
-    <div className={[styles.preview, className ?? ''].join(' ')} role="img" aria-label={t('Aperçu de jour et de nuit')}>
+    <div className={[styles.preview, className ?? ''].join(' ')} role="img" aria-label={t('Day and night preview')}>
       {MODES.map(mode => (
         <figure key={mode} className={styles.previewFigure} aria-hidden="true">
           <Mini look={look} mode={mode} />
           <figcaption className={`${styles.previewCaption} t-label-small`} data-shown={mode === shown || undefined}>
-            {mode === 'light' ? t('Jour') : t('Nuit')}
+            {mode === 'light' ? t('Day') : t('Night')}
           </figcaption>
         </figure>
       ))}

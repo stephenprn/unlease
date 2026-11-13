@@ -18,7 +18,8 @@ import { holidayDrafts, holidayYears, type NagerHoliday } from '@unlease/calenda
 import { readQuickAdd } from '@unlease/calendar/services/quickAdd';
 import { addDays, dayKey } from '@unlease/calendar/services/time';
 import { eventFromRecord } from '@unlease/calendar/sync/entities';
-import { parseCalendarAskRequest, parseFromLinkRequest, parseParseRequest } from '@unlease/calendar/sync/routes';
+import { FEED_CONNECT_PATH, parseCalendarAskRequest, parseFeedConnectRequest, parseFromLinkRequest, parseParseRequest } from '@unlease/calendar/sync/routes';
+import { feedAddress } from '@unlease/calendar/services/feeds';
 import { blockFields } from '@unlease/pages/sync/entities';
 import { dailyPageLines, dayTitle, JOURNAL_WORDS, parseDailyRequest, parseFromEventRequest } from '@unlease/pages/sync/journal';
 
@@ -116,7 +117,7 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
   }
   if (path === '/api/calendar/mentions' && method === 'GET') {
     const query = parseMentionsQuery(url.searchParams.get('type') ?? undefined, url.searchParams.get('ids') ?? undefined);
-    if (!query) return json({ error: 'Requête invalide' }, 400);
+    if (!query) return json({ error: 'Invalid request' }, 400);
     const events = store
       .records()
       .filter(record => record.type === 'calendarEvent')
@@ -126,13 +127,13 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
   if (path === '/api/calendar/weather' && method === 'GET') return weatherFor(url.searchParams.get('place') ?? '');
   if (path === '/api/calendar/parse' && method === 'POST') {
     const request = parseParseRequest(body);
-    if (!request) return json({ error: 'Requête invalide' }, 400);
+    if (!request) return json({ error: 'Invalid request' }, 400);
     const read = readQuickAdd(request.text, request.now.slice(0, 10));
     return json({ proposal: { title: read.title || request.text, start: read.foundTime || read.foundDay ? read.start : `${addDays(request.now.slice(0, 10), 1)}T19:00`, end: read.foundTime || read.foundDay ? read.end : `${addDays(request.now.slice(0, 10), 1)}T20:00`, timeZone: request.timeZone, place: read.place, description: '', url: '' } });
   }
   if (path === '/api/calendar/from-link' && method === 'POST') {
     const request = parseFromLinkRequest(body);
-    if (!request) return json({ error: 'Requête invalide' }, 400);
+    if (!request) return json({ error: 'Invalid request' }, 400);
     const link = store.records().find(record => record.type === 'link' && record.id === request.linkId);
     if (!link) return json({ error: 'Ce lien n’existe plus' }, 409);
     const day = addDays(request.now.slice(0, 10), 10);
@@ -140,7 +141,7 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
   }
   if (path === '/api/calendar/ask' && method === 'POST') {
     const request = parseCalendarAskRequest(body);
-    if (!request) return json({ error: 'Requête invalide' }, 400);
+    if (!request) return json({ error: 'Invalid request' }, 400);
     const lines = request.context.split('\n').filter(line => line >= request.now.slice(0, 10)).slice(0, 3);
     const english = request.lang === 'en';
     const next = lines.map(line => `• ${line}`).join('\n');
@@ -151,6 +152,15 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
     return json({ countries: [{ code: 'FR', name: 'France' }, { code: 'BE', name: 'Belgium' }, { code: 'CH', name: 'Switzerland' }, { code: 'GB', name: 'United Kingdom' }, { code: 'US', name: 'United States' }, { code: 'DE', name: 'Germany' }] });
   }
   if (path === '/api/calendar/holidays/regions' && method === 'GET') return json({ regions: url.searchParams.get('country') === 'FR' ? ['FR-57', 'FR-67', 'FR-68'] : [] });
+  if (path === FEED_CONNECT_PATH && method === 'POST') {
+    // No network in the demo: an address that names CalDAV asks for a login, and any login opens it; any other address is an iCalendar one.
+    const request = parseFeedConnectRequest(body);
+    const address = request ? feedAddress(request.url) : null;
+    if (!request || !address) return json({ error: 'Invalid calendar address' }, 400);
+    if (!/dav/i.test(address)) return json({ status: 'ready', kind: 'ics', url: address, name: '' });
+    if (!request.login) return json({ status: 'login' });
+    return json({ status: 'ready', kind: 'caldav', url: address, name: '' });
+  }
   const refresh = /^\/api\/calendar\/feeds\/([^/]+)\/refresh$/.exec(path);
   if (refresh && method === 'POST') {
     const now = Date.now();
@@ -163,7 +173,7 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
     const refused = off('pages');
     if (refused) return refused;
     const request = parseFromEventRequest(body);
-    if (!request) return json({ error: 'Requête invalide' }, 400);
+    if (!request) return json({ error: 'Invalid request' }, 400);
     const words = JOURNAL_WORDS[request.lang];
     const records = store.records();
     const found = records.find(record => record.type === 'block' && record.fields.kind === 'text' && record.fields.deletedAt === null && String(record.fields.text).includes(`{@event=${request.eventId}}`));
@@ -187,7 +197,7 @@ export function calendarRoute(store: CalendarStore, url: URL, method: string, bo
     const refused = off('pages');
     if (refused) return refused;
     const request = parseDailyRequest(body);
-    if (!request) return json({ error: 'Requête invalide' }, 400);
+    if (!request) return json({ error: 'Invalid request' }, 400);
     const words = JOURNAL_WORDS[request.lang];
     const records = store.records();
     const now = Date.now();

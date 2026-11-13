@@ -24,6 +24,6 @@ export function linksToTry(links: readonly LinkItem[], limit = 8): LinkItem[] {
 /** « Essayer »: what Claude reads on `url` with these fields, in the interface's language. Throws `SyncError` with the server's words when it refuses. */
 export function tryFields(url: string, fields: readonly TemplateField[], signal?: AbortSignal): Promise<TemplateTryResponse> {
   const config = useSettingsStore.getState().server;
-  if (!config) return Promise.reject(new SyncError('network', t('Aucun serveur n’est connecté')));
+  if (!config) return Promise.reject(new SyncError('network', t('No server is connected')));
   return tryTemplate(config, { url: url.trim(), lang: getLocale(), fields: namedFields(fields) }, signal);
 }

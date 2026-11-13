@@ -57,7 +57,7 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
         {groups.length === 0 ? (
           // The view's empty place, centred in it as « Aujourd'hui »'s is.
           <div className={styles.scheduleEmpty}>
-            <EmptyState scene="reminders" title={t('Rien de prévu')} text={t('Aucun événement sur ces jours. Un clic sur « Créer » en ajoute un.')} />
+            <EmptyState scene="reminders" title={t('Nothing planned')} text={t('No events on these days. “Create” adds one.')} />
           </div>
         ) : null}
         {groups.map(group => (
@@ -73,7 +73,7 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
                     <span className={styles.swatch} aria-hidden="true" />
                     <span className="t-meta tabular">{timeRange(item, twelveHours)}</span>
                     <span className="t-body">
-                      {item.event.title.trim() || t('Sans titre')}
+                      {item.event.title.trim() || t('Untitled')}
                       {item.event.place.trim() ? <span className={styles.muted}>{` · ${item.event.place.trim()}`}</span> : null}
                     </span>
                   </button>
@@ -85,7 +85,7 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
         {onMore && groups.length > 0 ? (
           <div className={styles.moreLater}>
             <Button kind="text" icon="arrowDown" onClick={onMore}>
-              {t('Afficher plus')}
+              {t('Show more')}
             </Button>
           </div>
         ) : null}

@@ -12,11 +12,11 @@ import { plural } from './format';
  * « q » », never « Aucun résultat » under results.
  */
 export function searchSummary(query: string, found: number, settings = 0): string {
-  if (found > 0) return plural(found, 'résultat');
-  return settings > 0 ? t('Rien d’autre pour « {query} »', { query: query.trim() }) : noResults(query);
+  if (found > 0) return plural(found, 'result');
+  return settings > 0 ? t('Nothing else for “{query}”', { query: query.trim() }) : noResults(query);
 }
 
 /** « Aucun résultat pour « q » »: the title of an empty search. */
 export function noResults(query: string): string {
-  return t('Aucun résultat pour « {query} »', { query: query.trim() });
+  return t('No results for “{query}”', { query: query.trim() });
 }

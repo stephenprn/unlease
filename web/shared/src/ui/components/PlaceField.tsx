@@ -94,7 +94,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
   }, [known, value, found.places]);
 
   const typedEnough = value.replace(/\s+/g, ' ').trim().length >= PLACE_QUERY_MIN;
-  const said = rows.length === 0 && typedEnough && !found.waiting ? (found.failed ? t('La recherche de lieux ne répond pas : le lieu est gardé tel qu’il est écrit.') : found.typed ? t('Aucun lieu trouvé : il est gardé tel qu’il est écrit.') : null) : null;
+  const said = rows.length === 0 && typedEnough && !found.waiting ? (found.failed ? t('The place search is not answering: the place is kept as written.') : found.typed ? t('No place found: it is kept as written.') : null) : null;
   const shown = open && anchor !== null && (rows.length > 0 || said !== null);
   const at = active < rows.length ? active : -1;
 
@@ -188,7 +188,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
         </p>
       ) : null}
       {shown && anchor ? (
-        <Floating anchor={anchor} label={label ?? ariaLabel ?? t('Lieux')} className={styles.panel} role="listbox" id={listId}>
+        <Floating anchor={anchor} label={label ?? ariaLabel ?? t('Places')} className={styles.panel} role="listbox" id={listId}>
           <div className={styles.list} style={{ width: Math.min(Math.max(anchor.width, 300), 520) }}>
             {rows.map((row, index) => (
               <div
@@ -209,7 +209,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
               </div>
             ))}
             {said ? <EmptyLine text={said} glyph="info" className={styles.said} /> : null}
-            {rows.some(row => !row.known) ? <p className={`${styles.credit} t-meta`}>{t('Lieux : © les contributeurs d’OpenStreetMap')}</p> : null}
+            {rows.some(row => !row.known) ? <p className={`${styles.credit} t-meta`}>{t('Places: © OpenStreetMap contributors')}</p> : null}
           </div>
         </Floating>
       ) : null}

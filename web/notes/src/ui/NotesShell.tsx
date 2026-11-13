@@ -6,7 +6,7 @@
  */
 import { useEffect } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
 import { spotKey } from '@unlease/core/services/spotlight';
 
@@ -68,13 +68,13 @@ function FactsPlace({ route }: { route: Extract<Route, { name: 'templates' | 'te
 
 function titleFor(state: LibraryState, route: Route, overlay: Route): string | null {
   if (overlay.name === 'note') return state.notes[overlay.id]?.title.trim() || t('Note');
-  if (overlay.name === 'link') return state.links[overlay.id]?.title || t('Lien');
+  if (overlay.name === 'link') return state.links[overlay.id]?.title || t('Link');
   switch (route.name) {
     case 'board':
-      if (route.view === 'reminders') return t('Rappels');
-      if (route.view === 'archive') return t('Archives');
-      if (route.view === 'trash') return t('Corbeille');
-      if (route.view.startsWith('label:')) return state.labels[route.view.slice(6)]?.name ?? t('Label');
+      if (route.view === 'reminders') return t('Reminders');
+      if (route.view === 'archive') return tc('place', 'Archive');
+      if (route.view === 'trash') return t('Bin');
+      if (route.view.startsWith('label:')) return state.labels[route.view.slice(6)]?.name ?? tc('notes', 'Label');
       return null;
     case 'line': {
       const line = state.notes[route.id];
@@ -83,9 +83,9 @@ function titleFor(state: LibraryState, route: Route, overlay: Route): string | n
     case 'lines':
       return t('Collections');
     case 'labels':
-      return t('Labels');
+      return tc('notes', 'Labels');
     case 'templates':
-      return t('Ce que Claude relève');
+      return t('Facts Claude notes');
     case 'template':
       return factsTitle(state, route.id);
     default:

@@ -12,7 +12,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 import { t } from '@unlease/core/i18n';
 import { APPS, type AppId } from '@unlease/core/apps';
-import { appsLine, backupLine, claudeLine, driveLine, formatMoment, serverLine, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
+import { appsLine, backupLine, claudeLine, driveLine, formatMoment, immichLine, serverLine, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { serverEmpty } from '@unlease/core/services/setup';
@@ -30,6 +30,7 @@ import { APPS_INFO, AppsSection } from '../features/admin/AppsSection';
 import { BACKUP_INFO, BackupSection } from '../features/admin/BackupSection';
 import { ClaudeSection, type ClaudeExtra } from '../features/admin/ClaudeSection';
 import { DRIVE_INFO, DriveSection } from '../features/admin/DriveSection';
+import { IMMICH_INFO, ImmichSection } from '../features/admin/ImmichSection';
 import type { AdminOverlays, Confirmation, RestoreTarget } from '../features/admin/overlays';
 import { RestoreDialog } from '../features/admin/RestoreDialog';
 import { SERVER_INFO, ServerSection } from '../features/admin/ServerSection';
@@ -82,9 +83,9 @@ export interface AdminScreenProps {
   readonly appSections?: readonly AppAdminSection[];
 }
 
-const SHARED_ICONS: Record<SharedAdminSection, GlyphName> = { apps: 'apps', server: 'server', reading: 'sparkle', backup: 'cloud', drive: 'file' };
+const SHARED_ICONS: Record<SharedAdminSection, GlyphName> = { apps: 'apps', server: 'server', reading: 'sparkle', backup: 'cloud', drive: 'file', immich: 'image' };
 
-const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO };
+const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO, immich: IMMICH_INFO };
 
 /** A section as the home lists it and its screen heads it. */
 interface Place {
@@ -135,7 +136,7 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
     try {
       admin.setStatus(target.kind === 'snapshot' ? await restoreSnapshot(server, target.name, mode) : await restoreFile(server, target.path, target.name, mode));
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Restauration refusée'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Restore refused'), undefined, { tone: 'error' });
     } finally {
       setSending(null);
       dropPicked(target);
@@ -148,11 +149,11 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
       const ticket = await requestDownload(server, { snapshot: name });
       await Linking.openURL(ticket.url);
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Téléchargement refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Download refused'), undefined, { tone: 'error' });
     }
   };
 
-  const unavailable = <ListRow icon="info" title={t('Réglages du serveur indisponibles')} supporting={admin.unavailable ? t('Le serveur ne répond pas pour l’instant.') : t('Lecture des réglages du serveur…')} onPress={admin.reload} />;
+  const unavailable = <ListRow icon="info" title={t('Server settings unavailable')} supporting={admin.unavailable ? t('The server isn’t answering for now.') : t('Reading the server’s settings…')} onPress={admin.reload} />;
   const empty = serverEmpty(admin.status);
   const settings = server ? admin.settings : null;
 
@@ -169,6 +170,8 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
         return settings ? backupLine(settings.backup, admin.status?.backup ?? null, now) : null;
       case 'drive':
         return settings ? driveLine(settings.drive, admin.status?.drive ?? null, now) : null;
+      case 'immich':
+        return settings ? immichLine(settings.immich) : null;
     }
   };
   const shared: Place[] = SHARED_ADMIN_SECTIONS.map(id => ({ id, title: SHARED_ADMIN_TITLES[id], icon: SHARED_ICONS[id], info: SHARED_INFO[id], needsServer: id !== 'server', line: sharedLine(id) }));
@@ -179,12 +182,12 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
   const row = (each: Place) => {
     const state =
       each.needsServer && !server
-        ? t('Reliez d’abord un serveur')
+        ? t('Connect a server first')
         : each.line
           ? [each.line.title, each.line.meta].filter(Boolean).join(' · ')
           : admin.unavailable
-            ? t('Le serveur ne répond pas pour l’instant.')
-            : t('Lecture des réglages du serveur…');
+            ? t('The server isn’t answering for now.')
+            : t('Reading the server’s settings…');
     return (
       // Its sheet tells its first and last rows where they lie: their press follows its corners.
       <PanelTappable key={each.id} onPress={() => onOpen(each.id)} accessibilityRole="button" accessibilityLabel={each.title} accessibilityValue={{ text: state }} style={styles.row}>
@@ -207,7 +210,7 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
 
   const sectionBody = (shown: Place): React.ReactNode => {
     if (shown.id === 'server') return <ServerSection status={admin.status} ask={overlays.ask} />;
-    if (!server) return <ListRow icon="server" title={t('Relier un serveur')} supporting={t('Reliez d’abord un serveur : ce réglage est le sien, pour tous vos appareils.')} onPress={() => onOpen('server')} />;
+    if (!server) return <ListRow icon="server" title={t('Connect a server')} supporting={t('Connect a server first: this setting is the server’s, for all your devices.')} onPress={() => onOpen('server')} />;
     if (shown.own) return admin.settings ? shown.own.render({ server, admin, overlays, unavailable }) : unavailable;
     switch (shown.id) {
       case 'apps':
@@ -218,6 +221,8 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
         return admin.settings ? <BackupSection server={server} admin={admin} backups={backups} overlays={overlays} now={now} sending={sending} /> : unavailable;
       case 'drive':
         return admin.settings ? <DriveSection server={server} admin={admin} overlays={overlays} now={now} /> : unavailable;
+      case 'immich':
+        return admin.settings ? <ImmichSection server={server} admin={admin} overlays={overlays} /> : unavailable;
       default:
         return null;
     }
@@ -242,20 +247,20 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
         ) : (
           <>
             <AppText variant="body" color={theme.color.inkMuted} style={styles.lead}>
-              {t('Ce que votre serveur fait pour toutes vos applications et tous vos appareils.')}
+              {t('What your server does for all your apps and all your devices.')}
             </AppText>
             {/* Named only beside the app's own: alone, the lead above already says they serve every app. */}
-            <Section title={own.length > 0 ? t('Pour toutes les applications') : undefined}>{shared.map(row)}</Section>
+            <Section title={own.length > 0 ? t('For every app') : undefined}>{shared.map(row)}</Section>
             {own.length > 0 ? <Section title={APPS[app].name}>{own.map(row)}</Section> : null}
           </>
         )}
       </EdgeScrollView>
       </KeyboardAvoidingView>
 
-      <Sheet visible={snapshotOpen} onDismiss={() => setSnapshotOpen(false)} title={snapshot ? t('Sauvegarde du {moment}', { moment: formatMoment(snapshot.at, now) }) : undefined}>
+      <Sheet visible={snapshotOpen} onDismiss={() => setSnapshotOpen(false)} title={snapshot ? t('Backup of {moment}', { moment: formatMoment(snapshot.at, now) }) : undefined}>
         <ListRow
           icon="download"
-          title={t('Télécharger')}
+          title={t('Download')}
           supporting={snapshot ? formatBytes(snapshot.bytes) : undefined}
           onPress={() => {
             setSnapshotOpen(false);
@@ -264,8 +269,8 @@ export function AdminScreen({ app, section, onBack, onOpen, claudeExtra, appSect
         />
         <ListRow
           icon="restore"
-          title={t('Restaurer')}
-          supporting={restoreBusy ? t('Restauration en cours…') : undefined}
+          title={t('Restore')}
+          supporting={restoreBusy ? t('Restoring…') : undefined}
           onPress={
             restoreBusy
               ? undefined

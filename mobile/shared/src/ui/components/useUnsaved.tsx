@@ -75,10 +75,10 @@ export function useUnsaved(dirty: boolean, { screen = false }: UnsavedOptions = 
   const dialog = (
     <Dialog
       visible={pending !== null}
-      title={t('Abandonner les modifications ?')}
-      message={t('Ce que vous avez saisi ici ne sera pas enregistré.')}
-      confirmLabel={t('Abandonner')}
-      cancelLabel={t('Continuer à modifier')}
+      title={t('Discard changes?')}
+      message={t('What you typed here will not be saved.')}
+      confirmLabel={t('Discard')}
+      cancelLabel={t('Keep editing')}
       danger
       onCancel={() => setPending(null)}
       onConfirm={() => {

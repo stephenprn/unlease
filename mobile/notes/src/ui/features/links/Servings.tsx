@@ -26,8 +26,8 @@ export function useServings(id: string): { readonly factor: number; readonly bas
 
 /** The line over a recipe's ingredients: what it makes as written, or what the quantities are now for; null when there is nothing to say. */
 export function servingsLine(servings: string, base: number | null, factor: number, unit: string | null): string | null {
-  if (factor === 1) return servings ? t('Recette pour {servings}', { servings }) : null;
-  return base === null ? t('Quantités multipliées par {factor}', { factor: formatNumber(factor, 2) }) : t('Quantités pour {servings}', { servings: servingsWords(base, factor, unit) });
+  if (factor === 1) return servings ? t('Recipe for {servings}', { servings }) : null;
+  return base === null ? t('Quantities multiplied by {factor}', { factor: formatNumber(factor, 2) }) : t('Quantities for {servings}', { servings: servingsWords(base, factor, unit) });
 }
 
 export function ServingsStepper({ id, inBar }: { id: string; inBar?: boolean }) {
@@ -40,8 +40,8 @@ export function ServingsStepper({ id, inBar }: { id: string; inBar?: boolean }) 
       label={MODULE_NAMES.servings}
       value={servingsWords(base, factor, unit)}
       icon="people"
-      lessLabel={people ? t('Une personne de moins') : t('Moins')}
-      moreLabel={people ? t('Une personne de plus') : t('Plus')}
+      lessLabel={people ? t('One person fewer') : t('Fewer')}
+      moreLabel={people ? t('One more person') : t('More')}
       // At either end the step gives the same factor back (or, past the most people offered, a smaller one): that side is off.
       onLess={less < factor ? () => setFactor(id, less) : undefined}
       onMore={more > factor ? () => setFactor(id, more) : undefined}

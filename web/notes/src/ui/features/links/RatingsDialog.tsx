@@ -47,7 +47,7 @@ function RatingRow({ rating, index }: { rating: Rating; index: number }) {
         <span className={styles.ratingMeter} style={{ '--share': ratingShare(rating) } as CSSProperties} aria-hidden="true" />
         {rating.count ? <p className="t-meta">{rating.count}</p> : null}
       </div>
-      {url ? <IconButton icon="external" label={t('Voir sur {site}', { site: rating.source })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('See on {site}', { site: rating.source })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }
@@ -64,18 +64,18 @@ function RatingsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Claude cherche les notes de {work}…', { work })}</p>
-        <p className="t-meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</p>
+        <p className="t-body">{t('Claude is looking up the ratings of {work}…', { work })}</p>
+        <p className="t-meta">{t('A web search often takes half a minute.')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Claude n’a pas pu chercher : {reason}', { reason: t(phase.reason) })}
+        {t('Claude couldn’t search: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
         {phase.answer.work ? <p className="t-body-strong">{phase.answer.work}</p> : null}
         {phase.answer.ratings.length === 0 ? (
-          <EmptyLine size="body" text={t('Aucune note trouvée pour l’instant.')} />
+          <EmptyLine size="body" text={t('No rating found for now.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES.ratings}>
             {phase.answer.ratings.map((rating, index) => (
@@ -84,7 +84,7 @@ function RatingsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
           </ul>
         )}
         <p className="t-meta">
-          {t('Trouvé sur le web par Claude le {day} à {time}. Les notes bougent, vérifiez-les sur chaque site.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
+          {t('Found on the web by Claude on {day} at {time}. Ratings move: check them on each site.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
         </p>
       </>
     );
@@ -93,15 +93,15 @@ function RatingsBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
       <>
         {phase.kind === 'failed' ? (
           <Button kind="text" onClick={() => search(false)}>
-            {t('Réessayer')}
+            {t('Try again')}
           </Button>
         ) : (
           <Button kind="text" icon="refresh" onClick={() => search(true)}>
-            {t('Chercher à nouveau')}
+            {t('Search again')}
           </Button>
         )}
         <Button icon="external" href={link.url}>
-          {t('Ouvrir la page')}
+          {t('Open the page')}
         </Button>
       </>
     );

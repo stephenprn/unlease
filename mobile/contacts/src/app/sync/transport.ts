@@ -40,7 +40,7 @@ export async function fetchMentions(config: ServerConfig, app: AppId, type: stri
   try {
     const response = await fetch(`${config.url}${mentionsPath(app, type, ids)}`, { method: 'GET', headers: authHeader(config.token), signal: controller.signal });
     if (response.status === 404) return [];
-    if (!response.ok) throw new SyncError('http', t('Le serveur a répondu {status}', { status: response.status }), response.status);
+    if (!response.ok) throw new SyncError('http', t('The server answered {status}', { status: response.status }), response.status);
     return parseMentionsResponse(await response.json()).places;
   } finally {
     clearTimeout(timer);

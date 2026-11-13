@@ -48,7 +48,7 @@ export const RichField = forwardRef<RichFieldHandle, RichFieldProps>(function Ri
   if (named !== revision && caret === null) setNamed(revision);
   // `named` is when the names were last read: the names themselves come from the store as it is now.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const display = useMemo(() => richDisplay(runs, target => nameOf(useLibraryStore.getState(), target) ?? t('Indisponible ici')), [runs, named]);
+  const display = useMemo(() => richDisplay(runs, target => nameOf(useLibraryStore.getState(), target) ?? t('Not available here')), [runs, named]);
   const input = useRef<React.ComponentRef<typeof TextInput>>(null);
   const selection = useRef({ start: display.text.length, end: display.text.length });
   /** Where the caret goes once the field shows the latest words. */
@@ -66,7 +66,7 @@ export const RichField = forwardRef<RichFieldHandle, RichFieldProps>(function Ri
   }, [display]);
 
   const write = (next: readonly Run[], modelCaret: number): void => {
-    const shown = richDisplay(next, target => nameOf(useLibraryStore.getState(), target) ?? t('Indisponible ici'));
+    const shown = richDisplay(next, target => nameOf(useLibraryStore.getState(), target) ?? t('Not available here'));
     pending.current = modelToDisplay(shown, modelCaret);
     onChange(serializeRich(next));
   };
@@ -112,7 +112,7 @@ export const RichField = forwardRef<RichFieldHandle, RichFieldProps>(function Ri
   }, [sections, word, start, runs]);
   const open = word !== null && !closesAfter(word, rows.length);
   const panel = useMemo(
-    () => (open ? <MentionSuggestions rows={rows} label={t('Mentionner')} empty={word.trim() ? t('Rien ne s’appelle « {query} ».', { query: word.trim() }) : t('Rien à mentionner pour l’instant.')} docked={!!onSuggestions} /> : null),
+    () => (open ? <MentionSuggestions rows={rows} label={t('Mention')} empty={word.trim() ? t('Nothing is called “{query}”.', { query: word.trim() }) : t('Nothing to mention yet.')} docked={!!onSuggestions} /> : null),
     [open, rows, word, onSuggestions],
   );
   useEffect(() => {
@@ -140,7 +140,7 @@ export const RichField = forwardRef<RichFieldHandle, RichFieldProps>(function Ri
         onChangeText={after => {
           const edit = displayEdit(display.text, after, selection.current);
           const { runs: next, caret: modelCaret } = applyDisplayEdit(runs, display, edit);
-          const shown = richDisplay(next, target => nameOf(useLibraryStore.getState(), target) ?? t('Indisponible ici'));
+          const shown = richDisplay(next, target => nameOf(useLibraryStore.getState(), target) ?? t('Not available here'));
           const at = modelToDisplay(shown, modelCaret);
           // Read at once: the selection's own event may come after the next keystroke.
           read({ start: at, end: at });

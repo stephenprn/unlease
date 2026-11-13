@@ -39,9 +39,9 @@ const CONFIRM_MS = 1_600;
 const EXIT_MS = duration.exit + 40;
 
 const TITLES: Record<WidgetKind, { readonly placing: string; readonly changing: string }> = {
-  collection: { placing: tx('Quelle collection afficher ?'), changing: tx('Changer de collection') },
-  label: { placing: tx('Quel label afficher ?'), changing: tx('Afficher un autre label') },
-  note: { placing: tx('Quelle note afficher ?'), changing: tx('Afficher une autre note') },
+  collection: { placing: tx('Which collection to show?'), changing: tx('Change collection') },
+  label: { placing: tx('Which label to show?'), changing: tx('Show another label') },
+  note: { placing: tx('Which note to show?'), changing: tx('Show another note') },
 };
 
 export function QuickRoot({ launch }: { launch: QuickLaunch }) {
@@ -86,7 +86,7 @@ function QuickLink({ target }: { target: string }) {
     clearQuickScrim();
     const auto = into === 'auto';
     const message = addedMessage(placed, auto ? { into: null } : { into, announce: true }, useLibraryStore.getState().notes);
-    showSnack(message ?? (placed.length > 1 ? t('Liens gardés : Claude les range') : t('Lien gardé : Claude le range')), undefined, { tone: addedTone(placed) });
+    showSnack(message ?? (placed.length > 1 ? t('Links kept: Claude is filing them') : t('Link kept: Claude is filing it')), undefined, { tone: addedTone(placed) });
     setTimeout(() => leaveQuick(false), CONFIRM_MS);
   }, []);
 
@@ -96,7 +96,7 @@ function QuickLink({ target }: { target: string }) {
         visible={open && initial !== null}
         initial={initial ?? ''}
         preset={preset?.id ?? null}
-        title={preset ? (shownTitle(preset).trim() ? t('Ajouter à {collection}', { collection: shownTitle(preset).trim() }) : t('Ajouter à cette collection')) : t('Classer un lien')}
+        title={preset ? (shownTitle(preset).trim() ? t('Add to {collection}', { collection: shownTitle(preset).trim() }) : t('Add to this collection')) : t('File a link')}
         offerClipboard={false}
         onDismiss={dismiss}
         onAdded={added}
@@ -105,7 +105,7 @@ function QuickLink({ target }: { target: string }) {
           leaveQuick(false);
         }}
       />
-      {saved ? <Tappable accessibilityLabel={t('Fermer')} noTint onPress={() => leaveQuick(false)} style={StyleSheet.absoluteFill} /> : null}
+      {saved ? <Tappable accessibilityLabel={t('Close')} noTint onPress={() => leaveQuick(false)} style={StyleSheet.absoluteFill} /> : null}
     </>
   );
 }

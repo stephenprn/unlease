@@ -71,7 +71,7 @@ function PlaceChooser() {
   const pick = (choice: MapsChoice): void => {
     if (shown) later(answerPlace(shown, choice, remember));
   };
-  const title = shown?.title ?? (shown?.directions ? t('Itinéraire') : t('Ouvrir l’adresse'));
+  const title = shown?.title ?? (shown?.directions ? t('Directions') : t('Open the address'));
   return (
     <Sheet visible={question !== null} onDismiss={closePlaceQuestion} title={title}>
       {/* Under the title, outside the scroll (which clips what rises above its top edge). */}
@@ -80,17 +80,17 @@ function PlaceChooser() {
           <AppText variant="meta">
             {shown.place}
           </AppText>
-          {shown.gone ? <AppText variant="meta">{t('{app} n’est plus sur ce téléphone : choisissez où ouvrir vos adresses.', { app: shown.gone })}</AppText> : null}
+          {shown.gone ? <AppText variant="meta">{t('{app} is no longer on this phone: choose where your addresses open.', { app: shown.gone })}</AppText> : null}
         </View>
       ) : null}
       <SheetScroll>
         {(apps ?? []).map(app => (
           <ListRow key={app.packageName} title={app.label} leading={<AppMark app={app} />} onPress={() => pick(appChoice(app))} />
         ))}
-        <ListRow title={MAP_APP_NAMES.openstreetmap} supporting={t('Dans le navigateur')} leading={<GlyphMark name="globe" />} onPress={() => pick(OPEN_STREET_MAP)} />
-        <ListRow title={t('Copier l’adresse')} leading={<GlyphMark name="copy" />} onPress={() => shown && later(copyPlace(shown))} />
+        <ListRow title={MAP_APP_NAMES.openstreetmap} supporting={t('In the browser')} leading={<GlyphMark name="globe" />} onPress={() => pick(OPEN_STREET_MAP)} />
+        <ListRow title={t('Copy the address')} leading={<GlyphMark name="copy" />} onPress={() => shown && later(copyPlace(shown))} />
         <View style={styles.rule} />
-        <SwitchRow title={t('Toujours utiliser ce choix')} supporting={t('Réglages le change ensuite.')} value={remember} onChange={setRemember} />
+        <SwitchRow title={t('Always use this choice')} supporting={t('Settings change it later.')} value={remember} onChange={setRemember} />
       </SheetScroll>
     </Sheet>
   );
@@ -125,12 +125,12 @@ function ChoiceSheet() {
   const listed = (apps ?? []).map(appChoice);
   const missing = chosen?.kind === 'app' && apps !== null && !listed.some(choice => sameChoice(choice, chosen)) ? chosen : null;
   return (
-    <Sheet visible={open} onDismiss={close} title={t('Ouvrir les adresses dans')}>
+    <Sheet visible={open} onDismiss={close} title={t('Open addresses in')}>
       <SheetScroll>
-        {row('ask', t('Demander à chaque fois'), <GlyphMark name="apps" />, null, t('Les applications de cartes de ce téléphone, au choix'))}
+        {row('ask', t('Ask every time'), <GlyphMark name="apps" />, null, t('The maps apps on this phone, to choose from'))}
         {(apps ?? []).map(app => row(app.packageName, app.label, <AppMark app={app} />, appChoice(app)))}
-        {missing ? row(missing.packageName, missing.label, <GlyphMark name="mapPin" />, missing, t('Plus sur ce téléphone')) : null}
-        {row('web', MAP_APP_NAMES.openstreetmap, <GlyphMark name="globe" />, OPEN_STREET_MAP, t('Dans le navigateur'))}
+        {missing ? row(missing.packageName, missing.label, <GlyphMark name="mapPin" />, missing, t('No longer on this phone')) : null}
+        {row('web', MAP_APP_NAMES.openstreetmap, <GlyphMark name="globe" />, OPEN_STREET_MAP, t('In the browser'))}
       </SheetScroll>
     </Sheet>
   );
@@ -153,10 +153,10 @@ export const MapsChoiceField = memo(function MapsChoiceField() {
   const chosen = useMapsChoice();
   return (
     <PickerField
-      label={t('Ouvrir les adresses dans')}
+      label={t('Open addresses in')}
       value={mapsChoiceName(chosen)}
       onPress={() => setChoosingMaps(true)}
-      help={t('Une adresse touchée s’y ouvre directement. « Demander à chaque fois » propose les applications de cartes du téléphone.')}
+      help={t('A tapped address opens there at once. “Ask every time” offers the phone’s maps apps.')}
     />
   );
 });

@@ -50,7 +50,7 @@ function Gap({ left, right }: { left: Share; right: Share }) {
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
-  return <div className={styles.columnGap} role="separator" aria-orientation="vertical" aria-label={t('Largeur des colonnes')} onPointerDown={drag} />;
+  return <div className={styles.columnGap} role="separator" aria-orientation="vertical" aria-label={t('Column widths')} onPointerDown={drag} />;
 }
 
 /** Under a column's last block: a press writes there, a drop lands there. */

@@ -24,7 +24,7 @@ export function nameOf(target: Ref): string | null {
     }
     case 'note': {
       const note = useLibraryStore.getState().notes[target.id];
-      return note && note.deletedAt === null ? shownTitle(note).trim() || t('Note sans titre') : null;
+      return note && note.deletedAt === null ? shownTitle(note).trim() || t('Untitled note') : null;
     }
     case 'link': {
       const link = useLibraryStore.getState().links[target.id];
@@ -32,11 +32,11 @@ export function nameOf(target: Ref): string | null {
     }
     case 'page': {
       const title = pageTitle(target.id);
-      return title === null ? null : title || t('Sans titre');
+      return title === null ? null : title || t('Untitled');
     }
     case 'event': {
       const event = useCalendarStore.getState().events[target.id];
-      return event && event.deletedAt === null ? event.title.trim() || t('Sans titre') : null;
+      return event && event.deletedAt === null ? event.title.trim() || t('Untitled') : null;
     }
     default:
       return null;
@@ -45,7 +45,7 @@ export function nameOf(target: Ref): string | null {
 
 /** A mention as words: its name, or what it was once gone. */
 export function mentionWords(target: Ref): string {
-  return nameOf(target) ?? (target.type === 'contact' ? t('Contact supprimé') : t('Indisponible ici'));
+  return nameOf(target) ?? (target.type === 'contact' ? t('Contact deleted') : t('Not available here'));
 }
 
 /** Where a mention opens: a contact merged into another opens the one kept. */

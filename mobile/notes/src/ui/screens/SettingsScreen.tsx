@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { APP_NAME } from '@unlease/notes/brand';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
 import { KEEP_WIZARD_WORDS } from '@unlease/notes/services/keepImport';
@@ -42,7 +42,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Settings')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Carnet's own first, under its name, as Agenda's and Contacts' are under theirs. */}
@@ -51,15 +51,15 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             {/* Its name over it as a field's is (6 above, 4 in). */}
             <View style={styles.field}>
               <AppText variant="metaStrong" style={styles.fieldLabel}>
-                {tc('layout', 'Tableau')}
+                {t('Board')}
               </AppText>
               <Segmented
-                label={t('Disposition du tableau')}
+                label={t('Board layout')}
                 value={layout}
                 onChange={setLayout}
                 options={[
-                  { value: 'wall', label: t('Mur'), icon: 'grid' },
-                  { value: 'list', label: t('Liste'), icon: 'rows' },
+                  { value: 'wall', label: t('Wall'), icon: 'grid' },
+                  { value: 'list', label: t('List'), icon: 'rows' },
                 ]}
               />
             </View>
@@ -74,21 +74,21 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <LanguageSection />
 
         {/* Imports first, as in every app's Données (Contacts', Agenda's): the Keep import is one row, opening its wizard; erasing last. */}
-        <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
-          <ListRow icon="download" title={t('Importer')} supporting={KEEP_WIZARD_WORDS.importerMeta} onPress={() => navigation.navigate('Import')} />
+        <Section title={t('Data')} anchor={SETTINGS_SECTIONS.data}>
+          <ListRow icon="download" title={t('Import')} supporting={KEEP_WIZARD_WORDS.importerMeta} onPress={() => navigation.navigate('Import')} />
           <ListRow
             icon="broom"
-            title={t('Nettoyer les liens enregistrés')}
+            title={t('Clean saved links')}
             supporting={
               tracked > 0
-                ? t('{links} des paramètres de suivi (utm, fbclid…) : ils seront retirés, le reste de l’adresse est gardé.', { links: plural(tracked, 'lien garde', 'liens gardent') })
-                : t('Aucun paramètre de suivi dans vos liens : les nouveaux sont nettoyés en arrivant.')
+                ? t('{links} tracking parameters (utm, fbclid…): they will be removed, the rest of the address is kept.', { links: plural(tracked, 'link keeps', 'links keep') })
+                : t('No tracking parameters in your links: new ones are cleaned as they arrive.')
             }
             onPress={
               tracked > 0
                 ? () => {
                     const { count, undo } = cleanSavedLinks();
-                    showSnack(plural(count, 'lien nettoyé', 'liens nettoyés'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+                    showSnack(plural(count, 'link cleaned', 'links cleaned'), { label: t('Undo'), run: undo }, { tone: 'success' });
                   }
                 : undefined
             }
@@ -96,8 +96,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           {/* As in every app's Données: what the bin holds, nothing to press while it is empty. */}
           <ListRow
             icon="trash"
-            title={t('Vider la corbeille')}
-            supporting={binned > 0 ? t('{notes} dans la corbeille', { notes: plural(binned, 'note') }) : t('La corbeille est vide.')}
+            title={t('Empty the bin')}
+            supporting={binned > 0 ? t('{notes} in the bin', { notes: plural(binned, 'note') }) : t('The bin is empty.')}
             onPress={binned > 0 ? () => setConfirmTrash(true) : undefined}
           />
           <EraseEntryRow app="notes" onOpen={() => navigation.navigate('Erase')} />
@@ -106,21 +106,21 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         {/* What is set once and rarely, last. */}
         <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
-        <AppText variant="meta" style={styles.about}>{t('{app} · notes, listes et liens, chez vous', { app: APP_NAME })}</AppText>
+        <AppText variant="meta" style={styles.about}>{t('{app} · notes, lists and links, at home', { app: APP_NAME })}</AppText>
       </SettingsScroll>
 
       <Dialog
         visible={confirmTrash}
-        title={t('Vider la corbeille ?')}
-        message={t('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every note in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmTrash(false)}
         onConfirm={() => {
           setConfirmTrash(false);
           // Emptied as the Corbeille's own head does.
           const notes = emptyTrash();
-          showSnack(t('{deleted} définitivement', { deleted: plural(notes, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(notes, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
         }}
       />
     </View>

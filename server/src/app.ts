@@ -151,7 +151,7 @@ export function createApp(options: AppOptions): Hono<Env> {
       const ip = clientIp(c);
       if (guard.isLimited(ip)) return braked(c, ip);
       guard.recordFailure({ ip, path: c.req.path.replace(/[^/]+$/, ':ticket') });
-      return c.json({ error: 'Lien de téléchargement expiré' }, 404);
+      return c.json({ error: 'Download link expired' }, 404);
     }
     const headers = {
       'Content-Type': 'application/gzip',
@@ -360,24 +360,24 @@ export function createApp(options: AppOptions): Hono<Env> {
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const outcome = await applySettingsPatch(settings, body, checks);
     if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);
     // Field names only: keys and secrets are never logged.
-    log.info('settings changed', { fields: Object.keys(body as object).filter(name => ['apps', 'setupDone', 'anthropicApiKey', 'model', 'budgetUsd', 'pages', 'calendar', 'backup', 'drive', 'seerr'].includes(name)) });
+    log.info('settings changed', { fields: Object.keys(body as object).filter(name => ['apps', 'setupDone', 'anthropicApiKey', 'model', 'budgetUsd', 'pages', 'calendar', 'backup', 'drive', 'seerr', 'immich'].includes(name)) });
     // A drive just set, or being turned off: its first pass now.
     if ('drive' in (body as object)) void admin?.drive.run();
     return c.json(settings.view(), 200, noStore);
   });
 
-  const noAdmin = (c: Context) => c.json({ error: 'L’administration n’est pas disponible sur ce serveur' }, 501);
+  const noAdmin = (c: Context) => c.json({ error: 'The Administration is not available on this server' }, 501);
 
   app.get('/api/admin', c => (admin ? c.json(admin.status(), 200, noStore) : noAdmin(c)));
 
   app.get('/api/admin/backups', async c => {
     if (!admin) return noAdmin(c);
-    if (!settings.backup()) return c.json({ error: 'Sauvegarde S3 non configurée' }, 409);
+    if (!settings.backup()) return c.json({ error: 'S3 backup not set up' }, 409);
     try {
       return c.json({ snapshots: await admin.backups.list() }, 200, noStore);
     } catch (error) {
@@ -387,16 +387,16 @@ export function createApp(options: AppOptions): Hono<Env> {
 
   app.post('/api/admin/backups', c => {
     if (!admin) return noAdmin(c);
-    if (!settings.backup()) return c.json({ error: 'Sauvegarde S3 non configurée' }, 409);
-    if (!admin.backups.hasData()) return c.json({ error: 'Le serveur est vide : rien à sauvegarder pour l’instant' }, 409);
-    if (admin.restore.running) return c.json({ error: 'Une restauration est en cours : la sauvegarde attendra' }, 409);
+    if (!settings.backup()) return c.json({ error: 'S3 backup not set up' }, 409);
+    if (!admin.backups.hasData()) return c.json({ error: 'The server is empty: nothing to back up yet' }, 409);
+    if (admin.restore.running) return c.json({ error: 'A restore is under way: the backup will wait' }, 409);
     void admin.backups.run('manual');
     return c.json(admin.status(), 202, noStore);
   });
 
   app.post('/api/admin/drive/sync', c => {
     if (!admin) return noAdmin(c);
-    if (!settings.drive()) return c.json({ error: 'Seafile n’est pas relié' }, 409);
+    if (!settings.drive()) return c.json({ error: 'Seafile is not connected' }, 409);
     void admin.drive.run();
     return c.json(admin.status(), 202, noStore);
   });
@@ -404,21 +404,21 @@ export function createApp(options: AppOptions): Hono<Env> {
   // A snapshot from S3 (JSON `{ snapshot }`), or an archive: its bytes as the body (web) or a multipart `file` (phone).
   app.post('/api/admin/restore', bodyLimit({ maxSize: RESTORE_LIMIT, onError: tooLarge }), async c => {
     if (!admin) return noAdmin(c);
-    const busy = () => c.json({ error: 'Une restauration est déjà en cours' }, 409);
+    const busy = () => c.json({ error: 'A restore is already under way' }, 409);
     if (admin.restore.running) return busy();
     const mode = c.req.query('mode') ?? 'merge';
-    if (!isRestoreMode(mode)) return c.json({ error: 'Mode de restauration inconnu' }, 400);
+    if (!isRestoreMode(mode)) return c.json({ error: 'Unknown restore mode' }, 400);
     const type = (c.req.header('content-type') ?? '').toLowerCase();
     if (type.startsWith('application/json')) {
       let body: unknown;
       try {
         body = await c.req.json();
       } catch {
-        return c.json({ error: 'Requête invalide' }, 400);
+        return c.json({ error: 'Invalid request' }, 400);
       }
       const name = (body as { snapshot?: unknown } | null)?.snapshot;
-      if (typeof name !== 'string' || !SNAPSHOT_NAME.test(name)) return c.json({ error: 'Sauvegarde inconnue' }, 400);
-      if (!settings.backup()) return c.json({ error: 'Sauvegarde S3 non configurée' }, 409);
+      if (typeof name !== 'string' || !SNAPSHOT_NAME.test(name)) return c.json({ error: 'Unknown backup' }, 400);
+      if (!settings.backup()) return c.json({ error: 'S3 backup not set up' }, 409);
       if (!admin.restore.start({ kind: 's3', name }, mode)) return busy();
       return c.json(admin.status(), 202, noStore);
     }
@@ -427,7 +427,7 @@ export function createApp(options: AppOptions): Hono<Env> {
     try {
       if (type.startsWith('multipart/form-data')) {
         // Parsed in memory: a big archive goes as the raw body (the web) or through S3.
-        if (Number(c.req.header('content-length') ?? 0) > MULTIPART_RESTORE_LIMIT) return c.json({ error: 'Archive trop grosse pour être envoyée d’ici : restaurez-la depuis le web ou depuis S3' }, 413);
+        if (Number(c.req.header('content-length') ?? 0) > MULTIPART_RESTORE_LIMIT) return c.json({ error: 'Archive too big to send from here: restore it from the web or from S3' }, 413);
         const form = await c.req.parseBody();
         const file = form.file;
         if (!(file instanceof File)) return c.json({ error: 'multipart body needs a "file" field' }, 400);
@@ -439,7 +439,7 @@ export function createApp(options: AppOptions): Hono<Env> {
       const size = (await stat(path).catch(() => null))?.size ?? 0;
       if (size === 0) {
         await rm(path, { force: true });
-        return c.json({ error: 'Archive vide' }, 400);
+        return c.json({ error: 'Empty archive' }, 400);
       }
     } catch (error) {
       await rm(path, { force: true });
@@ -458,15 +458,15 @@ export function createApp(options: AppOptions): Hono<Env> {
     try {
       body = (await c.req.json()) as typeof body;
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     if (body?.full === true) {
       const name = archiveName(now(), true);
       return c.json({ url: `/api/downloads/${admin.issueTicket({ kind: 'full', name })}`, name }, 200, noStore);
     }
     const snapshot = body?.snapshot;
-    if (typeof snapshot !== 'string' || !SNAPSHOT_NAME.test(snapshot)) return c.json({ error: 'Sauvegarde inconnue' }, 400);
-    if (!settings.backup()) return c.json({ error: 'Sauvegarde S3 non configurée' }, 409);
+    if (typeof snapshot !== 'string' || !SNAPSHOT_NAME.test(snapshot)) return c.json({ error: 'Unknown backup' }, 400);
+    if (!settings.backup()) return c.json({ error: 'S3 backup not set up' }, 409);
     // One asleep in cold storage (Glacier) is asked out, and downloaded hours later.
     try {
       if (!(await admin.backups.readyToDownload(snapshot))) return c.json({ error: GLACIER_WAIT }, 409, noStore);

@@ -8,7 +8,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import type { DuplicateGroup, DuplicateReason } from '@unlease/contacts/services/duplicates';
 import { contactName, workLine } from '@unlease/contacts/services/names';
@@ -29,9 +29,9 @@ import { ContactAvatar } from '../features/contacts/ContactAvatar';
 import type { ScreenProps } from '../navigation/types';
 
 const REASONS: Readonly<Record<DuplicateReason, string>> = {
-  email: tx('Même e-mail'),
-  phone: tx('Même numéro'),
-  name: tx('Même nom'),
+  email: tx('Same email'),
+  phone: tx('Same number'),
+  name: tx('Same name'),
 };
 
 function Member({ id, kept, onOpen }: { id: string; kept: boolean; onOpen: (id: string) => void }) {
@@ -56,7 +56,7 @@ function Member({ id, kept, onOpen }: { id: string; kept: boolean; onOpen: (id: 
       </View>
       {kept ? (
         <AppText variant="labelSmall" color={theme.color.action}>
-          {t('Gardé')}
+          {t('Kept')}
         </AppText>
       ) : null}
     </Tappable>
@@ -69,7 +69,7 @@ function Group({ group, onOpen }: { group: DuplicateGroup; onOpen: (id: string) 
   const merge = (): void => {
     const name = contactName(useLibraryStore.getState().contacts[keep]!);
     const undo = mergeDuplicates(keep, group.ids);
-    if (undo) showSnack(t('Fusionnés en {name}', { name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    if (undo) showSnack(t('Merged into {name}', { name }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   return (
     <Organic outline="card" style={styles.group}>
@@ -80,8 +80,8 @@ function Group({ group, onOpen }: { group: DuplicateGroup; onOpen: (id: string) 
         <Member key={id} id={id} kept={id === keep} onOpen={onOpen} />
       ))}
       <View style={styles.buttons}>
-        <Button label={t('Ignorer')} kind="text" onPress={() => ignoreDuplicates(group.ids)} />
-        <Button label={t('Fusionner')} icon="people" kind="tonal" onPress={merge} />
+        <Button label={t('Ignore')} kind="text" onPress={() => ignoreDuplicates(group.ids)} />
+        <Button label={t('Merge')} icon="people" kind="tonal" onPress={merge} />
       </View>
     </Organic>
   );
@@ -96,12 +96,12 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
   const mergeAll = (): void => {
     const undo = mergeAllDuplicates(groups.map(group => ({ keepId: group.ids[0]!, ids: group.ids })));
     const merged = groups.reduce((sum, group) => sum + group.ids.length - 1, 0);
-    if (undo) showSnack(t('{contacts} fusionnés', { contacts: plural(merged, 'contact') }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    if (undo) showSnack(t('{contacts} merged', { contacts: plural(merged, 'contact') }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Doublons')} onBack={() => navigation.goBack()} actions={groups.length > 1 ? <IconButton icon="people" label={t('Tout fusionner')} onPress={mergeAll} /> : undefined} />
+      <TopBar title={t('Duplicates')} onBack={() => navigation.goBack()} actions={groups.length > 1 ? <IconButton icon="people" label={t('Merge all')} onPress={mergeAll} /> : undefined} />
       <EdgeFlatList
         data={groups}
         keyExtractor={group => group.ids.join(',')}
@@ -110,13 +110,13 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
           // Why each group is here is its own first line (« Même e-mail »): the notice says only what merging does.
           groups.length > 0 ? (
             <AppText variant="meta" color={theme.color.inkMuted} style={styles.notice}>
-              {t('La fusion garde le premier, le complète avec ce que les autres ont en plus, et met les autres à la corbeille.')}
+              {t('Merging keeps the first, completes it with what the others have besides, and moves the others to the bin.')}
             </AppText>
           ) : undefined
         }
         renderItem={({ item }) => <Group group={item} onOpen={open} />}
         ListEmptyComponent={
-          <EmptyState scene="label" title={t('Aucun doublon')} text={t('Chaque personne n’apparaît qu’une fois. Après un import, revenez ici : les contacts en double s’y rassemblent.')} />
+          <EmptyState scene="label" title={t('No duplicates')} text={t('Everyone appears once. After an import, come back here: duplicate contacts gather here.')} />
         }
       />
     </View>

@@ -131,7 +131,7 @@ describe('the demo’s templates', () => {
     await vi.advanceTimersByTimeAsync(1_500);
     expect(await tried).toEqual({ status: 200, body: { title: 'Côtes-du-Rhône Les Galets 2022', values: { domaine: 'Domaine des Ormes', millesime: '2022', garde: '45 min' }, costUsd: 0.004 } });
     expect(server.pull(0).records).toHaveLength(before);
-    expect(await call(server, TEMPLATE_TRY_PATH, 'POST', { url: 'https://example.org', lang: 'fr', fields: [] })).toEqual({ status: 400, body: { error: 'Essai de modèle invalide' } });
+    expect(await call(server, TEMPLATE_TRY_PATH, 'POST', { url: 'https://example.org', lang: 'fr', fields: [] })).toEqual({ status: 400, body: { error: 'Invalid template try' } });
     const off = new FakeServer({ reading: false });
     expect((await call(off, TEMPLATE_TRY_PATH, 'POST', { url: 'https://example.org/a', lang: 'fr', fields: VIN })).status).toBe(409);
   });

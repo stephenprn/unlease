@@ -23,9 +23,9 @@ export function AskSection({ server, admin }: { server: ServerConfig; admin: Adm
     setBusy(true);
     try {
       admin.setSettings(await saveServerSettings(server, { calendar: { ask: !on } }));
-      showSnack(!on ? t('Questions sur l’agenda activées') : t('Questions sur l’agenda désactivées'), undefined, { tone: 'success' });
+      showSnack(!on ? t('Questions about the calendar turned on') : t('Questions about the calendar turned off'), undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -33,8 +33,8 @@ export function AskSection({ server, admin }: { server: ServerConfig; admin: Adm
   return (
     <ListRow
       icon="sparkle"
-      title={t('« Demander à Claude » sur l’agenda')}
-      supporting={!keyed ? t('Ajoutez d’abord une clé Claude, plus haut.') : on ? t('Claude répond d’après vos événements.') : t('Désactivé : rien de votre agenda n’est envoyé à Claude.')}
+      title={t('“Ask Claude” about the calendar')}
+      supporting={!keyed ? t('Add a Claude key first, above.') : on ? t('Claude answers from your events.') : t('Off: nothing from your calendar is sent to Claude.')}
       disabled={!keyed || busy}
       onPress={() => void flip()}
       trailing={<SwitchMark checked={on && keyed} />}

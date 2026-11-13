@@ -33,15 +33,15 @@ function RegionField() {
   return (
     <SelectField
       className={contacts.settingsField}
-      label={t('Indicatif par défaut')}
+      label={t('Default country code')}
       value={chosen ?? BROWSER}
       onChange={value => setRegion(value === BROWSER ? null : value)}
       options={[
-        { value: BROWSER, label: fallback ? t('Celui de ce navigateur : {country}', { country: callingCountry(fallback) }) : t('Celui de ce navigateur (aucun)') },
+        { value: BROWSER, label: fallback ? t('This browser’s: {country}', { country: callingCountry(fallback) }) : t('This browser’s (none)') },
         ...callingCountries(),
-        { value: 'none', label: t('Aucun : les numéros sont écrits avec leur +') },
+        { value: 'none', label: t('None: numbers are written with their +') },
       ]}
-      help={t('Un numéro écrit sans indicatif (06 12 34 56 78) prend celui-ci : la fiche du contact l’affiche et l’appelle avec, WhatsApp aussi, et un nouveau numéro le propose.')}
+      help={t('A number written without a country code (06 12 34 56 78) takes this one: the contact’s page shows it and calls it with it, as WhatsApp does, and a new number starts with it.')}
     />
   );
 }
@@ -52,17 +52,17 @@ function ContactsSection() {
     <Section title={t('Contacts')} id={CONTACTS_SETTINGS_SECTION}>
       <div className={styles.block}>
         {/* As the phone's: the choice named above its track, the segments in words alone. */}
-        <p className="t-meta-strong">{t('Trier par')}</p>
+        <p className="t-meta-strong">{t('Sort by')}</p>
         <Segmented<SortOrder>
-          label={t('Trier par')}
+          label={t('Sort by')}
           value={order}
           onChange={setSortOrder}
           options={[
-            { value: 'firstName', label: t('Prénom') },
-            { value: 'lastName', label: t('Nom de famille') },
+            { value: 'firstName', label: t('First name') },
+            { value: 'lastName', label: t('Last name') },
           ]}
         />
-        <p className="t-meta">{t('L’ordre de la liste sur cet appareil. Trié par nom de famille, la liste écrit aussi le nom en premier.')}</p>
+        <p className="t-meta">{t('The list’s order on this device. Sorted by last name, the list also writes the last name first.')}</p>
         <RegionField />
       </div>
     </Section>
@@ -74,7 +74,7 @@ function ContactsData() {
   const live = useLiveContacts();
   const exportAll = (): void => {
     const count = exportContacts(live);
-    if (count > 0) showSnack(t('{contacts} exportés', { contacts: plural(count, 'contact') }), undefined, { tone: 'success' });
+    if (count > 0) showSnack(t('{contacts} exported', { contacts: plural(count, 'contact') }), undefined, { tone: 'success' });
   };
   return (
     <>
@@ -82,16 +82,16 @@ function ContactsData() {
         <button type="button" className={styles.row} onClick={exportAll}>
           <Icon name="upload" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Exporter')}</span>
-            <span className="t-meta">{t('{contacts} dans un fichier .vcf', { contacts: plural(live.length, 'contact') })}</span>
+            <span className="t-body">{t('Export')}</span>
+            <span className="t-meta">{t('{contacts} in a .vcf file', { contacts: plural(live.length, 'contact') })}</span>
           </span>
         </button>
       ) : (
         <div className={styles.row}>
           <Icon name="upload" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Exporter')}</span>
-            <span className="t-meta">{t('Aucun contact à exporter.')}</span>
+            <span className="t-body">{t('Export')}</span>
+            <span className="t-meta">{t('No contacts to export.')}</span>
           </span>
         </div>
       )}

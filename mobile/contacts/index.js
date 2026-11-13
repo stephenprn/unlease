@@ -6,7 +6,7 @@
 import 'react-native-gesture-handler';
 
 import { AppRegistry } from 'react-native';
-import { addContactsEnglish } from '@unlease/contacts/i18n';
+import { addContactsFrench } from '@unlease/contacts/i18n';
 
 import App from './App';
 import { name as appName } from './app.json';
@@ -17,7 +17,7 @@ import { onBackgroundEvent } from './src/platform/notifications';
 import { runRemindersTask } from './src/app/birthdayAlerts';
 
 // The design system's and Contacts' English, for every root below.
-addContactsEnglish();
+addContactsFrench();
 
 // Before registerComponent, as Notifee requires: a birthday notification pressed with the app closed opens it.
 onBackgroundEvent();

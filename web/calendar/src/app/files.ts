@@ -25,12 +25,12 @@ const normalizeMime = (mime: string): string => (mime === 'image/jpg' ? 'image/j
 export async function keepEventFile(file: File, now: number = Date.now()): Promise<EventFile | string> {
   const mime = normalizeMime(file.type || 'application/octet-stream');
   const image = isUploadableImage(mime);
-  if (file.size === 0) return t('Ce fichier est vide.');
-  if (file.size > (image ? MAX_IMAGE_BYTES : MAX_FILE_BYTES)) return image ? t('Cette image dépasse 25 Mo.') : t('Ce fichier dépasse 100 Mo.');
+  if (file.size === 0) return t('This file is empty.');
+  if (file.size > (image ? MAX_IMAGE_BYTES : MAX_FILE_BYTES)) return image ? t('This image is over 25 MB.') : t('This file is over 100 MB.');
   const id = createId(now);
   await storeFile(id, file, mime, now);
   if (image || mime === 'application/pdf') primeBlobUrl(id, file);
-  return { id, name: (file.name || t('Fichier')).slice(0, 255), mime, bytes: file.size, uploaded: false };
+  return { id, name: (file.name || t('File')).slice(0, 255), mime, bytes: file.size, uploaded: false };
 }
 
 /** Once the event holding it is saved: the sync loop sends it. */

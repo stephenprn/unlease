@@ -33,4 +33,7 @@
     <string name="shortcut_birthdays_long">Anniversaires</string>
     <string name="shortcut_search_short">Rechercher</string>
     <string name="shortcut_search_long">Rechercher un contact</string>
+
+    <!-- A copied person's row in the phone's own contacts app (mirror/PhoneMirrorModule): %1$s is app_name. -->
+    <string name="mirror_open">Ouvrir dans %1$s</string>
 </resources>

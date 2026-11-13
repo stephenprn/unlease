@@ -46,8 +46,8 @@ export function sectionsFor(view: BoardView, order: readonly string[], notes: Li
   if (view === 'reminders') {
     const withReminder = notTrashed.filter(n => n.reminderAt !== null).sort((a, b) => (a.reminderAt ?? 0) - (b.reminderAt ?? 0));
     return result([
-      { key: 'upcoming', title: t('À venir'), ids: withReminder.filter(n => (n.reminderAt ?? 0) >= now).map(n => n.id) },
-      { key: 'past', title: t('Passés'), ids: withReminder.filter(n => (n.reminderAt ?? 0) < now).reverse().map(n => n.id) },
+      { key: 'upcoming', title: t('Upcoming'), ids: withReminder.filter(n => (n.reminderAt ?? 0) >= now).map(n => n.id) },
+      { key: 'past', title: t('Past'), ids: withReminder.filter(n => (n.reminderAt ?? 0) < now).reverse().map(n => n.id) },
     ]);
   }
   const active = notTrashed.filter(n => !n.archived);
@@ -55,8 +55,8 @@ export function sectionsFor(view: BoardView, order: readonly string[], notes: Li
     ? active.filter(n => n.labelIds.includes(view.slice(6)))
     : active.filter(n => n.kind !== 'links' || n.pinned);
   return result([
-    { key: 'pinned', title: t('Épinglées'), ids: onBoard.filter(n => n.pinned).map(n => n.id) },
-    { key: 'others', title: onBoard.some(n => n.pinned) ? t('Autres') : null, ids: onBoard.filter(n => !n.pinned).map(n => n.id) },
+    { key: 'pinned', title: t('Pinned'), ids: onBoard.filter(n => n.pinned).map(n => n.id) },
+    { key: 'others', title: onBoard.some(n => n.pinned) ? t('Others') : null, ids: onBoard.filter(n => !n.pinned).map(n => n.id) },
   ]);
 }
 

@@ -62,7 +62,7 @@ function StepText({ text, onTimer }: { text: string; onTimer: (seconds: number) 
           {timers.map((timer, index) => {
             const words = text.slice(timer.start, timer.end).trim();
             return (
-              <button key={index} type="button" className={styles.timerChip} onClick={() => onTimer(timer.seconds)} aria-label={t('Lancer un minuteur de {duration}', { duration: words })}>
+              <button key={index} type="button" className={styles.timerChip} onClick={() => onTimer(timer.seconds)} aria-label={t('Start a {duration} timer', { duration: words })}>
                 <Icon name="clock" size={20} />
                 {words}
               </button>
@@ -120,9 +120,9 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
           phase.kind === 'failed' ? (
             <>
               <Button kind="text" icon="external" href={link.url}>
-                {t('Ouvrir la recette')}
+                {t('Open the recipe')}
               </Button>
-              <Button onClick={() => search(false)}>{t('Réessayer')}</Button>
+              <Button onClick={() => search(false)}>{t('Try again')}</Button>
             </>
           ) : null
         }
@@ -130,11 +130,11 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
         {phase.kind === 'asking' ? (
           <div className={styles.couponsWaiting} role="status">
             <ReadingTrack width={120} />
-            <p className="t-body">{t('Lecture de la recette…')}</p>
+            <p className="t-body">{t('Reading the recipe…')}</p>
           </div>
         ) : (
           <p className={`${styles.couponsError} t-body`} role="alert">
-            {t('La recette n’a pas pu être lue : {reason}', { reason: t(phase.reason) })}
+            {t('The recipe could not be read: {reason}', { reason: t(phase.reason) })}
           </p>
         )}
       </DialogFrame>
@@ -152,14 +152,14 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
     });
   const time = (seconds: number): void => {
     primeChime();
-    startTimer(id, t('Étape {n}', { n: index + 1 }), seconds);
+    startTimer(id, t('Step {n}', { n: index + 1 }), seconds);
   };
 
   const ingredientList = (
     <section className={styles.cookIngredients} aria-labelledby={`${titleId}-ingredients`}>
       {/* Under the segmented switch on a phone, « Ingrédients » is the segment chosen: said, not shown again. How many the quantities are for, the stepper over the list says. */}
       <h3 id={`${titleId}-ingredients`} className={narrow && count > 0 ? 'sr-only' : 't-section'}>
-        {t('Ingrédients')}
+        {t('Ingredients')}
       </h3>
       <ul className={styles.choices}>
         {ingredients.map((ingredient, row) => {
@@ -179,32 +179,32 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
   const method = step ? (
     <section className={styles.cookMethod} aria-labelledby={`${titleId}-step`} aria-live="polite">
       <p id={`${titleId}-step`} className="t-meta-strong">
-        {t('Étape {n} sur {total}', { n: index + 1, total: count })}
+        {t('Step {n} of {total}', { n: index + 1, total: count })}
         {step.section ? ` · ${step.section}` : ''}
       </p>
       <StepText key={index} text={step.text} onTimer={time} />
     </section>
   ) : (
     <section className={styles.cookMethod}>
-      <p className="t-body">{t('Cette page ne donne pas ses étapes : suivez-la sur le site.')}</p>
+      <p className="t-body">{t('This page does not give its steps: follow it on the site.')}</p>
       <Button kind="tonal" icon="external" href={link.url}>
-        {t('Ouvrir la recette')}
+        {t('Open the recipe')}
       </Button>
     </section>
   );
 
   const foot = turning ? (
       <>
-        <Button kind="text" icon="back" disabled={index === 0} onClick={() => setIndex(index - 1)} title={t('Étape précédente')}>
-          {t('Précédente')}
+        <Button kind="text" icon="back" disabled={index === 0} onClick={() => setIndex(index - 1)} title={t('Previous step')}>
+          {t('Previous')}
         </Button>
         {index < count - 1 ? (
-          <Button icon="arrowRight" onClick={() => setIndex(index + 1)} title={t('Étape suivante')}>
-            {t('Suivante')}
+          <Button icon="arrowRight" onClick={() => setIndex(index + 1)} title={t('Next step')}>
+            {t('Next')}
           </Button>
         ) : (
           <Button icon="check" onClick={onDismiss}>
-            {t('Terminé')}
+            {t('Done')}
           </Button>
         )}
       </>
@@ -218,8 +218,8 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
           <Segmented<View>
             label={MODULE_NAMES.cooking}
             options={[
-              { value: 'steps', label: t('Étapes') },
-              { value: 'ingredients', label: t('Ingrédients') },
+              { value: 'steps', label: t('Steps') },
+              { value: 'ingredients', label: t('Ingredients') },
             ]}
             value={view}
             onChange={setView}
@@ -227,7 +227,7 @@ function CookBody({ id, titleId, onDismiss }: { id: string; titleId: string; onD
         ) : null}
       </div>
       {timers.length > 0 ? (
-        <ul className={styles.timerStrip} aria-label={t('Minuteurs')}>
+        <ul className={styles.timerStrip} aria-label={t('Timers')}>
           {timers.map(timer => (
             <TimerPill key={timer.id} timer={timer} now={now} here={id} />
           ))}

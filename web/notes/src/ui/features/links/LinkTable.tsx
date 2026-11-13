@@ -93,10 +93,10 @@ const LinkLine = memo(function LinkLine({ id, now, columns, onOpen }: { id: stri
         {pending ? (
           <span className={styles.cellReading}>
             <ReadingTrack width={48} />
-            <span className="sr-only">{t('Lecture de la page…')}</span>
+            <span className="sr-only">{t('Reading the page…')}</span>
           </span>
         ) : failed ? (
-          <span className={styles.cellFailed}>{link.error ? t(link.error) : t('Lecture impossible')}</span>
+          <span className={styles.cellFailed}>{link.error ? t(link.error) : t('Couldn’t read it')}</span>
         ) : (
           source
         )}
@@ -124,19 +124,19 @@ const LinkLine = memo(function LinkLine({ id, now, columns, onOpen }: { id: stri
       <td className={styles.lineEnd}>
         <span className={styles.lineActions}>
           {failed || (unread && claude) ? (
-            claude ? <IconButton compact icon="refresh" label={failed ? t('Relire la page') : t('Lire {title}', { title })} onClick={() => reanalyzeLink(id)} /> : null
+            claude ? <IconButton compact icon="refresh" label={failed ? t('Read the page again') : t('Read {title}', { title })} onClick={() => reanalyzeLink(id)} /> : null
           ) : null}
           {!pending ? (
             <IconButton
               compact
               className={styles.stampAction}
               icon={link.done ? 'undo' : 'stamp'}
-              label={link.done ? t('Remettre à faire') : t('Marquer : {stamp}', { stamp: stampWord(link.kind).toLowerCase() })}
+              label={link.done ? t('Put back to do') : t('Mark as {stamp}', { stamp: stampWord(link.kind).toLowerCase() })}
               pressed={link.done}
               onClick={() => toggleDone(id)}
             />
           ) : null}
-          <a className={`${controls.iconButton} ${controls.compact}`} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Ouvrir le lien')} data-tip={t('Ouvrir le lien')}>
+          <a className={`${controls.iconButton} ${controls.compact}`} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Open the link')} data-tip={t('Open the link')}>
             <Icon name="external" size={20} />
           </a>
         </span>
@@ -199,12 +199,12 @@ export function LinkTable({ open, done, now, sort, priced, label, onSort, onOpen
           <thead>
             <tr>
               <th scope="col" className={`${styles.headCell} ${styles.lead}`}>
-                <span className="t-meta-strong">{t('Lien')}</span>
+                <span className="t-meta-strong">{t('Link')}</span>
               </th>
               <th scope="col" className={styles.headCell}>
                 <span className="t-meta-strong">{t('Site')}</span>
               </th>
-              <SortHead label={t('Prix')} orders={['priceUp', 'priceDown']} sort={sort} disabled={priced < 2} onSort={onSort} numeric />
+              <SortHead label={t('Price')} orders={['priceUp', 'priceDown']} sort={sort} disabled={priced < 2} onSort={onSort} numeric />
               {columns.facts.map(column => (
                 <th key={column.key} scope="col" className={styles.headCell}>
                   <span className="t-meta-strong">{column.label}</span>
@@ -212,10 +212,10 @@ export function LinkTable({ open, done, now, sort, priced, label, onSort, onOpen
               ))}
               {columns.notes ? (
                 <th scope="col" className={styles.headCell}>
-                  <span className="t-meta-strong">{t('Votre note')}</span>
+                  <span className="t-meta-strong">{t('Your note')}</span>
                 </th>
               ) : null}
-              <SortHead label={t('Ajouté')} orders={['added']} sort={sort} disabled={false} onSort={onSort} numeric />
+              <SortHead label={t('Added')} orders={['added']} sort={sort} disabled={false} onSort={onSort} numeric />
               <th scope="col" className={styles.lineEnd}>
                 <span className="sr-only">{t('Actions')}</span>
               </th>
@@ -226,7 +226,7 @@ export function LinkTable({ open, done, now, sort, priced, label, onSort, onOpen
             <tbody>
               <tr className={styles.groupLine} data-flip="done-heading">
                 <th scope="rowgroup" colSpan={span} className={styles.groupCell}>
-                  <span className={`${styles.groupLabel} t-section`}>{t('Déjà faits · {count}', { count: done.length })}</span>
+                  <span className={`${styles.groupLabel} t-section`}>{t('Done · {count}', { count: done.length })}</span>
                 </th>
               </tr>
               {lines(done)}

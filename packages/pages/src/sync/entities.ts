@@ -95,6 +95,8 @@ export function blockFromRecord(record: SyncRecord): Block {
     showDone: asBool(f.showDone),
     calendarLabelId: typeof f.calendarLabelId === 'string' && f.calendarLabelId ? f.calendarLabelId : null,
     calendarDays: typeof f.calendarDays === 'number' && Number.isInteger(f.calendarDays) && f.calendarDays >= 1 ? f.calendarDays : 14,
+    immichAlbumId: typeof f.immichAlbumId === 'string' && f.immichAlbumId ? f.immichAlbumId : null,
+    immichAssetIds: Array.isArray(f.immichAssetIds) ? f.immichAssetIds.filter((entry): entry is string => typeof entry === 'string' && entry !== '') : [],
     ratio: typeof f.ratio === 'number' && Number.isFinite(f.ratio) && f.ratio > 0 ? f.ratio : 1,
     private: asBool(f.private),
     trashedAt: asNullableTime(f.trashedAt),
@@ -114,7 +116,7 @@ export function blockFields(block: NewBlockFields): Fields {
   const fields: Fields = { text: '', deletedAt: null };
   for (const [key, value] of Object.entries(rest)) {
     if (value === undefined) continue;
-    fields[key] = key === 'columns' || key === 'cells' || key === 'viewColumns' ? JSON.parse(JSON.stringify(value)) : value;
+    fields[key] = key === 'columns' || key === 'cells' || key === 'viewColumns' || key === 'immichAssetIds' ? JSON.parse(JSON.stringify(value)) : value;
   }
   if (target !== undefined) {
     fields.targetType = target?.type ?? null;

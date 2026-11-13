@@ -21,7 +21,7 @@ import { AppText, Button, EmptyLine, Icon, ListRow, TextField } from '../../comp
 import { useTheme } from '../../theme/ThemeProvider';
 import { StatusRow } from './StatusRow';
 
-export const HOLIDAYS_INFO = tx('Les jours fériés viennent de Nager.Date, une base ouverte et gratuite. Le serveur les garde pour l’année passée, celle-ci et les deux suivantes, et les montre dans l’agenda de chaque appareil, comme un agenda auquel vous êtes abonné.');
+export const HOLIDAYS_INFO = tx('Public holidays come from Nager.Date, an open and free database. The server keeps them for last year, this one and the next two, and shows them in every device’s calendar, as a calendar you subscribe to.');
 
 interface Country {
   readonly code: string;
@@ -40,7 +40,7 @@ async function getJson(server: ServerConfig, path: string): Promise<unknown> {
 
 /** The line it says on the Administration's home and in the setup. */
 export function holidaysLine(country: string | null, region: string | null): string {
-  return country ? (region ? `${countryName(country)} · ${region}` : countryName(country)) : t('Aucun pays choisi');
+  return country ? (region ? `${countryName(country)} · ${region}` : countryName(country)) : t('No country chosen');
 }
 
 export function HolidaysSection({ server, admin }: { server: ServerConfig; admin: AdminState }) {
@@ -82,9 +82,9 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
     setBusy(true);
     try {
       admin.setSettings(await saveServerSettings(server, { calendar: { holidays: { country, region } } }));
-      showSnack(country ? t('Jours fériés : {place}', { place: holidaysLine(country, region) }) : t('Plus de jours fériés dans l’agenda'), undefined, { tone: 'success' });
+      showSnack(country ? t('Public holidays: {place}', { place: holidaysLine(country, region) }) : t('No more public holidays in the calendar'), undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -112,24 +112,24 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
     <View>
       {/* The same head as every section's, its removal in it. */}
       <StatusRow line={{ tone: current.country ? 'ok' : 'off', title: holidaysLine(current.country, current.region), meta: '' }}>
-        {current.country ? <Button label={t('Ne plus afficher de jours fériés')} kind="dangerText" small disabled={busy} onPress={() => void save(null, null)} /> : null}
+        {current.country ? <Button label={t('Stop showing public holidays')} kind="dangerText" small disabled={busy} onPress={() => void save(null, null)} /> : null}
       </StatusRow>
       {regions.length > 0 ? (
-        <View accessibilityRole="radiogroup" accessibilityLabel={t('Région')}>
+        <View accessibilityRole="radiogroup" accessibilityLabel={t('Region')}>
           <AppText variant="metaStrong" style={styles.heading}>
-            {t('Région')}
+            {t('Region')}
           </AppText>
-          {choice('whole', t('Tout le pays'), current.region === null, () => void save(current.country, null))}
+          {choice('whole', t('The whole country'), current.region === null, () => void save(current.country, null))}
           {regions.map(region => choice(`region:${region}`, region, current.region === region, () => void save(current.country, region)))}
         </View>
       ) : null}
       <View style={styles.field}>
-        <TextField label={t('Pays')} kind="search" value={query} onChangeText={setQuery} placeholder={t('Rechercher un pays')} returnKeyType="search" />
+        <TextField label={t('Country')} kind="search" value={query} onChangeText={setQuery} placeholder={t('Search for a country')} returnKeyType="search" />
       </View>
-      <View accessibilityRole="radiogroup" accessibilityLabel={t('Pays')} style={styles.list}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={t('Country')} style={styles.list}>
         {shown.map(country => choice(country.code, country.name, current.country === country.code, () => void save(country.code, null)))}
       </View>
-      {shown.length === 0 && query.trim() && countries.length > 0 ? <EmptyLine text={t('Rien ne correspond à « {query} »', { query: query.trim() })} glyph="search" replayKey="none" style={styles.none} /> : null}
+      {shown.length === 0 && query.trim() && countries.length > 0 ? <EmptyLine text={t('Nothing matches “{query}”', { query: query.trim() })} glyph="search" replayKey="none" style={styles.none} /> : null}
     </View>
   );
 }

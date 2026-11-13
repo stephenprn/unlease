@@ -29,28 +29,28 @@ export function AppearanceScreen() {
 
   return (
     <div className={styles.page}>
-      <PageHead title={t('Apparence')} />
+      <PageHead title={t('Appearance')} />
 
       {/* Under the page's title, which names it: no title of its own. */}
-      <Section id={SETTINGS_SECTIONS.appearance} label={t('Thème')}>
+      <Section id={SETTINGS_SECTIONS.appearance} label={t('Theme')}>
         <div className={styles.block}>
-          <p className="t-meta-strong">{t('Thème')}</p>
+          <p className="t-meta-strong">{t('Theme')}</p>
           <Segmented
-            label={t('Thème')}
+            label={t('Theme')}
             value={theme}
             onChange={setTheme}
             options={[
-              { value: 'system', label: t('Système'), icon: 'settings' },
-              { value: 'light', label: t('Clair'), icon: 'sun' },
-              { value: 'dark', label: t('Sombre'), icon: 'moon' },
+              { value: 'system', label: t('System'), icon: 'settings' },
+              { value: 'light', label: t('Light'), icon: 'sun' },
+              { value: 'dark', label: t('Dark'), icon: 'moon' },
             ]}
           />
         </div>
         {/* What it is, said: the sheets' own grain (`--grain`), not the ground's (« Grain sur le fond », under Fond). */}
         <button type="button" role="switch" aria-checked={grain} className={styles.row} onClick={() => setGrain(!grain)}>
           <span className={styles.rowText}>
-            <span className="t-body">{t('Grain du papier')}</span>
-            <span className="t-meta">{t('Une fine texture de papier sur les notes, les cartes et les panneaux.')}</span>
+            <span className="t-body">{t('Paper grain')}</span>
+            <span className="t-meta">{t('A fine paper texture on notes, cards and panels.')}</span>
           </span>
           <SwitchMark checked={grain} />
         </button>

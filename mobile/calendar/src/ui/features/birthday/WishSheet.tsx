@@ -16,14 +16,14 @@ import { AppText, ListRow, Sheet, SHEET_INSET, SheetScroll } from '@shared/ui/co
 
 /** The way opened with the wish written; a slip says so when nothing on the phone opens it. */
 export function sendWish(way: WishWay): void {
-  later(Linking.openURL(way.href).catch(() => showSnack(t('Aucune application ne l’ouvre sur ce téléphone.'), undefined, { tone: 'warning' })));
+  later(Linking.openURL(way.href).catch(() => showSnack(t('No app on this phone opens it.'), undefined, { tone: 'warning' })));
 }
 
 export function WishSheet({ visible, name, message, ways, onDismiss }: { visible: boolean; name: string; message: string; ways: readonly WishWay[]; onDismiss: () => void }) {
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Souhaiter son anniversaire à {name}', { name })}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Wish {name} a happy birthday', { name })}>
       <AppText variant="meta" style={styles.message}>
-        {t('« {message} »', { message })}
+        {t('“{message}”', { message })}
       </AppText>
       <SheetScroll>
         {ways.map(way => (

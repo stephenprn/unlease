@@ -92,11 +92,11 @@ function FoldedCrumbs({ ids }: { ids: readonly string[] }) {
   );
   return (
     <span className={styles.crumb}>
-      <button ref={button} type="button" className={styles.crumbLink} aria-label={t('{pages} au-dessus', { pages: plural(ids.length, 'page') })} aria-haspopup="menu" aria-expanded={open} data-tip={t('Pages au-dessus')} onClick={() => setOpen(true)}>
+      <button ref={button} type="button" className={styles.crumbLink} aria-label={t('{pages} above', { pages: plural(ids.length, 'page') })} aria-haspopup="menu" aria-expanded={open} data-tip={t('Pages above')} onClick={() => setOpen(true)}>
         …
       </button>
       <Icon name="chevronRight" size={14} />
-      <Menu open={open} anchor={button} onDismiss={() => setOpen(false)} items={items} label={t('Pages au-dessus')} align="start" />
+      <Menu open={open} anchor={button} onDismiss={() => setOpen(false)} items={items} label={t('Pages above')} align="start" />
     </span>
   );
 }
@@ -156,7 +156,7 @@ const Breadcrumb = memo(function Breadcrumb({ id }: { id: string }) {
   if (trail.length === 0) return null;
   const folded = fold.to > fold.from ? trail.slice(fold.from, fold.to) : [];
   return (
-    <nav ref={nav} className={styles.breadcrumb} aria-label={t('Pages au-dessus')}>
+    <nav ref={nav} className={styles.breadcrumb} aria-label={t('Pages above')}>
       {/* Every crumb at its own width, out of sight: what the line can hold is read from it. */}
       <span ref={measure} className={styles.crumbMeasure} aria-hidden="true" inert>
         {trail.map(pageId => (
@@ -197,8 +197,8 @@ function PageBar({ id, menu }: { id: string; menu: boolean }) {
       <Edited id={id} />
       {menu ? (
         <>
-          {ask ? <IconButton icon="sparkle" label={t('Demander à Claude')} className={styles.pageAsk} pressed={asking} onClick={() => (asking ? closePagesAsk() : openPagesAsk(id))} /> : null}
-          <IconButton ref={more} icon="more" label={t('Plus d’actions')} className={styles.pageMore} hasPopup="menu" expanded={open} onClick={() => setOpen(true)} />
+          {ask ? <IconButton icon="sparkle" label={t('Ask Claude')} className={styles.pageAsk} pressed={asking} onClick={() => (asking ? closePagesAsk() : openPagesAsk(id))} /> : null}
+          <IconButton ref={more} icon="more" label={t('More actions')} className={styles.pageMore} hasPopup="menu" expanded={open} onClick={() => setOpen(true)} />
           <PageMenu id={id} open={open} anchor={more} onDismiss={() => setOpen(false)} />
         </>
       ) : null}
@@ -324,7 +324,7 @@ function PageTitle({ page, readOnly }: { page: Block; readOnly: boolean }) {
       contentEditable={readOnly ? false : 'plaintext-only'}
       suppressContentEditableWarning
       role="textbox"
-      aria-label={t('Titre de la page')}
+      aria-label={t('Page title')}
       data-placeholder={t(UNTITLED_PAGE)}
       data-caret-block={page.id}
       data-page-title=""
@@ -371,29 +371,29 @@ function BinBanner({ id }: { id: string }) {
   const own = useBlocksStore(s => s.blocks[id]?.trashedAt !== null);
   return (
     <div className={styles.binBanner} data-outline="panel">
-      <p className="t-meta">{own ? t('Cette page est dans la corbeille : elle ne peut pas être modifiée.') : t('Une page au-dessus de celle-ci est dans la corbeille.')}</p>
+      <p className="t-meta">{own ? t('This page is in the bin: it can’t be edited.') : t('A page above this one is in the bin.')}</p>
       {own ? (
         <span className={styles.binActions}>
-          <Button kind="tonal" small icon="restore" onClick={() => showUndo(t('Page restaurée'), restorePage(id))}>
-            {t('Restaurer')}
+          <Button kind="tonal" small icon="restore" onClick={() => showUndo(t('Page restored'), restorePage(id))}>
+            {t('Restore')}
           </Button>
           <Button kind="dangerText" small onClick={() => setConfirm(true)}>
-            {t('Supprimer définitivement')}
+            {t('Delete forever')}
           </Button>
         </span>
       ) : null}
       <Confirm
         open={confirm}
-        title={t('Supprimer définitivement ?')}
-        message={t('Cette page disparaîtra de tous vos appareils, avec tout ce qu’elle contient.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('This page will disappear from all your devices, with everything in it.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);
           deletePageForever([id]);
           navigate(paths.pages, { replace: true });
-          showSnack(t('Page supprimée définitivement'), undefined, { tone: 'success' });
+          showSnack(t('Page deleted forever'), undefined, { tone: 'success' });
         }}
       />
     </div>
@@ -573,11 +573,11 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
         >
           <header className={styles.head}>
             {page.icon ? (
-              <EmojiButton value={page.icon} label={t('Changer l’icône de la page')} disabled={readOnly} onChange={icon => setPageIcon(id, icon)} className={styles.pageIcon} />
+              <EmojiButton value={page.icon} label={t('Change page icon')} disabled={readOnly} onChange={icon => setPageIcon(id, icon)} className={styles.pageIcon} />
             ) : readOnly ? null : (
-              <EmojiButton value={null} label={t('Ajouter une icône')} onChange={icon => setPageIcon(id, icon)} className={styles.addIcon}>
+              <EmojiButton value={null} label={t('Add an icon')} onChange={icon => setPageIcon(id, icon)} className={styles.addIcon}>
                 <Icon name="smiley" size={18} />
-                {t('Ajouter une icône')}
+                {t('Add an icon')}
               </EmojiButton>
             )}
             <PageTitle page={page} readOnly={readOnly} />

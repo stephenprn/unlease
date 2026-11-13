@@ -131,10 +131,10 @@ function useTabTitle(module: AppModule | null, page: Route, route: Route): strin
     const section = page.section ? adminPlace(page.section, on) : null;
     return section ? `${section.title} · ${t('Administration')} · ${name}` : `${t('Administration')} · ${name}`;
   }
-  if (page.name === 'settings' && page.page === 'appearance') return `${t('Apparence')} · ${t('Réglages')} · ${name}`;
-  if (page.name === 'settings' && page.page === 'import') return `${t('Importer')} · ${t('Réglages')} · ${name}`;
-  if (page.name === 'settings' && page.page === 'erase') return `${t('Effacer des données')} · ${t('Réglages')} · ${name}`;
-  const title = (module ? own : null) ?? (page.name === 'settings' ? t('Réglages') : null);
+  if (page.name === 'settings' && page.page === 'appearance') return `${t('Appearance')} · ${t('Settings')} · ${name}`;
+  if (page.name === 'settings' && page.page === 'import') return `${t('Import')} · ${t('Settings')} · ${name}`;
+  if (page.name === 'settings' && page.page === 'erase') return `${t('Erase data')} · ${t('Settings')} · ${name}`;
+  const title = (module ? own : null) ?? (page.name === 'settings' ? t('Settings') : null);
   return title ? `${title} · ${name}` : name;
 }
 
@@ -217,7 +217,7 @@ export function App() {
   return (
     <div className={shell.shell}>
       <a className={shell.skip} href="#main">
-        {t('Aller au contenu')}
+        {t('Skip to content')}
       </a>
       {topBar ? null : <Header route={page} enter={entry} />}
       <div className={shell.body}>

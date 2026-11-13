@@ -81,8 +81,8 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
           type="search"
           className={styles.emojiField}
           value={query}
-          placeholder={languages.length > 1 ? t('Chercher : soleil, sun…') : languages[0] === 'en' ? t('Chercher : sun, heart…') : t('Chercher : soleil, cœur…')}
-          aria-label={t('Chercher un emoji par son nom, ou en coller un')}
+          placeholder={languages.length > 1 ? t('Search: sun, soleil…') : languages[0] === 'en' ? t('Search: sun, heart…') : t('Search: soleil, cœur…')}
+          aria-label={t('Search for an emoji by name, or paste one')}
           autoComplete="off"
           spellCheck={false}
           onChange={event => setQuery(event.target.value)}
@@ -96,7 +96,7 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
           </div>
         ) : searching ? (
           results.length > 0 ? (
-            <div className={styles.emojiGrid} role="group" aria-label={t('Emoji pour « {query} »', { query: query.trim() })}>
+            <div className={styles.emojiGrid} role="group" aria-label={t('Emoji for “{query}”', { query: query.trim() })}>
               {results.map((emoji, index) => (
                 <EmojiChoice key={emoji.emoji} emoji={emoji.emoji} name={emojiName(emoji, languages)} current={emoji.emoji === value} turn={index} onPick={onPick} />
               ))}
@@ -108,13 +108,13 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
               role="status"
               // Naming what is typed, it settles in once, not at every letter.
               replayKey={catalogue ? 'none' : undefined}
-              text={catalogue ? t('Aucun emoji pour « {query} ».', { query: query.trim() }) : failed ? t('La liste des emoji n’a pas pu se charger. Collez-en un, ou réessayez en ligne.') : t('Chargement…')}
+              text={catalogue ? t('No emoji for “{query}”.', { query: query.trim() }) : failed ? t('The emoji list couldn’t load. Paste one, or try again online.') : t('Loading…')}
             />
           )
         ) : (
           <>
-            <section className={styles.emojiGroup} aria-label={t('Courants')}>
-              <h3 className={`${styles.emojiGroupName} t-label-small`}>{t('Courants')}</h3>
+            <section className={styles.emojiGroup} aria-label={t('Frequently used')}>
+              <h3 className={`${styles.emojiGroupName} t-label-small`}>{t('Frequently used')}</h3>
               <div className={styles.emojiGrid}>
                 {EVERYDAY_EMOJI.map((emoji, index) => (
                   <EmojiChoice key={emoji} emoji={emoji} name={name(emoji)} current={emoji === value} turn={index} onPick={onPick} />
@@ -141,7 +141,7 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
       </div>
       {allowNone && value ? (
         <button type="button" className={styles.emojiNone} onClick={() => onPick(null)}>
-          {t('Retirer l’icône')}
+          {t('Remove icon')}
         </button>
       ) : null}
     </div>

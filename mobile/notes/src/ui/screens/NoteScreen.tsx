@@ -200,7 +200,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Cette note n’existe plus.')} />
+        <EmptyState scene="trash" title={t('Not found')} text={t('This note no longer exists.')} />
       </View>
     );
   }
@@ -234,7 +234,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     }
     const undo = trashNotes([id]);
     back();
-    showSnack(t('Note placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(t('Note moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const archive = () => {
@@ -244,7 +244,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     }
     const undo = setArchived(id, !note.archived);
     back();
-    showSnack(note.archived ? t('Note désarchivée') : t('Note archivée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(note.archived ? t('Note unarchived') : t('Note archived'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   /**
@@ -264,7 +264,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     showSnack(
       listConvertedMessage(outcome.title, outcome.links),
       {
-        label: tc('undo', 'Annuler'),
+        label: t('Undo'),
         run: () => {
           outcome.undo();
           // Still on the collection: the note comes back in its place.
@@ -281,7 +281,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     setLeaving(true);
     deleteForever([id]);
     back();
-    showSnack(t('Note supprimée définitivement'), undefined, { tone: 'success' });
+    showSnack(t('Note deleted forever'), undefined, { tone: 'success' });
   };
 
   const shareText = () => {
@@ -308,14 +308,14 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
               <>
                 <IconButton
                   icon="pin"
-                  label={note.pinned ? t('Retirer des épinglées') : t('Épingler')}
+                  label={note.pinned ? t('Unpin') : t('Pin')}
                   selected={note.pinned}
                   tone="ink"
                   shape={0}
                   onPress={() => setPinned(id, !note.pinned)}
                 />
-                <IconButton icon={note.reminderAt ? 'bell' : 'bellPlus'} label={t('Rappel')} selected={note.reminderAt !== null} tone="ink" shape={1} onPress={() => openSheet('reminder')} />
-                <IconButton icon={note.archived ? 'unarchive' : 'archive'} shape={2} label={note.archived ? t('Désarchiver') : t('Archiver')} onPress={archive} />
+                <IconButton icon={note.reminderAt ? 'bell' : 'bellPlus'} label={t('Reminder')} selected={note.reminderAt !== null} tone="ink" shape={1} onPress={() => openSheet('reminder')} />
+                <IconButton icon={note.archived ? 'unarchive' : 'archive'} shape={2} label={note.archived ? t('Unarchive') : t('Archive')} onPress={archive} />
               </>
             ) : null
           }
@@ -323,9 +323,9 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
         {!editable ? (
           <View style={styles.trashBanner}>
             <AppText variant="meta" style={styles.trashText}>
-              {t('Une note dans la corbeille ne peut pas être modifiée.')}
+              {t('A note in the bin can’t be edited.')}
             </AppText>
-            <Button kind="tonal" label={t('Restaurer')} icon="restore" onPress={() => restoreNotes([id])} />
+            <Button kind="tonal" label={t('Restore')} icon="restore" onPress={() => restoreNotes([id])} />
           </View>
         ) : null}
         <KeyboardAvoidingView behavior="padding" style={styles.fill}>
@@ -338,7 +338,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                 onChangeText={editTitle}
                 onBlur={() => flushTitle(title)}
                 editable={editable}
-                placeholder={t('Titre')}
+                placeholder={t('Title')}
                 placeholderTextColor={theme.color.inkFaint}
                 selectionColor={theme.color.highlight}
                 selectionHandleColor={theme.color.focus}
@@ -348,7 +348,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                 autoFocus={focus === 'title'}
                 style={[variantStyle(theme, 'editorTitle'), styles.title, note.kind === 'text' ? styles.textTitle : null]}
                 maxLength={TEXT_LIMITS.note.title}
-                accessibilityLabel={t('Titre')}
+                accessibilityLabel={t('Title')}
               />
               {note.kind === 'drawing' ? (
                 <DrawingSheet noteId={id} editable={editable} />
@@ -373,7 +373,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           {chipsShown ? (
             <View style={[styles.chips, caretLink ? styles.edgeless : null]}>
               {note.reminderAt !== null ? (
-                <Tappable onPress={() => openSheet('reminder')} disabled={!editable} ownDisabled hitSlop={CHIP_SLOP} style={[styles.chip, CHIP, { borderColor: theme.color.outline }]} accessibilityLabel={t('Modifier le rappel')}>
+                <Tappable onPress={() => openSheet('reminder')} disabled={!editable} ownDisabled hitSlop={CHIP_SLOP} style={[styles.chip, CHIP, { borderColor: theme.color.outline }]} accessibilityLabel={t('Edit the reminder')}>
                   <Icon name="bell" size={16} color={note.reminderAt < now ? theme.color.danger : theme.color.inkMuted} />
                   <AppText variant="label" color={note.reminderAt < now ? theme.color.danger : undefined}>
                     {formatReminder(note.reminderAt, now)}
@@ -391,8 +391,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           {body.mentionQuery && editable ? (
             <MentionSuggestions
               rows={mentionRows}
-              label={t('Mentionner un contact ou un événement')}
-              empty={mentionRows.length === 0 && !/\s/.test(body.mentionQuery.query) ? (body.mentionQuery.query.trim() ? t('Aucun contact ni événement ne s’appelle ainsi.') : t('Aucun contact pour l’instant.')) : null}
+              label={t('Mention a contact or an event')}
+              empty={mentionRows.length === 0 && !/\s/.test(body.mentionQuery.query) ? (body.mentionQuery.query.trim() ? t('No contact or event goes by that name.') : t('No contacts yet.')) : null}
             />
           ) : null}
           {/* Lifted onto the keyboard, the bar is already clear of the gesture bar: no second inset. */}
@@ -401,7 +401,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             <View style={styles.toolbarSlot}>
               <LayoutAnimationConfig skipEntering>
                 {formatting ? (
-                  <Animated.View key="format" entering={BAR_IN} exiting={BAR_OUT} style={styles.toolbarRow} accessibilityRole="toolbar" accessibilityLabel={t('Mise en forme')}>
+                  <Animated.View key="format" entering={BAR_IN} exiting={BAR_OUT} style={styles.toolbarRow} accessibilityRole="toolbar" accessibilityLabel={t('Formatting')}>
                     <FormatBar lines={body.lines} range={formatting} onFormat={body.format} />
                   </Animated.View>
                 ) : (
@@ -410,25 +410,25 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                       <>
                         {body.mentionAtCaret?.type === 'event' ? (
                           // The caret on an event: a tap away in Agenda.
-                          <IconButton icon="calendar" label={t('Ouvrir {name} dans {app}', { name: mentionName(body.mentionAtCaret), app: APPS.calendar.name })} onPress={() => openInApp('calendar', eventPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
+                          <IconButton icon="calendar" label={t('Open {name} in {app}', { name: mentionName(body.mentionAtCaret), app: APPS.calendar.name })} onPress={() => openInApp('calendar', eventPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
                         ) : body.mentionAtCaret ? (
                           // The caret on a mention: its person, a tap away in Contacts.
-                          <IconButton icon="person" label={t('Ouvrir {name} dans {app}', { name: mentionName(body.mentionAtCaret), app: APPS.contacts.name })} onPress={() => openInApp('contacts', contactPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
+                          <IconButton icon="person" label={t('Open {name} in {app}', { name: mentionName(body.mentionAtCaret), app: APPS.contacts.name })} onPress={() => openInApp('contacts', contactPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
                         ) : null}
-                        <IconButton icon="plus" label={t('Ajouter')} onPress={() => openSheet('add')} shape={0} />
-                        <IconButton icon="palette" label={t('Couleur et papier')} onPress={() => openSheet('color')} shape={1} />
-                        <IconButton icon="tag" label={t('Labels')} onPress={() => openSheet('labels')} shape={2} />
+                        <IconButton icon="plus" label={t('Add')} onPress={() => openSheet('add')} shape={0} />
+                        <IconButton icon="palette" label={t('Colour and paper')} onPress={() => openSheet('color')} shape={1} />
+                        <IconButton icon="tag" label={tc('notes', 'Labels')} onPress={() => openSheet('labels')} shape={2} />
                       </>
                     ) : (
                       // In the bin nothing is edited: the note comes back (the banner) or goes for good.
-                      <IconButton icon="trash" label={t('Supprimer définitivement')} onPress={() => setConfirmForever(true)} shape={0} />
+                      <IconButton icon="trash" label={t('Delete forever')} onPress={() => setConfirmForever(true)} shape={0} />
                     )}
                     {/* The date, until something is done to the note: then « Annuler » and « Rétablir » take its place for the session, as in Keep, each disabled at its end of the history. */}
                     <View style={styles.middle}>
                       {history.started ? (
                         <Animated.View key="history" entering={BAR_IN} exiting={BAR_OUT} style={styles.middleRow}>
-                          <IconButton icon="undo" label={tc('undo', 'Annuler')} shape={3} disabled={!history.canUndo} onPress={history.undo} />
-                          <IconButton icon="undo" label={t('Rétablir')} shape={0} disabled={!history.canRedo} onPress={history.redo} style={styles.mirrored} />
+                          <IconButton icon="undo" label={t('Undo')} shape={3} disabled={!history.canUndo} onPress={history.undo} />
+                          <IconButton icon="undo" label={t('Redo')} shape={0} disabled={!history.canRedo} onPress={history.redo} style={styles.mirrored} />
                         </Animated.View>
                       ) : (
                         <Animated.View key="date" entering={BAR_IN} exiting={BAR_OUT} style={styles.middleRow}>
@@ -439,7 +439,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                       )}
                     </View>
                     {editable ? (
-                      <IconButton icon="more" label={t('Plus d’actions')} shape={1} onPress={() => {
+                      <IconButton icon="more" label={t('More actions')} shape={1} onPress={() => {
                           Keyboard.dismiss();
                           setMenu(true);
                         }} />
@@ -459,9 +459,9 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           bottom={56}
           items={[
             // A drawing's words are its title alone: there is nothing to share as text (as on the web, where it has no « Copier le texte »).
-            ...(note.kind === 'drawing' ? [] : [{ label: t('Partager'), icon: 'share' as const, onPress: shareText }]),
+            ...(note.kind === 'drawing' ? [] : [{ label: t('Share'), icon: 'share' as const, onPress: shareText }]),
             {
-              label: t('Dupliquer'),
+              label: t('Duplicate'),
               icon: 'copy',
               // An empty note's copy would be discarded the moment it was left: nothing to duplicate yet.
               disabled: !canDuplicate(id, { title, body: body.text }),
@@ -471,14 +471,14 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                 if (!canDuplicate(id)) return;
                 const copy = duplicateNote(id);
                 // As on the web: the copy is a tap away, opened over this note (Back comes back to it).
-                if (copy) showSnack(t('Note dupliquée'), { label: t('Ouvrir'), run: () => navigationRef.isReady() && navigationRef.dispatch(StackActions.push('Note', { id: copy })) }, { tone: 'success' });
+                if (copy) showSnack(t('Note duplicated'), { label: t('Open'), run: () => navigationRef.isReady() && navigationRef.dispatch(StackActions.push('Note', { id: copy })) }, { tone: 'success' });
               },
             },
             // A checklist's items, or a text note's lines, all addresses: a collection of them.
             ...(note.kind === 'text' || note.kind === 'checklist'
-              ? [{ label: t('Transformer en collection'), icon: 'collections' as const, disabled: !(convertible || (note.kind === 'text' && body.text.trim().length > 0)), onPress: toCollection }]
+              ? [{ label: t('Turn into a collection'), icon: 'collections' as const, disabled: !(convertible || (note.kind === 'text' && body.text.trim().length > 0)), onPress: toCollection }]
               : []),
-            { label: t('Supprimer'), icon: 'trash', onPress: trash, danger: true },
+            { label: t('Delete'), icon: 'trash', onPress: trash, danger: true },
           ]}
         />
         <ReminderSheet
@@ -487,8 +487,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           onDismiss={() => setSheet(null)}
           onSet={time => {
             const undo = setReminder(id, time);
-            if (time) showSnack(t('Rappel : {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
-            else showSnack(t('Rappel supprimé'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+            if (time) showSnack(t('Reminder: {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
+            else showSnack(t('Reminder deleted'), { label: t('Undo'), run: undo }, { tone: 'success' });
           }}
         />
         <NoteColorSheet
@@ -504,7 +504,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
         <Sheet visible={sheet === 'add'} onDismiss={() => setSheet(null)}>
           <ListRow
             icon="camera"
-            title={t('Prendre une photo')}
+            title={t('Take a photo')}
             onPress={async () => {
               setSheet(null);
               const outcome = await pickInto(id, 'camera');
@@ -513,7 +513,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           />
           <ListRow
             icon="image"
-            title={t('Ajouter une image')}
+            title={t('Add an image')}
             onPress={async () => {
               setSheet(null);
               const outcome = await pickInto(id, 'gallery');
@@ -521,13 +521,13 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             }}
           />
           {peopleHere || note.contactIds.length > 0 ? (
-            <ListRow icon="personPlus" title={t('Personnes')} supporting={t('Pour qui, ou à propos de qui')} onPress={() => setSheet('people')} />
+            <ListRow icon="personPlus" title={t('People')} supporting={t('Who it is for, or about')} onPress={() => setSheet('people')} />
           ) : null}
           {note.kind === 'text' ? (
             <ListRow
               icon="checklist"
-              title={t('Cases à cocher')}
-              supporting={t('Chaque ligne devient un élément')}
+              title={t('Checkboxes')}
+              supporting={t('Each line becomes an item')}
               onPress={() => {
                 flushBody();
                 convertToChecklist(id);
@@ -537,8 +537,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
           ) : note.kind === 'checklist' ? (
             <ListRow
               icon="note"
-              title={t('Masquer les cases à cocher')}
-              supporting={t('La liste redevient du texte')}
+              title={t('Hide checkboxes')}
+              supporting={t('The list turns back into text')}
               onPress={() => {
                 convertToText(id);
                 setSheet(null);
@@ -548,9 +548,9 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
         </Sheet>
         <Dialog
           visible={confirmForever}
-          title={t('Supprimer définitivement ?')}
-          message={t('Cette note disparaîtra de tous vos appareils. Cette action est irréversible.')}
-          confirmLabel={t('Supprimer')}
+          title={t('Delete forever?')}
+          message={t('This note will disappear from all your devices. This can’t be undone.')}
+          confirmLabel={t('Delete')}
           danger
           onCancel={() => setConfirmForever(false)}
           onConfirm={deleteNow}

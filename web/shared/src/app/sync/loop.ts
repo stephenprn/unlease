@@ -253,7 +253,7 @@ async function loop(myGeneration: number): Promise<void> {
       setSyncState({
         phase: 'offline',
         pending: countPending(),
-        message: error instanceof Error ? error.message : t('Serveur injoignable'),
+        message: error instanceof Error ? error.message : t('Server unreachable'),
       });
       await sleep(backoff);
       if (hinted !== null) backoff = FIRST_BACKOFF_MS / 2;
@@ -384,7 +384,7 @@ function onOnline(): void {
 /** The network went away: drop the held request so the dot says so now, not in 45 s. */
 function onOffline(): void {
   if (!running) return;
-  setSyncState({ phase: 'offline', message: t('Pas de réseau') });
+  setSyncState({ phase: 'offline', message: t('No network') });
   inFlight?.abort();
 }
 

@@ -40,22 +40,22 @@ const VIEW_OF_KEY = Object.fromEntries(Object.entries(VIEW_KEYS).map(([view, key
 
 /** Each view under its name in the shortcuts dialog (French: read where shown), « Aujourd'hui » last. */
 const VIEW_TITLES: Readonly<Record<CalendarView, string>> = {
-  day: tx('Jour'),
-  threeDays: tx('3 jours'),
-  week: tx('Semaine'),
-  month: tx('Mois'),
-  year: tx('Année'),
-  schedule: tx('Planning'),
-  today: tx('Aujourd’hui : la journée d’un coup d’œil'),
+  day: tx('Day'),
+  threeDays: tx('3 days'),
+  week: tx('Week'),
+  month: tx('Month'),
+  year: tx('Year'),
+  schedule: tx('Schedule'),
+  today: tx('Today: your day at a glance'),
 };
 
 /** Its keys in the shortcuts dialog beyond its commands' (C, T): the calendar's (`onKey`). */
 const CALENDAR_SHORTCUTS: readonly ShortcutGroup[] = [
   {
-    title: tx('Dans l’agenda'),
+    title: tx('In the calendar'),
     rows: [
-      [['J'], tx('Période suivante')],
-      [['K'], tx('Période précédente')],
+      [['J'], tx('Next period')],
+      [['K'], tx('Previous period')],
       ...(Object.keys(VIEW_TITLES) as CalendarView[]).map(view => [[VIEW_KEYS[view].toUpperCase()], VIEW_TITLES[view]] as const),
     ],
   },
@@ -92,16 +92,16 @@ export const calendarModule: AppModule = {
 
   spotKinds: CALENDAR_SPOT_KINDS,
   commands: [
-    { title: tx('Créer un événement'), icon: 'plus', key: 'c', run: () => navigate(paths.newEvent()) },
-    { title: tx('Aujourd’hui'), icon: 'calendar', key: 't', run: () => navigate(paths.view(usePrefsStore.getState().view, instantToDay(Date.now()))) },
-    { title: tx('Importer un agenda'), icon: 'download', run: () => navigate(shellPaths.importer) },
-    { title: tx('Exporter mon agenda'), icon: 'upload', run: exportCalendar },
-    { title: tx('Autres agendas'), icon: 'calendar', run: () => navigate(paths.feeds) },
+    { title: tx('Create an event'), icon: 'plus', key: 'c', run: () => navigate(paths.newEvent()) },
+    { title: tx('Today'), icon: 'calendar', key: 't', run: () => navigate(paths.view(usePrefsStore.getState().view, instantToDay(Date.now()))) },
+    { title: tx('Import a calendar'), icon: 'download', run: () => navigate(shellPaths.importer) },
+    { title: tx('Export my calendar'), icon: 'upload', run: exportCalendar },
+    { title: tx('Other calendars'), icon: 'calendar', run: () => navigate(paths.feeds) },
     // « Aujourd'hui » the view, told apart from « Aujourd'hui » the day (T) by what it is.
-    { title: tx('Aujourd’hui : la journée d’un coup d’œil'), icon: 'today', run: () => navigate(paths.view('today', instantToDay(Date.now()))) },
+    { title: tx('Today: your day at a glance'), icon: 'today', run: () => navigate(paths.view('today', instantToDay(Date.now()))) },
     ...PERIOD_VIEWS.map(view => ({ title: VIEW_NAMES[view], icon: 'calendar' as const, run: () => navigate(paths.view(view, instantToDay(Date.now()))) })),
   ],
-  spotCreates: [{ type: 'event', title: typed => t('Créer l’événement « {title} »', { title: typed }), icon: 'plus', run: typed => void quickAdd(typed) }],
+  spotCreates: [{ type: 'event', title: typed => t('Create the event “{title}”', { title: typed }), icon: 'plus', run: typed => void quickAdd(typed) }],
   onKey: (event, route) => {
     const place = shown(route);
     if (!place || event.metaKey || event.ctrlKey || event.altKey) return false;
@@ -140,8 +140,8 @@ export const calendarModule: AppModule = {
 
   settingsSections: CALENDAR_SETTINGS,
   importer: {
-    source: () => t('Google Agenda'),
-    meta: () => t('Un fichier .ics : l’export de Google Agenda, une invitation'),
+    source: () => t('Google Calendar'),
+    meta: () => t('An .ics file: Google Calendar’s export, an invitation'),
     Wizard: CalendarImport,
   },
   erase: {

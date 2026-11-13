@@ -306,11 +306,11 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
 
   if (!note || note.deletedAt !== null) {
     return (
-      <Layer open={!closing} onDismiss={onClose} label={t('Note introuvable')} routed>
+      <Layer open={!closing} onDismiss={onClose} label={t('Note not found')} routed>
         <div className={styles.gone}>
           <Icon name="info" size={28} />
-          <p className="t-body">{t('Cette note n’existe plus.')}</p>
-          <Button onClick={onClose}>{t('Fermer')}</Button>
+          <p className="t-body">{t('This note no longer exists.')}</p>
+          <Button onClick={onClose}>{t('Close')}</Button>
         </div>
       </Layer>
     );
@@ -333,7 +333,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     if (isEmptyNote(id)) return;
     part();
     const undo = setArchived(id, !note.archived);
-    showUndo(note.archived ? t('Note désarchivée') : t('Note archivée'), undo);
+    showUndo(note.archived ? t('Note unarchived') : t('Note archived'), undo);
   };
 
   const trash = (): void => {
@@ -346,7 +346,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     part();
     const undo = trashNotes([id]);
     onClose();
-    showUndo(t('Note placée dans la corbeille'), undo);
+    showUndo(t('Note moved to the bin'), undo);
   };
 
   const addPhotos = async (files: readonly File[]): Promise<void> => {
@@ -354,8 +354,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     if (images.length === 0) return;
     const outcome = await attachFiles(id, images);
     if (outcome.refused > 0) {
-      if (outcome.added > 0) showWarning(t('Certains fichiers ne sont pas des images acceptées.'));
-      else showError(t('Ce fichier n’est pas une image acceptée (25 Mo au plus).'));
+      if (outcome.added > 0) showWarning(t('Some files aren’t accepted images.'));
+      else showError(t('This file isn’t an accepted image (25 MB at most).'));
     }
   };
 
@@ -398,7 +398,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const hasFiles = (event: DragEvent): boolean => [...event.dataTransfer.types].includes('Files');
 
   const duplicate: MenuItem = {
-    label: t('Dupliquer'),
+    label: t('Duplicate'),
     icon: 'copy',
     // An empty note's copy would be discarded the moment it was left: nothing to duplicate yet.
     disabled: !canDuplicate(id, { title, body: bodyWords ?? undefined }),
@@ -407,42 +407,42 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
       flush('body');
       if (!canDuplicate(id)) return;
       const copy = duplicateNote(id);
-      if (copy) showSnack(t('Note dupliquée'), { label: t('Ouvrir'), run: () => openNote(copy) }, { tone: 'success' });
+      if (copy) showSnack(t('Note duplicated'), { label: t('Open'), run: () => openNote(copy) }, { tone: 'success' });
     },
   };
   // A text note's lines become items, or a checklist's items lines again.
   const checkboxes: MenuItem & { readonly supporting: string } =
     note.kind === 'text'
       ? {
-          label: t('Cases à cocher'),
-          supporting: t('Chaque ligne devient un élément'),
+          label: t('Checkboxes'),
+          supporting: t('Each line becomes an item'),
           icon: 'checklist',
           onSelect: () => {
             flush('body');
             convertToChecklist(id);
           },
         }
-      : { label: t('Masquer les cases à cocher'), supporting: t('La liste redevient du texte'), icon: 'note', onSelect: () => convertToText(id) };
+      : { label: t('Hide checkboxes'), supporting: t('The list turns back into text'), icon: 'note', onSelect: () => convertToText(id) };
   // The web's "Partager": the note's text on the clipboard, so it wears the copy, not the share.
   const copyText: MenuItem = {
-    label: t('Copier le texte'),
+    label: t('Copy the text'),
     icon: 'copy',
     onSelect: () => {
       flush('title');
       flush('body');
       if (!navigator.clipboard) {
-        showError(t('Impossible de copier le texte'));
+        showError(t('Couldn’t copy the text'));
         return;
       }
       void navigator.clipboard.writeText(noteText(id)).then(
-        () => showSnack(t('Texte copié'), undefined, { tone: 'success' }),
-        () => showError(t('Impossible de copier le texte')),
+        () => showSnack(t('Text copied'), undefined, { tone: 'success' }),
+        () => showError(t('Couldn’t copy the text')),
       );
     },
   };
   // A list of addresses (a checklist's items, or a text note's lines) made a collection: the note to the bin, the collection opened.
   const toCollection: MenuItem = {
-    label: t('Transformer en collection'),
+    label: t('Turn into a collection'),
     icon: 'collections',
     // Nothing in it yet: nothing to make links of.
     disabled: !convertible,
@@ -461,7 +461,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
       showSnack(
         listConvertedMessage(outcome.title, outcome.links),
         {
-          label: tc('undo', 'Annuler'),
+          label: t('Undo'),
           run: () => {
             outcome.undo();
             // Still on the collection's page: the note comes back in its place, over the page it was opened from.
@@ -473,7 +473,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
       );
     },
   };
-  const remove: MenuItem = { label: t('Supprimer'), icon: 'trash', danger: true, shortcut: '#', separatorBefore: true, onSelect: trash };
+  const remove: MenuItem = { label: t('Delete'), icon: 'trash', danger: true, shortcut: '#', separatorBefore: true, onSelect: trash };
   // The phone's order everywhere (its « Partager », « Dupliquer », « Transformer en collection », « Supprimer »); a drawing has no
   // words to copy. On a phone-sized window the checkboxes are added with the rest, under "Ajouter"; wider, where nothing else adds
   // them, they come before « Supprimer ».
@@ -482,7 +482,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const pin = (
     <IconButton
       icon="pin"
-      label={note.pinned ? t('Retirer des épinglées') : t('Épingler')}
+      label={note.pinned ? t('Unpin') : t('Pin')}
       pressed={note.pinned}
       className={narrow ? undefined : styles.pin}
       onClick={() => setPinned(id, !note.pinned)}
@@ -492,7 +492,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     <IconButton
       ref={reminderAnchor}
       icon={note.reminderAt !== null ? 'bell' : 'bellPlus'}
-      label={t('Rappel')}
+      label={t('Reminder')}
       // Neighbours take different pebbles: the phone's in its top bar, alternating in the wide toolbar.
       shape={narrow ? 1 : 0}
       pressed={note.reminderAt !== null}
@@ -501,22 +501,22 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
       onClick={() => setPicker('reminder')}
     />
   );
-  const archiveButton = <IconButton icon={note.archived ? 'unarchive' : 'archive'} label={note.archived ? t('Désarchiver') : t('Archiver')} shape={narrow ? 2 : 1} shortcut="E" onClick={archive} />;
-  const colorButton = <IconButton ref={colorAnchor} icon="palette" label={t('Couleur et papier')} shape={1} hasPopup="dialog" expanded={picker === 'color'} onClick={() => setPicker('color')} />;
-  const labelsButton = <IconButton ref={labelsAnchor} icon="tag" label={t('Labels')} shape={2} hasPopup="dialog" expanded={picker === 'labels'} onClick={() => setPicker('labels')} />;
+  const archiveButton = <IconButton icon={note.archived ? 'unarchive' : 'archive'} label={note.archived ? t('Unarchive') : t('Archive')} shape={narrow ? 2 : 1} shortcut="E" onClick={archive} />;
+  const colorButton = <IconButton ref={colorAnchor} icon="palette" label={t('Colour and paper')} shape={1} hasPopup="dialog" expanded={picker === 'color'} onClick={() => setPicker('color')} />;
+  const labelsButton = <IconButton ref={labelsAnchor} icon="tag" label={tc('notes', 'Labels')} shape={2} hasPopup="dialog" expanded={picker === 'labels'} onClick={() => setPicker('labels')} />;
   const offersPeople = hasPeople || note.contactIds.length > 0;
   const peopleButton = offersPeople ? (
-    <IconButton ref={peopleAnchor} icon={note.contactIds.length > 0 ? 'people' : 'personPlus'} label={t('Personnes')} shape={0} hasPopup="dialog" expanded={picker === 'people'} onClick={() => setPicker('people')} />
+    <IconButton ref={peopleAnchor} icon={note.contactIds.length > 0 ? 'people' : 'personPlus'} label={t('People')} shape={0} hasPopup="dialog" expanded={picker === 'people'} onClick={() => setPicker('people')} />
   ) : null;
-  const moreButton = <IconButton ref={moreAnchor} icon="more" label={t('Plus d’actions')} shape={narrow ? 1 : 2} hasPopup="menu" expanded={picker === 'more'} onClick={() => setPicker('more')} />;
-  const forever = <IconButton icon="trash" label={t('Supprimer définitivement')} onClick={() => setConfirmForever(true)} />;
+  const moreButton = <IconButton ref={moreAnchor} icon="more" label={t('More actions')} shape={narrow ? 1 : 2} hasPopup="menu" expanded={picker === 'more'} onClick={() => setPicker('more')} />;
+  const forever = <IconButton icon="trash" label={t('Delete forever')} onClick={() => setConfirmForever(true)} />;
   const edited = <p className={`${styles.edited} t-meta`}>{formatEdited(Math.max(editedAt, note.editedAt), now)}</p>;
   const apple = isApple();
   // Redo is undo's glyph, mirrored, as the drawing's tools and the pages' bar draw it.
   const steps = (
     <>
-      <IconButton icon="undo" label={tc('undo', 'Annuler')} shortcut={apple ? '⌘Z' : 'Ctrl+Z'} disabled={!history.canUndo} shape={narrow ? 3 : 0} onClick={history.undo} />
-      <IconButton icon="undo" label={t('Rétablir')} shortcut={apple ? '⇧⌘Z' : `Ctrl+${t('Maj')}+Z`} disabled={!history.canRedo} shape={narrow ? 0 : 1} className={styles.redo} onClick={history.redo} />
+      <IconButton icon="undo" label={t('Undo')} shortcut={apple ? '⌘Z' : 'Ctrl+Z'} disabled={!history.canUndo} shape={narrow ? 3 : 0} onClick={history.undo} />
+      <IconButton icon="undo" label={t('Redo')} shortcut={apple ? '⇧⌘Z' : `Ctrl+${t('Shift')}+Z`} disabled={!history.canRedo} shape={narrow ? 0 : 1} className={styles.redo} onClick={history.redo} />
     </>
   );
 
@@ -566,7 +566,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
         >
           {narrow ? (
             <div className={styles.topBar}>
-              <IconButton icon="back" label={t('Retour')} onClick={close} />
+              <IconButton icon="back" label={t('Back')} onClick={close} />
               <span className={styles.barSpace} />
               {editable ? (
                 <>
@@ -579,9 +579,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
           ) : null}
           {!editable ? (
               <div className={styles.banner}>
-                <p className={`${styles.bannerText} t-meta`}>{t('Une note dans la corbeille ne peut pas être modifiée.')}</p>
+                <p className={`${styles.bannerText} t-meta`}>{t('A note in the bin can’t be edited.')}</p>
                 <Button kind="tonal" small icon="restore" onClick={() => restoreNotes([id])}>
-                  {t('Restaurer')}
+                  {t('Restore')}
                 </Button>
               </div>
             ) : null}
@@ -599,9 +599,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                   value={title}
                   rows={1}
                   readOnly={!editable}
-                  placeholder={t('Titre')}
+                  placeholder={t('Title')}
                   maxLength={TEXT_LIMITS.note.title}
-                  aria-label={t('Titre')}
+                  aria-label={t('Title')}
                   onPaste={event => noticeCut(event, TEXT_LIMITS.note.title, 'Titre')}
                   onChange={event => editTitle(event.target.value.replace(/\r?\n/g, ' '))}
                   onBlur={() => flush('title')}
@@ -612,7 +612,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                     if (note.kind === 'text') bodyApi.current?.focus('start');
                     else if (note.kind === 'drawing') event.currentTarget.blur();
                     else {
-                      const first = document.querySelector<HTMLTextAreaElement>(`[data-note-editor='${id}'] textarea[aria-label='${t('Texte de l’élément')}']`);
+                      const first = document.querySelector<HTMLTextAreaElement>(`[data-note-editor='${id}'] textarea[aria-label='${t('Item text')}']`);
                       if (first) first.focus();
                       else addCheck(id, '');
                     }
@@ -633,7 +633,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                       editable={editable}
                       className={`${styles.bodyInput} t-editor-body`}
                       placeholder={t('Note')}
-                      label={t('Texte de la note')}
+                      label={t('Note text')}
                       takesPictures
                       onText={setBodyWords}
                       still={parting !== undefined}
@@ -660,7 +660,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                     className={styles.chip}
                     data-past={note.reminderAt < now || undefined}
                     onClick={() => setPicker('reminder')}
-                    aria-label={t('Rappel : {when}. Modifier', { when: formatReminder(note.reminderAt, now) })}
+                    aria-label={t('Reminder: {when}. Edit', { when: formatReminder(note.reminderAt, now) })}
                     disabled={!editable}
                   >
                     <Icon name="bell" size={16} />
@@ -668,7 +668,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                   </button>
                 ) : null}
                 {noteLabels.map(label => (
-                  <button key={label!.id} type="button" className={styles.chip} onClick={() => setPicker('labels')} aria-label={t('Label {name}. Modifier', { name: label!.name })} disabled={!editable}>
+                  <button key={label!.id} type="button" className={styles.chip} onClick={() => setPicker('labels')} aria-label={t('Label {name}. Edit', { name: label!.name })} disabled={!editable}>
                     <LabelMark name={label!.name} color={label!.color} />
                   </button>
                 ))}
@@ -677,10 +677,10 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             ) : null}
             {narrow ? (
               // The phone's bottom bar; in the bin it keeps the date and "Supprimer définitivement", as on the phone.
-              <div className={styles.bottomBar} role="toolbar" aria-label={t('Actions de la note')}>
+              <div className={styles.bottomBar} role="toolbar" aria-label={t('Note actions')}>
                 {editable ? (
                   <>
-                    <IconButton ref={addAnchor} icon="plus" label={t('Ajouter')} hasPopup="dialog" expanded={picker === 'add'} onClick={() => setPicker('add')} />
+                    <IconButton ref={addAnchor} icon="plus" label={t('Add')} hasPopup="dialog" expanded={picker === 'add'} onClick={() => setPicker('add')} />
                     {colorButton}
                     {labelsButton}
                   </>
@@ -692,14 +692,14 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                 {editable ? moreButton : <span className={styles.barEnd} aria-hidden="true" />}
               </div>
             ) : (
-              <div className={styles.toolbar} role="toolbar" aria-label={t('Actions de la note')}>
+              <div className={styles.toolbar} role="toolbar" aria-label={t('Note actions')}>
                 {editable ? (
                   <>
                     {reminderButton}
                     {colorButton}
                     {labelsButton}
                     {peopleButton}
-                    <IconButton icon="image" label={t('Ajouter une image')} onClick={() => fileInput.current?.click()} />
+                    <IconButton icon="image" label={t('Add an image')} onClick={() => fileInput.current?.click()} />
                     {archiveButton}
                     {moreButton}
                     {history.enabled ? steps : null}
@@ -709,7 +709,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                 )}
                 {edited}
                 <Button kind="text" onClick={close}>
-                  {t('Fermer')}
+                  {t('Close')}
                 </Button>
               </div>
             )}
@@ -737,14 +737,14 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
           onDismiss={() => setPicker(null)}
           onSet={time => {
             const undo = setReminder(id, time);
-            if (time) showSnack(t('Rappel : {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
-            else showUndo(t('Rappel supprimé'), undo);
+            if (time) showSnack(t('Reminder: {when}', { when: formatReminder(time, Date.now()) }), undefined, { tone: 'success' });
+            else showUndo(t('Reminder deleted'), undo);
           }}
         />
-        <Popover open={picker === 'color'} anchor={colorAnchor} onDismiss={() => setPicker(null)} label={t('Couleur et papier')} width={344}>
+        <Popover open={picker === 'color'} anchor={colorAnchor} onDismiss={() => setPicker(null)} label={t('Colour and paper')} width={344}>
           <div className={styles.picker}>
             {/* A sheet on a phone, away from its button, says what it holds; by its button, its groups do. */}
-            {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Couleur et papier')}</h2> : null}
+            {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Colour and paper')}</h2> : null}
             <div className={styles.pickerBody}>
               <NoteFinishPicker color={note.color} pattern={note.pattern} onColor={color => setColor(id, color)} onPattern={pattern => setPattern(id, pattern)} />
             </div>
@@ -753,12 +753,12 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
         <LabelPicker open={picker === 'labels'} anchor={labelsAnchor} selected={note.labelIds} onDismiss={() => setPicker(null)} onChange={ids => setLabels(id, ids)} />
         {/* On a phone-sized window it is asked for from « Ajouter », whose button anchors it. */}
         <PeoplePicker open={picker === 'people'} anchor={narrow ? addAnchor : peopleAnchor} selected={note.contactIds} onDismiss={() => setPicker(null)} onChange={ids => setPeople('note', id, ids)} />
-        <Menu open={picker === 'more'} anchor={moreAnchor} onDismiss={() => setPicker(null)} items={menuItems} label={t('Plus d’actions')} />
-        <Popover open={narrow && picker === 'add'} anchor={addAnchor} onDismiss={() => setPicker(null)} label={t('Ajouter')} width={320}>
+        <Menu open={picker === 'more'} anchor={moreAnchor} onDismiss={() => setPicker(null)} items={menuItems} label={t('More actions')} />
+        <Popover open={narrow && picker === 'add'} anchor={addAnchor} onDismiss={() => setPicker(null)} label={t('Add')} width={320}>
           <div className={styles.addSheet}>
             <AddRow
               icon="image"
-              label={t('Ajouter une image')}
+              label={t('Add an image')}
               onSelect={() => {
                 setPicker(null);
                 fileInput.current?.click();
@@ -767,8 +767,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             {offersPeople ? (
               <AddRow
                 icon="personPlus"
-                label={t('Personnes')}
-                supporting={t('Pour qui, ou à propos de qui')}
+                label={t('People')}
+                supporting={t('Who it is for, or about')}
                 onSelect={() => setPicker('people')}
               />
             ) : null}
@@ -788,9 +788,9 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
         <NotLinksDialog kind={note.kind} lines={notLinks} onClose={() => setNotLinks(null)} />
         <Confirm
           open={confirmForever}
-          title={t('Supprimer définitivement ?')}
-          message={t('Cette note disparaîtra de tous vos appareils. Cette action est irréversible.')}
-          confirmLabel={t('Supprimer')}
+          title={t('Delete forever?')}
+          message={t('This note will disappear from all your devices. This can’t be undone.')}
+          confirmLabel={t('Delete')}
           danger
           onCancel={() => setConfirmForever(false)}
           onConfirm={() => {
@@ -798,7 +798,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
             part();
             deleteForever([id]);
             onClose();
-            showSnack(t('Note supprimée définitivement'), undefined, { tone: 'success' });
+            showSnack(t('Note deleted forever'), undefined, { tone: 'success' });
           }}
         />
       </Layer>

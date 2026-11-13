@@ -19,8 +19,8 @@ let channelReady: Promise<string> | null = null;
 function ensureChannel(): Promise<string> {
   channelReady ??= notifee.createChannel({
     id: CHANNEL,
-    name: t('Anniversaires'),
-    description: t('Les anniversaires de vos contacts, le jour venu'),
+    name: t('Birthdays'),
+    description: t('Your contacts’ birthdays, on the day'),
     importance: AndroidImportance.HIGH,
   });
   return channelReady;
@@ -75,7 +75,7 @@ function birthdayNotification(alert: BirthdayNotification, channelId: string): N
       pressAction: { id: 'default', launchActivity: launchActivity() },
       // Both open the app, which calls or writes: only an activity may start a call.
       actions: [
-        ...(alert.canCall ? [{ title: t('Appeler'), pressAction: { id: ACTION_CALL, launchActivity: launchActivity() } }] : []),
+        ...(alert.canCall ? [{ title: t('Call'), pressAction: { id: ACTION_CALL, launchActivity: launchActivity() } }] : []),
         ...(alert.canWrite ? [{ title: t('Message'), pressAction: { id: ACTION_MESSAGE, launchActivity: launchActivity() } }] : []),
       ],
     },

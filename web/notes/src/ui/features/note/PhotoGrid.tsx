@@ -32,12 +32,12 @@ function PhotoGridComponent({ noteId, editable }: { noteId: string; editable: bo
             {editable ? (
               <IconButton
                 icon="close"
-                label={t('Supprimer la photo')}
+                label={t('Delete the photo')}
                 onSlip
                 compact
                 size={18}
                 className={styles.photoRemove}
-                onClick={() => showUndo(t('Photo supprimée'), removeAttachment(id))}
+                onClick={() => showUndo(t('Photo deleted'), removeAttachment(id))}
               />
             ) : null}
           </div>
@@ -53,7 +53,7 @@ const Photo = memo(function Photo({ id, onOpen }: { id: string; onOpen: () => vo
   const url = useBlobUrl(id, 'display', attachment?.uploaded ?? false);
   const ratio = attachment && attachment.width > 0 && attachment.height > 0 ? attachment.width / attachment.height : undefined;
   return (
-    <button type="button" className={styles.photo} onClick={onOpen} aria-label={t('Ouvrir la photo')} style={ratio ? { aspectRatio: String(ratio) } : undefined}>
+    <button type="button" className={styles.photo} onClick={onOpen} aria-label={t('Open the photo')} style={ratio ? { aspectRatio: String(ratio) } : undefined}>
       {url ? (
         <img src={url} alt="" draggable={false} />
       ) : (
@@ -90,25 +90,25 @@ function Viewer({ ids, index, onIndex, editable }: { ids: readonly string[]; ind
       >
         {url ? <img src={url} alt="" /> : null}
         <div className={styles.viewerBar}>
-          <IconButton icon="back" label={t('Fermer')} onSlip onClick={close} shortcut={t('Échap')} />
+          <IconButton icon="back" label={t('Close')} onSlip onClick={close} shortcut={t('Esc')} />
           {editable && id ? (
             <IconButton
               icon="trash"
-              label={t('Supprimer la photo')}
+              label={t('Delete the photo')}
               onSlip
               onClick={() => {
                 const undo = removeAttachment(id);
                 close();
-                showUndo(t('Photo supprimée'), undo);
+                showUndo(t('Photo deleted'), undo);
               }}
             />
           ) : null}
         </div>
         {index !== null && index > 0 ? (
-          <IconButton icon="back" label={t('Photo précédente')} onSlip className={`${styles.viewerNav} ${styles.viewerPrev}`} onClick={() => onIndex(index - 1)} />
+          <IconButton icon="back" label={t('Previous photo')} onSlip className={`${styles.viewerNav} ${styles.viewerPrev}`} onClick={() => onIndex(index - 1)} />
         ) : null}
         {index !== null && index < ids.length - 1 ? (
-          <IconButton icon="chevronRight" label={t('Photo suivante')} onSlip className={`${styles.viewerNav} ${styles.viewerNext}`} onClick={() => onIndex(index + 1)} />
+          <IconButton icon="chevronRight" label={t('Next photo')} onSlip className={`${styles.viewerNav} ${styles.viewerNext}`} onClick={() => onIndex(index + 1)} />
         ) : null}
       </div>
     </Layer>

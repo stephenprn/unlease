@@ -19,6 +19,8 @@ import { convertCell, distinctTexts, emptyCell, optionsFor } from '@unlease/page
 import { blockFields, blockFromRecord, type NewBlockFields } from '@unlease/pages/sync/entities';
 import type { Fields } from '@unlease/core/sync/record';
 import { dateWords } from '@unlease/core/services/dates';
+import { restorePlan, type RestorePlan } from '@unlease/pages/services/versions';
+import type { PageVersion } from '@unlease/pages/sync/versions';
 
 import { saveTypedText, writeWithUndo, type Undo } from './actions';
 import { getRecord, useLibraryStore, writeLocal, type LocalChange } from './libraryStore';
@@ -195,6 +197,17 @@ export function setPagePrivate(id: string, kept: boolean): void {
   writeLocal([{ type: 'block', id, patch: { private: kept } }]);
 }
 
+/**
+ * A past version of a page, back (`restorePlan`): one step of the page's undo, and an Undo for its
+ * slip that writes back what the restore overwrote. No change when the page already reads as it.
+ */
+export function restoreVersion(version: PageVersion, now: number = Date.now()): { readonly plan: RestorePlan; readonly undo: Undo | null } {
+  const plan = restorePlan(version, { fieldsOf: id => getRecord('block', id)?.fields, childrenOf: id => state().blocksByParent[id] ?? [] }, now);
+  if (plan.changes.length === 0) return { plan, undo: null };
+  const before = commit(version.pageId, plan.changes.map(change => ({ type: 'block', id: change.id, patch: change.patch })), {}, now);
+  return { plan, undo: () => writeLocal(before) };
+}
+
 /** To the bin, with what it holds; its block stays where it was in its parent's content, hidden. */
 export function trashPage(id: string, now: number = Date.now()): Undo {
   const before = state().blocks[id]?.trashedAt ?? null;
@@ -278,7 +291,7 @@ export function duplicateBlocks(page: PageId | null, ids: readonly string[], out
     delete fields.position;
     const id = createId(now);
     const [position] = batch.place(parentKey(parentId), index, 1);
-    batch.set(id, { ...fields, text: rename && source.kind === 'page' ? t('{title} (copie)', { title: source.text }) : source.text, parentId, position: position!, createdAt: now, deletedAt: null, trashedAt: null });
+    batch.set(id, { ...fields, text: rename && source.kind === 'page' ? t('{title} (copy)', { title: source.text }) : source.text, parentId, position: position!, createdAt: now, deletedAt: null, trashedAt: null });
     batch.children(source.id).forEach((child, at) => copy(child, id, at, false));
     return id;
   };
@@ -625,8 +638,8 @@ export function turnInto(page: PageId, ids: readonly string[], kind: BlockKind, 
 // ── tables ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_COLUMNS = (): TableColumn[] => [
-  { id: createId(), name: t('Nom'), type: 'text' },
-  { id: createId(), name: t('Étiquettes'), type: 'multi', options: [] },
+  { id: createId(), name: t('Name'), type: 'text' },
+  { id: createId(), name: t('Tags'), type: 'multi', options: [] },
 ];
 
 /** A table after `afterId` (or in place of an empty block): two columns and three empty rows. */
@@ -667,8 +680,8 @@ export function addColumn(page: PageId, tableId: string, afterColumnId: string |
   const id = createId();
   const names = new Set(table.columns.map(column => column.name));
   let number = table.columns.length + 1;
-  while (names.has(t('Colonne {number}', { number }))) number += 1;
-  const column: TableColumn = { id, name: t('Colonne {number}', { number }), type, ...(type === 'select' || type === 'multi' ? { options: [] } : {}) };
+  while (names.has(t('Column {number}', { number }))) number += 1;
+  const column: TableColumn = { id, name: t('Column {number}', { number }), type, ...(type === 'select' || type === 'multi' ? { options: [] } : {}) };
   const columns = [...table.columns];
   const index = afterColumnId === null ? columns.length : columns.findIndex(entry => entry.id === afterColumnId) + 1;
   columns.splice(index, 0, column);
@@ -893,9 +906,9 @@ export function importPages(plan: ImportPlan, now: number = Date.now()): ImportW
   return written;
 }
 
-/** An import taken back: every block it made, gone for good on every device. */
-export function undoImport(created: readonly string[], now: number = Date.now()): void {
-  writeLocal(importUndoChanges(created, now), now);
+/** An import taken back: every block it made, gone for good on every device, and the icons it gave pages already here taken off. */
+export function undoImport(created: readonly string[], iconed: readonly string[] = [], now: number = Date.now()): void {
+  writeLocal(importUndoChanges(created, now, iconed), now);
 }
 
 /** « Effacer des données »: every block of the parts chosen (`pages/services/erase`), as one batch; how many went. */

@@ -86,7 +86,7 @@ describe('POST /api/recap', () => {
     server.claude.reply(searchMessage({ recap: '', characters: [], stop: '' }));
     const { status, body } = await post('/api/recap', { link: series, season: 1, episode: 2, lang: 'fr', fresh: false });
     expect(status).toBe(502);
-    expect(body.error).toBe('Réponse de Claude illisible');
+    expect(body.error).toBe('Unreadable answer from Claude');
     expect(tasks()).toEqual([{ task: 'recap', ok: 0 }]);
   });
 });
@@ -206,7 +206,7 @@ describe('Seerr', () => {
   it('is linked from the Administration once its address and its key answer, the key never sent back', async () => {
     const seerr = fakeSeerr([]);
     server = createTestServer({ seerrFetch: seerr.fetcher });
-    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example/', apiKey: 'wrong-key-1234' } })).toEqual({ status: 400, body: { error: 'Clé API refusée par Seerr' } });
+    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example/', apiKey: 'wrong-key-1234' } })).toEqual({ status: 400, body: { error: 'API key refused by Seerr' } });
     expect((await send('PUT', '/api/settings', { seerr: { url: 'ftp://seerr.example' } })).status).toBe(400);
     const saved = await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example/', apiKey: 'seerr-key-123456' } });
     expect(saved.status).toBe(200);
@@ -234,14 +234,14 @@ describe('Seerr', () => {
 
   it('refuses an address that does not answer as Seerr', async () => {
     server = createTestServer();
-    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 502, body: { error: 'Seerr injoignable' } });
+    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 502, body: { error: 'Seerr unreachable' } });
     server.close();
     server = createTestServer({ seerrFetch: (async () => new Response('<html>', { status: 200, headers: { 'content-type': 'text/html' } })) as typeof fetch });
-    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'Cette adresse ne répond pas comme un serveur Seerr' } });
+    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'This address does not answer like a Seerr server' } });
     // Another service refusing the status Seerr gives anyone: not Seerr, never « Clé API refusée » (no key was sent).
     server.close();
     server = createTestServer({ seerrFetch: (async () => Response.json({ error: 'Jeton manquant' }, { status: 401 })) as typeof fetch });
-    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'Cette adresse ne répond pas comme un serveur Seerr' } });
+    expect(await send('PUT', '/api/settings', { seerr: { url: 'https://seerr.example' } })).toEqual({ status: 400, body: { error: 'This address does not answer like a Seerr server' } });
   });
 
   it('finds the film in Seerr with its key, its year telling namesakes apart, else gives Seerr’s search', async () => {

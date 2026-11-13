@@ -106,7 +106,7 @@ function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: Fab
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {open ? (
         <Animated.View entering={DIM_IN} exiting={DIM_OUT} style={StyleSheet.absoluteFill}>
-          <Tappable accessibilityLabel={t('Fermer')} noTint onPress={() => setOpen(false)} style={[styles.fill, { backgroundColor: theme.color.scrim }]} />
+          <Tappable accessibilityLabel={t('Close')} noTint onPress={() => setOpen(false)} style={[styles.fill, { backgroundColor: theme.color.scrim }]} />
         </Animated.View>
       ) : null}
       <View style={[styles.stack, { bottom: insets.bottom + MARGIN }]} pointerEvents="box-none">
@@ -126,7 +126,7 @@ function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: Fab
         {shown ? (
           <Animated.View entering={FAB_IN} exiting={FAB_OUT}>
             <Tappable
-              accessibilityLabel={menu ? (open ? t('Fermer') : (label ?? main?.label)) : main?.label}
+              accessibilityLabel={menu ? (open ? t('Close') : (label ?? main?.label)) : main?.label}
               accessibilityState={menu ? { expanded: open } : undefined}
               onPress={press}
               onFill

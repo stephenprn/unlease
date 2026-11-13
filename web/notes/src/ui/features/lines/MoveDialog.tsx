@@ -17,7 +17,7 @@ import { Layer } from '@shared/ui/components/Layer';
 import styles from './lines.module.css';
 
 /** `exclude`: collections not offered (those being deleted). */
-export function MoveDialog({ open, currentLineId, onDismiss, onPick, title = t('Changer de collection'), exclude = [] }: { open: boolean; currentLineId: string | null; onDismiss: () => void; onPick: (lineId: string) => void; title?: string; exclude?: readonly string[] }) {
+export function MoveDialog({ open, currentLineId, onDismiss, onPick, title = t('Change collection'), exclude = [] }: { open: boolean; currentLineId: string | null; onDismiss: () => void; onPick: (lineId: string) => void; title?: string; exclude?: readonly string[] }) {
   const lines = useLines().filter(line => !exclude.includes(line.id));
   const titleId = useId();
   return (

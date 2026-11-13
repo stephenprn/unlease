@@ -11,12 +11,12 @@ export type { ArchiveResult, MediaFile, MediaResult, PickedFile, SavedFile };
 const unavailable = (message: string) => ({ status: 'error', message, files: [] as MediaFile[] });
 
 export async function pickImages(max = 10): Promise<MediaResult> {
-  if (!NativeMedia) return unavailable(t('Sélecteur de photos indisponible'));
+  if (!NativeMedia) return unavailable(t('Photo picker unavailable'));
   return NativeMedia.pickImages(max);
 }
 
 export async function capturePhoto(): Promise<MediaResult> {
-  if (!NativeMedia) return unavailable(t('Appareil photo indisponible'));
+  if (!NativeMedia) return unavailable(t('Camera unavailable'));
   return NativeMedia.capturePhoto();
 }
 
@@ -30,7 +30,7 @@ export async function describeImage(path: string): Promise<MediaFile | null> {
 }
 
 export async function pickKeepArchive(): Promise<ArchiveResult> {
-  if (!NativeMedia) return { status: 'error', message: t('Import indisponible'), dir: '', entries: [] };
+  if (!NativeMedia) return { status: 'error', message: t('Import unavailable'), dir: '', entries: [] };
   return NativeMedia.pickKeepArchive();
 }
 
@@ -38,7 +38,7 @@ export async function pickKeepArchive(): Promise<ArchiveResult> {
 const ARCHIVE_TYPES = ['application/gzip', 'application/x-gzip', 'application/x-tar', 'application/x-compressed-tar', 'application/octet-stream'];
 
 export async function pickBackupArchive(): Promise<PickedFile> {
-  if (!NativeMedia) return { status: 'error', message: t('Sélecteur de fichiers indisponible'), path: '', name: '', bytes: 0 };
+  if (!NativeMedia) return { status: 'error', message: t('File picker unavailable'), path: '', name: '', bytes: 0 };
   return NativeMedia.pickFile(ARCHIVE_TYPES);
 }
 

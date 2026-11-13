@@ -60,7 +60,7 @@ const openOut = (url: string): void => {
 };
 
 const copy = (text: string): void => {
-  void copyText(text).then(done => (done ? showSnack(t('Copié'), undefined, { tone: 'success' }) : showWarning(t('Ce navigateur n’a pas laissé copier.'))));
+  void copyText(text).then(done => (done ? showSnack(t('Copied'), undefined, { tone: 'success' }) : showWarning(t('This browser did not allow copying.'))));
 };
 
 /** A way to reach them: its glyph on its pebble, its name under it; greyed, saying why, when it cannot work yet. */
@@ -125,7 +125,7 @@ function Coordinates({ contact }: { contact: Contact }) {
   return (
     <section className={styles.block} aria-labelledby="contact-coordinates">
       <h2 id="contact-coordinates" className={`${styles.sectionHead} t-section`}>
-        {t('Coordonnées')}
+        {t('Contact details')}
       </h2>
       <OutlinedBox kind="panel" lift="card" className={`${styles.details} paper`}>
         <ul className={styles.group}>
@@ -139,8 +139,8 @@ function Coordinates({ contact }: { contact: Contact }) {
                 icon="phoneCall"
                 tools={
                   <>
-                    {whatsapp ? <IconButton icon="phone" label={t('WhatsApp avec le {number}', { number: shown })} shape={index + 1} onClick={() => openOut(whatsapp)} /> : null}
-                    <CopyButton text={shown} label={t('Copier le {number}', { number: shown })} turn={index + 2} />
+                    {whatsapp ? <IconButton icon="phone" label={t('WhatsApp with {number}', { number: shown })} shape={index + 1} onClick={() => openOut(whatsapp)} /> : null}
+                    <CopyButton text={shown} label={t('Copy {number}', { number: shown })} turn={index + 2} />
                   </>
                 }
               >
@@ -152,7 +152,7 @@ function Coordinates({ contact }: { contact: Contact }) {
             );
           })}
           {contact.emails.map((email, index) => (
-            <Detail key={email.id} icon="email" tools={<CopyButton text={email.address} label={t('Copier {address}', { address: email.address })} turn={index + 3} />}>
+            <Detail key={email.id} icon="email" tools={<CopyButton text={email.address} label={t('Copy {address}', { address: email.address })} turn={index + 3} />}>
               <Out href={mailtoHref(email.address)}>{email.address}</Out>
               <span className={`${styles.detailMeta} t-meta`}>{placeKindName(email)}</span>
             </Detail>
@@ -185,11 +185,11 @@ function PlaceCard({ address, index }: { address: AddressEntry; index: number })
       </div>
       <div className={styles.placeTools}>
         {OFFERED_MAP_APPS.map(app => (
-          <Button key={app} kind="outlined" small icon="external" href={mapsUrl(address, app) ?? undefined} title={t('Ouvrir dans {maps}', { maps: MAP_APP_NAMES[app] })}>
+          <Button key={app} kind="outlined" small icon="external" href={mapsUrl(address, app) ?? undefined} title={t('Open in {maps}', { maps: MAP_APP_NAMES[app] })}>
             {MAP_APP_NAMES[app]}
           </Button>
         ))}
-        <IconButton icon="copy" label={t('Copier l’adresse')} shape={index + 2} onClick={() => copy(lines.join('\n'))} />
+        <IconButton icon="copy" label={t('Copy the address')} shape={index + 2} onClick={() => copy(lines.join('\n'))} />
       </div>
     </OutlinedBox>
   );
@@ -201,7 +201,7 @@ function Addresses({ contact }: { contact: Contact }) {
   return (
     <section className={styles.block} aria-labelledby="contact-addresses">
       <h2 id="contact-addresses" className={`${styles.sectionHead} t-section`}>
-        {shown.length > 1 ? t('Adresses') : t('Adresse')}
+        {shown.length > 1 ? t('Addresses') : t('Address')}
       </h2>
       {shown.map((address, index) => (
         <PlaceCard key={address.id} address={address} index={index} />
@@ -218,7 +218,7 @@ function About({ contact }: { contact: Contact }) {
   return (
     <section className={styles.block} aria-labelledby="contact-about">
       <h2 id="contact-about" className={`${styles.sectionHead} t-section`}>
-        {t('À propos')}
+        {t('About')}
       </h2>
       <OutlinedBox kind="panel" lift="card" className={`${styles.details} paper`}>
         <ul className={styles.group}>
@@ -229,7 +229,7 @@ function About({ contact }: { contact: Contact }) {
             </Detail>
           ) : null}
           {note ? (
-            <Detail icon="note" tools={<CopyButton text={contact.note} label={t('Copier la note')} turn={1} />}>
+            <Detail icon="note" tools={<CopyButton text={contact.note} label={t('Copy the note')} turn={1} />}>
               <span className={`${styles.noteText} t-body`}>{contact.note}</span>
             </Detail>
           ) : null}
@@ -251,8 +251,8 @@ function BirthdayNotice({ contact, region }: { contact: Contact; region: string 
     <OutlinedBox kind="panel" className={`${styles.notice} ${styles.wishNotice} paper`}>
       <Icon name="cake" size={22} />
       <span className={styles.wishText}>
-        <span className="t-body-strong">{t('Son anniversaire')}</span>
-        <span className="t-meta">{[late === 0 ? t('Aujourd’hui') : t('Hier'), age !== null && age > 0 ? plural(age, 'an') : null].filter(Boolean).join(' · ')}</span>
+        <span className="t-body-strong">{t('Their birthday')}</span>
+        <span className="t-meta">{[late === 0 ? t('Today') : t('Yesterday'), age !== null && age > 0 ? plural(age, 'year') : null].filter(Boolean).join(' · ')}</span>
       </span>
       <WishButton contact={contact} region={region} className={styles.wishEnd} />
     </OutlinedBox>
@@ -286,7 +286,7 @@ export function ContactScreen({ id }: { id: string }) {
   if (!contact || contact.deletedAt !== null) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="trash" as="h1" title={t('Ce contact n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" as="h1" title={t('This contact no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }
@@ -302,7 +302,7 @@ export function ContactScreen({ id }: { id: string }) {
   const trash = (): void => {
     const undo = trashContacts([id]);
     navigate(paths.contacts);
-    showUndo(t('Contact placé dans la corbeille'), undo);
+    showUndo(t('Contact moved to the bin'), undo);
   };
   // Neighbours on different turns of the pebble.
   let turn = 0;
@@ -315,9 +315,9 @@ export function ContactScreen({ id }: { id: string }) {
       {trashed ? (
         <OutlinedBox kind="panel" className={`${styles.notice} paper`}>
           <Icon name="trash" size={22} />
-          <span className="t-body">{t('Ce contact est dans la corbeille.')}</span>
-          <Button kind="text" icon="restore" onClick={() => showUndo(t('Contact restauré'), restoreContacts([id]))}>
-            {t('Restaurer')}
+          <span className="t-body">{t('This contact is in the bin.')}</span>
+          <Button kind="text" icon="restore" onClick={() => showUndo(t('Contact restored'), restoreContacts([id]))}>
+            {t('Restore')}
           </Button>
         </OutlinedBox>
       ) : null}
@@ -336,35 +336,35 @@ export function ContactScreen({ id }: { id: string }) {
         </div>
         {trashed ? null : (
           <HeroTools>
-            <IconButton icon="star" label={contact.favorite ? t('Retirer des favoris') : t('Ajouter aux favoris')} pressed={contact.favorite} shape={1} onClick={() => toggleFavorite(contact)} />
+            <IconButton icon="star" label={contact.favorite ? t('Remove from favourites') : t('Add to favourites')} pressed={contact.favorite} shape={1} onClick={() => toggleFavorite(contact)} />
             {narrow ? (
-              <IconButton icon="edit" label={t('Modifier')} shape={3} onClick={() => navigate(paths.edit(id))} />
+              <IconButton icon="edit" label={t('Edit')} shape={3} onClick={() => navigate(paths.edit(id))} />
             ) : (
               <Button kind="tonal" icon="edit" onClick={() => navigate(paths.edit(id))}>
-                {t('Modifier')}
+                {t('Edit')}
               </Button>
             )}
-            <IconButton ref={more} icon="more" label={t('Plus d’actions')} shape={2} hasPopup="menu" expanded={menuOpen} onClick={() => setMenuOpen(true)} />
+            <IconButton ref={more} icon="more" label={t('More actions')} shape={2} hasPopup="menu" expanded={menuOpen} onClick={() => setMenuOpen(true)} />
             <Menu
               open={menuOpen}
               anchor={more}
               onDismiss={() => setMenuOpen(false)}
-              label={t('Actions sur {name}', { name })}
+              label={t('Actions on {name}', { name })}
               items={[
                 // The phone's order: the card handed on (here as a file), its labels, a gift idea, the bin.
-                { label: t('Exporter (.vcf)'), icon: 'upload', onSelect: () => exportContacts([contact]) },
-                { label: t('Libellés'), icon: 'tag', onSelect: () => setLabelling(true) },
-                { label: t('Idée cadeau…'), icon: 'bag', onSelect: () => (gifts ? showWarning(gifts) : setGifting(true)) },
-                { label: t('Supprimer'), icon: 'trash', danger: true, separatorBefore: true, onSelect: trash },
+                { label: t('Export (.vcf)'), icon: 'upload', onSelect: () => exportContacts([contact]) },
+                { label: t('Labels'), icon: 'tag', onSelect: () => setLabelling(true) },
+                { label: t('Gift idea…'), icon: 'bag', onSelect: () => (gifts ? showWarning(gifts) : setGifting(true)) },
+                { label: t('Delete'), icon: 'trash', danger: true, separatorBefore: true, onSelect: trash },
               ]}
             />
-            <LabelsPopover ids={[id]} open={labelling} anchor={more} label={t('Libellés de {name}', { name })} onDismiss={() => setLabelling(false)} />
+            <LabelsPopover ids={[id]} open={labelling} anchor={more} label={t('{name}’s labels', { name })} onDismiss={() => setLabelling(false)} />
           </HeroTools>
         )}
       </header>
       {call || email || chat || place ? (
-        <nav className={styles.actions} aria-label={t('Contacter {name}', { name })}>
-          {call ? <QuickAction icon="phoneCall" label={t('Appeler')} href={telHref(call.number, region)} turn={nextTurn()} /> : null}
+        <nav className={styles.actions} aria-label={t('Contact {name}', { name })}>
+          {call ? <QuickAction icon="phoneCall" label={t('Call')} href={telHref(call.number, region)} turn={nextTurn()} /> : null}
           {chat ? (
             <QuickAction
               icon="phone"
@@ -372,26 +372,26 @@ export function ContactScreen({ id }: { id: string }) {
               href={whatsappUrl(chat.number, region)}
               turn={nextTurn()}
               external
-              why={whatsappUrl(chat.number, region) ? undefined : t('Ce numéro n’a pas d’indicatif : choisissez l’indicatif par défaut dans les Réglages, ou écrivez-le avec son +.')}
+              why={whatsappUrl(chat.number, region) ? undefined : t('This number has no country code: choose the default country code in Settings, or write it with its +.')}
             />
           ) : null}
-          {email ? <QuickAction icon="email" label={t('E-mail')} href={mailtoHref(email.address)} turn={nextTurn()} /> : null}
-          {place ? <QuickAction icon="mapPin" label={t('Itinéraire')} turn={nextTurn()} anchor={routeButton} expanded={routeOpen} onClick={() => setRouteOpen(true)} /> : null}
+          {email ? <QuickAction icon="email" label={t('Email')} href={mailtoHref(email.address)} turn={nextTurn()} /> : null}
+          {place ? <QuickAction icon="mapPin" label={t('Directions')} turn={nextTurn()} anchor={routeButton} expanded={routeOpen} onClick={() => setRouteOpen(true)} /> : null}
           {place ? (
             <Menu
               open={routeOpen}
               anchor={routeButton}
               align="start"
               onDismiss={() => setRouteOpen(false)}
-              label={t('Itinéraire jusqu’à {name}', { name })}
-              items={OFFERED_MAP_APPS.map(app => ({ label: t('Itinéraire dans {maps}', { maps: MAP_APP_NAMES[app] }), icon: 'external' as const, onSelect: () => openOut(directionsUrl(place, app)!) }))}
+              label={t('Directions to {name}', { name })}
+              items={OFFERED_MAP_APPS.map(app => ({ label: t('Directions in {maps}', { maps: MAP_APP_NAMES[app] }), icon: 'external' as const, onSelect: () => openOut(directionsUrl(place, app)!) }))}
             />
           ) : null}
         </nav>
       ) : null}
       {trashed ? null : <BirthdayNotice contact={contact} region={region} />}
       {/* Nothing but a name: where the details would be, how to add them (as on the phone). */}
-      {nothing && !trashed ? <EmptyLine text={t('Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.')} align="center" className={styles.noDetails} /> : null}
+      {nothing && !trashed ? <EmptyLine text={t('Nothing else yet: “Edit” adds a number, an email, an address, a birthday.')} align="center" className={styles.noDetails} /> : null}
       <Coordinates contact={contact} />
       <Addresses contact={contact} />
       <About contact={contact} />

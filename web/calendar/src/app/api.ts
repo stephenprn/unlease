@@ -12,10 +12,12 @@ import { mentionsPath, parseMentionsResponse, type MentionsResponse } from '@unl
 import {
   ASK_PATH,
   COUNTRIES_PATH,
+  FEED_CONNECT_PATH,
   feedRefreshPath,
   PARSE_PATH,
   parseCalendarAskResponse,
   parseCountries,
+  parseFeedConnectResponse,
   parseProposalResponse,
   parseRegions,
   parseWeatherResponse,
@@ -25,6 +27,8 @@ import {
   weatherPath,
   type CalendarAskRequest,
   type CalendarAskResponse,
+  type FeedConnectRequest,
+  type FeedConnectResponse,
   type HolidayCountry,
   type ParseRequest,
   type ProposalResponse,
@@ -58,6 +62,11 @@ export function fetchCountries(config: ServerConfig, signal?: AbortSignal): Prom
 
 export function fetchRegions(config: ServerConfig, country: string, signal?: AbortSignal): Promise<string[]> {
   return getJson(config, regionsPath(country), value => parseRegions(value), signal);
+}
+
+/** An address tried before it is followed (a login, when given, kept by the server under the calendar's id). */
+export function connectFeed(config: ServerConfig, request: FeedConnectRequest): Promise<FeedConnectResponse> {
+  return postJson(config, FEED_CONNECT_PATH, request, parseFeedConnectResponse);
 }
 
 /** Asks the server to read a subscribed calendar again now. */

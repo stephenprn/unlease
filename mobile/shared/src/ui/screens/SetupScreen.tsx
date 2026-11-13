@@ -74,6 +74,7 @@ import { DRIVE_INFO, DriveSection } from '../features/admin/DriveSection';
 import type { AdminOverlays, Confirmation } from '../features/admin/overlays';
 import type { AppAdminSection } from './AdminScreen';
 import { SEERR_INFO, SeerrSection } from '../features/admin/SeerrSection';
+import { IMMICH_INFO, ImmichSection } from '../features/admin/ImmichSection';
 import { HOLIDAYS_INFO, HolidaysSection } from '../features/admin/HolidaysSection';
 import { SetupRestore } from '../features/admin/SetupRestore';
 import { ImportHost, type ImportWizardProps } from '../features/importing/ImportFlow';
@@ -98,7 +99,7 @@ const STEP_BACK = stepIn(-24);
 
 const NO_APPS: readonly AppId[] = [];
 
-const INFO: Partial<Record<SetupTask, string>> = { backup: BACKUP_INFO, drive: DRIVE_INFO, seerr: SEERR_INFO, holidays: HOLIDAYS_INFO };
+const INFO: Partial<Record<SetupTask, string>> = { backup: BACKUP_INFO, drive: DRIVE_INFO, seerr: SEERR_INFO, immich: IMMICH_INFO, holidays: HOLIDAYS_INFO };
 
 interface Place {
   readonly step: SetupStep;
@@ -255,7 +256,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
       try {
         admin.setSettings(await saveServerSettings(server, { setupDone: true }));
       } catch {
-        showSnack(t('Le serveur n’a pas noté la mise en route : le prochain appareil la reverra.'), undefined, { tone: 'warning' });
+        showSnack(t('The server did not record the setup: the next device will see it again.'), undefined, { tone: 'warning' });
       } finally {
         setFinishing(false);
       }
@@ -267,7 +268,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
   // The setup's sections list no snapshot and restore nothing: its own row does.
   const overlays: AdminOverlays = { ask: setConfirmation, openSnapshot: () => undefined, restore: () => undefined };
 
-  const unavailable = <ListRow icon="info" title={t('Réglages du serveur indisponibles')} supporting={admin.unavailable ? t('Le serveur ne répond pas pour l’instant.') : t('Lecture des réglages du serveur…')} onPress={admin.reload} />;
+  const unavailable = <ListRow icon="info" title={t('Server settings unavailable')} supporting={admin.unavailable ? t('The server isn’t answering for now.') : t('Reading the server’s settings…')} onPress={admin.reload} />;
 
   const [savingApp, setSavingApp] = useState<AppId | null>(null);
   const toggleApp = async (id: AppId) => {
@@ -278,7 +279,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     try {
       admin.setSettings(await saveServerSettings(server, { apps: [...next] }));
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setSavingApp(null);
     }
@@ -297,7 +298,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
             <Button
               kind="text"
               icon="undo"
-              label={t('Revenir à l’apparence d’origine')}
+              label={t('Back to the original look')}
               onPress={() => {
                 setFromSibling(null);
                 setAppearance({ ...DEFAULT_APPEARANCE, ownColor: appearance.ownColor, ownGradient: appearance.ownGradient });
@@ -308,7 +309,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
         </>
       );
     }
-    if (step === 'import') return importPending ? <AppText variant="meta" style={styles.note}>{t('Lecture de vos données…')}</AppText> : null;
+    if (step === 'import') return importPending ? <AppText variant="meta" style={styles.note}>{t('Reading your data…')}</AppText> : null;
     if (!server) return null;
     if (step === 'apps') {
       const shownApps = enabled.includes(app) ? enabled : [...enabled, app];
@@ -356,6 +357,8 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
         );
       case 'seerr':
         return <Section>{admin.settings ? <SeerrSection server={server} admin={admin} overlays={overlays} /> : unavailable}</Section>;
+      case 'immich':
+        return <Section>{admin.settings ? <ImmichSection server={server} admin={admin} overlays={overlays} /> : unavailable}</Section>;
       case 'holidays':
         return <Section>{admin.settings ? <HolidaysSection server={server} admin={admin} /> : unavailable}</Section>;
     }
@@ -367,7 +370,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
       const set = task === 'reading' ? useSettingsStore.getState().reading === true : setupTaskSet(task, admin.settings, admin.status);
       return (
         <>
-          <Button kind="text" label={t('Retour')} disabled={held} onPress={() => go('checklist')} />
+          <Button kind="text" label={t('Back')} disabled={held} onPress={() => go('checklist')} />
           <Button kind={set ? 'filled' : 'tonal'} label={setupTaskForward(set)} disabled={held} onPress={() => go('checklist')} />
         </>
       );
@@ -375,7 +378,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     const set = step === 'appearance' ? !isDefaultAppearance(appearance) : step === 'import' ? imported : true;
     return (
       <>
-        <Button kind="text" label={t('Retour')} disabled={held} onPress={() => go(previous)} />
+        <Button kind="text" label={t('Back')} disabled={held} onPress={() => go(previous)} />
         {last ? (
           <Button icon="check" label={setupForward(step, true, true)} busy={finishing} disabled={held} onPress={() => void finish()} />
         ) : (
@@ -468,10 +471,10 @@ function AppCard({ choice, last, busy, onPress, place }: { choice: SetupAppChoic
       <View style={styles.appText}>
         <View style={styles.appHead}>
           <AppText variant="title">{choice.name}</AppText>
-          <AppText variant="meta">{choice.soon ? t('Bientôt disponible') : choice.locked ? t('Cette application') : choice.replaces}</AppText>
+          <AppText variant="meta">{choice.soon ? t('Coming soon') : choice.locked ? t('This app') : choice.replaces}</AppText>
         </View>
         <AppText variant="body">{choice.description}</AppText>
-        {last && !choice.locked ? <AppText variant="meta">{t('Le serveur fait toujours tourner au moins une application.')}</AppText> : null}
+        {last && !choice.locked ? <AppText variant="meta">{t('The server always runs at least one app.')}</AppText> : null}
       </View>
       {choice.soon ? null : (
         <View style={styles.appBox}>
@@ -516,13 +519,13 @@ function StepHead({ app, steps, step, task, status, importSource }: { app: AppId
   const index = steps.indexOf(step);
   return (
     <View style={styles.head}>
-      <View style={styles.progress} accessible accessibilityLabel={t('{progress} : {step}', { progress: `${APPS[app].name} · ${t('Mise en route · {progress}', { progress: setupProgress(steps, step) })}`, step: SETUP_WORDS[step].short })}>
+      <View style={styles.progress} accessible accessibilityLabel={t('{progress}: {step}', { progress: `${APPS[app].name} · ${t('Getting started · {progress}', { progress: setupProgress(steps, step) })}`, step: SETUP_WORDS[step].short })}>
         <View style={styles.headBrand}>
           <BrandMark app={app} size={28} />
           <View style={styles.flex}>
             <AppText variant="bodyStrong">{APPS[app].name}</AppText>
             <AppText variant="meta" color={theme.color.inkMuted}>
-              {t('Mise en route · {progress}', { progress: setupProgress(steps, step) })}
+              {t('Getting started · {progress}', { progress: setupProgress(steps, step) })}
             </AppText>
           </View>
         </View>
@@ -542,7 +545,7 @@ function StepHead({ app, steps, step, task, status, importSource }: { app: AppId
           <AppText variant="title" accessibilityRole="header" style={styles.flex}>
             {words.title}
           </AppText>
-          {info ? <InfoButton open={bubble.open} label={bubble.open ? t('Masquer l’explication') : t('Comment ça marche')} onPress={bubble.toggle} /> : null}
+          {info ? <InfoButton open={bubble.open} label={bubble.open ? t('Hide the explanation') : t('How it works')} onPress={bubble.toggle} /> : null}
         </View>
         {info && bubble.open ? <InfoBubble text={t(info)} /> : null}
       </View>
@@ -581,8 +584,8 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
   // The keyboard goes from the address to the token, whose « OK » connects.
   const form = useForm(
     {
-      address: url.trim() ? null : t('Saisissez l’adresse de votre serveur.'),
-      token: token.trim() ? null : t('Saisissez le jeton de votre serveur.'),
+      address: url.trim() ? null : t('Enter your server’s address.'),
+      token: token.trim() ? null : t('Enter your server’s token.'),
     },
     { order: ['address', 'token'], sendOnDone: () => connect(typed()) },
   );
@@ -597,7 +600,7 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
       onConnected(serverEmpty(status), health);
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+      const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
       // The sibling's address lands in the fields, for the failure to point at.
       if (fromSibling) {
         setUrl(config.url);
@@ -652,20 +655,20 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
         </Organic>
       ) : null}
       <View style={styles.form}>
-        <TextField label={t('Adresse du serveur')} kind="serverAddress" value={url} onChangeText={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
+        <TextField label={t('Server address')} kind="serverAddress" value={url} onChangeText={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
         <TextField
-          label={t('Jeton')}
+          label={t('Token')}
           kind="serverToken"
           value={token}
           onChangeText={setToken}
           field={form.field('token')}
           help={setupFieldHelp('token')}
-          revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }}
+          revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }}
         />
         <FormMessage message={form.message} />
         <Button
           kind={sibling ? 'tonal' : 'filled'}
-          label={t('Se connecter')}
+          label={t('Connect')}
           icon="server"
           busy={form.busy}
           disabled={siblingBusy}
@@ -673,15 +676,15 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
           style={styles.submit}
         />
         <View style={styles.local}>
-          <Button kind="text" label={t('Tout garder sur ce téléphone')} onPress={later} style={styles.centered} />
+          <Button kind="text" label={t('Keep everything on this phone')} onPress={later} style={styles.centered} />
           <AppText variant="meta" style={styles.center}>
-            {t('Vous pourrez relier un serveur plus tard, dans l’Administration.')}
+            {t('You can connect a server later, in the Administration.')}
           </AppText>
         </View>
       </View>
       <View style={styles.guide}>
-        <AppText variant="meta">{t('Pas encore de serveur ?')}</AppText>
-        <Button kind="text" small label={t('Le guide d’installation')} onPress={() => void Linking.openURL(SELF_HOSTING_GUIDE)} />
+        <AppText variant="meta">{t('No server yet?')}</AppText>
+        <Button kind="text" small label={t('The installation guide')} onPress={() => void Linking.openURL(SELF_HOSTING_GUIDE)} />
       </View>
     </EdgeScrollView>
   );

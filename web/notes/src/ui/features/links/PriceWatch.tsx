@@ -53,7 +53,7 @@ export function PriceWatch({ id, underPrice }: { id: string; underPrice: boolean
       <div className={styles.foot}>
         <p className="t-meta">{priceCheckedText(link, now)}</p>
         <Button kind="text" small icon="refresh" busy={checking} onClick={check}>
-          {t('Vérifier le prix')}
+          {t('Check the price')}
         </Button>
       </div>
     </div>

@@ -23,13 +23,13 @@ export function priceWith(coupon: Coupon, price: number): number | null {
 /** « Revient à 42,41 € », when the code's saving can be counted on this price. */
 export function couponPrice(coupon: Coupon, link: Pick<LinkItem, 'price' | 'currency'>): string | null {
   const price = link.price === null ? null : priceWith(coupon, link.price);
-  return price === null ? null : t('Revient à {price}', { price: formatPrice(price, link.currency) });
+  return price === null ? null : t('Comes to {price}', { price: formatPrice(price, link.currency) });
 }
 
 /** Under a code, before where it was found: until when, and whether anyone confirmed it (« Jusqu’au 30 nov. · non confirmé »), or ''. */
 export function couponStatus(coupon: Coupon, now: number): string {
   const [year, month, day] = (coupon.expires ?? '').split('-').map(Number);
   const until = year && month && day ? formatDay(new Date(year, month - 1, day).getTime(), now) : null;
-  const status = [until ? t('jusqu’au {date}', { date: until }) : null, coupon.confirmed ? null : t('non confirmé')].filter(Boolean).join(' · ');
+  const status = [until ? t('until {date}', { date: until }) : null, coupon.confirmed ? null : t('not confirmed')].filter(Boolean).join(' · ');
   return status.charAt(0).toLocaleUpperCase() + status.slice(1);
 }

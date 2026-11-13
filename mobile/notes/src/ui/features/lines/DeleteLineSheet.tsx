@@ -31,8 +31,8 @@ export function DeleteLineSheet({ ids, visible, onDismiss, onChoose, onPickLine 
     onChoose(fate);
   };
   const words = {
-    title: deleting.length === 1 ? t('Supprimer {collection}', { collection: shownTitle(deleting[0]!) }) : t('Supprimer {count} collections', { count: deleting.length }),
-    lead: deleting.length === 1 ? t('Elle contient {links}. Où les mettre ?', { links: plural(count, 'lien') }) : t('Elles contiennent {links}. Où les mettre ?', { links: plural(count, 'lien') }),
+    title: deleting.length === 1 ? t('Delete {collection}', { collection: shownTitle(deleting[0]!) }) : t('Delete {count} collections', { count: deleting.length }),
+    lead: deleting.length === 1 ? t('It holds {links}. Where should they go?', { links: plural(count, 'link') }) : t('They hold {links}. Where should they go?', { links: plural(count, 'link') }),
   };
   // Once the choice is made the collections are gone: while it leaves, the sheet keeps the words it opened with.
   const [shown, setShown] = useState(words);
@@ -42,20 +42,20 @@ export function DeleteLineSheet({ ids, visible, onDismiss, onChoose, onPickLine 
       <AppText variant="body" color={theme.color.inkMuted} style={styles.lead}>
         {shown.lead}
       </AppText>
-      {reading && others && !sorting ? <ListRow icon="sparkle" title={t('Les ranger avec Claude')} supporting={t('Dans vos autres collections, sinon dans Non classé')} onPress={() => choose({ kind: 'claude' })} /> : null}
-      <ListRow icon="inbox" title={t('Les mettre dans Non classé')} onPress={() => choose({ kind: 'move', to: INBOX_ID })} />
+      {reading && others && !sorting ? <ListRow icon="sparkle" title={t('Sort them with Claude')} supporting={t('Into your other collections, otherwise into Unsorted')} onPress={() => choose({ kind: 'claude' })} /> : null}
+      <ListRow icon="inbox" title={t('Put them in Unsorted')} onPress={() => choose({ kind: 'move', to: INBOX_ID })} />
       {others ? (
         // « … » says a collection is picked next: no line under it to say so again.
         <ListRow
           icon="transfer"
-          title={t('Les déplacer vers…')}
+          title={t('Move them to…')}
           onPress={() => {
             onDismiss();
             onPickLine();
           }}
         />
       ) : null}
-      <ListRow icon="trash" danger title={t('Les supprimer aussi')} supporting={deleting.length === 1 ? t('Avec la collection, dans la corbeille') : t('Avec les collections, dans la corbeille')} onPress={() => choose({ kind: 'bin' })} />
+      <ListRow icon="trash" danger title={t('Delete them too')} supporting={deleting.length === 1 ? t('With the collection, into the bin') : t('With the collections, into the bin')} onPress={() => choose({ kind: 'bin' })} />
     </Sheet>
   );
 }

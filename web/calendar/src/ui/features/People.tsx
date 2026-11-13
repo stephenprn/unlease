@@ -6,7 +6,7 @@
  */
 import { memo, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { LineColor } from '@unlease/design/colors';
 import { pebbleTurnOf } from '@unlease/design/pebbles';
 import type { Contact } from '@unlease/contacts/models/contacts';
@@ -64,7 +64,7 @@ export function PersonChip({ id }: { id: string }) {
     return (
       <span className={styles.person} data-gone="">
         <Icon name="person" size={18} />
-        <span>{t('Contact supprimé')}</span>
+        <span>{t('Contact deleted')}</span>
       </span>
     );
   }
@@ -122,7 +122,7 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
   // Nothing found is said, as Carnet's picker says it; with no word typed and no favourite, it waits for one.
   const typing = query.trim().length > 0;
   const none = useMemo(() => !Object.values(contacts).some(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto), [contacts]);
-  const empty = found.length > 0 ? null : typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : none ? t('Aucun contact pour l’instant.') : null;
+  const empty = found.length > 0 ? null : typing ? t('Nobody in your contacts goes by that name.') : none ? t('No contacts yet.') : null;
   const listed = open && found.length > 0;
   const shown = listed || (open && empty !== null);
   const anchor = useFieldAnchor(shown, field);
@@ -130,15 +130,15 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
   return (
     <div className={styles.peoplePicker}>
       {value.length > 0 ? (
-        <ul className={styles.people} aria-label={t('Avec')}>
+        <ul className={styles.people} aria-label={t('With')}>
           {value.map(id => {
             const contact = resolveContact(contacts, id);
-            const name = contact ? contactName(contact) : t('Contact supprimé');
+            const name = contact ? contactName(contact) : t('Contact deleted');
             return (
               <li key={id} className={styles.person} data-gone={contact ? undefined : ''}>
                 {contact ? <PersonFace contact={contact} /> : <Icon name="person" size={18} />}
                 <span className={styles.personName}>{name}</span>
-                <IconButton icon="close" label={t('Retirer {name}', { name })} compact size={16} onClick={() => onChange(value.filter(each => each !== id))} />
+                <IconButton icon="close" label={t('Remove {name}', { name })} compact size={16} onClick={() => onChange(value.filter(each => each !== id))} />
               </li>
             );
           })}
@@ -151,13 +151,13 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
             className={styles.fieldInput}
             value={query}
             role="combobox"
-            aria-label={t('Ajouter des personnes')}
+            aria-label={t('Add people')}
             aria-expanded={listed}
             data-owns-escape={open || undefined}
             aria-controls={listId}
             aria-autocomplete="list"
             aria-activedescendant={listed ? `${listId}-${active}` : undefined}
-            placeholder={value.length > 0 ? t('Ajouter quelqu’un') : t('Ajouter des personnes')}
+            placeholder={value.length > 0 ? tc('event', 'Add someone') : t('Add people')}
             autoComplete="off"
             autoFocus={autoFocus}
             onFocus={() => setOpen(true)}
@@ -176,7 +176,7 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
               </div>
             </Floating>
           ) : shown && anchor ? (
-            <Floating anchor={anchor} label={query.trim() ? t('Contacts') : t('Favoris')} role="listbox" id={listId}>
+            <Floating anchor={anchor} label={query.trim() ? t('Contacts') : t('Favourites')} role="listbox" id={listId}>
               <div className={styles.floatList} style={{ width }}>
                 {found.map((contact, index) => {
                   const detail = workLine(contact) || contact.emails[0]?.address || contact.phones[0]?.number || '';

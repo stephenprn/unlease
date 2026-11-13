@@ -43,7 +43,7 @@ describe('POST /api/pages/ask', () => {
     server = createTestServer();
     expect((await send('GET', '/api/settings')).body.pages).toEqual({ enabled: false, everywhere: true, web: true, reach: 'medium' });
     const off = await send('POST', '/api/pages/ask', trip);
-    expect(off).toEqual({ status: 409, body: { error: 'Les questions sur les pages sont désactivées dans l’administration' } });
+    expect(off).toEqual({ status: 409, body: { error: 'Questions about pages are turned off in the Administration' } });
     expect(server.claude.requests).toHaveLength(0);
 
     expect((await send('PUT', '/api/settings', { pages: { reach: 'huge' } })).status).toBe(400);
@@ -108,9 +108,9 @@ describe('POST /api/pages/ask', () => {
   it('holds each question to what the Administration allows', async () => {
     server = createTestServer();
     await turnOn({ everywhere: false, web: false, reach: 'short' });
-    expect((await send('POST', '/api/pages/ask', { ...trip, scope: 'all' })).body.error).toBe('Les questions sur toutes les pages sont désactivées dans l’administration');
+    expect((await send('POST', '/api/pages/ask', { ...trip, scope: 'all' })).body.error).toBe('Questions about all pages are turned off in the Administration');
     const long = { ...trip, pages: [{ id: 'p1', path: 'Long', blocks: Array.from({ length: 6 }, (_, at) => ({ id: `b${at}`, text: 'x'.repeat(7000) })) }] };
-    expect((await send('POST', '/api/pages/ask', long)).body.error).toBe('Ces pages sont trop longues pour une question : choisissez moins de pages');
+    expect((await send('POST', '/api/pages/ask', long)).body.error).toBe('These pages are too long for one question: choose fewer pages');
     expect(server.claude.requests).toHaveLength(0);
     // The web asked for while the Administration forbids it: answered without.
     server.claude.reply(claudeMessage('Le 3 mai.'));
@@ -124,6 +124,6 @@ describe('POST /api/pages/ask', () => {
     expect((await send('POST', '/api/pages/ask', { ...trip, question: '  ' })).status).toBe(400);
     expect((await send('POST', '/api/pages/ask', { ...trip, scope: 'everything' })).status).toBe(400);
     expect((await send('POST', '/api/pages/ask', { ...trip, pages: [{ id: 'bad id!', path: '', blocks: [] }] })).status).toBe(400);
-    expect((await send('POST', '/api/pages/ask', trip)).body.error).toBe('Claude n’a pas de clé : ajoutez-en une dans l’administration.');
+    expect((await send('POST', '/api/pages/ask', trip)).body.error).toBe('Claude has no key: add one in the Administration.');
   });
 });

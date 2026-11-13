@@ -562,7 +562,9 @@ textarea.input {
   height: 32px;
   padding: 0;
   border: 2px solid var(--edge);
+  /* A capsule, as the phone's: the suite's squircle corner would square it off (base.css). */
   border-radius: 999px;
+  corner-shape: round;
   background: var(--paper-high);
   transition:
     background-color var(--duration-short) var(--ease-standard),

@@ -30,7 +30,7 @@ export function AdminEntrySection({ onOpen }: { onOpen: () => void }) {
   const theme = useTheme();
   return (
     <Section>
-      <ListRow icon="server" title={t('Administration')} supporting={t('Serveur, applications, Claude, sauvegardes et fichiers')} trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />} onPress={onOpen} />
+      <ListRow icon="server" title={t('Administration')} supporting={t('Server, apps, Claude, backups and files')} trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />} onPress={onOpen} />
     </Section>
   );
 }
@@ -56,7 +56,7 @@ export function AppearanceEntrySection({ onOpen }: { onOpen: () => void }) {
   );
   return (
     <Section>
-      <ListRow icon="palette" title={t('Apparence')} supporting={lookWords(preference, appearance)} trailing={pebbles} onPress={onOpen} />
+      <ListRow icon="palette" title={t('Appearance')} supporting={lookWords(preference, appearance)} trailing={pebbles} onPress={onOpen} />
     </Section>
   );
 }
@@ -72,21 +72,21 @@ export function ThemeSection() {
         {/* Its name over it as a field's is (6 above, 4 in). */}
         <View style={styles.field}>
           <AppText variant="metaStrong" style={styles.fieldLabel}>
-            {t('Thème')}
+            {t('Theme')}
           </AppText>
           <Segmented
-            label={t('Thème')}
+            label={t('Theme')}
             value={themePreference}
             onChange={setTheme}
             options={[
-              { value: 'system', label: t('Système'), icon: 'settings' },
-              { value: 'light', label: t('Clair'), icon: 'sun' },
-              { value: 'dark', label: t('Sombre'), icon: 'moon' },
+              { value: 'system', label: t('System'), icon: 'settings' },
+              { value: 'light', label: t('Light'), icon: 'sun' },
+              { value: 'dark', label: t('Dark'), icon: 'moon' },
             ]}
           />
         </View>
       </View>
-      <SwitchRow title={t('Grain du papier')} supporting={t('Une fine texture de papier sur les notes, les cartes et les panneaux.')} value={grain} onChange={setGrain} />
+      <SwitchRow title={t('Paper grain')} supporting={t('A fine paper texture on notes, cards and panels.')} value={grain} onChange={setGrain} />
     </Section>
   );
 }
@@ -102,7 +102,7 @@ export function LanguageSection() {
   // Carnet's and Pages' note names what Claude writes: only once Claude has a key.
   const words = languageWords(ownApp(), useServerFeature('claude'));
   return (
-    <Section title={t('Langue')} anchor={SETTINGS_SECTIONS.language}>
+    <Section title={t('Language')} anchor={SETTINGS_SECTIONS.language}>
       <View style={[styles.fields, styles.choice]}>
         {/* Each language named in itself, so it is found whichever is shown. */}
         <Segmented label={words.language} value={locale} onChange={setInterfaceLocale} options={LOCALES.map(option => ({ value: option, label: LOCALE_NAMES[option] }))} />

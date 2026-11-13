@@ -241,19 +241,27 @@ const liveFeeds = () =>
     .filter(feed => feed.deletedAt === null)
     .sort((a, b) => (a.position < b.position ? -1 : a.position > b.position ? 1 : 0));
 
+/** How a calendar is followed: as an iCalendar address, or over CalDAV with the login the server kept under `id`. */
+export interface FeedAccess {
+  readonly id?: string;
+  readonly kind?: 'ics' | 'caldav';
+  readonly account?: string;
+}
+
 /** A calendar subscribed to by its address: the server reads it and brings its events. */
-export function addFeed(url: string, name: string, color: LineColor | null = null, now: number = Date.now()): string {
+export function addFeed(url: string, name: string, color: LineColor | null = null, now: number = Date.now(), access: FeedAccess = {}): string {
   const feeds = liveFeeds();
-  const id = createId(now);
+  const id = access.id ?? createId(now);
   writeLocal(
     [
       {
         type: 'calendarFeed',
         id,
         patch: feedFields({
-          kind: 'ics',
+          kind: access.kind ?? 'ics',
           name: name.trim().slice(0, EVENT_LIMITS.feedName),
           url: url.slice(0, EVENT_LIMITS.url),
+          account: (access.account ?? '').slice(0, EVENT_LIMITS.feedAccount),
           color: color ?? nextLineColor([...feeds.map(feed => feed.color), ...liveLabels().map(label => label.color)]),
           hidden: false,
           position: positionBetween(feeds.at(-1)?.position ?? null, null),
@@ -267,6 +275,11 @@ export function addFeed(url: string, name: string, color: LineColor | null = nul
     now,
   );
   return id;
+}
+
+/** A CalDAV calendar's login changed (its password, kept by the server): the account it is read as. */
+export function setFeedAccount(id: string, account: string): void {
+  writeLocal([{ type: 'calendarFeed', id, patch: { account: account.slice(0, EVENT_LIMITS.feedAccount), error: '' } }]);
 }
 
 export function renameFeed(id: string, name: string): void {

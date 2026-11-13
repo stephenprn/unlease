@@ -278,7 +278,7 @@ function SheetComponent({ visible, onDismiss, title, children, tall = false, kee
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'box-none' : 'none'}>
       <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
-        <Tappable accessibilityLabel={t('Fermer')} onPress={onDismiss} style={scrim ? styles.scrim : styles.clear} noTint />
+        <Tappable accessibilityLabel={t('Close')} onPress={onDismiss} style={scrim ? styles.scrim : styles.clear} noTint />
       </Animated.View>
       {/* The lift comes out of this box, so the panel gives height back instead of leaving the screen. */}
       <View ref={anchor} onLayout={measureAnchor} style={[styles.anchor, { paddingTop: insets.top + 8, paddingBottom: lift }]} pointerEvents="box-none">
@@ -291,6 +291,10 @@ function SheetComponent({ visible, onDismiss, title, children, tall = false, kee
             <Organic outline={OUTLINE} style={styles.paper} pointerEvents="none">
               <Grain />
             </Organic>
+            {/* Its paper runs on under the screen's foot: pushed up, or springing back past its place, the sheet never shows where it ends. */}
+            <View style={[styles.skirt, { height: screen, bottom: -screen }]} pointerEvents="none">
+              <Grain />
+            </View>
             <View style={styles.handleZone} accessibilityElementsHidden>
               <View style={styles.handle} />
             </View>
@@ -336,6 +340,17 @@ const makeStyles = (theme: Theme) =>
     },
     // The grain is clipped by its own layer: the panel must not clip, or the shadow goes too.
     paper: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
+    // Under the panel's foot, its sides' lip continued (the panel's own border lies outside its children).
+    skirt: {
+      position: 'absolute',
+      left: -1,
+      right: -1,
+      overflow: 'hidden',
+      backgroundColor: theme.color.wall,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: theme.color.outline,
+    },
     handleZone: { height: 28, alignItems: 'center', justifyContent: 'center' },
     handle: { width: 36, height: 5, borderTopLeftRadius: 3, borderTopRightRadius: 2, borderBottomRightRadius: 3, borderBottomLeftRadius: 2, backgroundColor: theme.color.outline },
     title: { marginBottom: 12, marginHorizontal: SHEET_INSET },

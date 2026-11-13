@@ -7,13 +7,13 @@ import { changedKindTemplate, kindFields, shownFieldAnswer, type Templates } fro
 
 /** A list of facts by name (« Temps total, Portions, Difficulté »), or « Aucune information ». */
 export function factNames(fields: readonly TemplateField[]): string {
-  return fields.length > 0 ? fields.map(field => field.name).join(', ') : t('Aucune information');
+  return fields.length > 0 ? fields.map(field => field.name).join(', ') : t('No facts');
 }
 
 /** A kind's usual facts by name, then « · Modifiées » once the person changed them. */
 export function kindFactsMeta(templates: Templates, kind: LinkKind): string {
   const names = factNames(kindFields(templates, kind));
-  return changedKindTemplate(templates, kind) ? `${names} · ${t('Modifiées')}` : names;
+  return changedKindTemplate(templates, kind) ? `${names} · ${t('Changed')}` : names;
 }
 
 /** A fact's line: what Claude notes in it, then the shape of its answer when it is not « quelques mots ». */
@@ -23,6 +23,6 @@ export function factMeta(field: TemplateField): string {
 
 /** The well over the facts: how many links were read before the change, and about what reading them again costs. */
 export function readAgainWords(count: number, cost: string): string {
-  const links = plural(count, 'lien lu', 'liens lus');
-  return count === 1 ? t('{links} avant ce changement · environ {cost} pour le relire', { links, cost }) : t('{links} avant ce changement · environ {cost} pour les relire', { links, cost });
+  const links = plural(count, 'link read', 'links read');
+  return count === 1 ? t('{links} before this change · about {cost} to read it again', { links, cost }) : t('{links} before this change · about {cost} to read them again', { links, cost });
 }

@@ -82,7 +82,7 @@ const RecentTile = memo(function RecentTile({ id, now }: { id: string; now: numb
             <PageMark icon={page.icon} size={36} />
           </span>
           <span className={`${lineStyles.tileName} t-body-strong`}>{title}</span>
-          <span className={`${lineStyles.tileHint} t-meta`}>{shown.preview || t('Page vide')}</span>
+          <span className={`${lineStyles.tileHint} t-meta`}>{shown.preview || t('Empty page')}</span>
           <span className={styles.tileFoot}>
             {shown.path ? <span className={`${styles.tilePath} t-meta`}>{shown.path}</span> : null}
             <span className="t-meta">{formatEdited(edited, now)}</span>
@@ -121,7 +121,7 @@ const PageRow = memo(function PageRow({ id, now }: { id: string; now: number }) 
   const edited = useBlocksStore(s => pageEdited(s, id));
   if (!page) return null;
   const title = page.text.trim() || t(UNTITLED_PAGE);
-  const facts = [subPages > 0 ? plural(subPages, 'sous-page') : null, formatEdited(edited, now)].filter(Boolean).join(' · ');
+  const facts = [subPages > 0 ? plural(subPages, 'sub-page') : null, formatEdited(edited, now)].filter(Boolean).join(' · ');
   return (
     <li>
       <Link to={paths.page(id)} className={styles.pageRow}>
@@ -137,12 +137,12 @@ const PageRow = memo(function PageRow({ id, now }: { id: string; now: number }) 
 
 /** Under a keyboard, the keys that fill the pages. */
 const PAGE_KEYS = [
-  { key: 'C', label: tx('nouvelle page') },
-  { key: '/', label: tx('blocs, dans une page') },
-  { key: '?', label: tx('raccourcis') },
+  { key: 'C', label: tx('new page') },
+  { key: '/', label: tx('blocks, in a page') },
+  { key: '?', label: tx('shortcuts') },
 ] as const;
 
-const EMPTY_TEXT = tx('Une page tient des titres, des listes, des tableaux, du code, des images, et vos notes, collections et liens.');
+const EMPTY_TEXT = tx('A page holds headings, lists, tables, code, images, and your notes, collections and links.');
 
 /** What the header's search found: the pages. */
 function PagesSearch({ query }: { query: string }) {
@@ -187,22 +187,22 @@ function PagesHome() {
     <div className={styles.home}>
       {narrow ? <SyncNotice /> : null}
       <h1 className="sr-only">{t('Pages')}</h1>
-      <ComposerStrip label={t('Créer une page…')} shortcut="C" onCreate={() => openNewPage(null)} />
+      <ComposerStrip label={t('Create a page…')} shortcut="C" onCreate={() => openNewPage(null)} />
       {roots.length === 0 ? (
         <EmptyState
           scene="notes"
-          title={t('Aucune page pour l’instant')}
+          title={t('No pages yet')}
           // Wide, the create strip right above (its C at its end) and the keys under say how one is made; on a phone the pebble at the foot is out of the way, so a line points to it.
-          text={narrow ? `${t(EMPTY_TEXT)} ${t('Le bouton +, en bas, en crée une.')}` : t(EMPTY_TEXT)}
+          text={narrow ? `${t(EMPTY_TEXT)} ${t('The + button, at the bottom, makes one.')}` : t(EMPTY_TEXT)}
           keys={narrow ? undefined : PAGE_KEYS.map(item => ({ ...item, label: t(item.label) }))}
         />
       ) : (
         <>
-          {count < FEW_PAGES ? <p className={`${styles.homeIntro} t-body`}>{t('Vos documents, rangés comme vous voulez : une page peut en contenir d’autres. Tapez « / » dans une page pour y ajouter un bloc, « @ » pour citer un contact, une note, une collection ou un lien.')}</p> : null}
+          {count < FEW_PAGES ? <p className={`${styles.homeIntro} t-body`}>{t('Your documents, arranged as you like: a page can hold others. Type “/” in a page to add a block, “@” to cite a contact, a note, a collection or a link.')}</p> : null}
           {count >= RECENT_FROM ? (
             <section className={styles.homeSection} aria-labelledby="pages-recent">
               <h2 id="pages-recent" className={`${styles.homeHead} t-section`}>
-                {t('Récentes')}
+                {t('Recent')}
               </h2>
               {narrow ? (
                 <ul className={styles.allPages}>
@@ -221,7 +221,7 @@ function PagesHome() {
           ) : null}
           <section className={styles.homeSection} aria-labelledby="pages-all">
             <h2 id="pages-all" className={`${styles.homeHead} t-section`}>
-              {t('Toutes les pages')}
+              {t('All pages')}
             </h2>
             <ul className={styles.allPages}>
               {roots.map(id => (
@@ -234,7 +234,7 @@ function PagesHome() {
       {binned > 0 ? (
         <Link to={paths.trash} className={`${styles.binLink} t-meta`}>
           <Icon name="trash" size={18} />
-          {t('{count} dans la corbeille', { count: plural(binned, 'page') })}
+          {t('{count} in the bin', { count: plural(binned, 'page') })}
         </Link>
       ) : null}
     </div>

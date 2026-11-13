@@ -18,7 +18,7 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Importer')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Import')} onBack={() => navigation.goBack()} />
       <PagesImport />
     </View>
   );

@@ -25,7 +25,7 @@ export function FavoritesStrip({ contacts }: { contacts: readonly Contact[] }) {
   return (
     <section className={styles.block} aria-labelledby="contacts-favorites">
       <h2 id="contacts-favorites" className={`${styles.sectionHead} t-section`}>
-        {t('Favoris')}
+        {t('Favourites')}
       </h2>
       <ul className={styles.faces}>
         {favorites.map(contact => {
@@ -52,11 +52,11 @@ export function BirthdayLine({ contacts }: { contacts: readonly Contact[] }) {
   const first = coming[0]!;
   const others = coming.length - 1;
   return (
-    <Link to={paths.birthdays} className={styles.birthdayLine} ariaLabel={t('Anniversaires')}>
+    <Link to={paths.birthdays} className={styles.birthdayLine} ariaLabel={t('Birthdays')}>
       <Icon name="cake" size={22} />
       <span className={styles.birthdayText}>
         <span className="t-body-strong">{`${contactName(first.contact)} · ${birthdayWhen(first.birthday, now)}`}</span>
-        {others > 0 ? <span className="t-meta">{t('et {others} cette semaine', { others: plural(others, 'autre') })}</span> : null}
+        {others > 0 ? <span className="t-meta">{t('and {others} this week', { others: plural(others, 'other') })}</span> : null}
       </span>
       <Icon name="chevronRight" size={20} />
     </Link>

@@ -28,10 +28,10 @@ export function MentionedIn({ id }: { id: string }) {
   return (
     <RowPanel outline="card" style={styles.panel}>
       <AppText variant="section" style={styles.head} accessibilityRole="header">
-        {t('Mentionné dans')}
+        {t('Mentioned in')}
       </AppText>
       {places.map(place => {
-        const title = place.title.trim() || t('Sans titre');
+        const title = place.title.trim() || t('Untitled');
         return (
           <PanelTappable key={`${place.app}:${place.id}`} onPress={() => open(place)} style={styles.row} accessibilityRole="link" accessibilityLabel={title}>
             <View style={styles.mark}>{place.icon ? <AppText style={styles.emoji}>{place.icon}</AppText> : <Icon name={place.app === 'pages' ? 'page' : 'note'} size={22} color={theme.color.inkMuted} />}</View>

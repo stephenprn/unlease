@@ -16,8 +16,11 @@ import { listenForShares } from '../intake';
 import { publishWidgets } from '../widgets';
 import { later } from '../later';
 
-/** A reminder pressed: its event, at that occurrence. */
-const openEvent = (event: PressedEvent): void => navigate('Event', { id: event.eventId, at: event.occurrence || undefined });
+/** A reminder pressed: its event, at that occurrence; the morning digest: « Aujourd'hui » on its day. */
+const openEvent = (event: PressedEvent): void => {
+  if ('digestDay' in event) backToCalendar({ view: 'today', day: event.digestDay });
+  else navigate('Event', { id: event.eventId, at: event.occurrence || undefined });
+};
 
 /** Back in the foreground: the widgets learn the new day. Stable, as the lifecycle hook restarts on a new one. */
 const onForeground = (): void => later(publishWidgets());

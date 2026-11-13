@@ -21,7 +21,7 @@
  * - Every note of the export is previewed before anything is written (`keepPreview`): what it
  *   becomes, or why it is left out.
  */
-import { getLocale, localized, t, tx } from '@unlease/core/i18n';
+import { getLocale, localized, t, tc, tx } from '@unlease/core/i18n';
 import { formatDay, formatUsd, plural } from '@unlease/core/services/format';
 import type { ImportFate, PreviewEntry } from '@unlease/core/services/importFlow';
 import { asLineColor, nextLineColor, type LineColor } from '@unlease/design/colors';
@@ -384,8 +384,8 @@ export function keepPlanCounts(plan: KeepPlan): { readonly notes: number; readon
 /** The note's name in a list of choices: its title, else its first words. */
 export function keepNoteName(note: ImportedNote): string {
   if (note.title) return note.title;
-  if (note.links) return listName(note.links) || t('Note sans titre');
-  return shortLine(note.words, 60) || t('Note sans titre');
+  if (note.links) return listName(note.links) || t('Untitled note');
+  return shortLine(note.words, 60) || t('Untitled note');
 }
 
 // ── ids drawn from the Keep note ─────────────────────────────────────────────
@@ -902,7 +902,7 @@ export function keepImportWrote(report: KeepReport): boolean {
 
 /** The report's title: what happened, in a few words. */
 export function keepDoneTitle(report: KeepReport): string {
-  return keepImportWrote(report) ? t('Vos notes Keep sont arrivées') : t('Rien de nouveau dans cette archive');
+  return keepImportWrote(report) ? t('Your Keep notes are here') : t('Nothing new in this archive');
 }
 
 /** The import's summary, a line each: what came in, then what was left out and why. */
@@ -911,29 +911,29 @@ export function keepReportLines(report: KeepReport): { readonly imported: readon
   const skipped: string[] = [];
   if (report.notes > 0) {
     const kinds = [
-      report.checklists > 0 ? plural(report.checklists, 'liste', 'listes') : null,
-      report.formatted > 0 ? plural(report.formatted, 'mise en forme', 'mises en forme') : null,
+      report.checklists > 0 ? plural(report.checklists, 'list', 'lists') : null,
+      report.formatted > 0 ? plural(report.formatted, 'formatted', 'formatted [many]') : null,
     ].filter(Boolean);
-    const notes = plural(report.notes, 'note importée', 'notes importées');
-    imported.push(kinds.length > 0 ? t('{notes}, dont {kinds}', { notes, kinds: kinds.join(', ') }) : notes);
+    const notes = plural(report.notes, 'note imported', 'notes imported');
+    imported.push(kinds.length > 0 ? t('{notes}, including {kinds}', { notes, kinds: kinds.join(', ') }) : notes);
   }
-  if (report.collections > 0) imported.push(plural(report.collections, 'collection créée', 'collections créées'));
-  if (report.links > 0) imported.push(plural(report.links, 'lien ajouté', 'liens ajoutés'));
-  if (report.labels > 0) imported.push(plural(report.labels, 'label créé', 'labels créés'));
+  if (report.collections > 0) imported.push(plural(report.collections, 'collection created', 'collections created'));
+  if (report.links > 0) imported.push(plural(report.links, 'link added', 'links added'));
+  if (report.labels > 0) imported.push(plural(report.labels, 'label created [notes]', 'labels created [notes]'));
   if (report.photos > 0) imported.push(plural(report.photos, 'photo'));
-  if (report.straysLinked > 0) imported.push(plural(report.straysLinked, 'ligne sans lien remplacée par un lien', 'lignes sans lien remplacées par des liens'));
-  if (report.straysKept > 0) imported.push(plural(report.straysKept, 'ligne sans lien gardée en commentaire', 'lignes sans lien gardées en commentaire'));
-  if (report.already > 0) skipped.push(plural(report.already, 'note déjà importée', 'notes déjà importées'));
-  if (report.leftOut > 0) skipped.push(plural(report.leftOut, 'note décochée dans l’aperçu', 'notes décochées dans l’aperçu'));
-  if (report.archivedLeft > 0) skipped.push(plural(report.archivedLeft, 'note archivée laissée de côté', 'notes archivées laissées de côté'));
-  if (report.straysDropped > 0) skipped.push(plural(report.straysDropped, 'ligne sans lien retirée', 'lignes sans lien retirées'));
-  if (report.linksKnown > 0) skipped.push(plural(report.linksKnown, 'lien déjà enregistré', 'liens déjà enregistrés'));
-  if (report.trashed > 0) skipped.push(plural(report.trashed, 'note de la corbeille de Keep', 'notes de la corbeille de Keep'));
-  if (report.empty > 0) skipped.push(plural(report.empty, 'note vide', 'notes vides'));
-  if (report.audio > 0) skipped.push(t('{recordings} : seul le texte transcrit est importé', { recordings: plural(report.audio, 'enregistrement vocal', 'enregistrements vocaux') }));
-  if (report.otherFiles > 0) skipped.push(t('{files} : type non pris en charge', { files: plural(report.otherFiles, 'fichier joint', 'fichiers joints') }));
-  if (report.missingPhotos > 0) skipped.push(plural(report.missingPhotos, 'photo absente de l’archive', 'photos absentes de l’archive'));
-  if (report.unreadable > 0) skipped.push(plural(report.unreadable, 'fichier illisible', 'fichiers illisibles'));
+  if (report.straysLinked > 0) imported.push(plural(report.straysLinked, 'line without a link replaced by a link', 'lines without a link replaced by links'));
+  if (report.straysKept > 0) imported.push(plural(report.straysKept, 'line without a link kept as a comment', 'lines without a link kept as comments'));
+  if (report.already > 0) skipped.push(plural(report.already, 'note already imported', 'notes already imported'));
+  if (report.leftOut > 0) skipped.push(plural(report.leftOut, 'note unticked in the preview', 'notes unticked in the preview'));
+  if (report.archivedLeft > 0) skipped.push(plural(report.archivedLeft, 'archived note left out', 'archived notes left out'));
+  if (report.straysDropped > 0) skipped.push(plural(report.straysDropped, 'line without a link left out', 'lines without a link left out'));
+  if (report.linksKnown > 0) skipped.push(plural(report.linksKnown, 'link already saved', 'links already saved'));
+  if (report.trashed > 0) skipped.push(plural(report.trashed, 'note from Keep’s bin', 'notes from Keep’s bin'));
+  if (report.empty > 0) skipped.push(plural(report.empty, 'empty note', 'empty notes'));
+  if (report.audio > 0) skipped.push(t('{recordings}: only the transcribed text is imported', { recordings: plural(report.audio, 'voice recording', 'voice recordings') }));
+  if (report.otherFiles > 0) skipped.push(t('{files}: type not supported', { files: plural(report.otherFiles, 'attached file', 'attached files') }));
+  if (report.missingPhotos > 0) skipped.push(plural(report.missingPhotos, 'photo missing from the archive', 'photos missing from the archive'));
+  if (report.unreadable > 0) skipped.push(plural(report.unreadable, 'unreadable file', 'unreadable files'));
   return { imported, skipped };
 }
 
@@ -945,30 +945,30 @@ export const KEEP_SOURCE = 'Google Keep';
 /** The wizard's words both clients show (each adds its own way to the file: a drop zone, a button). */
 export const KEEP_WIZARD_WORDS = localized({
   /** Réglages › Données' « Importer » row, its second line. */
-  importerMeta: tx('Vos notes, listes, labels et photos Google Keep, depuis Google Takeout'),
-  sourceTitle: tx('Depuis Google Keep'),
-  sourceLead: tx('Google Takeout exporte vos notes Keep dans un fichier .zip : l’import le lit ici, puis vous montre tout avant d’écrire quoi que ce soit.'),
-  takeoutDeselect: tx('Désélectionnez tout, puis cochez seulement « Keep ».'),
-  keeps: tx('Les notes importées gardent leur date, leur couleur, leurs labels, leur mise en forme et leurs photos. Importer la même archive une seconde fois ne double rien.'),
-  previewLabel: tx('Notes de l’archive'),
-  linksTitle: tx('Notes faites de liens'),
-  toLinks: tx('Transformer en liens'),
-  toCollections: tx('En faire des collections'),
-  straysTitle: tx('Lignes sans lien'),
-  straysLead: tx('Ces lignes des listes qui deviennent des collections ne contiennent pas d’adresse. Par défaut, chacune rejoint le commentaire du lien au-dessus.'),
-  strayUrl: tx('Adresse du lien'),
-  writing: tx('Écriture des notes…'),
-  board: tx('Voir le tableau'),
-  nothingToChoose: tx('Rien à choisir dans cette archive : chaque note arrive telle qu’elle est dans Keep.'),
-  takeoutPick: tx('Exportez, téléchargez le fichier .zip, puis choisissez-le ici.'),
-  takeoutDrop: tx('Exportez, téléchargez le fichier .zip, puis déposez-le ici (ou les fichiers de son dossier Keep).'),
-  unreadableArchive: tx('Archive illisible : choisissez le fichier .zip téléchargé depuis Google Takeout.'),
-  noKeepNotes: tx('Aucune note Keep dans cette archive. Exportez « Keep » depuis Google Takeout.'),
+  importerMeta: tx('Your Google Keep notes, lists, labels and photos, from Google Takeout'),
+  sourceTitle: tx('From Google Keep'),
+  sourceLead: tx('Google Takeout exports your Keep notes as a .zip file: the import reads it here, then shows you everything before writing anything.'),
+  takeoutDeselect: tx('Deselect all, then tick only “Keep”.'),
+  keeps: tx('Imported notes keep their date, colour, labels, formatting and photos. Importing the same archive a second time doubles nothing.'),
+  previewLabel: tx('Notes in the archive'),
+  linksTitle: tx('Notes made of links'),
+  toLinks: tx('Turn into links'),
+  toCollections: tx('Make them collections'),
+  straysTitle: tx('Lines without a link'),
+  straysLead: tx('These lines of the lists becoming collections hold no address. By default, each joins the comment of the link above it.'),
+  strayUrl: tx('Link address'),
+  writing: tx('Writing the notes…'),
+  board: tx('View the board'),
+  nothingToChoose: tx('Nothing to choose in this archive: every note comes in as it is in Keep.'),
+  takeoutPick: tx('Export, download the .zip file, then choose it here.'),
+  takeoutDrop: tx('Export, download the .zip file, then drop it here (or the files of its Keep folder).'),
+  unreadableArchive: tx('Unreadable archive: choose the .zip file downloaded from Google Takeout.'),
+  noKeepNotes: tx('No Keep notes in this archive. Export “Keep” from Google Takeout.'),
 });
 
 /** A list's box among the choices, read out. */
 export function keepListBoxLabel(note: ImportedNote): string {
-  return t('{note} en collection', { note: keepNoteName(note) });
+  return t('{note} as a collection', { note: keepNoteName(note) });
 }
 
 /** What the preview reads besides the plan: what the library holds already, whether links are read, today. */
@@ -993,11 +993,11 @@ function importOrder(notes: readonly ImportedNote[]): ImportedNote[] {
 function keepKindWords(note: ImportedNote): string {
   if (note.kind === 'checklist') {
     const ticked = note.checks.filter(check => check.checked).length;
-    const items = plural(note.checks.length, 'élément');
-    return ticked > 0 ? t('Liste de {items}, dont {ticked}', { items, ticked: plural(ticked, 'coché', 'cochés') }) : t('Liste de {items}', { items });
+    const items = plural(note.checks.length, 'item');
+    return ticked > 0 ? t('List of {items}, {ticked}', { items, ticked: plural(ticked, 'ticked', 'ticked [many]') }) : t('List of {items}', { items });
   }
-  if (note.words) return note.rich ? t('Note mise en forme') : t('Note');
-  return note.attachments.length > 0 ? t('Photo sans texte') : t('Note');
+  if (note.words) return note.rich ? t('Formatted note') : t('Note');
+  return note.attachments.length > 0 ? t('Photo without text') : t('Note');
 }
 
 /**
@@ -1016,36 +1016,36 @@ export function keepPreview(plan: KeepPlan, context: KeepPreviewContext, choices
     let why: string | undefined;
     if (isHere(note, choices, context.known)) {
       fate = 'same';
-      why = t('Déjà importée : rien ne sera doublé');
+      why = t('Already imported: nothing will be doubled');
     } else if (note.archived && choices.archived === 'skip') {
       fate = 'skip';
-      why = t('Archivée dans Keep : laissée de côté, comme choisi');
+      why = t('Archived in Keep: left out, as chosen');
     } else if (asLink) {
-      why = context.reading ? t('Devient un lien que Claude lit et range') : t('Devient un lien dans Non classé');
+      why = context.reading ? t('Becomes a link Claude reads and files') : t('Becomes a link in Unsorted');
     } else if (collection) {
-      why = t('Devient une collection de {links}', { links: plural(collectionLinks(note, choices.strays).links.length, 'lien') });
+      why = t('Becomes a collection of {links}', { links: plural(collectionLinks(note, choices.strays).links.length, 'link') });
     } else if (single || list) {
-      why = t('Reste une note, ses liens dans le texte');
+      why = t('Stays a note, its links in its text');
     }
     // A text's first words, when its title does not stand for them already (a list of addresses says nothing in its words).
     const words = note.title && note.words && note.kind === 'text' && !note.links ? shortLine(note.words, 80) : null;
-    const detail = [asLink ? t('Lien vers {site}', { site: displayHost(note.links![0]!.url) }) : keepKindWords(note), words, formatDay(note.editedAt, context.now)].filter(Boolean).join(' · ');
+    const detail = [asLink ? t('Link to {site}', { site: displayHost(note.links![0]!.url) }) : keepKindWords(note), words, formatDay(note.editedAt, context.now)].filter(Boolean).join(' · ');
     const extras = [
-      note.labelNames.length > 0 ? t('Labels : {labels}', { labels: note.labelNames.join(', ') }) : null,
+      note.labelNames.length > 0 ? tc('notes', 'Labels: {labels}', { labels: note.labelNames.join(', ') }) : null,
       note.attachments.length > 0 ? plural(note.attachments.length, 'photo') : null,
-      note.pinned ? t('Épinglée') : null,
-      note.archived && choices.archived !== 'board' ? t('Archivée') : null,
-      note.audio > 0 ? plural(note.audio, 'enregistrement vocal non importé', 'enregistrements vocaux non importés') : null,
-      collection && note.strays.length > 0 ? plural(note.strays.length, 'ligne sans lien : à choisir ensuite', 'lignes sans lien : à choisir ensuite') : null,
+      note.pinned ? tc('one', 'Pinned') : null,
+      note.archived && choices.archived !== 'board' ? t('Archived') : null,
+      note.audio > 0 ? plural(note.audio, 'voice recording not imported', 'voice recordings not imported') : null,
+      collection && note.strays.length > 0 ? plural(note.strays.length, 'line without a link: to choose next', 'lines without a link: to choose next') : null,
     ].filter(Boolean);
     const glyph: GlyphName = asLink ? 'link' : collection ? 'collections' : note.kind === 'checklist' ? 'checklist' : !note.words && note.attachments.length > 0 ? 'image' : 'note';
     return { key: note.key, title: keepNoteName(note), detail, fate, ...(why ? { why } : {}), glyph, ...(extras.length > 0 ? { note: extras.join(' · ') } : {}) };
   });
   plan.skipped.forEach((left, index) => {
     const key = `skip:${index}`;
-    if (left.reason === 'trashed') entries.push({ key, title: left.title || t('Note sans titre'), detail: left.source, fate: 'skip', why: t('Dans la corbeille de Keep'), glyph: 'trash' });
-    else if (left.reason === 'empty') entries.push({ key, title: t('Note vide'), detail: left.source, fate: 'skip', why: t('Ni texte, ni liste, ni photo'), glyph: 'note' });
-    else entries.push({ key, title: left.source, detail: t('Fichier illisible'), fate: 'skip', why: t('Ce n’est pas une note Keep que l’import sait lire'), glyph: 'alert' });
+    if (left.reason === 'trashed') entries.push({ key, title: left.title || t('Untitled note'), detail: left.source, fate: 'skip', why: t('In Keep’s bin'), glyph: 'trash' });
+    else if (left.reason === 'empty') entries.push({ key, title: t('Empty note'), detail: left.source, fate: 'skip', why: t('No text, list or photo'), glyph: 'note' });
+    else entries.push({ key, title: left.source, detail: t('Unreadable file'), fate: 'skip', why: t('Not a Keep note the import can read'), glyph: 'alert' });
   });
   return entries;
 }
@@ -1072,27 +1072,27 @@ export function keepCountLines(plan: KeepPlan, already: number): KeepCountLine[]
   const counts = keepPlanCounts(plan);
   const checklists = plan.notes.filter(note => note.kind === 'checklist').length;
   const formatted = plan.notes.filter(note => note.rich).length;
-  const kinds = [checklists > 0 ? plural(checklists, 'liste', 'listes') : null, formatted > 0 ? plural(formatted, 'mise en forme', 'mises en forme') : null].filter(Boolean);
+  const kinds = [checklists > 0 ? plural(checklists, 'list', 'lists') : null, formatted > 0 ? plural(formatted, 'formatted', 'formatted [many]') : null].filter(Boolean);
   const lines: KeepCountLine[] = [
     {
       icon: 'note',
       text: plural(counts.notes, 'note'),
       meta:
-        [kinds.length > 0 ? t('Dont {kinds}', { kinds: kinds.join(', ') }) : null, already > 0 ? t('{notes} : ignorées, rien ne sera doublé', { notes: plural(already, 'note déjà importée', 'notes déjà importées') }) : null]
+        [kinds.length > 0 ? t('Including {kinds}', { kinds: kinds.join(', ') }) : null, already > 0 ? t('{notes}: skipped, nothing will be doubled', { notes: plural(already, 'note already imported', 'notes already imported') }) : null]
           .filter(Boolean)
           .join(' · ') || null,
     },
   ];
   const linkNotes = singleLinkNotes(plan).length + linkListNotes(plan).length;
-  if (linkNotes > 0) lines.push({ icon: 'link', text: plural(linkNotes, 'note faite de liens', 'notes faites de liens'), meta: t('Vous choisirez à l’étape suivante ce qu’elles deviennent.') });
-  lines.push({ icon: 'tag', text: plural(plan.labelNames.length, 'label'), meta: null });
+  if (linkNotes > 0) lines.push({ icon: 'link', text: plural(linkNotes, 'note made of links', 'notes made of links'), meta: t('You will choose what they become at the next step.') });
+  lines.push({ icon: 'tag', text: plural(plan.labelNames.length, 'label [notes]', 'labels [notes]'), meta: null });
   lines.push({
     icon: 'image',
     text: plural(counts.photos, 'photo'),
     meta:
       [
-        counts.audio > 0 ? t('{recordings} : seul le texte transcrit est importé', { recordings: plural(counts.audio, 'enregistrement vocal', 'enregistrements vocaux') }) : null,
-        counts.otherFiles > 0 ? t('{files} : type non pris en charge', { files: plural(counts.otherFiles, 'fichier joint', 'fichiers joints') }) : null,
+        counts.audio > 0 ? t('{recordings}: only the transcribed text is imported', { recordings: plural(counts.audio, 'voice recording', 'voice recordings') }) : null,
+        counts.otherFiles > 0 ? t('{files}: type not supported', { files: plural(counts.otherFiles, 'attached file', 'attached files') }) : null,
       ]
         .filter(Boolean)
         .join(' · ') || null,
@@ -1100,12 +1100,12 @@ export function keepCountLines(plan: KeepPlan, already: number): KeepCountLine[]
   if (plan.trashed + plan.empty > 0) {
     lines.push({
       icon: 'trash',
-      text: plural(plan.trashed + plan.empty, 'note laissée de côté', 'notes laissées de côté'),
-      meta: [plan.trashed > 0 ? plural(plan.trashed, 'note de la corbeille de Keep', 'notes de la corbeille de Keep') : null, plan.empty > 0 ? plural(plan.empty, 'note vide', 'notes vides') : null].filter(Boolean).join(', '),
+      text: plural(plan.trashed + plan.empty, 'note left out', 'notes left out'),
+      meta: [plan.trashed > 0 ? plural(plan.trashed, 'note from Keep’s bin', 'notes from Keep’s bin') : null, plan.empty > 0 ? plural(plan.empty, 'empty note', 'empty notes') : null].filter(Boolean).join(', '),
     });
   }
   if (plan.unreadable.length > 0) {
-    lines.push({ icon: 'alert', text: plural(plan.unreadable.length, 'fichier illisible', 'fichiers illisibles'), meta: `${plan.unreadable.slice(0, 3).join(', ')}${plan.unreadable.length > 3 ? '…' : ''}` });
+    lines.push({ icon: 'alert', text: plural(plan.unreadable.length, 'unreadable file', 'unreadable files'), meta: `${plan.unreadable.slice(0, 3).join(', ')}${plan.unreadable.length > 3 ? '…' : ''}` });
   }
   return lines;
 }
@@ -1134,7 +1134,7 @@ export function keepLinksToRead(plan: KeepPlan, known: KeepPreviewContext['known
 
 /** The import's button: what comes in, counted. */
 export function keepImportAction(count: number): string {
-  return count > 0 ? t('Importer {notes}', { notes: plural(count, 'note') }) : t('Importer');
+  return count > 0 ? t('Import {notes}', { notes: plural(count, 'note') }) : t('Import');
 }
 
 /** The notes archived in Keep that would come in (the choice is asked only when there are some). */
@@ -1145,12 +1145,12 @@ export function archivedCount(plan: KeepPlan, known: KeepPreviewContext['known']
 /** The archive's choice: its words and its options. */
 export function archivedChoiceWords(count: number): { readonly title: string; readonly meta: string; readonly options: readonly { readonly value: ArchivedChoice; readonly label: string; readonly meta: string }[] } {
   return {
-    title: t('Archives de Keep'),
-    meta: t('{notes} dans Keep : où les mettre ?', { notes: plural(count, 'note archivée', 'notes archivées') }),
+    title: t('Keep’s archive'),
+    meta: t('{notes} in Keep: where should they go?', { notes: plural(count, 'archived note', 'archived notes') }),
     options: [
-      { value: 'archive', label: t('Dans les archives, comme dans Keep'), meta: t('Elles restent à portée, hors du tableau.') },
-      { value: 'board', label: t('Sur le tableau'), meta: t('Avec les autres notes, archivables ensuite une à une.') },
-      { value: 'skip', label: t('Ne pas les importer'), meta: t('Elles restent dans Keep ; un nouvel import pourra les apporter.') },
+      { value: 'archive', label: t('In the archive, as in Keep'), meta: t('Within reach, off the board.') },
+      { value: 'board', label: t('On the board'), meta: t('With the other notes, to archive one by one later.') },
+      { value: 'skip', label: t('Don’t import them'), meta: t('They stay in Keep; another import can bring them.') },
     ],
   };
 }
@@ -1160,54 +1160,54 @@ export const STRAY_CHOICES = ['comment', 'drop', 'link'] as const;
 export type StrayChoiceKind = (typeof STRAY_CHOICES)[number];
 
 export function strayChoiceLabels(): Readonly<Record<StrayChoiceKind, string>> {
-  return { comment: t('Joindre'), drop: t('Retirer'), link: t('Lien') };
+  return { comment: t('Attach'), drop: t('Remove'), link: t('Link') };
 }
 
 /** A line's choice, read out: the line named. */
 export function strayChoiceName(stray: KeepStray): string {
-  return t('Que devient « {line} » ?', { line: shortLine(stray.text, 60) });
+  return t('What becomes of “{line}”?', { line: shortLine(stray.text, 60) });
 }
 
 /** What the chosen way does to that line, said under it. */
 export function strayChoiceMeta(note: ImportedNote, stray: KeepStray, kind: StrayChoiceKind): string {
-  if (kind === 'drop') return t('Cette ligne ne sera pas importée.');
-  if (kind === 'link') return t('Un lien à sa place, ces mots pour commentaire.');
+  if (kind === 'drop') return t('This line will not be imported.');
+  if (kind === 'link') return t('A link in its place, these words as its comment.');
   const link = note.links?.[stray.link];
   const name = link ? shortLine(link.comment.split('\n')[0] || link.title || prettyUrl(link.url, 40), 40) : '';
-  return stray.before ? t('Ajoutée au commentaire du premier lien, « {link} ».', { link: name }) : t('Ajoutée au commentaire du lien au-dessus, « {link} ».', { link: name });
+  return stray.before ? t('Added to the first link’s comment, “{link}”.', { link: name }) : t('Added to the comment of the link above, “{link}”.', { link: name });
 }
 
 /** The lists sheet's head: how many, what a collection keeps, and what Claude's reading costs. */
 export function keepListsWords(count: number, links: number, reading: boolean, costEach: number | null): { readonly title: string; readonly meta: string } {
-  const what = t('Chacune peut devenir une collection : le texte autour d’un lien devient son commentaire, un élément coché un lien fait. Sinon, elle reste une note.');
+  const what = t('Each can become a collection: the text around a link becomes its comment, a ticked item a done link. Otherwise it stays a note.');
   const cost =
     links > 0
       ? reading
         ? costEach !== null
-          ? t('Claude lit {links} (environ {cost} en tout).', { links: plural(links, 'lien'), cost: formatUsd(costEach * links) })
-          : t('Claude lit {links}.', { links: plural(links, 'lien') })
-        : t('Les liens restent tels quels : la lecture par Claude est désactivée.')
+          ? t('Claude reads {links} (about {cost} in all).', { links: plural(links, 'link'), cost: formatUsd(costEach * links) })
+          : t('Claude reads {links}.', { links: plural(links, 'link') })
+        : t('Links stay as they are: reading by Claude is off.')
       : null;
-  return { title: t('{notes} de liens', { notes: plural(count, 'note faite', 'notes faites') }), meta: cost ? `${what} ${cost}` : what };
+  return { title: t('{notes} of links', { notes: plural(count, 'note made', 'notes made') }), meta: cost ? `${what} ${cost}` : what };
 }
 
 /** The single links' switch: how many, and what each costs. */
 export function keepSinglesWords(count: number, reading: boolean, costEach: number | null): { readonly title: string; readonly meta: string } {
   return {
-    title: t('{notes} qu’un lien', { notes: plural(count, 'note ne contient', 'notes ne contiennent') }),
+    title: t('{notes} just one link', { notes: plural(count, 'note holds', 'notes hold') }),
     meta: reading
       ? costEach !== null
-        ? t('En faire des liens que Claude lit et range (environ {cost} chacun).', { cost: formatUsd(costEach) })
-        : t('En faire des liens que Claude lit et range.')
-      : t('En faire des liens, gardés tels quels dans Non classé : la lecture par Claude est désactivée.'),
+        ? t('Make them links Claude reads and files (about {cost} each).', { cost: formatUsd(costEach) })
+        : t('Make them links Claude reads and files.')
+      : t('Make them links, kept as they are in Unsorted: reading by Claude is off.'),
   };
 }
 
 /** A list's row among the choices: made a collection, or kept a note. */
 export function keepListLine(note: ImportedNote, chosen: boolean, strays: ReadonlyMap<string, StrayChoice> | undefined): string {
-  if (!chosen) return t('Note gardée telle quelle');
-  const links = plural(collectionLinks(note, strays).links.length, 'lien');
+  if (!chosen) return t('Kept as a note');
+  const links = plural(collectionLinks(note, strays).links.length, 'link');
   return note.strays.length > 0
-    ? t('Collection de {links} · {lines}', { links, lines: plural(note.strays.length, 'ligne sans lien', 'lignes sans lien') })
-    : t('Collection de {links}', { links });
+    ? t('Collection of {links} · {lines}', { links, lines: plural(note.strays.length, 'line without a link', 'lines without a link') })
+    : t('Collection of {links}', { links });
 }

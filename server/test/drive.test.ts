@@ -42,13 +42,13 @@ describe('Seafile settings', () => {
 
   it('refuses a wrong token, a read-only one, the library root and an address that is not Seafile', async () => {
     const target = server();
-    expect(await putSettings(target, { drive: { ...SEAFILE(target), token: 'not-the-token-at-all' } })).toMatchObject({ status: 400, body: { error: 'Jeton refusé par Seafile' } });
+    expect(await putSettings(target, { drive: { ...SEAFILE(target), token: 'not-the-token-at-all' } })).toMatchObject({ status: 400, body: { error: 'Token refused by Seafile' } });
     target.seafile.readOnly = true;
-    expect(await putSettings(target, { drive: SEAFILE(target) })).toMatchObject({ status: 400, body: { error: 'Ce jeton est en lecture seule : il faut la lecture et l’écriture' } });
+    expect(await putSettings(target, { drive: SEAFILE(target) })).toMatchObject({ status: 400, body: { error: 'This token is read-only: it needs read and write access' } });
     target.seafile.readOnly = false;
-    expect(await putSettings(target, { drive: { ...SEAFILE(target), folder: '/' } })).toMatchObject({ status: 400, body: { error: 'Choisissez un dossier de la bibliothèque (pas sa racine)' } });
+    expect(await putSettings(target, { drive: { ...SEAFILE(target), folder: '/' } })).toMatchObject({ status: 400, body: { error: 'Choose a folder in the library (not its root)' } });
     target.seafile.unreachable = true;
-    expect(await putSettings(target, { drive: SEAFILE(target) })).toMatchObject({ status: 502, body: { error: 'Seafile injoignable' } });
+    expect(await putSettings(target, { drive: SEAFILE(target) })).toMatchObject({ status: 502, body: { error: 'Seafile unreachable' } });
     expect(target.settings.drive()).toBeNull();
   });
 });
@@ -133,7 +133,7 @@ describe('the drive holds the files', () => {
     target.seafile.repoId = 'repo-2';
     expect(await putSettings(target, { drive: { token: target.seafile.token } })).toMatchObject({
       status: 400,
-      body: { error: 'Ce jeton ouvre une autre bibliothèque : désactivez d’abord Seafile pour rapatrier vos fichiers' },
+      body: { error: 'This token opens another library: turn Seafile off first to bring your files back' },
     });
   });
 
@@ -142,7 +142,7 @@ describe('the drive holds the files', () => {
     await postSync(target, { node: 'phone1', since: 0, records: [rec('note', NOTE, { title: 'Autre titre' }, T0)] });
     target.seafile.unreachable = true;
     await target.drive.run();
-    expect(target.drive.status()).toMatchObject({ error: 'Seafile injoignable', files: 2 });
+    expect(target.drive.status()).toMatchObject({ error: 'Seafile unreachable', files: 2 });
     target.seafile.unreachable = false;
     await target.drive.run();
     expect(target.drive.status().error).toBeNull();

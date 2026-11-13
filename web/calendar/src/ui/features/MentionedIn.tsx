@@ -15,7 +15,7 @@ import styles from '../calendar.module.css';
 function Place({ place }: { place: MentionPlace }) {
   const path = pathOfRef(place.type, place.id);
   if (!path) return null;
-  const title = place.title.trim() || (place.type === 'page' ? t('Sans titre') : t('Note sans titre'));
+  const title = place.title.trim() || (place.type === 'page' ? t('Untitled') : t('Untitled note'));
   const where = [place.within, APPS[place.app].name].filter(Boolean).join(' · ');
   return (
     <li>
@@ -37,9 +37,9 @@ export function MentionedIn({ id }: { id: string }) {
   const places = useMentionedIn(id);
   if (!places || places.length === 0) return null;
   return (
-    <section aria-label={t('Mentionné dans')}>
+    <section aria-label={t('Mentioned in')}>
       <h2 className={`${styles.sectionHead} t-section`}>
-        {t('Mentionné dans')}
+        {t('Mentioned in')}
         <span className={`${styles.sectionCount} t-meta tabular`}>{places.length}</span>
       </h2>
       <ul className={styles.list}>

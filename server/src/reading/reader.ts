@@ -116,17 +116,17 @@ function failure(attempt: Attempt): { error: string; fatal: boolean } {
   if (attempt.kind === 'failed') {
     switch (attempt.error.code) {
       case 'blocked':
-        return { error: 'Adresse non autorisée', fatal: true };
+        return { error: 'Address not allowed', fatal: true };
       case 'invalid_url':
-        return { error: 'Adresse invalide', fatal: true };
+        return { error: 'Invalid address', fatal: true };
       case 'timeout':
-        return { error: 'Délai dépassé', fatal: false };
+        return { error: 'Timed out', fatal: false };
       case 'redirects':
-        return { error: 'Trop de redirections', fatal: false };
+        return { error: 'Too many redirects', fatal: false };
       case 'aborted':
-        return { error: 'Analyse interrompue', fatal: false };
+        return { error: 'Analysis interrupted', fatal: false };
       default:
-        return { error: 'Site injoignable', fatal: false };
+        return { error: 'Site unreachable', fatal: false };
     }
   }
   if (attempt.status === 404 || attempt.status === 410) return { error: `Page introuvable (${attempt.status})`, fatal: true };
@@ -134,8 +134,8 @@ function failure(attempt: Attempt): { error: string; fatal: boolean } {
   if (attempt.status === 401 || attempt.status === 402) return { error: `Page réservée aux abonnés (${attempt.status})`, fatal: false };
   if (attempt.status === 403) return { error: `Page protégée contre les robots (${attempt.status})`, fatal: false };
   if (attempt.status >= 400) return { error: `Page inaccessible (${attempt.status})`, fatal: false };
-  if (attempt.kind === 'html') return { error: 'Page protégée contre les robots', fatal: false };
-  return { error: 'Contenu illisible', fatal: false };
+  if (attempt.kind === 'html') return { error: 'Page protected against robots', fatal: false };
+  return { error: 'Unreadable content', fatal: false };
 }
 
 export async function readLink(url: string, fetcher: Fetcher, signal: AbortSignal): Promise<LinkRead> {

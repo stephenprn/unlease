@@ -74,9 +74,9 @@ const LeadCell = memo(function LeadCell({ id, pressed, onPressed, onOpen, onLong
       onPressOut={() => onPressed(null)}
       onPress={() => onOpen(id)}
       onLongPress={() => onLongPress?.(id)}
-      accessibilityLabel={[title, site, pending ? null : price, failed ? (link.error ? t(link.error) : t('Lecture impossible')) : null].filter(Boolean).join(', ')}
-      accessibilityActions={[{ name: 'open', label: t('Ouvrir le lien') }]}
-      onAccessibilityAction={() => Linking.openURL(link.url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }))}
+      accessibilityLabel={[title, site, pending ? null : price, failed ? (link.error ? t(link.error) : t('Couldn’t read it')) : null].filter(Boolean).join(', ')}
+      accessibilityActions={[{ name: 'open', label: t('Open the link') }]}
+      onAccessibilityAction={() => Linking.openURL(link.url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }))}
       style={[styles.line, styles.lead, pressed ? styles.pressed : null]}
     >
       <Organic style={[styles.thumb, image ? styles.thumbPicture : null, link.done ? styles.faded : null]}>
@@ -123,7 +123,7 @@ const RestCells = memo(function RestCells({ id, pressed, onPressed, onOpen, onLo
           <ReadingTrack width={48} />
         ) : (
           <AppText variant="meta" numberOfLines={1} color={failed ? theme.color.danger : undefined}>
-            {failed ? (link.error ? t(link.error) : t('Lecture impossible')) : source}
+            {failed ? (link.error ? t(link.error) : t('Couldn’t read it')) : source}
           </AppText>
         )}
       </View>
@@ -205,7 +205,7 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
   const [under, setUnder] = useState(false);
   const groups: { readonly ids: readonly string[]; readonly title: string | null }[] = [
     { ids: open, title: null },
-    ...(done.length > 0 ? [{ ids: done, title: t('Déjà faits · {count}', { count: done.length }) }] : []),
+    ...(done.length > 0 ? [{ ids: done, title: t('Done · {count}', { count: done.length }) }] : []),
   ];
 
   return (
@@ -213,7 +213,7 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
       <View style={styles.table}>
         <View style={[styles.held, under ? styles.heldUnder : null]}>
           <View style={[styles.headRow, styles.leadHead]}>
-            <AppText variant="metaStrong">{t('Lien')}</AppText>
+            <AppText variant="metaStrong">{t('Link')}</AppText>
           </View>
           {groups.map(group => (
             <React.Fragment key={group.title ?? 'open'}>
@@ -236,7 +236,7 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
               <View style={[styles.cell, { width: WIDTHS.site }]}>
                 <AppText variant="metaStrong">{t('Site')}</AppText>
               </View>
-              <SortHead label={t('Prix')} orders={['priceUp', 'priceDown']} sort={sort} disabled={priced < 2} width={WIDTHS.price} onSort={onSort} />
+              <SortHead label={t('Price')} orders={['priceUp', 'priceDown']} sort={sort} disabled={priced < 2} width={WIDTHS.price} onSort={onSort} />
               {columns.facts.map(column => (
                 <View key={column.key} style={[styles.cell, { width: WIDTHS.fact }]}>
                   <AppText variant="metaStrong" numberOfLines={1}>
@@ -246,10 +246,10 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
               ))}
               {columns.notes ? (
                 <View style={[styles.cell, { width: WIDTHS.note }]}>
-                  <AppText variant="metaStrong">{t('Votre note')}</AppText>
+                  <AppText variant="metaStrong">{t('Your note')}</AppText>
                 </View>
               ) : null}
-              <SortHead label={t('Ajouté')} orders={['added']} sort={sort} disabled={false} width={WIDTHS.added} onSort={onSort} />
+              <SortHead label={t('Added')} orders={['added']} sort={sort} disabled={false} width={WIDTHS.added} onSort={onSort} />
             </View>
             {groups.map(group => (
               <React.Fragment key={group.title ?? 'open'}>

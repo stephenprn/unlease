@@ -1,7 +1,7 @@
 import { setLocale } from '@unlease/core/i18n';
 import type { Fields } from '@unlease/core/sync/record';
 import { isValidField } from '@unlease/core/sync/schema';
-import { EN_TEMPLATES } from '../../i18n/en/templates';
+import { FR_TEMPLATES } from '../../i18n/fr/templates';
 import { SUGGESTED_COLLECTIONS } from '../../models/collections';
 import { INBOX_ID, LINK_KINDS, type LinkItem, type Note } from '../../models/entities';
 import { KIND_TEMPLATES, TEMPLATE_FIELD_TYPES, TEMPLATE_LIMITS, type LinkTemplate, type TemplateField } from '../../models/templates';
@@ -86,8 +86,8 @@ describe('the kinds’ templates', () => {
     // Every preset has its English: the prompt never lists « Marque / Marque » by mistake.
     for (const kind of LINK_KINDS) {
       for (const preset of KIND_TEMPLATES[kind]) {
-        expect(Object.hasOwn(EN_TEMPLATES, preset.name), preset.name).toBe(true);
-        expect(Object.hasOwn(EN_TEMPLATES, preset.hint), preset.hint).toBe(true);
+        expect(Object.hasOwn(FR_TEMPLATES, preset.name), preset.name).toBe(true);
+        expect(Object.hasOwn(FR_TEMPLATES, preset.hint), preset.hint).toBe(true);
       }
     }
   });
@@ -316,8 +316,8 @@ describe('the starter collections’ own facts', () => {
   it('have every name and hint in English', () => {
     for (const starter of SUGGESTED_COLLECTIONS) {
       for (const fact of starter.facts) {
-        expect(Object.hasOwn(EN_TEMPLATES, fact.name), fact.name).toBe(true);
-        expect(Object.hasOwn(EN_TEMPLATES, fact.hint), fact.hint).toBe(true);
+        expect(Object.hasOwn(FR_TEMPLATES, fact.name), fact.name).toBe(true);
+        expect(Object.hasOwn(FR_TEMPLATES, fact.hint), fact.hint).toBe(true);
       }
     }
     expect(starterFacts('line-restos')!.slice(0, 2).map(each => each.name)).toEqual(['Cuisine', 'Quartier']);

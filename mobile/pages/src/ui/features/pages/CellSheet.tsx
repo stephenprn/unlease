@@ -9,7 +9,7 @@ import { Linking, StyleSheet, View, type KeyboardTypeOptions } from 'react-nativ
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import type { CellValue, ColumnType, SelectOption, TableColumn } from '@unlease/pages/models/blocks';
 import { LINE_COLORS } from '@unlease/design/colors';
 import { createId } from '@unlease/core/services/ids';
@@ -68,15 +68,15 @@ function FieldEditor({ request, column, value, onDone }: { request: CellRequest;
         returnKeyType={type === 'text' ? 'default' : 'done'}
         submitBehavior={type === 'text' ? 'newline' : 'submit'}
         onSubmitEditing={type === 'text' ? undefined : save}
-        placeholder={format ? t('Exemple : {example}', { example: format.example }) : t('Vide')}
-        error={refused && format ? t('Ce n’est pas {expected}. Exemple : {example}', { expected: t(format.expected), example: format.example }) : null}
+        placeholder={format ? t('Example: {example}', { example: format.example }) : tc('state', 'Empty')}
+        error={refused && format ? t('That isn’t {expected}. Example: {example}', { expected: t(format.expected), example: format.example }) : null}
         accessibilityLabel={column.name}
         style={type === 'text' ? styles.longField : null}
       />
       <View style={styles.actions}>
-        {address ? <Button kind="text" icon="external" label={t(OPEN_LABELS[type] ?? tx('Ouvrir'))} onPress={() => Linking.openURL(address).catch(() => {})} /> : null}
+        {address ? <Button kind="text" icon="external" label={t(OPEN_LABELS[type] ?? tx('Open'))} onPress={() => Linking.openURL(address).catch(() => {})} /> : null}
         <View style={styles.spacer} />
-        <Button label={t('Enregistrer')} onPress={save} />
+        <Button label={t('Save')} onPress={save} />
       </View>
     </View>
   );
@@ -95,9 +95,9 @@ function DayEditor({ request, column, value, onDone }: { request: CellRequest; c
     <View style={styles.body}>
       <MonthCalendar chosen={chosen} today={today} onPick={write} />
       <View style={styles.actions}>
-        {chosen ? <Button kind="text" label={t('Effacer')} onPress={() => write('')} /> : null}
+        {chosen ? <Button kind="text" label={t('Clear')} onPress={() => write('')} /> : null}
         <View style={styles.spacer} />
-        <Button kind="tonal" label={t('Aujourd’hui')} onPress={() => write(today)} />
+        <Button kind="tonal" label={t('Today')} onPress={() => write(today)} />
       </View>
     </View>
   );
@@ -142,8 +142,8 @@ function OptionsEditor({ request, column, value, onDone }: { request: CellReques
         <TextField
           value={query}
           onChangeText={setQuery}
-          placeholder={options.length > 0 ? t('Chercher ou créer une option') : t('Créer une option')}
-          accessibilityLabel={t('Chercher ou créer une option')}
+          placeholder={options.length > 0 ? t('Search or create an option') : t('Create an option')}
+          accessibilityLabel={t('Search or create an option')}
           returnKeyType="done"
           submitBehavior="submit"
           onSubmitEditing={() => {
@@ -163,19 +163,19 @@ function OptionsEditor({ request, column, value, onDone }: { request: CellReques
           </Tappable>
         ))}
         {query.trim() && !exact ? (
-          <Tappable accessibilityLabel={t('Créer « {name} »', { name: query.trim() })} onPress={create} style={styles.optionRow}>
+          <Tappable accessibilityLabel={t('Create “{name}”', { name: query.trim() })} onPress={create} style={styles.optionRow}>
             <Icon name="plus" size={24} color={theme.color.link} />
             <AppText variant="label" color={theme.color.link} numberOfLines={1} style={styles.optionChip}>
-              {t('Créer « {name} »', { name: query.trim() })}
+              {t('Create “{name}”', { name: query.trim() })}
             </AppText>
           </Tappable>
         ) : null}
-        {options.length === 0 && !query.trim() ? <EmptyLine text={t('Tapez le nom d’une option pour la créer.')} style={styles.hint} /> : null}
+        {options.length === 0 && !query.trim() ? <EmptyLine text={t('Type an option’s name to create it.')} style={styles.hint} /> : null}
       </SheetScroll>
       {multi ? (
         <View style={[styles.actions, styles.foot]}>
           <View style={styles.spacer} />
-          <Button label={t('Terminé')} onPress={onDone} />
+          <Button label={t('Done')} onPress={onDone} />
         </View>
       ) : null}
     </View>

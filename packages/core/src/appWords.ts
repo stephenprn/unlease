@@ -26,40 +26,40 @@ export interface AppWords {
 
 export const APP_WORDS: Record<AppId, AppWords> = {
   notes: localized({
-    tagline: tx('Notes, listes et liens'),
-    description: tx('Vos notes, listes de courses, dessins et rappels, et des collections de liens que Claude lit et range pour vous.'),
-    replaces: tx('Remplace Google Keep'),
-    search: tx('Rechercher dans vos notes'),
-    searchHint: tx('Cherchez les mots d’une note, d’une liste ou d’un lien de vos collections, sans tenir compte des accents.'),
-    language: tx('Langue de l’interface et des lectures'),
-    languageNote: tx('Les écrans de l’application, et ce que Claude écrit quand il lit un lien enregistré depuis cet appareil : titre, résumé, détails. Un lien déjà lu garde sa langue ; « Relire la page » le relit dans celle-ci.'),
+    tagline: tx('Notes, lists and links'),
+    description: tx('Your notes, shopping lists, drawings and reminders, and collections of links Claude reads and sorts for you.'),
+    replaces: tx('Replaces Google Keep'),
+    search: tx('Search your notes'),
+    searchHint: tx('Search the words of a note, a list or a link in your collections, accents or not.'),
+    language: tx('Language of the app and of link readings'),
+    languageNote: tx('The app’s screens, and what Claude writes when it reads a link saved from this device: title, summary, details. A link already read keeps its language; “Read the page again” reads it in this one.'),
   }),
   pages: localized({
-    tagline: tx('Pages et wiki'),
-    description: tx('Des pages imbriquées, des tableaux et des colonnes pour vos projets, votre wiki ou vos voyages ; elles citent vos notes et vos collections.'),
-    replaces: tx('Remplace Google Docs et Notion'),
-    search: tx('Rechercher dans vos pages'),
-    searchHint: tx('Cherchez le titre ou les mots d’une page, sans tenir compte des accents.'),
-    language: tx('Langue de l’interface'),
-    languageNote: tx('Les écrans de l’application, et la langue dans laquelle Claude répond aux questions posées depuis cet appareil.'),
+    tagline: tx('Pages and wiki'),
+    description: tx('Nested pages, tables and columns for your projects, your wiki or your trips; they cite your notes and collections.'),
+    replaces: tx('Replaces Google Docs and Notion'),
+    search: tx('Search your pages'),
+    searchHint: tx('Search the title or the words of a page, accents or not.'),
+    language: tx('Interface language'),
+    languageNote: tx('The app’s screens, and the language Claude answers questions asked from this device in.'),
   }),
   calendar: localized({
-    tagline: tx('Agenda'),
-    description: tx('Vos rendez-vous, les anniversaires de vos contacts, les jours fériés et les agendas auxquels vous êtes abonné, sur tous vos appareils.'),
-    replaces: tx('Remplace Google Agenda'),
-    search: tx('Rechercher dans votre agenda'),
-    searchHint: tx('Cherchez un titre, un lieu, une description ou un libellé.'),
-    language: tx('Langue de l’interface'),
-    languageNote: tx('Les écrans de l’application, les jours, les mois et les rappels.'),
+    tagline: tx('Calendar'),
+    description: tx('Your appointments, your contacts’ birthdays, public holidays and the calendars you subscribe to, on all your devices.'),
+    replaces: tx('Replaces Google Calendar'),
+    search: tx('Search your calendar'),
+    searchHint: tx('Search a title, a place, a description or a label.'),
+    language: tx('Interface language'),
+    languageNote: tx('The app’s screens, the days, the months and the reminders.'),
   }),
   contacts: localized({
-    tagline: tx('Carnet d’adresses'),
-    description: tx('Vos contacts, leurs anniversaires et leurs adresses, sur tous vos appareils.'),
-    replaces: tx('Remplace Google Contacts'),
-    search: tx('Rechercher dans vos contacts'),
-    searchHint: tx('Cherchez un nom, une entreprise, un numéro, un e-mail, une adresse ou un libellé.'),
-    language: tx('Langue de l’interface'),
-    languageNote: tx('Les écrans de l’application, les dates et les noms des types de numéros.'),
+    tagline: tx('Address book'),
+    description: tx('Your contacts, their birthdays and addresses, on all your devices.'),
+    replaces: tx('Replaces Google Contacts'),
+    search: tx('Search your contacts'),
+    searchHint: tx('Search a name, a company, a number, an email, an address or a label.'),
+    language: tx('Interface language'),
+    languageNote: tx('The app’s screens, dates, and the names of number types.'),
   }),
 };
 
@@ -68,8 +68,8 @@ export const APP_WORDS: Record<AppId, AppWords> = {
  * sets what Claude writes (Carnet's readings, Pages' answers): Claude is not mentioned where it does nothing.
  */
 export const LANGUAGE_WITHOUT_CLAUDE: Partial<Record<AppId, Pick<AppWords, 'language' | 'languageNote'>>> = {
-  notes: localized({ language: tx('Langue de l’interface'), languageNote: tx('Les écrans de l’application, les dates et les rappels.') }),
-  pages: localized({ language: tx('Langue de l’interface'), languageNote: tx('Les écrans de l’application et les dates écrites dans les pages.') }),
+  notes: localized({ language: tx('Interface language'), languageNote: tx('The app’s screens, the dates and the reminders.') }),
+  pages: localized({ language: tx('Interface language'), languageNote: tx('The app’s screens and the dates written in pages.') }),
 };
 
 /** The language's name and note in an app's Réglages, with or without Claude. */

@@ -75,6 +75,6 @@ export const useMapsChoice = (): MapsChoice | null => useMapsStore(selectMapsCho
 
 /** The choice by name: the app's, OpenStreetMap, or « Demander à chaque fois ». */
 export function mapsChoiceName(choice: MapsChoice | null): string {
-  if (!choice) return t('Demander à chaque fois');
+  if (!choice) return t('Ask every time');
   return choice.kind === 'web' ? MAP_APP_NAMES.openstreetmap : choice.label;
 }

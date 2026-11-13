@@ -38,7 +38,7 @@ const BirthdayRow = memo(function BirthdayRow({ contact, birthday, now, region }
         <Avatar contact={contact} size={40} />
         <span className={styles.nameCell}>
           <span className={`${styles.cell} t-body-strong`}>{contactName(contact)}</span>
-          <span className={`${styles.cell} t-meta`}>{age !== null && age > 0 ? `${formatBirthday(birthday)} · ${plural(age, 'an')}` : formatBirthday(birthday)}</span>
+          <span className={`${styles.cell} t-meta`}>{age !== null && age > 0 ? `${formatBirthday(birthday)} · ${plural(age, 'year')}` : formatBirthday(birthday)}</span>
         </span>
         {wishing ? null : (
           <span className={`${styles.when} t-meta`} data-soon={soon || undefined}>
@@ -74,9 +74,9 @@ export function BirthdaysScreen() {
   const groups = birthdayGroups(upcomingBirthdays(contacts, now, YEAR_DAYS), now);
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
-      <PageHead title={t('Anniversaires')} />
+      <PageHead title={t('Birthdays')} />
       {groups.length === 0 ? (
-        <EmptyState scene="reminders" title={t('Aucun anniversaire')} text={t('Ajoutez une date de naissance à un contact : elle apparaît ici, avec le nombre de jours qui vous en séparent.')} />
+        <EmptyState scene="reminders" title={t('No birthdays')} text={t('Add a birthday to a contact: it shows here, with how many days away it is.')} />
       ) : (
         groups.map(group => <Panel key={group.title} title={group.title} rows={group.entries} now={now} region={region} />)
       )}

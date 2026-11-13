@@ -1,7 +1,7 @@
 /**
  * Agenda's settings, in every app's order: the calendar's own on this phone first (the week's first
  * day, weekends and week numbers, the hours' format, a new event's length and reminders, the maps app
- * places open in, then what keeps the reminders from ringing on the minute, only while something
+ * places open in, the morning summary, then what keeps the reminders from ringing on the minute, only while something
  * does); then « Apparence » (one row opening its own page: the theme, the paper's grain, the colours
  * and the ground), the language, the import and the export of one's events as an `.ics`, the other
  * calendars, the bin and « Effacer des données », and the way to the Administration last.
@@ -24,6 +24,7 @@ import { selectPrefs, setPrefs, useCalendarUiStore } from '@app/store/calendarUi
 import { useLibraryStore } from '@app/store/libraryStore';
 import { nameOf } from '@app/mentionNames';
 import { later } from '@app/later';
+import { calendarMirror } from '@app/phoneMirror';
 import { showSnack } from '@shared/app/store/uiStore';
 import { saveFile } from '@shared/platform/media';
 import { makerBatterySettings } from '@platform/notifications';
@@ -33,12 +34,14 @@ import { SwitchRow } from '@shared/ui/features/appearance/SwitchRow';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
+import { PhoneMirrorRows } from '@shared/ui/features/settings/PhoneMirrorRows';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { DigestSection } from '../features/digest/DigestSection';
 import { ReminderSheet } from '../features/event/ReminderSheet';
 import type { ScreenProps } from '../navigation/types';
 
@@ -77,45 +80,55 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       categories: event => event.labelIds.map(id => state.calendarLabels[id]?.name ?? '').filter(Boolean),
     });
     const saved = await saveFile(`${APP_NAME}.ics`, 'text/calendar', utf8(text));
-    if (saved.status === 'ok') showSnack(t('{events} exportés', { events: plural(own, 'événement') }), undefined, { tone: 'success' });
-    else if (saved.status === 'error') showSnack(t('L’export n’a pas pu être enregistré.'), undefined, { tone: 'error' });
+    if (saved.status === 'ok') showSnack(t('{events} exported', { events: plural(own, 'event') }), undefined, { tone: 'success' });
+    else if (saved.status === 'error') showSnack(t('The export couldn’t be saved.'), undefined, { tone: 'error' });
   };
 
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Settings')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* The calendar's own first. */}
-        <Section title={t('Agenda')} anchor={CALENDAR_SETTINGS_SECTION}>
+        <Section title={t('Calendar')} anchor={CALENDAR_SETTINGS_SECTION}>
           <View style={styles.fields}>
-            <AppText variant="metaStrong">{t('La semaine commence le')}</AppText>
+            <AppText variant="metaStrong">{t('The week starts on')}</AppText>
             <Segmented
               value={String(prefs.weekStart)}
               onChange={value => setPrefs({ weekStart: Number(value) })}
               options={[
-                { value: '1', label: t('Lundi') },
-                { value: '0', label: t('Dimanche') },
-                { value: '6', label: t('Samedi') },
+                { value: '1', label: t('Monday') },
+                { value: '0', label: t('Sunday') },
+                { value: '6', label: t('Saturday') },
               ]}
             />
           </View>
           {/* The web's words. */}
-          <SwitchRow title={t('Masquer les week-ends')} supporting={t('La semaine et le mois sans samedi ni dimanche.')} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
-          <SwitchRow title={t('Numéros de semaine')} supporting={t('Le numéro ISO de la semaine, à gauche de ses jours.')} value={prefs.weekNumbers} onChange={weekNumbers => setPrefs({ weekNumbers })} />
-          <SwitchRow title={t('Heures sur 12')} supporting={t('2 PM plutôt que 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
+          <SwitchRow title={t('Hide weekends')} supporting={t('The week and the month without Saturday and Sunday.')} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
+          <SwitchRow title={t('Week numbers')} supporting={t('The week’s ISO number, left of its days.')} value={prefs.weekNumbers} onChange={weekNumbers => setPrefs({ weekNumbers })} />
+          <SwitchRow title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
           <View style={styles.fields}>
-            <PickerField label={t('Durée d’un nouvel événement')} icon="clock" value={lengthWords(prefs.eventLength)} onPress={() => setLengthOpen(true)} />
+            <PickerField label={t('A new event’s length')} icon="clock" value={lengthWords(prefs.eventLength)} onPress={() => setLengthOpen(true)} />
           </View>
-          <ListRow icon="bell" title={t('Rappels d’un nouvel événement')} supporting={prefs.reminders.map(minutes => reminderWords(minutes, false)).join(', ') || t('Aucun')} onPress={() => setReminding('timed')} />
+          <ListRow icon="bell" title={t('A new event’s reminders')} supporting={prefs.reminders.map(minutes => reminderWords(minutes, false)).join(', ') || t('None')} onPress={() => setReminding('timed')} />
           {/* Its glyph keeps its words on the column of the row it empties. */}
-          {prefs.reminders.length > 0 ? <ListRow icon="bellOff" title={t('Retirer les rappels par défaut')} onPress={() => setPrefs({ reminders: [] })} /> : null}
-          <ListRow icon="bell" title={t('Rappels d’un événement sur la journée')} supporting={prefs.allDayReminders.map(minutes => reminderWords(minutes, true)).join(', ') || t('Aucun')} onPress={() => setReminding('allDay')} />
-          {prefs.allDayReminders.length > 0 ? <ListRow icon="bellOff" title={t('Retirer les rappels de la journée')} onPress={() => setPrefs({ allDayReminders: [] })} /> : null}
+          {prefs.reminders.length > 0 ? <ListRow icon="bellOff" title={t('Remove the default reminders')} onPress={() => setPrefs({ reminders: [] })} /> : null}
+          <ListRow icon="bell" title={t('An all-day event’s reminders')} supporting={prefs.allDayReminders.map(minutes => reminderWords(minutes, true)).join(', ') || t('None')} onPress={() => setReminding('allDay')} />
+          {prefs.allDayReminders.length > 0 ? <ListRow icon="bellOff" title={t('Remove the all-day reminders')} onPress={() => setPrefs({ allDayReminders: [] })} /> : null}
           <View style={styles.fields}>
             <MapsChoiceField />
           </View>
+        </Section>
+
+        <DigestSection />
+
+        <Section title={t('On this phone')}>
+          <PhoneMirrorRows
+            mirror={calendarMirror}
+            title={t('Copy to the phone’s calendar')}
+            supporting={t('Your events show in the phone’s own calendar, read-only, under an account of their own: the Clock, Maps and your other apps see them. Your other accounts are never touched, and reminders still ring from here only.')}
+          />
         </Section>
 
         <BackgroundSyncSection />
@@ -126,11 +139,11 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
         <LanguageSection />
 
-        <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
-          <ListRow icon="download" title={t('Importer')} supporting={t('Un fichier .ics : l’export de Google Agenda, une invitation')} onPress={() => navigation.navigate('Import')} />
-          <ListRow icon="upload" title={t('Exporter')} supporting={own > 0 ? t('{events} dans un fichier .ics', { events: plural(own, 'événement') }) : t('Aucun événement à exporter.')} onPress={own > 0 ? () => later(exportAll()) : undefined} />
-          <ListRow icon="calendar" title={t('Autres agendas')} supporting={t('Vos abonnements et les jours fériés')} onPress={() => navigation.navigate('Feeds')} />
-          <ListRow icon="trash" title={t('Vider la corbeille')} supporting={binned > 0 ? t('{events} dans la corbeille', { events: plural(binned, 'événement') }) : t('La corbeille est vide.')} onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined} />
+        <Section title={t('Data')} anchor={SETTINGS_SECTIONS.data}>
+          <ListRow icon="download" title={t('Import')} supporting={t('An .ics file: Google Calendar’s export, an invitation')} onPress={() => navigation.navigate('Import')} />
+          <ListRow icon="upload" title={t('Export')} supporting={own > 0 ? t('{events} in an .ics file', { events: plural(own, 'event') }) : t('No event to export.')} onPress={own > 0 ? () => later(exportAll()) : undefined} />
+          <ListRow icon="calendar" title={t('Other calendars')} supporting={t('Your subscriptions and the public holidays')} onPress={() => navigation.navigate('Feeds')} />
+          <ListRow icon="trash" title={t('Empty the bin')} supporting={binned > 0 ? t('{events} in the bin', { events: plural(binned, 'event') }) : t('The bin is empty.')} onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined} />
           <EraseEntryRow app="calendar" onOpen={() => navigation.navigate('Erase')} />
         </Section>
 
@@ -138,10 +151,10 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
         <AppText variant="meta" style={styles.about}>
-          {t('{app} · votre agenda, chez vous', { app: APP_NAME })}
+          {t('{app} · your calendar, at home', { app: APP_NAME })}
         </AppText>
       </SettingsScroll>
-      <Sheet visible={lengthOpen} onDismiss={() => setLengthOpen(false)} title={t('Durée d’un nouvel événement')}>
+      <Sheet visible={lengthOpen} onDismiss={() => setLengthOpen(false)} title={t('A new event’s length')}>
         <SheetScroll>
           {EVENT_LENGTHS.map(minutes => {
             const current = minutes === prefs.eventLength;
@@ -170,9 +183,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       />
       <Dialog
         visible={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Tous les événements de la corbeille seront supprimés définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every event in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {

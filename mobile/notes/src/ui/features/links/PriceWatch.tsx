@@ -57,7 +57,7 @@ export function PriceWatch({ id, underPrice }: { id: string; underPrice: boolean
       ) : null}
       <View style={styles.foot}>
         <AppText variant="meta">{priceCheckedText(link, now)}</AppText>
-        <Button kind="text" small icon="refresh" label={t('Vérifier le prix')} busy={checking} onPress={check} />
+        <Button kind="text" small icon="refresh" label={t('Check the price')} busy={checking} onPress={check} />
       </View>
     </View>
   );

@@ -7,7 +7,7 @@ import { collectionEmblem } from '@unlease/notes/models/collections';
 import { pebbleTurnOf } from '@unlease/design/pebbles';
 import { asLineColor } from '@unlease/design/colors';
 import { t } from '@unlease/core/i18n';
-import { INBOX_TITLE, INBOX_ID, shownTitle, type CheckItem, type Note } from '@unlease/notes/models/entities';
+import { INBOX_SHOWN_TITLE, INBOX_ID, shownTitle, type CheckItem, type Note } from '@unlease/notes/models/entities';
 import { formatPrice, plural } from '@unlease/core/services/format';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { bodyText } from '@unlease/notes/services/noteBody';
@@ -140,8 +140,8 @@ export function collectionPayload(state: LibraryState, id: string): CollectionPa
     kind: 'collection',
     id,
     gone: false,
-    title: shownTitle(note).trim() || (id === INBOX_ID ? t(INBOX_TITLE) : t('Sans titre')),
-    count: plural(open.length, 'lien'),
+    title: shownTitle(note).trim() || (id === INBOX_ID ? t(INBOX_SHOWN_TITLE) : t('Untitled')),
+    count: plural(open.length, 'link'),
     emblem: collectionEmblem(id, note.emblem),
     color: asLineColor(note.color) ?? 'grey',
     turn: pebbleTurnOf(id),
@@ -158,7 +158,7 @@ export function collectionPayload(state: LibraryState, id: string): CollectionPa
         reading: link.status === 'pending',
       };
     }),
-    done: done > 0 ? plural(done, 'déjà fait', 'déjà faits') : '',
+    done: done > 0 ? plural(done, 'already done', 'already done [many]') : '',
   };
 }
 
@@ -172,21 +172,21 @@ function card(state: LibraryState, note: Note): WidgetCard {
   const base = { id: note.id, open: note.kind === 'links' ? `line/${note.id}` : `note/${note.id}`, title: shownTitle(note).trim(), wash: note.color };
   if (note.kind === 'links') {
     const open = (state.linksByNote[note.id] ?? []).filter(linkId => state.links[linkId]?.done === false).length;
-    return { ...base, body: plural(open, 'lien'), items: [], more: '' };
+    return { ...base, body: plural(open, 'link'), items: [], more: '' };
   }
   if (note.kind === 'checklist') {
     const items = checksOf(state, note.id);
     const open = items.filter(item => !item.checked && item.text.trim());
     const done = items.filter(item => item.checked).length;
     const rest = open.length - WIDGET_LIMITS.cardItems;
-    const more = [rest > 0 ? `+ ${plural(rest, 'élément')}` : '', done > 0 ? plural(done, 'élément coché', 'éléments cochés') : ''].filter(Boolean).join(' · ');
+    const more = [rest > 0 ? `+ ${plural(rest, 'item')}` : '', done > 0 ? plural(done, 'ticked item', 'ticked items') : ''].filter(Boolean).join(' · ');
     return { ...base, body: '', items: open.slice(0, WIDGET_LIMITS.cardItems).map(item => ({ text: item.text, indent: item.indent })), more };
   }
-  if (note.kind === 'drawing') return { ...base, body: t('Dessin'), items: [], more: '' };
+  if (note.kind === 'drawing') return { ...base, body: t('Drawing'), items: [], more: '' };
   const body = excerpt(bodyText(note));
   const photos = state.attachmentsByNote[note.id]?.length ?? 0;
   // A note of pictures alone still says what it holds.
-  const fallback = !body && !base.title ? (photos > 0 ? plural(photos, 'photo') : t('Note vide')) : '';
+  const fallback = !body && !base.title ? (photos > 0 ? plural(photos, 'photo') : t('Empty note')) : '';
   return { ...base, body: body || fallback, items: [], more: body && photos > 0 ? plural(photos, 'photo') : '' };
 }
 
@@ -213,7 +213,7 @@ export function notePayload(state: LibraryState, id: string): NotePayload | Gone
   const note = state.notes[id];
   if (!isLiveNote(note) || note.kind === 'links') return gone('note', id);
   const list = note.kind === 'checklist';
-  const lines = list ? [] : note.kind === 'drawing' ? [t('Dessin')] : bodyText(note).replace(/\s+$/, '').split('\n');
+  const lines = list ? [] : note.kind === 'drawing' ? [t('Drawing')] : bodyText(note).replace(/\s+$/, '').split('\n');
   return {
     v: 1,
     kind: 'note',

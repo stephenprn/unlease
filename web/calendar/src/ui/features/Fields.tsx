@@ -342,4 +342,4 @@ export function ChoiceField<T extends string>({ value, choices, onChange, label,
 }
 
 /** « 1 heure », « 2 jours »: how long an all-day event lasts. */
-export const daysWords = (days: number): string => plural(days, 'jour');
+export const daysWords = (days: number): string => plural(days, 'day');

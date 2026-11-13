@@ -44,32 +44,32 @@ export function GiftSheet({ visible, name, contactId, onDismiss }: { visible: bo
     onDismiss();
     return true;
   };
-  const form = useForm({ url: url.trim() && !link ? t('Collez l’adresse d’une page web, qui commence par https://') : null }, { order: ['url'], sendOnDone: add });
+  const form = useForm({ url: url.trim() && !link ? t('Paste the address of a web page, starting with https://') : null }, { order: ['url'], sendOnDone: add });
   const close = unsaved.guard(() => {
     form.reset();
     onDismiss();
   });
   return (
     <>
-      <Sheet visible={visible} onDismiss={close} title={t('Idée cadeau pour {name}', { name })}>
+      <Sheet visible={visible} onDismiss={close} title={t('Gift idea for {name}', { name })}>
         <View style={styles.body}>
           <View style={styles.fields}>
             <TextField
               kind="url"
               field={form.field('url')}
-              label={t('Lien du produit')}
+              label={t('Product link')}
               value={url}
               onChangeText={setUrl}
               placeholder="https://"
-              help={t('Gardé dans la collection « Cadeaux » de {app}.', { app: APPS.notes.name })}
+              help={t('Kept in {app}’s “Gifts” collection.', { app: APPS.notes.name })}
             />
-            {clip && clip !== link ? <Button label={t('Coller le lien copié')} icon="copy" kind="text" onPress={() => setUrl(clip)} style={styles.paste} /> : null}
+            {clip && clip !== link ? <Button label={t('Paste the copied link')} icon="copy" kind="text" onPress={() => setUrl(clip)} style={styles.paste} /> : null}
             {why ? <AppText variant="meta">{why}</AppText> : null}
           </View>
           <FormFoot message={form.message}>
-            <Button label={t('Annuler')} kind="text" onPress={close} />
+            <Button label={t('Cancel')} kind="text" onPress={close} />
             {/* Nothing to add without a link; without a server running Carnet, pressed, it says why on the form's line. */}
-            <Button label={t('Ajouter')} icon="plus" busy={form.busy} disabled={!url.trim()} onPress={() => later(form.submit(add))} />
+            <Button label={t('Add')} icon="plus" busy={form.busy} disabled={!url.trim()} onPress={() => later(form.submit(add))} />
           </FormFoot>
         </View>
       </Sheet>

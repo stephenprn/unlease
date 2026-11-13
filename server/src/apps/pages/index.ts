@@ -1,6 +1,6 @@
 /**
  * Pages on the server: questions about pages and copies of articles (`routes.ts`, `ask.ts`,
- * `copies.ts`), its bin (`bin.ts`), and how its files and Markdown look in the drive and in
+ * `copies.ts`), its bin (`bin.ts`), each page's past versions (`versions.ts`), and how its files and Markdown look in the drive and in
  * archives (`files.ts`, `markdown.ts`), all under its own folder there. Claude and the web reader
  * are the suite's (`claude/`, `reading/`); it reads Carnet's records (a copy's link, the names of
  * what a page mentions), as its package builds on Carnet's.
@@ -24,6 +24,7 @@ import { FOLDER, layoutPages, pagesFilesInUse, readBlocks } from './files';
 import { pagesMarkdown } from './markdown';
 import { pagesRoutes } from './routes';
 import { descendantsOf, repairPagesTree, repairPageTree } from './tree';
+import { PageVersions } from './versions';
 
 /** Pages' rules for what a push brings (`SyncService`): a page the bin emptied that a device restores afterwards comes back, with what it held. */
 export const PAGES_PUSH_RULES: readonly PushRule[] = [reviveRule('block', descendantsOf)];
@@ -49,6 +50,8 @@ export interface PagesApp extends ServerApp {
   readonly copies: CopyMaker;
   /** Makes the pages Agenda asks for. */
   readonly journal: JournalMaker;
+  /** Keeps each page's past versions. */
+  readonly versions: PageVersions;
 }
 
 export function createPagesApp(options: PagesAppOptions): PagesApp {
@@ -57,19 +60,27 @@ export function createPagesApp(options: PagesAppOptions): PagesApp {
   const asker = new PagesAsker({ usage, claude, settings: () => settings.pages(), now });
   const copies = new CopyMaker({ reader: new PageCopier({ fetcher, blobs }), sync, records, now });
   const journal = new JournalMaker({ db, records, sync, now });
+  const versions = new PageVersions(db, records, now);
   const pageCount: StatementSync = db.prepare(`SELECT COUNT(*) AS count FROM records WHERE type = 'block' AND json_extract(fields, '$.kind') = 'page' AND json_extract(fields, '$.deletedAt') IS NULL`);
   return {
     id: 'pages',
     readme: `\`${FOLDER}/\` : une page par fichier Markdown, ses sous-pages dans un dossier à son nom, rangées comme dans l’application.`,
     copies,
     journal,
-    routes: app => pagesRoutes(app, { asker, copies, records, journal }),
-    chores: at => emptyPagesBin(db, sync, at) + repairPagesTree(db, sync),
-    filesInUse: pagesFilesInUse,
+    versions,
+    routes: app => pagesRoutes(app, { asker, copies, records, journal, versions }),
+    start: () => versions.start(),
+    stop: () => versions.stop(),
+    chores: at => {
+      const changed = emptyPagesBin(db, sync, at) + repairPagesTree(db, sync);
+      versions.thin(at);
+      return changed;
+    },
+    filesInUse: (all, keep) => new Set([...pagesFilesInUse(all, keep), ...versions.fileIds()]),
     files: (all, filesOptions) => layoutPages(readBlocks(all), filesOptions).files,
     markdown: (all, filesOptions) => {
       const blocks = readBlocks(all);
-      return pagesMarkdown(blocks, all, layoutPages(blocks, filesOptions));
+      return pagesMarkdown(blocks, all, layoutPages(blocks, filesOptions), Date.now(), settings.immich()?.url ?? null);
     },
     counts: () => ({ pages: Number((pageCount.get() as { count: number }).count) }),
   };

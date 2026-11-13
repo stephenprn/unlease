@@ -37,7 +37,7 @@ const ContactMark = memo(function ContactMark({ doc, large = false }: { doc: Sea
 });
 
 function ContactPreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher: Matcher }) {
-  if (doc.parts.length === 0) return <p className={`${styles.quiet} t-meta`}>{t('Rien d’autre que son nom')}</p>;
+  if (doc.parts.length === 0) return <p className={`${styles.quiet} t-meta`}>{t('Nothing but their name')}</p>;
   return (
     <div className={styles.pageBody}>
       {doc.parts.map((part, at) => (

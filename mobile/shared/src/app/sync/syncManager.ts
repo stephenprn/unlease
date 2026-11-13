@@ -123,8 +123,8 @@ function markSynced(): void {
 
 /** What failed, in words: an exchange cut short by its own limit is a server that did not answer. */
 function failureMessage(error: unknown): string {
-  if (error instanceof SyncError && error.kind === 'aborted') return t('Le serveur ne répond pas');
-  return error instanceof Error ? error.message : t('Serveur injoignable');
+  if (error instanceof SyncError && error.kind === 'aborted') return t('The server isn’t responding');
+  return error instanceof Error ? error.message : t('Server unreachable');
 }
 
 let running = false;

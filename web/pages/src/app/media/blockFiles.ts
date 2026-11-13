@@ -50,8 +50,8 @@ export async function attachImportedFile(blockId: string, bytes: Uint8Array, nam
 
 /** What a refused file says, in the slip. */
 export function fileRefusal(outcome: Exclude<FileOutcome, 'ok'>, image: boolean): string {
-  if (outcome === 'empty') return t('Ce fichier est vide.');
-  return image ? t('Cette image dépasse 25 Mo.') : t('Ce fichier dépasse 100 Mo.');
+  if (outcome === 'empty') return t('This file is empty.');
+  return image ? t('This image is over 25 MB.') : t('This file is over 100 MB.');
 }
 
 /** A page's file saved to this computer: this browser's copy while it uploads, the server's after. */

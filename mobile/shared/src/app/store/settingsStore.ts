@@ -32,6 +32,8 @@ export interface SettingsState {
   readonly reading: boolean | null;
   /** Seerr's address as the server last gave it ('' when not linked): its module shows on films and series. */
   readonly seerr: string;
+  /** Immich's address as the server last gave it ('' when not linked): Pages' Immich blocks open their photos there. */
+  readonly immich: string;
   /** Which of the Administration's other services the server has set up (S3, the drive, Seerr), as it last said; one left out is not known yet. Claude's is `reading`. */
   readonly serverFeatures: ServerFeatures;
   /** The Claude model the server last said it reads with: what a module's cost is shown at. */
@@ -64,6 +66,7 @@ const DEFAULTS: SettingsState = {
   onboarded: false,
   reading: null,
   seerr: '',
+  immich: '',
   serverFeatures: {},
   model: 'claude-opus-5-5',
   pagesAsk: null,
@@ -101,6 +104,7 @@ export const selectLocale = (s: SettingsState): Locale => s.locale;
 export const selectCanRead = (s: SettingsState): boolean => s.server !== null && s.reading !== false;
 export const selectSeerr = (s: SettingsState): boolean => s.server !== null && s.seerr !== '';
 export const selectSeerrUrl = (s: SettingsState): string => (s.server ? s.seerr : '');
+export const selectImmichUrl = (s: SettingsState): string => (s.server ? s.immich : '');
 export const selectModel = (s: SettingsState): ClaudeModel => s.model;
 /** Whether a server is connected and has said it set up this service (`on`), said it has not or none is connected (`off`), or has not said yet (`unknown`). */
 export type FeatureState = 'on' | 'off' | 'unknown';
@@ -150,6 +154,7 @@ export function loadSettings(): void {
     onboarded: stored.onboarded === true,
     reading: typeof stored.reading === 'boolean' ? stored.reading : null,
     seerr: typeof stored.seerr === 'string' ? stored.seerr : '',
+    immich: typeof stored.immich === 'string' ? stored.immich : '',
     serverFeatures: parseServerFeatures(stored.serverFeatures),
     model: isClaudeModel(stored.model) ? stored.model : DEFAULTS.model,
     pagesAsk: typeof stored.pagesAsk === 'object' && stored.pagesAsk !== null ? parsePagesAsk(stored.pagesAsk) : null,
@@ -185,9 +190,10 @@ export const setReading = (reading: boolean | null): void => save('reading', rea
 export function rememberServerSettings(settings: ServerSettings): void {
   setReading(settings.analysis.enabled);
   save('seerr', settings.seerr.url);
-  const { backup, drive, seerr } = serverFeatures(settings);
+  save('immich', settings.immich.url);
+  const { backup, drive, seerr, immich } = serverFeatures(settings);
   const known = useSettingsStore.getState().serverFeatures;
-  if (known.backup !== backup || known.drive !== drive || known.seerr !== seerr) save('serverFeatures', { backup, drive, seerr });
+  if (known.backup !== backup || known.drive !== drive || known.seerr !== seerr || known.immich !== immich) save('serverFeatures', { backup, drive, seerr, immich });
   save('model', settings.analysis.model);
   save('pagesAsk', settings.pages);
   save('calendarAsk', settings.calendar.ask);
@@ -299,6 +305,7 @@ export function setServer(config: ServerConfig | null): void {
     save('server', null);
     save('reading', null);
     save('seerr', '');
+    save('immich', '');
     save('serverFeatures', {});
     save('pagesAsk', null);
     save('calendarAsk', false);
@@ -312,6 +319,7 @@ export function setServer(config: ServerConfig | null): void {
     save('apps', null);
     save('reading', null);
     save('seerr', '');
+    save('immich', '');
     save('serverFeatures', {});
   }
   save('server', { url: origin, token: config.token.trim() });

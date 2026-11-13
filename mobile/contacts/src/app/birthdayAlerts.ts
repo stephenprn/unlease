@@ -113,7 +113,7 @@ export async function turnBirthdaysOn(on: boolean): Promise<boolean> {
   }
   const allowed = await ensurePermission();
   if (!allowed) {
-    showSnack(t('Les notifications de {app} sont refusées : elles se donnent dans les réglages d’Android.', { app: APP_NAME }), undefined, { tone: 'warning' });
+    showSnack(t('{app}’s notifications are turned off: they are allowed in Android’s settings.', { app: APP_NAME }), undefined, { tone: 'warning' });
     return false;
   }
   setBirthdaySettings({ enabled: true });

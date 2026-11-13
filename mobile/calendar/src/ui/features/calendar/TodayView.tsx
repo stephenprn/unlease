@@ -56,13 +56,13 @@ export interface TodayViewProps {
 function titleOf(item: DayItem): string {
   switch (item.kind) {
     case 'event':
-      return item.occurrence.event.title.trim() || t('Sans titre');
+      return item.occurrence.event.title.trim() || t('Untitled');
     case 'birthday':
       return birthdayTitle(item.birthday.name, item.birthday.age);
     case 'reminder':
-      return item.reminder.title || t('Sans titre');
+      return item.reminder.title || t('Untitled');
     case 'page':
-      return item.page.title || t('Sans titre');
+      return item.page.title || t('Untitled');
   }
 }
 
@@ -208,14 +208,14 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
 
       {rows.length === 0 && plan.overdue.length === 0 && !tomorrow ? (
         // Nothing today nor tomorrow: the view's empty place.
-        <EmptyState scene="reminders" title={t('Rien de prévu aujourd’hui')} text={t('La journée est à vous.')}>
-          <Button kind="tonal" icon="plus" label={t('Créer un événement')} onPress={onCreate} />
+        <EmptyState scene="reminders" title={t('Nothing planned today')} text={t('The day is yours.')}>
+          <Button kind="tonal" icon="plus" label={t('Create an event')} onPress={onCreate} />
         </EmptyState>
       ) : rows.length === 0 ? (
         // Nothing today, something below: the day's line, the way to fill it after.
-        <EmptyLine size="body" text={t('Rien de prévu aujourd’hui : la journée est à vous.')} action={{ label: t('Créer un événement'), onPress: onCreate }} style={styles.emptyDay} />
+        <EmptyLine size="body" text={t('Nothing planned today: the day is yours.')} action={{ label: t('Create an event'), onPress: onCreate }} style={styles.emptyDay} />
       ) : (
-        <View accessibilityLabel={t('Aujourd’hui')}>
+        <View accessibilityLabel={t('Today')}>
           {plan.allDay.map(row => (
             <Animated.View key={row.item.key} entering={enter(row.item.key)}>
               <ItemRow row={row} day={today} now={now} today={today} twelveHours={twelveHours} onOpen={onOpen} />
@@ -223,32 +223,32 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
           ))}
           {plan.timed.map((row, index) => (
             <React.Fragment key={row.item.key}>
-              {index === plan.nowAt ? <NowLine label={t('Maintenant, {clock}', { clock })} /> : null}
+              {index === plan.nowAt ? <NowLine label={t('Now, {clock}', { clock })} /> : null}
               <Animated.View entering={enter(row.item.key)}>
                 <ItemRow row={row} day={today} now={now} today={today} twelveHours={twelveHours} onOpen={onOpen} />
               </Animated.View>
             </React.Fragment>
           ))}
-          {plan.timed.length > 0 && plan.nowAt === plan.timed.length ? <NowLine label={t('Maintenant, {clock}', { clock })} /> : null}
+          {plan.timed.length > 0 && plan.nowAt === plan.timed.length ? <NowLine label={t('Now, {clock}', { clock })} /> : null}
         </View>
       )}
 
       {journal ? (
         <Row
           lead={<Icon name={dailyPageId ? 'page' : 'pagePlus'} size={20} color={theme.color.ink} />}
-          title={t('Note du jour')}
-          line={dailyPageId ? t('Ouvrir dans {app}', { app: APPS.pages.name }) : t('À écrire dans {app}', { app: APPS.pages.name })}
-          label={`${t('Note du jour')}, ${dailyPageId ? t('Ouvrir dans {app}', { app: APPS.pages.name }) : t('À écrire dans {app}', { app: APPS.pages.name })}`}
+          title={t('Today’s note')}
+          line={dailyPageId ? t('Open in {app}', { app: APPS.pages.name }) : t('To write in {app}', { app: APPS.pages.name })}
+          label={`${t('Today’s note')}, ${dailyPageId ? t('Open in {app}', { app: APPS.pages.name }) : t('To write in {app}', { app: APPS.pages.name })}`}
           onPress={() => onJournal(dailyPageId)}
         />
       ) : null}
 
       {plan.overdue.length > 0 ? (
         <View style={styles.section}>
-          <SectionHead title={t('En retard')} />
+          <SectionHead title={t('Overdue')} />
           {plan.overdue.map((reminder: ReminderItem) => {
             const when = overdueWords(reminder, today, twelveHours);
-            const title = reminder.title || t('Sans titre');
+            const title = reminder.title || t('Untitled');
             return (
               <Row
                 key={reminder.key}
@@ -256,7 +256,7 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
                 title={title}
                 line={when}
                 lineColor={theme.color.danger}
-                label={`${title}, ${t('En retard')}, ${when}`}
+                label={`${title}, ${t('Overdue')}, ${when}`}
                 onPress={() => onOpenNote(reminder.noteId)}
               />
             );
@@ -266,14 +266,14 @@ function TodayViewComponent({ today, now, twelveHours, homePlace, journal, onOpe
 
       {tomorrow ? (
         <View style={styles.section}>
-          <SectionHead title={t('Demain')} meta={weekdayDay(tomorrow.day, Number(today.slice(0, 4)))} />
+          <SectionHead title={t('Tomorrow')} meta={weekdayDay(tomorrow.day, Number(today.slice(0, 4)))} />
           {tomorrow.rows.map(row => (
             <ItemRow key={row.item.key} row={row} day={tomorrow.day} now={now} today={today} twelveHours={twelveHours} onOpen={onOpen} />
           ))}
           {tomorrow.more > 0 ? (
             <Tappable onPress={() => onDay(tomorrow.day)} style={styles.more} accessibilityRole="button">
               <AppText variant="label" color={theme.color.link}>
-                {t('Et {events} demain', { events: plural(tomorrow.more, 'autre événement', 'autres événements') })}
+                {t('And {events} tomorrow', { events: plural(tomorrow.more, 'more event', 'more events') })}
               </AppText>
               <Icon name="chevronRight" size={18} color={theme.color.link} />
             </Tappable>

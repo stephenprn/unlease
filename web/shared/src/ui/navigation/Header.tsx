@@ -38,22 +38,22 @@ export const APP_HEADER_ID = 'app-header';
 export function syncText(phase: SyncPhase, pending: number, lastSync: number | null, message: string | null, clock: string | null = null, now: number = Date.now()): string {
   switch (phase) {
     case 'local':
-      return t('Pas de serveur : tout reste dans ce navigateur.');
+      return t('No server: everything stays in this browser.');
     case 'unauthorized':
-      return t('Le serveur refuse le jeton. Vérifiez-le dans l’administration.');
+      return t('The server refuses the token. Check it in the Administration.');
     case 'offline': {
       // Why, what waits (and that it is safe here), and since when: a server reached only at home or
       // through a VPN is out of reach for hours, and the person should know nothing is lost meanwhile.
-      const reason = message ? t(message) : t('Hors ligne');
+      const reason = message ? t(message) : t('Offline');
       const waiting = pending > 0
-        ? t('{reason} : {changes} en attente, à l’abri dans ce navigateur.', { reason, changes: plural(pending, 'modification') })
-        : message ? t('Hors ligne ({reason}).', { reason }) : t('Hors ligne.');
-      return lastSync ? `${waiting} ${t('Dernière synchronisation {when}.', { when: formatRelative(lastSync, now) })}` : waiting;
+        ? t('{reason}: {changes} waiting, safe in this browser.', { reason, changes: plural(pending, 'change') })
+        : message ? t('Offline ({reason}).', { reason }) : t('Offline.');
+      return lastSync ? `${waiting} ${t('Last synced {when}.', { when: formatRelative(lastSync, now) })}` : waiting;
     }
     case 'syncing':
-      return pending > 0 ? t('Envoi de {changes}…', { changes: plural(pending, 'modification') }) : t('Synchronisation…');
+      return pending > 0 ? t('Sending {changes}…', { changes: plural(pending, 'change') }) : t('Syncing…');
     default:
-      return `${lastSync ? t('Synchronisé {when}.', { when: formatRelative(lastSync, now) }) : t('Synchronisé.')}${clock ? ` ${clock}` : ''}`;
+      return `${lastSync ? t('Synced {when}.', { when: formatRelative(lastSync, now) }) : t('Synced.')}${clock ? ` ${clock}` : ''}`;
   }
 }
 
@@ -68,8 +68,8 @@ const DOT_COLORS: Record<SyncPhase, string> = {
 
 /** The state in a few words, beside the dot, when it needs saying: offline, or refused. Null when all is well (or local by choice). */
 export function syncWords(phase: SyncPhase, pending: number): string | null {
-  if (phase === 'unauthorized') return t('Jeton refusé');
-  if (phase === 'offline') return pending > 0 ? t('Hors ligne · {count} en attente', { count: pending }) : t('Hors ligne');
+  if (phase === 'unauthorized') return t('Token refused');
+  if (phase === 'offline') return pending > 0 ? t('Offline · {count} waiting', { count: pending }) : t('Offline');
   return null;
 }
 
@@ -102,7 +102,7 @@ export const SyncDot = memo(function SyncDot({ words = false }: { words?: boolea
       onClick={() =>
         phase === 'synced' || phase === 'syncing'
           ? showSnack(text, undefined, { tone: phase === 'synced' ? 'success' : 'info' })
-          : showSnack(text, { label: t('Serveur'), run: () => navigate(adminPath('server')) }, { tone: phase === 'local' ? 'info' : phase === 'offline' ? 'warning' : 'error' })
+          : showSnack(text, { label: t('Server'), run: () => navigate(adminPath('server')) }, { tone: phase === 'local' ? 'info' : phase === 'offline' ? 'warning' : 'error' })
       }
     >
       <span className={styles.dot} data-phase={phase} style={{ '--dot': DOT_COLORS[phase] } as CSSProperties} />
@@ -118,8 +118,8 @@ export function SyncNotice() {
   return (
     <button type="button" className={styles.syncNotice} data-phase={phase} onClick={() => navigate(adminPath('server'))}>
       <span className={styles.dot} data-phase={phase} style={{ '--dot': DOT_COLORS[phase] } as CSSProperties} />
-      <span>{phase === 'unauthorized' ? t('Le serveur refuse le jeton') : said}</span>
-      <span className={styles.syncNoticeAction}>{t('Serveur')}</span>
+      <span>{phase === 'unauthorized' ? t('The server refuses the token') : said}</span>
+      <span className={styles.syncNoticeAction}>{t('Server')}</span>
     </button>
   );
 }
@@ -151,7 +151,7 @@ function SearchStrip({ route, narrow, covered }: { route: Route; narrow: boolean
   return (
     <div className={styles.search} inert={covered}>
       {searchMode ? (
-        <IconButton icon="back" label={t('Fermer la recherche')} onClick={endSearch} />
+        <IconButton icon="back" label={t('Close search')} onClick={endSearch} />
       ) : (
         <IconButton icon="menu" label={t('Menu')} className={styles.menuButton} onClick={() => setDrawerOpen(true)} />
       )}
@@ -165,7 +165,7 @@ function SearchStrip({ route, narrow, covered }: { route: Route; narrow: boolean
           className={styles.searchInput}
           value={query}
           placeholder={APP_WORDS[module.id].search}
-          aria-label={t('Rechercher')}
+          aria-label={t('Search')}
           autoComplete="off"
           spellCheck={false}
           onChange={event => {
@@ -183,9 +183,9 @@ function SearchStrip({ route, narrow, covered }: { route: Route; narrow: boolean
           }}
         />
         {searchMode ? (
-          <IconButton icon="close" label={t('Effacer la recherche')} onClick={() => setQuery('')} />
+          <IconButton icon="close" label={t('Clear search')} onClick={() => setQuery('')} />
         ) : query ? (
-          <IconButton icon="close" label={t('Effacer la recherche')} compact size={18} onClick={() => setQuery('')} />
+          <IconButton icon="close" label={t('Clear search')} compact size={18} onClick={() => setQuery('')} />
         ) : narrow ? null : (
           <kbd className={styles.searchKey} aria-hidden="true">
             /

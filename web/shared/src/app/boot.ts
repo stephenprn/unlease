@@ -45,7 +45,7 @@ export async function boot(): Promise<BootResult> {
     // Once a minute at most: a full disk fails every write.
     if (Date.now() - lastStorageWarning < 60_000) return;
     lastStorageWarning = Date.now();
-    showError(t('Impossible d’enregistrer sur cet appareil : l’espace de stockage du navigateur est plein ou bloqué.'));
+    showError(t('Can’t save on this device: the browser’s storage is full or blocked.'));
   });
   // Write-behind storage: commit what is queued when the page goes away.
   window.addEventListener('pagehide', () => void flushLibrary());

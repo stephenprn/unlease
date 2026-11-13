@@ -45,7 +45,7 @@ export function QuickRoot({ launch }: { launch: QuickLaunch }) {
   return (
     <SheetScrim.Provider value={false}>
       <View style={styles.root}>
-        <EventPickerSheet visible={open} title={current ? t('Compter jusqu’à un autre événement') : t('Compter jusqu’à quel événement ?')} current={current} onDismiss={dismiss} onPick={pick} />
+        <EventPickerSheet visible={open} title={current ? t('Count down to another event') : t('Count down to which event?')} current={current} onDismiss={dismiss} onPick={pick} />
       </View>
     </SheetScrim.Provider>
   );

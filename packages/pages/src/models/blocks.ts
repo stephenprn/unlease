@@ -36,6 +36,8 @@ export const BLOCK_KINDS = [
   'drawing',
   /** Agenda's next events (a label's, or all), a live view: holds nothing of its own. */
   'calendar',
+  /** An Immich album, or photos picked in it (`@unlease/core/sync/immich`), shown through the server: its `fileName` keeps the album's name. */
+  'immich',
 ] as const;
 
 export type BlockKind = (typeof BLOCK_KINDS)[number];
@@ -55,7 +57,7 @@ export function isMediaKind(kind: BlockKind): kind is MediaKind {
 }
 
 /** Kinds that take a caption under them, once one is written. */
-export const CAPTION_KINDS: ReadonlySet<BlockKind> = new Set(['code', 'table', 'image', 'video', 'pdf', 'file', 'bookmark', 'embed', 'drawing']);
+export const CAPTION_KINDS: ReadonlySet<BlockKind> = new Set(['code', 'table', 'image', 'video', 'pdf', 'file', 'bookmark', 'embed', 'drawing', 'immich']);
 
 /** The headings a page's table of contents lists (`toc`). */
 export const HEADING_KINDS: ReadonlySet<BlockKind> = new Set(['h1', 'h2', 'h3', 'h4']);
@@ -75,15 +77,15 @@ export const COLUMN_TYPES = ['text', 'number', 'checkbox', 'url', 'email', 'phon
 export type ColumnType = (typeof COLUMN_TYPES)[number];
 
 export const COLUMN_TYPE_NAMES: Record<ColumnType, string> = localized({
-  text: tx('Texte'),
-  number: tx('Nombre'),
-  checkbox: tx('Case à cocher'),
-  url: tx('Lien'),
-  email: tx('E-mail'),
-  phone: tx('Téléphone'),
+  text: tx('Text'),
+  number: tx('Number'),
+  checkbox: tx('Checkbox'),
+  url: tx('Link'),
+  email: tx('Email'),
+  phone: tx('Phone'),
   date: tx('Date'),
-  select: tx('Sélection'),
-  multi: tx('Sélection multiple'),
+  select: tx('Select [column]'),
+  multi: tx('Multi-select'),
 });
 
 export function isColumnType(value: unknown): value is ColumnType {
@@ -172,6 +174,10 @@ export interface Block {
   readonly calendarLabelId: string | null;
   /** A calendar block's reach: how many days ahead it lists (`CALENDAR_BLOCK_DAYS`). */
   readonly calendarDays: number;
+  /** An Immich block's album (its photos, the latest first), or null for photos picked one by one. */
+  readonly immichAlbumId: string | null;
+  /** An Immich block's photos picked one by one, in their order (empty for an album). */
+  readonly immichAssetIds: readonly string[];
   /** A page kept away from Claude: neither it nor its sub-pages are ever sent with a question. */
   readonly private: boolean;
   /** A page in the bin (everything under it goes with it). */
@@ -184,7 +190,7 @@ export interface Block {
   readonly movedAt?: string;
 }
 
-export const UNTITLED_PAGE = tx('Sans titre');
+export const UNTITLED_PAGE = tx('Untitled');
 
 /** How far ahead a calendar block may list, in days: the choices its menu offers. */
 export const CALENDAR_BLOCK_DAYS = [7, 14, 30] as const;
@@ -223,6 +229,8 @@ export const BLOCK_FIELD_DEFAULTS: Readonly<Record<string, unknown>> = {
   showDone: false,
   calendarLabelId: null,
   calendarDays: 14,
+  immichAlbumId: null,
+  immichAssetIds: [],
   ratio: 1,
   private: false,
   trashedAt: null,

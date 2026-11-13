@@ -45,7 +45,7 @@ export function DialogFrame({ title, titleId, onClose, foot, children, kind = 'f
         <h2 id={titleId} className={`${styles.frameTitle} t-title`}>
           {title}
         </h2>
-        {onClose && (!sheet || page) ? <IconButton icon="close" label={t('Fermer')} onClick={onClose} /> : null}
+        {onClose && (!sheet || page) ? <IconButton icon="close" label={t('Close')} onClick={onClose} /> : null}
       </div>
       <div ref={edges} className={styles.frameBody} data-scroll-sheet="">
         {children}
@@ -91,7 +91,7 @@ export function Confirm({ open, title, message, confirmLabel, cancelLabel, dange
         foot={
           <>
             <Button kind="text" onClick={onCancel}>
-              {cancelLabel ?? t('Annuler')}
+              {cancelLabel ?? t('Cancel')}
             </Button>
             <Button kind={danger ? 'danger' : 'filled'} onClick={onConfirm}>
               {confirmLabel}

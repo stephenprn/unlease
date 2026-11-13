@@ -162,6 +162,24 @@ describe('the guarded fetcher', () => {
     expect(calls[1]!.headers.cookie).toBe('session=abc123');
   });
 
+  it('sends a login to the address’s own origin only, and keeps a WebDAV method across a redirect', async () => {
+    const { calls, transport } = scripted({
+      'https://dav.example/.well-known/caldav': { status: 301, headers: { location: '/dav/' } },
+      'https://dav.example/dav/': { status: 302, headers: { location: 'https://elsewhere.example/dav/' } },
+      'https://elsewhere.example/dav/': { status: 207, body: '<multistatus/>' },
+    });
+    const fetcher = createFetcher({ resolve: dns({ 'dav.example': [PUBLIC_A], 'elsewhere.example': [PUBLIC_B] }), transport });
+    const result = await fetcher.fetch('https://dav.example/.well-known/caldav', { ...GET, method: 'PROPFIND', body: '<propfind/>', login: { username: 'léa', password: 'p:ss' } });
+    expect(result.status).toBe(207);
+    expect(calls.map(call => [call.method, call.body])).toEqual([
+      ['PROPFIND', '<propfind/>'],
+      ['PROPFIND', '<propfind/>'],
+      ['PROPFIND', '<propfind/>'],
+    ]);
+    const basic = `Basic ${Buffer.from('léa:p:ss', 'utf8').toString('base64')}`;
+    expect(calls.map(call => call.headers.authorization)).toEqual([basic, basic, undefined]);
+  });
+
   it('tries the next address when one refuses the connection, IPv4 first', async () => {
     const seen: string[] = [];
     const transport: Transport = async request => {
@@ -191,6 +209,13 @@ describe('the network transport', () => {
         response.writeHead(200, { 'content-type': 'text/html' });
         response.write('<title>');
         setTimeout(() => response.end('late</title>'), 2000).unref();
+      } else if (request.url === '/dav' && request.method === 'REPORT') {
+        let sent = '';
+        request.on('data', (chunk: Buffer) => (sent += chunk.toString('utf8')));
+        request.on('end', () => {
+          response.writeHead(207, { 'content-type': 'application/xml' });
+          response.end(JSON.stringify({ method: request.method, depth: request.headers.depth, length: request.headers['content-length'], sent }));
+        });
       } else if (request.url === '/echo') {
         response.writeHead(200, { 'content-type': 'application/json' });
         response.end(JSON.stringify({ host: request.headers.host, ua: request.headers['user-agent'] }));
@@ -222,6 +247,12 @@ describe('the network transport', () => {
     expect(gz.body.toString()).toBe('<title>Compressé</title>');
     const echo = await open().fetch(`${base}/echo`, { ...GET, headers: { 'user-agent': 'carnet-test' } });
     expect(JSON.parse(echo.body.toString())).toEqual({ host: new URL(base).host, ua: 'carnet-test' });
+  });
+
+  it('sends a WebDAV method with its body', async () => {
+    const result = await open().fetch(`${base}/dav`, { ...GET, method: 'REPORT', body: '<é/>', headers: { depth: '1' } });
+    expect(result.status).toBe(207);
+    expect(JSON.parse(result.body.toString())).toEqual({ method: 'REPORT', depth: '1', length: '5', sent: '<é/>' });
   });
 
   it('stops reading at the byte limit', async () => {

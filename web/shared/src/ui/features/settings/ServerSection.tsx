@@ -26,7 +26,7 @@ import styles from './settings.module.css';
 
 /** In French, translated where it is shown (`Section` reads its `info` through `t`). */
 export const SERVER_INFO =
-  tx('Le serveur garde vos données et les synchronise entre vos appareils, pour toutes les applications. Avec une clé Claude, il lit vos liens et répond sur vos pages.');
+  tx('The server keeps your data and syncs it between your devices, for every app. With a Claude key, it reads your links and answers about your pages.');
 
 /** `facts`: what the server holds, once it has said (`serverFacts`). */
 export function ServerSection({ address, facts }: { address: RefObject<HTMLInputElement | HTMLTextAreaElement | null>; facts: string | null }) {
@@ -52,11 +52,11 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
       setUrl(config.url);
       retryFailedImages();
       startSync();
-      if (health.analysis) showSnack(t('Connecté, avec Claude.'), undefined, { tone: 'success' });
-      else showWarning(t('Connecté, mais le serveur n’a pas de clé Claude.'));
+      if (health.analysis) showSnack(t('Connected, with Claude.'), undefined, { tone: 'success' });
+      else showWarning(t('Connected, but the server has no Claude key.'));
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+      const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
       if (failure instanceof SyncError) form.fail(connectFailureField(failure.kind, failure.status), connectFailureMessage(failure.kind, message));
       else form.fail('address', message);
       return false;
@@ -67,14 +67,14 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
   // The phone's words for each phase.
   const status =
     phase === 'local'
-      ? t('Non connecté : tout reste dans ce navigateur.')
+      ? t('Not connected: everything stays in this browser.')
       : phase === 'unauthorized'
-        ? t('Le serveur refuse ce jeton.')
+        ? t('The server refuses this token.')
         : phase === 'offline'
-          ? [t('Hors ligne'), pending > 0 ? t('{changes} en attente', { changes: plural(pending, 'modification') }) : '', message ? t(message) : '', lastSyncAt ? t('Synchronisé {when}', { when: formatRelative(lastSyncAt, now) }) : ''].filter(Boolean).join(' · ')
+          ? [t('Offline'), pending > 0 ? t('{changes} waiting', { changes: plural(pending, 'change') }) : '', message ? t(message) : '', lastSyncAt ? t('Synced {when}', { when: formatRelative(lastSyncAt, now) }) : ''].filter(Boolean).join(' · ')
           : phase === 'syncing'
-            ? t('Synchronisation…')
-            : [lastSyncAt ? t('Synchronisé {when}', { when: formatRelative(lastSyncAt, now) }) : t('Connecté'), clock ? t(clock) : ''].filter(Boolean).join(' · ');
+            ? t('Syncing…')
+            : [lastSyncAt ? t('Synced {when}', { when: formatRelative(lastSyncAt, now) }) : t('Connected'), clock ? t(clock) : ''].filter(Boolean).join(' · ');
 
   return (
     <>
@@ -87,20 +87,20 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
       </div>
       <form className={styles.block} onSubmit={form.onSubmit(connect)} noValidate>
         <div className={styles.fields}>
-          <TextField ref={address} label={t('Adresse')} kind="serverAddress" value={url} onChange={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
+          <TextField ref={address} label={t('Address')} kind="serverAddress" value={url} onChange={setUrl} field={form.field('address')} help={setupFieldHelp('address')} />
           <TextField
-            label={t('Jeton')}
+            label={t('Token')}
             kind="serverToken"
             value={token}
             onChange={setToken}
             field={form.field('token')}
-            revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }}
+            revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }}
           />
         </div>
         <FormMessage form={form} />
         <div className={styles.buttons}>
           <Button type="submit" icon="server" busy={form.busy}>
-            {server ? t('Tester et enregistrer') : t('Se connecter')}
+            {server ? t('Test and save') : t('Connect')}
           </Button>
           {server ? (
             <Button
@@ -111,7 +111,7 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
                 requestSync();
               }}
             >
-              {t('Synchroniser')}
+              {t('Sync')}
             </Button>
           ) : null}
         </div>
@@ -120,16 +120,16 @@ export function ServerSection({ address, facts }: { address: RefObject<HTMLInput
         <button type="button" className={styles.row} onClick={() => setConfirmDisconnect(true)}>
           <Icon name="cloudOff" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Se déconnecter du serveur')}</span>
-            <span className="t-meta">{t('Tout reste dans ce navigateur.')}</span>
+            <span className="t-body">{t('Disconnect from the server')}</span>
+            <span className="t-meta">{t('Everything stays in this browser.')}</span>
           </span>
         </button>
       ) : null}
       <Confirm
         open={confirmDisconnect}
-        title={t('Se déconnecter ?')}
-        message={t('Ce navigateur arrêtera de se synchroniser. Ce qu’il garde reste ici.')}
-        confirmLabel={t('Se déconnecter')}
+        title={t('Disconnect?')}
+        message={t('This browser will stop syncing. What it holds stays here.')}
+        confirmLabel={t('Disconnect')}
         onCancel={() => setConfirmDisconnect(false)}
         onConfirm={() => {
           setConfirmDisconnect(false);

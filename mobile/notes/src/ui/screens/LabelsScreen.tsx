@@ -34,13 +34,13 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Labels')} onBack={() => navigation.goBack()} />
+      <TopBar title={tc('notes', 'Labels')} onBack={() => navigation.goBack()} />
       {/* The tag every label wears leads the strip, as the link strip leads with a link. */}
       <NewLabelStrip
-        placeholder={t('Créer un label')}
-        accessibilityLabel={t('Nom du nouveau label')}
-        submitLabel={t('Créer')}
-        takenMessage={t('Ce label existe déjà : choisissez un autre nom.')}
+        placeholder={t('Create a label')}
+        accessibilityLabel={tc('notes', 'New label’s name')}
+        submitLabel={t('Create')}
+        takenMessage={tc('notes', 'This label already exists: choose another name.')}
         maxLength={60}
         isTaken={name => nameTaken(name)}
         onCreate={name => {
@@ -50,9 +50,9 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
       <LabelsList
         order={order}
         renderRow={id => <LabelRow id={id} onColor={() => openColors(id)} onOpen={() => navigation.navigate('Board', { view: `label:${id}` })} />}
-        empty={<EmptyState scene="label" title={t('Aucun label')} text={t('Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.')} />}
+        empty={<EmptyState scene="label" title={tc('notes', 'No labels')} text={t('Labels group notes on the board. A note can wear several.')} />}
       />
-      <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringLabel?.name ?? t('Couleur')}>
+      <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringLabel?.name ?? t('Colour')}>
         <View style={styles.sheet}>
           <LineColorPicker
             value={coloringLabel?.color ?? null}
@@ -78,10 +78,10 @@ function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; on
       color={label.color}
       maxLength={60}
       words={{
-        color: t('Couleur de {name}', { name: label.name }),
-        rename: t('Renommer {name}', { name: label.name }),
-        remove: t('Supprimer {name}', { name: label.name }),
-        taken: t('Ce label existe déjà : choisissez un autre nom.'),
+        color: t('Colour of {name}', { name: label.name }),
+        rename: t('Rename {name}', { name: label.name }),
+        remove: t('Delete {name}', { name: label.name }),
+        taken: tc('notes', 'This label already exists: choose another name.'),
       }}
       stored={() => {
         const current = useLibraryStore.getState().labels[id];
@@ -92,9 +92,9 @@ function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; on
       onColor={onColor}
       onDelete={() => {
         const undo = deleteLabel(id);
-        showSnack(t('Label « {name} » supprimé', { name: label.name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+        showSnack(tc('notes', 'Label “{name}” deleted', { name: label.name }), { label: t('Undo'), run: undo }, { tone: 'success' });
       }}
-      count={{ text: String(uses), numeric: true, label: t('{notes} avec {name}', { notes: plural(uses, 'note'), name: label.name }), onPress: onOpen }}
+      count={{ text: String(uses), numeric: true, label: t('{notes} with {name}', { notes: plural(uses, 'note'), name: label.name }), onPress: onOpen }}
     />
   );
 }

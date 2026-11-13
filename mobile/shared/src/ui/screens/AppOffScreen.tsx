@@ -42,9 +42,9 @@ export function AppOffScreen({ app, onSettings }: { app: AppId; onSettings?: () 
     try {
       const settings = await saveServerSettings(server, { apps: [...(apps ?? []).filter(id => id !== app), app] });
       rememberServerSettings(settings);
-      showSnack(t('{app} activé sur le serveur', { app: APPS[app].name }), undefined, { tone: 'success' });
+      showSnack(t('{app} turned on on the server', { app: APPS[app].name }), undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -67,7 +67,7 @@ export function AppOffScreen({ app, onSettings }: { app: AppId; onSettings?: () 
             {server.url.replace(/^https?:\/\//, '')}
           </AppText>
         ) : null}
-        {onSettings ? <Button kind="text" label={t('Réglages')} icon="settings" onPress={onSettings} /> : null}
+        {onSettings ? <Button kind="text" label={t('Settings')} icon="settings" onPress={onSettings} /> : null}
       </EdgeScrollView>
     </View>
   );

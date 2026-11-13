@@ -56,9 +56,9 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
   };
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Personnes')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('People')} tall>
       <View style={styles.field}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher une personne')} accessibilityLabel={t('Chercher une personne')} autoCorrect={false} returnKeyType="search" />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search for someone')} accessibilityLabel={t('Search for someone')} autoCorrect={false} returnKeyType="search" />
       </View>
       <SheetScroll top={false}>
         {!typing && chosen.length > 0 ? (
@@ -73,7 +73,7 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
           <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
         ))}
         {others.length === 0 && (typing || chosen.length === 0) ? (
-          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Personne ne s’appelle ainsi dans vos contacts.') : t('Aucun contact pour l’instant.')} slot={40} gap={16} style={styles.empty} />
+          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Nobody in your contacts goes by that name.') : t('No contacts yet.')} slot={40} gap={16} style={styles.empty} />
         ) : null}
       </SheetScroll>
     </Sheet>

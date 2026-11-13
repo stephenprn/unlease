@@ -31,19 +31,19 @@ export function ReadingExtras({ settings, usage }: { server: ServerConfig; setti
         {/* The links read this month, as on the phone (the spend is every app's, over it). */}
         <p className="t-meta">
           {[
-            t('Environ {cost} par lien lu, {search} par recherche d’un module sur le web.', { cost: usd(CLAUDE_COST_PER_LINK[model]), search: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) }),
-            usage ? t('Ce mois-ci : {links}.', { links: plural(usage.month.analyses, 'lien lu', 'liens lus') }) : '',
+            t('About {cost} per link read, {search} per web search by a module.', { cost: usd(CLAUDE_COST_PER_LINK[model]), search: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) }),
+            usage ? t('This month: {links}.', { links: plural(usage.month.analyses, 'link read', 'links read') }) : '',
           ]
             .filter(Boolean)
             .join(' ')}
         </p>
       </div>
       {enabled && skipped > 0 ? (
-        <button type="button" className={styles.row} onClick={() => showSnack(t('{links} en lecture', { links: plural(readSkippedLinks(), 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' })}>
+        <button type="button" className={styles.row} onClick={() => showSnack(t('{links} for reading', { links: plural(readSkippedLinks(), 'link sent', 'links sent') }), undefined, { tone: 'success' })}>
           <Icon name="refresh" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{skipped === 1 ? t('Lire le lien non lu') : t('Lire les {links}', { links: plural(skipped, 'lien non lu', 'liens non lus') })}</span>
-            <span className="t-meta">{skipped === 1 ? t('Gardé tel quel quand la lecture était désactivée · environ {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) }) : t('Gardés tels quels quand la lecture était désactivée · environ {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) })}</span>
+            <span className="t-body">{skipped === 1 ? t('Read the unread link') : t('Read the {links}', { links: plural(skipped, 'unread link', 'unread links') })}</span>
+            <span className="t-meta">{skipped === 1 ? t('Kept as it was while reading was off · about {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) }) : t('Kept as they were while reading was off · about {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) })}</span>
           </span>
         </button>
       ) : null}
@@ -51,8 +51,8 @@ export function ReadingExtras({ settings, usage }: { server: ServerConfig; setti
         <button type="button" className={styles.row} onClick={() => navigate(paths.templates)}>
           <Icon name="list" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Ce que Claude relève')}</span>
-            <span className="t-meta">{t('Ce que Claude relève sur chaque lien qu’il lit')}</span>
+            <span className="t-body">{t('Facts Claude notes')}</span>
+            <span className="t-meta">{t('What Claude notes on each link it reads')}</span>
           </span>
           <Icon name="chevronRight" size={20} />
         </button>

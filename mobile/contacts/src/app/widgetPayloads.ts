@@ -52,7 +52,7 @@ function person(contact: Contact, localPaths: ReadonlyMap<string, string>): Widg
   return {
     id: contact.id,
     name: contact.firstName.trim() || name,
-    said: number ? t('Appeler {name}', { name }) : name,
+    said: number ? t('Call {name}', { name }) : name,
     initials: initials(contact),
     color: avatarColor(contact.id),
     photo: contact.photoId ?? '',
@@ -70,7 +70,7 @@ export function callsPayload(target: string, state: Pick<LibraryState, 'contacts
   return {
     id: target,
     kind: labelId ? 'label' : 'favorites',
-    title: labelId ? (label?.name ?? '') : t('Favoris'),
+    title: labelId ? (label?.name ?? '') : t('Favourites'),
     color: label?.color ?? '',
     open: labelId ? `label/${labelId}` : 'favorites',
     gone: labelId !== null && (!label || label.deletedAt !== null),

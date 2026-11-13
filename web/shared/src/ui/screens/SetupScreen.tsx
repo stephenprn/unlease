@@ -73,6 +73,7 @@ import { saveApps } from '../features/settings/AppsSection';
 import { BACKUP_INFO, BackupSection } from '../features/settings/BackupSection';
 import { ClaudeSection } from '../features/settings/ClaudeSection';
 import { DRIVE_INFO, DriveSection } from '../features/settings/DriveSection';
+import { IMMICH_INFO, ImmichSection } from '../features/settings/ImmichSection';
 import { InfoBubble, InfoButton, useInfoBubble } from '../features/settings/InfoBubble';
 import { Section, StatusRow, toneColor } from '../features/settings/Section';
 import settingsStyles from '../features/settings/settings.module.css';
@@ -150,7 +151,7 @@ export function SetupScreen() {
   // This app's own forms: another app's task (Carnet's Seerr, set up from Pages) waits for that app's setup.
   const forms = app.adminSections ?? [];
   // A row opened is the page's one sheet: its "how it works" stands by the page's title.
-  const info = task === 'backup' ? BACKUP_INFO : task === 'drive' ? DRIVE_INFO : task ? forms.find(form => form.task === task)?.info : undefined;
+  const info = task === 'backup' ? BACKUP_INFO : task === 'drive' ? DRIVE_INFO : task === 'immich' ? IMMICH_INFO : task ? forms.find(form => form.task === task)?.info : undefined;
 
   /** « Commencer »: the server is set up for every device that comes next, then the app opens. */
   const finish = async (): Promise<void> => {
@@ -160,7 +161,7 @@ export function SetupScreen() {
         setServerSettings(await saveServerSettings(server, { setupDone: true }));
       } catch (failure) {
         // Not kept on the server: the next device will see these steps again, nothing else is lost.
-        showError(failure instanceof Error ? t(failure.message) : t('Réglage refusé'));
+        showError(failure instanceof Error ? t(failure.message) : t('Setting refused'));
       } finally {
         setFinishing(false);
       }
@@ -176,18 +177,18 @@ export function SetupScreen() {
           <GroundSection />
           {isDefaultAppearance(appearance) ? null : (
             <Button kind="text" icon="undo" className={styles.setupReset} onClick={() => setAppearance({ ...DEFAULT_APPEARANCE, ownColor: appearance.ownColor, ownGradient: appearance.ownGradient })}>
-              {t('Revenir à l’apparence d’origine')}
+              {t('Back to the original look')}
             </Button>
           )}
         </>
       );
     }
     if (step === 'import' && importer) {
-      if (importPending) return <p className="t-meta">{t('Lecture de vos données…')}</p>;
+      if (importPending) return <p className="t-meta">{t('Reading your data…')}</p>;
       const { Wizard } = importer;
       return <Wizard embedded onFlow={setImporting} onImported={() => setImported(true)} />;
     }
-    if (!ready) return <p className="t-meta">{t('Lecture des réglages du serveur…')}</p>;
+    if (!ready) return <p className="t-meta">{t('Reading the server’s settings…')}</p>;
     if (step === 'apps') return <AppsStep server={server} settings={settings} />;
     switch (task) {
       case null:
@@ -232,6 +233,12 @@ export function SetupScreen() {
             <DriveSection key={server.url} server={server} drive={settings.drive} admin={admin} />
           </Section>
         );
+      case 'immich':
+        return (
+          <Section labelledBy={headingId}>
+            <ImmichSection key={server.url} server={server} immich={settings.immich} />
+          </Section>
+        );
       case 'reading':
         // Claude's key once, for every app; then what an app asks of it (Pages' questions).
         return (
@@ -270,7 +277,7 @@ export function SetupScreen() {
       return (
         <>
           <Button kind="text" icon="back" onClick={() => go('checklist')} disabled={held}>
-            {t('Retour')}
+            {t('Back')}
           </Button>
           <Button kind={set ? 'filled' : 'tonal'} onClick={() => go('checklist')} disabled={held}>
             {setupTaskForward(set)}
@@ -284,7 +291,7 @@ export function SetupScreen() {
     return (
       <>
         <Button kind="text" icon="back" onClick={() => go(previousSetupStep(steps, step))} disabled={restoring}>
-          {t('Retour')}
+          {t('Back')}
         </Button>
         {last ? (
           <Button icon="check" onClick={() => void finish()} busy={finishing} disabled={restoring}>
@@ -307,12 +314,12 @@ export function SetupScreen() {
           <span className="t-body-strong">{APPS[theApp().id].name}</span>
           {/* The trail under it shows which step this is: the count is said, not shown twice. */}
           <span className={`${styles.setupHeadProgress} t-meta`}>
-            {t('Mise en route')}
+            {t('Getting started')}
             <span className="sr-only">{` · ${setupProgress(steps, step)}`}</span>
           </span>
         </div>
         {/* The way through, a stone per step on one thread: ticked once done, a leaf at the step open, bare ahead. */}
-        <StepTrail steps={steps.map(entry => ({ id: entry, name: SETUP_WORDS[entry].short }))} current={index} label={t('Étapes')} />
+        <StepTrail steps={steps.map(entry => ({ id: entry, name: SETUP_WORDS[entry].short }))} current={index} label={t('Steps')} />
       </header>
 
       <SetupIntro key={task ?? step} id={headingId} heading={heading} title={words.title} lead={words.lead} info={info} />
@@ -320,7 +327,7 @@ export function SetupScreen() {
       {body()}
 
       {step === 'import' && importing ? null : (
-        <nav className={styles.setupNav} aria-label={t('Mise en route')}>
+        <nav className={styles.setupNav} aria-label={t('Getting started')}>
           {nav()}
         </nav>
       )}
@@ -363,7 +370,7 @@ function AppsStep({ server, settings }: { server: ServerConfig; settings: Server
     try {
       await saveApps(server, next);
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Réglage refusé'));
+      showError(failure instanceof Error ? t(failure.message) : t('Setting refused'));
     } finally {
       setBusy(null);
     }
@@ -390,10 +397,10 @@ function AppsStep({ server, settings }: { server: ServerConfig; settings: Server
               <span className={styles.setupAppText}>
                 <span className={styles.setupAppName}>
                   <span className="t-title">{choice.name}</span>
-                  <span className="t-meta">{choice.soon ? t('Bientôt disponible') : choice.locked ? t('Cette application') : choice.replaces}</span>
+                  <span className="t-meta">{choice.soon ? t('Coming soon') : choice.locked ? t('This app') : choice.replaces}</span>
                 </span>
                 <span className="t-body">{choice.description}</span>
-                {last && !choice.locked ? <span className="t-meta">{t('Le serveur fait toujours tourner au moins une application.')}</span> : null}
+                {last && !choice.locked ? <span className="t-meta">{t('The server always runs at least one app.')}</span> : null}
               </span>
               {choice.soon ? null : <CheckMark checked={choice.checked} />}
             </button>
@@ -462,7 +469,7 @@ function Welcome({ initial, onNext }: { initial: ServerConfig | null; onNext: (s
       onNext(health.setup);
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+      const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
       const field = failure instanceof SyncError ? connectFailureField(failure.kind, failure.status) : 'address';
       if (field === 'address') setEditAddress(true);
       form.fail(field, failure instanceof SyncError ? connectFailureMessage(failure.kind, message) : message);
@@ -498,14 +505,14 @@ function Welcome({ initial, onNext }: { initial: ServerConfig | null; onNext: (s
                   <span className="t-meta">{setupFieldHelp('served')}</span>
                 </span>
                 <Button kind="text" small onClick={() => setEditAddress(true)}>
-                  {t('Une autre adresse')}
+                  {t('Another address')}
                 </Button>
                 {/* The address a password manager keeps beside the token, when it is not typed. */}
                 <input type="text" name="address" autoComplete="username" value={url} readOnly hidden />
               </div>
             ) : (
               <TextField
-                label={t('Adresse du serveur')}
+                label={t('Server address')}
                 kind="serverAddress"
                 value={url}
                 onChange={setUrl}
@@ -515,31 +522,31 @@ function Welcome({ initial, onNext }: { initial: ServerConfig | null; onNext: (s
               />
             )}
             <TextField
-              label={t('Jeton')}
+              label={t('Token')}
               kind="serverToken"
               value={token}
               onChange={setToken}
               field={form.field('token')}
               autoFocus={addressShown}
               help={setupFieldHelp('token')}
-              revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }}
+              revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }}
             />
             <FormMessage form={form} />
             <Button type="submit" icon="server" busy={form.busy} stretch>
-              {initial ? t('Continuer') : t('Se connecter')}
+              {initial ? t('Continue') : t('Connect')}
             </Button>
             <div className={styles.setupLocal}>
               <Button kind="text" onClick={later} stretch>
-                {t('Tout garder dans ce navigateur')}
+                {t('Keep everything in this browser')}
               </Button>
-              <p className="t-meta">{t('Vous pourrez relier un serveur plus tard, dans l’Administration.')}</p>
+              <p className="t-meta">{t('You can connect a server later, in the Administration.')}</p>
             </div>
           </form>
         </OutlineLift>
         <p className={`${styles.setupAfter} t-meta`}>
-          {t('Pas encore de serveur ?')}{' '}
+          {t('No server yet?')}{' '}
           <a href={SELF_HOSTING_GUIDE} target="_blank" rel="noopener noreferrer">
-            {t('Le guide d’installation')}
+            {t('The installation guide')}
           </a>
         </p>
       </div>
@@ -585,7 +592,7 @@ function RestoreStep({ server, settings, admin, onSetBackup }: { server: ServerC
           <StatusRow tone="waiting" title={title} meta={meta} />
           <div className={`${settingsStyles.buttons} ${styles.setupRestoreS3}`}>
             <Button kind="tonal" icon="restore" onClick={() => setSent(false)}>
-              {t('Choisir à nouveau')}
+              {t('Choose again')}
             </Button>
           </div>
         </>
@@ -615,7 +622,7 @@ function RestoreStep({ server, settings, admin, onSetBackup }: { server: ServerC
         </div>
       ) : (
         <div className={settingsStyles.block}>
-          <div role="radiogroup" aria-label={t('Sauvegarde à restaurer')} className={settingsStyles.choices}>
+          <div role="radiogroup" aria-label={t('Backup to restore')} className={settingsStyles.choices}>
             {snapshots.slice(0, 8).map(snapshot => (
               <button key={snapshot.name} type="button" role="radio" aria-checked={selected === snapshot.name} className={settingsStyles.choice} onClick={() => setChosen(snapshot.name)}>
                 <span className={settingsStyles.choiceMark} aria-hidden="true">
@@ -648,7 +655,7 @@ function RestoreStep({ server, settings, admin, onSetBackup }: { server: ServerC
         type="file"
         accept=".gz,.tgz,application/gzip"
         hidden
-        aria-label={t('Archive à restaurer')}
+        aria-label={t('Archive to restore')}
         onChange={event => {
           const file = event.target.files?.[0];
           event.target.value = '';

@@ -28,7 +28,7 @@ function RichViewComponent({ markup, now, onRef }: { markup: string; now: number
           const name = nameOf(state, run.target);
           return (
             <AppText key={index} variant="bodyStrong" color={theme.color.link} onPress={() => onRef(run.target)} accessibilityRole="link">
-              {name ?? t('Indisponible ici')}
+              {name ?? t('Not available here')}
             </AppText>
           );
         }

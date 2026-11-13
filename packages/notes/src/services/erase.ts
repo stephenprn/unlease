@@ -14,7 +14,7 @@
  * A note or a collection loses its words with its tombstone, as « Supprimer définitivement » does.
  * Records already erased are left as they are.
  */
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { EraseChange, ErasePart } from '@unlease/core/services/erase';
 import { plural } from '@unlease/core/services/format';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -70,17 +70,17 @@ const sum = (groups: readonly { readonly ids: readonly string[] }[]): number => 
 
 /** The notes' line: how many, how many archived or in the bin, their photos. */
 function notesDetail(notes: readonly Note[], photos: number): string {
-  if (notes.length === 0) return t('Aucune note');
+  if (notes.length === 0) return t('No notes');
   const all = plural(notes.length, 'note');
   const archived = notes.filter(note => note.archived && note.trashedAt === null).length;
   const binned = notes.filter(note => note.trashedAt !== null).length;
   const words =
     archived > 0 && binned > 0
-      ? t('{notes}, dont {archived} et {binned} dans la corbeille', { notes: all, archived: plural(archived, 'archivée', 'archivées'), binned })
+      ? t('{notes}, {archived} and {binned} in the bin', { notes: all, archived: plural(archived, 'archived', 'archived [many]'), binned })
       : archived > 0
-        ? t('{notes}, dont {archived}', { notes: all, archived: plural(archived, 'archivée', 'archivées') })
+        ? t('{notes}, {archived}', { notes: all, archived: plural(archived, 'archived', 'archived [many]') })
         : binned > 0
-          ? t('{notes}, dont {binned} dans la corbeille', { notes: all, binned })
+          ? t('{notes}, {binned} in the bin', { notes: all, binned })
           : all;
   return photos > 0 ? `${words} · ${plural(photos, 'photo')}` : words;
 }
@@ -101,28 +101,28 @@ export function eraseParts(library: EraseLibrary): ErasePart[] {
   const inbox = library.notes[INBOX_ID];
   const part = (id: NotesErasePart, title: string, detail: string, glyph: GlyphName): ErasePart => ({ id, title, detail, count: sum(records[id]), glyph });
   return [
-    part('notes', t('Notes, listes et dessins'), notesDetail(written, live(library.attachments).length), 'note'),
+    part('notes', t('Notes, lists and drawings'), notesDetail(written, live(library.attachments).length), 'note'),
     part(
       'collections',
       t('Collections'),
-      collections.length > 0 ? t('{collections}, {links}', { collections: plural(collections.length, 'collection'), links: plural(filed, 'lien') }) : t('Aucune collection'),
+      collections.length > 0 ? t('{collections}, {links}', { collections: plural(collections.length, 'collection'), links: plural(filed, 'link') }) : t('No collections'),
       'collections',
     ),
     part(
       'inbox',
-      t('Liens de {collection}', { collection: inbox ? shownTitle(inbox) : t('Non classé') }),
-      unfiled > 0 ? t('{links} ; la collection elle-même reste', { links: plural(unfiled, 'lien') }) : t('Aucun lien'),
+      t('Links in {collection}', { collection: inbox ? shownTitle(inbox) : t('Unsorted') }),
+      unfiled > 0 ? t('{links}; the collection itself stays', { links: plural(unfiled, 'link') }) : t('No links'),
       'inbox',
     ),
-    part('labels', t('Labels'), labels > 0 ? t('{labels}, retirés des notes qui les portent', { labels: plural(labels, 'label') }) : t('Aucun label'), 'tag'),
+    part('labels', tc('notes', 'Labels'), labels > 0 ? t('{labels}, taken off the notes that wear them', { labels: plural(labels, 'label [notes]', 'labels [notes]') }) : tc('notes', 'No labels'), 'tag'),
     part(
       'templates',
-      t('Ce que Claude relève'),
+      t('Facts Claude notes'),
       templates.length > 0
-        ? t('{lists} : Claude revient aux informations habituelles', {
-            lists: [own > 0 ? plural(own, 'liste d’informations', 'listes d’informations') : null, kinds > 0 ? plural(kinds, 'type de lien modifié', 'types de liens modifiés') : null].filter(Boolean).join(', '),
+        ? t('{lists}: Claude goes back to its usual facts', {
+            lists: [own > 0 ? plural(own, 'list of facts', 'lists of facts') : null, kinds > 0 ? plural(kinds, 'kind of link changed', 'kinds of link changed') : null].filter(Boolean).join(', '),
           })
-        : t('Claude relève les informations habituelles'),
+        : t('Claude notes its usual facts'),
       'list',
     ),
   ];

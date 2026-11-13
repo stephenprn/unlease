@@ -11,7 +11,7 @@
  */
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 import { createId } from '@unlease/core/services/ids';
 import { IMPORT_WORDS, importFilesProgress } from '@unlease/core/services/importFlow';
 import { defaultLabels, fileLabels, planImport, plannedCount, readImportFile, type ImportedContact, type ImportFormat, type ImportPlan, type PlanOptions } from '@unlease/contacts/services/importing';
@@ -49,9 +49,9 @@ import { navigate } from '@shared/ui/router';
 import { paths } from '../../routes';
 
 const STEPS = [
-  tx('Ouvrez contacts.google.com et connectez-vous.'),
-  tx('Choisissez « Exporter », puis « vCard » (ou « CSV Google ») et exportez.'),
-  tx('Déposez ici le fichier téléchargé (.vcf ou .csv). Celui d’un export Takeout de Google Contacts convient aussi.'),
+  tx('Open contacts.google.com and sign in.'),
+  tx('Choose “Export”, then “vCard” (or “Google CSV”) and export.'),
+  tx('Drop the downloaded file here (.vcf or .csv). The one from a Google Contacts Takeout export works too.'),
 ];
 
 const ACCEPT = '.vcf,.vcard,.csv,text/vcard,text/x-vcard,text/csv';
@@ -184,7 +184,7 @@ export function ContactsImport({ embedded = false, onFlow, onImported }: ImportW
       setStep(current => (current.kind === 'done' ? { ...current, undone: true, snack: null } : current));
       return true;
     };
-    const snack = showSnack(importedMessage(fresh), { label: tc('undo', 'Annuler'), run: () => void undo() }, { tone: 'success' });
+    const snack = showSnack(importedMessage(fresh), { label: t('Undo'), run: () => void undo() }, { tone: 'success' });
     // Written: nothing left to plan (the report holds its plan, for « Annuler »).
     setRead(null);
     setChoices(null);
@@ -201,7 +201,7 @@ export function ContactsImport({ embedded = false, onFlow, onImported }: ImportW
 
   const back = (to: () => void) => (
     <Button kind="text" icon="back" onClick={to}>
-      {t('Retour')}
+      {t('Back')}
     </Button>
   );
 
@@ -211,7 +211,7 @@ export function ContactsImport({ embedded = false, onFlow, onImported }: ImportW
         <ImportSheet label={CONTACTS_IMPORT_WORDS.sourceTitle}>
           <div className={settings.block}>
             <ImportInstructions steps={STEPS.map(text => t(text))} />
-            <ImportDrop label={t('Déposez le fichier exporté (.vcf ou .csv)')} meta={t('ou cliquez pour le choisir')} accept={ACCEPT} reading={step.reading} inputLabel={t('Fichier de contacts')} onFiles={files => void take(files)} />
+            <ImportDrop label={t('Drop the exported file (.vcf or .csv)')} meta={t('or click to choose it')} accept={ACCEPT} reading={step.reading} inputLabel={t('Contacts file')} onFiles={files => void take(files)} />
             {/* A file refused says why under the drop zone, as a form's own line. */}
             <FormMessage form={{ message: step.problem ? CONTACTS_IMPORT_WORDS[step.problem] : null, problems: 0 }} />
             <p className="t-meta">{`${CONTACTS_IMPORT_WORDS.kept} ${server ? IMPORT_WORDS.private : IMPORT_WORDS.privateLocal}`}</p>
@@ -271,7 +271,7 @@ export function ContactsImport({ embedded = false, onFlow, onImported }: ImportW
         title={IMPORT_WORDS.previewTitle}
         lead={IMPORT_WORDS.previewLead}
         back={back(toSource)}
-        forward={<Button onClick={() => setStep({ kind: 'choices' })}>{t('Continuer')}</Button>}
+        forward={<Button onClick={() => setStep({ kind: 'choices' })}>{t('Continue')}</Button>}
       >
         <ImportSheet label={source}>
           <div className={settings.block}>

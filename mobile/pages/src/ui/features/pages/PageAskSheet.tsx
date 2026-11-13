@@ -9,7 +9,7 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { answerCopy, answerLayout, askStarters, askTitle, askWords, citationNumbers, isPrivatePage, keptUnder, pagePath, quoteText, type AnswerSegment } from '@unlease/pages/services/pagesAsk';
 import { askCost, PAGES_ASK_LIMITS, type PageScope, type PagesAskResponse } from '@unlease/pages/sync/pagesAsk';
@@ -46,14 +46,14 @@ import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 
 const EMPTY: AskThread = { scope: 'page', web: false, turns: [] };
 
-const openUrl = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+const openUrl = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 
 /** Mounted at the page screen's root: open while the conversation is this page's. */
 export function PageAskSheet({ pageId, onCite }: { pageId: string; onCite: (pageId: string, blockId: string | null) => void }) {
   const settings = usePagesAskSettings();
   const open = usePagesAskStore(s => s.open === pageId);
   return (
-    <Sheet visible={open && settings !== null} onDismiss={closePagesAsk} title={t('Demander à Claude')} tall>
+    <Sheet visible={open && settings !== null} onDismiss={closePagesAsk} title={t('Ask Claude')} tall>
       {open && settings ? <AskBody pageId={pageId} settings={settings} onCite={onCite} /> : null}
     </Sheet>
   );
@@ -65,20 +65,20 @@ function ScopeFacts({ pageId, scope, settings, model, web }: { pageId: string; s
   const reach = PAGES_REACH_CHARS[settings.reach];
   const lines: string[] = [];
   if (scope === 'all') {
-    lines.push(t('Claude lit les pages les plus proches de votre question, jusqu’à environ {words} mots ({cost} au plus).', { words: askWords(reach), cost: formatUsd(askCost(reach, model, web)) }));
+    lines.push(t('Claude reads the pages closest to your question, up to about {words} words ({cost} at most).', { words: askWords(reach), cost: formatUsd(askCost(reach, model, web)) }));
   } else {
     const words = askWords(preview.chars);
     const cost = formatUsd(askCost(preview.chars, model, web));
     const others = preview.pages.length - 1;
     lines.push(
       scope === 'tree' && others > 0
-        ? t('Claude lit cette page et {pages} : environ {words} mots ({cost} au plus).', { pages: plural(others, 'sous-page', 'sous-pages'), words, cost })
-        : t('Claude lit cette page : environ {words} mots ({cost} au plus).', { words, cost }),
+        ? t('Claude reads this page and {pages}: about {words} words ({cost} at most).', { pages: plural(others, 'sub-page', 'sub-pages'), words, cost })
+        : t('Claude reads this page: about {words} words ({cost} at most).', { words, cost }),
     );
-    if (preview.cut > 0) lines.push(t('Trop long pour une seule question : {pages} de côté.', { pages: plural(preview.cut, 'page laissée', 'pages laissées') }));
+    if (preview.cut > 0) lines.push(t('Too long for one question: {pages} out.', { pages: plural(preview.cut, 'page left', 'pages left') }));
   }
   const kept = scope === 'all' ? 0 : keptUnder(library, pageId);
-  if (kept > 0) lines.push(t('{pages} hors de Claude.', { pages: plural(kept, 'page gardée', 'pages gardées') }));
+  if (kept > 0) lines.push(t('{pages} away from Claude.', { pages: plural(kept, 'page kept', 'pages kept') }));
   return (
     <>
       {lines.map(line => (
@@ -105,9 +105,9 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
   const scope: PageScope = thread.scope === 'all' && !settings.everywhere ? 'page' : thread.scope === 'tree' && subCount === 0 ? 'page' : thread.scope;
   const web = thread.web && settings.web;
   const options = [
-    { value: 'page' as const, label: t('Cette page') },
-    ...(subCount > 0 ? [{ value: 'tree' as const, label: t('Sous-pages') }] : []),
-    ...(settings.everywhere ? [{ value: 'all' as const, label: t('Toutes') }] : []),
+    { value: 'page' as const, label: t('This page') },
+    ...(subCount > 0 ? [{ value: 'tree' as const, label: t('Sub-pages') }] : []),
+    ...(settings.everywhere ? [{ value: 'all' as const, label: tc('pages', 'All') }] : []),
   ];
 
   const send = (question: string): void => {
@@ -125,8 +125,8 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
     return (
       <View style={styles.private}>
         <Icon name="eyeOff" size={24} color={theme.color.inkMuted} />
-        <AppText variant="body">{ownKept ? t('Cette page est gardée hors de Claude : ni elle ni ses sous-pages ne lui sont envoyées.') : t('Une page au-dessus de celle-ci la garde hors de Claude : rien n’en est envoyé.')}</AppText>
-        {ownKept ? <Button kind="tonal" icon="eye" label={t('Montrer à Claude')} onPress={() => setPagePrivate(pageId, false)} /> : null}
+        <AppText variant="body">{ownKept ? t('This page is kept away from Claude: neither it nor its sub-pages are sent.') : t('A page above this one keeps it away from Claude: nothing of it is sent.')}</AppText>
+        {ownKept ? <Button kind="tonal" icon="eye" label={t('Show to Claude')} onPress={() => setPagePrivate(pageId, false)} /> : null}
       </View>
     );
   }
@@ -136,9 +136,9 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
       <View style={styles.scope}>
         <View style={styles.aboutRow}>
           <AppText variant="meta" numberOfLines={1} style={styles.flex}>
-            {t('À propos de « {page} »', { page: title })}
+            {t('About “{page}”', { page: title })}
           </AppText>
-          {thread.turns.length > 0 ? <Button kind="text" icon="broom" label={t('Nouvelle conversation')} onPress={() => clearAskThread(pageId)} /> : null}
+          {thread.turns.length > 0 ? <Button kind="text" icon="broom" label={t('New conversation')} onPress={() => clearAskThread(pageId)} /> : null}
         </View>
         {options.length > 1 ? <Segmented<PageScope> options={options} value={scope} onChange={next => setAskScope(pageId, next)} /> : null}
         <ScopeFacts pageId={pageId} scope={scope} settings={settings} model={model} web={web} />
@@ -146,8 +146,8 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
 
       <SheetScroll ref={scroll} style={styles.thread} contentContainerStyle={styles.threadContent} onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
         {thread.turns.length === 0 ? (
-          <View role="group" accessibilityLabel={t('Questions pour commencer')} style={styles.starters}>
-            <AppText variant="meta">{t('Claude répond d’après vos pages et cite les passages.')}</AppText>
+          <View role="group" accessibilityLabel={t('Questions to start with')} style={styles.starters}>
+            <AppText variant="meta">{t('Claude answers from your pages and cites the passages.')}</AppText>
             {askStarters(scope).map(starter => (
               <Tappable key={starter} onPress={() => send(starter)} accessibilityLabel={starter} style={styles.starter}>
                 <AppText variant="label">{starter}</AppText>
@@ -163,23 +163,23 @@ function AskBody({ pageId, settings, onCite }: { pageId: string; settings: Pages
         <View style={styles.composeRow}>
           <View style={styles.flex}>
             <TextField
-              accessibilityLabel={t('Votre question')}
+              accessibilityLabel={t('Your question')}
               kind="prose"
               value={draft}
               onChangeText={setDraft}
-              placeholder={thread.turns.length > 0 ? t('Une autre question…') : scope === 'page' ? t('Une question sur cette page') : t('Une question sur vos pages')}
+              placeholder={thread.turns.length > 0 ? t('Another question…') : scope === 'page' ? t('A question about this page') : t('A question about your pages')}
               multiline
               maxLength={PAGES_ASK_LIMITS.question}
               style={styles.field}
             />
           </View>
-          <IconButton icon="arrowUp" label={t('Demander')} shape={1} disabled={!draft.trim() || pending} onPress={() => send(draft)} style={styles.send} />
+          <IconButton icon="arrowUp" label={t('Ask')} shape={1} disabled={!draft.trim() || pending} onPress={() => send(draft)} style={styles.send} />
         </View>
         {settings.web ? (
           // The whole row is the switch (the web's): its words name it.
-          <Tappable onPress={() => setAskWeb(pageId, !web)} accessibilityRole="switch" accessibilityState={{ checked: web }} accessibilityLabel={t('Chercher aussi sur le web')} style={styles.webRow}>
+          <Tappable onPress={() => setAskWeb(pageId, !web)} accessibilityRole="switch" accessibilityState={{ checked: web }} accessibilityLabel={t('Search the web too')} style={styles.webRow}>
             <AppText variant="meta" style={styles.flex}>
-              {t('Chercher aussi sur le web')}
+              {t('Search the web too')}
             </AppText>
             <SwitchMark checked={web} />
           </Tappable>
@@ -204,17 +204,17 @@ function Turn({ pageId, turn, onCite }: { pageId: string; turn: AskTurn; onCite:
       ) : turn.error !== null ? (
         <View style={styles.failed} accessibilityLiveRegion="polite">
           <AppText variant="body" color={theme.color.danger}>
-            {t('Claude n’a pas pu répondre : {reason}', { reason: t(turn.error) })}
+            {t('Claude could not answer: {reason}', { reason: t(turn.error) })}
           </AppText>
-          <Button kind="text" icon="refresh" label={t('Réessayer')} onPress={() => retryAsk(pageId, turn.id)} />
+          <Button kind="text" icon="refresh" label={t('Try again')} onPress={() => retryAsk(pageId, turn.id)} />
         </View>
       ) : (
         <View style={styles.waiting} accessibilityLiveRegion="polite">
           <ReadingTrack width={72} />
           <AppText variant="meta" style={styles.flex}>
-            {turn.web ? t('Claude lit {pages} et cherche sur le web…', { pages: plural(turn.read, 'page', 'pages') }) : t('Claude lit {pages}…', { pages: plural(turn.read, 'page', 'pages') })}
+            {turn.web ? t('Claude is reading {pages} and searching the web…', { pages: plural(turn.read, 'page', 'pages') }) : t('Claude is reading {pages}…', { pages: plural(turn.read, 'page', 'pages') })}
           </AppText>
-          <Button kind="text" label={t('Annuler')} onPress={() => cancelAsk(pageId)} />
+          <Button kind="text" label={t('Cancel')} onPress={() => cancelAsk(pageId)} />
         </View>
       )}
     </View>
@@ -227,20 +227,20 @@ function Answer({ pageId, turn, answer, onCite }: { pageId: string; turn: AskTur
   const layout = useMemo(() => answerLayout(answer.parts), [answer]);
   const numbers = useMemo(() => [...citationNumbers(answer.parts)].sort((a, b) => a[1] - b[1]), [answer]);
   const blocks = useLibraryStore(s => s.blocks);
-  const where = (id: string): string => (blocks[id] && blocks[id]!.deletedAt === null ? pagePath(blocks, id) : t('Page supprimée'));
+  const where = (id: string): string => (blocks[id] && blocks[id]!.deletedAt === null ? pagePath(blocks, id) : t('Deleted page'));
   // A source's mark among the words: its number on the action's wash, pressed to open it.
   const words = (line: readonly AnswerSegment[]) =>
     line.map((segment, part) =>
       'text' in segment ? (
         segment.text
       ) : (
-        <AppText key={part} variant="metaStrong" onPress={() => onCite(segment.index)} accessibilityRole="link" accessibilityLabel={t('Source {number} : {page}', { number: segment.cite, page: where(answer.citations[segment.index]?.pageId ?? '') })} style={styles.mark}>
+        <AppText key={part} variant="metaStrong" onPress={() => onCite(segment.index)} accessibilityRole="link" accessibilityLabel={t('Source {number}: {page}', { number: segment.cite, page: where(answer.citations[segment.index]?.pageId ?? '') })} style={styles.mark}>
           {` ${segment.cite} `}
         </AppText>
       ),
     );
   const copy = (): void => {
-    void copyText(answerCopy(answer, id => askTitle(blocks[id]))).then(done => showSnack(done ? t('Réponse copiée') : t('Impossible de copier la réponse'), undefined, { tone: done ? 'success' : 'error' }));
+    void copyText(answerCopy(answer, id => askTitle(blocks[id]))).then(done => showSnack(done ? t('Answer copied') : t('Couldn’t copy the answer'), undefined, { tone: done ? 'success' : 'error' }));
   };
   return (
     <View style={styles.answer}>
@@ -267,11 +267,11 @@ function Answer({ pageId, turn, answer, onCite }: { pageId: string; turn: AskTur
         </View>
       ))}
       {numbers.length > 0 ? (
-        <View accessibilityLabel={t('Sources dans vos pages')}>
+        <View accessibilityLabel={t('Sources in your pages')}>
           {numbers.map(([index, cite]) => {
             const citation = answer.citations[index]!;
             return (
-              <Tappable key={index} onPress={() => onCite(index)} accessibilityRole="link" accessibilityLabel={t('Source {number} : {page}', { number: cite, page: where(citation.pageId) })} style={styles.source}>
+              <Tappable key={index} onPress={() => onCite(index)} accessibilityRole="link" accessibilityLabel={t('Source {number}: {page}', { number: cite, page: where(citation.pageId) })} style={styles.source}>
                 <View style={styles.slot}>
                   <Organic style={styles.sourceNumber}>
                     <AppText variant="metaStrong" color={theme.color.onActionContainer}>
@@ -295,7 +295,7 @@ function Answer({ pageId, turn, answer, onCite }: { pageId: string; turn: AskTur
         </View>
       ) : null}
       {answer.sources.length > 0 ? (
-        <View accessibilityLabel={t('Sources sur le web')}>
+        <View accessibilityLabel={t('Sources on the web')}>
           {answer.sources.map(source => (
             <Tappable key={source.url} onPress={() => openUrl(source.url)} accessibilityRole="link" accessibilityLabel={source.title} style={styles.source}>
               <View style={styles.slot}>
@@ -314,13 +314,13 @@ function Answer({ pageId, turn, answer, onCite }: { pageId: string; turn: AskTur
         </View>
       ) : null}
       <View style={styles.actions}>
-        <Button kind="text" icon="copy" label={t('Copier')} onPress={copy} />
+        <Button kind="text" icon="copy" label={t('Copy')} onPress={copy} />
         <Button
           kind="text"
           icon="pagePlus"
-          label={t('Ajouter à la page')}
+          label={t('Add to the page')}
           onPress={() => {
-            if (addAnswerToPage(pageId, turn)) showSnack(t('Réponse ajoutée à la fin de la page'), undefined, { tone: 'success' });
+            if (addAnswerToPage(pageId, turn)) showSnack(t('Answer added at the end of the page'), undefined, { tone: 'success' });
           }}
         />
       </View>

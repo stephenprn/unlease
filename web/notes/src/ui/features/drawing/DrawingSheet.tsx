@@ -21,7 +21,7 @@ export function DrawingSheet({ noteId, editable }: { noteId: string; editable: b
   const session = useDrawingSession(stored, save);
   return (
     <div className={styles.sheet} onKeyDown={editable ? session.onKeyDown : undefined}>
-      <DrawingCanvas strokes={session.strokes} editable={editable} label={editable ? t('Zone de dessin') : t('Dessin')} onGesture={session.onGesture} onStroke={session.onStroke} onErase={session.onErase} />
+      <DrawingCanvas strokes={session.strokes} editable={editable} label={editable ? t('Drawing area') : t('Drawing')} onGesture={session.onGesture} onStroke={session.onStroke} onErase={session.onErase} />
       {editable ? (
         <div className={styles.dock}>
           <DrawingTools canUndo={session.canUndo} canRedo={session.canRedo} canClear={session.strokes.length > 0} onUndo={session.undo} onRedo={session.redo} onClear={session.clear} />

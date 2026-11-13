@@ -37,34 +37,34 @@ export const DEFAULT_LINE_VIEW: LineView = { sort: 'own', filter: 'all', layout:
 
 /** What each layout is called, in the menu and in its button's name. */
 export const LINE_LAYOUT_NAMES: Readonly<Record<LineLayout, string>> = localized({
-  list: tx('Liste'),
-  gallery: tx('Galerie'),
-  mosaic: tx('Mosaïque'),
-  table: tx('Tableau'),
+  list: tx('List'),
+  gallery: tx('Gallery'),
+  mosaic: tx('Mosaic'),
+  table: tx('Table'),
 });
 
 /** What each layout is for, under its name where there is room (the phone's sheet). */
 export const LINE_LAYOUT_HINTS: Readonly<Record<LineLayout, string>> = localized({
-  list: tx('Une ligne par lien, son image en petit'),
-  gallery: tx('Les images en grand, pour comparer d’un coup d’œil'),
-  mosaic: tx('Les images à leurs proportions, comme un tableau d’inspiration'),
-  table: tx('Une colonne par information, pour comparer en détail'),
+  list: tx('A row per link, its picture small'),
+  gallery: tx('The pictures large, to compare at a glance'),
+  mosaic: tx('The pictures at their own proportions, like a mood board'),
+  table: tx('A column per detail, to compare closely'),
 });
 
 /** What each order is called, in the menu and on its button. */
 export const LINE_SORT_NAMES: Readonly<Record<LineSort, string>> = localized({
-  own: tx('Ordre de la collection'),
-  added: tx('Ajoutés récemment'),
-  priceUp: tx('Prix croissant'),
-  priceDown: tx('Prix décroissant'),
+  own: tx('Collection order'),
+  added: tx('Recently added'),
+  priceUp: tx('Price: low to high'),
+  priceDown: tx('Price: high to low'),
 });
 
 /** What each filter is called, in the menu and on its button. */
 export const LINE_FILTER_NAMES: Readonly<Record<LineFilter, string>> = localized({
-  all: tx('Tous les liens'),
-  unread: tx('Non lus'),
-  failed: tx('Lecture impossible [filter]'),
-  priceDrop: tx('Prix en baisse'),
+  all: tx('All links'),
+  unread: tx('Unread'),
+  failed: tx('Couldn’t be read'),
+  priceDrop: tx('Price dropped'),
 });
 
 /** A link nobody has read yet: kept while there was no key, or waiting for its reading. */
@@ -200,11 +200,11 @@ export function withLineView(views: Readonly<Record<string, LineView>>, id: stri
 export function emptyFilterSentence(filter: LineFilter, collection: string): string {
   switch (filter) {
     case 'unread':
-      return t('Aucun lien non lu dans {collection}.', { collection });
+      return t('No unread links in {collection}.', { collection });
     case 'failed':
-      return t('Tous les liens de {collection} ont pu être lus.', { collection });
+      return t('Every link in {collection} could be read.', { collection });
     case 'priceDrop':
-      return t('Aucun prix en baisse dans {collection} pour l’instant.', { collection });
+      return t('No price has dropped in {collection} for now.', { collection });
     default:
       return '';
   }

@@ -92,7 +92,7 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
   const formatted = noteCardLines(note);
   const body = note.kind === 'text' && !formatted ? cardBody(note.body) : '';
   const isLine = note.kind === 'links';
-  const label = title || bodyText(note).trim().slice(0, 80) || (isLine ? t('Collection') : note.kind === 'drawing' ? t('Dessin') : t('Note sans titre'));
+  const label = title || bodyText(note).trim().slice(0, 80) || (isLine ? t('Collection') : note.kind === 'drawing' ? t('Drawing') : t('Untitled note'));
   const drawing = noteDrawingRatio(note);
   const href = isLine ? paths.line(id) : paths.note(id);
   // The card's outline, the same for every card: the sheet is clipped to it, the card lifts it.
@@ -162,8 +162,8 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
         data-pebble-under={TICK_TURN}
         data-still
         aria-pressed={selected}
-        aria-label={selected ? t('Désélectionner « {title} »', { title: label }) : t('Sélectionner « {title} »', { title: label })}
-        data-tip={selected ? t('Désélectionner') : t('Sélectionner')}
+        aria-label={selected ? t('Deselect “{title}”', { title: label }) : t('Select “{title}”', { title: label })}
+        data-tip={selected ? t('Deselect') : t('Select')}
         onClick={event => onSelect(id, event)}
       >
         <Icon name="check" size={15} />
@@ -230,7 +230,7 @@ const CardChecklist = memo(function CardChecklist({ noteId, query }: { noteId: s
       {checked > 0 ? (
         <li className={styles.checkRow}>
           <Icon name="check" size={16} />
-          <span className="t-meta">{plural(checked, 'élément coché', 'éléments cochés')}</span>
+          <span className="t-meta">{plural(checked, 'ticked item', 'ticked items')}</span>
         </li>
       ) : null}
     </ul>
@@ -276,7 +276,7 @@ const LineSummary = memo(function LineSummary({ noteId, metrics }: { noteId: str
         </div>
       ) : null}
       {/* What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading), as on the phone. */}
-      <p className="t-meta tabular">{count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}</p>
+      <p className="t-meta tabular">{count === 0 && done > 0 ? t('Done · {count}', { count: done }) : total ? `${plural(count, 'link')} · ${total}` : plural(count, 'link')}</p>
     </div>
   );
 });

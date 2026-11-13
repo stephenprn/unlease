@@ -31,7 +31,7 @@ export function EventScreen({ id }: { id: string }) {
   if (!item) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="trash" as="h1" title={t('Cet événement n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" as="h1" title={t('This event no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }
@@ -41,10 +41,10 @@ export function EventScreen({ id }: { id: string }) {
       {series.trashedAt !== null ? (
         <OutlinedBox kind="panel" className={`${styles.panel} paper`}>
           <Detail icon="trash">
-            <span className="t-body">{t('Cet événement est dans la corbeille.')}</span>
+            <span className="t-body">{t('This event is in the bin.')}</span>
             <span>
-              <Button kind="text" icon="restore" onClick={() => showUndo(t('Événement restauré'), restore(series))}>
-                {t('Restaurer')}
+              <Button kind="text" icon="restore" onClick={() => showUndo(t('Event restored'), restore(series))}>
+                {t('Restore')}
               </Button>
             </span>
           </Detail>
@@ -66,7 +66,7 @@ function EventHead({ item, color }: { item: NonNullable<ReturnType<typeof findOc
     <header className={styles.hero} data-line={color ?? undefined}>
       <span className={styles.heroSwatch} data-pebble={pebbleTurnOf(item.seriesId)} data-still aria-hidden="true" />
       <div className={styles.heroText}>
-        <h1 className={`${styles.heroTitle} t-display`}>{item.event.title.trim() || t('Sans titre')}</h1>
+        <h1 className={`${styles.heroTitle} t-display`}>{item.event.title.trim() || t('Untitled')}</h1>
         <p className={`${styles.heroWhen} t-title`}>{whenLine(item, now, twelveHours)}</p>
         <p className={`${styles.heroNotes} t-meta`}>
           <span className={styles.heroNear}>{relativeWhen(item, now, today)}</span>

@@ -19,7 +19,7 @@ export async function openDailyNote(day: string): Promise<void> {
     const made = await makeDailyPage(server, { day, lang: getLocale() });
     navigate(suitePlace('page', made.pageId)!);
   } catch (error) {
-    showError(error instanceof Error ? error.message : t('Le serveur ne répond pas'));
+    showError(error instanceof Error ? error.message : t('The server isn’t responding'));
   }
 }
 

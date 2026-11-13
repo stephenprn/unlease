@@ -3,7 +3,7 @@
  * (`/notes/admin`, `/pages/admin`), opened from the launcher at the header's end.
  *
  * Its home lists its sections with each one's state in a line: first those every app shares (the
- * apps the server runs, the server itself, Claude, the backups to S3, the files on Seafile), then
+ * apps the server runs, the server itself, Claude, the backups to S3, the files on Seafile, Immich), then
  * the app's own under its name (Carnet's Seerr, Pages' questions). Each section is a page of its own
  * (`/notes/admin/<id>`): its « how it works » first, then its sheet of paper. A section that needs a
  * server says so until one is connected.
@@ -25,6 +25,7 @@ import { AppsSection } from '../features/settings/AppsSection';
 import { BackupSection } from '../features/settings/BackupSection';
 import { ClaudeSection } from '../features/settings/ClaudeSection';
 import { DriveSection } from '../features/settings/DriveSection';
+import { ImmichSection } from '../features/settings/ImmichSection';
 import { Section, StatusRow, toneColor } from '../features/settings/Section';
 import { ServerSection } from '../features/settings/ServerSection';
 import styles from '../features/settings/settings.module.css';
@@ -71,7 +72,7 @@ function AdminHome() {
   return (
     <div className={styles.page}>
       <PageHead title={t('Administration')} />
-      <p className={`${admin.lead} t-body`}>{t('Ce que votre serveur fait pour toutes vos applications et tous vos appareils.')}</p>
+      <p className={`${admin.lead} t-body`}>{t('What your server does for all your apps and all your devices.')}</p>
       {groups.map(group => (
         <Section key={group.app ?? 'shared'} title={titled ? group.title : undefined} label={group.title}>
           <ul className={admin.rows}>
@@ -101,7 +102,7 @@ function PlaceRow({ place, facts }: { place: AdminPlace; facts: AdminFacts }) {
         <span className="t-body-strong">{place.title}</span>
         <span className={`${admin.state} t-meta`}>
           <span className={admin.dot} style={{ '--dot': toneColor(tone) } as CSSProperties} aria-hidden="true" />
-          <span className={admin.stateText}>{waiting ? t('Reliez d’abord un serveur') : line ? [line.title, line.meta].filter(Boolean).join(' · ') : facts.unavailable ? t('Le serveur ne répond pas pour l’instant.') : t('Lecture des réglages du serveur…')}</span>
+          <span className={admin.stateText}>{waiting ? t('Connect a server first') : line ? [line.title, line.meta].filter(Boolean).join(' · ') : facts.unavailable ? t('The server isn’t answering for now.') : t('Reading the server’s settings…')}</span>
         </span>
       </span>
       <Icon name="chevronRight" size={20} />
@@ -157,6 +158,8 @@ function SectionBody({ place, admin: state }: { place: AdminPlace; admin: Admin 
       return server && settings ? <BackupSection key={key} server={server} backup={settings.backup} admin={state} /> : null;
     case 'drive':
       return server && settings ? <DriveSection key={key} server={server} drive={settings.drive} admin={state} /> : null;
+    case 'immich':
+      return server && settings ? <ImmichSection key={key} server={server} immich={settings.immich} /> : null;
     default:
       return null;
   }
@@ -165,11 +168,11 @@ function SectionBody({ place, admin: state }: { place: AdminPlace; admin: Admin 
 /** A section that needs a server, on a browser without one. */
 /** A section's settings not read yet, or the server not answering: then a way to ask again. */
 function Unavailable({ admin: state }: { admin: Admin }) {
-  if (!state.unavailable) return <p className={`${styles.help} t-meta`}>{t('Lecture des réglages du serveur…')}</p>;
+  if (!state.unavailable) return <p className={`${styles.help} t-meta`}>{t('Reading the server’s settings…')}</p>;
   return (
-    <StatusRow tone="off" title={t('Réglages du serveur indisponibles')} meta={t('Le serveur ne répond pas pour l’instant.')}>
+    <StatusRow tone="off" title={t('Server settings unavailable')} meta={t('The server isn’t answering for now.')}>
       <Button kind="text" small onClick={() => void state.refresh()}>
-        {t('Réessayer')}
+        {t('Try again')}
       </Button>
     </StatusRow>
   );
@@ -178,10 +181,10 @@ function Unavailable({ admin: state }: { admin: Admin }) {
 function NeedsServer() {
   return (
     <div className={styles.block}>
-      <p className="t-body">{t('Reliez d’abord un serveur : ce réglage est le sien, pour tous vos appareils.')}</p>
+      <p className="t-body">{t('Connect a server first: this setting is the server’s, for all your devices.')}</p>
       <div>
         <Button kind="tonal" icon="server" onClick={connect}>
-          {t('Relier un serveur')}
+          {t('Connect a server')}
         </Button>
       </div>
     </div>

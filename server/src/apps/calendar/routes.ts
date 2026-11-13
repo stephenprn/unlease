@@ -1,6 +1,7 @@
 /**
  * Agenda's routes, beside the platform's under `/api` and behind the same token, answered while
- * Agenda is on (`app.ts`'s gate): the events that mention something, a subscription read now, the
+ * Agenda is on (`app.ts`'s gate): the events that mention something, an address tried before it is
+ * followed (and a CalDAV calendar's login kept), a subscription read now, the
  * holidays' countries and regions, the weather, Claude's readings and answers, the web's push
  * subscriptions. And its one public route, outside `/api` and without the token: the published
  * calendar, `/ical/<secret>.ics`, whose secret is its key.
@@ -13,9 +14,12 @@ import {
   ASK_CONTEXT_MAX,
   ASK_PATH,
   COUNTRIES_PATH,
+  FEED_CONNECT_PATH,
+  FEED_LOGIN_LIMITS,
   FROM_LINK_PATH,
   PARSE_PATH,
   parseCalendarAskRequest,
+  parseFeedConnectRequest,
   parseFromLinkRequest,
   parseParseRequest,
   parsePushSubscription,
@@ -61,7 +65,7 @@ const answer =
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const request = parse(body);
     if (!request) return c.json({ error: invalid }, 400);
@@ -75,14 +79,28 @@ export function calendarRoutes(app: Hono<Env>, services: CalendarServices): void
 
   app.get('/api/calendar/mentions', c => {
     const query = parseMentionsQuery(c.req.query('type'), c.req.query('ids'));
-    if (!query) return c.json({ error: 'Requête invalide' }, 400);
+    if (!query) return c.json({ error: 'Invalid request' }, 400);
     const answer: MentionsResponse = { places: eventsMentioning(records.ofType('calendarEvent').map(eventFromRecord), query.type, query.ids) };
     return c.json(answer, 200, noStore);
   });
 
+  // Before the `:id` routes. A login travels in the body only, and never comes back.
+  app.post(FEED_CONNECT_PATH, bodyLimit({ maxSize: 8 * KB + FEED_LOGIN_LIMITS.password * 4, onError: tooLarge }), async c => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: 'Invalid request' }, 400);
+    }
+    const request = parseFeedConnectRequest(body);
+    if (!request) return c.json({ error: 'Invalid request' }, 400);
+    const outcome = await feeds.connect(request);
+    return outcome.ok ? c.json(outcome.answer, 200, noStore) : c.json({ error: outcome.error }, outcome.status);
+  });
+
   app.post('/api/calendar/feeds/:id/refresh', async c => {
     const id = c.req.param('id');
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return c.json({ error: 'Requête invalide' }, 400);
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return c.json({ error: 'Invalid request' }, 400);
     if (id === 'holidays') {
       await holidays.sync();
       return c.json({ ok: true }, 200, noStore);
@@ -119,9 +137,9 @@ export function calendarRoutes(app: Hono<Env>, services: CalendarServices): void
     }
   });
 
-  app.post(PARSE_PATH, bodyLimit({ maxSize: 16 * KB, onError: tooLarge }), answer(parseParseRequest, 'Requête invalide', request => claude.parse(request)));
-  app.post(FROM_LINK_PATH, bodyLimit({ maxSize: 4 * KB, onError: tooLarge }), answer(parseFromLinkRequest, 'Requête invalide', request => claude.fromLink(request)));
-  app.post(ASK_PATH, bodyLimit({ maxSize: ASK_CONTEXT_MAX * 3 + 64 * KB, onError: tooLarge }), answer(parseCalendarAskRequest, 'Question invalide', request => claude.ask(request)));
+  app.post(PARSE_PATH, bodyLimit({ maxSize: 16 * KB, onError: tooLarge }), answer(parseParseRequest, 'Invalid request', request => claude.parse(request)));
+  app.post(FROM_LINK_PATH, bodyLimit({ maxSize: 4 * KB, onError: tooLarge }), answer(parseFromLinkRequest, 'Invalid request', request => claude.fromLink(request)));
+  app.post(ASK_PATH, bodyLimit({ maxSize: ASK_CONTEXT_MAX * 3 + 64 * KB, onError: tooLarge }), answer(parseCalendarAskRequest, 'Invalid question', request => claude.ask(request)));
 
   app.get(PUSH_KEY_PATH, c => c.json({ publicKey: reminders.publicKey() }, 200, noStore));
   app.post(PUSH_SUBSCRIPTIONS_PATH, bodyLimit({ maxSize: 8 * KB, onError: tooLarge }), async c => {
@@ -129,7 +147,7 @@ export function calendarRoutes(app: Hono<Env>, services: CalendarServices): void
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const subscription = parsePushSubscription(body);
     if (!subscription) return c.json({ error: 'Abonnement invalide' }, 400);
@@ -141,9 +159,9 @@ export function calendarRoutes(app: Hono<Env>, services: CalendarServices): void
     try {
       body = (await c.req.json()) as typeof body;
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
-    if (typeof body?.endpoint !== 'string') return c.json({ error: 'Requête invalide' }, 400);
+    if (typeof body?.endpoint !== 'string') return c.json({ error: 'Invalid request' }, 400);
     reminders.unsubscribe(body.endpoint);
     return c.json({ ok: true }, 200, noStore);
   });

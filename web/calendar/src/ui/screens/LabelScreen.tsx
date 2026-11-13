@@ -22,7 +22,7 @@ export function LabelScreen({ id }: { id: string }) {
   if (!label || label.deletedAt !== null) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="label" as="h1" title={t('Ce libellé n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="label" as="h1" title={t('This label no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }

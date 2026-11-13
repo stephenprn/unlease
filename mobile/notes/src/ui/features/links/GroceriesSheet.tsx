@@ -33,7 +33,7 @@ type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly r
 /** Checklists offered besides a new one. */
 const RECENT_LISTS = 5;
 
-const listTitle = (note: Note) => shownTitle(note).trim() || t('Liste sans titre');
+const listTitle = (note: Note) => shownTitle(note).trim() || t('Untitled list');
 
 export function GroceriesSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
   return (
@@ -71,7 +71,7 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -84,7 +84,7 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Lecture des ingrédients…')}
+          {t('Reading the ingredients…')}
         </AppText>
       </View>
     );
@@ -94,13 +94,13 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Les ingrédients n’ont pas pu être lus : {reason}', { reason: phase.reason })}
+            {t('The ingredients couldn’t be read: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <FormFoot>
           <Button
             kind="text"
-            label={t('Réessayer')}
+            label={t('Try again')}
             onPress={() => {
               setPhase({ kind: 'asking' });
               setAttempt(value => value + 1);
@@ -114,7 +114,7 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
   const ingredients = phase.answer.ingredients.map(ingredient => scaleIngredient(ingredient, factor));
   const servings = servingsLine(phase.answer.servings, base, factor, unit);
   const ticked = ingredients.filter((_, index) => !skipped.has(index));
-  const newTitle = t('Courses : {recipe}', { recipe: link.title || linkShop(link) });
+  const newTitle = t('Shopping: {recipe}', { recipe: link.title || linkShop(link) });
   // A list gone from the offer meanwhile (binned, archived elsewhere) leaves the new one chosen.
   const picked = lists.find(list => list.id === target) ?? null;
   const toggle = (index: number) =>
@@ -126,7 +126,7 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
   const add = () => {
     const noteId = addToChecklist(picked?.id ?? null, newTitle, ticked);
     onDismiss();
-    showSnack(t('{items} dans « {list} »', { items: plural(ticked.length, 'ingrédient'), list: picked ? listTitle(picked) : newTitle }), { label: t('Ouvrir'), run: () => navigate('Note', { id: noteId }) }, { tone: 'success' });
+    showSnack(t('{items} in “{list}”', { items: plural(ticked.length, 'ingredient'), list: picked ? listTitle(picked) : newTitle }), { label: t('Open'), run: () => navigate('Note', { id: noteId }) }, { tone: 'success' });
   };
 
   return (
@@ -140,17 +140,17 @@ function GroceriesBody({ id, onDismiss }: { id: string; onDismiss: () => void })
       </View>
       <View accessibilityRole="radiogroup">
         <AppText variant="section" style={styles.section} accessibilityRole="header">
-          {t('Ajouter à')}
+          {t('Add to')}
         </AppText>
-        <TargetRow icon="plus" title={t('Nouvelle liste')} detail={newTitle} chosen={picked === null} onPress={() => setTarget(null)} />
+        <TargetRow icon="plus" title={t('New list')} detail={newTitle} chosen={picked === null} onPress={() => setTarget(null)} />
         {lists.map(list => (
           <TargetRow key={list.id} icon="checklist" title={listTitle(list)} chosen={picked?.id === list.id} onPress={() => setTarget(list.id)} />
         ))}
       </View>
     </SheetScroll>
     <FormFoot>
-      <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
-      <Button label={ticked.length > 0 ? t('Ajouter {items}', { items: plural(ticked.length, 'ingrédient') }) : t('Ajouter')} icon="basket" disabled={ticked.length === 0} onPress={add} />
+      <Button kind="text" label={t('Cancel')} onPress={onDismiss} />
+      <Button label={ticked.length > 0 ? t('Add {items}', { items: plural(ticked.length, 'ingredient') }) : t('Add')} icon="basket" disabled={ticked.length === 0} onPress={add} />
     </FormFoot>
     </>
   );

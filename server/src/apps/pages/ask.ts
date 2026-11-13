@@ -26,9 +26,9 @@ export const PAGES_TASK = 'pages';
 /** Within the apps' wait (100 s). */
 const DEADLINE_MS = 90_000;
 
-export const PAGES_OFF = 'Les questions sur les pages sont désactivées dans l’administration';
-export const PAGES_ALL_OFF = 'Les questions sur toutes les pages sont désactivées dans l’administration';
-export const PAGES_TOO_LONG = 'Ces pages sont trop longues pour une question : choisissez moins de pages';
+export const PAGES_OFF = 'Questions about pages are turned off in the Administration';
+export const PAGES_ALL_OFF = 'Questions about all pages are turned off in the Administration';
+export const PAGES_TOO_LONG = 'These pages are too long for one question: choose fewer pages';
 
 export interface PagesAskerOptions {
   readonly usage: UsageStore;
@@ -134,11 +134,11 @@ export function pagesAnswer(content: readonly BetaContentBlock[], pages: readonl
 /** One question asked of Claude: its answer, or a `ModelError` with what it cost. */
 export async function answerPages(client: ClaudeClient, request: PagesRequest, signal: AbortSignal): Promise<PagesAnswer> {
   const { message, usage, content } = await client.within(buildPagesRequest(request, client.model, client.effort), signal);
-  if (message.stop_reason === 'refusal') throw new ModelError('Question refusée par Claude', usage);
-  if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-  if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
+  if (message.stop_reason === 'refusal') throw new ModelError('Question refused by Claude', usage);
+  if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+  if (message.stop_reason === 'pause_turn') throw new ModelError('Search too long', usage);
   const answer = pagesAnswer(content, request.pages);
-  if (!answer.parts.some(part => part.text.trim())) throw new ModelError('Réponse de Claude illisible', usage);
+  if (!answer.parts.some(part => part.text.trim())) throw new ModelError('Unreadable answer from Claude', usage);
   return { answer, usage };
 }
 
@@ -182,7 +182,7 @@ export class PagesAsker {
       return { ok: true, answer: found.answer };
     } catch (error) {
       if (!deadline.aborted && !(error instanceof ModelError)) log.error('pages question crashed', { error });
-      const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la question';
+      const message = deadline.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Question error';
       const spent = error instanceof ModelError ? error.usage : null;
       // Cut off, Claude bills what it read and wrote all the same: counted as the app foresaw it.
       const foreseen = isClaudeModel(client.model) ? askCost(requestChars(request.pages), client.model, web) : 0;

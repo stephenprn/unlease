@@ -35,7 +35,7 @@ export function AppearanceScreen({ section, onBack }: AppearanceScreenProps) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Apparence')} onBack={onBack} />
+      <TopBar title={t('Appearance')} onBack={onBack} />
       <SettingsScroll section={section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ThemeSection />
         <ColorsSection onEdit={editColor} />

@@ -8,6 +8,9 @@
     <!-- « Importer les contacts du téléphone » (Google's synced ones included) and WhatsApp's call rows
          for a number: asked at runtime, only when the person chooses one of them. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- « Copy to the phone's contacts » (Réglages): the people written, one way, under the app's own
+         account (mirror/PhoneMirrorModule); asked at runtime with READ_CONTACTS only when it is turned on. -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <!-- « Appeler » and the quick calls place the call at once (ACTION_CALL), as Google's direct dial
          does; asked at the first call, and without it the dialer opens with the number (ACTION_DIAL). -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
@@ -332,6 +335,44 @@
         android:authorities="${applicationId}.suite"
         android:exported="true"
         android:readPermission="com.stephenprn.unlease${suiteSuffix}.permission.SUITE" />
+
+      <!-- The phone's own address book, one way (« Copy to the phone's contacts »: mobile/shared/android/src/mirror,
+           mirror/PhoneMirrorModule): the app's own account, its authenticator and its sync adapter, which
+           fetches nothing and carries how the phone's contacts app shows the account's people
+           (res/xml/mirror_contacts.xml). Exported: Android's account manager binds the authenticator, and the
+           contacts apps find the adapter's description through the package manager; neither does anything
+           when bound by another app. -->
+      <service
+        android:name="com.stephenprn.unlease.mirror.AuthenticatorService"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.accounts.AccountAuthenticator" />
+        </intent-filter>
+        <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/mirror_authenticator" />
+      </service>
+      <service
+        android:name="com.stephenprn.unlease.mirror.MirrorSyncService"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.content.SyncAdapter" />
+        </intent-filter>
+        <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/mirror_sync" />
+        <meta-data android:name="android.provider.CONTACTS_STRUCTURE" android:resource="@xml/mirror_contacts" />
+      </service>
+      <!-- « Open in Contacts » on a copied person, in the phone's contacts app: opens them here. It never shows. -->
+      <activity
+        android:name=".mirror.ContactOpenActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="true"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true">
+        <intent-filter>
+          <action android:name="android.intent.action.VIEW" />
+          <category android:name="android.intent.category.DEFAULT" />
+          <data android:mimeType="vnd.android.cursor.item/vnd.unlease${suiteSuffix}.contact" />
+        </intent-filter>
+      </activity>
 
       <!-- The reminders seen to after the system's changes (mobile/shared/android/src/reminders): each a
            protected broadcast only Android sends, so not exported. -->

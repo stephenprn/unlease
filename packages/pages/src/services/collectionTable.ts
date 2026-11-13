@@ -20,11 +20,11 @@ export type LinkField = 'site' | 'kind' | 'price' | 'summary' | 'comment' | 'add
 const FIELD_NAMES: Record<LinkField, string> = localized({
   site: tx('Site'),
   kind: tx('Type'),
-  price: tx('Prix'),
-  summary: tx('Résumé'),
-  comment: tx('Votre note'),
-  added: tx('Ajouté le'),
-  url: tx('Adresse'),
+  price: tx('Price'),
+  summary: tx('Summary'),
+  comment: tx('Your note'),
+  added: tx('Added [date]'),
+  url: tx('Address'),
 });
 
 export interface CollectionColumn {

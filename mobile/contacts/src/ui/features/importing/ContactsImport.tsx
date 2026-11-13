@@ -12,7 +12,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 import { IMPORT_WORDS, importFilesProgress } from '@unlease/core/services/importFlow';
 import { defaultLabels, fileLabels, plannedCount, type ImportPlan } from '@unlease/contacts/services/importing';
 import {
@@ -55,9 +55,9 @@ import {
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 
 const GOOGLE_STEPS = [
-  tx('Ouvrez contacts.google.com, puis « Exporter » (ou takeout.google.com, « Contacts »).'),
-  tx('Choisissez « vCard » ou « Google CSV », puis enregistrez le fichier sur ce téléphone.'),
-  tx('Choisissez-le ici : rien n’est écrit avant votre accord.'),
+  tx('Open contacts.google.com, then “Export” (or takeout.google.com, “Contacts”).'),
+  tx('Choose “vCard” or “Google CSV”, then save the file on this phone.'),
+  tx('Choose it here: nothing is written before you agree.'),
 ];
 
 interface Choices {
@@ -191,7 +191,7 @@ export function ContactsImport({ onFlow, onImported, onSeeContacts }: ContactsIm
       setStep(current => (current.kind === 'done' ? { ...current, undone: true, snack: null } : current));
       return true;
     };
-    const snack = showSnack(importedMessage(fresh), { label: tc('undo', 'Annuler'), run: () => { undo(); } }, { tone: 'success' });
+    const snack = showSnack(importedMessage(fresh), { label: t('Undo'), run: () => { undo(); } }, { tone: 'success' });
     // Written: nothing left to plan (the report holds its plan, for « Annuler »).
     setRead(null);
     setChoices(null);
@@ -210,21 +210,21 @@ export function ContactsImport({ onFlow, onImported, onSeeContacts }: ContactsIm
 
   if (step.kind === 'source') {
     return (
-      <ImportFrame step="source" title={IMPORT_WORDS.sourceTitle} lead={t('Le plus simple : les contacts de ce téléphone, qui comptent ceux de votre compte Google. Ou l’export de Google Contacts.')}>
+      <ImportFrame step="source" title={IMPORT_WORDS.sourceTitle} lead={t('The simplest: this phone’s contacts, which include your Google account’s. Or Google Contacts’ export.')}>
         <ImportSheet title={CONTACTS_IMPORT_WORDS.phoneTitle}>
           <ImportBlock>
             <AppText variant="body">{CONTACTS_IMPORT_WORDS.phoneLead}</AppText>
             <FormMessage message={problem?.from === 'phone' ? problem.message : null} />
-            {problem?.from === 'phone' && problem.blocked ? <Button label={t('Ouvrir les réglages d’Android')} icon="settings" kind="text" onPress={openAppSettings} style={styles.start} /> : null}
-            <Button label={t('Lire les contacts du téléphone')} icon="phone" kind="tonal" busy={reading !== null && reading !== 'file'} disabled={busy} onPress={() => later(fromPhone())} style={styles.start} />
+            {problem?.from === 'phone' && problem.blocked ? <Button label={t('Open Android settings')} icon="settings" kind="text" onPress={openAppSettings} style={styles.start} /> : null}
+            <Button label={t('Read the phone’s contacts')} icon="phone" kind="tonal" busy={reading !== null && reading !== 'file'} disabled={busy} onPress={() => later(fromPhone())} style={styles.start} />
           </ImportBlock>
         </ImportSheet>
-        {reading !== null && reading !== 'file' ? <ImportProgress label={reading.total > 0 ? t('Lecture des contacts du téléphone… {done} sur {total}', reading) : t('Lecture des contacts du téléphone…')} done={reading.done} total={reading.total} /> : null}
+        {reading !== null && reading !== 'file' ? <ImportProgress label={reading.total > 0 ? t('Reading the phone’s contacts… {done} of {total}', reading) : t('Reading the phone’s contacts…')} done={reading.done} total={reading.total} /> : null}
         <ImportSheet title={CONTACTS_IMPORT_WORDS.sourceTitle}>
           <ImportBlock>
             <ImportInstructions steps={GOOGLE_STEPS.map(text => t(text))} />
             <FormMessage message={problem?.from === 'file' ? problem.message : null} />
-            <Button label={t('Choisir un fichier')} icon="file" kind="tonal" busy={reading === 'file'} disabled={busy} onPress={() => later(fromFile())} style={styles.start} />
+            <Button label={t('Choose a file')} icon="file" kind="tonal" busy={reading === 'file'} disabled={busy} onPress={() => later(fromFile())} style={styles.start} />
           </ImportBlock>
         </ImportSheet>
         <AppText variant="meta" style={styles.note}>
@@ -276,8 +276,8 @@ export function ContactsImport({ onFlow, onImported, onSeeContacts }: ContactsIm
         title={IMPORT_WORDS.previewTitle}
         lead={IMPORT_WORDS.previewLead}
         onBack={toSource}
-        back={<Button label={t('Retour')} kind="text" onPress={toSource} />}
-        forward={<Button label={t('Continuer')} onPress={() => setStep({ kind: 'choices' })} />}
+        back={<Button label={t('Back')} kind="text" onPress={toSource} />}
+        forward={<Button label={t('Continue')} onPress={() => setStep({ kind: 'choices' })} />}
       >
         <ImportSheet>
           <ImportCounts lines={previewCounts(plan, source, server === null)} />
@@ -309,7 +309,7 @@ export function ContactsImport({ onFlow, onImported, onSeeContacts }: ContactsIm
       title={IMPORT_WORDS.choicesTitle}
       lead={IMPORT_WORDS.choicesLead}
       onBack={toPreview}
-      back={<Button label={t('Retour')} kind="text" onPress={toPreview} />}
+      back={<Button label={t('Back')} kind="text" onPress={toPreview} />}
       forward={<Button label={importContactsAction(plan)} icon="download" onPress={() => later(run())} />}
     >
       {reach.matched > 0 ? (

@@ -63,12 +63,12 @@ export function SettingsMatches({ query, own, onOpen, style }: SettingsMatchesPr
     <View style={style}>
       <View style={styles.heading}>
         <AppText variant="metaStrong" accessibilityRole="header">
-          {t('Réglages')}
+          {t('Settings')}
         </AppText>
         {found.length > shown.length ? (
-          <Tappable accessibilityRole="button" accessibilityLabel={t('Tous les réglages trouvés')} onPress={() => setWhole(query)} hitSlop={HEADING_SLOP} style={styles.headingAction}>
+          <Tappable accessibilityRole="button" accessibilityLabel={t('Every setting found')} onPress={() => setWhole(query)} hitSlop={HEADING_SLOP} style={styles.headingAction}>
             <AppText variant="metaStrong" color={theme.color.link}>
-              {t('Tout voir')}
+              {t('See all')}
             </AppText>
           </Tappable>
         ) : null}

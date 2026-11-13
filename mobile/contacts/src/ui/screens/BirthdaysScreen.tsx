@@ -39,7 +39,7 @@ export function BirthdaysScreen({ navigation }: ScreenProps<'Birthdays'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Anniversaires')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Birthdays')} onBack={() => navigation.goBack()} />
       <EdgeSectionList
         sections={sections}
         keyExtractor={entry => entry.contact.id}
@@ -70,16 +70,16 @@ export function BirthdaysScreen({ navigation }: ScreenProps<'Birthdays'>) {
                   </AppText>
                   <AppText variant="meta" numberOfLines={1} color={item.days === 0 ? theme.color.action : undefined}>
                     {/* With « Souhaiter » beside it, the age alone: the head says « Aujourd’hui ». */}
-                    {wishing ? [formatBirthday({ ...item.birthday, year: null }), age !== null && age > 0 ? plural(age, 'an') : null].filter(Boolean).join(' · ') : `${formatBirthday({ ...item.birthday, year: null })} · ${birthdayWhen(item.birthday, now)}`}
+                    {wishing ? [formatBirthday({ ...item.birthday, year: null }), age !== null && age > 0 ? plural(age, 'year') : null].filter(Boolean).join(' · ') : `${formatBirthday({ ...item.birthday, year: null })} · ${birthdayWhen(item.birthday, now)}`}
                   </AppText>
                 </View>
               </Tappable>
-              {wishing ? <Button kind="tonal" small icon="bubble" label={t('Souhaiter')} accessibilityLabel={t('Souhaiter son anniversaire à {name}', { name })} onPress={() => wish(item.contact)} style={styles.wish} /> : null}
+              {wishing ? <Button kind="tonal" small icon="bubble" label={t('Send wishes')} accessibilityLabel={t('Wish {name} a happy birthday', { name })} onPress={() => wish(item.contact)} style={styles.wish} /> : null}
             </View>
           );
         }}
         ListEmptyComponent={
-          <EmptyState scene="reminders" title={t('Aucun anniversaire')} text={t('Ajoutez une date de naissance à un contact : elle apparaît ici, avec le nombre de jours qui vous en séparent.')} />
+          <EmptyState scene="reminders" title={t('No birthdays')} text={t('Add a birthday to a contact: it shows here, with how many days away it is.')} />
         }
       />
       {sheet}

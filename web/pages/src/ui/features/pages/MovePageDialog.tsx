@@ -73,12 +73,12 @@ export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTo
 
   return (
     <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
-      <DialogFrame kind="list" title={title ?? t('Déplacer vers')} titleId={titleId} onClose={onDismiss}>
-        <input className={styles.pickerField} value={query} placeholder={t('Chercher une page')} aria-label={t('Chercher une page')} data-autofocus="" onChange={event => setQuery(event.target.value)} />
+      <DialogFrame kind="list" title={title ?? t('Move to')} titleId={titleId} onClose={onDismiss}>
+        <input className={styles.pickerField} value={query} placeholder={t('Search for a page')} aria-label={t('Search for a page')} data-autofocus="" onChange={event => setQuery(event.target.value)} />
         {headed ? (
           <section className={styles.moveGroup} aria-labelledby={`${titleId}-recent`}>
             <h3 id={`${titleId}-recent`} className={`${styles.moveHead} t-section`}>
-              {t('Récentes')}
+              {t('Recent')}
             </h3>
             {recent.map(place => row(place, `recent-${place.page.id}`))}
           </section>
@@ -86,7 +86,7 @@ export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTo
         <section className={headed ? styles.moveGroup : styles.moveRows} aria-labelledby={headed ? `${titleId}-all` : undefined}>
           {headed ? (
             <h3 id={`${titleId}-all`} className={`${styles.moveHead} t-section`}>
-              {t('Toutes les pages')}
+              {t('All pages')}
             </h3>
           ) : null}
           {top ? (
@@ -103,14 +103,14 @@ export function MovePageDialog({ open, current, exclude, onDismiss, onPick, onTo
                 <Icon name="page" size={24} />
               </span>
               <span className={lineStyles.moveText}>
-                <span className="t-body-strong">{t('Au premier niveau')}</span>
-                <span className={`${lineStyles.moveHint} t-meta`}>{t('Avec les pages de l’accueil')}</span>
+                <span className="t-body-strong">{t('At the top level')}</span>
+                <span className={`${lineStyles.moveHint} t-meta`}>{t('Alongside the pages on the home page')}</span>
               </span>
               {current === null ? <Icon name="check" size={20} /> : null}
             </button>
           ) : null}
           {all.map(place => row(place, place.page.id))}
-          {all.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('Aucune page ne correspond.')} /> : null}
+          {all.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('No page matches.')} /> : null}
         </section>
       </DialogFrame>
     </Layer>

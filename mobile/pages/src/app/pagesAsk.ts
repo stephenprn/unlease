@@ -127,11 +127,11 @@ export async function askPages(pageId: string, question: string): Promise<void> 
   update(pageId, now => ({ ...now, turns: [...now.turns, { id, question: asked, scope, web, read: context?.pages.length ?? 0, cut: context?.cut ?? 0, answer: null, error: null }] }));
   const settle = (answer: PagesAskResponse | null, error: string | null): void => update(pageId, now => ({ ...now, turns: now.turns.map(turn => (turn.id === id ? { ...turn, answer, error } : turn)) }));
   if (!settings || !config || !context) {
-    settle(null, !config ? t('Aucun serveur n’est connecté') : t('Les questions sur les pages sont désactivées dans l’administration'));
+    settle(null, !config ? t('No server is connected') : t('Questions about pages are turned off in the Administration'));
     return;
   }
   if (context.pages.length === 0) {
-    settle(null, t('Ces pages sont gardées hors de Claude.'));
+    settle(null, t('These pages are kept away from Claude.'));
     return;
   }
   running.get(pageId)?.abort();
@@ -141,7 +141,7 @@ export async function askPages(pageId: string, question: string): Promise<void> 
     const answer = await askAboutPages(config, { scope, pages: context.pages, question: asked, history, web, lang: getLocale() }, controller.signal);
     if (!controller.signal.aborted) settle(answer, null);
   } catch (error) {
-    if (!controller.signal.aborted) settle(null, error instanceof Error ? error.message : t('erreur inconnue'));
+    if (!controller.signal.aborted) settle(null, error instanceof Error ? error.message : t('unknown error'));
   } finally {
     if (running.get(pageId) === controller) running.delete(pageId);
   }

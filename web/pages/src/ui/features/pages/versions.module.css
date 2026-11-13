@@ -1,0 +1,230 @@
+/* « Historique des versions »: the list by day, then a version read-only, each block marked against the page now. */
+
+/* Wider than a list dialog, whose own rule sets 440: doubled to outrank it whatever order the sheets load in. */
+.frame.frame[data-kind] {
+  --frame-width: min(640px, 100vw - 32px);
+}
+
+.about {
+  margin: 0;
+  padding: 4px 10px 8px;
+  color: var(--ink-muted);
+}
+
+.waiting {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--ink-muted);
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  padding-top: 8px;
+}
+
+.dayHead {
+  margin: 0;
+  padding: 0 10px 2px;
+}
+
+.versionRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .versionRow:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.versionRow:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.versionRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.versionRow > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.clock {
+  flex: none;
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.change {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-muted);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 10px 12px;
+}
+
+.versionHead {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.pageTitle {
+  margin: 0 0 8px;
+}
+
+/* A block of the version: nested as it was; a bar at its start when it changed since, faded when it is no longer on the page. */
+.row {
+  position: relative;
+  padding-inline-start: calc(var(--depth, 0) * 24px + 12px);
+}
+
+.row::before {
+  content: '';
+  position: absolute;
+  inset-block: 2px;
+  inset-inline-start: calc(var(--depth, 0) * 24px);
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.row[data-mark='changed']::before {
+  background: var(--focus);
+}
+
+.row[data-mark='gone'] {
+  opacity: 0.62;
+}
+
+.row[data-mark='gone']::before {
+  background: var(--danger);
+}
+
+.row p {
+  margin: 0;
+}
+
+.heading {
+  padding-top: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.item > svg {
+  flex: none;
+  align-self: center;
+  color: var(--ink-muted);
+}
+
+.done {
+  color: var(--ink-muted);
+}
+
+.media {
+  color: var(--ink-muted);
+}
+
+.callout {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--cut-small);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.code {
+  margin: 0;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-radius: var(--cut-small);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: pre;
+}
+
+.blank {
+  height: 8px;
+}
+
+.tableBox {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 4px 8px;
+  border: 1px solid var(--hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.keeps {
+  margin: 12px 0 0;
+  color: var(--ink-muted);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 0;
+  color: var(--ink-muted);
+}
+
+.legendChanged,
+.legendGone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendChanged::before,
+.legendGone::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.legendChanged::before {
+  background: var(--focus);
+}
+
+.legendGone::before {
+  background: var(--danger);
+}
+
+/* Beside the actions while there is room, else on a line of its own above them (the foot wraps). */
+.footWords {
+  flex: 1 1 200px;
+  color: var(--ink-muted);
+}

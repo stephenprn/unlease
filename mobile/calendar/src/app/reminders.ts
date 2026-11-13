@@ -16,10 +16,14 @@ import { mustArmAgain, planAlarms, readBook, rememberMode, type AlarmEntry } fro
 import { pullNow } from '@shared/app/sync/syncManager';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { keepRemindersFresh } from '@shared/platform/reminders';
-import { armEvent, canScheduleExact, disarmEvent, ringEventNow, type EventNotification } from '@platform/notifications';
+import { digestEntries, digestWorthRinging, nextDigest, writeDigest } from '@unlease/calendar/services/digest';
+import { armDigest, armEvent, canScheduleExact, DIGEST_ID, disarmEvent, ringDigestNow, ringEventNow, type DigestNotification, type EventNotification } from '@platform/notifications';
 
 import { bootstrap } from './bootstrap';
+import { calendarMirror } from './phoneMirror';
+import { useCalendarUiStore } from './store/calendarUi';
 import { useLibraryStore } from './store/libraryStore';
+import { gatherToday, todayPlan } from './today';
 import { publishWidgets } from './widgets';
 
 const ARMED = 'calendar.armed';
@@ -32,13 +36,13 @@ export const REFRESH_MINUTES = 60;
 
 /** What a reminder says: the event's title, and when and where. */
 export function notificationOf(alarm: Alarm): EventNotification {
-  const when = alarm.allDay ? t('Toute la journée') : formatClock(alarm.startAt);
+  const when = alarm.allDay ? t('All day') : formatClock(alarm.startAt);
   return {
     id: alarm.key,
     seriesId: alarm.seriesId,
     occurrence: alarm.occurrence,
     at: alarm.fireAt,
-    title: alarm.title.trim() || t('Sans titre'),
+    title: alarm.title.trim() || t('Untitled'),
     body: alarm.place.trim() ? `${when} · ${alarm.place.trim()}` : when,
   };
 }
@@ -91,10 +95,62 @@ export function reconcileAlarms(now: number = Date.now()): Promise<void> {
     for (const id of plan.gone) await disarmEvent(id).catch(() => undefined);
     writePreference(ARMED, next);
     if (!failed) rememberMode(BOOK, mode);
+    await reconcileDigest(now, exact);
   });
   // A run that failed leaves the next ones free to try.
   running = running.catch(() => undefined);
   return running;
+}
+
+const DIGEST_ARMED = 'calendar.digestArmed';
+const DIGEST_BOOK = 'calendarDigest';
+
+/**
+ * The morning digest wanted at `now` (`services/digest`): today's while to come or still worth ringing,
+ * else tomorrow's, its words read from the day as « Aujourd'hui » gathers it now; null when it is off,
+ * or on a day with nothing unless asked. Armed again with fresh words whenever they change (the hook's
+ * changes, a sync, the hourly run), so they are at most an hour old.
+ */
+export function wantedDigest(now: number): DigestNotification | null {
+  const prefs = useCalendarUiStore.getState().prefs;
+  if (!prefs.digest) return null;
+  const { day, at } = nextDigest(now, prefs.digestAt);
+  const plan = todayPlan(gatherToday(useLibraryStore.getState(), prefs, day), day, at);
+  const digest = writeDigest(digestEntries(plan, prefs.twelveHours), plan.overdue.length, { empty: prefs.digestEmpty });
+  return digest ? { day, at, ...digest } : null;
+}
+
+/** The digest's own book, on `planAlarms` as the reminders': one id (`DIGEST_ID`), its moment and words compared. */
+async function reconcileDigest(now: number, exact: boolean): Promise<void> {
+  const mode = exact ? 'exact' : 'inexact';
+  const { armAll, first } = await mustArmAgain(DIGEST_BOOK, mode);
+  const armed = readBook(readPreferences()[DIGEST_ARMED]);
+  const digest = wantedDigest(now);
+  const key = digest ? JSON.stringify([digest.at, digest.day, digest.title, digest.body]) : '';
+  const entries = new Map<string, AlarmEntry>(digest ? [[DIGEST_ID, { at: digest.at, key }]] : []);
+  const plan = planAlarms(entries, armed, now, { armAll, ringLate: !first });
+  let kept: string | undefined = armed.get(DIGEST_ID)?.key;
+  let failed = false;
+  if (digest && plan.arm.includes(DIGEST_ID)) {
+    const ok = await armDigest(digest, exact).then(
+      () => true,
+      () => false,
+    );
+    kept = ok ? key : undefined;
+    failed = !ok;
+  } else if (digest && plan.ringNow.includes(DIGEST_ID) && digestWorthRinging(digest.at, now)) {
+    await ringDigestNow(digest).catch(() => undefined);
+    kept = key;
+  } else if (digest && digest.at <= now) {
+    // Rung already, or a first run that keeps no record of it: never rung again that morning.
+    kept = key;
+  }
+  if (plan.gone.includes(DIGEST_ID)) {
+    await disarmEvent(DIGEST_ID).catch(() => undefined);
+    kept = undefined;
+  }
+  writePreference(DIGEST_ARMED, kept ? { [DIGEST_ID]: kept } : {});
+  if (!failed) rememberMode(DIGEST_BOOK, mode);
 }
 
 /** Asked from the root at each start: the hourly run with the app closed. */
@@ -112,4 +168,6 @@ export async function runRemindersTask(): Promise<void> {
   await pullNow().catch(() => undefined);
   await reconcileAlarms();
   await publishWidgets();
+  // The phone's copy of the calendar (when on), with what the pull brought.
+  await calendarMirror.sync();
 }

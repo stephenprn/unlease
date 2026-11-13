@@ -57,12 +57,12 @@ export function Detail({ icon, children, label, chips = false }: { icon: GlyphNa
 function calendarOf(event: CalendarEvent): string | null {
   if (!event.feedId) return null;
   const feed = useCalendarStore.getState().feeds[event.feedId];
-  return feed ? feedName(feed) || t('Agenda sans nom') : t('Agenda supprimé');
+  return feed ? feedName(feed) || t('Unnamed calendar') : t('Calendar deleted');
 }
 
 /** « Supprimer »: a series asks which of its events first; the slip offers to take it back. */
 export async function removeOccurrence(item: Occurrence): Promise<boolean> {
-  const scope = asksScope(item) ? await askScope(t('Supprimer un événement périodique')) : 'all';
+  const scope = asksScope(item) ? await askScope(t('Delete a repeating event')) : 'all';
   if (!scope) return false;
   const seriesStart = useCalendarStore.getState().events[item.seriesId]?.start ?? item.start;
   const undo = deleteEvent(item, scope);
@@ -84,7 +84,7 @@ export async function writeNotes(item: Occurrence): Promise<void> {
     const made = await makeEventPage(server, { eventId: item.seriesId, title: item.event.title, start: item.start, contactIds: item.event.contactIds, lang: getLocale() });
     navigate(suitePlace('page', made.pageId)!);
   } catch (error) {
-    showError(error instanceof Error ? error.message : t('Le serveur ne répond pas'));
+    showError(error instanceof Error ? error.message : t('The server isn’t responding'));
   }
 }
 
@@ -124,18 +124,18 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
         </Detail>
       ) : null}
       {place ? (
-        <Detail icon="mapPin" label={t('Lieu')}>
+        <Detail icon="mapPin" label={t('Place')}>
           <PlaceButton place={place} />
           {weather ? (
             <span className={`${styles.weatherLine} t-meta`}>
               <Icon name={weatherKind(weather.day.code) === 'clear' ? 'sun' : 'cloud'} size={14} />
-              {`${WEATHER_WORDS[weatherKind(weather.day.code)]} · ${temperatures(weather.day.max, weather.day.min)} · ${t('{chance} % de pluie', { chance: Math.round(weather.day.rain) })}`}
+              {`${WEATHER_WORDS[weatherKind(weather.day.code)]} · ${temperatures(weather.day.max, weather.day.min)} · ${t('{chance}% chance of rain', { chance: Math.round(weather.day.rain) })}`}
             </span>
           ) : null}
         </Detail>
       ) : null}
       {event.contactIds.length > 0 ? (
-        <Detail icon="people" label={t('Avec')} chips>
+        <Detail icon="people" label={t('With')} chips>
           <div className={styles.people}>
             {event.contactIds.map(id => (
               <PersonChip key={id} id={id} />
@@ -144,13 +144,13 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
         </Detail>
       ) : null}
       {event.reminders.length > 0 ? (
-        <Detail icon="bell" label={t('Rappels')}>
+        <Detail icon="bell" label={t('Reminders')}>
           <span className="t-body">{event.reminders.map(minutes => reminderWords(minutes, item.allDay)).join(' · ')}</span>
         </Detail>
       ) : null}
       {/* Its labels need no glyph before them: each wears its own tag, the row starting where the glyphs do. */}
       {worn.length > 0 ? (
-        <div className={styles.wornLabels} role="group" aria-label={t('Libellés : {names}', { names: worn.map(label => label!.name).join(', ') })}>
+        <div className={styles.wornLabels} role="group" aria-label={t('Labels: {names}', { names: worn.map(label => label!.name).join(', ') })}>
           {worn.map(label => (
             <span key={label!.id} className={styles.wornLabel} data-line={label!.color}>
               <LabelTag color={label!.color} size={16} />
@@ -162,11 +162,11 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
       {from ? (
         <Detail icon="calendar">
           <span className="t-body">{from}</span>
-          <span className="t-meta">{t('Agenda abonné : en lecture seule')}</span>
+          <span className="t-meta">{t('Subscribed calendar: read-only')}</span>
           {onCopy ? (
             <span className={styles.detailButton}>
               <Button kind="tonal" small icon="copy" onClick={onCopy}>
-                {t('Copier dans mon agenda')}
+                {t('Copy to my calendar')}
               </Button>
             </span>
           ) : null}
@@ -178,19 +178,19 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
         </Detail>
       ) : null}
       {event.files.length > 0 ? (
-        <Detail icon="file" label={t('Fichiers')} chips>
+        <Detail icon="file" label={t('Files')} chips>
           <div className={styles.files}>
             {event.files.map(file => (
-              <button key={file.id} type="button" className={styles.file} onClick={() => void saveEventFile(file).then(ok => (ok ? undefined : showError(t('Ce fichier n’est pas encore sur le serveur.'))))}>
+              <button key={file.id} type="button" className={styles.file} onClick={() => void saveEventFile(file).then(ok => (ok ? undefined : showError(t('This file is not on the server yet.'))))}>
                 <Icon name={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} size={18} />
-                <span className="t-body">{file.name || t('Fichier')}</span>
+                <span className="t-body">{file.name || t('File')}</span>
               </button>
             ))}
           </div>
         </Detail>
       ) : null}
       {url ? (
-        <Detail icon="link" label={t('Lien')}>
+        <Detail icon="link" label={t('Link')}>
           <LinkRow url={url} />
         </Detail>
       ) : null}
@@ -205,8 +205,8 @@ function useMoreItems(item: Occurrence): MenuItem[] {
   const own = isOwn(item.event);
   const pages = !!server && (!apps || apps.includes('pages'));
   return [
-    { label: own ? t('Dupliquer') : t('Copier dans mon agenda'), icon: 'copy', onSelect: () => duplicateOccurrence(item) },
-    ...(pages ? [{ label: t('Créer une page de notes'), icon: 'pagePlus' as const, onSelect: () => void writeNotes(item) }] : []),
+    { label: own ? t('Duplicate') : t('Copy to my calendar'), icon: 'copy', onSelect: () => duplicateOccurrence(item) },
+    ...(pages ? [{ label: t('Create a notes page'), icon: 'pagePlus' as const, onSelect: () => void writeNotes(item) }] : []),
   ];
 }
 
@@ -220,21 +220,21 @@ export function EventActions({ item }: { item: Occurrence }) {
     <div className={styles.eventActions}>
       {own ? (
         <Button icon="edit" onClick={() => navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null))}>
-          {t('Modifier')}
+          {t('Edit')}
         </Button>
       ) : null}
       <Button kind={own ? 'text' : 'filled'} icon="copy" onClick={() => duplicateOccurrence(item)}>
-        {own ? t('Dupliquer') : t('Copier dans mon agenda')}
+        {own ? t('Duplicate') : t('Copy to my calendar')}
       </Button>
       {pages ? (
         <Button kind="text" icon="pagePlus" onClick={() => void writeNotes(item)}>
-          {t('Page de notes')}
+          {t('Notes page')}
         </Button>
       ) : null}
       {own ? (
         <span className={styles.eventActionsEnd}>
           <Button kind="dangerText" icon="trash" onClick={() => void removeOccurrence(item).then(gone => (gone ? navigate(paths.home) : undefined))}>
-            {t('Supprimer')}
+            {t('Delete')}
           </Button>
         </span>
       ) : null}
@@ -268,11 +268,11 @@ export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose
   }, [own]);
   return (
     <div ref={tools} className={styles.peekTools}>
-      {own ? <IconButton icon="edit" label={t('Modifier')} compact shortcut="E" onClick={edit} /> : null}
+      {own ? <IconButton icon="edit" label={t('Edit')} compact shortcut="E" onClick={edit} /> : null}
       {own ? (
         <IconButton
           icon="trash"
-          label={t('Supprimer')}
+          label={t('Delete')}
           compact
           shape={1}
           onClick={() => {
@@ -281,12 +281,12 @@ export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose
           }}
         />
       ) : null}
-      <IconButton ref={more} icon="more" label={t('Plus d’actions')} compact shape={2} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
+      <IconButton ref={more} icon="more" label={t('More actions')} compact shape={2} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
       <Menu
         open={menu}
         anchor={more}
         onDismiss={() => setMenu(false)}
-        label={t('Plus d’actions')}
+        label={t('More actions')}
         items={items.map(each => ({
           ...each,
           onSelect: () => {
@@ -295,8 +295,8 @@ export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose
           },
         }))}
       />
-      <IconButton icon="external" label={t('Ouvrir la page de l’événement')} compact shape={3} onClick={onOpen} />
-      <IconButton icon="close" label={t('Fermer')} compact onClick={onClose} />
+      <IconButton icon="external" label={t('Open the event’s page')} compact shape={3} onClick={onOpen} />
+      <IconButton icon="close" label={t('Close')} compact onClick={onClose} />
     </div>
   );
 }

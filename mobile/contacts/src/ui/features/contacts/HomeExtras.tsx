@@ -63,7 +63,7 @@ export function FavoritesStrip({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <Animated.View entering={arrived ? BLOCK_IN : undefined} style={styles.block}>
       <AppText variant="section" style={styles.head} accessibilityRole="header">
-        {t('Favoris')}
+        {t('Favourites')}
       </AppText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
         {ids.map(id => (
@@ -87,7 +87,7 @@ export function BirthdayLine({ onOpen }: { onOpen: () => void }) {
   const others = coming.length - 1;
   const line = `${contactName(first.contact)} · ${birthdayWhen(first.birthday, now)}`;
   return (
-    <Tappable onPress={onOpen} style={styles.birthday} accessibilityRole="link" accessibilityLabel={t('Anniversaires')}>
+    <Tappable onPress={onOpen} style={styles.birthday} accessibilityRole="link" accessibilityLabel={t('Birthdays')}>
       <View style={styles.birthdayMark}>
         <Icon name="cake" size={22} color={theme.color.action} />
       </View>
@@ -97,7 +97,7 @@ export function BirthdayLine({ onOpen }: { onOpen: () => void }) {
         </AppText>
         {others > 0 ? (
           <AppText variant="meta" numberOfLines={1}>
-            {t('et {others} cette semaine', { others: plural(others, 'autre') })}
+            {t('and {others} this week', { others: plural(others, 'other') })}
           </AppText>
         ) : null}
       </View>

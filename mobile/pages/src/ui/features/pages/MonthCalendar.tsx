@@ -50,12 +50,12 @@ function MonthCalendarComponent({ chosen, today, onPick }: MonthCalendarProps) {
       <View style={styles.monthHead}>
         {/* The back chevron is the forward one turned round: Onde draws one. */}
         <View style={styles.flip}>
-          <IconButton icon="chevronRight" label={t('Mois précédent')} onPress={() => step(-1)} shape={1} />
+          <IconButton icon="chevronRight" label={t('Previous month')} onPress={() => step(-1)} shape={1} />
         </View>
         <AppText variant="bodyStrong" style={styles.monthName} accessibilityRole="header">
           {`${months[shown.month - 1]} ${shown.year}`}
         </AppText>
-        <IconButton icon="chevronRight" label={t('Mois suivant')} onPress={() => step(1)} shape={2} />
+        <IconButton icon="chevronRight" label={t('Next month')} onPress={() => step(1)} shape={2} />
       </View>
       <View style={styles.week}>
         {weekdayInitials().map((day, index) => (

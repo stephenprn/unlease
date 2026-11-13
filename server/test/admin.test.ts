@@ -31,11 +31,11 @@ describe('the administration', () => {
   it('refuses a backup or a drive pass before they are set, in French', async () => {
     const target = server();
     const backup = await target.app.request('/api/admin/backups', { method: 'POST', headers: AUTH });
-    expect([backup.status, await backup.json()]).toEqual([409, { error: 'Sauvegarde S3 non configurée' }]);
+    expect([backup.status, await backup.json()]).toEqual([409, { error: 'S3 backup not set up' }]);
     const list = await target.app.request('/api/admin/backups', { headers: AUTH });
     expect(list.status).toBe(409);
     const drive = await target.app.request('/api/admin/drive/sync', { method: 'POST', headers: AUTH });
-    expect([drive.status, await drive.json()]).toEqual([409, { error: 'Seafile n’est pas relié' }]);
+    expect([drive.status, await drive.json()]).toEqual([409, { error: 'Seafile is not connected' }]);
   });
 
   it('needs the token everywhere but the download by ticket', async () => {

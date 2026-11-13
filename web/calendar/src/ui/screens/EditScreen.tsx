@@ -12,7 +12,7 @@
  */
 import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { DAY_PATTERN, EVENT_LIMITS, labelNameTaken, WALL_PATTERN, type EventFile } from '@unlease/calendar/models/events';
 import { asksScope, blankDraft, draftOf, handedDescription, handedUrl, keepLength, type EventDraft } from '@unlease/calendar/services/editing';
 import { reminderWords, REMINDER_CHOICES } from '@unlease/calendar/services/eventText';
@@ -82,7 +82,7 @@ function draftFromQuery(search: string, now: number, length: number, reminders: 
 
 /** What is wrong with a link typed, or null (`readsAsEventUrl`). */
 function urlProblem(url: string): string | null {
-  return readsAsEventUrl(url) ? null : t('Un lien comme https://exemple.fr/billets, ou visio.exemple.org.');
+  return readsAsEventUrl(url) ? null : t('A link such as https://example.com/tickets, or meet.example.org.');
 }
 
 /** The zones offered: the device's, the event's own, then the usual ones. */
@@ -144,7 +144,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
   };
 
   const endsBefore = !(draft.end >= draft.start && (allDay ? draft.end > draft.start : true));
-  const form = useForm({ end: endsBefore ? t('La fin vient avant le début : choisissez un jour ou une heure de fin plus tard.') : null, url: urlProblem(draft.url) });
+  const form = useForm({ end: endsBefore ? t('The end comes before the start: choose a later end day or time.') : null, url: urlProblem(draft.url) });
   const endField = form.field('end');
   const endProblem = form.error('end');
   const endNote = useId();
@@ -161,16 +161,16 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
       if (!occurrence) {
         const id = addEvent(clean);
         if (clean.files.length > 0) sendFiles();
-        showSnack(t('Événement enregistré'), undefined, { tone: 'success' });
+        showSnack(t('Event saved'), undefined, { tone: 'success' });
         unsaved.saved();
         navigate(paths.event(id), { replace: true });
         return;
       }
-      const scope = asksScope(occurrence) ? await askScope(t('Modifier un événement périodique')) : 'all';
+      const scope = asksScope(occurrence) ? await askScope(t('Edit a repeating event')) : 'all';
       if (!scope) return false;
       const undo = saveEvent(occurrence, clean, scope, since.current);
       if (clean.files.some(file => !file.uploaded)) sendFiles();
-      showUndo(t('Événement enregistré'), undo);
+      showUndo(t('Event saved'), undo);
       unsaved.saved();
       navigate(paths.event(occurrence.seriesId, occurrence.repeats && scope === 'this' ? occurrence.occurrence : null), { replace: true });
     });
@@ -200,14 +200,14 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
         }}
         noValidate
       >
-        <PageHead title={occurrence ? t('Modifier l’événement') : t('Nouvel événement')} />
+        <PageHead title={occurrence ? t('Edit event') : t('New event')} />
         <OutlinedBox kind="panel" lift="card" className={`${styles.formSheet} paper`}>
-          <input className={styles.titleInput} value={draft.title} onChange={event => set({ title: event.target.value })} placeholder={t('Ajouter un titre')} aria-label={t('Titre')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" autoFocus={!occurrence} />
-          <FormRow icon="clock" label={t('Quand')} wide>
+          <input className={styles.titleInput} value={draft.title} onChange={event => set({ title: event.target.value })} placeholder={t('Add a title')} aria-label={t('Title')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" autoFocus={!occurrence} />
+          <FormRow icon="clock" label={t('When')} wide>
             <div className={styles.whenLine}>
               <div className={styles.whenGroup}>
-                <DateField value={draft.start.slice(0, 10)} label={allDay ? t('Premier jour') : t('Jour de début')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${draft.start.slice(10)}`)} />
-                {!allDay ? <TimeField value={draft.start.slice(11, 16)} label={t('Heure de début')} twelveHours={prefs.twelveHours} onChange={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} /> : null}
+                <DateField value={draft.start.slice(0, 10)} label={allDay ? t('First day') : t('Start day')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${draft.start.slice(10)}`)} />
+                {!allDay ? <TimeField value={draft.start.slice(11, 16)} label={t('Start time')} twelveHours={prefs.twelveHours} onChange={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} /> : null}
               </div>
               <span className={styles.whenDash} aria-hidden="true">
                 –
@@ -216,7 +216,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
                 {!allDay ? (
                   <TimeField
                     value={draft.end.slice(11, 16)}
-                    label={t('Heure de fin')}
+                    label={t('End time')}
                     from={sameDay ? draft.start.slice(11, 16) : undefined}
                     twelveHours={prefs.twelveHours}
                     invalid={!!endProblem}
@@ -226,7 +226,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
                 ) : null}
                 <DateField
                   value={lastDay}
-                  label={allDay ? t('Dernier jour') : t('Jour de fin')}
+                  label={allDay ? t('Last day') : t('End day')}
                   weekStart={prefs.weekStart}
                   today={today}
                   invalid={!!endProblem}
@@ -246,26 +246,26 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
             <div className={styles.whenOptions}>
               <button type="button" role="switch" aria-checked={allDay} className={styles.switchRow} onClick={() => toggleAllDay(!allDay)}>
                 <SwitchMark checked={allDay} />
-                <span className="t-body">{t('Toute la journée')}</span>
+                <span className="t-body">{t('All day')}</span>
               </button>
               {!allDay && !showZone ? (
                 <Button kind="text" small icon="globe" onClick={() => setShowZone(true)}>
-                  {t('Fuseau horaire')}
+                  {t('Time zone')}
                 </Button>
               ) : null}
             </div>
             {!allDay && showZone ? (
               <div className={styles.zoneLine}>
-                <ChoiceField value={draft.timeZone || deviceZone()} choices={zoneChoices(draft.timeZone)} label={t('Fuseau horaire')} icon="globe" onChange={timeZone => set({ timeZone })} />
-                {draft.timeZone && draft.timeZone !== deviceZone() ? <span className="t-meta">{t('Heures sur place, à {zone}', { zone: draft.timeZone.replace(/_/g, ' ').split('/').pop() ?? draft.timeZone })}</span> : null}
+                <ChoiceField value={draft.timeZone || deviceZone()} choices={zoneChoices(draft.timeZone)} label={t('Time zone')} icon="globe" onChange={timeZone => set({ timeZone })} />
+                {draft.timeZone && draft.timeZone !== deviceZone() ? <span className="t-meta">{t('Local times, in {zone}', { zone: draft.timeZone.replace(/_/g, ' ').split('/').pop() ?? draft.timeZone })}</span> : null}
               </div>
             ) : null}
           </FormRow>
-          <FormRow icon="refresh" label={t('Répétition')}>
+          <FormRow icon="refresh" label={tc('noun', 'Repeat')}>
             <ChoiceField
               value={choice}
               shown={repeatShown}
-              label={t('Répétition')}
+              label={tc('noun', 'Repeat')}
               choices={repeatChoices(draft.start).map(each => ({ value: each, label: choiceWords(each, draft.start) }))}
               onChange={next => {
                 if (next === 'custom') setRepeatOpen(true);
@@ -273,63 +273,63 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
               }}
             />
           </FormRow>
-          <FormRow icon="mapPin" label={t('Lieu')} wide>
-            <PlaceField ariaLabel={t('Lieu')} value={draft.place} onChange={place => set({ place: place.slice(0, EVENT_LIMITS.place) })} known={known} placeholder={t('Ajouter un lieu')} />
+          <FormRow icon="mapPin" label={t('Place')} wide>
+            <PlaceField ariaLabel={t('Place')} value={draft.place} onChange={place => set({ place: place.slice(0, EVENT_LIMITS.place) })} known={known} placeholder={t('Add a place')} />
           </FormRow>
-          <FormRow icon="people" label={t('Avec')} wide>
+          <FormRow icon="people" label={t('With')} wide>
             <PeoplePicker value={draft.contactIds} max={EVENT_LIMITS.contacts} onChange={contactIds => set({ contactIds })} />
           </FormRow>
-          <FormRow icon="bell" label={t('Rappels')} first="small" fieldsRef={reminderList}>
+          <FormRow icon="bell" label={t('Reminders')} first="small" fieldsRef={reminderList}>
             {draft.reminders.map(minutes => (
               <span key={minutes} className={styles.pick} data-motion={`reminder:${minutes}`}>
                 {reminderWords(minutes, allDay)}
-                <IconButton icon="close" label={t('Retirer le rappel {when}', { when: reminderWords(minutes, allDay) })} compact size={16} onClick={() => set({ reminders: draft.reminders.filter(each => each !== minutes) })} />
+                <IconButton icon="close" label={t('Remove the reminder {when}', { when: reminderWords(minutes, allDay) })} compact size={16} onClick={() => set({ reminders: draft.reminders.filter(each => each !== minutes) })} />
               </span>
             ))}
             {draft.reminders.length < EVENT_LIMITS.reminders && reminderChoices.length > 0 ? (
               <>
                 <span ref={reminderButton} className={styles.anchorSpan} data-motion="reminder-add">
                   <Button kind="text" small icon="plus" onClick={() => setReminderMenu(true)}>
-                    {draft.reminders.length > 0 ? t('Un autre rappel') : t('Ajouter un rappel')}
+                    {draft.reminders.length > 0 ? t('Another reminder') : t('Add a reminder')}
                   </Button>
                 </span>
                 <Menu
                   open={reminderMenu}
                   anchor={reminderButton}
                   onDismiss={() => setReminderMenu(false)}
-                  label={t('Ajouter un rappel')}
+                  label={t('Add a reminder')}
                   align="start"
                   items={reminderChoices.map(minutes => ({ label: reminderWords(minutes, allDay), icon: 'bell', onSelect: () => set({ reminders: [...draft.reminders, minutes].sort((a, b) => a - b) }) }))}
                 />
               </>
             ) : null}
           </FormRow>
-          <FormRow icon="tag" label={t('Libellés')} first="chips">
+          <FormRow icon="tag" label={t('Labels')} first="chips">
             {/* Each label its chip, its own tag the tick, and a new one named in place (as Contacts' form and the phone's). */}
             <LabelChips
               labels={liveLabels}
               chosen={draft.labelIds}
               onToggle={id => set({ labelIds: draft.labelIds.includes(id) ? draft.labelIds.filter(each => each !== id) : draft.labelIds.length < EVENT_LIMITS.labels ? [...draft.labelIds, id] : draft.labelIds })}
               onCreate={name => {
-                if (labelNameTaken(useCalendarStore.getState().labels, name)) return { problem: t('Ce libellé existe déjà : choisissez un autre nom.') };
+                if (labelNameTaken(useCalendarStore.getState().labels, name)) return { problem: t('This label already exists: choose another name.') };
                 const id = createLabel(name);
                 if (draft.labelIds.length < EVENT_LIMITS.labels) set({ labelIds: [...draft.labelIds, id] });
                 return { id };
               }}
               maxLength={EVENT_LIMITS.labelName}
-              words={{ add: t('Nouveau libellé'), placeholder: t('Nom du libellé'), field: t('Nom du nouveau libellé'), create: t('Créer le libellé') }}
+              words={{ add: t('New label'), placeholder: t('Label name'), field: t('New label’s name'), create: t('Create the label') }}
             />
           </FormRow>
-          <FormRow icon="palette" label={t('Couleur')} wide first="swatches">
-            <ColorPicker<true> value={draft.color} onChange={color => set({ color })} label={t('Couleur')} none={t('Celle de ses libellés')} />
+          <FormRow icon="palette" label={t('Colour')} wide first="swatches">
+            <ColorPicker<true> value={draft.color} onChange={color => set({ color })} label={t('Colour')} none={t('Its labels’')} />
           </FormRow>
           <FormRow icon="text" label={t('Description')} wide>
             <DescriptionField markup={draft.description} onChange={description => set({ description })} />
           </FormRow>
-          <FormRow icon="link" label={t('Lien')} wide>
+          <FormRow icon="link" label={t('Link')} wide>
             <TextField
               kind="url"
-              ariaLabel={t('Lien')}
+              ariaLabel={t('Link')}
               value={draft.url}
               field={form.field('url')}
               onChange={url => {
@@ -339,32 +339,32 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
                 else set({ url });
               }}
               onBlur={() => tidyUrl(draft.url)}
-              placeholder={t('Ajouter un lien (billetterie, visio…)')}
+              placeholder={t('Add a link (tickets, video call…)')}
               maxLength={EVENT_LIMITS.url}
-              help={removed.length > 0 ? t('Pistage retiré : {names}', { names: removed.join(', ') }) : undefined}
+              help={removed.length > 0 ? t('Tracking removed: {names}', { names: removed.join(', ') }) : undefined}
             />
           </FormRow>
-          <FormRow icon="file" label={t('Fichiers')} first={draft.files.length > 0 ? 'file' : 'small'}>
+          <FormRow icon="file" label={t('Files')} first={draft.files.length > 0 ? 'file' : 'small'}>
             {draft.files.map(file => (
               <span key={file.id} className={styles.file}>
                 <Icon name={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} size={18} />
                 <span>{file.name}</span>
-                <IconButton icon="close" label={t('Retirer {name}', { name: file.name })} compact size={16} onClick={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
+                <IconButton icon="close" label={t('Remove {name}', { name: file.name })} compact size={16} onClick={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
               </span>
             ))}
             <Button kind="text" icon="upload" small onClick={() => fileInput.current?.click()}>
-              {t('Joindre un fichier')}
+              {t('Attach a file')}
             </Button>
             <input ref={fileInput} type="file" multiple hidden onChange={event => void addFiles(event.target.files).then(() => (event.target.value = ''))} />
           </FormRow>
         </OutlinedBox>
         <FormFoot form={form}>
-          <span className={`${styles.formHint} t-meta`}>{t('{key} + Entrée pour enregistrer', { key: SAVE_KEY })}</span>
+          <span className={`${styles.formHint} t-meta`}>{t('{key} + Enter to save', { key: SAVE_KEY })}</span>
           <Button kind="text" onClick={() => goBack(paths.home)}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button type="submit" icon="check" busy={form.busy}>
-            {t('Enregistrer')}
+            {t('Save')}
           </Button>
         </FormFoot>
       </form>
@@ -413,7 +413,7 @@ export function EditEventScreen({ id }: { id: string }) {
   if (!occurrence || occurrence.event.feedId !== null) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="trash" as="h1" title={t('Cet événement n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" as="h1" title={t('This event no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }

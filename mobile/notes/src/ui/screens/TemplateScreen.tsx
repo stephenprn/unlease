@@ -89,7 +89,7 @@ export function TemplateScreen({ navigation, route }: ScreenProps<'Template'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar onBack={() => navigation.goBack()} />
-      <EmptyState scene="trash" title={t('Cette liste d’informations n’existe plus')} text={t('Elle a été supprimée, sur cet appareil ou sur un autre.')} />
+      <EmptyState scene="trash" title={t('This list of facts no longer exists')} text={tc('template', 'It was deleted, on this device or another.')} />
     </View>
   );
 }
@@ -181,10 +181,10 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     }
     if (kind) {
       saveTemplate({ id: null, name: '', kind, fields });
-      showSnack(t('Informations enregistrées'), undefined, { tone: 'success' });
+      showSnack(t('Facts saved'), undefined, { tone: 'success' });
     } else {
       const undo = saveCollectionFacts(lineId!, own ? fields : null);
-      showSnack(t('Informations enregistrées'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+      showSnack(t('Facts saved'), { label: t('Undo'), run: undo }, { tone: 'success' });
     }
     // Links noted before the change: the form stays, its well at the top offering to note them again (as the web's).
     const { links: now, notes: collections, linkTemplates } = useLibraryStore.getState();
@@ -206,7 +206,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
   const noteAgain = (): void => {
     const sent = readLinks(noteBefore.map(link => link.id));
     // No « Annuler »: the server starts reading at once (a collection's « Tout lire »).
-    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+    if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
   };
   // A fact taken off in one press, from its row: nothing is saved yet, and the slip puts it back where it was.
   const remove = (field: TemplateField): void => {
@@ -214,7 +214,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     if (index < 0) return;
     setFields(before => before.filter(each => each.id !== field.id));
     const put = (): void => setFields(before => (before.some(each => each.id === field.id) ? before : [...before.slice(0, index), field, ...before.slice(index)]));
-    showSnack(t('« {name} » supprimée', { name: field.name || t('Information sans nom') }), { label: tc('undo', 'Annuler'), run: put }, { tone: 'success' });
+    showSnack(tc('field', '“{name}” removed', { name: field.name || t('Unnamed fact') }), { label: t('Undo'), run: put }, { tone: 'success' });
   };
   const add = (field: TemplateField): void => setFields(before => [...before, { ...field, id: before.some(each => each.id === field.id) ? newFieldId(before) : field.id }]);
 
@@ -224,7 +224,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     if (!kind) return;
     const undo = resetKindTemplate(kind);
     leave();
-    showSnack(t('Informations de Claude rétablies'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(t('Claude’s facts restored'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const full = fields.length >= TEMPLATE_LIMITS.fields;
@@ -236,10 +236,10 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
     <View style={styles.screen}>
       <Ground />
       <TopBar
-        title={kind ? t('Informations habituelles · {kind}', { kind: LINK_KIND_NAMES[kind] }) : t('Ce que Claude relève')}
+        title={kind ? t('Usual facts · {kind}', { kind: LINK_KIND_NAMES[kind] }) : t('Facts Claude notes')}
         closes
         onBack={() => navigation.goBack()}
-        actions={<Button label={t('Enregistrer')} small busy={form.busy} onPress={() => void form.submit(save)} style={styles.saveButton} />}
+        actions={<Button label={t('Save')} small busy={form.busy} onPress={() => void form.submit(save)} style={styles.saveButton} />}
       />
       {form.message ? (
         <View style={styles.message}>
@@ -251,7 +251,7 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
           {reading && noteBefore.length > 0 && !dirty ? (
             <ReadAllBanner
               text={readAgainWords(noteBefore.length, cost)}
-              action={noteBefore.length === 1 ? t('Relire') : t('Tout relire')}
+              action={noteBefore.length === 1 ? t('Read again') : t('Read all again')}
               onRead={noteAgain}
               style={styles.banner}
             />
@@ -259,52 +259,52 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
 
           {kind ? (
             <View style={styles.lead}>
-              <AppText variant="meta">{t('Claude les relève sur chaque lien qu’il reconnaît comme « {kind} », sauf dans une collection qui a les siennes.', { kind: LINK_KIND_NAMES[kind] })}</AppText>
+              <AppText variant="meta">{t('Claude notes these on every link it recognises as “{kind}”, except in a collection that has its own.', { kind: LINK_KIND_NAMES[kind] })}</AppText>
             </View>
           ) : (
             <>
               <View style={[styles.lead, styles.collection]}>
                 <EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={18} width={30} height={27} />
                 <AppText variant="label" color={theme.color.inkMuted} style={styles.fill}>
-                  {t('Sur les liens de {collection}', { collection })}
+                  {t('On the links in {collection}', { collection })}
                 </AppText>
               </View>
-              <View accessibilityRole="radiogroup" accessibilityLabel={t('Ce que Claude relève')} style={styles.choices}>
-                <SourceChoice chosen={!own} mark={<Icon name="sparkle" size={24} color={!own ? theme.color.onActionContainer : theme.color.ink} />} title={t('Informations adaptatives')} meta={t('Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…')} onPress={() => choose(false)} />
-                <SourceChoice chosen={own} mark={<EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={16} width={28} height={25} />} title={t('Informations personnalisées')} meta={t('Celles que vous choisissez, les mêmes sur chaque lien d’ici.')} onPress={() => choose(true)} />
+              <View accessibilityRole="radiogroup" accessibilityLabel={t('Facts Claude notes')} style={styles.choices}>
+                <SourceChoice chosen={!own} mark={<Icon name="sparkle" size={24} color={!own ? theme.color.onActionContainer : theme.color.ink} />} title={t('Adaptive facts')} meta={t('Claude picks them by each link’s kind: a product’s brand, a film’s director…')} onPress={() => choose(false)} />
+                <SourceChoice chosen={own} mark={<EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={16} width={28} height={25} />} title={t('Custom facts')} meta={t('The ones you choose, the same on every link here.')} onPress={() => choose(true)} />
               </View>
             </>
           )}
 
           {own ? (
-            <Section title={t('Informations')}>
-              {fields.length === 0 ? <EmptyLine text={t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')} style={styles.line} /> : null}
+            <Section title={t('Facts')}>
+              {fields.length === 0 ? <EmptyLine text={t('No facts: Claude will only note the title, the summary and the price.')} style={styles.line} /> : null}
               {fields.map(field => (
                 <TemplateRow
                   key={field.id}
                   icon={FIELD_TYPE_GLYPHS[field.type]}
-                  title={field.name || t('Information sans nom')}
+                  title={field.name || t('Unnamed fact')}
                   meta={factMeta(field) || undefined}
                   strong
                   metaLine
                   error={problems.fields[field.id] ?? null}
                   onPress={() => setSheet({ open: true, fieldId: field.id })}
-                  trailing={<IconButton icon="trash" label={t('Supprimer « {name} »', { name: field.name || t('Information sans nom') })} color={theme.color.inkMuted} size={20} onPress={() => remove(field)} style={styles.rowTrash} />}
+                  trailing={<IconButton icon="trash" label={t('Remove “{name}”', { name: field.name || t('Unnamed fact') })} color={theme.color.inkMuted} size={20} onPress={() => remove(field)} style={styles.rowTrash} />}
                 />
               ))}
               {full ? (
                 <AppText variant="meta" style={styles.line}>
-                  {t('{count} informations au plus.', { count: TEMPLATE_LIMITS.fields })}
+                  {t('{count} facts at most.', { count: TEMPLATE_LIMITS.fields })}
                 </AppText>
               ) : (
                 <>
-                  <TemplateRow icon="plus" title={t('Ajouter une information')} adds onPress={() => setSheet({ open: true, fieldId: null })} />
+                  <TemplateRow icon="plus" title={t('Add a fact')} adds onPress={() => setSheet({ open: true, fieldId: null })} />
                   {suggestions.length > 0 ? (
                     <View style={styles.common}>
                       <AppText variant="metaStrong">{t('Suggestions')}</AppText>
                       <View style={styles.chips}>
                         {suggestions.map(field => (
-                          <Tappable key={field.name} onPress={() => add(field)} accessibilityRole="button" accessibilityLabel={t('Ajouter « {name} »', { name: field.name })} style={styles.chip}>
+                          <Tappable key={field.name} onPress={() => add(field)} accessibilityRole="button" accessibilityLabel={t('Add “{name}”', { name: field.name })} style={styles.chip}>
                             <Icon name="plus" size={16} color={theme.color.link} />
                             <AppText variant="label">{field.name}</AppText>
                           </Tappable>
@@ -316,21 +316,21 @@ function FactsForm({ navigation, kind, lineId }: FormProps) {
               )}
               {others.length > 0 ? (
                 <AppText variant="meta" style={styles.line}>
-                  {t('Aussi relevées sur les liens de {collections}.', { collections: others.join(', ') })}
+                  {t('Also noted on the links in {collections}.', { collections: others.join(', ') })}
                 </AppText>
               ) : null}
             </Section>
           ) : (
-            <Section title={t('Types de liens ici')}>
-              {kinds.length === 0 ? <EmptyLine text={t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')} style={styles.line} /> : null}
+            <Section title={t('Kinds of link here')}>
+              {kinds.length === 0 ? <EmptyLine text={t('Its links have no kind yet: Claude gives one to each link it reads.')} style={styles.line} /> : null}
               {kinds.map(each => (
                 <TemplateRow key={each} icon={KIND_ICONS[each]} title={LINK_KIND_NAMES[each]} meta={factNames(kindFields(templates, each))} metaLine chevron onPress={() => navigation.push('Template', { kind: each })} />
               ))}
-              <TemplateRow icon="rows" title={t('Informations habituelles, par type de lien')} adds chevron onPress={() => navigation.navigate('Templates')} />
+              <TemplateRow icon="rows" title={t('Usual facts, by kind of link')} adds chevron onPress={() => navigation.navigate('Templates')} />
             </Section>
           )}
           {/* The usual facts as the person changed them, set back in one press: quiet, under them. */}
-          {changed ? <Button kind="text" icon="restore" label={t('Rétablir celles de Claude')} onPress={reset} style={styles.quiet} /> : null}
+          {changed ? <Button kind="text" icon="restore" label={t('Restore Claude’s facts')} onPress={reset} style={styles.quiet} /> : null}
 
           {own ? <TrySection state={trying} fields={fields} /> : null}
         </RevealScrollView>

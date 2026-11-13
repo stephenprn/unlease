@@ -12,7 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { noteBackdrop } from '@unlease/design/backgrounds';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { lineLinkAt } from '@unlease/core/services/url';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
@@ -52,7 +52,7 @@ interface Focus {
 /** × on an item: it goes, and the slip offers it back (the keyboard would cover the slip). */
 function removeItem(id: string): void {
   Keyboard.dismiss();
-  showSnack(t('Élément supprimé'), { label: tc('undo', 'Annuler'), run: deleteCheck(id) }, { tone: 'success' });
+  showSnack(t('Item deleted'), { label: t('Undo'), run: deleteCheck(id) }, { tone: 'success' });
 }
 
 export interface ChecklistEditorProps {
@@ -266,27 +266,27 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false, on
         </View>
         {editable ? (
           <Animated.View layout={ROW_MOVE}>
-            <Tappable onPress={() => addAfter(openIds[openIds.length - 1] ?? null)} accessibilityLabel={t('Ajouter un élément')} style={styles.addRow}>
+            <Tappable onPress={() => addAfter(openIds[openIds.length - 1] ?? null)} accessibilityLabel={t('Add an item')} style={styles.addRow}>
               <View style={styles.gripSpace} />
               <View style={styles.addIcon}>
                 <Icon name="plus" size={20} color={theme.color.inkMuted} />
               </View>
               <AppText variant="body" color={theme.color.inkMuted} style={styles.columnText}>
-                {t('Élément de liste')}
+                {t('List item')}
               </AppText>
             </Tappable>
           </Animated.View>
         ) : null}
         {doneIds.length > 0 ? (
           <Animated.View layout={ROW_MOVE} entering={ROW_IN_LATE} exiting={ROW_OUT} style={styles.doneSection}>
-            <Tappable onPress={() => setShowDone(value => !value)} accessibilityLabel={showDone ? t('Masquer les éléments cochés') : t('Afficher les éléments cochés')} style={styles.doneHeader}>
+            <Tappable onPress={() => setShowDone(value => !value)} accessibilityLabel={showDone ? t('Hide ticked items') : t('Show ticked items')} style={styles.doneHeader}>
               {/* The chevron in the boxes' column, the count on the items' words. */}
               <View style={styles.gripSpace} />
               <View style={styles.addIcon}>
                 <Chevron open={showDone} color={theme.color.inkMuted} />
               </View>
               <AppText variant="metaStrong" style={styles.columnText}>
-                {plural(doneIds.length, 'élément coché', 'éléments cochés')}
+                {plural(doneIds.length, 'ticked item', 'ticked items')}
               </AppText>
             </Tappable>
             {showDone
@@ -342,7 +342,7 @@ interface CheckRowProps {
 
 /** An address in a ticked item, tapped: the browser, or a slip when nothing opens it. */
 const openAddress = (href: string): void => {
-  Linking.openURL(href).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+  Linking.openURL(href).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 };
 
 const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, onMergeUp, onEmptyBackspace, onPasteLines, onDrag, onDrop, onHold, onLinkAtCaret, rowY, settleFrom, raised }: CheckRowProps) {
@@ -448,7 +448,7 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
       ) : null}
       {editable ? (
         <GestureDetector gesture={drag}>
-          <View style={styles.grip} accessibilityLabel={t('Maintenir pour déplacer')} accessible>
+          <View style={styles.grip} accessibilityLabel={t('Hold to move')} accessible>
             <Icon name="grip" size={18} color={theme.color.inkFaint} />
           </View>
         </GestureDetector>
@@ -456,7 +456,7 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
         <View style={styles.gripSpace} />
       )}
       <View style={styles.box}>
-        <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Cocher {item}', { item: item.text }) : t('Cocher l’élément')} disabled={!editable} recede />
+        <Checkbox checked={ticked} onToggle={tick} label={item.text ? t('Tick {item}', { item: item.text }) : t('Tick the item')} disabled={!editable} recede />
       </View>
       <TextInput
         ref={ref => {
@@ -500,18 +500,18 @@ const CheckRow = memo(function CheckRowView({ id, editable, register, onSplit, o
           if (toldLink.current) onLinkAtCaret?.(null);
           toldLink.current = false;
         }}
-        placeholder={t('Élément')}
+        placeholder={t('Item')}
         placeholderTextColor={theme.color.inkFaint}
         selectionColor={theme.color.highlight}
         selectionHandleColor={theme.color.focus}
         cursorColor={theme.color.focus}
         style={[variantStyle(theme, 'editorBody'), styles.input]}
         maxLength={TEXT_LIMITS.check.text}
-        accessibilityLabel={t('Texte de l’élément')}
+        accessibilityLabel={t('Item text')}
       >
         <LinkedWords text={draft} style={styles.inputLink} />
       </TextInput>
-      {focused && editable ? <IconButton icon="close" label={t('Supprimer l’élément')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
+      {focused && editable ? <IconButton icon="close" label={t('Delete the item')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
     </AnimatedOrganic>
   );
 });
@@ -530,12 +530,12 @@ const DoneRow = memo(function DoneRowView({ id, editable }: { id: string; editab
     <View style={styles.row}>
       <View style={styles.gripSpace} />
       <View style={styles.box}>
-        <Checkbox checked={!unticked} onToggle={untick} label={t('Décocher {item}', { item: item.text })} disabled={!editable} recede />
+        <Checkbox checked={!unticked} onToggle={untick} label={t('Untick {item}', { item: item.text })} disabled={!editable} recede />
       </View>
       <AppText variant="editorBody" color={theme.color.inkMuted} style={styles.doneText}>
         <LinkedWords text={item.text} style={styles.doneLink} onOpen={openAddress} />
       </AppText>
-      {editable ? <IconButton icon="close" label={t('Supprimer l’élément')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
+      {editable ? <IconButton icon="close" label={t('Delete the item')} onPress={() => removeItem(id)} size={20} /> : <View style={styles.trailing} />}
     </View>
   );
 });

@@ -211,7 +211,7 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
   const onDelete = useCallback((id: string) => {
     const index = openIds.indexOf(id);
     const undo = deleteCheck(id);
-    showUndo(t('Élément supprimé'), undo);
+    showUndo(t('Item deleted'), undo);
     const neighbour = openIds[index - 1] ?? openIds[index + 1];
     if (neighbour) focusItem(neighbour, 'end');
   }, [openIds, focusItem]);
@@ -268,7 +268,7 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
 
   return (
     <div ref={root} className={styles.checklist}>
-      <ul ref={list} className={styles.checkList} aria-label={t('Éléments à faire')}>
+      <ul ref={list} className={styles.checkList} aria-label={t('Items to do')}>
         {openIds.map(id => (
           <CheckRow
             key={id}
@@ -298,17 +298,17 @@ function ChecklistEditorComponent({ noteId, editable, autoFocusFirst = false }: 
           }}
         >
           <Icon name="plus" size={20} />
-          {t('Élément de liste')}
+          {t('List item')}
         </button>
       ) : null}
       {doneIds.length > 0 ? (
         <div className={styles.doneSection} data-motion="done" data-motion-late>
           <button type="button" className={styles.doneToggle} aria-expanded={showDone} onClick={() => setShowDone(value => !value)}>
             <Icon name={showDone ? 'chevronDown' : 'chevronRight'} size={20} />
-            {plural(doneIds.length, 'élément coché', 'éléments cochés')}
+            {plural(doneIds.length, 'ticked item', 'ticked items')}
           </button>
           {showDone ? (
-            <ul className={styles.doneList} aria-label={t('Éléments cochés')}>
+            <ul className={styles.doneList} aria-label={t('Ticked items')}>
               {doneIds.map(id => (
                 <DoneRow key={id} id={id} editable={editable} />
               ))}
@@ -419,7 +419,7 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
         <button
           type="button"
           className={styles.grip}
-          aria-label={t('Glisser pour déplacer (ou Alt + flèches)')}
+          aria-label={t('Drag to move (or Alt + arrows)')}
           tabIndex={-1}
           onPointerDown={event => onGripDown(id, event)}
           onPointerMove={onGripMove}
@@ -438,7 +438,7 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
           flushSync(() => setTicked(true));
           toggleCheck(id);
         }}
-        label={t('Cocher « {item} »', { item: value || t('élément vide') })}
+        label={t('Tick “{item}”', { item: value || t('empty item') })}
         disabled={!editable}
         recede
       />
@@ -448,9 +448,9 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
         value={value}
         rows={1}
         readOnly={!editable}
-        placeholder={t('Élément')}
+        placeholder={t('Item')}
         maxLength={TEXT_LIMITS.check.text}
-        aria-label={t('Texte de l’élément')}
+        aria-label={t('Item text')}
         onChange={event => {
           const text = event.target.value.replace(/\r?\n/g, ' ');
           keystroke?.();
@@ -466,7 +466,7 @@ const CheckRow = memo(function CheckRow({ id, editable, dragging, register, regi
         onKeyDown={event => onKey(id, event, rowDraft)}
         onPaste={event => onPaste(id, event, rowDraft)}
       />
-      {editable ? <IconButton icon="close" label={t('Supprimer l’élément')} compact size={18} className={styles.removeItem} onClick={() => onDelete(id)} /> : null}
+      {editable ? <IconButton icon="close" label={t('Delete the item')} compact size={18} className={styles.removeItem} onClick={() => onDelete(id)} /> : null}
     </li>
   );
 });
@@ -485,7 +485,7 @@ const DoneRow = memo(function DoneRow({ id, editable }: { id: string; editable: 
           flushSync(() => setUnticked(true));
           toggleCheck(id);
         }}
-        label={t('Décocher « {item} »', { item: item.text || t('élément vide') })}
+        label={t('Untick “{item}”', { item: item.text || t('empty item') })}
         disabled={!editable}
         recede
       />
@@ -493,11 +493,11 @@ const DoneRow = memo(function DoneRow({ id, editable }: { id: string; editable: 
       {editable ? (
         <IconButton
           icon="close"
-          label={t('Supprimer l’élément')}
+          label={t('Delete the item')}
           compact
           size={18}
           className={styles.removeItem}
-          onClick={() => showUndo(t('Élément supprimé'), deleteCheck(id))}
+          onClick={() => showUndo(t('Item deleted'), deleteCheck(id))}
         />
       ) : null}
     </li>

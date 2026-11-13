@@ -27,6 +27,15 @@
   animation: dock-out var(--duration-short) var(--ease-accelerate) both;
 }
 
+/*
+ * The window's room for the page's caret (its scroll-padding, pages.module.css) is none while the
+ * focus is in the docked panel: the panel is sticky, so the window can never bring its question
+ * field any nearer, and the browser's caret reveal would scroll the page under it at every key.
+ */
+:global(html):has(.dock :focus) {
+  scroll-padding: 0;
+}
+
 @keyframes dock-in {
   from {
     opacity: 0;

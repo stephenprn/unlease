@@ -18,6 +18,7 @@ export const SETTINGS: ServerSettings = {
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
   calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
+  immich: { url: '', keyHint: null },
 };
 
 export const answer = (body: unknown, code = 200) => ({ ok: code < 400, status: code, headers: { get: () => null }, json: async () => body });

@@ -169,18 +169,18 @@ function isRetryable(error: unknown): boolean {
 
 /** Most specific first: the timeout and connection errors are themselves `APIError`s. */
 function frenchMessage(error: unknown): string {
-  if (error instanceof Anthropic.APIConnectionTimeoutError) return 'Délai dépassé (Claude)';
-  if (error instanceof Anthropic.APIConnectionError) return 'API Claude injoignable';
-  if (error instanceof Anthropic.RateLimitError) return 'Limite de l’API Claude atteinte';
-  if (error instanceof Anthropic.AuthenticationError) return 'Clé API refusée';
-  if (error instanceof Anthropic.PermissionDeniedError) return 'Accès à l’API Claude refusé';
-  if (error instanceof Anthropic.NotFoundError) return 'Modèle Claude introuvable';
-  if (error instanceof Anthropic.InternalServerError) return error.status === 529 ? 'Claude est surchargé' : 'Erreur du service Claude';
+  if (error instanceof Anthropic.APIConnectionTimeoutError) return 'Timed out (Claude)';
+  if (error instanceof Anthropic.APIConnectionError) return 'Claude API unreachable';
+  if (error instanceof Anthropic.RateLimitError) return 'Claude API limit reached';
+  if (error instanceof Anthropic.AuthenticationError) return 'API key refused';
+  if (error instanceof Anthropic.PermissionDeniedError) return 'Access to the Claude API denied';
+  if (error instanceof Anthropic.NotFoundError) return 'Claude model not found';
+  if (error instanceof Anthropic.InternalServerError) return error.status === 529 ? 'Claude is overloaded' : 'Claude service error';
   if (error instanceof Anthropic.APIError) {
-    if (error.type === 'billing_error' || error.status === 402) return 'Crédit API épuisé';
+    if (error.type === 'billing_error' || error.status === 402) return 'API credit used up';
     return `Requête refusée par l’API Claude (${error.status ?? '?'})`;
   }
-  return 'Erreur de l’analyse';
+  return 'Analysis error';
 }
 
 function retryDelayMs(error: unknown): number {
@@ -251,7 +251,7 @@ export class ClaudeClient {
     try {
       return await this.converse(params, signal, usage => (spent = usage));
     } catch (error) {
-      if (signal.aborted) throw new ModelError('Claude a mis trop de temps', spent);
+      if (signal.aborted) throw new ModelError('Claude took too long', spent);
       throw error;
     }
   }

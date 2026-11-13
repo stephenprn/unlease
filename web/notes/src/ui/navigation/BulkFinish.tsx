@@ -30,12 +30,12 @@ export function BulkFinish({ ids, shape }: { ids: readonly string[]; shape: numb
   const picked = ids.flatMap(id => (notes[id] && notes[id]!.deletedAt === null ? [notes[id]!] : []));
   const shared = pickedFinish(picked);
   const collections = picked.length > 0 && shared.notes === 0;
-  const label = collections ? t('Couleur') : t('Couleur et papier');
+  const label = collections ? t('Colour') : t('Colour and paper');
 
   const apply = (finish: Finish): void => {
     const { undo, changed, kept } = setFinish(ids, finish);
     if (changed === 0) return;
-    showUndo('color' in finish ? (kept > 0 ? t('Couleur changée sur les notes') : t('Couleur changée')) : kept > 0 ? t('Papier changé sur les notes') : t('Papier changé'), undo);
+    showUndo('color' in finish ? (kept > 0 ? t('Colour changed on the notes') : t('Colour changed')) : kept > 0 ? t('Paper changed on the notes') : t('Paper changed'), undo);
   };
 
   return (
@@ -47,10 +47,10 @@ export function BulkFinish({ ids, shape }: { ids: readonly string[]; shape: numb
           {narrow ? <h2 className={`${styles.title} t-title`}>{label}</h2> : null}
           <div className={collections ? `${styles.body} ${styles.lines}` : styles.body}>
             {collections ? (
-              <LineColorPicker value={isLineColor(shared.color) ? shared.color : null} onChange={next => next && apply({ color: next })} label={t('Couleur')} />
+              <LineColorPicker value={isLineColor(shared.color) ? shared.color : null} onChange={next => next && apply({ color: next })} label={t('Colour')} />
             ) : (
               <>
-                {shared.collections > 0 ? <p className={`${styles.note} t-meta`}>{t('Les collections ne prennent qu’une couleur, ni dégradé ni papier.')}</p> : null}
+                {shared.collections > 0 ? <p className={`${styles.note} t-meta`}>{t('Collections take a colour only: no gradient, no paper.')}</p> : null}
                 <NoteFinishPicker color={shared.color} pattern={shared.pattern} onColor={color => apply({ color })} onPattern={pattern => apply({ pattern })} />
               </>
             )}

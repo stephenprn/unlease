@@ -54,7 +54,7 @@ export function servingsUnit(attributes: readonly LinkAttribute[]): string | nul
   }
   const unit = words.join(' ');
   if (unit && unit.length <= 24) return PEOPLE_WORDS.has(foldText(words[0]!)) ? null : unit;
-  return makes ? t('pièces') : null;
+  return makes ? t('pieces') : null;
 }
 
 /** A count of `unit` as written for `written` of them: « 1 crêpe » from « 15 crêpes », « 2 gâteaux » from « 1 gâteau ». */
@@ -72,7 +72,7 @@ function unitFor(unit: string, count: number, written: number): string {
 export function servingsWords(servings: number | null, factor: number, unit: string | null = null): string {
   if (servings === null) return t('× {factor}', { factor: formatNumber(factor, 2) });
   const count = Math.round(servings * factor);
-  return unit ? `${formatNumber(count, 0)}\u00a0${unitFor(unit, count, servings)}` : plural(count, 'personne');
+  return unit ? `${formatNumber(count, 0)}\u00a0${unitFor(unit, count, servings)}` : plural(count, 'person', 'people');
 }
 
 /** The factors offered for a recipe that does not say how many it serves. */

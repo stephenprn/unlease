@@ -6,7 +6,7 @@
  */
 import { create } from 'zustand';
 
-import { tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 
 /** What a slip says, by its leading glyph: news, a change made, something to look at, a refusal. */
 export type SnackTone = 'info' | 'success' | 'warning' | 'error';
@@ -72,7 +72,7 @@ export function showWarning(message: string, action?: Snack['action']): number {
 
 /** A change made, and the way back; `also`, where to go and see it (a page restored: « Voir la page »). */
 export function showUndo(message: string, undo: () => void, also?: Snack['also']): void {
-  showSnack(message, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success', ...(also ? { also } : {}) });
+  showSnack(message, { label: t('Undo'), run: undo }, { tone: 'success', ...(also ? { also } : {}) });
 }
 
 export function dismissSnack(id: number): void {

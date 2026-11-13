@@ -15,6 +15,7 @@ import { PagesScreen } from '../screens/PagesScreen';
 import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
 import { SetupScreen } from '../screens/SetupScreen';
 import { TrashScreen } from '../screens/TrashScreen';
+import { VersionsScreen } from '../screens/VersionsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,6 +77,7 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Pages" component={PagesScreen} />
       <Stack.Screen name="Page" component={PageScreen} options={DEEPER} />
       <Stack.Screen name="Drawing" component={DrawingScreen} />
+      <Stack.Screen name="Versions" component={VersionsScreen} options={DEEPER} />
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />

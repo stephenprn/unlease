@@ -22,7 +22,7 @@ import { StatusRow } from '@shared/ui/features/settings/Section';
 import styles from '@shared/ui/features/settings/settings.module.css';
 
 /** In French, translated where it is shown (`Section` reads its `info` through `t`). */
-export const SEERR_INFO = tx('Seerr est l’application où l’on demande films et séries à un serveur Plex ou Jellyfin. Relié ici, un module ouvre chaque film ou série de vos collections dans votre Seerr, pour le demander ou voir s’il est déjà là.');
+export const SEERR_INFO = tx('Seerr is the app where people request films and series from a Plex or Jellyfin server. Linked here, a module opens each film or series in your collections in your Seerr, to request it or see whether it is already there.');
 
 type Busy = 'save' | 'key' | 'remove' | null;
 
@@ -36,7 +36,7 @@ export function SeerrSection({ server, seerr }: { server: ServerConfig; seerr: S
   // Nothing to try: linked, and nothing in the form changed.
   const unchanged = on && urlValue.trim() === seerr.url && key.trim() === '';
   // The key is optional: only Seerr's refusal of it shows under it.
-  const form = useForm({ url: serviceAddressProblem(urlValue, t('Saisissez l’adresse de votre Seerr.'), t('https://seerr.exemple.fr')), apiKey: null });
+  const form = useForm({ url: serviceAddressProblem(urlValue, t('Enter your Seerr’s address.'), t('https://seerr.example.org')), apiKey: null });
 
   /** Saves; the server's refusal of the link comes back on its form, anything else on a slip. */
   const save = async (patch: SettingsPatch, what: Exclude<Busy, null>, done: string): Promise<boolean> => {
@@ -46,7 +46,7 @@ export function SeerrSection({ server, seerr }: { server: ServerConfig; seerr: S
       showSnack(done, undefined, { tone: 'success' });
       return true;
     } catch (failure) {
-      const said = failure instanceof Error ? failure.message : tx('Réglage refusé');
+      const said = failure instanceof Error ? failure.message : tx('Setting refused');
       const message = t(said);
       // Under the field it concerns (the address, the key), else on the whole form.
       const field = serviceRefusalField(said);
@@ -61,63 +61,63 @@ export function SeerrSection({ server, seerr }: { server: ServerConfig; seerr: S
   const saveSeerr = async (): Promise<boolean> => {
     if (unchanged) return true;
     const patch = { url: urlValue.trim(), ...(key.trim() ? { apiKey: key.trim() } : {}) };
-    if (!(await save({ seerr: patch }, 'save', on ? t('Seerr enregistré') : t('Seerr relié : son module apparaît sur les films et les séries.')))) return false;
+    if (!(await save({ seerr: patch }, 'save', on ? t('Seerr saved') : t('Seerr linked: its module shows on films and series.')))) return false;
     setUrl(null);
     setKey('');
     form.reset();
     return true;
   };
 
-  const meta = !on ? t('Le module Seerr n’apparaît qu’une fois relié.') : seerr.keyHint ? t('{address} · clé {hint}', { address: seerr.url.replace(/^https?:\/\//, ''), hint: seerr.keyHint }) : t('{address} · sans clé : la recherche de Seerr seulement', { address: seerr.url.replace(/^https?:\/\//, '') });
+  const meta = !on ? t('The Seerr module shows only once it is linked.') : seerr.keyHint ? t('{address} · key {hint}', { address: seerr.url.replace(/^https?:\/\//, ''), hint: seerr.keyHint }) : t('{address} · no key: Seerr’s search only', { address: seerr.url.replace(/^https?:\/\//, '') });
 
   return (
     <>
-      <StatusRow tone={on ? 'ok' : 'off'} title={on ? t('Seerr relié') : t('Seerr non relié')} meta={meta}>
+      <StatusRow tone={on ? 'ok' : 'off'} title={on ? t('Seerr linked') : t('Seerr not linked')} meta={meta}>
         {on ? (
           <Button kind="dangerText" small busy={busy === 'remove'} onClick={() => setConfirmRemove(true)}>
-            {t('Délier Seerr')}
+            {t('Unlink Seerr')}
           </Button>
         ) : null}
       </StatusRow>
 
       <form className={styles.block} onSubmit={form.onSubmit(saveSeerr)} noValidate>
         <div className={styles.fields}>
-          <TextField label={t('Adresse de Seerr')} kind="url" value={urlValue} onChange={setUrl} field={form.field('url')} help={t('Par exemple {example}.', { example: t('https://seerr.exemple.fr') })} />
+          <TextField label={t('Seerr address')} kind="url" value={urlValue} onChange={setUrl} field={form.field('url')} help={t('For example {example}.', { example: t('https://seerr.example.org') })} />
         </div>
         <TextField
-          label={seerr.keyHint ? t('Remplacer la clé API') : t('Clé API')}
+          label={seerr.keyHint ? t('Replace the API key') : t('API key')}
           kind="secret"
           optional={!seerr.keyHint}
           value={key}
           onChange={setKey}
           field={form.field('apiKey')}
           // The key kept is in the status line over the form (« clé …7d1e »): its help does not say it again.
-          help={t('Dans Seerr : Réglages, puis Général, « Clé API ». Gardée sur votre serveur.')}
-          revealLabels={{ show: t('Afficher la clé'), hide: t('Masquer la clé') }}
+          help={t('In Seerr: Settings, then General, “API Key”. Kept on your server.')}
+          revealLabels={{ show: t('Show the key'), hide: t('Hide the key') }}
         />
         <FormMessage form={form} />
         <div className={styles.buttons}>
           {on && seerr.keyHint ? (
-            <Button kind="text" busy={busy === 'key'} disabled={busy !== null} onClick={() => void save({ seerr: { apiKey: '' } }, 'key', t('Clé retirée : Seerr est seulement cherché.'))}>
-              {t('Retirer la clé')}
+            <Button kind="text" busy={busy === 'key'} disabled={busy !== null} onClick={() => void save({ seerr: { apiKey: '' } }, 'key', t('Key removed: Seerr is only searched.'))}>
+              {t('Remove the key')}
             </Button>
           ) : null}
           <Button type="submit" icon="server" busy={form.busy} disabled={unchanged || (busy !== null && busy !== 'save')}>
-            {t('Tester et enregistrer')}
+            {t('Test and save')}
           </Button>
         </div>
       </form>
 
       <Confirm
         open={confirmRemove}
-        title={t('Délier Seerr ?')}
-        message={t('Le module Seerr disparaît des films et des séries. Rien ne change dans Seerr.')}
-        confirmLabel={t('Délier')}
+        title={t('Unlink Seerr?')}
+        message={t('The Seerr module goes from films and series. Nothing changes in Seerr.')}
+        confirmLabel={t('Unlink')}
         danger
         onCancel={() => setConfirmRemove(false)}
         onConfirm={() => {
           setConfirmRemove(false);
-          void save({ seerr: null }, 'remove', t('Seerr délié'));
+          void save({ seerr: null }, 'remove', t('Seerr unlinked'));
         }}
       />
     </>

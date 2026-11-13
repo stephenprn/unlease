@@ -9,7 +9,7 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { DRAWING_NONE, drawingBackgroundOf } from '@unlease/notes/models/drawing';
 import { isInBin } from '@unlease/pages/services/blocks';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -45,7 +45,7 @@ export function DrawingScreen({ navigation, route }: ScreenProps<'Drawing'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={back} />
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Ce dessin n’existe plus.')} />
+        <EmptyState scene="trash" title={t('Not found')} text={t('This drawing no longer exists.')} />
       </View>
     );
   }
@@ -55,12 +55,12 @@ export function DrawingScreen({ navigation, route }: ScreenProps<'Drawing'>) {
       <Ground />
       <TopBar
         onBack={back}
-        title={t('Dessin')}
+        title={t('Drawing')}
         actions={
           editable ? (
             <>
-              <IconButton icon="undo" label={tc('undo', 'Annuler')} shape={1} disabled={!editor.canUndo} onPress={editor.undo} />
-              <IconButton icon="undo" label={t('Rétablir')} shape={2} disabled={!editor.canRedo} onPress={editor.redo} style={styles.mirrored} />
+              <IconButton icon="undo" label={t('Undo')} shape={1} disabled={!editor.canUndo} onPress={editor.undo} />
+              <IconButton icon="undo" label={t('Redo')} shape={2} disabled={!editor.canRedo} onPress={editor.redo} style={styles.mirrored} />
             </>
           ) : null
         }

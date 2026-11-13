@@ -46,10 +46,10 @@ function DrawingBackgroundSheetComponent({ visible, value, onDismiss, onChange }
   const columns = COLUMNS;
   const cell = swatchCells.quarter;
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Fond du dessin')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Drawing background')}>
       {/* One group under the sheet's title: no head of its own saying « Fond » again. The chosen one is ringed, and named to TalkBack. */}
       <View style={styles.body}>
-        <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={t('Fond du dessin')}>
+        <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={t('Drawing background')}>
           {options.map((option, index) => (
             <Swatch
               key={option}

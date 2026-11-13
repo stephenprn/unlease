@@ -30,7 +30,7 @@ export function TimeSheet({ visible, title, value, twelveHours, onDismiss, onTim
     const clock = readClock(typed);
     if (clock) pick(clock);
   };
-  const form = useForm({ time: readClock(typed) ? null : t('Une heure comme 20h, 8:30 ou 9 pm.') }, { sendOnDone: keepTyped });
+  const form = useForm({ time: readClock(typed) ? null : t('A time such as 8 pm, 20:00 or 8:30.') }, { sendOnDone: keepTyped });
   const { reset } = form;
   useEffect(() => {
     if (!visible) return;
@@ -43,7 +43,7 @@ export function TimeSheet({ visible, title, value, twelveHours, onDismiss, onTim
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <View style={styles.typed}>
         <View style={styles.field}>
-          <TextField kind="time" value={typed} onChangeText={setTyped} accessibilityLabel={t('Heure')} field={form.field('time')} selectTextOnFocus />
+          <TextField kind="time" value={typed} onChangeText={setTyped} accessibilityLabel={t('Time')} field={form.field('time')} selectTextOnFocus />
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>

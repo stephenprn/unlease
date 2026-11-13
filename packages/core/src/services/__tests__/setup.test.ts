@@ -11,6 +11,7 @@ const UNSET: ServerSettings = {
   drive: { provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false },
   calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
+  immich: { url: '', keyHint: null },
 };
 
 const status = (restore: Partial<AdminStatus['restore']> = {}): AdminStatus => ({
@@ -68,10 +69,11 @@ describe('the first run', () => {
   });
 
   it('lists a backup to bring back first, only on a server that held nothing, then what the apps on use', () => {
-    expect(setupTasks(true, ['notes', 'pages'])).toEqual(['restore', 'reading', 'backup', 'drive', 'seerr']);
+    expect(setupTasks(true, ['notes', 'pages'])).toEqual(['restore', 'reading', 'backup', 'drive', 'seerr', 'immich']);
     expect(setupTasks(false, ['notes'])).toEqual(['reading', 'backup', 'drive', 'seerr']);
-    // Seerr serves Carnet's films and series only.
-    expect(setupTasks(false, ['pages'])).toEqual(['reading', 'backup', 'drive']);
+    // Seerr serves Carnet's films and series only; Immich, Pages and Contacts.
+    expect(setupTasks(false, ['pages'])).toEqual(['reading', 'backup', 'drive', 'immich']);
+    expect(setupTasks(false, ['contacts'])).toEqual(['backup', 'drive', 'immich']);
   });
 
   it('says what each row holds now, or what it would do', () => {
@@ -82,11 +84,14 @@ describe('the first run', () => {
       backup: { ...UNSET.backup, configured: true, bucket: 'sauvegardes', prefix: 'unlease/', recurrence: 'daily' },
       drive: { ...UNSET.drive, provider: 'seafile', library: 'Maison' },
       seerr: { url: 'https://seerr.example.org', keyHint: '…7d1e' },
+      immich: { url: 'http://192.168.1.20:2283', keyHint: '…abcd' },
     };
     expect(setupTaskLine('reading', set, null)).toMatchObject({ tone: 'ok', meta: 'Claude Opus 5.5, pour toutes les applications' });
     expect(setupTaskLine('backup', set, null)).toMatchObject({ tone: 'ok', meta: 'sauvegardes/unlease · chaque jour' });
     expect(setupTaskLine('drive', set, null)).toMatchObject({ tone: 'ok', meta: 'Seafile « Maison », /Unlease' });
     expect(setupTaskLine('seerr', set, null)).toMatchObject({ tone: 'ok', meta: 'seerr.example.org' });
+    expect(setupTaskLine('immich', set, null)).toMatchObject({ tone: 'ok', meta: '192.168.1.20:2283' });
+    expect(setupTaskLine('immich', UNSET, null)).toMatchObject({ tone: 'off', title: 'Photos sur Immich' });
     expect(setupTaskLine('restore', UNSET, status({ running: true }))).toMatchObject({ tone: 'waiting', meta: 'Restauration en cours…' });
     expect(setupTaskLine('restore', UNSET, status())).toMatchObject({ tone: 'off' });
   });

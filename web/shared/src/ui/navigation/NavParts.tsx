@@ -73,7 +73,7 @@ export function NavFold({ id, title, action, children }: { id: NavSection; title
     <section className={styles.section}>
       <div className={styles.heading}>
         <h2 className={styles.headingTitle}>
-          <button type="button" className={styles.headingToggle} aria-label={folded ? t('Déplier {section}', { section: title }) : t('Replier {section}', { section: title })} aria-expanded={!folded} aria-controls={body} onClick={() => setSectionFolded(id, !folded)}>
+          <button type="button" className={styles.headingToggle} aria-label={folded ? t('Expand {section}', { section: title }) : t('Collapse {section}', { section: title })} aria-expanded={!folded} aria-controls={body} onClick={() => setSectionFolded(id, !folded)}>
             <span className={styles.headingChevron} data-open={!folded || undefined}>
               <Icon name="chevronRight" size={14} />
             </span>

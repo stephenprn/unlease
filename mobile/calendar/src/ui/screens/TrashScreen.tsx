@@ -7,7 +7,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { formatRelative } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS } from '@unlease/calendar/models/events';
 import { deletedForGoodWords, weekdayDay } from '@unlease/calendar/services/eventText';
@@ -25,14 +25,14 @@ const TrashedEventRow = memo(function TrashedEventRowView({ id, now, onOpen, onD
   const theme = useTheme();
   const event = useLibraryStore(s => s.events[id]);
   if (!event) return null;
-  const title = event.title.trim() || t('Sans titre');
+  const title = event.title.trim() || t('Untitled');
   return (
     <BinRow
       title={title}
-      meta={`${weekdayDay(event.start.slice(0, 10))} · ${t('Mis à la corbeille {when}', { when: formatRelative(event.trashedAt ?? now, now) })}`}
+      meta={`${weekdayDay(event.start.slice(0, 10))} · ${t('Moved to the bin {when}', { when: formatRelative(event.trashedAt ?? now, now) })}`}
       leading={<Icon name="calendar" size={24} color={theme.color.ink} />}
       onOpen={() => onOpen(id)}
-      onRestore={() => showSnack(t('Événement restauré'), { label: tc('undo', 'Annuler'), run: restoreFromBin(id) }, { tone: 'success' })}
+      onRestore={() => showSnack(t('Event restored'), { label: t('Undo'), run: restoreFromBin(id) }, { tone: 'success' })}
       onDelete={() => onDelete(id)}
     />
   );
@@ -58,31 +58,31 @@ export function TrashScreen({ navigation }: ScreenProps<'Trash'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Corbeille')} onBack={() => navigation.goBack()} actions={ids.length > 0 ? <IconButton icon="broom" label={t('Vider la corbeille')} onPress={() => setEmptying(true)} /> : undefined} />
+      <TopBar title={t('Bin')} onBack={() => navigation.goBack()} actions={ids.length > 0 ? <IconButton icon="broom" label={t('Empty the bin')} onPress={() => setEmptying(true)} /> : undefined} />
       <BinList
         ids={ids}
-        retention={t('Les événements de la corbeille sont supprimés au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
-        emptyText={t('Les événements supprimés y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })}
+        retention={t('Events in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}
+        emptyText={t('Deleted events stay there for {days} days, in case you change your mind.', { days: TRASH_RETENTION_DAYS })}
         renderRow={id => <TrashedEventRow id={id} now={now} onOpen={open} onDelete={setToDelete} />}
       />
       <Dialog
         visible={toDelete !== null}
-        title={t('Supprimer définitivement ?')}
-        message={t('L’événement disparaîtra de tous vos appareils.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('The event will leave all your devices.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setToDelete(null)}
         onConfirm={() => {
           if (toDelete) deleteFromBin(toDelete);
           setToDelete(null);
-          showSnack(t('Événement supprimé définitivement'), undefined, { tone: 'success' });
+          showSnack(t('Event deleted forever'), undefined, { tone: 'success' });
         }}
       />
       <Dialog
         visible={emptying}
-        title={t('Vider la corbeille ?')}
-        message={t('Tous les événements de la corbeille seront supprimés définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every event in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setEmptying(false)}
         onConfirm={() => {

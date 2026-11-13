@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { CONTACT_LIMITS } from '@unlease/contacts/models/contacts';
 
 import { Button, footEdge, FormFoot, Icon, ListRow, Sheet, SHEET_INSET, SheetScroll, TextField } from '@shared/ui/components';
@@ -52,13 +52,13 @@ export function KindSheet({ visible, kinds, names, value, onChange, onDismiss }:
         })}
       </SheetScroll>
       <View style={styles.own}>
-        <TextField kind="text" label={t('Personnalisé')} value={own} onChangeText={setOwn} placeholder={t('Bureau Lyon, Maison de vacances…')} maxLength={CONTACT_LIMITS.entryLabel} returnKeyType="done" onSubmitEditing={keepOwn} />
+        <TextField kind="text" label={tc('kind', 'Custom')} value={own} onChangeText={setOwn} placeholder={t('London office, Holiday home…')} maxLength={CONTACT_LIMITS.entryLabel} returnKeyType="done" onSubmitEditing={keepOwn} />
       </View>
       {/* The field's box above draws the footer's edge already. */}
       <View style={styles.ownFoot}>
         <FormFoot edge={false}>
           {/* Nothing to use until a name is typed. */}
-          <Button label={t('Utiliser ce nom')} kind="tonal" disabled={!own.trim()} onPress={keepOwn} />
+          <Button label={t('Use this name')} kind="tonal" disabled={!own.trim()} onPress={keepOwn} />
         </FormFoot>
       </View>
     </Sheet>

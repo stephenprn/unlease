@@ -2,7 +2,7 @@
  * Birthdays: stored as vCard writes them (`1990-03-12`, `--03-12` without a year), shown in the
  * interface's language, counted to the next one. A 29 February falls on the 28th in other years.
  */
-import { getLocale, t } from '@unlease/core/i18n';
+import { getLocale, t, tc } from '@unlease/core/i18n';
 import { dayDelta, monthNames, plural } from '@unlease/core/services/format';
 import type { Contact } from '../models/contacts';
 import { BIRTHDAY_PATTERN } from '../sync/types';
@@ -72,9 +72,9 @@ export function ageToday(birthday: Birthday, now: number): number | null {
 /** « Aujourd’hui », « Demain », « Dans 12 jours », with the age when it is known (« Demain · 35 ans »). */
 export function birthdayWhen(birthday: Birthday, now: number): string {
   const days = daysToBirthday(birthday, now);
-  const when = days === 0 ? t('Aujourd’hui') : days === 1 ? t('Demain') : t('Dans {days}', { days: plural(days, 'jour') });
+  const when = days === 0 ? t('Today') : days === 1 ? t('Tomorrow') : t('In {days}', { days: plural(days, 'day') });
   const age = ageAtNext(birthday, now);
-  return age === null || age <= 0 ? when : `${when} · ${plural(age, 'an')}`;
+  return age === null || age <= 0 ? when : `${when} · ${plural(age, 'year')}`;
 }
 
 export interface UpcomingBirthday<T> {
@@ -113,7 +113,7 @@ export function birthdayGroups<T>(coming: readonly UpcomingBirthday<T>[], now: n
     const when = nextBirthday(entry.birthday, now);
     const month = monthNames()[when.getMonth()] ?? '';
     // A heading: « Novembre 2026 », its month capitalised.
-    const title = entry.days === 0 ? t('Aujourd’hui') : entry.days < 7 ? t('Cette semaine') : `${month.charAt(0).toUpperCase()}${month.slice(1)} ${when.getFullYear()}`;
+    const title = entry.days === 0 ? t('Today') : entry.days < 7 ? t('This week') : `${month.charAt(0).toUpperCase()}${month.slice(1)} ${when.getFullYear()}`;
     const last = out.at(-1);
     if (last && last.title === title) last.entries.push(entry);
     else out.push({ title, entries: [entry] });
@@ -214,5 +214,5 @@ export const elides = (name: string): boolean => /^[aeiouyàâäéèêëîïôö
 
 /** « Anniversaire de Léa », « Anniversaire d’Étienne ». */
 export function birthdayOf(name: string): string {
-  return elides(name) ? t('Anniversaire d’{name}', { name }) : t('Anniversaire de {name}', { name });
+  return elides(name) ? tc('elided', '{name}’s birthday', { name }) : t('{name}’s birthday', { name });
 }

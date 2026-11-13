@@ -65,13 +65,13 @@ export function DayPickerSheet({ visible, title, day, today, weekStart, onDismis
       {/* The month as the sheet opens is simply there; turned, it comes in. */}
       <LayoutAnimationConfig skipEntering>
         <View style={styles.head}>
-          <IconButton icon="back" label={t('Mois précédent')} shape={1} onPress={() => turn(-1)} />
+          <IconButton icon="back" label={t('Previous month')} shape={1} onPress={() => turn(-1)} />
           <Animated.View key={key} entering={way === 0 ? undefined : TITLE_IN}>
             <AppText variant="bodyStrong">{monthTitle(month)}</AppText>
           </Animated.View>
           {/* The same arrow turned round, as the web's mini-month: a pair, never an arrow and a chevron. */}
           <View style={styles.flip}>
-            <IconButton icon="back" label={t('Mois suivant')} shape={2} onPress={() => turn(1)} />
+            <IconButton icon="back" label={t('Next month')} shape={2} onPress={() => turn(1)} />
           </View>
         </View>
         <GestureDetector gesture={swipe}>
@@ -83,7 +83,7 @@ export function DayPickerSheet({ visible, title, day, today, weekStart, onDismis
         </GestureDetector>
       </LayoutAnimationConfig>
       <View style={styles.foot}>
-        <Button label={t('Aujourd’hui')} kind="text" onPress={() => pick(today)} />
+        <Button label={t('Today')} kind="text" onPress={() => pick(today)} />
       </View>
     </Sheet>
   );

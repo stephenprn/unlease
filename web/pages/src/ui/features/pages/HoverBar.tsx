@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { isRefType } from '@unlease/core/refs';
 import type { BlockTarget } from '@unlease/pages/models/blocks';
 import { deleteRich, richToPlain, setValue } from '@unlease/core/services/richText';
@@ -108,24 +108,24 @@ export function HoverBar() {
   const link = hovered.element.dataset.href;
   return (
     <div onPointerEnter={keep} onPointerLeave={leave}>
-      <Floating anchor={hovered.rect} label={hovered.target ? t('Mention') : t('Lien')} className={styles.hoverBar} role="toolbar">
+      <Floating anchor={hovered.rect} label={hovered.target ? tc('noun', 'Mention') : t('Link')} className={styles.hoverBar} role="toolbar">
         {hovered.target ? (
           <>
             <button type="button" className={styles.hoverAction} onClick={event => openTarget(event, hovered.target!)}>
               <Icon name="external" size={16} />
-              {t('Ouvrir')}
+              {t('Open')}
             </button>
             {/* A contact or an event is only ever mentioned: no bookmark, no embed. */}
             {hovered.target.type !== 'contact' && hovered.target.type !== 'event' ? (
               <button type="button" className={styles.hoverAction} onClick={() => showAs('bookmark')}>
                 <Icon name="bookmark" size={16} />
-                {t('Signet')}
+                {t('Bookmark')}
               </button>
             ) : null}
             {hovered.target.type !== 'page' && hovered.target.type !== 'contact' && hovered.target.type !== 'event' ? (
               <button type="button" className={styles.hoverAction} onClick={() => showAs('embed')}>
                 <Icon name="embed" size={16} />
-                {t('Intégré')}
+                {tc('state', 'Embed')}
               </button>
             ) : null}
           </>
@@ -145,7 +145,7 @@ export function HoverBar() {
               }}
             >
               <Icon name="edit" size={16} />
-              {t('Modifier')}
+              {t('Edit')}
             </button>
             <button
               type="button"
@@ -158,7 +158,7 @@ export function HoverBar() {
               }}
             >
               <Icon name="unlink" size={16} />
-              {t('Retirer')}
+              {t('Remove')}
             </button>
           </>
         ) : null}

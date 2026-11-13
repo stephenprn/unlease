@@ -33,7 +33,7 @@ export function ZoneSheet({ visible, zone, onDismiss, onZone }: { visible: boole
   const keepTyped = (): void => {
     if (isKnownZone(name)) pick(canonicalZone(name));
   };
-  const form = useForm({ zone: isKnownZone(name) ? null : t('Un fuseau comme Europe/Paris ou America/New_York.') }, { sendOnDone: keepTyped });
+  const form = useForm({ zone: isKnownZone(name) ? null : t('A time zone such as Europe/Paris or America/New_York.') }, { sendOnDone: keepTyped });
   const { reset } = form;
   useEffect(() => {
     if (!visible) return;
@@ -44,19 +44,19 @@ export function ZoneSheet({ visible, zone, onDismiss, onZone }: { visible: boole
   const wanted = foldText(typed.trim());
   const zones = [...new Set([own, ...USUAL_ZONES].filter(Boolean))].filter(each => !wanted || foldText(each.replace(/_/g, ' ')).includes(wanted.replace(/_/g, ' ')));
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Fuseau horaire')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Time zone')} tall>
       <View style={styles.typed}>
         <View style={styles.field}>
-          <TextField kind="code" value={typed} onChangeText={setTyped} placeholder="Europe/Paris" accessibilityLabel={t('Fuseau horaire')} field={form.field('zone')} />
+          <TextField kind="code" value={typed} onChangeText={setTyped} placeholder="Europe/Paris" accessibilityLabel={t('Time zone')} field={form.field('zone')} />
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>
       <SheetScroll top={false}>
         {zones.map(each => (
-          <ListRow key={each} title={each.replace(/_/g, ' ')} supporting={each === own ? t('Fuseau de ce téléphone') : undefined} icon={each === zone ? 'check' : 'globe'} onPress={() => pick(each)} />
+          <ListRow key={each} title={each.replace(/_/g, ' ')} supporting={each === own ? t('This phone’s time zone') : undefined} icon={each === zone ? 'check' : 'globe'} onPress={() => pick(each)} />
         ))}
         {/* Nothing in the list: a zone typed whole is still kept by « OK ». */}
-        {zones.length === 0 ? <EmptyLine text={isKnownZone(name) ? t('Pas dans la liste : « OK » garde ce fuseau.') : t('Aucun fuseau ne correspond.')} style={styles.none} /> : null}
+        {zones.length === 0 ? <EmptyLine text={isKnownZone(name) ? t('Not in the list: “OK” keeps this time zone.') : t('No time zone matches.')} style={styles.none} /> : null}
       </SheetScroll>
     </Sheet>
   );

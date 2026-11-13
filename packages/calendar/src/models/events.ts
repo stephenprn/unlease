@@ -86,8 +86,11 @@ export function labelNameTaken(labels: Readonly<Record<string, CalendarLabel>>, 
   return !!wanted && Object.values(labels).some(label => label.deletedAt === null && label.id !== except && foldText(label.name) === wanted);
 }
 
-/** An iCalendar address one subscribes to, or the public holidays. */
-export const FEED_KINDS = ['ics', 'holidays'] as const;
+/**
+ * An iCalendar address one subscribes to (`ics`), a calendar read over CalDAV with a login
+ * (`caldav`: its password kept by the server alone), or the public holidays.
+ */
+export const FEED_KINDS = ['ics', 'caldav', 'holidays'] as const;
 export type FeedKind = (typeof FEED_KINDS)[number];
 
 /** The holidays' calendar: the server makes it (and only it), with this id. */
@@ -97,8 +100,10 @@ export interface CalendarFeed {
   readonly id: string;
   readonly kind: FeedKind;
   readonly name: string;
-  /** The address (`https://calendar.google.com/calendar/ical/…/basic.ics`, `webcal://…`); '' for the holidays. */
+  /** The address (`https://calendar.google.com/calendar/ical/…/basic.ics`, `webcal://…`, a CalDAV calendar's); '' for the holidays. */
   readonly url: string;
+  /** The login a CalDAV calendar is read with (its password stays on the server); '' otherwise. */
+  readonly account: string;
   readonly color: LineColor;
   /** Left out of the views, on every device. */
   readonly hidden: boolean;
@@ -128,6 +133,7 @@ export const EVENT_LIMITS = {
   labelName: 60,
   feedName: 200,
   feedError: 500,
+  feedAccount: 320,
   timeZone: 64,
 } as const;
 

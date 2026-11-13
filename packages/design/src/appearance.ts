@@ -57,13 +57,13 @@ export const PALETTE_COLORS: Readonly<Record<PaletteKey, { readonly primary: str
 export const PALETTE_NAMES: Readonly<Record<PaletteKey, string>> = localized({
   // Carnet's own colours, named after it.
   carnet: APPS.notes.name,
-  sarcelle: tx('Sarcelle'),
-  myrtille: tx('Myrtille'),
-  glycine: tx('Glycine'),
-  pivoine: tx('Pivoine'),
+  sarcelle: tx('Teal'),
+  myrtille: tx('Blueberry'),
+  glycine: tx('Wisteria'),
+  pivoine: tx('Peony'),
   mimosa: tx('Mimosa'),
-  ardoise: tx('Ardoise'),
-  mousse: tx('Mousse'),
+  ardoise: tx('Slate'),
+  mousse: tx('Moss'),
 });
 
 /** The palette two colours come from, or null when they were picked by hand. */
@@ -75,13 +75,13 @@ export type ColorRole = 'primary' | 'accent';
 
 /** What each colour is called and what it paints, the same words on both clients. */
 export const COLOR_ROLE_WORDS: Readonly<Record<ColorRole, { readonly name: string; readonly title: string; readonly hint: string }>> = {
-  primary: localized({ name: tx('Principale'), title: tx('Couleur principale'), hint: tx('Le bouton +, la sélection et les interrupteurs') }),
-  accent: localized({ name: tx('Accent'), title: tx('Couleur d’accent'), hint: tx('Les boutons d’action, les liens et le texte sélectionné') }),
+  primary: localized({ name: tx('Primary'), title: tx('Primary colour'), hint: tx('The + button, selection and switches') }),
+  accent: localized({ name: tx('Accent'), title: tx('Accent colour'), hint: tx('Action buttons, links and selected text') }),
 };
 
 /** The "how it works" of the colours and of the ground, the same words on both clients. */
-export const COLORS_INFO = tx('La couleur principale marque ce qui est choisi : le bouton +, la sélection, les interrupteurs. L’accent fait agir : les boutons d’action et les liens. Une couleur choisie à la main est gardée telle quelle quand le texte reste lisible dessus ; sinon elle garde sa teinte et change juste assez de clarté.');
-export const GROUND_INFO = tx('Le fond reste clair le jour et sombre la nuit, pour que le texte se lise toujours : chaque fond a sa version de nuit. Une couleur choisie à la main est gardée telle quelle quand elle s’y prête ; sinon elle garde sa teinte et s’éclaircit ou s’assombrit juste ce qu’il faut.');
+export const COLORS_INFO = tx('The primary colour marks what is chosen: the + button, selection, switches. The accent acts: action buttons and links. A colour picked by hand is kept as it is when text stays readable on it; otherwise it keeps its hue and changes just enough in lightness.');
+export const GROUND_INFO = tx('The background stays light by day and dark at night, so text always reads: every background has its night version. A colour picked by hand is kept as it is when it fits; otherwise it keeps its hue and lightens or darkens just as much as needed.');
 
 // ---------------------------------------------------------------------------------------------
 // The ground.
@@ -96,20 +96,20 @@ export const GROUND_PRESETS: readonly GroundPreset[] = [...GROUND_GRADIENTS, ...
 
 export const GROUND_NAMES: Readonly<Record<GroundPreset, string>> = localized({
   carnet: APPS.notes.name,
-  aube: tx('Aube'),
-  lagon: tx('Lagon'),
-  brume: tx('Brume'),
-  sauge: tx('Sauge'),
-  nacre: tx('Nacre'),
-  opale: tx('Opale'),
+  aube: tx('Dawn'),
+  lagon: tx('Lagoon'),
+  brume: tx('Mist'),
+  sauge: tx('Sage'),
+  nacre: tx('Mother-of-pearl'),
+  opale: tx('Opal'),
   sorbet: tx('Sorbet'),
-  creme: tx('Crème'),
-  lin: tx('Lin'),
-  pierre: tx('Pierre'),
-  nuage: tx('Nuage'),
-  menthe: tx('Menthe'),
-  ciel: tx('Ciel'),
-  lilas: tx('Lilas'),
+  creme: tx('Cream'),
+  lin: tx('Linen'),
+  pierre: tx('Stone'),
+  nuage: tx('Cloud'),
+  menthe: tx('Mint'),
+  ciel: tx('Sky'),
+  lilas: tx('Lilac'),
   rose: tx('Rose'),
 });
 
@@ -118,7 +118,7 @@ export const GRADIENT_FORMS = ['fondu', 'nuees'] as const;
 
 export type GradientForm = (typeof GRADIENT_FORMS)[number];
 
-export const GRADIENT_FORM_NAMES: Readonly<Record<GradientForm, string>> = localized({ fondu: tx('Fondu'), nuees: tx('Nuées') });
+export const GRADIENT_FORM_NAMES: Readonly<Record<GradientForm, string>> = localized({ fondu: tx('Blend'), nuees: tx('Clouds') });
 
 /** A gradient takes two to four colours. */
 export const GRADIENT_COLORS = { min: 2, max: 4 } as const;
@@ -174,7 +174,7 @@ export function sameGround(a: GroundChoice, b: GroundChoice): boolean {
 }
 
 /** The theme as « Apparence »'s row says it, on both clients. */
-export const THEME_WORDS: Readonly<Record<'system' | 'light' | 'dark', string>> = { system: tx('Thème du système'), light: tx('Thème clair'), dark: tx('Thème sombre') };
+export const THEME_WORDS: Readonly<Record<'system' | 'light' | 'dark', string>> = { system: tx('System theme'), light: tx('Light theme'), dark: tx('Dark theme') };
 
 /**
  * The look in words, as « Apparence »'s row says it on both clients: the theme, then « apparence
@@ -186,16 +186,16 @@ export function lookWords(theme: 'system' | 'light' | 'dark', appearance: Pick<A
   const shown = t(THEME_WORDS[theme]);
   const palette = paletteOf(appearance.primary, appearance.accent);
   const { ground } = appearance;
-  if (palette === 'carnet' && sameGround(ground, DEFAULT_APPEARANCE.ground)) return t('{theme} · apparence d’origine', { theme: shown });
-  const colors = palette ? t('couleurs {palette}', { palette: PALETTE_NAMES[palette] }) : t('couleurs sur mesure');
-  const backdrop = ground.kind === 'preset' ? t('fond {ground}', { ground: GROUND_NAMES[ground.key] }) : ground.kind === 'color' ? t('fond uni sur mesure') : t('fond dégradé sur mesure');
+  if (palette === 'carnet' && sameGround(ground, DEFAULT_APPEARANCE.ground)) return t('{theme} · original look', { theme: shown });
+  const colors = palette ? t('{palette} colours', { palette: PALETTE_NAMES[palette] }) : t('custom colours');
+  const backdrop = ground.kind === 'preset' ? t('{ground} background', { ground: GROUND_NAMES[ground.key] }) : ground.kind === 'color' ? t('custom plain background') : t('custom gradient background');
   return t('{theme} · {colors} · {ground}', { theme: shown, colors, ground: backdrop });
 }
 
 /** A ground's name as a picker heads it. */
 export function groundName(ground: GroundChoice): string {
   if (ground.kind === 'preset') return GROUND_NAMES[ground.key];
-  return ground.kind === 'color' ? t('Votre couleur') : t('Votre dégradé');
+  return ground.kind === 'color' ? t('Your colour') : t('Your gradient');
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -724,7 +724,7 @@ export interface PickSuggestion {
 export function pickSuggestions(target: PickTarget): readonly PickSuggestion[] {
   if (target === 'ground') return GROUND_COLORS.map(key => ({ name: GROUND_NAMES[key], color: groundPaint({ kind: 'preset', key }, 'light').base }));
   return PALETTES.map(key => ({
-    name: target === 'primary' ? t('{palette}, couleur principale', { palette: PALETTE_NAMES[key] }) : t('{palette}, couleur d’accent', { palette: PALETTE_NAMES[key] }),
+    name: target === 'primary' ? t('{palette} primary', { palette: PALETTE_NAMES[key] }) : t('{palette} accent', { palette: PALETTE_NAMES[key] }),
     color: PALETTE_COLORS[key][target],
   }));
 }
@@ -737,10 +737,10 @@ export interface PickNote {
 
 /** The line under a picker's preview: it always says something, so the picker never changes height as a drag crosses into a colour that moves. */
 export function pickNote(day: boolean, night: boolean): PickNote {
-  if (day && night) return { text: t('Ajustée le jour et la nuit pour rester lisible.'), adjusted: true };
-  if (day) return { text: t('Ajustée le jour pour rester lisible.'), adjusted: true };
-  if (night) return { text: t('Ajustée la nuit pour rester lisible.'), adjusted: true };
-  return { text: t('Gardée telle quelle le jour et la nuit.'), adjusted: false };
+  if (day && night) return { text: t('Adjusted by day and at night to stay readable.'), adjusted: true };
+  if (day) return { text: t('Adjusted by day to stay readable.'), adjusted: true };
+  if (night) return { text: t('Adjusted at night to stay readable.'), adjusted: true };
+  return { text: t('Kept as picked, by day and at night.'), adjusted: false };
 }
 
 /** The longest line `pickNote` can say in this language: the room a picker keeps for it, whatever it says. */

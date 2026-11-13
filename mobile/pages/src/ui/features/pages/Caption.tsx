@@ -69,7 +69,7 @@ function CaptionComponent({ block }: { block: Block }) {
         if (useCaptionStore.getState().opened === block.id) useCaptionStore.setState({ opened: null });
       }}
       onBlur={() => setFocused(false)}
-      placeholder={t('Écrivez une légende…')}
+      placeholder={t('Write a caption…')}
       placeholderTextColor={theme.color.inkFaint}
       selectionColor={theme.color.highlight}
       selectionHandleColor={theme.color.focus}
@@ -78,7 +78,7 @@ function CaptionComponent({ block }: { block: Block }) {
       submitBehavior="blurAndSubmit"
       maxLength={PAGES_TEXT_LIMITS.block.caption}
       style={[styles.caption, { fontFamily: fontFamily(theme, 'Regular'), color: theme.color.inkMuted }]}
-      accessibilityLabel={t('Légende')}
+      accessibilityLabel={t('Caption')}
     />
   );
 }

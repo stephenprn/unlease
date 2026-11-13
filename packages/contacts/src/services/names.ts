@@ -7,7 +7,7 @@ import { foldText } from '@unlease/core/services/search';
 import type { Contact, ContactLabel } from '../models/contacts';
 
 /** What a contact without a name, a company, an email or a number is called. */
-export const UNNAMED = tx('Sans nom');
+export const UNNAMED = tx('No name');
 
 /** How the list is ordered: Google's « Trier par ». */
 export const SORT_ORDERS = ['firstName', 'lastName'] as const;

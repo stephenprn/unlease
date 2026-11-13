@@ -18,13 +18,21 @@ export const SETTINGS: ServerSettings = {
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
   calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
+  immich: { url: '', keyHint: null },
 };
 
 export const answer = (body: unknown, code = 200) => ({ ok: code < 400, status: code, headers: { get: () => null }, json: async () => body });
 
 /** What the first run asks of the server; a sync waits forever (no records come). */
-export function fakeFetch(input: string) {
+export function fakeFetch(input: string, init?: { body?: unknown }) {
   const url = new URL(input);
+  // An address tried before it is followed: one that names CalDAV asks for a login (any opens it), any other is an iCalendar one.
+  if (url.pathname === '/api/calendar/feeds/connect') {
+    const asked = JSON.parse(String(init?.body)) as { url: string; login?: unknown };
+    const address = asked.url.replace(/^webcal:/, 'https:');
+    if (!/dav/.test(address)) return Promise.resolve(answer({ status: 'ready', kind: 'ics', url: address, name: '' }));
+    return Promise.resolve(answer(asked.login ? { status: 'ready', kind: 'caldav', url: address, name: 'Travail' } : { status: 'login' }));
+  }
   if (url.pathname === '/api/sync') return new Promise(() => {});
   if (url.pathname === '/api/health') return Promise.resolve(answer({ ok: true, analysis: false, version: '0.1.0', apps: SETTINGS.apps.enabled, setup: true }));
   if (url.pathname === '/api/settings') return Promise.resolve(answer(SETTINGS));

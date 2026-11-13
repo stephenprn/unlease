@@ -66,7 +66,7 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
 
   const suggestions = suggestionsFor(lines);
   const form = useForm(
-    { title: isBlank(title) ? t('Donnez un nom à la collection.') : lineTitleTaken(lines, title) ? t('Une collection porte déjà ce nom : choisissez-en un autre.') : null },
+    { title: isBlank(title) ? t('Give the collection a name.') : lineTitleTaken(lines, title) ? t('A collection already has this name: choose another.') : null },
     { order: ['title', 'hint'] },
   );
   const dirty = visible && (!isBlank(title) || !isBlank(hint) || (opened !== null && (color !== opened.color || emblem !== opened.emblem)));
@@ -83,7 +83,7 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
 
   return (
     <>
-    <Sheet visible={visible} onDismiss={cancel} title={t('Nouvelle collection')} tall>
+    <Sheet visible={visible} onDismiss={cancel} title={t('New collection')} tall>
       <SheetScroll contentContainerStyle={styles.body}>
         {suggestions.length > 0 ? (
           <View style={styles.suggestions}>
@@ -91,7 +91,7 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
               <Tappable
                 key={s.id}
                 onPress={() => createSuggested(s)}
-                accessibilityLabel={t('Créer la collection {collection}', { collection: s.title })}
+                accessibilityLabel={t('Create the {collection} collection', { collection: s.title })}
                 style={[styles.suggestion, corners(SHAPES.chip), { borderColor: theme.color.outline, backgroundColor: theme.color.paper }]}
               >
                 <Emblem emblem={s.emblem} color={s.color} size={22} />
@@ -100,36 +100,36 @@ export function NewLineSheet({ visible, onDismiss, onCreated }: NewLineSheetProp
             ))}
           </View>
         ) : null}
-        <CollectionPreview emblem={emblem} color={color} title={title.trim() || t('Nom de la collection')} hint={hint.trim() || t('Une phrase sur ce qu’elle contient aide Claude à y ranger les bons liens.')} />
-        <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChangeText={setTitle} help={t('Ex. Cadeaux, Films à voir, Restaurants')} autoFocus maxLength={60} />
+        <CollectionPreview emblem={emblem} color={color} title={title.trim() || t('Collection name')} hint={hint.trim() || t('A sentence about what it holds helps Claude file the right links in it.')} />
+        <TextField label={t('Name')} kind="text" field={form.field('title')} value={title} onChangeText={setTitle} help={t('E.g. Gifts, Films to watch, Restaurants')} autoFocus maxLength={60} />
         <TextField
-          label={t('Ce qui va dans cette collection')}
+          label={t('What goes in this collection')}
           kind="prose"
           field={form.field('hint')}
           value={hint}
           onChangeText={setHint}
           multiline
           maxLength={500}
-          help={t('Claude lit cette phrase pour choisir la bonne collection. Ex. idées de cadeaux pour les proches.')}
+          help={t('Claude reads this sentence to pick the right collection. E.g. gift ideas for family and friends.')}
         />
         {/* The cut-outs and the swatches say what they are, and the preview above wears them: no word over them, but for TalkBack. */}
         <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
-        <View accessibilityRole="radiogroup" accessibilityLabel={t('Couleur')}>
+        <View accessibilityRole="radiogroup" accessibilityLabel={t('Colour')}>
           <LineColorPicker value={color} onChange={next => next && setColor(next)} />
         </View>
         {offerFill ? (
-          <Tappable onPress={() => setFill(!fill)} accessibilityRole="checkbox" accessibilityState={{ checked: fill }} accessibilityLabel={t('Y ranger les liens de Non classé qui lui correspondent')} style={styles.fill}>
+          <Tappable onPress={() => setFill(!fill)} accessibilityRole="checkbox" accessibilityState={{ checked: fill }} accessibilityLabel={t('File the links from Unsorted that fit it')} style={styles.fill}>
             <CheckMark checked={fill} />
             <View style={styles.previewText}>
-              <AppText variant="body">{t('Y ranger les liens de Non classé qui lui correspondent')}</AppText>
-              <AppText variant="meta">{inboxLinks === 1 ? t('Claude choisit parmi le lien de Non classé.') : t('Claude choisit parmi les {count} liens de Non classé.', { count: inboxLinks })}</AppText>
+              <AppText variant="body">{t('File the links from Unsorted that fit it')}</AppText>
+              <AppText variant="meta">{inboxLinks === 1 ? t('Claude picks from the link in Unsorted.') : t('Claude picks from the {count} links in Unsorted.', { count: inboxLinks })}</AppText>
             </View>
           </Tappable>
         ) : null}
       </SheetScroll>
       <FormFoot message={form.message}>
-        <Button kind="text" label={t('Annuler')} onPress={cancel} />
-        <Button label={t('Créer la collection')} icon="plus" onPress={() => void form.submit(() => create({ title, hint: hint.trim(), color, emblem }))} />
+        <Button kind="text" label={t('Cancel')} onPress={cancel} />
+        <Button label={t('Create the collection')} icon="plus" onPress={() => void form.submit(() => create({ title, hint: hint.trim(), color, emblem }))} />
       </FormFoot>
     </Sheet>
     {unsaved.dialog}

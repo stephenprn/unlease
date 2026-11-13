@@ -54,14 +54,14 @@ export const PersonFace = memo(PersonFaceComponent);
 export function PersonChip({ contact, onPress, onRemove }: { contact: Contact | null; onPress?: () => void; onRemove?: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const name = contact ? contactName(contact) : t('Contact supprimé');
+  const name = contact ? contactName(contact) : t('Contact deleted');
   return (
     <Tappable onPress={onPress} disabled={!onPress} style={[styles.chip, onRemove ? styles.chipRemovable : null]} accessibilityRole={onPress ? 'link' : undefined} accessibilityLabel={name}>
       {contact ? <PersonFace contact={contact} /> : <Icon name="person" size={20} color={theme.color.inkMuted} />}
       <AppText variant="label" numberOfLines={1} color={contact ? undefined : theme.color.inkMuted} style={styles.name}>
         {name}
       </AppText>
-      {onRemove ? <IconButton icon="close" size={18} label={t('Retirer {name}', { name })} onPress={onRemove} /> : null}
+      {onRemove ? <IconButton icon="close" size={18} label={t('Remove {name}', { name })} onPress={onRemove} /> : null}
     </Tappable>
   );
 }

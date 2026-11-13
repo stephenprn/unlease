@@ -45,7 +45,7 @@ async function request(url: string, init: RequestInit, signal?: AbortSignal, tim
     return await fetch(url, { ...init, signal: controller.signal });
   } catch {
     if (signal?.aborted) throw new SyncError('aborted', 'aborted');
-    if (controller.signal.aborted) throw new SyncError('network', t('Le serveur ne répond pas'));
+    if (controller.signal.aborted) throw new SyncError('network', t('The server isn’t responding'));
     throw new SyncError('network', unreachable(url));
   } finally {
     clearTimeout(timer);
@@ -55,12 +55,12 @@ async function request(url: string, init: RequestInit, signal?: AbortSignal, tim
 
 /** fetch's own errors are English and vague. Release builds also refuse plain http (React Native's default). */
 function unreachable(url: string): string {
-  return !__DEV__ && url.startsWith('http://') ? t('Cette version n’accepte que les adresses https://') : t('Serveur injoignable');
+  return !__DEV__ && url.startsWith('http://') ? t('This version only accepts https:// addresses') : t('Server unreachable');
 }
 
 function check(response: Response): void {
-  if (response.status === 401) throw new SyncError('unauthorized', t('Jeton refusé par le serveur'), 401);
-  if (!response.ok) throw new SyncError('http', t('Le serveur a répondu {status}', { status: response.status }), response.status, retryAfter(response));
+  if (response.status === 401) throw new SyncError('unauthorized', t('Token refused by the server'), 401);
+  if (!response.ok) throw new SyncError('http', t('The server answered {status}', { status: response.status }), response.status, retryAfter(response));
 }
 
 /** `types`: the record types this app syncs (`syncedTypes`), named in every request so the server answers only those. */
@@ -79,7 +79,7 @@ export function createTransport(config: ServerConfig, types?: readonly string[])
       );
       check(response);
       const parsed = parseSyncResponse(await response.json());
-      if (!parsed) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+      if (!parsed) throw new SyncError('protocol', t('Unreadable server response'));
       return parsed;
     },
   };
@@ -165,10 +165,10 @@ export async function saveServerSettings(config: ServerConfig, patch: SettingsPa
     headers: { ...authHeader(config.token), 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   });
-  await refuse(response, [400, 502], t('Réglage refusé'));
+  await refuse(response, [400, 502], t('Setting refused'));
   check(response);
   const settings = parseServerSettings(await response.json());
-  if (!settings) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+  if (!settings) throw new SyncError('protocol', t('Unreadable server response'));
   return settings;
 }
 
@@ -205,8 +205,8 @@ export async function fetchUsage(config: ServerConfig): Promise<Usage | null> {
   }
 }
 
-/** Statuses whose `error` an app's route writes in French for the person (no key, the budget, Claude's failure, the app off). */
-const ROUTE_REFUSALS = [400, 404, 409, 501, 502];
+/** Statuses whose `error` an app's route writes in French for the person (no key, the budget, Claude's failure, the app off, an address or a login another server refused). */
+const ROUTE_REFUSALS = [400, 404, 409, 422, 501, 502];
 
 /** A refusal is about that one request (a file the server will not take): anything else is about the network, and backs off. */
 export const isRefusal = (error: unknown): boolean =>
@@ -229,7 +229,7 @@ export async function askServer<T>(config: ServerConfig, path: string, body: unk
   }
   check(response);
   const parsed = parse(await response.json().catch(() => null));
-  if (parsed === null) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+  if (parsed === null) throw new SyncError('protocol', t('Unreadable server response'));
   return parsed;
 }
 
@@ -242,7 +242,7 @@ export async function getFromServer<T>(config: ServerConfig, path: string, parse
   }
   check(response);
   const parsed = parse(await response.json().catch(() => null));
-  if (parsed === null) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+  if (parsed === null) throw new SyncError('protocol', t('Unreadable server response'));
   return parsed;
 }
 
@@ -260,10 +260,10 @@ export async function fetchAdminStatus(config: ServerConfig): Promise<AdminStatu
 /** `GET /api/admin/backups`, newest first. Throws with the server's words without S3 (409) or when S3 fails (502). */
 export async function fetchBackups(config: ServerConfig): Promise<BackupList> {
   const response = await request(`${config.url}/api/admin/backups`, { method: 'GET', headers: authHeader(config.token) });
-  await refuse(response, REFUSALS, t('Sauvegardes indisponibles'));
+  await refuse(response, REFUSALS, t('Backups unavailable'));
   check(response);
   const list = parseBackupList(await response.json().catch(() => null));
-  if (!list) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+  if (!list) throw new SyncError('protocol', t('Unreadable server response'));
   return list;
 }
 
@@ -274,7 +274,7 @@ async function startAdmin(config: ServerConfig, path: string, init: { readonly b
     headers: { ...authHeader(config.token), ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
     body: init.body,
   });
-  await refuse(response, REFUSALS, t('Action refusée'));
+  await refuse(response, REFUSALS, t('Action refused'));
   check(response);
   return parseAdminStatus(await response.json().catch(() => null));
 }
@@ -299,7 +299,7 @@ export async function restoreFile(config: ServerConfig, path: string, name: stri
   const form = new FormData();
   form.append('file', { uri: path.startsWith('file://') ? path : `file://${path}`, type: 'application/gzip', name } as unknown as Blob);
   const response = await request(`${config.url}/api/admin/restore?mode=${mode}`, { method: 'POST', headers: authHeader(config.token), body: form }, undefined, RESTORE_UPLOAD_TIMEOUT_MS);
-  await refuse(response, REFUSALS, t('Restauration refusée'));
+  await refuse(response, REFUSALS, t('Restore refused'));
   check(response);
   return parseAdminStatus(await response.json().catch(() => null));
 }
@@ -311,9 +311,9 @@ export async function requestDownload(config: ServerConfig, what: { readonly sna
     headers: { ...authHeader(config.token), 'Content-Type': 'application/json' },
     body: JSON.stringify(what),
   });
-  await refuse(response, [...REFUSALS, 501], t('Téléchargement refusé'));
+  await refuse(response, [...REFUSALS, 501], t('Download refused'));
   check(response);
   const ticket = parseDownloadTicket(await response.json().catch(() => null));
-  if (!ticket) throw new SyncError('protocol', t('Réponse du serveur illisible'));
+  if (!ticket) throw new SyncError('protocol', t('Unreadable server response'));
   return { url: `${config.url}${ticket.url}`, name: ticket.name };
 }

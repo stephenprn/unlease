@@ -32,27 +32,27 @@ import { askQuestion, fetchRecipe, findInSeerr, requestCopy, searchCoupons, sear
 
 function server(): ServerConfig {
   const config = useSettingsStore.getState().server;
-  if (!config) throw new SyncError('network', t('Aucun serveur n’est connecté'));
+  if (!config) throw new SyncError('network', t('No server is connected'));
   return config;
 }
 
 function linkOf(id: string): LinkItem {
   const link = useLibraryStore.getState().links[id];
-  if (!link) throw new SyncError('protocol', t('Ce lien n’existe plus.'));
+  if (!link) throw new SyncError('protocol', t('This link no longer exists.'));
   return link;
 }
 
 /** Claude's codes for this link, in the interface's language; `fresh` searches again instead of showing those of the last hours. */
 export async function findCoupons(linkId: string, fresh: boolean, signal?: AbortSignal): Promise<CouponResponse> {
   const request = couponRequest(linkOf(linkId), getLocale(), fresh);
-  if (!request) throw new SyncError('protocol', t('Ce lien n’a pas de prix'));
+  if (!request) throw new SyncError('protocol', t('This link has no price'));
   return searchCoupons(server(), request, signal);
 }
 
 /** The same item at other shops (`new`) or second-hand (`used`), as Claude found it. */
 export async function findOffers(linkId: string, market: OfferMarket, fresh: boolean, signal?: AbortSignal): Promise<OfferResponse> {
   const request = offerRequest(linkOf(linkId), market, getLocale(), fresh);
-  if (!request) throw new SyncError('protocol', t('Ce lien n’a pas de prix'));
+  if (!request) throw new SyncError('protocol', t('This link has no price'));
   return searchOffers(server(), request, signal);
 }
 
@@ -99,7 +99,7 @@ const seerrLookups = new Map<string, { readonly at: number; readonly answer: Pro
 export function lookUpSeerr(linkId: string): Promise<SeerrResponse> {
   const link = useLibraryStore.getState().links[linkId];
   const config = useSettingsStore.getState().server;
-  if (!link || !config) return Promise.reject(new SyncError('network', t('Aucun serveur n’est connecté')));
+  if (!link || !config) return Promise.reject(new SyncError('network', t('No server is connected')));
   // A title read meanwhile is another search.
   const key = `${link.id} ${link.title}`;
   const kept = seerrLookups.get(key);
@@ -147,7 +147,7 @@ async function makeCopy(linkId: string): Promise<string> {
 export async function agendaDraft(linkId: string, signal?: AbortSignal): Promise<string> {
   const link = linkOf(linkId);
   const { proposal } = await eventFromLink(server(), { linkId: link.id, lang: getLocale(), now: wallNow(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? '' }, signal);
-  if (!proposal) throw new SyncError('protocol', t('Aucune date trouvée dans ce lien.'));
+  if (!proposal) throw new SyncError('protocol', t('No date found in this link.'));
   return `/agenda/new?${proposalQuery(proposal, link.id)}`;
 }
 

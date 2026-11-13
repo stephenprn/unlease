@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { noteBackdrop, patternBackdrop } from '@unlease/design/backgrounds';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import type { GlyphName } from '@unlease/design/glyphs';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { RICH_KINDS, UNTITLED_PAGE, type Block, type BlockTarget, type CollectionView } from '@unlease/pages/models/blocks';
 import { asLineColor, isRuledPattern } from '@unlease/design/colors';
 import { shownHint, shownTitle } from '@unlease/notes/models/entities';
@@ -73,19 +73,19 @@ function glimpse(s: LibraryState, target: BlockTarget): Glimpse {
       if (note.kind === 'links') {
         const ids = (s.linksByNote[target.id] ?? []).filter(id => s.links[id] && !s.links[id]!.done);
         const titles = ids.slice(0, 3).map(id => s.links[id]!.title || prettyUrl(s.links[id]!.url));
-        return { text: shownHint(note) || titles.join(' · '), meta: t('Collection · {links}', { links: plural(ids.length, 'lien') }), picture: null, pictureUrl: null };
+        return { text: shownHint(note) || titles.join(' · '), meta: t('Collection · {links}', { links: plural(ids.length, 'link') }), picture: null, pictureUrl: null };
       }
       const items = (s.checksByNote[target.id] ?? []).flatMap(id => (s.checks[id] && !s.checks[id]!.checked ? [s.checks[id]!.text] : []));
       // A formatted body's words alone, read once per version of the note.
       const shown = noteCardLines(note);
       const text = note.kind === 'checklist' ? items.slice(0, 4).join(' · ') : (shown ? linesText(shown) : note.body).slice(0, 280);
-      return { text, meta: note.kind === 'checklist' ? t('Liste') : note.kind === 'drawing' ? t('Dessin') : t('Note'), picture: s.attachmentsByNote[target.id]?.[0] ?? null, pictureUrl: null };
+      return { text, meta: note.kind === 'checklist' ? t('List') : note.kind === 'drawing' ? t('Drawing') : t('Note'), picture: s.attachmentsByNote[target.id]?.[0] ?? null, pictureUrl: null };
     }
     case 'link': {
       const link = s.links[target.id];
       if (!link) return none;
       const { source } = linkRowText(link);
-      return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Lien'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
+      return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Link'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
     }
     case 'page': {
       let text = '';
@@ -98,7 +98,7 @@ function glimpse(s: LibraryState, target: BlockTarget): Glimpse {
     }
     case 'event':
       // Only ever mentioned from here; a block another client made shows its next occurrence.
-      return s.agenda.events[target.id] ? { text: eventWhen(s.agenda.events, target.id), meta: t('Événement'), picture: null, pictureUrl: null } : none;
+      return s.agenda.events[target.id] ? { text: eventWhen(s.agenda.events, target.id), meta: t('Event'), picture: null, pictureUrl: null } : none;
     default:
       // A type a newer client added (another app's): nothing to show of it here.
       return none;
@@ -113,7 +113,7 @@ function GoneCard({ target }: { target: BlockTarget }) {
     <Organic outline="frame" style={styles.gone}>
       <Icon name="info" size={20} color={theme.color.inkMuted} />
       <AppText variant="meta">
-        {target.type === 'page' ? t('Cette page n’existe plus.') : target.type === 'link' ? t('Ce lien n’existe plus.') : target.type === 'event' ? t('Cet événement n’existe plus.') : target.type === 'contact' ? t('Ce contact n’existe plus.') : t('Cette note n’existe plus.')}
+        {target.type === 'page' ? t('This page no longer exists.') : target.type === 'link' ? t('This link no longer exists.') : target.type === 'event' ? t('This event no longer exists.') : target.type === 'contact' ? t('This contact no longer exists.') : t('This note no longer exists.')}
       </AppText>
     </Organic>
   );
@@ -211,7 +211,7 @@ function NoteEmbed({ id }: { id: string }) {
   return (
     <Organic outline="card" style={[styles.sheet, noteBackdrop(theme.mode, note.color, ruled ? null : note.pattern)]}>
       <Grain />
-      <Tappable unstable_pressDelay={listPressDelay} onPress={open} accessibilityLabel={note.title ? t('Ouvrir la note {title}', { title: shownTitle(note) }) : t('Ouvrir la note')} style={styles.note}>
+      <Tappable unstable_pressDelay={listPressDelay} onPress={open} accessibilityLabel={note.title ? t('Open note {title}', { title: shownTitle(note) }) : t('Open note')} style={styles.note}>
         {photo ? (
           <Organic outline="frame" style={styles.notePhoto}>
             <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -219,9 +219,9 @@ function NoteEmbed({ id }: { id: string }) {
         ) : null}
         <View style={styles.noteHead}>
           <AppText variant="title" numberOfLines={3} style={styles.flex} color={note.title ? undefined : theme.color.inkMuted}>
-            {shownTitle(note) || (note.kind === 'checklist' ? t('Liste') : note.kind === 'drawing' ? t('Dessin') : t('Note'))}
+            {shownTitle(note) || (note.kind === 'checklist' ? t('List') : note.kind === 'drawing' ? t('Drawing') : t('Note'))}
           </AppText>
-          <IconButton icon="external" label={t('Ouvrir la note')} size={20} shape={2} onPress={open} />
+          <IconButton icon="external" label={t('Open note')} size={20} shape={2} onPress={open} />
         </View>
         {note.kind === 'checklist' ? (
           <View style={styles.items}>
@@ -236,7 +236,7 @@ function NoteEmbed({ id }: { id: string }) {
               </View>
             ))}
             {items.length > NOTE_ITEMS || ticked > 0 ? (
-              <AppText variant="meta">{[items.length > NOTE_ITEMS ? plural(items.length - NOTE_ITEMS, 'autre élément', 'autres éléments') : null, ticked > 0 ? plural(ticked, 'élément coché', 'éléments cochés') : null].filter(Boolean).join(' · ')}</AppText>
+              <AppText variant="meta">{[items.length > NOTE_ITEMS ? plural(items.length - NOTE_ITEMS, 'other item', 'other items') : null, ticked > 0 ? plural(ticked, 'ticked item', 'ticked items') : null].filter(Boolean).join(' · ')}</AppText>
             ) : null}
           </View>
         ) : note.kind === 'drawing' ? (
@@ -262,8 +262,8 @@ function NoteEmbed({ id }: { id: string }) {
 }
 
 const viewOptions = (): readonly SegmentedOption<CollectionView>[] => [
-  { value: 'list', label: t('Liste'), icon: 'list' },
-  { value: 'table', label: t('Tableau'), icon: 'table' },
+  { value: 'list', label: t('List'), icon: 'list' },
+  { value: 'table', label: t('Table'), icon: 'table' },
 ];
 
 /**
@@ -297,18 +297,18 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
     <Organic outline="card" style={[styles.sheet]}>
       <Grain />
       <View style={styles.collection}>
-        <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'note', id })} accessibilityLabel={t('Ouvrir la collection {title}', { title: shownTitle(line) })} style={styles.collectionHead}>
+        <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'note', id })} accessibilityLabel={t('Open collection {title}', { title: shownTitle(line) })} style={styles.collectionHead}>
           <EmblemStone id={id} emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={26} width={44} height={40} />
           <View style={styles.flex}>
             <AppText variant="title" numberOfLines={2}>
               {shownTitle(line)}
             </AppText>
-            <AppText variant="meta">{plural(openIds.length, 'lien')}</AppText>
+            <AppText variant="meta">{plural(openIds.length, 'link')}</AppText>
           </View>
         </Tappable>
         {readOnly ? null : (
           <View style={styles.collectionViews}>
-            <Segmented options={viewOptions()} value={block.view} label={t('Afficher la collection en')} onChange={view => setCollectionView(page, block.id, view)} />
+            <Segmented options={viewOptions()} value={block.view} label={t('Show the collection as')} onChange={view => setCollectionView(page, block.id, view)} />
           </View>
         )}
         {table ? (
@@ -316,14 +316,14 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
         ) : (
           <>
             {openIds.length === 0 && doneIds.length === 0 ? (
-              <EmptyLine text={t('Aucun lien à faire dans cette collection.')} style={styles.collectionEmpty} />
+              <EmptyLine text={t('No links to do in this collection.')} style={styles.collectionEmpty} />
             ) : null}
             {openIds.map(lid => (
               <LinkRow key={lid} id={lid} onOpen={openLink} />
             ))}
             {doneIds.length > 0 ? (
               <AppText variant="section" style={styles.doneHeading} accessibilityRole="header">
-                {t('Déjà faits · {count}', { count: doneIds.length })}
+                {t('Done · {count}', { count: doneIds.length })}
               </AppText>
             ) : null}
             {doneIds.map(lid => (
@@ -356,7 +356,7 @@ function LinkEmbed({ id }: { id: string }) {
   const origin = [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ');
   const stamp = () => {
     const undo = setLinkDone(id, !link.done);
-    showSnack(link.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(link.kind) }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(link.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(link.kind) }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   return (
     <Organic outline="card" style={[styles.sheet]}>
@@ -380,9 +380,9 @@ function LinkEmbed({ id }: { id: string }) {
           {link.summary ? <AppText variant="body">{link.summary}</AppText> : null}
           {facts.length > 0 ? <AppText variant="meta">{facts.join(' · ')}</AppText> : null}
           <View style={styles.linkActions}>
-            <Button kind="filled" small icon="external" label={t('Ouvrir la page')} onPress={() => Linking.openURL(link.url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }))} />
-            <Button kind="tonal" small icon="stamp" label={link.done ? t('Remettre à faire') : stampWord(link.kind)} onPress={stamp} />
-            <Button kind="text" small label={t('Détails')} onPress={() => openTarget({ type: 'link', id })} />
+            <Button kind="filled" small icon="external" label={t('Open the page')} onPress={() => Linking.openURL(link.url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }))} />
+            <Button kind="tonal" small icon="stamp" label={link.done ? t('Put back to do') : stampWord(link.kind)} onPress={stamp} />
+            <Button kind="text" small label={t('Details')} onPress={() => openTarget({ type: 'link', id })} />
           </View>
         </View>
       </View>
@@ -401,10 +401,10 @@ function PageEmbed({ id }: { id: string }) {
   return (
     <Organic outline="card" style={[styles.sheet]}>
       <Grain />
-      <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'page', id })} accessibilityRole="link" accessibilityLabel={t('Ouvrir la page {title}', { title })} style={styles.pageEmbed}>
+      <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'page', id })} accessibilityRole="link" accessibilityLabel={t('Open page {title}', { title })} style={styles.pageEmbed}>
         <AppText variant="title">{page.icon ? `${page.icon} ${title}` : title}</AppText>
         <AppText variant="body" numberOfLines={6}>
-          {seen.text || t('Page vide')}
+          {seen.text || t('Empty page')}
         </AppText>
       </Tappable>
     </Organic>

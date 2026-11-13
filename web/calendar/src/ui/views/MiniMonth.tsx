@@ -45,9 +45,9 @@ function MiniMonthComponent({ month, weekStart, today, busy, shown, onPick, onTi
         )}
         {onStep ? (
           <>
-            <IconButton icon="back" label={t('Mois précédent')} compact size={18} onClick={() => onStep(-1)} />
+            <IconButton icon="back" label={t('Previous month')} compact size={18} onClick={() => onStep(-1)} />
             <span style={{ transform: 'scaleX(-1)', display: 'inline-flex' }}>
-              <IconButton icon="back" label={t('Mois suivant')} compact size={18} onClick={() => onStep(1)} />
+              <IconButton icon="back" label={t('Next month')} compact size={18} onClick={() => onStep(1)} />
             </span>
           </>
         ) : null}

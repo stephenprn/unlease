@@ -20,7 +20,7 @@ import type { AdminOverlays } from './overlays';
 import { StatusRow } from './StatusRow';
 
 export const SEERR_INFO = tx(
-  'Seerr est l’application où l’on demande films et séries à un serveur Plex ou Jellyfin. Relié ici, un module ouvre chaque film ou série de vos collections dans votre Seerr, pour le demander ou voir s’il est déjà là.',
+  'Seerr is the app where people request films and series from a Plex or Jellyfin server. Linked here, a module opens each film or series in your collections in your Seerr, to request it or see whether it is already there.',
 );
 
 type Busy = 'save' | 'key' | 'unlink' | null;
@@ -36,7 +36,7 @@ export function SeerrSection({ server, admin, overlays }: { server: ServerConfig
   // Nothing to try: linked, and nothing in the form changed.
   const unchanged = on && address === seerr.url && key.trim() === '';
   const form = useForm(
-    { url: serviceAddressProblem(address, t('Saisissez l’adresse de votre Seerr.'), t('https://seerr.exemple.fr')) },
+    { url: serviceAddressProblem(address, t('Enter your Seerr’s address.'), t('https://seerr.example.org')) },
     { order: ['url', 'key'], sendOnDone: () => saveSeerr() },
   );
 
@@ -49,7 +49,7 @@ export function SeerrSection({ server, admin, overlays }: { server: ServerConfig
       showSnack(done, undefined, { tone: 'success' });
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Réglage refusé');
+      const message = failure instanceof Error ? t(failure.message) : t('Setting refused');
       // Under the field it concerns (the address, the key), else on the whole form.
       const field = failure instanceof Error ? serviceRefusalField(failure.message) : null;
       if (what === 'save') form.fail(field === 'address' ? 'url' : field === 'key' ? 'key' : null, message);
@@ -64,7 +64,7 @@ export function SeerrSection({ server, admin, overlays }: { server: ServerConfig
     if (unchanged) return true;
     // A key field left empty keeps the key stored.
     const patch = { url: address, ...(key.trim() ? { apiKey: key.trim() } : {}) };
-    if (!(await save({ seerr: patch }, 'save', on ? t('Seerr enregistré') : t('Seerr relié : son module apparaît sur les films et les séries.')))) return false;
+    if (!(await save({ seerr: patch }, 'save', on ? t('Seerr saved') : t('Seerr linked: its module shows on films and series.')))) return false;
     setUrl(null);
     setKey('');
     form.reset();
@@ -72,25 +72,25 @@ export function SeerrSection({ server, admin, overlays }: { server: ServerConfig
   }
 
   const host = seerr.url.replace(/^https?:\/\//, '');
-  const meta = !on ? t('Le module Seerr n’apparaît qu’une fois relié.') : seerr.keyHint ? t('{address} · clé {hint}', { address: host, hint: seerr.keyHint }) : t('{address} · sans clé : la recherche de Seerr seulement', { address: host });
+  const meta = !on ? t('The Seerr module shows only once it is linked.') : seerr.keyHint ? t('{address} · key {hint}', { address: host, hint: seerr.keyHint }) : t('{address} · no key: Seerr’s search only', { address: host });
 
   return (
     <View>
-      <StatusRow line={{ tone: on ? 'ok' : 'off', title: on ? t('Seerr relié') : t('Seerr non relié'), meta }}>
+      <StatusRow line={{ tone: on ? 'ok' : 'off', title: on ? t('Seerr linked') : t('Seerr not linked'), meta }}>
         {on ? (
           <Button
             kind="dangerText"
             small
-            label={t('Délier Seerr')}
+            label={t('Unlink Seerr')}
             busy={busy === 'unlink'}
             disabled={busy !== null}
             onPress={() =>
               overlays.ask({
-                title: t('Délier Seerr ?'),
-                message: t('Le module Seerr disparaît des films et des séries. Rien ne change dans Seerr.'),
-                confirmLabel: t('Délier'),
+                title: t('Unlink Seerr?'),
+                message: t('The Seerr module goes from films and series. Nothing changes in Seerr.'),
+                confirmLabel: t('Unlink'),
                 danger: true,
-                run: () => void save({ seerr: null }, 'unlink', t('Seerr délié')),
+                run: () => void save({ seerr: null }, 'unlink', t('Seerr unlinked')),
               })
             }
           />
@@ -98,27 +98,27 @@ export function SeerrSection({ server, admin, overlays }: { server: ServerConfig
       </StatusRow>
       <View style={styles.fields}>
         <TextField
-          label={t('Adresse de Seerr')}
+          label={t('Seerr address')}
           kind="url"
           value={url ?? seerr.url}
           onChangeText={setUrl}
           field={form.field('url')}
-          help={t('Par exemple {example}.', { example: t('https://seerr.exemple.fr') })}
+          help={t('For example {example}.', { example: t('https://seerr.example.org') })}
         />
         <TextField
-          label={seerr.keyHint ? t('Remplacer la clé API') : t('Clé API')}
+          label={seerr.keyHint ? t('Replace the API key') : t('API key')}
           kind="secret"
           optional={!seerr.keyHint}
           value={key}
           onChangeText={setKey}
           field={form.field('key')}
-          help={seerr.keyHint ? t('Dans Seerr : Réglages, puis Général, « Clé API ». Gardée sur votre serveur. Actuelle : {hint}', { hint: seerr.keyHint }) : t('Dans Seerr : Réglages, puis Général, « Clé API ». Gardée sur votre serveur.')}
-          revealLabels={{ show: t('Afficher la clé'), hide: t('Masquer la clé') }}
+          help={seerr.keyHint ? t('In Seerr: Settings, then General, “API Key”. Kept on your server. Current: {hint}', { hint: seerr.keyHint }) : t('In Seerr: Settings, then General, “API Key”. Kept on your server.')}
+          revealLabels={{ show: t('Show the key'), hide: t('Hide the key') }}
         />
         <FormMessage message={form.message} />
         <View style={styles.row}>
-          <Button label={t('Tester et enregistrer')} icon="server" busy={form.busy} disabled={unchanged || (busy !== null && busy !== 'save')} onPress={() => void form.submit(saveSeerr)} />
-          {on && seerr.keyHint ? <Button kind="text" label={t('Retirer la clé')} busy={busy === 'key'} disabled={busy !== null} onPress={() => void save({ seerr: { apiKey: '' } }, 'key', t('Clé retirée : Seerr est seulement cherché.'))} /> : null}
+          <Button label={t('Test and save')} icon="server" busy={form.busy} disabled={unchanged || (busy !== null && busy !== 'save')} onPress={() => void form.submit(saveSeerr)} />
+          {on && seerr.keyHint ? <Button kind="text" label={t('Remove the key')} busy={busy === 'key'} disabled={busy !== null} onPress={() => void save({ seerr: { apiKey: '' } }, 'key', t('Key removed: Seerr is only searched.'))} /> : null}
         </View>
       </View>
     </View>

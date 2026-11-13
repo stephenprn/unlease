@@ -85,35 +85,35 @@ export function FieldSheet({ visible, fieldId, fields, onChange, onDismiss }: Fi
 
   return (
     <>
-      <Sheet visible={visible} onDismiss={cancel} title={existing ? t('Modifier l’information') : t('Ajouter une information')} tall>
+      <Sheet visible={visible} onDismiss={cancel} title={existing ? t('Edit the fact') : t('Add a fact')} tall>
         <SheetScroll keyboardShouldPersistTaps="handled">
           <View style={styles.body}>
             <TextField
-              label={t('Nom de l’information')}
+              label={t('Name of the fact')}
               kind="text"
               field={form.field('name')}
               value={name}
               onChangeText={setName}
-              placeholder={t('Prix, auteur, adresse…')}
+              placeholder={t('Price, author, address…')}
               maxLength={TEMPLATE_LIMITS.fieldName}
               autoFocus={!existing}
             />
             <TextField
-              label={t('Ce que Claude y note')}
+              label={t('What Claude writes in it')}
               kind="prose"
               field={form.field('hint')}
               value={hint}
               onChangeText={setHint}
-              placeholder={t('Par exemple : l’année de sortie')}
+              placeholder={t('For example: the year it came out')}
               multiline
               maxLength={TEMPLATE_LIMITS.hint}
               style={styles.hint}
             />
             <View style={styles.group}>
               <AppText variant="metaStrong" style={styles.label}>
-                {t('Réponse')}
+                {t('Answer')}
               </AppText>
-              <View style={styles.types} accessibilityRole="radiogroup" accessibilityLabel={t('Réponse')}>
+              <View style={styles.types} accessibilityRole="radiogroup" accessibilityLabel={t('Answer')}>
                 {TEMPLATE_FIELD_TYPES.map(each => (
                   <AnswerChoice key={each} type={each} chosen={each === type} onPress={() => setType(each)} />
                 ))}
@@ -126,17 +126,17 @@ export function FieldSheet({ visible, fieldId, fields, onChange, onDismiss }: Fi
               {/* Alone in its template, a field has nowhere to go. */}
               {fields.length > 1 ? (
                 <>
-                  <TemplateRow icon="arrowUp" title={t('Monter')} disabled={index <= 0} onPress={() => void form.submit(() => move(-1))} />
-                  <TemplateRow icon="arrowDown" title={t('Descendre')} disabled={index >= fields.length - 1} onPress={() => void form.submit(() => move(1))} />
+                  <TemplateRow icon="arrowUp" title={t('Move up')} disabled={index <= 0} onPress={() => void form.submit(() => move(-1))} />
+                  <TemplateRow icon="arrowDown" title={t('Move down')} disabled={index >= fields.length - 1} onPress={() => void form.submit(() => move(1))} />
                 </>
               ) : null}
-              <TemplateRow icon="trash" title={t('Supprimer l’information')} danger onPress={remove} />
+              <TemplateRow icon="trash" title={t('Remove the fact')} danger onPress={remove} />
             </View>
           ) : null}
         </SheetScroll>
         <FormFoot message={form.message}>
-          <Button kind="text" label={t('Annuler')} onPress={cancel} />
-          <Button label={existing ? t('OK') : t('Ajouter')} onPress={() => void form.submit(save)} />
+          <Button kind="text" label={t('Cancel')} onPress={cancel} />
+          <Button label={existing ? t('OK') : t('Add')} onPress={() => void form.submit(save)} />
         </FormFoot>
       </Sheet>
       {unsaved.dialog}

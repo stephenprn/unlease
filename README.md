@@ -86,6 +86,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 - **Nested pages** of headings, lists, tasks, toggles, callouts, code, tables with typed columns, side-by-side columns, pictures, videos, PDFs, files and drawings, with templates for a new page.
 - **Your other apps inside**: Carnet's notes, collections and links cited inline or embedded as a list or a table; people and events mentioned with `@`; dates that show in Agenda.
 - **Questions to Claude** about a page, its sub-pages or all your pages, each answer pointing at the passages it rests on. Off until you turn it on; a page you keep private is never sent.
+- **Version history**: your server keeps each page's past versions (every one for a day, then one a day for 90 days), to read and restore.
 - **On Android**: share text from any app as a new page; a new page or the search from the icon's shortcuts.
 
 </details>
@@ -103,7 +104,7 @@ Unlease is four apps you run yourself, in place of Google's: **Carnet** for Keep
 
 - **Day, three days, week, month, year, a schedule and Today**; repeating events and their exceptions, reminders, time zones, labels, places with their weather, guests from Contacts, files kept with an event.
 - **Beside your events**: your contacts' birthdays (with a message or a gift idea a tap away), Carnet's reminders, the days written in your pages and your country's public holidays.
-- **Calendars in and out**: subscribe to any calendar by its address (Google's secret iCal address included), import Google Calendar's export, publish yours at a secret address. Type an event in a few words, or ask Claude about your week; a meeting's notes become a page in one tap.
+- **Calendars in and out**: subscribe to any calendar by its address (Google's secret iCal address included), or with a login over CalDAV (your mailbox's, Nextcloud's, iCloud's), import Google Calendar's export, publish yours at a secret address. Type an event in a few words, or ask Claude about your week; a meeting's notes become a page in one tap.
 - **On Android**: five widgets (the schedule, today, the month, the next event and a countdown); « Add to calendar » in your other apps opens Agenda's form, filled in; `webcal://` links subscribe; selected text becomes an event; a Quick Settings tile and the icon's shortcuts.
 
 </details>

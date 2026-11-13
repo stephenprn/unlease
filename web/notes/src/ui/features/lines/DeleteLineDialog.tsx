@@ -46,8 +46,8 @@ export function DeleteLineDialog({ ids, open, onDismiss, onChoose, onPickLine }:
   const sorting = useNotesUiStore(selectSorting);
   const others = lines.some(line => !ids.includes(line.id) && line.id !== INBOX_ID);
   const words = {
-    title: deleting.length === 1 ? t('Supprimer {collection}', { collection: shownTitle(deleting[0]!) }) : t('Supprimer {count} collections', { count: deleting.length }),
-    lead: deleting.length === 1 ? t('Elle contient {links}. Où les mettre ?', { links: plural(count, 'lien') }) : t('Elles contiennent {links}. Où les mettre ?', { links: plural(count, 'lien') }),
+    title: deleting.length === 1 ? t('Delete {collection}', { collection: shownTitle(deleting[0]!) }) : t('Delete {count} collections', { count: deleting.length }),
+    lead: deleting.length === 1 ? t('It holds {links}. Where should they go?', { links: plural(count, 'link') }) : t('They hold {links}. Where should they go?', { links: plural(count, 'link') }),
   };
   // Once the choice is made the collections are gone: while it leaves, the dialog keeps the words it opened with.
   const [shown, setShown] = useState(words);
@@ -60,19 +60,19 @@ export function DeleteLineDialog({ ids, open, onDismiss, onChoose, onPickLine }:
     <Layer open={open} onDismiss={onDismiss} labelledBy={titleId}>
       <DialogFrame kind="list" title={shown.title} titleId={titleId} onClose={onDismiss}>
         <p className={`${styles.choiceLead} t-body`}>{shown.lead}</p>
-        {reading && others && !sorting ? <Choice icon="sparkle" title={t('Les ranger avec Claude')} hint={t('Dans vos autres collections, sinon dans Non classé')} onClick={() => choose({ kind: 'claude' })} /> : null}
-        <Choice icon="inbox" title={t('Les mettre dans Non classé')} onClick={() => choose({ kind: 'move', to: INBOX_ID })} />
+        {reading && others && !sorting ? <Choice icon="sparkle" title={t('Sort them with Claude')} hint={t('Into your other collections, otherwise into Unsorted')} onClick={() => choose({ kind: 'claude' })} /> : null}
+        <Choice icon="inbox" title={t('Put them in Unsorted')} onClick={() => choose({ kind: 'move', to: INBOX_ID })} />
         {others ? (
           <Choice
             icon="transfer"
-            title={t('Les déplacer vers…')}
+            title={t('Move them to…')}
             onClick={() => {
               onDismiss();
               onPickLine();
             }}
           />
         ) : null}
-        <Choice icon="trash" title={t('Les supprimer aussi')} hint={deleting.length === 1 ? t('Avec la collection, dans la corbeille') : t('Avec les collections, dans la corbeille')} onClick={() => choose({ kind: 'bin' })} danger />
+        <Choice icon="trash" title={t('Delete them too')} hint={deleting.length === 1 ? t('With the collection, into the bin') : t('With the collections, into the bin')} onClick={() => choose({ kind: 'bin' })} danger />
       </DialogFrame>
     </Layer>
   );

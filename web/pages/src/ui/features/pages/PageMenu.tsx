@@ -1,7 +1,7 @@
 /**
  * A page's own menu, « Plus d’actions » in its head (in the phone's top bar under 720px): Claude
  * when the Administration offers it, a sub-page, a move to another page, a copy, its address, its
- * Markdown, keeping it away from Claude, and the bin, last.
+ * Markdown, its past versions, keeping it away from Claude, and the bin, last.
  */
 import { useState, type RefObject } from 'react';
 
@@ -22,17 +22,18 @@ import { pageMarkdown } from './clipboard';
 import { flushAll } from './editorStore';
 import { MovePageDialog } from './MovePageDialog';
 import { openNewPage, trashWithUndo } from './PageTree';
+import { VersionHistory } from './VersionHistory';
 
 /** The page's address, to paste anywhere. */
 function copyLink(id: string): void {
   const url = new URL(browserPath(paths.page(id)), window.location.origin).href;
   if (!navigator.clipboard) {
-    showError(t('Impossible de copier le lien'));
+    showError(t('Couldn’t copy the link'));
     return;
   }
   void navigator.clipboard.writeText(url).then(
-    () => showSnack(t('Lien copié'), undefined, { tone: 'success' }),
-    () => showError(t('Impossible de copier le lien')),
+    () => showSnack(t('Link copied'), undefined, { tone: 'success' }),
+    () => showError(t('Couldn’t copy the link')),
   );
 }
 
@@ -66,15 +67,18 @@ function moved(id: string, message: string): void {
 
 export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: boolean; anchor: RefObject<HTMLElement | null>; onDismiss: () => void }) {
   const [moving, setMoving] = useState(false);
+  const [history, setHistory] = useState(false);
+  // A fresh history at each opening: it starts on its list, loading.
+  const [historyKey, setHistoryKey] = useState(0);
   const parent = useBlocksStore(s => containingPage(s.blocks, id));
   const ask = usePagesAskSettings() !== null;
   // Kept away by itself (its own switch), or by a page above it (nothing to switch here).
   const own = useBlocksStore(s => s.blocks[id]?.private === true);
   const kept = useBlocksStore(s => isPrivatePage(s.blocks, id));
   const items: MenuItem[] = [
-    ...(ask && !kept ? [{ label: t('Demander à Claude'), icon: 'sparkle' as const, onSelect: () => openPagesAsk(id) }] : []),
+    ...(ask && !kept ? [{ label: t('Ask Claude'), icon: 'sparkle' as const, onSelect: () => openPagesAsk(id) }] : []),
     {
-      label: t('Ajouter une sous-page'),
+      label: t('Add a sub-page'),
       separatorBefore: ask && !kept,
       icon: 'pagePlus',
       onSelect: () => {
@@ -82,9 +86,9 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
         openNewPage(id);
       },
     },
-    { label: t('Déplacer vers…'), icon: 'transfer', onSelect: () => setMoving(true) },
+    { label: t('Move to…'), icon: 'transfer', onSelect: () => setMoving(true) },
     {
-      label: t('Dupliquer'),
+      label: t('Duplicate'),
       icon: 'copy',
       onSelect: () => {
         flushAll();
@@ -92,24 +96,33 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
         if (copy) navigate(paths.page(copy));
       },
     },
-    { label: t('Copier le lien'), icon: 'link', onSelect: () => copyLink(id) },
-    { label: t('Exporter en Markdown'), icon: 'upload', onSelect: () => exportMarkdown(id) },
+    { label: t('Copy link'), icon: 'link', onSelect: () => copyLink(id) },
+    { label: t('Export as Markdown'), icon: 'upload', onSelect: () => exportMarkdown(id) },
+    {
+      label: t('Version history'),
+      icon: 'clock',
+      onSelect: () => {
+        flushAll();
+        setHistoryKey(key => key + 1);
+        setHistory(true);
+      },
+    },
     ...(ask && (own || !kept)
       ? [
           own
-            ? { label: t('Montrer à Claude'), icon: 'eye' as const, onSelect: () => setPagePrivate(id, false) }
+            ? { label: t('Show to Claude'), icon: 'eye' as const, onSelect: () => setPagePrivate(id, false) }
             : {
-                label: t('Garder hors de Claude'),
+                label: t('Keep away from Claude'),
                 icon: 'eyeOff' as const,
                 onSelect: () => {
                   setPagePrivate(id, true);
-                  showSnack(t('Cette page et ses sous-pages ne seront plus envoyées à Claude'), undefined, { tone: 'success' });
+                  showSnack(t('This page and its sub-pages will no longer be sent to Claude'), undefined, { tone: 'success' });
                 },
               },
         ]
       : []),
     {
-      label: t('Mettre à la corbeille'),
+      label: t('Move to bin'),
       icon: 'trash',
       danger: true,
       separatorBefore: true,
@@ -121,7 +134,8 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
   ];
   return (
     <>
-      <Menu open={open} anchor={anchor} onDismiss={onDismiss} items={items} label={t('Actions de la page')} />
+      <Menu open={open} anchor={anchor} onDismiss={onDismiss} items={items} label={t('Page actions')} />
+      <VersionHistory key={historyKey} id={id} open={history} onDismiss={() => setHistory(false)} />
       <MovePageDialog
         open={moving}
         current={parent}
@@ -129,11 +143,11 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
         onDismiss={() => setMoving(false)}
         onPick={target => {
           flushAll();
-          if (movePage(id, { into: target })) moved(id, t('Page déplacée vers {page}', { page: useBlocksStore.getState().blocks[target]?.text.trim() || t(UNTITLED_PAGE) }));
+          if (movePage(id, { into: target })) moved(id, t('Page moved to {page}', { page: useBlocksStore.getState().blocks[target]?.text.trim() || t(UNTITLED_PAGE) }));
         }}
         onTop={() => {
           flushAll();
-          if (movePage(id, { into: null })) moved(id, t('Page déplacée au premier niveau'));
+          if (movePage(id, { into: null })) moved(id, t('Page moved to the top level'));
         }}
       />
     </>

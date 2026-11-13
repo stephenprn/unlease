@@ -77,29 +77,29 @@ function LinkTileComponent({ id, now, shape, onOpen }: { id: string; now: number
   const words = mosaic && !image;
   const known = image ? (ratio ?? pictureRatio(image)) : null;
   const frameStyle: CSSProperties = { ...frameVars, ...(mosaic && image ? { aspectRatio: String(known ?? 0.8) } : null) };
-  const label = [title, source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, now)?.text, people.length > 0 ? people.join(', ') : null, note ? t('Votre note : {note}', { note }) : null]
+  const label = [title, source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, now)?.text, people.length > 0 ? people.join(', ') : null, note ? t('Your note: {note}', { note }) : null]
     .filter(Boolean)
     .join(', ');
 
   const status = pending ? (
     <p className={`${styles.status} t-meta`}>
       <ReadingTrack width={56} />
-      <span className={styles.ellipsis}>{t('Lecture de la page…')}</span>
+      <span className={styles.ellipsis}>{t('Reading the page…')}</span>
     </p>
   ) : failed ? (
     <p className={`${styles.status} ${styles.failed} t-meta`}>
       <Icon name="alert" size={14} />
-      <span className={styles.ellipsis}>{link.error ? t(link.error) : t('Lecture impossible')}</span>
+      <span className={styles.ellipsis}>{link.error ? t(link.error) : t('Couldn’t read it')}</span>
       {claude ? (
         <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)}>
-          {t('Réessayer')}
+          {t('Try again')}
         </button>
       ) : null}
     </p>
   ) : unread && claude ? (
     <p className={`${styles.status} t-meta`}>
-      <button type="button" className={`${styles.retry} ${styles.retryAlone}`} onClick={() => reanalyzeLink(id)} aria-label={t('Lire {title}', { title })}>
-        {t('Lire la page')}
+      <button type="button" className={`${styles.retry} ${styles.retryAlone}`} onClick={() => reanalyzeLink(id)} aria-label={t('Read {title}', { title })}>
+        {t('Read the page')}
       </button>
     </p>
   ) : null;
@@ -183,12 +183,12 @@ function LinkTileComponent({ id, now, shape, onOpen }: { id: string; now: number
               compact
               className={styles.stampAction}
               icon={link.done ? 'undo' : 'stamp'}
-              label={link.done ? t('Remettre à faire') : t('Marquer : {stamp}', { stamp: stampWord(link.kind).toLowerCase() })}
+              label={link.done ? t('Put back to do') : t('Mark as {stamp}', { stamp: stampWord(link.kind).toLowerCase() })}
               pressed={link.done}
               onClick={() => toggleDone(id)}
             />
           ) : null}
-          <a className={`${controls.iconButton} ${controls.compact}`} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Ouvrir le lien')} data-tip={t('Ouvrir le lien')}>
+          <a className={`${controls.iconButton} ${controls.compact}`} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Open the link')} data-tip={t('Open the link')}>
             <Icon name="external" size={20} />
           </a>
         </div>

@@ -7,6 +7,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.stephenprn.agenda.intake.IntakePackage
+import com.stephenprn.agenda.mirror.PhoneMirrorPackage
 import com.stephenprn.agenda.widget.WidgetsPackage
 import com.stephenprn.unlease.clipboard.ClipboardPackage
 import com.stephenprn.unlease.backgroundsync.BackgroundSyncPackage
@@ -44,6 +45,8 @@ class MainApplication : Application(), ReactApplication {
           add(RemindersPackage())
           // Agenda's own (this app's Kotlin): a calendar file shared or opened, the widgets.
           add(IntakePackage())
+          // The records copied into the phone's own, one way (Réglages › On this phone).
+          add(PhoneMirrorPackage())
           add(WidgetsPackage())
         },
     )

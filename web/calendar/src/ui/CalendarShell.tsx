@@ -88,22 +88,22 @@ function titleFor(state: CalendarState, route: Route): string | null {
     case 'agendaEvent':
     case 'agendaEdit': {
       const event = state.events[route.id];
-      return event ? event.title.trim() || t('Sans titre') : null;
+      return event ? event.title.trim() || t('Untitled') : null;
     }
     case 'agendaNew':
-      return t('Nouvel événement');
+      return t('New event');
     case 'agendaBirthday':
-      return t('Anniversaire');
+      return t('Birthday');
     case 'agendaLabels':
-      return t('Libellés');
+      return t('Labels');
     case 'agendaLabel':
-      return state.labels[route.id]?.name ?? t('Libellés');
+      return state.labels[route.id]?.name ?? t('Labels');
     case 'agendaFeeds':
-      return t('Autres agendas');
+      return t('Other calendars');
     case 'agendaImport':
-      return t('Importer');
+      return t('Import');
     case 'agendaTrash':
-      return t('Corbeille');
+      return t('Bin');
     default:
       return null;
   }
@@ -176,7 +176,7 @@ function CalendarCheck({ stone, color, checked }: { stone: string; color: string
 }
 
 /** « Alt+clic » (« ⌥+clic » on a Mac): a stone so clicked shows its calendar alone, or all of them again. */
-const altClick = (): string => t('{key}+clic', { key: isApple() ? '⌥' : 'Alt' });
+const altClick = (): string => t('{key}+click', { key: isApple() ? '⌥' : 'Alt' });
 
 /**
  * A calendar's menu (its row's ⋮, a right-click on the row): « Afficher uniquement celui-ci » unless
@@ -188,8 +188,8 @@ function onlyChoices(only: { readonly key: string; readonly shown: Shown } | und
   const choices = shownChoices(only.shown, only.key);
   const alone = aloneShown(only.shown) === only.key;
   const items: MenuItem[] = [
-    ...(choices.only ? [{ label: t('Afficher uniquement celui-ci'), icon: 'eye' as const, shortcut: altClick(), onSelect: () => showOnlyCalendar(only.key) }] : []),
-    ...(choices.all ? [{ label: t('Tout afficher'), icon: 'restore' as const, ...(alone ? { shortcut: altClick() } : {}), onSelect: showAllCalendars }] : []),
+    ...(choices.only ? [{ label: t('Show only this one'), icon: 'eye' as const, shortcut: altClick(), onSelect: () => showOnlyCalendar(only.key) }] : []),
+    ...(choices.all ? [{ label: t('Show all'), icon: 'restore' as const, ...(alone ? { shortcut: altClick() } : {}), onSelect: showAllCalendars }] : []),
   ];
   if (items.length === 0) return null;
   return { items, quick: () => (alone ? showAllCalendars() : showOnlyCalendar(only.key)) };
@@ -241,11 +241,11 @@ function ToggleRow({ label, color, checked, onToggle, onNavigate, to, stone, onl
       {menu ? (
         <>
           <span className={styles.navMoreSlot}>
-            <button ref={more} type="button" className={styles.navMore} aria-label={t('Plus d’actions pour {name}', { name: label })} aria-haspopup="menu" aria-expanded={menuOpen} data-tip={t('Plus d’actions')} onClick={() => setMenuOpen(true)}>
+            <button ref={more} type="button" className={styles.navMore} aria-label={t('More actions for {name}', { name: label })} aria-haspopup="menu" aria-expanded={menuOpen} data-tip={t('More actions')} onClick={() => setMenuOpen(true)}>
               <Icon name="more" size={18} />
             </button>
           </span>
-          <Menu open={menuOpen} anchor={more} align="start" onDismiss={() => setMenuOpen(false)} items={menu.items} label={t('Actions pour {name}', { name: label })} />
+          <Menu open={menuOpen} anchor={more} align="start" onDismiss={() => setMenuOpen(false)} items={menu.items} label={t('Actions for {name}', { name: label })} />
         </>
       ) : null}
     </div>
@@ -286,11 +286,11 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
         />
       </div>
       {/* « Aujourd'hui », the day at a glance, then the calendar in the view chosen last. */}
-      <NavRow to={paths.view('today', today)} label={t('Aujourd’hui')} leading={<NavGlyph name="today" />} current={route.name === 'agenda' && view === 'today'} onNavigate={onNavigate} />
-      <NavRow to={paths.view(prefs.periodView, today)} label={t('Agenda')} leading={<NavGlyph name="calendar" />} current={route.name === 'agenda' && view !== 'today'} onNavigate={onNavigate} />
+      <NavRow to={paths.view('today', today)} label={t('Today')} leading={<NavGlyph name="today" />} current={route.name === 'agenda' && view === 'today'} onNavigate={onNavigate} />
+      <NavRow to={paths.view(prefs.periodView, today)} label={t('Calendar')} leading={<NavGlyph name="calendar" />} current={route.name === 'agenda' && view !== 'today'} onNavigate={onNavigate} />
       <NavFold
         id="calendarOwn"
-        title={t('Mes agendas')}
+        title={t('My calendars')}
         action={
           <a
             href={paths.labels}
@@ -301,18 +301,18 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
               navigate(paths.labels);
             }}
           >
-            {t('Modifier')}
+            {t('Edit')}
           </a>
         }
       >
-        <ToggleRow label={t('Mes événements')} color={null} stone="own" checked={!prefs.hideOwn} onToggle={() => savePrefs({ hideOwn: !prefs.hideOwn })} only={{ key: OWN_KEY, shown: listed }} />
+        <ToggleRow label={t('My events')} color={null} stone="own" checked={!prefs.hideOwn} onToggle={() => savePrefs({ hideOwn: !prefs.hideOwn })} only={{ key: OWN_KEY, shown: listed }} />
         {liveLabels.map(label => (
           <ToggleRow key={label.id} label={label.name} color={label.color} checked={!prefs.hiddenLabels.includes(label.id)} onToggle={() => toggleLabelShown(label.id)} to={paths.label(label.id)} onNavigate={onNavigate} only={{ key: labelKey(label.id), shown: listed }} />
         ))}
       </NavFold>
       <NavFold
         id="calendarOthers"
-        title={t('Autres agendas')}
+        title={t('Other calendars')}
         action={
           <a
             href={paths.feeds}
@@ -323,17 +323,17 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
               navigate(paths.feeds);
             }}
           >
-            {t('Ajouter')}
+            {t('Add')}
           </a>
         }
       >
         {liveFeeds.map(feed => (
           <ToggleRow key={feed.id} label={feedName(feed)} color={feed.color} stone={feed.id} checked={!feed.hidden} onToggle={() => setFeedHidden(feed.id, !feed.hidden)} to={paths.feeds} onNavigate={onNavigate} only={{ key: feedKey(feed.id), shown: listed }} />
         ))}
-        <ToggleRow label={t('Anniversaires ({app})', { app: APPS.contacts.name })} color={LAYER_COLORS.birthday} stone="birthday" checked={prefs.birthdays} onToggle={() => savePrefs({ birthdays: !prefs.birthdays })} only={{ key: layerKey('birthdays'), shown: listed }} />
-        <ToggleRow label={t('Rappels de {app}', { app: APPS.notes.name })} color={LAYER_COLORS.reminder} stone="reminder" checked={prefs.noteReminders} onToggle={() => savePrefs({ noteReminders: !prefs.noteReminders })} only={{ key: layerKey('noteReminders'), shown: listed }} />
-        <ToggleRow label={t('Dates des pages ({app})', { app: APPS.pages.name })} color={LAYER_COLORS.page} stone="page" checked={prefs.pageDates} onToggle={() => savePrefs({ pageDates: !prefs.pageDates })} only={{ key: layerKey('pageDates'), shown: listed }} />
-        <ToggleRow label={t('Météo')} color="sky" stone="weather" checked={prefs.weather} onToggle={() => savePrefs({ weather: !prefs.weather })} only={{ key: layerKey('weather'), shown: listed }} />
+        <ToggleRow label={t('Birthdays ({app})', { app: APPS.contacts.name })} color={LAYER_COLORS.birthday} stone="birthday" checked={prefs.birthdays} onToggle={() => savePrefs({ birthdays: !prefs.birthdays })} only={{ key: layerKey('birthdays'), shown: listed }} />
+        <ToggleRow label={t('{app} reminders', { app: APPS.notes.name })} color={LAYER_COLORS.reminder} stone="reminder" checked={prefs.noteReminders} onToggle={() => savePrefs({ noteReminders: !prefs.noteReminders })} only={{ key: layerKey('noteReminders'), shown: listed }} />
+        <ToggleRow label={t('Dates in pages ({app})', { app: APPS.pages.name })} color={LAYER_COLORS.page} stone="page" checked={prefs.pageDates} onToggle={() => savePrefs({ pageDates: !prefs.pageDates })} only={{ key: layerKey('pageDates'), shown: listed }} />
+        <ToggleRow label={t('Weather')} color="sky" stone="weather" checked={prefs.weather} onToggle={() => savePrefs({ weather: !prefs.weather })} only={{ key: layerKey('weather'), shown: listed }} />
       </NavFold>
     </>
   );
@@ -343,8 +343,8 @@ export function CalendarNavFoot({ route, onNavigate }: { route: Route; onNavigat
   return (
     <>
       {/* Réglages' import page: this row is the chosen place there, Réglages the one it lies within. */}
-      <NavRow to={shellPaths.importer} label={t('Importer un agenda')} leading={<NavGlyph name="download" />} current={route.name === 'settings' && route.page === 'import'} onNavigate={onNavigate} />
-      <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={route.name === 'agendaTrash'} onNavigate={onNavigate} />
+      <NavRow to={shellPaths.importer} label={t('Import a calendar')} leading={<NavGlyph name="download" />} current={route.name === 'settings' && route.page === 'import'} onNavigate={onNavigate} />
+      <NavRow to={paths.trash} label={t('Bin')} leading={<NavGlyph name="trash" />} current={route.name === 'agendaTrash'} onNavigate={onNavigate} />
     </>
   );
 }
@@ -365,7 +365,7 @@ export async function quickAdd(words: string, now: number = Date.now()): Promise
         return;
       }
     } catch (error) {
-      showError(error instanceof Error ? error.message : t('Le serveur ne répond pas'));
+      showError(error instanceof Error ? error.message : t('The server isn’t responding'));
     }
   }
   navigate(paths.newEvent({ title: read.title, start: read.start, end: read.end, place: read.place }));
@@ -385,10 +385,10 @@ export function CalendarHeaderActions({ route }: { route: Route }) {
         void quickAdd(typed);
       }}
     >
-      <input className={styles.quickInput} value={words} onChange={event => setWords(event.target.value)} placeholder={t('Ajouter en quelques mots')} aria-label={t('Ajouter en quelques mots')} autoComplete="off" enterKeyHint="go" title={t('« Dîner chez Paul jeudi 20h », « Congrès du 12 au 14 mars à Lyon »')} />
-      <button type="submit" className={`${shell.classify} paper`} aria-label={t('Créer un événement')} data-tip={t('Créer un événement (C)')} onClick={event => (words.trim() ? undefined : (event.preventDefault(), navigate(paths.newEvent())))}>
+      <input className={styles.quickInput} value={words} onChange={event => setWords(event.target.value)} placeholder={t('Add in a few words')} aria-label={t('Add in a few words')} autoComplete="off" enterKeyHint="go" title={t('“Dinner at Paul’s Thursday 8pm”, “Conference March 12 to 14 at Lyon”')} />
+      <button type="submit" className={`${shell.classify} paper`} aria-label={t('Create an event')} data-tip={t('Create an event (C)')} onClick={event => (words.trim() ? undefined : (event.preventDefault(), navigate(paths.newEvent())))}>
         <Icon name="plus" size={20} />
-        <span className={shell.classifyLabel}>{t('Créer')}</span>
+        <span className={shell.classifyLabel}>{t('Create')}</span>
       </button>
     </form>
   );
@@ -408,7 +408,7 @@ export function CalendarBottomBar({ route, enter }: { route: Route; enter: Arriv
   return (
     <div className={`${shell.bottomBar} paper`} data-enter={(!closing && arrival) || undefined} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
       <div className={shell.bottomActions} />
-      <button type="button" className={shell.fab} data-pebble-under={0} aria-label={t('Créer un événement')} onClick={() => navigate(paths.newEvent())}>
+      <button type="button" className={shell.fab} data-pebble-under={0} aria-label={t('Create an event')} onClick={() => navigate(paths.newEvent())}>
         <Icon name="plus" size={26} />
       </button>
     </div>

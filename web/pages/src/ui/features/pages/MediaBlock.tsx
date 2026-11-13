@@ -23,10 +23,10 @@ import styles from './pages.module.css';
 import { formatBytes } from '@unlease/core/services/format';
 
 const WORDS: Record<MediaKind, { readonly add: string; readonly accept: string; readonly icon: 'image' | 'video' | 'pdf' | 'file' }> = {
-  image: { add: tx('Ajouter une image'), accept: 'image/*', icon: 'image' },
-  video: { add: tx('Ajouter une vidéo'), accept: 'video/*', icon: 'video' },
-  pdf: { add: tx('Ajouter un PDF'), accept: 'application/pdf', icon: 'pdf' },
-  file: { add: tx('Ajouter un fichier'), accept: '', icon: 'file' },
+  image: { add: tx('Add an image'), accept: 'image/*', icon: 'image' },
+  video: { add: tx('Add a video'), accept: 'video/*', icon: 'video' },
+  pdf: { add: tx('Add a PDF'), accept: 'application/pdf', icon: 'pdf' },
+  file: { add: tx('Add a file'), accept: '', icon: 'file' },
 };
 
 function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
@@ -37,7 +37,7 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
   const [over, setOver] = useState(false);
   const words = WORDS[kind];
   // An address that cannot be read is said under the field, what was typed kept.
-  const form = useForm({ address: extractUrls(address).length === 0 ? t('Ce n’est pas une adresse : tapez par exemple example.org ou https://example.org/page.') : null });
+  const form = useForm({ address: extractUrls(address).length === 0 ? t('That isn’t an address: type for example example.org or https://example.org/page.') : null });
 
   const attach = async (file: File): Promise<void> => {
     const outcome = await attachBlockFile(page, block.id, file);
@@ -82,12 +82,12 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
             value={address}
             autoFocus
             placeholder="https://…"
-            ariaLabel={t('Adresse à intégrer')}
+            ariaLabel={t('Address to embed')}
             enterKeyHint="done"
             onChange={setAddress}
           />
           <Button kind="tonal" small type="submit">
-            {t('Intégrer')}
+            {t('Embed')}
           </Button>
         </form>
       ) : (
@@ -96,10 +96,10 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
           {readOnly ? null : (
             <span className={styles.mediaActions}>
               <Button kind="tonal" small icon="upload" onClick={() => input.current?.click()}>
-                {t('Téléverser')}
+                {t('Upload')}
               </Button>
               <Button kind="text" small icon="link" onClick={() => setLinking(true)}>
-                {t('Intégrer un lien')}
+                {t('Embed a link')}
               </Button>
             </span>
           )}
@@ -140,8 +140,8 @@ function MediaBlockComponent({ block }: { block: Block }) {
   const image = useBlobUrl(kind === 'image' ? fileId : null, 'display', block.uploaded);
   const whole = useBlobUrl(kind === 'video' || kind === 'pdf' ? fileId : null, 'original', block.uploaded);
   if (!fileId && !block.url) return <EmptyMedia block={block} kind={kind} />;
-  const name = block.fileName || (block.url ? fileNameFromUrl(block.url) : t('fichier'));
-  const waiting = <div className={`${styles.mediaWaiting} t-meta`} data-outline="frame">{block.uploaded ? t('Chargement…') : t('En cours d’envoi depuis un autre appareil…')}</div>;
+  const name = block.fileName || (block.url ? fileNameFromUrl(block.url) : t('file'));
+  const waiting = <div className={`${styles.mediaWaiting} t-meta`} data-outline="frame">{block.uploaded ? t('Loading…') : t('Uploading from another device…')}</div>;
 
   switch (kind) {
     case 'image': {
@@ -171,7 +171,7 @@ function MediaBlockComponent({ block }: { block: Block }) {
           <Icon name="file" size={22} />
           <span className={styles.fileText}>
             <span className="t-body-strong">{name}</span>
-            <span className="t-meta">{[formatBytes(block.bytes), block.uploaded ? null : t('pas encore envoyé')].filter(Boolean).join(' · ')}</span>
+            <span className="t-meta">{[formatBytes(block.bytes), block.uploaded ? null : t('not uploaded yet')].filter(Boolean).join(' · ')}</span>
           </span>
           <Button
             kind="text"
@@ -179,11 +179,11 @@ function MediaBlockComponent({ block }: { block: Block }) {
             icon="download"
             onClick={() =>
               void saveBlockFile(fileId!, name).then(saved => {
-                if (!saved) showWarning(t('Ce fichier n’est pas disponible pour l’instant.'));
+                if (!saved) showWarning(t('This file isn’t available right now.'));
               })
             }
           >
-            {t('Télécharger')}
+            {t('Download')}
           </Button>
         </div>
       );

@@ -54,7 +54,7 @@ export function searchPlace(request: { value: string; known?: readonly Place[]; 
 function PlaceFieldComponent({ label, accessibilityLabel, value, onChangeText, onPick, known = [], placeholder, help, autoFocus, field }: PlaceFieldProps) {
   const theme = useTheme();
   const problem = field?.error ?? null;
-  const name = accessibilityLabel ?? label ?? t('Lieu');
+  const name = accessibilityLabel ?? label ?? t('Place');
   const latest = useRef({ value, known, onChangeText, onPick });
   latest.current = { value, known, onChangeText, onPick };
   const open = (): void => searchPlace({ ...latest.current, label: name });
@@ -79,10 +79,10 @@ function PlaceFieldComponent({ label, accessibilityLabel, value, onChangeText, o
         style={[styles.field, { borderColor: problem ? theme.color.danger : theme.color.edge, borderWidth: problem ? 2 : 1, backgroundColor: theme.color.fieldVeil }]}
         accessibilityRole="button"
         accessibilityLabel={[name, value.trim() || placeholder, problem].filter(Boolean).join(', ')}
-        accessibilityHint={t('Ouvre la recherche de lieux.')}
+        accessibilityHint={t('Opens the place search.')}
       >
         <AppText variant="body" color={value.trim() ? theme.color.ink : theme.color.inkFaint} numberOfLines={2} style={styles.text}>
-          {value.trim() || placeholder || t('Rechercher un lieu ou une adresse')}
+          {value.trim() || placeholder || t('Search for a place or an address')}
         </AppText>
         <Icon name="search" size={20} color={theme.color.inkMuted} />
       </Tappable>

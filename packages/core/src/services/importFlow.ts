@@ -24,14 +24,14 @@ export type ImportStep = (typeof IMPORT_STEPS)[number];
 /** Each step's name in the trail, short. */
 export const IMPORT_STEP_NAMES: Readonly<Record<ImportStep, string>> = localized({
   source: tx('Source'),
-  preview: tx('Aperçu'),
-  choices: tx('Choix'),
-  import: tx('Import'),
+  preview: tx('Preview'),
+  choices: tx('Choices'),
+  import: tx('Import [noun]'),
 });
 
 /** "Étape 2 sur 4", read out under the trail. */
 export function importProgress(step: ImportStep): string {
-  return t('Étape {step} sur {count}', { step: IMPORT_STEPS.indexOf(step) + 1, count: IMPORT_STEPS.length });
+  return t('Step {step} of {count}', { step: IMPORT_STEPS.indexOf(step) + 1, count: IMPORT_STEPS.length });
 }
 
 /** The step before (itself at the start). */
@@ -53,10 +53,10 @@ export type ImportFate = (typeof IMPORT_FATES)[number];
 
 /** A fate's name on its tag and its filter chip. */
 export const IMPORT_FATE_NAMES: Readonly<Record<ImportFate, string>> = localized({
-  new: tx('Nouveau'),
-  update: tx('Complété'),
-  same: tx('Déjà là'),
-  skip: tx('Laissé de côté'),
+  new: tx('New'),
+  update: tx('Completed'),
+  same: tx('Already here'),
+  skip: tx('Left out'),
 });
 
 /** One item of the preview's list: what it is, what becomes of it. */
@@ -93,50 +93,50 @@ export function fateCounts(entries: readonly PreviewEntry[]): { readonly fate: I
 
 /** « Afficher 40 de plus », or the rest when fewer remain. */
 export function showMoreWords(shown: number, total: number): string {
-  return t('Afficher {count} de plus', { count: Math.min(PREVIEW_PAGE, total - shown) });
+  return t('Show {count} more', { count: Math.min(PREVIEW_PAGE, total - shown) });
 }
 
 /** The list's foot while it is cut: how many are shown of how many. */
 export function shownOfWords(shown: number, total: number): string {
-  return t('{shown} sur {total}', { shown: Math.min(shown, total), total });
+  return t('{shown} of {total}', { shown: Math.min(shown, total), total });
 }
 
 /** What a filter that keeps nothing says. */
 export function previewEmptyWords(query: string): string {
-  return query.trim() ? t('Rien ne correspond à « {query} ».', { query: query.trim() }) : t('Rien dans ce filtre.');
+  return query.trim() ? t('Nothing matches “{query}”.', { query: query.trim() }) : t('Nothing in this filter.');
 }
 
 /** The import's foot button, counted when it can be. */
 export function importAction(count: number | null): string {
-  return count === null ? t('Importer') : count > 0 ? t('Importer {items}', { items: plural(count, 'élément') }) : t('Importer');
+  return count === null ? t('Import') : count > 0 ? t('Import {items}', { items: plural(count, 'item') }) : t('Import');
 }
 
 /** The words of the steps every app shares. */
 export const IMPORT_WORDS = localized({
-  sourceTitle: tx('D’où viennent vos données'),
-  previewTitle: tx('Ce que contient le fichier'),
-  previewLead: tx('Rien n’est encore écrit. Voici ce que deviendra chaque élément ; filtrez ou cherchez pour vérifier.'),
-  choicesTitle: tx('Vos choix'),
-  choicesLead: tx('Ce que l’import fait de ce qui demande un choix. Les réglages proposés conviennent le plus souvent.'),
-  importingTitle: tx('Import en cours'),
-  importingLead: tx('Gardez cette page ouverte jusqu’à la fin.'),
-  doneTitle: tx('Import terminé'),
-  skipped: tx('Laissé de côté'),
-  nothingNew: tx('Rien de nouveau à importer.'),
-  allFates: tx('Tout'),
-  search: tx('Chercher dans l’aperçu'),
-  another: tx('Importer un autre fichier'),
-  change: tx('Choisir un autre fichier'),
-  private: tx('Rien n’est envoyé ailleurs que sur votre serveur.'),
-  privateLocal: tx('Rien ne quitte cet appareil.'),
+  sourceTitle: tx('Where your data comes from'),
+  previewTitle: tx('What the file holds'),
+  previewLead: tx('Nothing is written yet. Here is what each item will become; filter or search to check.'),
+  choicesTitle: tx('Your choices'),
+  choicesLead: tx('What the import does with what needs a choice. The settings offered suit most cases.'),
+  importingTitle: tx('Importing'),
+  importingLead: tx('Keep this page open until it ends.'),
+  doneTitle: tx('Import complete'),
+  skipped: tx('Left out'),
+  nothingNew: tx('Nothing new to import.'),
+  allFates: tx('All'),
+  search: tx('Search the preview'),
+  another: tx('Import another file'),
+  change: tx('Choose another file'),
+  private: tx('Nothing is sent anywhere but your server.'),
+  privateLocal: tx('Nothing leaves this device.'),
 });
 
 /** The setup's import step, an app's source named (« Google Keep »). */
 export function setupImportLead(source: string): string {
-  return t('Vous arrivez de {source} ? Importez vos données maintenant, ou plus tard depuis les Réglages. Rien n’est écrit avant que vous ayez tout vu.', { source });
+  return t('Coming from {source}? Import your data now, or later from Settings. Nothing is written before you have seen it all.', { source });
 }
 
 /** The progress line while files go up: « Photos : 12 sur 40 ». */
 export function importFilesProgress(done: number, total: number): string {
-  return t('Photos et fichiers : {done} sur {total}', { done, total });
+  return t('Photos and files: {done} of {total}', { done, total });
 }

@@ -37,29 +37,29 @@ export function TrashScreen() {
   useListMotion(list, { late: true });
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
-      <PageHead title={t('Corbeille')} action={binned.length > 0 ? { label: t('Vider la corbeille'), icon: 'broom', onClick: () => setEmptying(true) } : undefined} />
+      <PageHead title={t('Bin')} action={binned.length > 0 ? { label: t('Empty the bin'), icon: 'broom', onClick: () => setEmptying(true) } : undefined} />
       {binned.length === 0 ? (
-        <EmptyState scene="trash" title={t('La corbeille est vide')} text={t('Les événements supprimés y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })} />
+        <EmptyState scene="trash" title={t('The bin is empty')} text={t('Deleted events stay there for {days} days, in case you change your mind.', { days: TRASH_RETENTION_DAYS })} />
       ) : (
         <>
-          <p className={`${styles.lead} t-meta`}>{t('Les événements de la corbeille sont supprimés au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p>
+          <p className={`${styles.lead} t-meta`}>{t('Events in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p>
           <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
             <ul ref={list} className={styles.list}>
               {binned.map(event => {
-                const title = event.title.trim() || t('Sans titre');
+                const title = event.title.trim() || t('Untitled');
                 return (
                   <li key={event.id} className={styles.simpleRow} data-motion={event.id}>
                     <span className={styles.rowText}>
                       <span className="t-body-strong">{title}</span>
                       <span className="t-meta">
-                        {weekdayDay(event.start.slice(0, 10))} · {t('Mis à la corbeille {when}', { when: formatRelative(event.trashedAt ?? now, now) })}
+                        {weekdayDay(event.start.slice(0, 10))} · {t('Moved to the bin {when}', { when: formatRelative(event.trashedAt ?? now, now) })}
                       </span>
                     </span>
                     <span className={styles.rowTools}>
-                      <Button kind="tonal" icon="restore" small onClick={() => showUndo(t('Événement restauré'), restore(event), { label: t('Voir l’événement'), run: () => navigate(paths.event(event.id)) })}>
-                        {t('Restaurer')}
+                      <Button kind="tonal" icon="restore" small onClick={() => showUndo(t('Event restored'), restore(event), { label: t('See the event'), run: () => navigate(paths.event(event.id)) })}>
+                        {t('Restore')}
                       </Button>
-                      <IconButton icon="trash" label={t('Supprimer définitivement {name}', { name: title })} compact onClick={() => setDeleting(event)} />
+                      <IconButton icon="trash" label={t('Delete {name} forever', { name: title })} compact onClick={() => setDeleting(event)} />
                     </span>
                   </li>
                 );
@@ -70,22 +70,22 @@ export function TrashScreen() {
       )}
       <Confirm
         open={deleting !== null}
-        title={t('Supprimer définitivement ?')}
-        message={t('L’événement disparaîtra de tous vos appareils.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('The event will leave all your devices.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setDeleting(null)}
         onConfirm={() => {
           if (deleting) deleteEventForGood(deleting);
           setDeleting(null);
-          showSnack(t('Événement supprimé définitivement'), undefined, { tone: 'success' });
+          showSnack(t('Event deleted forever'), undefined, { tone: 'success' });
         }}
       />
       <Confirm
         open={emptying}
-        title={t('Vider la corbeille ?')}
-        message={t('Tous les événements de la corbeille seront supprimés définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every event in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setEmptying(false)}
         onConfirm={() => {

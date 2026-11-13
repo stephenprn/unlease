@@ -6,7 +6,7 @@
  */
 import { memo, useRef, useState, type AnimationEvent, type RefObject } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 
 import { useLiveLabels, useLiveContacts, useTrashedContacts } from '../../app/hooks/useContacts';
@@ -41,7 +41,7 @@ export function LabelsPopover({ ids, open, anchor, label, onDismiss }: { ids: re
   return (
     <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={label} align="end" className={shell.bulkLabels} rows>
       {labels.length === 0 ? (
-        <EmptyLine glyph="tag" text={t('Aucun libellé. Créez-en depuis la navigation.')} className={shell.bulkEmpty} />
+        <EmptyLine glyph="tag" text={t('No labels. Create some from the navigation.')} className={shell.bulkEmpty} />
       ) : (
         <ul className={shell.bulkList}>
           {labels.map(label => {
@@ -56,12 +56,12 @@ export function LabelsPopover({ ids, open, anchor, label, onDismiss }: { ids: re
                   className={shell.bulkRow}
                   onClick={() => {
                     const undo = setLabelOn(ids, label.id, !all);
-                    showUndo(all ? t('« {name} » retiré', { name: label.name }) : t('« {name} » ajouté', { name: label.name }), undo);
+                    showUndo(all ? t('“{name}” removed', { name: label.name }) : t('“{name}” added', { name: label.name }), undo);
                   }}
                 >
                   <LabelCheck color={label.color} checked={all} size={22} />
                   <span className={shell.bulkName}>{label.name}</span>
-                  {wearing > 0 && !all ? <span className={`${shell.bulkSome} t-meta`}>{t('{count} sur {total}', { count: wearing, total: ids.length })}</span> : null}
+                  {wearing > 0 && !all ? <span className={`${shell.bulkSome} t-meta`}>{t('{count} of {total}', { count: wearing, total: ids.length })}</span> : null}
                 </button>
               </li>
             );
@@ -78,8 +78,8 @@ function BulkLabels({ ids }: { ids: readonly string[] }) {
   const anchor = useRef<HTMLButtonElement>(null);
   return (
     <>
-      <IconButton ref={anchor} icon="tag" label={t('Libellés')} shape={2} hasPopup="dialog" expanded={open} onClick={() => setOpen(true)} />
-      <LabelsPopover ids={ids} open={open} anchor={anchor} label={t('Libellés des contacts sélectionnés')} onDismiss={() => setOpen(false)} />
+      <IconButton ref={anchor} icon="tag" label={t('Labels')} shape={2} hasPopup="dialog" expanded={open} onClick={() => setOpen(true)} />
+      <LabelsPopover ids={ids} open={open} anchor={anchor} label={t('Labels of the selected contacts')} onDismiss={() => setOpen(false)} />
     </>
   );
 }
@@ -116,44 +116,44 @@ function Bar({ route, closing, onGone, onDeleteForever }: BarProps) {
     if (closing && event.target === event.currentTarget) onGone();
   };
   return (
-    <div className={shell.selectionBar} role="toolbar" aria-label={t('Contacts sélectionnés')} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
-      <IconButton icon="close" label={t('Annuler la sélection')} onClick={clearSelection} shortcut={t('Échap')} />
+    <div className={shell.selectionBar} role="toolbar" aria-label={t('Selected contacts')} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
+      <IconButton icon="close" label={t('Clear selection')} onClick={clearSelection} shortcut={t('Esc')} />
       <p className={`${shell.selectionCount} t-title`} aria-live="polite">
         {narrow ? (
           <>
             <span aria-hidden="true">{count}</span>
-            <span className="sr-only">{plural(count, 'sélectionné', 'sélectionnés')}</span>
+            <span className="sr-only">{plural(count, 'selected [contact]', 'selected [contacts]')}</span>
           </>
         ) : (
-          plural(count, 'sélectionné', 'sélectionnés')
+          plural(count, 'selected [contact]', 'selected [contacts]')
         )}
       </p>
-      {shown.length > count ? <IconButton icon="multiSelect" label={t('Tout sélectionner')} shape={3} onClick={() => selectAll(shown.map(contact => contact.id))} /> : null}
+      {shown.length > count ? <IconButton icon="multiSelect" label={t('Select all')} shape={3} onClick={() => selectAll(shown.map(contact => contact.id))} /> : null}
       {inTrash ? (
         <>
-          <IconButton icon="restore" label={t('Restaurer')} shape={1} onClick={() => done(restoreContacts(ids), count > 1 ? t('Contacts restaurés') : t('Contact restauré'))} />
-          <IconButton icon="trash" label={t('Supprimer définitivement')} shape={2} onClick={onDeleteForever} />
+          <IconButton icon="restore" label={t('Restore')} shape={1} onClick={() => done(restoreContacts(ids), count > 1 ? t('Contacts restored') : t('Contact restored'))} />
+          <IconButton icon="trash" label={t('Delete forever')} shape={2} onClick={onDeleteForever} />
         </>
       ) : (
         <>
           <IconButton
             icon="star"
-            label={allFavorite ? t('Retirer des favoris') : t('Ajouter aux favoris')}
+            label={allFavorite ? t('Remove from favourites') : t('Add to favourites')}
             pressed={allFavorite}
             shape={1}
-            onClick={() => done(setFavorite(ids, !allFavorite), allFavorite ? t('Retirés des favoris') : t('Ajoutés aux favoris'))}
+            onClick={() => done(setFavorite(ids, !allFavorite), allFavorite ? tc('many', 'Removed from favourites') : tc('many', 'Added to favourites'))}
           />
           <BulkLabels ids={ids} />
           <IconButton
             icon="upload"
-            label={t('Exporter (.vcf)')}
+            label={t('Export (.vcf)')}
             shape={3}
             onClick={() => {
               exportContacts(ids.map(id => contacts[id]!));
               clearSelection();
             }}
           />
-          <IconButton icon="trash" label={t('Supprimer')} shortcut="#" onClick={() => done(trashContacts(ids), count > 1 ? t('Contacts placés dans la corbeille') : t('Contact placé dans la corbeille'))} />
+          <IconButton icon="trash" label={t('Delete')} shortcut="#" onClick={() => done(trashContacts(ids), count > 1 ? t('Contacts moved to the bin') : t('Contact moved to the bin'))} />
         </>
       )}
     </div>
@@ -174,9 +174,9 @@ export const ContactsHeaderCover = memo(function ContactsHeaderCover({ route }: 
       {bar.present ? <Bar route={route} closing={bar.closing} onGone={bar.done} onDeleteForever={() => setConfirm(true)} /> : null}
       <Confirm
         open={confirm}
-        title={t('Supprimer définitivement ?')}
-        message={t('Ces contacts disparaîtront de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('These contacts will disappear from all your devices. This cannot be undone.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
@@ -186,7 +186,7 @@ export const ContactsHeaderCover = memo(function ContactsHeaderCover({ route }: 
           const ids = [...useContactsUi.getState().selection].filter(id => contacts[id] && contacts[id]!.trashedAt !== null);
           deleteForever(ids);
           clearSelection();
-          showSnack(ids.length > 1 ? t('{count} supprimés définitivement', { count: plural(ids.length, 'contact') }) : t('{count} supprimé définitivement', { count: plural(ids.length, 'contact') }), undefined, { tone: 'success' });
+          showSnack(ids.length > 1 ? tc('many', '{count} deleted forever', { count: plural(ids.length, 'contact') }) : t('{count} deleted forever', { count: plural(ids.length, 'contact') }), undefined, { tone: 'success' });
         }}
       />
     </>

@@ -101,6 +101,8 @@ export interface TestServerOptions {
   readonly pushFetch?: typeof fetch;
   /** The places' geocoder (Photon) stood in for; without it the search is off. */
   readonly placesFetch?: typeof fetch;
+  /** Immich as the server reaches it (unreachable by default). */
+  readonly immichFetch?: typeof fetch;
   /** `UNLEASE_TRUSTED_PROXY_HEADER`: none by default, the connection's address. */
   readonly trustedProxyHeader?: ProxyHeader;
 }
@@ -122,6 +124,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
   const claude = new FakeClaude();
   const fetcher = options.fetcher ?? new FakeFetcher({});
   const seerrFetch: typeof fetch = options.seerrFetch ?? (() => Promise.reject(new TypeError('fetch failed')));
+  const immichFetch: typeof fetch = options.immichFetch ?? (() => Promise.reject(new TypeError('fetch failed')));
   const provider = new ClaudeProvider(settings, { effort: 'low', createApi: () => claude, sleep: async () => {} });
   const s3 = new FakeS3('carnet-test', now);
   const seafile = new FakeSeafile();
@@ -129,7 +132,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
   mkdirSync(tmpDir, { recursive: true });
   settings.settleSetup(!records.holdsNothing());
   // The apps, as main.ts makes them, with Claude, the pages they read and Seerr stood in for; Carnet's link reading is `analysisOf`'s.
-  const suite = createApps({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, claude: provider, fetcher, seerrFetch, now, ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}), ...(options.placesFetch ? { placesFetch: options.placesFetch, placesUrl: 'https://photon.example.org' } : {}) });
+  const suite = createApps({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, claude: provider, fetcher, seerrFetch, immichFetch, now, ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}), ...(options.placesFetch ? { placesFetch: options.placesFetch, placesUrl: 'https://photon.example.org' } : {}) });
   const { apps, notes, pages, contacts, calendar, usage } = suite;
   const runner = new AppRunner(apps, settings, sync);
   const drive = new DriveSync({ db, records, blobs, settings, apps, fetcher: seafile.fetch, now });
@@ -145,7 +148,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     apps,
     routes: suite.routes,
     listModels: options.listModels ?? (async () => ({ data: [] })),
-    checks: { checkS3: config => checkS3Bucket(config, s3.fetch), checkDrive: target => checkSeafile(target, seafile.fetch), checkSeerr: config => checkSeerrServer(config, seerrFetch), checkHolidays: suite.checks.checkHolidays! },
+    checks: { checkS3: config => checkS3Bucket(config, s3.fetch), checkDrive: target => checkSeafile(target, seafile.fetch), checkSeerr: config => checkSeerrServer(config, seerrFetch), checkHolidays: suite.checks.checkHolidays!, checkImmich: suite.checks.checkImmich! },
     admin,
     now,
   });

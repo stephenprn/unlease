@@ -80,7 +80,7 @@ export interface TopBarProps {
 export function TopBar({ fallback, over = false, onSlot }: TopBarProps) {
   return (
     <header className={over ? styles.topBarOver : styles.topBar} id={over ? undefined : APP_HEADER_ID}>
-      <IconButton icon="back" label={t('Retour')} size={24} onClick={() => goBack(fallback)} />
+      <IconButton icon="back" label={t('Back')} size={24} onClick={() => goBack(fallback)} />
       {over ? null : <div ref={onSlot} className={styles.topBarSlot} />}
     </header>
   );

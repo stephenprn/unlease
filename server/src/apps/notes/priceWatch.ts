@@ -75,15 +75,15 @@ const READ_DEADLINE_MS = 30_000;
 const CHECK_DEADLINE_MS = 85_000;
 
 export const PRICE_WORDS = {
-  invalid: 'Demande de vérification du prix invalide',
-  gone: 'Lien introuvable',
-  again: 'Prix vérifié à l’instant : réessayez dans une minute.',
-  tooMany: 'Trop de vérifications de prix : réessayez dans un moment.',
-  hidden: 'Cette page ne montre pas son prix.',
-  week: 'Cette page cache son prix, et Claude l’a déjà relu cette semaine.',
-  day: 'Cette page cache son prix, et Claude a lu assez de prix pour aujourd’hui.',
-  budget: 'Cette page cache son prix, et le budget Claude du mois est atteint.',
-  none: 'Claude n’a pas trouvé de prix sur cette page.',
+  invalid: 'Invalid price check request',
+  gone: 'Link not found',
+  again: 'Price checked a moment ago: try again in a minute.',
+  tooMany: 'Too many price checks: try again in a while.',
+  hidden: 'This page does not show its price.',
+  week: 'This page hides its price, and Claude already read it this week.',
+  day: 'This page hides its price, and Claude has read enough prices for today.',
+  budget: 'This page hides its price, and this month’s Claude budget is reached.',
+  none: 'Claude found no price on this page.',
 } as const;
 
 /** A link's minute of the day, from its id (FNV-1a): the day's readings spread evenly. */
@@ -276,7 +276,7 @@ export class PriceWatch {
     const job = this.read(linkId, by, signal)
       .catch((error: unknown): Reading => {
         log.error('price reading crashed', { id: linkId, error });
-        return { kind: 'failed', error: 'Erreur interne' };
+        return { kind: 'failed', error: 'Internal error' };
       })
       .finally(() => {
         this.running.delete(linkId);
@@ -291,9 +291,9 @@ export class PriceWatch {
     if (!record || typeof record.fields.deletedAt === 'number') return { kind: 'gone' };
     const link = linkFromRecord(record);
     const url = normalizeUrl(link.url);
-    if (!isHttpUrl(url)) return { kind: 'failed', error: 'Adresse invalide' };
+    if (!isHttpUrl(url)) return { kind: 'failed', error: 'Invalid address' };
     const read = await readLink(url, this.options.fetcher, AbortSignal.any([signal, AbortSignal.timeout(READ_DEADLINE_MS)]));
-    if (signal.aborted) return { kind: 'failed', error: 'Analyse interrompue' };
+    if (signal.aborted) return { kind: 'failed', error: 'Analysis interrupted' };
     const seen = pagePrice(read);
     if (seen) return this.write(linkId, url, seen, 'page');
     // Gone for good, or refused: nobody, Claude included, would find a price there.
@@ -307,7 +307,7 @@ export class PriceWatch {
     const now = this.options.now();
     const readable = isReadable(read) && read.page !== null;
     // Not read, and no reason Claude was not asked that says more than the page's own failure.
-    const refuse = (note: string): Reading => (readable ? { kind: 'hidden', note, link } : { kind: 'failed', error: read.error ?? 'Page illisible' });
+    const refuse = (note: string): Reading => (readable ? { kind: 'hidden', note, link } : { kind: 'failed', error: read.error ?? 'Unreadable page' });
     const { client, budgetUsd } = this.options.claude();
     if (!client) return refuse(PRICE_WORDS.hidden);
     const lastAsked = (this.claudeLast.get(link.id) as { at: number | null } | undefined)?.at ?? null;
@@ -336,7 +336,7 @@ export class PriceWatch {
       log.info('price read by Claude', { id: link.id, costUsd: Math.round(answer.usage.costUsd * 10_000) / 10_000 });
       return this.write(link.id, url, seen, 'claude');
     } catch (error) {
-      const message = error instanceof ModelError ? error.message : 'Erreur de la lecture';
+      const message = error instanceof ModelError ? error.message : 'Reading error';
       if (!(error instanceof ModelError)) log.error('price reading by Claude crashed', { id: link.id, error });
       // Cut off, it was reading a page (with web_fetch at most), never searching.
       const spent = error instanceof ModelError ? error.usage : null;
@@ -371,7 +371,7 @@ export class PriceWatch {
     const record = written[0] ?? this.options.records.get('link', linkId);
     if (!record || typeof record.fields.deletedAt === 'number') return { kind: 'gone' };
     const { outcome } = result;
-    if (result.moved || outcome === null) return { kind: 'failed', error: 'Analyse interrompue' };
+    if (result.moved || outcome === null) return { kind: 'failed', error: 'Analysis interrupted' };
     if (outcome === 'changed') log.info('price changed', { id: linkId, by });
     return { kind: 'read', outcome, by, link: linkFromRecord(record) };
   }
@@ -394,7 +394,7 @@ export function priceWatchRoutes(app: Hono<Env>, watch: PriceWatch): void {
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const request = parsePriceCheckRequest(body);
     if (!request) return c.json({ error: PRICE_WORDS.invalid }, 400);

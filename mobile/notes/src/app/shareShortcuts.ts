@@ -66,7 +66,7 @@ export function sharingShortcut(line: Note) {
   const swatch = LINES.light[asLineColor(line.color) ?? 'grey'];
   return {
     id: `${PREFIX}${line.id}`,
-    label: shownTitle(line).trim() || t('Sans titre'),
+    label: shownTitle(line).trim() || t('Untitled'),
     uri: `${appScheme('notes')}://line/${line.id}`,
     path: d,
     evenOdd: rule === 'evenodd',

@@ -13,8 +13,8 @@ import { Dialog, Icon, ListRow } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
 
 const CHOICES: readonly { readonly mode: RestoreMode; readonly title: string; readonly supporting: string }[] = [
-  { mode: 'merge', title: tx('Compléter'), supporting: tx('Seul ce qui manque revient ; les modifications faites depuis sont gardées.') },
-  { mode: 'rollback', title: tx('Revenir à la sauvegarde'), supporting: tx('Tout reprend l’état de la sauvegarde, sur tous vos appareils ; ce qui a été créé depuis est gardé.') },
+  { mode: 'merge', title: tx('Complete'), supporting: tx('Only what is missing comes back; changes made since are kept.') },
+  { mode: 'rollback', title: tx('Go back to the backup'), supporting: tx('Everything returns to the backup’s state, on all your devices; what was created since is kept.') },
 ];
 
 export function RestoreDialog({ visible, empty, onCancel, onConfirm }: { visible: boolean; empty: boolean; onCancel: () => void; onConfirm: (mode: RestoreMode) => void }) {
@@ -26,9 +26,9 @@ export function RestoreDialog({ visible, empty, onCancel, onConfirm }: { visible
   return (
     <Dialog
       visible={visible}
-      title={t('Restaurer cette sauvegarde ?')}
-      message={empty ? t('Les données de toutes les applications reviennent sur le serveur, puis sur vos appareils.') : undefined}
-      confirmLabel={t('Restaurer')}
+      title={t('Restore this backup?')}
+      message={empty ? t('The data of every app comes back to the server, then to your devices.') : undefined}
+      confirmLabel={t('Restore')}
       onCancel={onCancel}
       onConfirm={() => onConfirm(empty ? 'merge' : mode)}
     >

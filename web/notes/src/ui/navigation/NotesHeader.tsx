@@ -6,7 +6,7 @@
  */
 import { memo, useRef, useState, type AnimationEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { collectionsWithLinks } from '@unlease/notes/services/sorting';
 import { INBOX_ID } from '@unlease/notes/models/entities';
@@ -37,7 +37,7 @@ export function LayoutToggle() {
   return (
     <IconButton
       icon={layout === 'wall' ? 'rows' : 'grid'}
-      label={layout === 'wall' ? t('Afficher en liste') : t('Afficher en mur')}
+      label={layout === 'wall' ? t('Show as a list') : t('Show as a wall')}
       shape={1}
       onClick={() => setLayout(layout === 'wall' ? 'list' : 'wall')}
     />
@@ -54,10 +54,10 @@ function BulkLabels({ ids }: { ids: readonly string[] }) {
   const live = order.map(id => labels[id]).filter(label => !!label && label.deletedAt === null);
   return (
     <>
-      <IconButton ref={anchor} icon="tag" label={t('Labels')} shape={2} onClick={() => setOpen(true)} />
-      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Labels des notes sélectionnées')} align="end" className={styles.bulkLabels} rows>
+      <IconButton ref={anchor} icon="tag" label={tc('notes', 'Labels')} shape={2} onClick={() => setOpen(true)} />
+      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Labels of the selected notes')} align="end" className={styles.bulkLabels} rows>
         {live.length === 0 ? (
-          <EmptyLine glyph="tag" text={t('Aucun label. Créez-en depuis la page Labels.')} className={styles.bulkEmpty} />
+          <EmptyLine glyph="tag" text={t('No labels. Create some from the Labels page.')} className={styles.bulkEmpty} />
         ) : (
           <ul className={styles.bulkList}>
             {live.map(label => {
@@ -72,12 +72,12 @@ function BulkLabels({ ids }: { ids: readonly string[] }) {
                     className={styles.bulkRow}
                     onClick={() => {
                       const undo = setLabelOn(ids, label!.id, !all);
-                      showUndo(all ? t('« {name} » retiré', { name: label!.name }) : t('« {name} » ajouté', { name: label!.name }), undo);
+                      showUndo(all ? t('“{name}” removed', { name: label!.name }) : t('“{name}” added', { name: label!.name }), undo);
                     }}
                   >
                     <LabelCheck color={label!.color} checked={all} size={22} />
                     <span className={styles.bulkName}>{label!.name}</span>
-                    {wearing > 0 && !all ? <span className={`${styles.bulkSome} t-meta`}>{t('{count} sur {total}', { count: wearing, total: ids.length })}</span> : null}
+                    {wearing > 0 && !all ? <span className={`${styles.bulkSome} t-meta`}>{t('{count} of {total}', { count: wearing, total: ids.length })}</span> : null}
                   </button>
                 </li>
               );
@@ -119,55 +119,55 @@ function SelectionBar({ route, closing, onGone, onDeleteForever }: SelectionBarP
     if (closing && event.target === event.currentTarget) onGone();
   };
   return (
-    <div className={styles.selectionBar} role="toolbar" aria-label={t('Notes sélectionnées')} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
-      <IconButton icon="close" label={t('Annuler la sélection')} onClick={clearSelection} shortcut={t('Échap')} />
+    <div className={styles.selectionBar} role="toolbar" aria-label={t('Selected notes')} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
+      <IconButton icon="close" label={t('Clear selection')} onClick={clearSelection} shortcut={t('Esc')} />
       {/* On a phone-sized window the number alone, as the phone's bar: the words would be cut short by its five actions. */}
       <p className={`${styles.selectionCount} t-title`} aria-live="polite">
         {narrow ? (
           <>
             <span aria-hidden="true">{count}</span>
-            <span className="sr-only">{plural(count, 'sélectionnée', 'sélectionnées')}</span>
+            <span className="sr-only">{plural(count, 'selected', 'selected [many]')}</span>
           </>
         ) : (
-          plural(count, 'sélectionnée', 'sélectionnées')
+          plural(count, 'selected', 'selected [many]')
         )}
       </p>
       {inTrash ? (
         <>
-          <IconButton icon="restore" label={t('Restaurer')} shape={1} onClick={() => done(restoreNotes(selected), count > 1 ? t('Notes restaurées') : t('Note restaurée'))} />
-          <IconButton icon="trash" label={t('Supprimer définitivement')} shape={2} onClick={onDeleteForever} />
+          <IconButton icon="restore" label={t('Restore')} shape={1} onClick={() => done(restoreNotes(selected), count > 1 ? t('Notes restored') : t('Note restored'))} />
+          <IconButton icon="trash" label={t('Delete forever')} shape={2} onClick={onDeleteForever} />
         </>
       ) : (
         <>
           <IconButton
             icon={allPinned ? 'pinOff' : 'pin'}
-            label={allPinned ? t('Retirer des épinglées') : t('Épingler')}
+            label={allPinned ? t('Unpin') : t('Pin')}
             shape={1}
             onClick={() => {
               const undos = selected.map(id => setPinned(id, !allPinned));
-              done(() => undos.forEach(undo => undo()), allPinned ? (count > 1 ? t('Retirées des épinglées') : t('Retirée des épinglées')) : count > 1 ? t('Notes épinglées') : t('Note épinglée'));
+              done(() => undos.forEach(undo => undo()), allPinned ? (count > 1 ? tc('many', 'Unpinned') : t('Unpinned')) : count > 1 ? t('Notes pinned') : t('Note pinned'));
             }}
           />
           <BulkFinish ids={selected} shape={0} />
           <BulkLabels ids={selected} />
           <IconButton
             icon={inArchive ? 'unarchive' : 'archive'}
-            label={inArchive ? t('Désarchiver') : t('Archiver')}
+            label={inArchive ? t('Unarchive') : t('Archive')}
             shape={2}
             shortcut="E"
             onClick={() => {
               const undos = selected.map(id => setArchived(id, !inArchive));
-              done(() => undos.forEach(undo => undo()), inArchive ? (count > 1 ? t('Notes désarchivées') : t('Note désarchivée')) : count > 1 ? t('Notes archivées') : t('Note archivée'));
+              done(() => undos.forEach(undo => undo()), inArchive ? (count > 1 ? t('Notes unarchived') : t('Note unarchived')) : count > 1 ? t('Notes archived') : t('Note archived'));
             }}
           />
           <IconButton
             icon="trash"
-            label={t('Supprimer')}
+            label={t('Delete')}
             shortcut="#"
             onClick={() => {
               // Collections holding links ask where those go first; "Non classé" never goes to the bin.
               if (collectionsWithLinks(selected, notes, useLibraryStore.getState().linksByNote).length > 0) askDeleteLines(selected.filter(id => id !== INBOX_ID));
-              else done(trashNotes(selected), count > 1 ? t('Notes placées dans la corbeille') : t('Note placée dans la corbeille'));
+              else done(trashNotes(selected), count > 1 ? t('Notes moved to the bin') : t('Note moved to the bin'));
             }}
           />
         </>
@@ -180,9 +180,9 @@ function SelectionBar({ route, closing, onGone, onDeleteForever }: SelectionBarP
 export function NotesHeaderActions({ route }: { route: Route }) {
   return (
     <>
-      <button type="button" className={`${styles.classify} paper`} onClick={() => openCapture('')} aria-label={t('Classer un lien')} data-tip={t('Classer un lien (K)')}>
+      <button type="button" className={`${styles.classify} paper`} onClick={() => openCapture('')} aria-label={t('File a link')} data-tip={t('File a link (K)')}>
         <Icon name="link" size={20} />
-        <span className={styles.classifyLabel}>{t('Classer un lien')}</span>
+        <span className={styles.classifyLabel}>{t('File a link')}</span>
       </button>
       {/* The layout is the board's: elsewhere (a collection, the settings) it would change nothing on screen. */}
       {route.name === 'board' ? <LayoutToggle /> : null}
@@ -211,9 +211,9 @@ export const NotesHeaderCover = memo(function NotesHeaderCover({ route }: { rout
       {selectionBar.present ? <SelectionBar route={route} closing={selectionBar.closing} onGone={selectionBar.done} onDeleteForever={() => setConfirmForever(true)} /> : null}
       <Confirm
         open={confirmForever}
-        title={t('Supprimer définitivement ?')}
-        message={t('Ces notes disparaîtront de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('These notes will disappear from all your devices. This can’t be undone.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirmForever(false)}
         onConfirm={() => {
@@ -223,7 +223,7 @@ export const NotesHeaderCover = memo(function NotesHeaderCover({ route }: { rout
           const selected = [...useBoardStore.getState().selection].filter(id => notes[id] && notes[id]!.trashedAt !== null);
           deleteForever(selected);
           clearSelection();
-          showSnack(t('{deleted} définitivement', { deleted: plural(selected.length, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(selected.length, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
         }}
       />
     </>

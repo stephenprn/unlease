@@ -36,11 +36,11 @@ function archiveOrTrash(ids: readonly string[], action: 'archive' | 'trash'): vo
     return;
   }
   if (action === 'trash') {
-    showUndo(live.length > 1 ? t('Notes placées dans la corbeille') : t('Note placée dans la corbeille'), trashNotes(live));
+    showUndo(live.length > 1 ? t('Notes moved to the bin') : t('Note moved to the bin'), trashNotes(live));
   } else {
     const archiving = !notes[live[0]!]!.archived;
     const undos = live.map(id => setArchived(id, archiving));
-    showUndo(archiving ? (live.length > 1 ? t('Notes archivées') : t('Note archivée')) : t('Note désarchivée'), () => undos.forEach(undo => undo()));
+    showUndo(archiving ? (live.length > 1 ? t('Notes archived') : t('Note archived')) : t('Note unarchived'), () => undos.forEach(undo => undo()));
   }
   clearSelection();
 }

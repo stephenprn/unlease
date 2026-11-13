@@ -41,7 +41,7 @@ function CollectionRow({ id }: { id: string }) {
       <EmblemStone id={id} emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={18} width={30} height={27} />
       <span className={page.rowText}>
         <span className={`${styles.rowName} t-body`}>{shownTitle(line)}</span>
-        <span className={`${styles.rowMeta} t-meta`}>{names || t('Aucune information')}</span>
+        <span className={`${styles.rowMeta} t-meta`}>{names || t('No facts')}</span>
       </span>
       <Icon name="chevronRight" size={20} className={styles.chevron} />
     </button>
@@ -52,13 +52,13 @@ function KindRow({ kind }: { kind: LinkKind }) {
   const { names, changed } = useLibraryStore(
     useShallow(s => ({ names: kindDraftFields(s.linkTemplates, kind).map(field => field.name).join(', '), changed: changedKindTemplate(s.linkTemplates, kind) !== null })),
   );
-  const facts = names || t('Aucune information');
+  const facts = names || t('No facts');
   return (
     <button type="button" className={page.row} onClick={() => navigate(paths.template(`kind-${kind}`))}>
       <Icon name={KIND_ICONS[kind]} size={24} />
       <span className={page.rowText}>
         <span className="t-body">{LINK_KIND_NAMES[kind]}</span>
-        <span className={`${styles.rowMeta} t-meta`}>{changed ? `${facts} · ${t('Modifiées')}` : facts}</span>
+        <span className={`${styles.rowMeta} t-meta`}>{changed ? `${facts} · ${t('Changed')}` : facts}</span>
       </span>
       <Icon name="chevronRight" size={20} className={styles.chevron} />
     </button>
@@ -78,17 +78,17 @@ export function FactsScreen() {
   return (
     <div className={page.page}>
       <div className={styles.head}>
-        <PageHead title={t('Ce que Claude relève')} />
-        <p className={`${styles.lead} t-meta`}>{t('Une collection peut avoir les siennes : « Ce que Claude relève » dans son menu.')}</p>
+        <PageHead title={t('Facts Claude notes')} />
+        <p className={`${styles.lead} t-meta`}>{t('A collection can have its own: “Facts Claude notes” in its menu.')}</p>
       </div>
       {own.length > 0 ? (
-        <Section title={t('Collections qui ont les leurs')}>
+        <Section title={t('Collections with their own')}>
           {own.map(id => (
             <CollectionRow key={id} id={id} />
           ))}
         </Section>
       ) : null}
-      <Section title={t('Informations habituelles, par type de lien')}>
+      <Section title={t('Usual facts, by kind of link')}>
         {KINDS.map(kind => (
           <KindRow key={kind} kind={kind} />
         ))}

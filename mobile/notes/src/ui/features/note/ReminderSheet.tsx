@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { getLocale, t } from '@unlease/core/i18n';
+import { getLocale, t, tc } from '@unlease/core/i18n';
 import { formatDay, formatReminder, weekdayNames } from '@unlease/core/services/format';
 
 import { AppText, Button, FormMessage, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
@@ -41,10 +41,10 @@ export function quickReminders(now: number): { label: string; time: number }[] {
   const monday = new Date(now);
   monday.setDate(today.getDate() + (((8 - today.getDay()) % 7) || 7));
   const options = [];
-  if (hour < 17) options.push({ label: t('Plus tard aujourd’hui'), time: at(today, 18) });
-  else if (hour < 20) options.push({ label: t('Ce soir'), time: at(today, 21) });
-  options.push({ label: t('Demain matin'), time: at(tomorrow, 8) });
-  options.push({ label: t('Lundi prochain'), time: at(monday, 8) });
+  if (hour < 17) options.push({ label: t('Later today'), time: at(today, 18) });
+  else if (hour < 20) options.push({ label: t('Tonight'), time: at(today, 21) });
+  options.push({ label: t('Tomorrow morning'), time: at(tomorrow, 8) });
+  options.push({ label: t('Next Monday'), time: at(monday, 8) });
   return options;
 }
 
@@ -92,7 +92,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
   const cell = Math.floor((room - GAP * (columns - 1)) / columns);
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Rappel')} tall={custom}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Reminder')} tall={custom}>
       {!custom ? (
         <View>
           {quickReminders(now).map(option => (
@@ -107,11 +107,11 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
               }}
             />
           ))}
-          <ListRow icon="calendar" title={t('Choisir la date et l’heure')} onPress={() => setCustom(true)} />
+          <ListRow icon="calendar" title={t('Pick a date and time')} onPress={() => setCustom(true)} />
           {current !== null ? (
             <ListRow
               icon="bellOff"
-              title={t('Supprimer le rappel')}
+              title={t('Delete the reminder')}
               supporting={formatReminder(current, now)}
               danger
               onPress={() => {
@@ -124,7 +124,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
       ) : (
         <SheetScroll contentContainerStyle={styles.custom}>
           {/* The chips say what they are (« lun. 10 », « 9 h », « :15 »): no word over them; TalkBack hears each group's name. */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Jour')}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Day')}>
             {days.map((date, index) => {
               const selected = index === day;
               return (
@@ -136,7 +136,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
                   style={[styles.day, DAY_CUTS[index % DAY_CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
                 >
                   <AppText variant="meta" color={selected ? theme.color.onActionContainer : undefined}>
-                    {index === 0 ? t('auj.') : index === 1 ? t('dem.') : shortDay(date.getDay())}
+                    {index === 0 ? tc('short', 'Today') : index === 1 ? t('Tmrw') : shortDay(date.getDay())}
                   </AppText>
                   <AppText variant="bodyStrong" color={selected ? theme.color.onActionContainer : undefined}>
                     {date.getDate()}
@@ -145,7 +145,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
               );
             })}
           </ScrollView>
-          <View style={styles.time} accessibilityLabel={t('Heure')}>
+          <View style={styles.time} accessibilityLabel={t('Time')}>
             <View style={styles.grid}>
               {hours.map(hour => {
                 const selected = hour === time[0];
@@ -156,7 +156,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
                     accessibilityState={{ selected }}
                     style={[styles.cell, { width: cell }, CUTS[hour % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
                   >
-                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour} h', { hour })}</AppText>
+                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour}:00', { hour })}</AppText>
                   </Tappable>
                 );
               })}
@@ -183,14 +183,14 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
               {chosen > now ? (
                 <AppText variant="bodyStrong">{formatReminder(chosen, now)}</AppText>
               ) : tried ? (
-                <FormMessage message={t('Ce moment est passé : choisissez un moment à venir.')} />
+                <FormMessage message={t('That moment has passed: choose one still to come.')} />
               ) : (
-                <AppText variant="meta">{t('Choisissez un moment à venir')}</AppText>
+                <AppText variant="meta">{t('Pick a time in the future')}</AppText>
               )}
             </View>
             {/* Never disabled to say why: pressed on a moment gone, it says so. */}
             <Button
-              label={t('Enregistrer')}
+              label={t('Save')}
               onPress={() => {
                 if (chosen <= now) {
                   setTried(true);

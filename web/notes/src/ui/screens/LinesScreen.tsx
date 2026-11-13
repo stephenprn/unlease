@@ -55,11 +55,11 @@ const Tile = memo(function Tile({ id }: { id: string }) {
     // Its outline rides down from its slot: the router's Link takes no style of its own.
     <TileSlot>
       {d => (
-        <Link to={paths.line(id)} className={`${styles.tile} paper`} ariaLabel={`${shownTitle(line)}, ${plural(count, 'lien')}`}>
+        <Link to={paths.line(id)} className={`${styles.tile} paper`} ariaLabel={`${shownTitle(line)}, ${plural(count, 'link')}`}>
           <EmblemStone id={id} emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={40} width={64} height={58} className={styles.tileMark} />
           <span className={`${styles.tileName} t-body-strong`}>{shownTitle(line)}</span>
           <span className={`${styles.tileHint} t-meta`}>
-            {shownHint(line) || (inbox ? t('Ce que Claude ne sait pas où ranger.') : t('Ajoutez une phrase pour aider Claude à y ranger les bons liens.'))}
+            {shownHint(line) || (inbox ? t('What Claude doesn’t know where to file.') : t('Add a sentence to help Claude file the right links here.'))}
           </span>
           {images ? (
             <span className={styles.glimpses}>
@@ -69,7 +69,7 @@ const Tile = memo(function Tile({ id }: { id: string }) {
             </span>
           ) : null}
           {/* What is left to do; all of it done, it says so rather than « 0 lien », as on the phone. */}
-          <span className={`${styles.tileCount} t-meta-strong tabular`}>{count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : [plural(count, 'lien'), total].filter(Boolean).join(' · ')}</span>
+          <span className={`${styles.tileCount} t-meta-strong tabular`}>{count === 0 && done > 0 ? t('Done · {count}', { count: done }) : [plural(count, 'link'), total].filter(Boolean).join(' · ')}</span>
           <OutlineEdge d={d} />
         </Link>
       )}
@@ -83,8 +83,8 @@ export function LinesScreen() {
   const narrow = useMedia(NARROW);
   return (
     <div className={styles.collections}>
-      <PageHead title={t('Collections')} action={narrow ? { icon: 'plus', label: t('Nouvelle collection'), onClick: () => setNewLineOpen(true) } : undefined} />
-      <p className={`${styles.intro} t-body`}>{t('Claude lit chaque lien que vous enregistrez et le range dans la collection qui lui correspond. La phrase de chaque collection l’aide à choisir.')}</p>
+      <PageHead title={t('Collections')} action={narrow ? { icon: 'plus', label: t('New collection'), onClick: () => setNewLineOpen(true) } : undefined} />
+      <p className={`${styles.intro} t-body`}>{t('Claude reads each link you save and files it in the collection that fits. Each collection’s sentence helps it choose.')}</p>
       <ul className={styles.tiles}>
         {lines.map(line => (
           <Tile key={line.id} id={line.id} />
@@ -94,7 +94,7 @@ export function LinesScreen() {
           {d => (
             <button type="button" className={styles.newTile} onClick={() => setNewLineOpen(true)}>
               <Icon name="plus" size={28} />
-              <span className="t-body-strong">{t('Nouvelle collection')}</span>
+              <span className="t-body-strong">{t('New collection')}</span>
               <OutlineEdge d={d} />
             </button>
           )}

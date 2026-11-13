@@ -10,9 +10,11 @@ import { useBlocksStore } from '../../app/store/blocks';
 import { createPage, insertBlock, setPagePrivate } from '../../app/store/pages';
 import { resetServerSettings, setServerSettings } from '@shared/app/store/serverSettings';
 import { useSettingsStore } from '@shared/app/store/settings';
+import { browserPath } from '@shared/ui/router';
 import { askAboutPages } from '../../app/api';
 import { WithPageAsk } from '../features/pages/AskPanel';
 import { PageView } from '../features/pages/PageView';
+import { paths } from '../routes';
 
 vi.mock('../../app/api', () => ({ askAboutPages: vi.fn() }));
 
@@ -83,6 +85,44 @@ describe('Demander à Claude on a page', () => {
     await user.click(within(panel).getByRole('button', { name: 'Ajouter à la page' }));
     const added = useBlocksStore.getState().blocksByParent[page]!.map(id => useBlocksStore.getState().blocks[id]!);
     expect(added.find(block => block.kind === 'toggle')?.text).toBe('Quand est-ce que je pars ?');
+  });
+
+  it('leaves the page where it is: an answer scrolls the conversation alone, a source on this page is scrolled to from there', async () => {
+    const user = userEvent.setup();
+    const { page, dates } = trip();
+    offer({});
+    vi.mocked(askAboutPages).mockResolvedValue({
+      parts: [{ text: 'Vous partez le 3 mai', cites: [0] }, { text: '.', cites: [] }],
+      citations: [{ pageId: page, blockIds: [dates], quote: 'Départ le 3 mai.' }],
+      sources: [],
+    });
+    // jsdom lays nothing out and has neither: what scrolls is watched.
+    const scrolled = vi.fn();
+    const revealed = vi.fn();
+    Object.defineProperty(Element.prototype, 'scrollTo', { value: scrolled, configurable: true, writable: true });
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { value: revealed, configurable: true, writable: true });
+    history.replaceState(null, '', browserPath(paths.page(page)));
+    try {
+      view(page);
+      await user.click(screen.getByRole('button', { name: 'Demander à Claude' }));
+      const panel = screen.getByRole('dialog', { name: 'Demander à Claude' });
+      await user.type(within(panel).getByRole('textbox', { name: 'Votre question' }), 'Quand est-ce que je pars ?{Enter}');
+      await waitFor(() => expect(within(panel).getByText(/Vous partez le 3 mai/)).toBeInTheDocument());
+      // `scrollIntoView` would scroll the window too, the docked panel being sticky in it.
+      expect(revealed).not.toHaveBeenCalled();
+      expect(scrolled.mock.contexts.at(-1)).toHaveClass('thread');
+
+      vi.mocked(window.scrollTo).mockClear();
+      await user.click(within(panel).getByRole('button', { name: 'Source 1 : Lisbonne' }));
+      await waitFor(() => expect(revealed).toHaveBeenCalled());
+      expect(revealed.mock.contexts[0]).toHaveAttribute('data-select-block', dates);
+      // Not to the page's top first.
+      expect(window.scrollTo).not.toHaveBeenCalled();
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollTo;
+      delete (Element.prototype as Partial<Element>).scrollIntoView;
+      history.replaceState(null, '', '/');
+    }
   });
 
   it('keeps a private page and what is under it away, with a way to show it again', async () => {

@@ -34,7 +34,7 @@ function preview(note: Note): { title: string; body: string } {
   const text = bodyText(note);
   const firstLine = text.split('\n').find(line => line.trim()) ?? '';
   return {
-    title: shownTitle(note).trim() || firstLine.slice(0, 80) || t('Rappel'),
+    title: shownTitle(note).trim() || firstLine.slice(0, 80) || t('Reminder'),
     body: note.title.trim() ? text.slice(0, 200) : '',
   };
 }
@@ -51,7 +51,7 @@ async function askOnce(): Promise<void> {
   permissionAsked = true;
   // Refused, a reminder would be set and never ring: say so once, where the person sees it.
   const allowed = await ensurePermission().catch(() => false);
-  if (!allowed) showSnack(t('Les notifications de {app} sont désactivées : les rappels ne sonneront pas.', { app: APP_NAME }), undefined, { tone: 'warning' });
+  if (!allowed) showSnack(t('{app}’s notifications are off: reminders won’t ring.', { app: APP_NAME }), undefined, { tone: 'warning' });
 }
 
 let running: Promise<void> = Promise.resolve();

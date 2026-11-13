@@ -116,11 +116,11 @@ export function ColorsSection() {
   const [editing, setEditing] = useState<{ readonly role: ColorRole; readonly open: boolean }>({ role: 'primary', open: false });
   const choose = (key: PaletteKey): void => setAppearance({ ...appearance, ...PALETTE_COLORS[key] });
   return (
-    <Section title={t('Couleurs')} info={COLORS_INFO} id={SETTINGS_SECTIONS.colors}>
+    <Section title={t('Colours')} info={COLORS_INFO} id={SETTINGS_SECTIONS.colors}>
       <AppearancePreview look={appearance} />
       <div className={styles.groups}>
         <section className={styles.group}>
-          <Heading title={t('Palettes')} chosen={chosen ? PALETTE_NAMES[chosen] : t('Sur mesure')} />
+          <Heading title={t('Palettes')} chosen={chosen ? PALETTE_NAMES[chosen] : t('Custom')} />
           <div className={styles.grid} role="radiogroup" aria-label={t('Palettes')} onKeyDown={groupKeys(PALETTES, chosen, choose)}>
             {PALETTES.map((key, index) => (
               <button key={key} type="button" role="radio" aria-checked={key === chosen} data-key={key} tabIndex={key === (chosen ?? PALETTES[0]) ? 0 : -1} className={styles.option} onClick={() => choose(key)}>
@@ -136,9 +136,9 @@ export function ColorsSection() {
       </div>
       {/* Or each colour on its own: what it paints, in the words of the screens it paints. */}
       <section className={styles.roles}>
-        <h3 className={`${styles.rolesHead} t-meta-strong`}>{t('Sur mesure')}</h3>
+        <h3 className={`${styles.rolesHead} t-meta-strong`}>{t('Custom')}</h3>
         {(['primary', 'accent'] as const).map((role, index) => (
-          <button key={role} type="button" className={settings.row} aria-label={t('{name} : {color}', { name: COLOR_ROLE_WORDS[role].title, color: appearance[role] })} onClick={() => setEditing({ role, open: true })}>
+          <button key={role} type="button" className={settings.row} aria-label={t('{name}: {color}', { name: COLOR_ROLE_WORDS[role].title, color: appearance[role] })} onClick={() => setEditing({ role, open: true })}>
             <span className={styles.roleSwatch} data-pebble-under={pebbleTurn(index + 1)} data-still style={{ '--pebble-fill': appearance[role] } as CSSProperties} aria-hidden="true">
               <PebbleEdge turn={pebbleTurn(index + 1)} />
             </span>
@@ -202,16 +202,16 @@ export function GroundSection() {
     setGradient({ open: true, draft: { spec: start, grain: appearance.grain } });
   };
   return (
-    <Section title={t('Fond')} info={GROUND_INFO} id={SETTINGS_SECTIONS.ground}>
+    <Section title={t('Background')} info={GROUND_INFO} id={SETTINGS_SECTIONS.ground}>
       <div className={styles.groups}>
-        <PresetGroup title={t('Dégradés')} keys={GROUND_GRADIENTS} appearance={appearance} mode={mode} />
-        <PresetGroup title={t('Couleurs unies')} keys={GROUND_COLORS} appearance={appearance} mode={mode} />
+        <PresetGroup title={t('Gradients')} keys={GROUND_GRADIENTS} appearance={appearance} mode={mode} />
+        <PresetGroup title={t('Plain colours')} keys={GROUND_COLORS} appearance={appearance} mode={mode} />
         <section className={styles.group}>
-          <Heading title={t('Les vôtres')} chosen={ownChosen ? (ownChosen.kind === 'color' ? t('Votre couleur') : t('Votre dégradé')) : null} />
-          <div className={styles.grid} role="group" aria-label={t('Les vôtres')}>
+          <Heading title={t('Your own')} chosen={ownChosen ? (ownChosen.kind === 'color' ? t('Your colour') : t('Your gradient')) : null} />
+          <div className={styles.grid} role="group" aria-label={t('Your own')}>
             {own.map((choice, index) => {
               const chosen = sameGround(choice, ground);
-              const name = choice.kind === 'color' ? t('Votre couleur') : t('Votre dégradé');
+              const name = choice.kind === 'color' ? t('Your colour') : t('Your gradient');
               return (
                 <button key={choice.kind} type="button" role="radio" aria-checked={chosen} className={styles.option} onClick={() => setAppearance({ ...appearance, ground: choice })}>
                   <span className={`${styles.swatch} ${styles.ground}`} data-pebble={pebbleTurn(index)} data-still style={groundStyle(choice, mode)}>
@@ -227,22 +227,22 @@ export function GroundSection() {
                 <PebbleEdge turn={pebbleTurn(own.length)} />
                 <Icon name="plus" size={20} />
               </span>
-              <span className={`${styles.name} t-label-small`}>{t('Couleur…')}</span>
+              <span className={`${styles.name} t-label-small`}>{t('Colour…')}</span>
             </button>
             <button type="button" className={styles.option} aria-haspopup="dialog" onClick={makeGradient}>
               <span className={`${styles.swatch} ${styles.make}`} data-pebble-under={pebbleTurn(own.length + 1)} data-still>
                 <PebbleEdge turn={pebbleTurn(own.length + 1)} />
                 <Icon name="plus" size={20} />
               </span>
-              <span className={`${styles.name} t-label-small`}>{t('Dégradé…')}</span>
+              <span className={`${styles.name} t-label-small`}>{t('Gradient…')}</span>
             </button>
           </div>
         </section>
       </div>
       <button type="button" role="switch" aria-checked={appearance.grain} className={settings.row} onClick={() => setAppearance({ ...appearance, grain: !appearance.grain })}>
         <span className={settings.rowText}>
-          <span className="t-body">{t('Grain sur le fond')}</span>
-          <span className="t-meta">{t('Le grain de film sur le fond de l’écran.')}</span>
+          <span className="t-body">{t('Grain on the background')}</span>
+          <span className="t-meta">{t('The film grain over the screen’s background.')}</span>
         </span>
         <SwitchMark checked={appearance.grain} />
       </button>

@@ -20,19 +20,19 @@ import { KIND_ICONS } from '@notes/ui/features/links/kindIcon';
 import type { MentionLook } from './richDom';
 import { type PagesLibrary } from '../../../app/store/blocks';
 
-const GONE: Readonly<Record<TargetType, string>> = localized({ note: tx('Note supprimée'), link: tx('Lien supprimé'), page: tx('Page supprimée'), contact: tx('Contact supprimé'), event: tx('Événement supprimé') });
+const GONE: Readonly<Record<TargetType, string>> = localized({ note: tx('Note deleted'), link: tx('Link deleted'), page: tx('Deleted page'), contact: tx('Contact deleted'), event: tx('Event deleted') });
 
 export function lookOf(s: PagesLibrary, target: BlockTarget): MentionLook {
   const title = targetTitle(s, target);
   // A type a newer client added: another app's, which this build cannot show.
-  const gone = isRefType(target.type) ? GONE[target.type] : t('Indisponible ici');
+  const gone = isRefType(target.type) ? GONE[target.type] : t('Not available here');
   const base = { title: title ?? gone, gone: title === null, emoji: null, emblem: null };
   switch (target.type) {
     case 'page':
       return { ...base, emoji: title === null ? null : (s.blocks[target.id]?.icon ?? null), glyph: 'page' };
     case 'note': {
       const note = s.notes[target.id];
-      if (note?.kind === 'links') return { ...base, title: title ?? t('Collection supprimée'), emblem: { shape: collectionEmblem(note.id, note.emblem), color: asLineColor(note.color) ?? 'grey' }, glyph: 'collections' };
+      if (note?.kind === 'links') return { ...base, title: title ?? t('Collection deleted'), emblem: { shape: collectionEmblem(note.id, note.emblem), color: asLineColor(note.color) ?? 'grey' }, glyph: 'collections' };
       return { ...base, glyph: note?.kind === 'checklist' ? 'checklist' : 'note' };
     }
     case 'link': {

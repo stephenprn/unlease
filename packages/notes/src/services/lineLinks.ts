@@ -130,8 +130,8 @@ export function typedAddress(typed: string): string | null {
 
 /** What is wrong with the address typed for a link (null: it is one). */
 export function typedAddressProblem(typed: string): string | null {
-  if (!typed.trim()) return t('Saisissez l’adresse du lien.');
-  return typedAddress(typed) ? null : t('Une adresse de page commençant par https://, comme https://example.org/page.');
+  if (!typed.trim()) return t('Enter the link’s address.');
+  return typedAddress(typed) ? null : t('A page address starting with https://, like https://example.org/page.');
 }
 
 /** A list's name when it has no title: the first words beside a link, else the first link's page or address. */

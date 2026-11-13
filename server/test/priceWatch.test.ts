@@ -226,7 +226,7 @@ describe('Claude, when the page hides its price', () => {
     const { watch } = setUp({ [url('atelier')]: productPage(70, { hidden: true }) });
     server.sync.push([product('l1', url('atelier'))]);
     server.claude.reply(claudeMessage({ price: null, currency: null }));
-    expect(await watch.check('l1')).toEqual({ ok: true, answer: { outcome: 'hidden', price: 89, currency: 'EUR', before: null, by: null, note: 'Claude n’a pas trouvé de prix sur cette page.' } });
+    expect(await watch.check('l1')).toEqual({ ok: true, answer: { outcome: 'hidden', price: 89, currency: 'EUR', before: null, by: null, note: 'Claude found no price on this page.' } });
     expect(linkOf('l1').priceCheckedAt).toBe(T0 - DAY);
     expect(priceRows()).toEqual([{ linkId: 'l1', ok: 1, error: null }]);
   });
@@ -235,7 +235,7 @@ describe('Claude, when the page hides its price', () => {
     const fetcher = new FakeFetcher({ [url('atelier')]: productPage(70, { hidden: true }) });
     open = server = createTestServer({ fetcher, envApiKey: null });
     server.sync.push([listNote(LINE, 'Mode', T0 - 40 * DAY, { modules: ['pricewatch'] }), product('l1', url('atelier'))]);
-    expect(await check('l1')).toEqual({ status: 200, body: { outcome: 'hidden', price: 89, currency: 'EUR', before: null, by: null, note: 'Cette page ne montre pas son prix.' } });
+    expect(await check('l1')).toEqual({ status: 200, body: { outcome: 'hidden', price: 89, currency: 'EUR', before: null, by: null, note: 'This page does not show its price.' } });
   });
 });
 
@@ -259,9 +259,9 @@ describe('POST /api/notes/price-check', () => {
     open = server = createTestServer({ fetcher: new FakeFetcher(routes) });
     server.sync.push([listNote(LINE, 'Mode', T0 - 40 * DAY, { modules: ['pricewatch'] }), ...links]);
     expect((await check('l0')).body.outcome).toBe('same');
-    expect(await check('l0')).toEqual({ status: 409, body: { error: 'Prix vérifié à l’instant : réessayez dans une minute.' } });
+    expect(await check('l0')).toEqual({ status: 409, body: { error: 'Price checked a moment ago: try again in a minute.' } });
     for (let index = 1; index < 30; index += 1) expect((await check(`l${index}`)).status).toBe(200);
-    expect(await check('l30')).toEqual({ status: 409, body: { error: 'Trop de vérifications de prix : réessayez dans un moment.' } });
+    expect(await check('l30')).toEqual({ status: 409, body: { error: 'Too many price checks: try again in a while.' } });
     expect((await check('nowhere')).status).toBe(404);
     expect((await check('not an id')).status).toBe(400);
   });

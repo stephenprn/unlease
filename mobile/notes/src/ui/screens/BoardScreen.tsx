@@ -12,7 +12,7 @@ import { t, tc, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { searchSummary } from '@unlease/core/services/searchWords';
 import { collectionsWithLinks } from '@unlease/notes/services/sorting';
-import { INBOX_ID, INBOX_TITLE, TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { useBoardSections, useSearch, type BoardView } from '@app/hooks/useBoard';
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -50,10 +50,10 @@ const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 const canSwipe = (id: string) => id !== INBOX_ID;
 
 function viewTitle(view: BoardView, labelName: string | undefined): string | null {
-  if (view === 'reminders') return t('Rappels');
-  if (view === 'archive') return t('Archives');
-  if (view === 'trash') return t('Corbeille');
-  if (view.startsWith('label:')) return labelName ?? t('Label');
+  if (view === 'reminders') return t('Reminders');
+  if (view === 'archive') return tc('place', 'Archive');
+  if (view === 'trash') return t('Bin');
+  if (view.startsWith('label:')) return labelName ?? tc('notes', 'Label');
   return null;
 }
 
@@ -202,7 +202,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     // By the note itself: Rappels shows archived notes too, and one of those comes out of the archive.
     const archive = !useLibraryStore.getState().notes[id]?.archived;
     const undo = setArchived(id, archive);
-    showSnack(archive ? t('Note archivée') : t('Note désarchivée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(archive ? t('Note archived') : t('Note unarchived'), { label: t('Undo'), run: undo }, { tone: 'success' });
   }, []);
   const allPinned = selected.every(id => useLibraryStore.getState().notes[id]?.pinned);
   /** "Note …" for one, "Notes …" for several. */
@@ -210,12 +210,12 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const bulk = (run: () => () => void, message: string) => {
     const undo = run();
     clearSelection();
-    showSnack(message, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(message, { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   const trashSelected = () => {
     const { notes, linksByNote } = useLibraryStore.getState();
     if (collectionsWithLinks(selected, notes, linksByNote).length === 0) {
-      bulk(() => trashNotes(selected), byCount(t('Note placée dans la corbeille'), t('Notes placées dans la corbeille')));
+      bulk(() => trashNotes(selected), byCount(t('Note moved to the bin'), t('Notes moved to the bin')));
       return;
     }
     // "Non classé" never goes to the bin, so its links are not asked about.
@@ -226,14 +226,14 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const removeSelected = (fate: LinksFate) => {
     const { notes, linksByNote } = useLibraryStore.getState();
     const links = deleteIds.flatMap(id => (notes[id]?.kind === 'links' ? (linksByNote[id] ?? []) : []));
-    const deleted = deleteIds.length > 1 ? tx('Notes supprimées') : tx('Collection supprimée');
+    const deleted = deleteIds.length > 1 ? tx('Notes deleted') : tx('Collection deleted');
     clearSelection();
     if (fate.kind === 'bin') {
-      showSnack(deleteIds.length > 1 ? t('Notes placées dans la corbeille') : t('Note placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: trashLines(deleteIds, null) }, { tone: 'success' });
+      showSnack(deleteIds.length > 1 ? t('Notes moved to the bin') : t('Note moved to the bin'), { label: t('Undo'), run: trashLines(deleteIds, null) }, { tone: 'success' });
     } else if (fate.kind === 'move') {
       const undo = trashLines(deleteIds, fate.to);
-      const name = fate.to === INBOX_ID ? t(INBOX_TITLE) : (notes[fate.to]?.title ?? '');
-      showSnack(t('{deleted} : {links} dans {name}', { deleted: t(deleted), links: plural(links.length, 'lien déplacé', 'liens déplacés'), name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+      const name = fate.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : (notes[fate.to]?.title ?? '');
+      showSnack(t('{deleted}: {links} to {name}', { deleted: t(deleted), links: plural(links.length, 'link moved', 'links moved'), name }), { label: t('Undo'), run: undo }, { tone: 'success' });
     } else {
       sortDeletedLinksOnSlip(links, trashLines(deleteIds, INBOX_ID), deleted);
     }
@@ -261,14 +261,14 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           </AppText>
           {view === 'trash' && total > 0 ? (
             // Small beside the title, so the title stands where every view's does.
-            <Button kind="text" small icon="broom" label={t('Vider la corbeille')} onPress={() => setConfirmEmpty(true)} />
+            <Button kind="text" small icon="broom" label={t('Empty the bin')} onPress={() => setConfirmEmpty(true)} />
           ) : null}
         </View>
       ) : null}
       {/* Said once, under the title, while the bin holds something: empty, its empty state says how long notes stay. */}
       {view === 'trash' && !searching && total > 0 ? (
         <AppText variant="meta" style={styles.underTitle}>
-          {t('Les notes de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
+          {t('Notes in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}
         </AppText>
       ) : null}
       {/* The settings the words name, above the notes, in the search of every note (a view's searches its own). */}
@@ -297,10 +297,10 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         query={query}
         onQuery={setQuery}
         onMenu={() => setDrawerOpen(true)}
-        localText={t('Pas de serveur : les notes restent sur ce téléphone.')}
+        localText={t('No server: notes stay on this phone.')}
         layout={layout}
         onToggleLayout={() => setLayout(layout === 'wall' ? 'list' : 'wall')}
-        placeholder={title ? t('Rechercher dans « {view} »', { view: title }) : APP_WORDS.notes.search}
+        placeholder={title ? t('Search in “{view}”', { view: title }) : APP_WORDS.notes.search}
         focusKey={searchFocus}
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
       />
@@ -326,13 +326,13 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
 
       <FabMenu
         visible={showCapture && selection.size === 0}
-        label={t('Créer')}
+        label={t('Create')}
         actions={[
           { icon: 'note', label: t('Note'), onPress: newNote },
-          { icon: 'checklist', label: t('Liste'), onPress: newChecklist },
-          { icon: 'draw', label: t('Dessin'), onPress: newDrawing },
+          { icon: 'checklist', label: t('List'), onPress: newChecklist },
+          { icon: 'draw', label: t('Drawing'), onPress: newDrawing },
           { icon: 'image', label: t('Photo'), onPress: () => newPhotoNote('gallery') },
-          { icon: 'link', label: t('Lien'), onPress: newLink },
+          { icon: 'link', label: t('Link'), onPress: newLink },
         ]}
       />
 
@@ -340,36 +340,36 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         <SelectionBar count={selection.size} onClose={clearSelection}>
           {view === 'trash' ? (
             <>
-              <IconButton icon="restore" label={t('Restaurer')} color={selectionInk} shape={1} onPress={() => bulk(() => restoreNotes(selected), byCount(t('Note restaurée'), t('Notes restaurées')))} />
-              <IconButton icon="trash" label={t('Supprimer définitivement')} color={selectionInk} shape={2} onPress={() => setConfirmDelete(true)} />
+              <IconButton icon="restore" label={t('Restore')} color={selectionInk} shape={1} onPress={() => bulk(() => restoreNotes(selected), byCount(t('Note restored'), t('Notes restored')))} />
+              <IconButton icon="trash" label={t('Delete forever')} color={selectionInk} shape={2} onPress={() => setConfirmDelete(true)} />
             </>
           ) : (
             <>
               <IconButton
                 icon={allPinned ? 'pinOff' : 'pin'}
-                label={allPinned ? t('Retirer des épinglées') : t('Épingler')}
+                label={allPinned ? t('Unpin') : t('Pin')}
                 color={selectionInk}
                 shape={1}
                 onPress={() => {
                   const undos = selected.map(id => setPinned(id, !allPinned));
                   clearSelection();
-                  showSnack(allPinned ? byCount(t('Retirée des épinglées'), t('Retirées des épinglées')) : byCount(t('Note épinglée'), t('Notes épinglées')), { label: tc('undo', 'Annuler'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
+                  showSnack(allPinned ? byCount(t('Unpinned'), tc('many', 'Unpinned')) : byCount(t('Note pinned'), t('Notes pinned')), { label: t('Undo'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
                 }}
               />
-              <IconButton icon="palette" label={onlyCollections(selected) ? t('Couleur') : t('Couleur et papier')} color={selectionInk} shape={0} onPress={() => setColorOpen(true)} />
-              <IconButton icon="tag" label={t('Labels')} color={selectionInk} shape={3} onPress={() => setLabelsOpen(true)} />
+              <IconButton icon="palette" label={onlyCollections(selected) ? t('Colour') : t('Colour and paper')} color={selectionInk} shape={0} onPress={() => setColorOpen(true)} />
+              <IconButton icon="tag" label={tc('notes', 'Labels')} color={selectionInk} shape={3} onPress={() => setLabelsOpen(true)} />
               <IconButton
                 icon={view === 'archive' ? 'unarchive' : 'archive'}
-                label={view === 'archive' ? t('Désarchiver') : t('Archiver')}
+                label={view === 'archive' ? t('Unarchive') : t('Archive')}
                 color={selectionInk}
                 shape={2}
                 onPress={() => {
                   const undos = selected.map(id => setArchived(id, view !== 'archive'));
                   clearSelection();
-                  showSnack(view === 'archive' ? byCount(t('Note désarchivée'), t('Notes désarchivées')) : byCount(t('Note archivée'), t('Notes archivées')), { label: tc('undo', 'Annuler'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
+                  showSnack(view === 'archive' ? byCount(t('Note unarchived'), t('Notes unarchived')) : byCount(t('Note archived'), t('Notes archived')), { label: t('Undo'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
                 }}
               />
-              <IconButton icon="trash" label={t('Supprimer')} color={selectionInk} shape={0} onPress={trashSelected} />
+              <IconButton icon="trash" label={t('Delete')} color={selectionInk} shape={0} onPress={trashSelected} />
             </>
           )}
         </SelectionBar>
@@ -392,26 +392,26 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
       <BulkColorSheet visible={colorOpen} ids={selected} onDismiss={() => setColorOpen(false)} />
       <NewLineSheet visible={newLineOpen} onDismiss={() => setNewLineOpen(false)} onCreated={id => navigation.navigate('Line', { id })} />
       <DeleteLineSheet ids={deleteIds} visible={deleteOpen} onDismiss={() => setDeleteOpen(false)} onChoose={removeSelected} onPickLine={() => setPicking(true)} />
-      <MoveSheet visible={picking} currentLineId={null} exclude={deleteIds} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => removeSelected({ kind: 'move', to: target })} />
+      <MoveSheet visible={picking} currentLineId={null} exclude={deleteIds} title={t('Move the links to')} onDismiss={() => setPicking(false)} onPick={target => removeSelected({ kind: 'move', to: target })} />
 
       <Dialog
         visible={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every note in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const notes = emptyTrash();
-          showSnack(t('{deleted} définitivement', { deleted: plural(notes, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(notes, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
         }}
       />
       <Dialog
         visible={confirmDelete}
-        title={t('Supprimer définitivement ?')}
-        message={t('Ces notes disparaîtront de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('These notes will disappear from all your devices. This can’t be undone.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
@@ -421,7 +421,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           const binned = selected.filter(id => notes[id] && notes[id]!.trashedAt !== null);
           deleteForever(binned);
           clearSelection();
-          showSnack(t('{deleted} définitivement', { deleted: plural(binned.length, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(binned.length, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
         }}
       />
     </View>

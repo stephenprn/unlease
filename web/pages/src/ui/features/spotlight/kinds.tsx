@@ -85,7 +85,7 @@ function PagePart({ part, matcher }: { part: SearchPart; matcher: Matcher }) {
 }
 
 function PagePreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher: Matcher }) {
-  if (doc.parts.length === 0) return <p className={`${styles.quiet} t-meta`}>{t('Page vide')}</p>;
+  if (doc.parts.length === 0) return <p className={`${styles.quiet} t-meta`}>{t('Empty page')}</p>;
   return (
     <div className={styles.pageBody}>
       {doc.parts.slice(0, 300).map((part, at) => (

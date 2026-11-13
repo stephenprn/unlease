@@ -6,6 +6,6 @@ import NativeMedia, { type PickedFile } from '../../specs/NativeMedia';
 export type { PickedFile };
 
 export async function pickDocument(mimeTypes: readonly string[]): Promise<PickedFile> {
-  if (!NativeMedia) return { status: 'error', message: t('Sélecteur de fichiers indisponible'), path: '', name: '', bytes: 0 };
+  if (!NativeMedia) return { status: 'error', message: t('File picker unavailable'), path: '', name: '', bytes: 0 };
   return NativeMedia.pickFile([...mimeTypes]);
 }

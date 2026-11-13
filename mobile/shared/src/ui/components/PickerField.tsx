@@ -40,7 +40,7 @@ function PickerFieldComponent({ label, value, placeholder, onPress, icon, help, 
       {label ? (
         <AppText variant="metaStrong" style={styles.label}>
           {label}
-          {optional ? <AppText variant="meta" color={theme.color.inkMuted}>{` ${t('(facultatif)')}`}</AppText> : null}
+          {optional ? <AppText variant="meta" color={theme.color.inkMuted}>{` ${t('(optional)')}`}</AppText> : null}
         </AppText>
       ) : null}
       <Tappable

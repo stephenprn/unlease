@@ -14,15 +14,15 @@ export function isEmailAddress(value: string): boolean {
 
 /** An e-mail's problem, or null (an empty row is dropped at saving, not a mistake). */
 export function emailProblem(value: string): string | null {
-  return value.trim() && !isEmailAddress(value) ? t('Une adresse e-mail complète, comme nom@exemple.fr.') : null;
+  return value.trim() && !isEmailAddress(value) ? t('A full e-mail address, such as name@example.com.') : null;
 }
 
 /** A typed birthday's problem, or null (none typed is none). */
 export function birthdayProblem(typed: string, monthFirst = false): string | null {
   if (!typed.trim() || readTypedBirthday(typed, monthFirst)) return null;
   // The example's day is past 12, so it says which part comes first.
-  return monthFirst ? t('Une date comme 03/27/1990, ou 03/27 sans l’année.') : t('Une date comme 27/03/1990, ou 27/03 sans l’année.');
+  return monthFirst ? t('A date such as 03/27/1990, or 03/27 without the year.') : t('A date such as 27/03/1990, or 27/03 without the year.');
 }
 
 /** What an empty contact's form says on saving, under its first name. */
-export const emptyContactProblem = (): string => t('Donnez-lui au moins un nom, un numéro ou une adresse e-mail.');
+export const emptyContactProblem = (): string => t('Give them at least a name, a number or an e-mail address.');

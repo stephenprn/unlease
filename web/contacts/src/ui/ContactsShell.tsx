@@ -67,26 +67,26 @@ export function ContactsScreen({ route }: { route: Route }) {
 function titleFor(state: ContactsState, route: Route): string | null {
   switch (route.name) {
     case 'contactsFavorites':
-      return t('Favoris');
+      return t('Favourites');
     case 'contactsBirthdays':
-      return t('Anniversaires');
+      return t('Birthdays');
     case 'contactsLabel':
-      return state.labels[route.id]?.name ?? t('Libellés');
+      return state.labels[route.id]?.name ?? t('Labels');
     case 'contactsLabels':
-      return t('Libellés');
+      return t('Labels');
     case 'contactsImport':
-      return t('Importer');
+      return t('Import');
     case 'contactsDuplicates':
-      return t('Doublons');
+      return t('Duplicates');
     case 'contactsTrash':
-      return t('Corbeille');
+      return t('Bin');
     case 'contact':
     case 'contactEdit': {
       const contact = state.contacts[route.id];
       return contact ? contactName(contact) : null;
     }
     case 'contactNew':
-      return t('Créer un contact');
+      return t('Create contact');
     default:
       return null;
   }
@@ -153,14 +153,14 @@ export function ContactsNav({ route, onNavigate }: { route: Route; onNavigate: (
   return (
     <>
       <NavRow to={paths.contacts} label={t('Contacts')} leading={<NavGlyph name="people" />} trailing={<Count count={contacts.length} />} current={route.name === 'contacts'} onNavigate={onNavigate} />
-      <NavRow to={paths.favorites} label={t('Favoris')} leading={<NavGlyph name="star" />} trailing={<Count count={favorites} />} current={route.name === 'contactsFavorites'} onNavigate={onNavigate} />
-      <NavRow to={paths.birthdays} label={t('Anniversaires')} leading={<NavGlyph name="cake" />} trailing={<Count count={soon} />} current={route.name === 'contactsBirthdays'} onNavigate={onNavigate} />
+      <NavRow to={paths.favorites} label={t('Favourites')} leading={<NavGlyph name="star" />} trailing={<Count count={favorites} />} current={route.name === 'contactsFavorites'} onNavigate={onNavigate} />
+      <NavRow to={paths.birthdays} label={t('Birthdays')} leading={<NavGlyph name="cake" />} trailing={<Count count={soon} />} current={route.name === 'contactsBirthdays'} onNavigate={onNavigate} />
       <NavFold
         id="contactLabels"
-        title={t('Libellés')}
+        title={t('Labels')}
         action={
-          <Link to={paths.labels} className={navStyles.headingAction} onNavigate={onNavigate} ariaLabel={t('Modifier les libellés')}>
-            {t('Modifier')}
+          <Link to={paths.labels} className={navStyles.headingAction} onNavigate={onNavigate} ariaLabel={t('Edit labels')}>
+            {t('Edit')}
           </Link>
         }
       >
@@ -181,7 +181,7 @@ export function ContactsNav({ route, onNavigate }: { route: Route; onNavigate: (
           />
         ))}
         <NavAction
-          label={t('Créer un libellé')}
+          label={t('Create label')}
           icon="plus"
           onClick={() => {
             onNavigate();
@@ -189,13 +189,13 @@ export function ContactsNav({ route, onNavigate }: { route: Route; onNavigate: (
           }}
         />
       </NavFold>
-      <NavRow to={paths.duplicates} label={t('Doublons')} leading={<NavGlyph name="copy" />} trailing={<Count count={duplicates} />} current={route.name === 'contactsDuplicates'} onNavigate={onNavigate} />
+      <NavRow to={paths.duplicates} label={t('Duplicates')} leading={<NavGlyph name="copy" />} trailing={<Count count={duplicates} />} current={route.name === 'contactsDuplicates'} onNavigate={onNavigate} />
     </>
   );
 }
 
 export function ContactsNavFoot({ route, onNavigate }: { route: Route; onNavigate: () => void }) {
-  return <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={route.name === 'contactsTrash'} onNavigate={onNavigate} />;
+  return <NavRow to={paths.trash} label={t('Bin')} leading={<NavGlyph name="trash" />} current={route.name === 'contactsTrash'} onNavigate={onNavigate} />;
 }
 
 /** « Créer un contact » beside the search, wide (a label's list makes one wearing it). */
@@ -203,9 +203,9 @@ export function ContactsHeaderActions({ route }: { route: Route }) {
   if (route.name === 'contactNew' || route.name === 'contactEdit') return null;
   const labelIds = route.name === 'contactsLabel' ? [route.id] : [];
   return (
-    <button type="button" className={`${shell.classify} paper`} onClick={() => openNewContact('', labelIds)} aria-label={t('Créer un contact')} data-tip={t('Créer un contact (C)')}>
+    <button type="button" className={`${shell.classify} paper`} onClick={() => openNewContact('', labelIds)} aria-label={t('Create contact')} data-tip={t('Create a contact (C)')}>
       <Icon name="personPlus" size={20} />
-      <span className={shell.classifyLabel}>{t('Créer un contact')}</span>
+      <span className={shell.classifyLabel}>{t('Create contact')}</span>
     </button>
   );
 }
@@ -225,7 +225,7 @@ export function ContactsBottomBar({ route, enter }: { route: Route; enter: Arriv
   return (
     <div className={`${shell.bottomBar} paper`} data-enter={(!closing && arrival) || undefined} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
       <div className={shell.bottomActions} />
-      <button ref={fab} type="button" className={shell.fab} data-pebble-under={0} aria-label={t('Créer un contact')} onClick={() => openNewContact()}>
+      <button ref={fab} type="button" className={shell.fab} data-pebble-under={0} aria-label={t('Create contact')} onClick={() => openNewContact()}>
         <Icon name="plus" size={26} />
       </button>
     </div>

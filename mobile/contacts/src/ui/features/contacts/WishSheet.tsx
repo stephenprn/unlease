@@ -25,11 +25,11 @@ interface Asked {
 
 export function WishSheet({ asked, visible, onDismiss }: { asked: Asked | null; visible: boolean; onDismiss: () => void }) {
   return (
-    <Sheet visible={visible && asked !== null} onDismiss={onDismiss} title={asked ? t('Souhaiter son anniversaire à {name}', { name: asked.name }) : undefined}>
+    <Sheet visible={visible && asked !== null} onDismiss={onDismiss} title={asked ? t('Wish {name} a happy birthday', { name: asked.name }) : undefined}>
       {asked ? (
         <>
           <AppText variant="meta" style={styles.message}>
-            {t('« {message} »', { message: asked.message })}
+            {t('“{message}”', { message: asked.message })}
           </AppText>
           <SheetScroll>
             {asked.ways.map(way => (
@@ -60,7 +60,7 @@ export function useWish(): { wish: (contact: Contact, ways?: readonly WishWay[])
   const [open, setOpen] = useState(false);
   const wish = useCallback((contact: Contact, known?: readonly WishWay[]) => {
     const go = (ways: readonly WishWay[]): void => {
-      if (ways.length === 0) showSnack(t('Ni numéro ni e-mail pour lui écrire : « Modifier » en ajoute.'), undefined, { tone: 'warning' });
+      if (ways.length === 0) showSnack(t('No number or email to write to: “Edit” adds one.'), undefined, { tone: 'warning' });
       else if (ways.length === 1) later(sendWish(ways[0]!));
       else {
         setAsked({ name: contactName(contact), message: wishMessage(contact), ways });

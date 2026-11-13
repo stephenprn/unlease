@@ -41,20 +41,20 @@ const pagesData: AppData = {
 /** Its keys in the shortcuts dialog beyond its commands': a page's editor's. */
 const PAGES_SHORTCUTS: readonly ShortcutGroup[] = [
   {
-    title: tx('Dans une page'),
+    title: tx('In a page'),
     rows: [
-      [[tx('Entrée')], tx('Nouveau paragraphe (Maj+Entrée : nouvelle ligne)')],
-      [[MOD_KEY, tx('Entrée')], tx('Cocher la tâche, ou sortir du bloc de code')],
-      [['/'], tx('Ajouter un bloc')],
-      [['@'], tx('Mentionner une page, une note, une collection ou un lien')],
-      [[MOD_KEY, 'B'], tx('Gras (I : italique, U : souligné, E : code)')],
-      [[MOD_KEY, tx('Maj'), 'S'], tx('Barré')],
-      [[MOD_KEY, 'K'], tx('Lien sur les mots sélectionnés')],
-      [['Tab'], tx('Imbriquer le bloc (Maj+Tab : le désimbriquer)')],
-      [[MOD_KEY, tx('Maj'), '↑'], tx('Monter le bloc (↓ : le descendre)')],
-      [[MOD_KEY, 'D'], tx('Dupliquer le bloc')],
-      [[tx('Échap')], tx('Sélectionner le bloc')],
-      [[MOD_KEY, 'Z'], tx('Annuler (Ctrl+Maj+Z : rétablir)')],
+      [[tx('Enter')], tx('New paragraph (Shift+Enter: new line)')],
+      [[MOD_KEY, tx('Enter')], tx('Tick the to-do, or leave the code block')],
+      [['/'], tx('Add a block')],
+      [['@'], tx('Mention a page, a note, a collection or a link')],
+      [[MOD_KEY, 'B'], tx('Bold (I: italic, U: underline, E: code)')],
+      [[MOD_KEY, tx('Shift'), 'S'], tx('Strikethrough')],
+      [[MOD_KEY, 'K'], tx('Link on the selected words')],
+      [['Tab'], tx('Indent the block (Shift+Tab: outdent it)')],
+      [[MOD_KEY, tx('Shift'), '↑'], tx('Move the block up (↓: move it down)')],
+      [[MOD_KEY, 'D'], tx('Duplicate the block')],
+      [[tx('Esc')], tx('Select the block')],
+      [[MOD_KEY, 'Z'], tx('Undo (Ctrl+Shift+Z: redo)')],
     ],
   },
 ];
@@ -81,13 +81,13 @@ export const pagesModule: AppModule = {
 
   spotKinds: PAGES_SPOT_KINDS,
   // C makes the app's thing in every app; P, Pages' key before that, still does.
-  commands: [{ title: tx('Nouvelle page'), icon: 'pagePlus', key: 'c', aliases: ['p'], run: () => openNewPage(null) }],
+  commands: [{ title: tx('New page'), icon: 'pagePlus', key: 'c', aliases: ['p'], run: () => openNewPage(null) }],
   shortcuts: PAGES_SHORTCUTS,
-  spotCreates: [{ type: 'page', title: typed => t('Créer la page « {title} »', { title: typed }), icon: 'pagePlus', run: typed => navigate(paths.page(createPage({ title: typed }))) }],
+  spotCreates: [{ type: 'page', title: typed => t('Create the page “{title}”', { title: typed }), icon: 'pagePlus', run: typed => navigate(paths.page(createPage({ title: typed }))) }],
 
   emptyBin: () => emptyPagesBin(),
   binCount: () => trashedPages().length,
-  importer: { source: () => 'Notion', meta: () => t('Un export de Notion, ou des fichiers Markdown (Obsidian…)'), Wizard: PagesImport },
+  importer: { source: () => 'Notion', meta: () => t('A Notion export, or Markdown files (Obsidian…)'), Wizard: PagesImport },
   erase: { parts: () => pagesEraseParts(useBlocksStore.getState()), run: chosen => erasePages(chosen) },
   adminSections: PAGES_ADMIN_SECTIONS,
   settingsPlaces: PAGES_SETTINGS_PLACES,

@@ -21,7 +21,7 @@ export function BirthdayScreen({ id }: { id: string }) {
   if (!contact || !next) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="reminders" as="h1" title={t('Pas d’anniversaire')} text={t('Ce contact n’a pas de date d’anniversaire, ou n’existe plus.')} />
+        <EmptyState scene="reminders" as="h1" title={t('No birthday')} text={t('This contact has no birthday, or no longer exists.')} />
       </div>
     );
   }

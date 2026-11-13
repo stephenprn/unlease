@@ -1,6 +1,6 @@
 /**
  * Server settings set from the apps' Administration: link reading by Claude and questions about
- * the pages, the backup to S3, the drive that holds the files (Seafile) and Seerr for the films and series modules. Keys and secrets are set from the apps, never from
+ * the pages, the backup to S3, the drive that holds the files (Seafile), Seerr for the films and series modules and Immich for the photos. Keys and secrets are set from the apps, never from
  * source, and never come back: only their last characters do.
  * `GET /api/settings` -> ServerSettings; `PUT` a SettingsPatch -> the same, or 400/502 { error }.
  */
@@ -50,9 +50,9 @@ export type PagesReach = (typeof PAGES_REACHES)[number];
 export const PAGES_REACH_CHARS: Record<PagesReach, number> = { short: 40_000, medium: 120_000, long: 400_000 };
 
 export const PAGES_REACH_NAMES: Record<PagesReach, string> = localized({
-  short: tx('Courte'),
-  medium: tx('Moyenne'),
-  long: tx('Longue'),
+  short: tx('Short'),
+  medium: tx('Medium'),
+  long: tx('Long'),
 });
 
 export function isPagesReach(value: unknown): value is PagesReach {
@@ -71,10 +71,10 @@ export const BACKUP_RECURRENCES = ['off', '6h', 'daily', 'weekly'] as const;
 export type BackupRecurrence = (typeof BACKUP_RECURRENCES)[number];
 
 export const BACKUP_RECURRENCE_NAMES: Record<BackupRecurrence, string> = localized({
-  off: tx('Jamais'),
-  '6h': tx('Toutes les 6 h'),
-  daily: tx('Chaque jour'),
-  weekly: tx('Chaque semaine'),
+  off: tx('Never'),
+  '6h': tx('Every 6 h'),
+  daily: tx('Every day'),
+  weekly: tx('Every week'),
 });
 
 export const BACKUP_INTERVAL_MS: Record<Exclude<BackupRecurrence, 'off'>, number> = {
@@ -155,6 +155,14 @@ export interface SeerrSettings {
   /** Its address ("https://seerr.exemple.fr"); '' when not linked. */
   readonly url: string;
   /** Never the key. Null: linked without one (searches only). */
+  readonly keyHint: string | null;
+}
+
+/** Immich, the photo library: where it answers, and its API key's last characters (it is never linked without one). */
+export interface ImmichSettings {
+  /** Its address ("https://photos.example.org"); '' when not linked. */
+  readonly url: string;
+  /** Never the key. */
   readonly keyHint: string | null;
 }
 
@@ -272,10 +280,17 @@ export interface ServerSettings {
   readonly backup: BackupSettings;
   readonly drive: DriveSettings;
   readonly seerr: SeerrSettings;
+  readonly immich: ImmichSettings;
 }
 
 /** Seerr linked or changed: the address (tried before it is kept), and a new API key or '' to drop it. */
 export interface SeerrPatch {
+  readonly url?: string;
+  readonly apiKey?: string;
+}
+
+/** Immich linked or changed: its address and its API key, both tried before they are kept. */
+export interface ImmichPatch {
   readonly url?: string;
   readonly apiKey?: string;
 }
@@ -326,6 +341,8 @@ export interface SettingsPatch {
   readonly drive?: DrivePatch | null;
   /** null unlinks Seerr. */
   readonly seerr?: SeerrPatch | null;
+  /** null unlinks Immich. */
+  readonly immich?: ImmichPatch | null;
 }
 
 export function isClaudeModel(value: unknown): value is ClaudeModel {
@@ -379,6 +396,11 @@ function parseSeerr(value: unknown): SeerrSettings {
   return { url: text(raw.url), keyHint: hint(raw.keyHint) };
 }
 
+function parseImmich(value: unknown): ImmichSettings {
+  const raw = (typeof value === 'object' && value !== null ? value : {}) as Partial<Record<keyof ImmichSettings, unknown>>;
+  return { url: text(raw.url), keyHint: hint(raw.keyHint) };
+}
+
 /** A list of apps as a server holds it: ready ones, once each, in the suite's order; null when none is left. */
 export function parseEnabledApps(value: unknown): AppId[] | null {
   if (!Array.isArray(value)) return null;
@@ -387,7 +409,7 @@ export function parseEnabledApps(value: unknown): AppId[] | null {
 }
 
 export function parseServerSettings(body: unknown): ServerSettings | null {
-  const raw = body as { apps?: { enabled?: unknown }; setup?: { done?: unknown }; analysis?: Partial<ServerSettings['analysis']>; pages?: unknown; calendar?: unknown; backup?: unknown; drive?: unknown; seerr?: unknown } | null;
+  const raw = body as { apps?: { enabled?: unknown }; setup?: { done?: unknown }; analysis?: Partial<ServerSettings['analysis']>; pages?: unknown; calendar?: unknown; backup?: unknown; drive?: unknown; seerr?: unknown; immich?: unknown } | null;
   const analysis = raw?.analysis;
   if (!analysis || typeof analysis.enabled !== 'boolean') return null;
   return {
@@ -406,27 +428,30 @@ export function parseServerSettings(body: unknown): ServerSettings | null {
     backup: parseBackup(raw.backup),
     drive: parseDrive(raw.drive),
     seerr: parseSeerr(raw.seerr),
+    // An older server knows no Immich.
+    immich: parseImmich(raw.immich),
   };
 }
 
 /**
  * The optional services the Administration sets up: Claude (a key), the backup to S3, the drive
- * (Seafile) and Seerr. What leans on one shows in the apps only once the server has said it is set
+ * (Seafile), Seerr and Immich. What leans on one shows in the apps only once the server has said it is set
  * up (each client remembers what it last said: the web's `useServerFeature`, the phone's).
  */
-export const SERVER_FEATURES = ['claude', 'backup', 'drive', 'seerr'] as const;
+export const SERVER_FEATURES = ['claude', 'backup', 'drive', 'seerr', 'immich'] as const;
 export type ServerFeature = (typeof SERVER_FEATURES)[number];
 
 /** Which of them a server has set up, as far as it has said: a feature left out is not known yet. */
 export type ServerFeatures = { readonly [F in ServerFeature]?: boolean };
 
-/** What the server's settings say of each: Claude has a key, S3 is set, a drive holds the files, Seerr is linked. */
+/** What the server's settings say of each: Claude has a key, S3 is set, a drive holds the files, Seerr and Immich are linked. */
 export function serverFeatures(settings: ServerSettings): Required<ServerFeatures> {
   return {
     claude: settings.analysis.enabled,
     backup: settings.backup.configured,
     drive: settings.drive.provider !== null,
     seerr: settings.seerr.url !== '',
+    immich: settings.immich.url !== '',
   };
 }
 

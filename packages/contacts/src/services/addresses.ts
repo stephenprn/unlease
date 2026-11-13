@@ -70,12 +70,12 @@ export function geoUri(address: Postal): string | null {
 /** An entry's name: the person's own label, else its kind's (« Mobile », « Travail »). */
 export function phoneKindName(entry: Pick<PhoneEntry, 'kind' | 'label'>): string {
   if (entry.label.trim()) return entry.label.trim();
-  return Object.hasOwn(PHONE_KIND_NAMES, entry.kind) ? PHONE_KIND_NAMES[entry.kind as keyof typeof PHONE_KIND_NAMES] : t('Autre');
+  return Object.hasOwn(PHONE_KIND_NAMES, entry.kind) ? PHONE_KIND_NAMES[entry.kind as keyof typeof PHONE_KIND_NAMES] : t('Other');
 }
 
 export function placeKindName(entry: Pick<EmailEntry | AddressEntry, 'kind' | 'label'>): string {
   if (entry.label.trim()) return entry.label.trim();
-  return Object.hasOwn(PLACE_KIND_NAMES, entry.kind) ? PLACE_KIND_NAMES[entry.kind as keyof typeof PLACE_KIND_NAMES] : t('Autre');
+  return Object.hasOwn(PLACE_KIND_NAMES, entry.kind) ? PLACE_KIND_NAMES[entry.kind as keyof typeof PLACE_KIND_NAMES] : t('Other');
 }
 
 /** A `mailto:` address; null for one that is no address. */

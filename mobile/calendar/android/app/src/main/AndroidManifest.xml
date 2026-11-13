@@ -19,6 +19,11 @@
     <!-- Réglages' « Notifications à l'heure » asks Android to leave the app out of the battery's
          optimization only when the person chooses to (RemindersModule). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- « Copy to the phone's calendar » (Réglages): the events written, one way, under the app's own
+         account (mirror/PhoneMirrorModule), and read back from that account alone; asked at runtime only
+         when it is turned on. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <!-- Declared by Notifee for features this app never uses. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" tools:node="remove" />
@@ -403,6 +408,42 @@
           <action android:name="android.service.quicksettings.action.QS_TILE" />
         </intent-filter>
       </service>
+
+      <!-- The phone's own calendar, one way (« Copy to the phone's calendar »: mobile/shared/android/src/mirror,
+           mirror/PhoneMirrorModule): the app's own account, its authenticator and its sync adapter, which
+           fetches nothing. Exported: Android's account manager binds the authenticator, and the calendar apps
+           find the adapter through the package manager; neither does anything when bound by another app. -->
+      <service
+        android:name="com.stephenprn.unlease.mirror.AuthenticatorService"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.accounts.AccountAuthenticator" />
+        </intent-filter>
+        <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/mirror_authenticator" />
+      </service>
+      <service
+        android:name="com.stephenprn.unlease.mirror.MirrorSyncService"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.content.SyncAdapter" />
+        </intent-filter>
+        <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/mirror_sync" />
+      </service>
+      <!-- A copied event's « open in Agenda » in a calendar app that offers it (CalendarContract's custom app,
+           set on every copied event to this package): opens it here. It never shows. -->
+      <activity
+        android:name=".mirror.EventOpenActivity"
+        android:theme="@android:style/Theme.NoDisplay"
+        android:exported="true"
+        android:taskAffinity=""
+        android:excludeFromRecents="true"
+        android:noHistory="true">
+        <intent-filter>
+          <action android:name="android.provider.calendar.action.HANDLE_CUSTOM_EVENT" />
+          <category android:name="android.intent.category.DEFAULT" />
+          <data android:mimeType="vnd.android.cursor.item/event" />
+        </intent-filter>
+      </activity>
 
       <!-- The reminders seen to after the system's changes (mobile/shared/android/src/reminders): each a
            protected broadcast only Android sends, so not exported. -->

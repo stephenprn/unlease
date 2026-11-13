@@ -5,7 +5,7 @@
  * Claude is sent. Shared by the server (what it asks), both clients (the editor, « Relire ») and the
  * demo.
  */
-import { inEnglish, t, tc } from '@unlease/core/i18n';
+import { inEnglish, inFrench, t } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
 import { SUGGESTED_COLLECTIONS } from '../models/collections';
 import { INBOX_ID, LINK_KINDS, type LinkItem, type LinkKind, type Note } from '../models/entities';
@@ -34,18 +34,14 @@ export function kindOfTemplateId(id: string): LinkKind | null {
   return (LINK_KINDS as readonly string[]).includes(kind) ? (kind as LinkKind) : null;
 }
 
-const CONTEXT = /^(.+) \[(\w+)\]$/;
-
-/** A preset's name (or hint) in the interface's language: « Note [rating] » reads « Note », « Rating » in English. */
+/** A preset's name (or hint) in the interface's language. */
 function shown(text: string): string {
-  const contextual = CONTEXT.exec(text);
-  return contextual ? tc(contextual[2]!, contextual[1]!) : t(text);
+  return t(text);
 }
 
 /** A preset's name in French and in English (« Note » / « Rating »): what the analysis prompt lists. */
 export function presetNames(field: PresetField): { readonly fr: string; readonly en: string } {
-  const contextual = CONTEXT.exec(field.name);
-  return { fr: contextual ? contextual[1]! : field.name, en: inEnglish(field.name) };
+  return { fr: inFrench(field.name), en: inEnglish(field.name) };
 }
 
 /** A preset's field as the person sees it (and as it is kept once they change the template): its words in the interface's language. */
@@ -316,16 +312,16 @@ export function templateProblems(
   let name: string | null = null;
   if (draft.kind === null) {
     const clean = fold(draft.name);
-    if (!clean) name = t('Donnez-lui un nom.');
+    if (!clean) name = t('Give it a name.');
     // A saved template being edited is among the others: its own name is no clash.
-    else if (others.some(other => other.id !== draft.id && other.kind === null && other.deletedAt === null && fold(other.name) === clean)) name = t('Un modèle porte déjà ce nom.');
+    else if (others.some(other => other.id !== draft.id && other.kind === null && other.deletedAt === null && fold(other.name) === clean)) name = t('A template already has this name.');
   }
   const fields: Record<string, string> = {};
   const seen = new Map<string, string>();
   for (const field of draft.fields) {
     const clean = fold(field.name);
-    if (!clean) fields[field.id] = t('Nommez cette information.');
-    else if (seen.has(clean)) fields[field.id] = t('Une autre information porte ce nom.');
+    if (!clean) fields[field.id] = t('Name this fact.');
+    else if (seen.has(clean)) fields[field.id] = t('Another fact has this name.');
     else seen.set(clean, field.id);
   }
   return { name, fields };

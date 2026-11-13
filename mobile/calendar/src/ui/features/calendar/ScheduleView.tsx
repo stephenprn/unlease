@@ -100,9 +100,9 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
           <AgendaRow item={item} day={section.day} twelveHours={twelveHours} onOpen={each => onOpen(each, section.day)} />
         </Animated.View>
       )}
-      renderSectionFooter={({ section }) => (section.data.length === 0 ? <EmptyLine text={t('Rien de prévu')} style={styles.none} /> : null)}
+      renderSectionFooter={({ section }) => (section.data.length === 0 ? <EmptyLine text={t('Nothing planned')} style={styles.none} /> : null)}
       ItemSeparatorComponent={Gap}
-      ListEmptyComponent={<EmptyState scene="reminders" title={t('Rien de prévu')} text={t('Aucun événement sur ces jours. Le bouton +, en bas, en ajoute un.')} />}
+      ListEmptyComponent={<EmptyState scene="reminders" title={t('Nothing planned')} text={t('No events on these days. The + button, at the bottom, adds one.')} />}
     />
     </View>
   );

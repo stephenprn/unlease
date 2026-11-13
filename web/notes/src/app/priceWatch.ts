@@ -40,7 +40,7 @@ export function checkPriceNow(linkId: string): Promise<PriceSlip> {
 
 async function askServer(linkId: string): Promise<PriceSlip> {
   const config = useSettingsStore.getState().server;
-  if (!config) return { text: t('Aucun serveur n’est connecté'), tone: 'error' };
+  if (!config) return { text: t('No server is connected'), tone: 'error' };
   try {
     const answer = await checkPrice(config, linkId);
     requestSync();
@@ -48,6 +48,6 @@ async function askServer(linkId: string): Promise<PriceSlip> {
   } catch (error) {
     // Refused for now (read a moment ago, too many asks): a word of caution, not a failure.
     if (error instanceof SyncError && error.status === 409) return { text: error.message, tone: 'warning' };
-    return { text: error instanceof Error ? error.message : t('erreur inconnue'), tone: 'error' };
+    return { text: error instanceof Error ? error.message : t('unknown error'), tone: 'error' };
   }
 }

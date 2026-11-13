@@ -77,8 +77,8 @@ function BinRowComponent({ title, meta, leading, onOpen, onRestore, onDelete }: 
       ) : (
         <View style={styles.press}>{body}</View>
       )}
-      <Button kind="tonal" small icon="restore" label={t('Restaurer')} accessibilityLabel={t('Restaurer {name}', { name: title })} onPress={onRestore} />
-      <IconButton icon="trash" label={t('Supprimer définitivement {name}', { name: title })} shape={2} onPress={onDelete} />
+      <Button kind="tonal" small icon="restore" label={t('Restore')} accessibilityLabel={t('Restore {name}', { name: title })} onPress={onRestore} />
+      <IconButton icon="trash" label={t('Delete {name} forever', { name: title })} shape={2} onPress={onDelete} />
     </Organic>
   );
 }
@@ -116,7 +116,7 @@ function BinListComponent({ ids, renderRow, retention, emptyText }: BinListProps
             </AppText>
           ) : undefined
         }
-        ListEmptyComponent={<EmptyState scene="trash" title={t('La corbeille est vide')} text={emptyText} />}
+        ListEmptyComponent={<EmptyState scene="trash" title={t('The bin is empty')} text={emptyText} />}
         renderItem={({ item }) => (
           <Animated.View entering={arrived.has(item) ? listIn : undefined} exiting={listOut}>
             {renderRow(item)}

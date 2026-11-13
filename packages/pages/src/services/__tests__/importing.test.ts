@@ -2,7 +2,7 @@ import { parseRich } from '@unlease/core/services/richText';
 import type { Block, BlockKind } from '../../models/blocks';
 import { blockFields, blockFromRecord } from '../../sync/entities';
 import { ROOT, type ChildIndex } from '../blocks';
-import { exportDay, importChanges, importContainerTitle, parseCsv, planImport, previewEntries, readExport, type ExportFile, type ImportChoices, type ImportLibrary } from '../importing';
+import { exportDay, importChanges, importContainerTitle, importCountLines, importReportLines, importUndoChanges, notionPageIcon, parseCsv, planImport, previewEntries, readExport, type ExportFile, type ImportChoices, type ImportLibrary } from '../importing';
 import { blocksFromMarkdown, type BlockDraft } from '../pageText';
 
 const ID = (n: number): string => n.toString(16).padStart(32, '0');
@@ -164,6 +164,135 @@ describe('a Notion export read as pages', () => {
   });
 });
 
+/** A page as Notion's HTML export writes it: its header (cover, icon, title), then its body. */
+function notionHtml(title: string, header: string, body = ''): string {
+  return [
+    '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>' + title + '</title><style>',
+    '/* cspell:disable-file */ .page-header-icon { font-size: 78px; } .page-header-icon .icon { display: block; }',
+    '</style></head><body><article id="1d0c5e2a-9f3b-4c7e-8a51-0e6f2b7d9c41" class="page sans"><header>' + header + '<h1 class="page-title">' + title + '</h1><p class="page-description"></p></header>',
+    '<div class="page-body">' + body + '</div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>',
+  ].join('');
+}
+
+const EMOJI_HEADER = (emoji: string): string => `<div class="page-header-icon undefined"><span class="icon">${emoji}</span></div>`;
+
+/**
+ * The same workspace exported twice, as Notion's « Markdown & CSV » (no icon anywhere: `# Voyage`)
+ * and as its HTML (each page's icon over its title), each archive in its own `Export-…` folder,
+ * dropped together.
+ */
+function notionWithHtml(): ExportFile[] {
+  const md = 'Export-3f6b2c1e-8d4a-4f1b-9c2e-5a7d8e9f0a1b';
+  const html = 'Export-7c1d9e2f-0b3a-4e5c-8d6f-1a2b3c4d5e6f';
+  const files: [string, string | null, number?][] = [
+    [`${md}/Voyage ${V}.md`, `# Voyage\n\nNotre voyage.\n\n![carte.png](Voyage%20${V}/carte.png)\n\n[Lisbonne](Voyage%20${V}/Lisbonne%20${L}.md)`],
+    [`${md}/Voyage ${V}/carte.png`, null, 2048],
+    [`${md}/Voyage ${V}/Lisbonne ${L}.md`, '# Lisbonne\n\nLe tram 28.'],
+    [`${md}/Voyage ${V}/Budget ${B}_all.csv`, 'Name,Montant\nVols,186\nHôtel,1200\n'],
+    [`${md}/Voyage ${V}/Budget ${B}/Vols ${F}.md`, '# Vols\n\nMontant: 186\n\nAller le 12.'],
+    [`${md}/Voyage ${V}/Budget ${B}/Hôtel ${H}.md`, '# Hôtel\n\nMontant: 1200\n'],
+    [`${md}/Sans icône ${T}.md`, '# Sans icône\n\nRien.'],
+    [`${html}/index.html`, '<html><body><ul><li><a href="Voyage%20' + V + '.html">Voyage</a></li></ul></body></html>'],
+    [
+      `${html}/Voyage ${V}.html`,
+      notionHtml('Voyage', EMOJI_HEADER('🌍'), `<p class="">Notre voyage.</p><figure class="image"><a href="Voyage%20${V}/carte.png"><img style="width:640px" src="Voyage%20${V}/carte.png"/></a></figure><figure id="a1" class="link-to-page"><a href="Voyage%20${V}/Lisbonne%20${L}.html"><span class="icon">🚋</span>Lisbonne</a></figure>`),
+    ],
+    [`${html}/Voyage ${V}/carte.png`, null, 2048],
+    [
+      `${html}/Voyage ${V}/Lisbonne ${L}.html`,
+      notionHtml('Lisbonne', `<img class="page-cover-image" src="Lisbonne%20${L}/couverture.jpg" style="object-position:center 50%"/><div class="page-header-icon page-header-icon-with-cover"><img class="icon" src="Lisbonne%20${L}/tram.png"/></div>`, '<p class="">Le tram 28.</p>'),
+    ],
+    [`${html}/Voyage ${V}/Lisbonne ${L}/tram.png`, null, 900],
+    [`${html}/Voyage ${V}/Lisbonne ${L}/couverture.jpg`, null, 40_000],
+    [`${html}/Voyage ${V}/Budget ${B}.html`, notionHtml('Budget', EMOJI_HEADER('&#x1F4B0;'), '<table class="collection-content"></table>')],
+    [`${html}/Voyage ${V}/Budget ${B}/Vols ${F}.html`, notionHtml('Vols', EMOJI_HEADER('✈️'), '<table class="properties"></table><p>Aller le 12.</p>')],
+    [`${html}/Voyage ${V}/Budget ${B}/Hôtel ${H}.html`, notionHtml('Hôtel', EMOJI_HEADER('🏨'), '<table class="properties"></table>')],
+    [`${html}/Sans icône ${T}.html`, notionHtml('Sans icône', '', '<p>Rien.</p>')],
+  ];
+  return files.map(([path, text, bytes]) => ({ path, ...(text !== null ? { text } : {}), bytes: bytes ?? text?.length ?? 0 }));
+}
+
+describe('the pages’ icons from Notion’s HTML export', () => {
+  beforeEach(() => {
+    counter = 0;
+  });
+
+  it('reads the icon over a page’s title: an emoji, a picture, none (an icon in its body is a sub-page’s)', () => {
+    expect(notionPageIcon(notionHtml('Voyage', EMOJI_HEADER('🌍')))).toEqual({ emoji: '🌍' });
+    expect(notionPageIcon(notionHtml('Équipe', EMOJI_HEADER('👩🏽‍💻')))).toEqual({ emoji: '👩🏽‍💻' });
+    expect(notionPageIcon(notionHtml('Budget', EMOJI_HEADER('&#x1F4B0;')))).toEqual({ emoji: '💰' });
+    expect(notionPageIcon(notionHtml('Lisbonne', '<div class="page-header-icon undefined"><img class="icon" src="Lisbonne%20abc/tram.png"/></div>'))).toEqual({ picture: 'Lisbonne%20abc/tram.png' });
+    expect(notionPageIcon(notionHtml('Notes', '<div class="page-header-icon undefined"><img class="icon" src="https://www.notion.so/icons/book-closed_gray.svg"/></div>'))).toEqual({ picture: 'https://www.notion.so/icons/book-closed_gray.svg' });
+    expect(notionPageIcon(notionHtml('Sans', '', '<figure class="link-to-page"><a href="x.html"><span class="icon">🚋</span>X</a></figure>'))).toBeNull();
+  });
+
+  it('gives each Markdown page the icon its HTML page shows, the databases’ and their rows’ too', () => {
+    const read = readExport(notionWithHtml(), { mint });
+    expect(read.kind).toBe('notion');
+    expect(read.top.map(key => read.pages[key]!.title)).toEqual(['Sans icône', 'Voyage']);
+    const byTitle = Object.fromEntries(Object.values(read.pages).map(page => [page.title, page]));
+    expect(byTitle.Voyage).toMatchObject({ icon: '🌍', iconPicture: false });
+    expect(byTitle.Budget).toMatchObject({ icon: '💰' });
+    expect(byTitle.Vols).toMatchObject({ icon: '✈️' });
+    expect(byTitle['Sans icône']).toMatchObject({ icon: null, iconPicture: false });
+    // A custom icon is a picture: a page's icon is an emoji, so it comes without, and says so.
+    expect(byTitle.Lisbonne).toMatchObject({ icon: null, iconPicture: true });
+    // Nothing else of the HTML is read: the pages hold what their Markdown holds.
+    expect(byTitle.Voyage!.drafts.map(draft => draft.kind)).toEqual(['text', 'image', 'page', 'page']);
+  });
+
+  it('leaves out nothing it read for an icon, says why of the HTML that matched no page, and attaches pictures from the bytes given', () => {
+    const given = notionWithHtml();
+    const read = readExport(given, { mint });
+    const why = Object.fromEntries(read.leftOut.map(item => [item.title, item.why]));
+    expect(Object.keys(why).filter(name => name.endsWith('.html'))).toEqual(['index.html']);
+    expect(why['index.html']).toMatch(/icônes/);
+    // The custom icon's picture is said on its page, the cover is no page's.
+    expect(why['tram.png']).toBeUndefined();
+    expect(why['couverture.jpg']).toMatch(/Aucune page/);
+    const carte = read.assets[`Voyage ${V}/carte.png`]!;
+    expect(given.some(file => file.path === carte.source)).toBe(true);
+  });
+
+  it('shows the icon in the preview, says a picture icon is left out, and writes the emoji on the page', () => {
+    const read = readExport(notionWithHtml(), { mint });
+    const plan = planImport(read, choices(), EMPTY, mint);
+    const entries = previewEntries(plan);
+    expect(entries.map(entry => entry.title)).toEqual(expect.arrayContaining(['🌍 Voyage', '💰 Budget', '✈️ Vols', 'Lisbonne', 'Sans icône']));
+    expect(entries.find(entry => entry.title === 'Lisbonne')?.why).toMatch(/icône est une image/);
+    const result = importChanges(plan, EMPTY, 1000, mint);
+    const blocks = written(result.changes);
+    const voyage = Object.values(read.pages).find(page => page.title === 'Voyage')!;
+    expect(blocks[voyage.id]).toMatchObject({ kind: 'page', text: 'Voyage', icon: '🌍' });
+    expect(result.iconed).toEqual([]);
+  });
+
+  it('imported again over pages that came without icons, gives each its icon and takes it back with the import', () => {
+    const made = library([
+      ['old', 'page', null, 'Voyage', 'a0'],
+      ['oldLis', 'page', 'old', 'Lisbonne', 'a0'],
+      ['oldBudget', 'page', 'old', 'Budget', 'a1'],
+    ]);
+    // A page here with an icon of its own keeps it.
+    const here: ImportLibrary = { ...made, blocks: { ...made.blocks, oldBudget: { ...made.blocks.oldBudget!, icon: '📊' } } };
+    const plan = planImport(readExport(notionWithHtml(), { mint }), choices({ placement: 'top' }), here, mint);
+    expect(plan.pages.filter(page => page.fate === 'same').map(page => [page.title, page.iconAdded])).toEqual([
+      ['Voyage', true],
+      ['Lisbonne', false],
+      ['Budget', false],
+    ]);
+    expect(plan.totals.icons).toBe(1);
+    expect(previewEntries(plan).find(entry => entry.key === plan.pages.find(page => page.title === 'Voyage')!.key)?.why).toMatch(/son icône/);
+    expect(importCountLines(plan).some(line => /icône ajoutée/.test(line.text))).toBe(true);
+    const result = importChanges(plan, here, 1000, mint);
+    expect(result.changes.find(change => change.id === 'old')?.patch).toEqual({ icon: '🌍' });
+    expect(result.changes.some(change => change.id === 'oldBudget' && 'icon' in change.patch)).toBe(false);
+    expect(result.iconed).toEqual(['old']);
+    expect(importReportLines(result, 0, 0)).toContain('1 icône ajoutée à une page déjà là');
+    expect(importUndoChanges(result.created, 2000, result.iconed)).toContainEqual({ type: 'block', id: 'old', patch: { icon: null } });
+  });
+});
+
 describe('Markdown from a folder read as pages', () => {
   const vault: ExportFile[] = [
     { path: 'Coffre/Accueil.md', text: '# Accueil\n\nVoir [[Recettes/Tarte|la tarte]] et [[Inconnue]].\n\n![[photo.jpg]]', bytes: 60 },
@@ -265,7 +394,8 @@ describe('planning and writing an import', () => {
     const budget = Object.values(blocks).find(block => block.kind === 'page' && block.text === 'Budget')!;
     expect(budget.parentId).toBe('old');
     expect(budget.position > 'a0').toBe(true);
-    expect(blocks.old).toBeUndefined();
+    // Kept as it is but for its icon, which it lacked.
+    expect(result.changes.filter(change => change.id === 'old')).toEqual([{ type: 'block', id: 'old', patch: { icon: '🌍' } }]);
   });
 
   it('the same export the same day finds its new page again and adds nothing', () => {

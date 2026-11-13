@@ -14,7 +14,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { GEOMETRY } from '@unlease/design/palette';
 import { RADII, SHAPES } from '@unlease/design/shapes';
 import { listName, workLine } from '@unlease/contacts/services/names';
@@ -165,12 +165,12 @@ function ContactRowComponent({ id, order, detail = false, railed = false, place 
       <Animated.View style={[styles.side, start]}>
         <Icon name="phoneCall" size={24} color={ink} />
         <AppText variant="label" color={ink}>
-          {t('Appeler')}
+          {t('Call')}
         </AppText>
       </Animated.View>
       <Animated.View style={[styles.side, end]}>
         <AppText variant="label" color={ink}>
-          {t('SMS')}
+          {tc('message', 'Text')}
         </AppText>
         <Icon name="bubble" size={24} color={ink} />
       </Animated.View>
@@ -194,7 +194,7 @@ function ContactRowComponent({ id, order, detail = false, railed = false, place 
             style={[styles.row, place ? styles.rowInPanel : null, corners(shape)]}
             accessibilityRole="link"
             accessibilityLabel={name}
-            accessibilityActions={number ? [{ name: 'call', label: t('Appeler') }, { name: 'text', label: t('Écrire un SMS') }] : undefined}
+            accessibilityActions={number ? [{ name: 'call', label: t('Call') }, { name: 'text', label: t('Send a text') }] : undefined}
             onAccessibilityAction={event => {
               const action = event.nativeEvent.actionName;
               if (action === 'call' || action === 'text') act(action);

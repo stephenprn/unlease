@@ -37,21 +37,21 @@ const LabelRow = memo(function LabelRow({ id, uses }: { id: string; uses: number
   const commit = (): void => {
     const name = draft?.trim() ?? '';
     if (name && name !== label.name) {
-      if (labelNameTaken(name, id)) showWarning(t('Ce libellé existe déjà'));
+      if (labelNameTaken(name, id)) showWarning(t('This label already exists'));
       else renameLabel(id, name);
     }
     setDraft(null);
   };
   return (
     <li className={page.labelRow} data-motion={id}>
-      <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Couleur de {name}', { name: label.name })} data-tip={t('Couleur')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
+      <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Colour of {name}', { name: label.name })} data-tip={t('Colour')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
         <LabelTag color={label.color} size={26} />
       </button>
       <input
         className={`${page.labelName} t-body`}
         value={draft ?? label.name}
         maxLength={CONTACT_LIMITS.labelName}
-        aria-label={t('Renommer {name}', { name: label.name })}
+        aria-label={t('Rename {name}', { name: label.name })}
         onChange={event => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={event => {
@@ -62,15 +62,15 @@ const LabelRow = memo(function LabelRow({ id, uses }: { id: string; uses: number
           }
         }}
       />
-      <Link to={paths.label(id)} className={`${page.labelCount} t-meta-strong tabular`} ariaLabel={t('{contacts} avec {name}', { contacts: plural(uses, 'contact'), name: label.name })} tip={t('Voir les contacts')}>
+      <Link to={paths.label(id)} className={`${page.labelCount} t-meta-strong tabular`} ariaLabel={t('{contacts} with {name}', { contacts: plural(uses, 'contact'), name: label.name })} tip={t('See the contacts')}>
         {uses}
       </Link>
-      <IconButton icon="trash" label={t('Supprimer {name}', { name: label.name })} shape={2} onClick={() => showUndo(t('Libellé « {name} » supprimé', { name: label.name }), deleteLabel(id))} />
-      <Popover open={coloring} anchor={tag} onDismiss={() => setColoring(false)} label={t('Couleur de {name}', { name: label.name })} width={300}>
+      <IconButton icon="trash" label={t('Delete {name}', { name: label.name })} shape={2} onClick={() => showUndo(t('Label “{name}” deleted', { name: label.name }), deleteLabel(id))} />
+      <Popover open={coloring} anchor={tag} onDismiss={() => setColoring(false)} label={t('Colour of {name}', { name: label.name })} width={300}>
         <div className={page.labelColors}>
           <LabelColorPicker
             value={label.color}
-            label={t('Couleur de {name}', { name: label.name })}
+            label={t('Colour of {name}', { name: label.name })}
             onChange={color => {
               recolorLabel(id, color);
               setColoring(false);
@@ -93,7 +93,7 @@ export function LabelsScreen() {
   // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
   useListMotion(list, { late: true });
   // A name already worn is said under the strip, what was typed kept.
-  const form = useForm({ name: !isBlank(name) && labelNameTaken(name) ? t('Ce libellé existe déjà : choisissez un autre nom.') : null });
+  const form = useForm({ name: !isBlank(name) && labelNameTaken(name) ? t('This label already exists: choose another name.') : null });
   const add = (): void => {
     if (isBlank(name)) return;
     void form.submit(() => {
@@ -104,7 +104,7 @@ export function LabelsScreen() {
   };
   return (
     <div className={page.page}>
-      <PageHead title={t('Libellés')} />
+      <PageHead title={t('Labels')} />
       <section className={page.labels}>
         <form
           className={page.labelNew}
@@ -126,23 +126,23 @@ export function LabelsScreen() {
             className={`${page.labelNewInput} t-body`}
             value={name}
             onChange={setName}
-            placeholder={t('Créer un libellé')}
-            aria-label={t('Nom du nouveau libellé')}
+            placeholder={t('Create label')}
+            aria-label={t('New label’s name')}
             maxLength={CONTACT_LIMITS.labelName}
             enterKeyHint="done"
             autoCapitalize="sentences"
           />
-          {name.trim() ? <IconButton icon="check" label={t('Créer')} onClick={add} /> : null}
+          {name.trim() ? <IconButton icon="check" label={t('Create')} onClick={add} /> : null}
         </form>
         <FieldProblem field={form.field('name')} id="label-new-problem" className={page.labelNewProblem} />
         {labels.length > 0 ? (
-          <ul ref={list} className={page.labelList} aria-label={t('Libellés')}>
+          <ul ref={list} className={page.labelList} aria-label={t('Labels')}>
             {labels.map(label => (
               <LabelRow key={label.id} id={label.id} uses={counts.get(label.id) ?? 0} />
             ))}
           </ul>
         ) : (
-          <EmptyState scene="label" title={t('Aucun libellé')} text={t('Les libellés regroupent des contacts : la famille, le travail, le club. Un contact peut en porter plusieurs.')} />
+          <EmptyState scene="label" title={t('No labels')} text={t('Labels group contacts: family, work, the club. A contact can have several.')} />
         )}
       </section>
     </div>

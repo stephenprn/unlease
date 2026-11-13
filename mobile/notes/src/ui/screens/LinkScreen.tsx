@@ -123,7 +123,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Ce lien n’existe plus.')} />
+        <EmptyState scene="trash" title={t('Not found')} text={t('This link no longer exists.')} />
       </View>
     );
   }
@@ -147,11 +147,11 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
   const read = link.analyzedAt === null ? '' : formatDay(link.analyzedAt, now);
   const dates =
     link.analyzedAt !== null && link.status === 'ready'
-      ? t('Ajouté le {added} · lu le {read}', { added, read })
+      ? t('Added on {added} · read on {read}', { added, read })
       : link.analyzedAt !== null && failed
-        ? t('Ajouté le {added} · lecture tentée le {read}', { added, read })
-        : t('Ajouté le {added}', { added });
-  const open = () => Linking.openURL(link.url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+        ? t('Added on {added} · reading tried on {read}', { added, read })
+        : t('Added on {added}', { added });
+  const open = () => Linking.openURL(link.url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
   // Tall enough to show the thing, low enough that the title and the price stay in the first screen.
   const pictureHeight = Math.round(Math.min(360, width * 0.9));
 
@@ -185,7 +185,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
   // What became of the reading, and the way on: one panel, its action under the words.
   const action = claude
     ? unread || failed
-      ? { label: unread ? t('Lire la page') : t('Réessayer'), run: () => reanalyzeLink(id) }
+      ? { label: unread ? t('Read the page') : t('Try again'), run: () => reanalyzeLink(id) }
       : null
     : !reading && unread
       ? // With a server, what is missing is the key: straight to that section (the web's).
@@ -195,7 +195,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
     link.status === 'pending' && reading ? (
       <View style={styles.reading}>
         <ReadingTrack width={96} />
-        <AppText variant="meta">{t('Lecture de la page par Claude…')}</AppText>
+        <AppText variant="meta">{tc('status', 'Claude is reading the page…')}</AppText>
       </View>
     ) : unread || failed ? (
       <Organic outline={NOTICE} style={[styles.notice, action ? styles.noticeWithAction : null]}>
@@ -205,12 +205,12 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
         <View style={styles.noticeBody}>
           <AppText variant="body" color={failed ? theme.color.danger : theme.color.inkMuted}>
             {failed
-              ? (link.error ? t(link.error) : t('La page n’a pas pu être lue.'))
+              ? (link.error ? t(link.error) : t('The page couldn’t be read.'))
               : !server
-                ? t('Pas lu : Claude lit les liens depuis votre serveur {app}. Connectez-le dans l’administration.', { app: APP_NAME })
+                ? t('Not read: Claude reads links from your {app} server. Connect it in the Administration.', { app: APP_NAME })
                 : !reading
-                  ? t('Pas lu : ajoutez une clé API Claude dans l’administration pour que les liens soient lus.')
-                  : t('Ce lien a été gardé sans être lu.')}
+                  ? t('Not read: add a Claude API key in the Administration to have links read.')
+                  : t('This link was kept without being read.')}
           </AppText>
           {/* `small` gives the 40 high action its 48 touch (its 8 of slop); the style keeps its size. */}
           {action ? <Button kind="text" small label={action.label} onPress={action.run} style={styles.noticeAction} /> : null}
@@ -233,12 +233,12 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
               }
             : undefined
         }
-        titleLabel={line ? t('Collection {name} : changer de collection', { name: shownTitle(line) }) : undefined}
+        titleLabel={line ? t('Collection {name}: change collection', { name: shownTitle(line) }) : undefined}
         onBack={() => navigation.goBack()}
         actions={
           <IconButton
             icon="more"
-            label={t('Plus d’actions')}
+            label={t('More actions')}
             onPress={() => {
               Keyboard.dismiss();
               setMenu(true);
@@ -300,9 +300,9 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
                 {fiche.stale ? (
                   <View style={styles.stale}>
                     <AppText variant="meta" style={styles.flex}>
-                      {t('Lu avant le dernier changement de ses informations.')}
+                      {t('Read before its facts last changed.')}
                     </AppText>
-                    {claude ? <Button kind="text" small label={t('Relire')} onPress={() => reanalyzeLink(id)} style={styles.staleAction} /> : null}
+                    {claude ? <Button kind="text" small label={t('Read again')} onPress={() => reanalyzeLink(id)} style={styles.staleAction} /> : null}
                   </View>
                 ) : null}
               </View>
@@ -311,18 +311,18 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
             <PeopleField type="link" id={id} ids={link.contactIds} />
 
             <TextField
-              label={t('Votre note')}
+              label={t('Your note')}
               value={comment}
               onChangeText={text => {
                 setComment(text);
                 clearTimeout(timer.current);
                 timer.current = setTimeout(() => saveComment(text), 400);
               }}
-              placeholder={t('Pour qui, pourquoi, quand…')}
+              placeholder={t('For whom, why, when…')}
               multiline
               maxLength={TEXT_LIMITS.link.comment}
               style={styles.comment}
-              accessibilityLabel={t('Votre note sur ce lien')}
+              accessibilityLabel={t('Your note on this link')}
             />
 
             <View style={styles.details}>
@@ -341,14 +341,14 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
         <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
           <Button
             kind="tonal"
-            label={link.done ? t('Remettre à faire') : stampWord(link.kind)}
+            label={link.done ? t('Put back to do') : stampWord(link.kind)}
             icon={link.done ? 'undo' : 'stamp'}
             onPress={() => {
               const undo = setLinkDone(id, !link.done);
-              showSnack(link.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(link.kind) }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+              showSnack(link.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(link.kind) }), { label: t('Undo'), run: undo }, { tone: 'success' });
             }}
           />
-          <Button label={t('Ouvrir la page')} icon="external" onPress={open} style={styles.primary} />
+          <Button label={t('Open the page')} icon="external" onPress={open} style={styles.primary} />
         </View>
       )}
 
@@ -356,30 +356,30 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
         visible={menu}
         onDismiss={() => setMenu(false)}
         items={[
-          { label: t('Changer de collection'), icon: 'transfer', onPress: () => setMoving(true) },
+          { label: t('Change collection'), icon: 'transfer', onPress: () => setMoving(true) },
           {
-            label: t('Copier l’adresse'),
+            label: t('Copy the address'),
             icon: 'copy',
             onPress: () =>
               void copyText(link.url).then(copied =>
-                copied ? showSnack(t('Adresse copiée'), undefined, { tone: 'success' }) : showSnack(t('Impossible de copier l’adresse'), undefined, { tone: 'error' }),
+                copied ? showSnack(t('Address copied'), undefined, { tone: 'success' }) : showSnack(t('Couldn’t copy the address'), undefined, { tone: 'error' }),
               ),
           },
-          { label: t('Partager'), icon: 'share', onPress: () => Share.share({ message: link.url, title: link.title || undefined }).catch(() => {}) },
-          ...(claude ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onPress: () => reanalyzeLink(id) }] : []),
+          { label: t('Share'), icon: 'share', onPress: () => Share.share({ message: link.url, title: link.title || undefined }).catch(() => {}) },
+          ...(claude ? [{ label: link.status === 'skipped' ? t('Read the page') : t('Read the page again'), icon: 'refresh' as const, onPress: () => reanalyzeLink(id) }] : []),
           // Where its facts are chosen: its collection's page, or its kind's usual facts (« Non classé »'s link of no kind has none).
           ...(claude && (fiche.collection || (fiche.kind && fiche.kind !== 'other'))
-            ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', fiche.collection ? { collection: fiche.collection } : { kind: fiche.kind! }) }]
+            ? [{ label: t('Facts Claude notes'), icon: 'list' as const, onPress: () => navigation.navigate('Template', fiche.collection ? { collection: fiche.collection } : { kind: fiche.kind! }) }]
             : []),
           {
-            label: t('Supprimer'),
+            label: t('Delete'),
             icon: 'trash',
             danger: true,
             onPress: () => {
               setParting(link);
               const undo = deleteLink(id);
               navigation.goBack();
-              showSnack(t('Lien supprimé'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+              showSnack(t('Link deleted'), { label: t('Undo'), run: undo }, { tone: 'success' });
             },
           },
         ]}
@@ -392,7 +392,7 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
         onPick={target => {
           const undo = moveLink(id, target);
           const into = useLibraryStore.getState().notes[target];
-          showSnack(t('Déplacé dans {name}', { name: into ? shownTitle(into) : '' }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+          showSnack(t('Moved to {name}', { name: into ? shownTitle(into) : '' }), { label: t('Undo'), run: undo }, { tone: 'success' });
         }}
       />
     </View>
@@ -416,7 +416,7 @@ function Gallery({ blobIds, fallback, width, height, onLost }: { blobIds: readon
         ))}
       </ScrollView>
       {blobIds.length > 1 ? (
-        <View style={styles.dots} accessibilityLabel={t('Image {index} sur {count}', { index: page + 1, count: blobIds.length })}>
+        <View style={styles.dots} accessibilityLabel={t('Picture {index} of {count}', { index: page + 1, count: blobIds.length })}>
           {blobIds.map((blobId, index) => (
             <View key={blobId} style={[styles.dot, DOT, index === page ? styles.dotOn : null]} />
           ))}

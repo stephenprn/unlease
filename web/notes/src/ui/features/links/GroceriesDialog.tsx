@@ -68,14 +68,14 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
     return () => controller.abort();
   }, [id, round]);
 
   if (!link) return null;
-  const newTitle = t('Courses : {recipe}', { recipe: link.title || linkShop(link) });
+  const newTitle = t('Shopping: {recipe}', { recipe: link.title || linkShop(link) });
   const toggle = (index: number): void =>
     setSkipped(previous => {
       const next = new Set(previous);
@@ -88,20 +88,20 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
   const picked = lists.find(list => list.id === target) ?? null;
   const add = (): void => {
     const noteId = addToChecklist(picked?.id ?? null, newTitle, ticked);
-    const list = picked ? picked.title || t('Liste sans titre') : newTitle;
+    const list = picked ? picked.title || t('Untitled list') : newTitle;
     onDismiss();
-    showSnack(t('{items} dans « {list} »', { items: plural(ticked.length, 'ingrédient'), list }), { label: t('Ouvrir'), run: () => navigate(paths.note(noteId)) }, { tone: 'success' });
+    showSnack(t('{items} in “{list}”', { items: plural(ticked.length, 'ingredient'), list }), { label: t('Open'), run: () => navigate(paths.note(noteId)) }, { tone: 'success' });
   };
 
   const body =
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Lecture des ingrédients…')}</p>
+        <p className="t-body">{t('Reading the ingredients…')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Les ingrédients n’ont pas pu être lus : {reason}', { reason: t(phase.reason) })}
+        {t('The ingredients couldn’t be read: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
@@ -121,13 +121,13 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
         </ul>
         <section className={styles.couponTips} aria-labelledby={`${titleId}-target`}>
           <h3 id={`${titleId}-target`} className="t-section">
-            {t('Ajouter à')}
+            {t('Add to')}
           </h3>
           <div role="radiogroup" aria-labelledby={`${titleId}-target`} className={styles.choices}>
             <button type="button" role="radio" aria-checked={picked === null} className={styles.choice} onClick={() => setTarget(null)}>
               <Icon name="plus" size={20} />
               <span className={styles.choiceText}>
-                <span className="t-body">{t('Nouvelle liste')}</span>
+                <span className="t-body">{t('New list')}</span>
                 <span className="t-meta">{newTitle}</span>
               </span>
               {picked === null ? <Icon name="check" size={20} className={styles.choiceMark} /> : null}
@@ -135,7 +135,7 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
             {lists.map(list => (
               <button key={list.id} type="button" role="radio" aria-checked={picked?.id === list.id} className={styles.choice} onClick={() => setTarget(list.id)}>
                 <Icon name="checklist" size={20} />
-                <span className={`${styles.choiceText} t-body`}>{list.title || t('Liste sans titre')}</span>
+                <span className={`${styles.choiceText} t-body`}>{list.title || t('Untitled list')}</span>
                 {picked?.id === list.id ? <Icon name="check" size={20} className={styles.choiceMark} /> : null}
               </button>
             ))}
@@ -152,15 +152,15 @@ function GroceriesBody({ id, titleId, onDismiss }: { id: string; titleId: string
           setRound(value => value + 1);
         }}
       >
-        {t('Réessayer')}
+        {t('Try again')}
       </Button>
     ) : (
       <>
         <Button kind="text" onClick={onDismiss}>
-          {t('Annuler')}
+          {t('Cancel')}
         </Button>
         <Button icon="basket" disabled={ticked.length === 0} onClick={add}>
-          {ticked.length > 0 ? t('Ajouter {items}', { items: plural(ticked.length, 'ingrédient') }) : t('Ajouter')}
+          {ticked.length > 0 ? t('Add {items}', { items: plural(ticked.length, 'ingredient') }) : t('Add')}
         </Button>
       </>
     );

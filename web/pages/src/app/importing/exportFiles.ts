@@ -1,13 +1,14 @@
 /**
  * What Pages' import is given, read in this browser (nothing leaves it): a Notion export (its .zip,
  * and the archives at its top, as Notion cuts a large export in parts), Markdown files, a folder
- * chosen whole (its files' paths kept). Words are decoded (UTF-8, else Windows-1252: a note saved by
+ * chosen whole (its files' paths kept), Notion's HTML export beside its Markdown one (for the pages'
+ * icons). Words are decoded (UTF-8, else Windows-1252: a note saved by
  * an older editor); pictures and files are kept as bytes, for the pages that show them.
  */
 import { unzipSync, type Unzipped } from 'fflate';
 
 import { t } from '@unlease/core/i18n';
-import { isExportArchive, isExportJunk, isExportText, type ExportFile } from '@unlease/pages/services/importing';
+import { isExportArchive, isExportHtml, isExportJunk, isExportText, type ExportFile } from '@unlease/pages/services/importing';
 
 export interface ReadExport {
   readonly files: readonly ExportFile[];
@@ -66,10 +67,9 @@ export async function readExportFiles(given: readonly File[]): Promise<ReadExpor
   const add = (path: string, data: Uint8Array): void => {
     if (isExportJunk(path)) return;
     if (isExportText(path)) files.set(path, { path, text: decode(data), bytes: data.length });
-    else {
-      files.set(path, { path, bytes: data.length });
-      bytes.set(path, data);
-    }
+    else files.set(path, { path, bytes: data.length });
+    // An HTML file is read for its icon (Notion's HTML export) and kept as a file a page may show.
+    if (!isExportText(path) || isExportHtml(path)) bytes.set(path, data);
   };
   // Notion's parts (`Export-…-Part-1.zip`) sit at an archive's top and are opened in place; an archive attached to a page stays a file.
   const open = async (data: Uint8Array, nested: boolean): Promise<void> => {
@@ -86,17 +86,17 @@ export async function readExportFiles(given: readonly File[]): Promise<ReadExpor
       data = new Uint8Array(await file.arrayBuffer());
     } catch {
       // A folder dropped on the zone reads as a file that cannot be read.
-      refused.push({ name: file.name, why: t('Un dossier ne se dépose pas ici : choisissez-le avec « Choisir un dossier », ou compressez-le en .zip.') });
+      refused.push({ name: file.name, why: t('A folder can’t be dropped here: pick it with “Choose a folder”, or compress it as a .zip.') });
       continue;
     }
     if (isExportArchive(file.name)) {
       try {
         await open(data, false);
       } catch {
-        refused.push({ name: file.name, why: t('Archive illisible : téléchargez-la à nouveau.') });
+        refused.push({ name: file.name, why: t('Unreadable archive: download it again.') });
       }
     } else if (path.includes('/') || isExportText(path)) add(path, data);
-    else refused.push({ name: file.name, why: t('Ni une archive .zip, ni un fichier Markdown ou CSV.') });
+    else refused.push({ name: file.name, why: t('Neither a .zip archive nor a Markdown or CSV file.') });
   }
   return { files: [...files.values()], bytes, refused };
 }

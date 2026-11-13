@@ -53,7 +53,7 @@ export function TryPanel({ fields, links }: TryPanelProps) {
   useEffect(() => () => controller.current?.abort(), []);
 
   if (!reading) {
-    return <p className={`${styles.try} t-meta`}>{t('Claude n’est pas configuré : l’essai n’est pas possible.')}</p>;
+    return <p className={`${styles.try} t-meta`}>{t('Claude is not set up: trying is not possible.')}</p>;
   }
 
   // A link gone meanwhile (deleted, moved out) leaves the address field.
@@ -68,7 +68,7 @@ export function TryPanel({ fields, links }: TryPanelProps) {
     if (busy || offline || nothing) return;
     const url = link ? link.url : extractUrls(typed)[0];
     if (!url) {
-      setProblem(t('Aucun lien ici : collez une adresse, comme https://example.org/page.'));
+      setProblem(t('No link here: paste an address, like https://example.org/page.'));
       return;
     }
     setProblem(null);
@@ -83,24 +83,24 @@ export function TryPanel({ fields, links }: TryPanelProps) {
         if (!next.signal.aborted) setState({ kind: 'read', fields: asked, answer, seconds: (performance.now() - started) / 1000 });
       },
       (error: unknown) => {
-        if (!next.signal.aborted) setState({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!next.signal.aborted) setState({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
   };
 
   const options = [
     ...links.map(each => ({ value: each.id, label: linkRowText(each).title })),
-    { value: PASTE, label: t('Coller une adresse') },
+    { value: PASTE, label: t('Paste an address') },
   ];
 
   return (
     <div className={styles.try}>
-      <p className="t-meta">{t('Voyez ce que Claude relèverait, sans rien enregistrer.')}</p>
-      {links.length > 0 ? <SelectField label={t('Lien')} value={link ? link.id : PASTE} options={options} icon={link ? 'link' : 'copy'} onChange={setChoice} /> : null}
+      <p className="t-meta">{t('See what Claude would note, without saving anything.')}</p>
+      {links.length > 0 ? <SelectField label={t('Link')} value={link ? link.id : PASTE} options={options} icon={link ? 'link' : 'copy'} onChange={setChoice} /> : null}
       {pasting ? (
         <TextField
-          label={links.length > 0 ? undefined : t('Adresse')}
-          ariaLabel={t('Adresse à essayer')}
+          label={links.length > 0 ? undefined : t('Address')}
+          ariaLabel={t('Address to try')}
           kind="url"
           value={typed}
           placeholder="https://…"
@@ -120,9 +120,9 @@ export function TryPanel({ fields, links }: TryPanelProps) {
       ) : null}
       <div className={styles.tryAction}>
         <Button kind="tonal" icon="sparkle" busy={busy} disabled={!busy && (offline || nothing)} onClick={run}>
-          {t('Essayer')}
+          {t('Try')}
         </Button>
-        {offline ? <span className={`${styles.tryOffline} t-meta`}>{syncMessage ?? t('Hors ligne')}</span> : null}
+        {offline ? <span className={`${styles.tryOffline} t-meta`}>{syncMessage ?? t('Offline')}</span> : null}
       </div>
       {state.kind === 'failed' ? (
         <p className={`${styles.tryProblem} t-meta`} role="alert">
@@ -151,7 +151,7 @@ function TryResult({ fields, answer, seconds }: { fields: readonly TemplateField
               {value ? (
                 <dd className="t-body">{value}</dd>
               ) : (
-                <dd className={`${styles.none} t-body`} aria-label={t('Rien trouvé')}>
+                <dd className={`${styles.none} t-body`} aria-label={t('Nothing found')}>
                   —
                 </dd>
               )}
@@ -159,7 +159,7 @@ function TryResult({ fields, answer, seconds }: { fields: readonly TemplateField
           );
         })}
       </dl>
-      <p className={`${styles.resultMeta} t-meta`}>{t('Lu en {seconds} s · {cost}', { seconds: formatNumber(Math.max(0.1, seconds), 1), cost: formatUsd(answer.costUsd) })}</p>
+      <p className={`${styles.resultMeta} t-meta`}>{t('Read in {seconds} s · {cost}', { seconds: formatNumber(Math.max(0.1, seconds), 1), cost: formatUsd(answer.costUsd) })}</p>
     </div>
   );
 }

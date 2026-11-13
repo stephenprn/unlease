@@ -129,5 +129,5 @@ export function feedName(feed: Pick<CalendarFeed, 'kind' | 'name' | 'url'>): str
   if (!from) return feed.name;
   const region = feed.url.length > 'nager:XX'.length ? feed.url.slice('nager:'.length) : null;
   const country = countryName(from[1]!);
-  return region ? t('Jours fériés · {country} ({region})', { country, region }) : t('Jours fériés · {country}', { country });
+  return region ? t('Public holidays · {country} ({region})', { country, region }) : t('Public holidays · {country}', { country });
 }

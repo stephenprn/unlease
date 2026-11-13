@@ -54,7 +54,7 @@ function OfferRow({ offer, market, link, index }: { offer: Offer; market: OfferM
         {details ? <p className="t-meta">{details}</p> : null}
       </div>
       {/* Without a page, its room stays: the prices keep one column. */}
-      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('See the offer from {shop}', { shop: offer.shop })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }
@@ -74,7 +74,7 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -91,7 +91,7 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
     market === 'used' ? (
       <section className={styles.couponTips} aria-labelledby={`${titleId}-sites`}>
         <h3 id={`${titleId}-sites`} className="t-section">
-          {t('Chercher vous-même')}
+          {t('Look for yourself')}
         </h3>
         <div className={styles.moduleBar}>
           {marketplaceSearches(link, getLocale()).map(site => (
@@ -106,13 +106,13 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{market === 'new' ? t('Claude cherche {item} dans d’autres boutiques…', { item }) : t('Claude cherche {item} d’occasion…', { item })}</p>
-        <p className="t-meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</p>
+        <p className="t-body">{market === 'new' ? t('Claude is looking for {item} in other shops…', { item }) : t('Claude is looking for {item} second-hand…', { item })}</p>
+        <p className="t-meta">{t('A web search often takes half a minute.')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <>
         <p className={`${styles.couponsError} t-body`} role="alert">
-          {t('Claude n’a pas pu chercher : {reason}', { reason: t(phase.reason) })}
+          {t('Claude couldn’t search: {reason}', { reason: t(phase.reason) })}
         </p>
         {/* The resale sites' own searches need no Claude: still there when it could not search. */}
         {sites}
@@ -121,7 +121,7 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
       <>
         {market === 'used' && phase.answer.range ? <p className="t-body-strong">{rangeText(phase.answer.range)}</p> : null}
         {phase.answer.offers.length === 0 ? (
-          <EmptyLine size="body" text={market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')} />
+          <EmptyLine size="body" text={market === 'new' ? t('Nothing cheaper found elsewhere for now.') : t('No second-hand offer found for now.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES[market === 'new' ? 'cheaper' : 'secondhand']}>
             {phase.answer.offers.map((offer, index) => (
@@ -132,7 +132,7 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
         {phase.answer.note ? <p className="t-body">{phase.answer.note}</p> : null}
         {sites}
         <p className="t-meta">
-          {t('Trouvé sur le web par Claude le {day} à {time}. Les prix changent vite, vérifiez-les sur le site.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
+          {t('Found on the web by Claude on {day} at {time}. Prices change fast, check them on the site.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}
         </p>
       </>
     );
@@ -141,15 +141,15 @@ function OffersBody({ id, market, titleId, onDismiss }: { id: string; market: Of
       <>
         {phase.kind === 'failed' ? (
           <Button kind="text" onClick={() => search(false)}>
-            {t('Réessayer')}
+            {t('Try again')}
           </Button>
         ) : (
           <Button kind="text" icon="refresh" onClick={() => search(true)}>
-            {t('Chercher à nouveau')}
+            {t('Search again')}
           </Button>
         )}
         <Button icon="external" href={link.url}>
-          {t('Ouvrir la page')}
+          {t('Open the page')}
         </Button>
       </>
     );

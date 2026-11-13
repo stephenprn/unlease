@@ -180,24 +180,24 @@ export function notLinksWords(kind: Note['kind'], lines: readonly string[]): { r
   const one = lines.length === 1;
   const title = checklist
     ? one
-      ? t('Un élément n’est pas un lien')
-      : t('Certains éléments ne sont pas des liens')
+      ? t('One item is not a link')
+      : t('Some items are not links')
     : one
-      ? t('Une ligne n’est pas un lien')
-      : t('Certaines lignes ne sont pas des liens');
+      ? t('One line is not a link')
+      : t('Some lines are not links');
   const message = checklist
     ? one
-      ? t('Une collection ne contient que des liens. Modifiez ou supprimez cet élément, puis réessayez :')
-      : t('Une collection ne contient que des liens. Modifiez ou supprimez ces éléments, puis réessayez :')
+      ? t('A collection holds links only. Edit or remove this item, then try again:')
+      : t('A collection holds links only. Edit or remove these items, then try again:')
     : one
-      ? t('Une collection ne contient que des liens. Modifiez ou supprimez cette ligne, puis réessayez :')
-      : t('Une collection ne contient que des liens. Modifiez ou supprimez ces lignes, puis réessayez :');
+      ? t('A collection holds links only. Edit or remove this line, then try again:')
+      : t('A collection holds links only. Edit or remove these lines, then try again:');
   const items = lines.slice(0, NOT_LINKS_SHOWN).map(line => shortLine(line, 60));
   const rest = lines.length - items.length;
-  return { title, message, items, more: rest > 0 ? t('et {count} autres', { count: rest }) : null };
+  return { title, message, items, more: rest > 0 ? t('and {count} more', { count: rest }) : null };
 }
 
 /** The slip once done. */
 export function listConvertedMessage(title: string, links: number): string {
-  return t('Collection « {title} » créée : {links}', { title, links: plural(links, 'lien') });
+  return t('Collection “{title}” created: {links}', { title, links: plural(links, 'link') });
 }

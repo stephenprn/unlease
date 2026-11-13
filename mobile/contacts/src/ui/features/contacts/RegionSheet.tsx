@@ -37,9 +37,9 @@ function callingCountries(): { readonly region: string; readonly name: string }[
 
 /** What the setting reads as: the chosen country, the phone's, or none. */
 export function regionWords(chosen: string | null, phone: string | null): string {
-  if (chosen === 'none') return t('Aucun : les numéros sont écrits avec leur +');
+  if (chosen === 'none') return t('None: numbers are written with their +');
   if (chosen) return callingCountry(chosen);
-  return phone ? t('Celui de ce téléphone : {country}', { country: callingCountry(phone) }) : t('Celui de ce téléphone (aucun)');
+  return phone ? t('This phone’s: {country}', { country: callingCountry(phone) }) : t('This phone’s (none)');
 }
 
 /** A row's value: a country, `none`, or null (the setting: follow the phone). */
@@ -78,7 +78,7 @@ export function RegionSheet({ visible, chosen, phone, onChoose, onDismiss }: { v
     ...callingCountries().map(country => ({ value: country.region, title: country.name })),
     { value: 'none', title: regionWords('none', phone) },
   ];
-  return <ChoiceSheet visible={visible} title={t('Indicatif par défaut')} rows={rows} chosen={chosen} onChoose={onChoose} onDismiss={onDismiss} />;
+  return <ChoiceSheet visible={visible} title={t('Default country code')} rows={rows} chosen={chosen} onChoose={onChoose} onDismiss={onDismiss} />;
 }
 
 /** A number's calling code in the contact form: the default first, the countries by name, then none (the number kept as written). */
@@ -88,6 +88,6 @@ export function CodeSheet({ visible, chosen, fallback, onChoose, onDismiss }: { 
     ...countries.filter(country => country.region === fallback),
     ...countries.filter(country => country.region !== fallback),
   ].map(country => ({ value: country.region as Choice, title: country.name }));
-  rows.push({ value: 'none', title: t('Aucun : le numéro tel qu’il est écrit') });
-  return <ChoiceSheet visible={visible} title={t('Indicatif du numéro')} rows={rows} chosen={chosen ?? 'none'} onChoose={value => onChoose(value === 'none' ? null : value)} onDismiss={onDismiss} />;
+  rows.push({ value: 'none', title: t('None: the number as it is written') });
+  return <ChoiceSheet visible={visible} title={t('Country code of the number')} rows={rows} chosen={chosen ?? 'none'} onChoose={value => onChoose(value === 'none' ? null : value)} onDismiss={onDismiss} />;
 }

@@ -42,7 +42,7 @@ export function AskSheet({ id, visible, onDismiss }: { id: string; visible: bool
   );
 }
 
-const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+const open = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 
 /** An answer's lines: a paragraph's plain lines, and its "- " lines as a list. */
 const LIST_LINE = /^[-•]\s+/;
@@ -77,8 +77,8 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
     return (
       <>
       <SheetScroll contentContainerStyle={styles.body}>
-        <TextField label={t('Votre question')} kind="prose" value={question} onChangeText={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} style={styles.question} />
-        <View role="group" accessibilityLabel={t('Questions pour commencer')} style={styles.suggestions}>
+        <TextField label={t('Your question')} kind="prose" value={question} onChangeText={setQuestion} multiline autoFocus maxLength={ASK_LIMITS.question} style={styles.question} />
+        <View role="group" accessibilityLabel={t('Questions to start with')} style={styles.suggestions}>
           {askSuggestions(link.kind).map(suggestion => (
             <Tappable key={suggestion} onPress={() => setQuestion(suggestion)} accessibilityLabel={suggestion} style={styles.suggestion}>
               <AppText variant="label">{suggestion}</AppText>
@@ -86,17 +86,17 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
           ))}
         </View>
         {/* The whole row is the switch (the web's): its words name it. */}
-        <Tappable onPress={() => setWeb(!web)} accessibilityRole="switch" accessibilityState={{ checked: web }} accessibilityLabel={t('Chercher aussi sur le web')} style={styles.check}>
+        <Tappable onPress={() => setWeb(!web)} accessibilityRole="switch" accessibilityState={{ checked: web }} accessibilityLabel={t('Search the web too')} style={styles.check}>
           <AppText variant="body" style={styles.flex}>
-            {t('Chercher aussi sur le web')}
+            {t('Search the web too')}
           </AppText>
           <SwitchMark checked={web} />
         </Tappable>
         <AppText variant="meta">{moduleCost('ask', model, formatUsd)}</AppText>
       </SheetScroll>
       <FormFoot>
-        <Button kind="text" label={t('Annuler')} onPress={onCancel} />
-        <Button label={t('Demander')} icon="sparkle" disabled={!asked} onPress={ask} />
+        <Button kind="text" label={t('Cancel')} onPress={onCancel} />
+        <Button label={t('Ask')} icon="sparkle" disabled={!asked} onPress={ask} />
       </FormFoot>
       </>
     );
@@ -107,9 +107,9 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {web ? t('Claude lit la page et cherche sur le web…') : t('Claude lit la page…')}
+          {web ? t('Claude is reading the page and searching the web…') : t('Claude is reading the page…')}
         </AppText>
-        {web ? <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText> : null}
+        {web ? <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText> : null}
       </View>
     );
   }
@@ -119,12 +119,12 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu répondre : {reason}', { reason: phase.reason })}
+            {t('Claude could not answer: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <FormFoot>
-          <Button kind="text" label={t('Autre question')} onPress={another} />
-          <Button label={t('Réessayer')} onPress={() => search(false)} />
+          <Button kind="text" label={t('Another question')} onPress={another} />
+          <Button label={t('Try again')} onPress={() => search(false)} />
         </FormFoot>
       </>
     );
@@ -133,10 +133,10 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
   const { answer, sources } = phase.answer;
   const add = () => {
     if (!addToLinkNote(id, `${asked}\n${answer}`)) {
-      showSnack(t('Votre note est trop longue pour y ajouter cette réponse.'), undefined, { tone: 'warning' });
+      showSnack(t('Your note is too long to add this answer to it.'), undefined, { tone: 'warning' });
       return;
     }
-    showSnack(t('Ajouté à votre note'), undefined, { tone: 'success' });
+    showSnack(t('Added to your note'), undefined, { tone: 'success' });
     onDismiss();
   };
   return (
@@ -187,8 +187,8 @@ function AskBody({ id, onDismiss, onCancel, onDirty }: { id: string; onDismiss: 
       ) : null}
     </SheetScroll>
     <FormFoot>
-      <Button kind="text" label={t('Autre question')} onPress={another} />
-      <Button kind="tonal" label={t('Ajouter à votre note')} icon="note" onPress={add} />
+      <Button kind="text" label={t('Another question')} onPress={another} />
+      <Button kind="tonal" label={t('Add to your note')} icon="note" onPress={add} />
     </FormFoot>
     </>
   );

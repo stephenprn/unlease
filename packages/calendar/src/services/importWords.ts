@@ -3,7 +3,7 @@
  * day and time in its own zone, its place, how it repeats and what the file changes of it, and why it
  * is left out; the counts over it; the choices' words, each with what it brings; the report.
  */
-import { getLocale, t } from '@unlease/core/i18n';
+import { getLocale, t, tc } from '@unlease/core/i18n';
 import { formatNumber, plural } from '@unlease/core/services/format';
 import type { PreviewEntry } from '@unlease/core/services/importFlow';
 import { foldText } from '@unlease/core/services/search';
@@ -43,8 +43,8 @@ export function importWhen(event: Pick<IcsEvent, 'start' | 'end' | 'timeZone'>, 
   const year = yearOf(now);
   if (isDay(event.start)) {
     const last = addDays(event.end, -1);
-    if (last <= event.start) return `${weekdayDay(event.start, year)} · ${t('Toute la journée')}`;
-    return t('Du {from} au {to}', { from: weekdayDay(event.start, year), to: weekdayDay(last, year) });
+    if (last <= event.start) return `${weekdayDay(event.start, year)} · ${t('All day')}`;
+    return t('{from} to {to}', { from: weekdayDay(event.start, year), to: weekdayDay(last, year) });
   }
   const clock = (wall: string): string => clockWords(clockPart(wall), twelveHours);
   const day = event.start.slice(0, 10);
@@ -54,26 +54,26 @@ export function importWhen(event: Pick<IcsEvent, 'start' | 'end' | 'timeZone'>, 
       ? `${weekdayDay(day, year)} · ${clock(event.start)}${event.end > event.start ? ` – ${clock(event.end)}` : ''}`
       : `${weekdayDay(day, year)} ${clock(event.start)} – ${weekdayDay(endDay, year)} ${clock(event.end)}`;
   if (!event.timeZone || event.timeZone === deviceZone()) return when;
-  return event.timeZone === 'UTC' ? t('{when} (UTC)', { when }) : t('{when} (heure de {place})', { when, place: zonePlace(event.timeZone) });
+  return event.timeZone === 'UTC' ? t('{when} (UTC)', { when }) : t('{when} ({place} time)', { when, place: zonePlace(event.timeZone) });
 }
 
 /** How a series repeats: « Se répète toutes les semaines le lundi », or that only its first date will show. */
 export function repeatWords(event: Pick<IcsEvent, 'rrule' | 'start' | 'timeZone'>): string | null {
   if (!event.rrule) return null;
   const rule = parseRule(event.rrule);
-  if (!rule || rule.partial) return t('Se répète selon une règle qu’Agenda ne sait pas lire : seule sa première date s’affichera.');
+  if (!rule || rule.partial) return t('Repeats by a rule Agenda cannot read: only its first date will show.');
   const words = describeRule(rule, event.start, event.timeZone || undefined);
-  return t('Se répète {rule}', { rule: words.charAt(0).toLocaleLowerCase() + words.slice(1) });
+  return t('Repeats {rule}', { rule: words.charAt(0).toLocaleLowerCase() + words.slice(1) });
 }
 
 /** The occurrences a file changes of a series: « 2 occurrences modifiées, 1 annulée ». */
 function changesWords(modified: number, cancelled: number): string {
-  return [modified > 0 ? plural(modified, 'occurrence modifiée', 'occurrences modifiées') : '', cancelled > 0 ? plural(cancelled, 'occurrence annulée', 'occurrences annulées') : ''].filter(Boolean).join(', ');
+  return [modified > 0 ? plural(modified, 'occurrence changed', 'occurrences changed') : '', cancelled > 0 ? plural(cancelled, 'occurrence cancelled', 'occurrences cancelled') : ''].filter(Boolean).join(', ');
 }
 
 const calendarName = (context: ImportWordsContext, file: number): string => {
   const found = context.files[file];
-  return (found ? importFileName(found) : '') || t('Agenda sans nom');
+  return (found ? importFileName(found) : '') || t('Unnamed calendar');
 };
 
 /** Why an event does not come as it is, or what it brings to what is here. */
@@ -82,31 +82,31 @@ export function whyWords(item: ImportItem, context: ImportWordsContext): string 
     case null:
       return null;
     case 'here':
-      return t('Déjà dans votre agenda');
+      return t('Already in your calendar');
     case 'subscribed': {
-      if (item.feedId === HOLIDAYS_FEED_ID) return t('Déjà là : un jour férié');
+      if (item.feedId === HOLIDAYS_FEED_ID) return t('Already here: a public holiday');
       const name = item.feedId ? context.feedName?.(item.feedId) : null;
-      return name ? t('Déjà là par l’abonnement « {name} »', { name }) : t('Déjà là par un abonnement');
+      return name ? t('Already here through the subscription “{name}”', { name }) : t('Already here through a subscription');
     }
     case 'twice':
-      return item.twin !== null && item.twin !== item.file ? t('En double : déjà dans « {calendar} »', { calendar: calendarName(context, item.twin) }) : t('En double dans le fichier');
+      return item.twin !== null && item.twin !== item.file ? t('A duplicate: already in “{calendar}”', { calendar: calendarName(context, item.twin) }) : t('A duplicate within the file');
     case 'cancelled':
-      return t('Annulé dans le fichier');
+      return t('Cancelled in the file');
     case 'orphan':
-      return t('Une occurrence modifiée dont la série n’est ni dans le fichier ni dans votre agenda');
+      return t('A changed occurrence whose series is neither in the file nor in your calendar');
     case 'unreadable':
-      return item.unreadable?.reason === 'noStart' ? t('Illisible : il n’a pas de date de début') : t('Illisible : sa date de début ne se lit pas');
+      return item.unreadable?.reason === 'noStart' ? t('Unreadable: it has no start date') : t('Unreadable: its start date cannot be read');
     case 'past': {
       const since = periodStart(context.period ?? 'all', context.now);
-      return since ? t('Terminé avant le {day}', { day: shortDay(since, yearOf(context.now)) }) : null;
+      return since ? t('Ended before {day}', { day: shortDay(since, yearOf(context.now)) }) : null;
     }
     case 'fileOff':
-      return t('Vous laissez de côté l’agenda « {calendar} »', { calendar: calendarName(context, item.file) });
+      return t('You are leaving out the calendar “{calendar}”', { calendar: calendarName(context, item.file) });
     case 'adds':
-      return t('Ajoute à la série déjà là : {changes}', { changes: changesWords(item.adds.modified, item.adds.cancelled) });
+      return t('Adds to the series already here: {changes}', { changes: changesWords(item.adds.modified, item.adds.cancelled) });
     case 'joins': {
-      const title = item.series?.title.trim() || t('Sans titre');
-      return item.fate === 'update' ? t('Annule une date de « {title} », déjà dans votre agenda', { title }) : t('Modifie une date de « {title} », déjà dans votre agenda', { title });
+      const title = item.series?.title.trim() || t('Untitled');
+      return item.fate === 'update' ? t('Cancels a date of “{title}”, already in your calendar', { title }) : t('Changes a date of “{title}”, already in your calendar', { title });
     }
   }
 }
@@ -115,7 +115,7 @@ export function whyWords(item: ImportItem, context: ImportWordsContext): string 
 export function importEntries(plan: ImportPlan, context: ImportWordsContext): PreviewEntry[] {
   return plan.items.map(item => {
     const event = item.event;
-    const title = (event?.title ?? item.unreadable?.title ?? '').trim() || t('Sans titre');
+    const title = (event?.title ?? item.unreadable?.title ?? '').trim() || t('Untitled');
     const why = whyWords(item, context);
     if (!event) return { key: item.key, title, detail: '', fate: item.fate, glyph: 'alert', ...(why ? { why } : {}) };
     const place = event.place.split('\n')[0]!.trim();
@@ -137,23 +137,23 @@ export function leftOutWords(plan: ImportPlan, context: ImportWordsContext): str
   const count = (test: (item: ImportItem) => boolean): number => plan.items.filter(test).length;
   const out: string[] = [];
   const cancelled = count(item => item.why === 'cancelled');
-  if (cancelled > 0) out.push(plural(cancelled, 'annulé dans le fichier', 'annulés dans le fichier'));
+  if (cancelled > 0) out.push(plural(cancelled, 'cancelled in the file', 'cancelled in the file [many]'));
   const past = count(item => item.why === 'past');
   const since = periodStart(context.period ?? 'all', context.now);
   if (past > 0 && since) {
     const words = { count: counted(past), day: shortDay(since, yearOf(context.now)) };
-    out.push(one(past) ? t('{count} terminé avant le {day}', words) : t('{count} terminés avant le {day}', words));
+    out.push(one(past) ? t('{count} ended before {day}', words) : tc('many', '{count} ended before {day}', words));
   }
   const unreadable = count(item => item.why === 'unreadable');
-  if (unreadable > 0) out.push(plural(unreadable, 'illisible faute de date', 'illisibles faute de date'));
+  if (unreadable > 0) out.push(plural(unreadable, 'unreadable, with no date', 'unreadable, with no date [many]'));
   const twice = count(item => item.why === 'twice');
-  if (twice > 0) out.push(plural(twice, 'en double', 'en double'));
+  if (twice > 0) out.push(plural(twice, 'duplicate', 'duplicate'));
   const orphans = count(item => item.why === 'orphan');
-  if (orphans > 0) out.push(plural(orphans, 'occurrence sans sa série', 'occurrences sans leur série'));
+  if (orphans > 0) out.push(plural(orphans, 'occurrence without its series', 'occurrences without their series'));
   const unticked = count(item => item.leftOut);
-  if (unticked > 0) out.push(plural(unticked, 'décoché par vous', 'décochés par vous'));
+  if (unticked > 0) out.push(plural(unticked, 'unticked by you', 'unticked by you [many]'));
   for (const file of new Set(plan.items.filter(item => item.why === 'fileOff').map(item => item.file))) {
-    out.push(t('L’agenda « {calendar} » ({events})', { calendar: calendarName(context, file), events: plural(count(item => item.file === file), 'événement') }));
+    out.push(t('The calendar “{calendar}” ({events})', { calendar: calendarName(context, file), events: plural(count(item => item.file === file), 'event') }));
   }
   return out;
 }
@@ -171,27 +171,27 @@ export function importCounts(plan: ImportPlan, context: ImportWordsContext): Imp
   const lines: ImportCountLine[] = [];
   lines.push(
     names.length === 1
-      ? { icon: 'calendar', text: t('Agenda « {calendar} »', { calendar: names[0]! }), meta: context.files[0]!.fileName || null }
-      : { icon: 'calendar', text: plural(names.length, 'agenda'), meta: names.join(', ') },
+      ? { icon: 'calendar', text: t('Calendar “{calendar}”', { calendar: names[0]! }), meta: context.files[0]!.fileName || null }
+      : { icon: 'calendar', text: plural(names.length, 'calendar'), meta: names.join(', ') },
   );
   const events = plan.items.filter(item => item.event !== null);
   const series = events.filter(item => item.event!.rrule && item.why !== 'joins').length;
   const allDay = events.filter(item => isDay(item.event!.start)).length;
   const modified = events.reduce((sum, item) => sum + item.modified, 0);
-  const holds = [series > 0 ? plural(series, 'série', 'séries') : '', allDay > 0 ? plural(allDay, 'sur la journée', 'sur la journée') : '', modified > 0 ? plural(modified, 'occurrence modifiée', 'occurrences modifiées') : ''].filter(Boolean);
-  lines.push({ icon: 'list', text: plural(plan.items.length, 'événement'), meta: holds.length > 0 ? t('Dont {list}', { list: holds.join(', ') }) : null });
+  const holds = [series > 0 ? plural(series, 'series', 'series [many]') : '', allDay > 0 ? plural(allDay, 'all-day', 'all-day') : '', modified > 0 ? plural(modified, 'occurrence changed', 'occurrences changed') : ''].filter(Boolean);
+  lines.push({ icon: 'list', text: plural(plan.items.length, 'event'), meta: holds.length > 0 ? t('Including {list}', { list: holds.join(', ') }) : null });
   const updates = plan.items.filter(item => item.fate === 'update' && !item.leftOut).length;
   lines.push({
     icon: 'download',
-    text: plan.count > 0 ? t('{count} à importer', { count: plural(plan.count, 'événement') }) : t('Rien de nouveau à importer.'),
-    meta: updates > 0 ? t('Dont {series} déjà là, que le fichier complète', { series: plural(updates, 'série', 'séries') }) : null,
+    text: plan.count > 0 ? t('{count} to import', { count: plural(plan.count, 'event') }) : t('Nothing new to import.'),
+    meta: updates > 0 ? t('Including {series} already here, which the file completes', { series: plural(updates, 'series', 'series [many]') }) : null,
   });
   const same = plan.items.filter(item => item.fate === 'same').length;
-  if (same > 0) lines.push({ icon: 'check', text: t('{events} déjà dans l’agenda', { events: plural(same, 'événement') }), meta: t('Reconnus à leur identifiant : importés avant, ou servis par un abonnement.') });
+  if (same > 0) lines.push({ icon: 'check', text: t('{events} already in the calendar', { events: plural(same, 'event') }), meta: t('Recognised by their identifier: imported before, or served by a subscription.') });
   const left = plan.items.filter(item => item.fate === 'skip' || item.leftOut).length;
-  if (left > 0) lines.push({ icon: 'eyeOff', text: plural(left, 'laissé de côté', 'laissés de côté'), meta: leftOutWords(plan, context).join(', ') });
+  if (left > 0) lines.push({ icon: 'eyeOff', text: plural(left, 'left out', 'left out [many]'), meta: leftOutWords(plan, context).join(', ') });
   const zones = importZones(plan);
-  if (zones.length > 1) lines.push({ icon: 'globe', text: plural(zones.length, 'fuseau horaire', 'fuseaux horaires'), meta: t('Chaque événement garde son heure sur place : {zones}', { zones: zones.slice(0, 6).map(zonePlace).join(', ') + (zones.length > 6 ? '…' : '') }) });
+  if (zones.length > 1) lines.push({ icon: 'globe', text: plural(zones.length, 'time zone', 'time zones'), meta: t('Each event keeps its local time: {zones}', { zones: zones.slice(0, 6).map(zonePlace).join(', ') + (zones.length > 6 ? '…' : '') }) });
   return lines;
 }
 
@@ -199,37 +199,37 @@ export function importCounts(plan: ImportPlan, context: ImportWordsContext): Imp
 export function periodOptions(counts: Readonly<Record<ImportPeriod, number>>, now: number): { readonly value: ImportPeriod; readonly label: string; readonly meta: string }[] {
   const year = periodStart('year', now)!;
   return [
-    { value: 'all', label: t('Tous les événements'), meta: t('Le passé compris : {events}', { events: plural(counts.all, 'événement') }) },
-    { value: 'year', label: t('Depuis un an'), meta: t('À partir du {day} : {events}', { day: shortDay(year, yearOf(now)), events: plural(counts.year, 'événement') }) },
-    { value: 'upcoming', label: t('À venir seulement'), meta: t('À partir d’aujourd’hui : {events}', { events: plural(counts.upcoming, 'événement') }) },
+    { value: 'all', label: t('All events'), meta: t('The past included: {events}', { events: plural(counts.all, 'event') }) },
+    { value: 'year', label: t('From a year ago'), meta: t('From {day}: {events}', { day: shortDay(year, yearOf(now)), events: plural(counts.year, 'event') }) },
+    { value: 'upcoming', label: t('Upcoming only'), meta: t('From today: {events}', { events: plural(counts.upcoming, 'event') }) },
   ];
 }
 
 /** The reminders' choices: the file's (how many have some), none, the device's own for a new event. */
 export function reminderOptions(plan: ImportPlan, defaults: { readonly timed: readonly number[]; readonly allDay: readonly number[] }): { readonly value: 'file' | 'none' | 'yours'; readonly label: string; readonly meta: string }[] {
   const withSome = plan.items.filter(item => item.event && item.event.reminders.length > 0 && (item.fate === 'new' || item.fate === 'update')).length;
-  const list = (minutes: readonly number[], allDay: boolean): string => minutes.map(each => reminderWords(each, allDay)).join(', ') || t('Aucun');
+  const list = (minutes: readonly number[], allDay: boolean): string => minutes.map(each => reminderWords(each, allDay)).join(', ') || t('None');
   const allDay = list(defaults.allDay, true);
   return [
-    { value: 'file', label: t('Ceux du fichier'), meta: withSome > 0 ? t('{events} en ont dans le fichier.', { events: plural(withSome, 'événement') }) : t('Ce fichier n’en donne aucun.') },
-    { value: 'none', label: t('Aucun'), meta: t('Rien ne sonnera pour ces événements.') },
-    { value: 'yours', label: t('Vos rappels par défaut'), meta: t('{timed} ; sur la journée : {allDay}', { timed: list(defaults.timed, false), allDay: allDay.charAt(0).toLocaleLowerCase() + allDay.slice(1) }) },
+    { value: 'file', label: t('The file’s own'), meta: withSome > 0 ? t('{events} have some in the file.', { events: plural(withSome, 'event') }) : t('This file gives none.') },
+    { value: 'none', label: t('None'), meta: t('Nothing will ring for these events.') },
+    { value: 'yours', label: t('Your default reminders'), meta: t('{timed}; all-day: {allDay}', { timed: list(defaults.timed, false), allDay: allDay.charAt(0).toLocaleLowerCase() + allDay.slice(1) }) },
   ];
 }
 
 /** Under a label's name: whether it is made or joined, or that a name left empty files nothing. */
 export function labelHelp(name: string, labels: Readonly<Record<string, CalendarLabel>>): string {
   const folded = foldText(name.trim());
-  if (!folded) return t('Sans nom, ces événements ne sont rangés sous aucun libellé.');
-  return Object.values(labels).some(label => label.deletedAt === null && foldText(label.name.trim()) === folded) ? t('Ce libellé existe déjà : les événements le rejoignent.') : t('Un nouveau libellé, créé avec l’import.');
+  if (!folded) return t('Without a name, these events go under no label.');
+  return Object.values(labels).some(label => label.deletedAt === null && foldText(label.name.trim()) === folded) ? t('This label exists already: the events join it.') : t('A new label, made with the import.');
 }
 
 /** A calendar's line among the files: how many events, and why it is left out at first. */
 export function calendarMeta(file: ImportFile, events: number): string {
   const known = knownCalendar(importFileName(file));
-  if (known === 'holidays') return t('{events} · des jours fériés : Agenda les montre déjà, réglés dans l’Administration.', { events: plural(events, 'événement') });
-  if (known === 'birthdays') return t('{events} · des anniversaires : Agenda montre déjà ceux de vos contacts.', { events: plural(events, 'événement') });
-  return plural(events, 'événement');
+  if (known === 'holidays') return t('{events} · public holidays: Agenda shows them already, set in the Administration.', { events: plural(events, 'event') });
+  if (known === 'birthdays') return t('{events} · birthdays: Agenda shows your contacts’ already.', { events: plural(events, 'event') });
+  return plural(events, 'event');
 }
 
 /** The report: what came in, then what was left out and why. */
@@ -237,15 +237,15 @@ export function importReport(plan: ImportPlan, context: ImportWordsContext, labe
   const imported: string[] = [];
   const fresh = plan.items.filter(item => item.fate === 'new' && !item.leftOut).length;
   const updated = plan.items.filter(item => item.fate === 'update' && !item.leftOut).length;
-  if (fresh > 0) imported.push(t('{events} importés', { events: plural(fresh, 'événement') }));
-  if (updated > 0) imported.push(plural(updated, 'série complétée', 'séries complétées'));
+  if (fresh > 0) imported.push(t('{events} imported', { events: plural(fresh, 'event') }));
+  if (updated > 0) imported.push(plural(updated, 'series completed', 'series completed [many]'));
   const made = new Map(plan.labels.map(label => [label.id, String(label.fields.name)]));
   const used = [...new Set(plan.labelIds.filter((id): id is string => id !== null))].map(id => made.get(id) ?? labels[id]?.name ?? '').filter(Boolean);
-  if (fresh > 0 && used.length === 1) imported.push(t('Rangés sous le libellé « {label} »', { label: used[0]! }));
-  else if (fresh > 0 && used.length > 1) imported.push(t('Rangés sous les libellés {labels}', { labels: used.map(name => `« ${name} »`).join(', ') }));
+  if (fresh > 0 && used.length === 1) imported.push(t('Filed under the label “{label}”', { label: used[0]! }));
+  else if (fresh > 0 && used.length > 1) imported.push(t('Filed under the labels {labels}', { labels: used.map(name => `« ${name} »`).join(', ') }));
   const skipped: string[] = [];
   const same = plan.items.filter(item => item.fate === 'same').length;
-  if (same > 0) skipped.push(t('{events} déjà dans l’agenda', { events: plural(same, 'événement') }));
+  if (same > 0) skipped.push(t('{events} already in the calendar', { events: plural(same, 'event') }));
   skipped.push(...leftOutWords(plan, context));
   return { imported, skipped };
 }

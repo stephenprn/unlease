@@ -53,11 +53,11 @@ export function MentionedIn({ id }: { id: string }) {
       {events.length > 0 ? (
         <View style={styles.block}>
           <AppText variant="section" style={styles.head} accessibilityRole="header">
-            {t('Vus ensemble')}
+            {t('Seen together')}
           </AppText>
           <Organic outline="card" style={styles.panel}>
             {events.map((place, index) => {
-              const title = place.title.trim() || t('Sans titre');
+              const title = place.title.trim() || t('Untitled');
               const when = placeWhen(place, Number(today.slice(0, 4)));
               return (
                 <Tappable key={place.id} onPress={() => open(place)} style={[styles.row, rowCorners(index, events.length)]} accessibilityRole="link" accessibilityLabel={when ? `${title}, ${when}` : title}>
@@ -92,13 +92,13 @@ function Mentions({ places }: { places: readonly MentionPlace[] }) {
   return (
     <View style={styles.block}>
       <AppText variant="section" style={styles.head} accessibilityRole="header">
-        {t('Mentionné dans')}
+        {t('Mentioned in')}
       </AppText>
       <Organic outline="card" style={styles.panel}>
         {places.map((place, index) => {
-          const title = place.title.trim() || (place.type === 'link' ? t('Lien sans titre') : t('Sans titre'));
+          const title = place.title.trim() || (place.type === 'link' ? t('Untitled link') : t('Untitled'));
           // A note or a link naming the person among its people (a gift idea) says so before where it sits.
-          const where = [place.linked ? t('Associé') : '', place.within].filter(Boolean).join(' · ');
+          const where = [place.linked ? t('Linked') : '', place.within].filter(Boolean).join(' · ');
           return (
             <Tappable key={`${place.app}:${place.id}`} onPress={() => open(place)} style={[styles.row, rowCorners(index, places.length)]} accessibilityRole="link" accessibilityLabel={title}>
               <View style={styles.mark}>{place.icon ? <AppText style={styles.emoji}>{place.icon}</AppText> : <Icon name={place.type === 'page' ? 'page' : place.type === 'link' ? 'link' : 'note'} size={22} color={theme.color.inkMuted} />}</View>

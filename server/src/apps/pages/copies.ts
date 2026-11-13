@@ -41,10 +41,10 @@ export class PageCopier {
   async copy(request: CopyRequest): Promise<ModuleOutcome<CopyResponse>> {
     const signal = AbortSignal.timeout(READ_DEADLINE_MS * 2);
     const read = await readLink(request.link.url, this.options.fetcher, AbortSignal.any([signal, AbortSignal.timeout(READ_DEADLINE_MS)]));
-    if (!read.page || !read.html) return { ok: false, status: 502, error: read.error ?? 'La page n’a pas pu être lue' };
+    if (!read.page || !read.html) return { ok: false, status: 502, error: read.error ?? 'The page could not be read' };
     const title = read.page.meta['og:title'] ?? read.page.title ?? '';
     const article = extractArticle(read.html, read.finalUrl, title);
-    if (!article) return { ok: false, status: 502, error: 'Aucun texte à garder sur cette page' };
+    if (!article) return { ok: false, status: 502, error: 'No text to keep on this page' };
 
     const addresses = [...new Set(article.drafts.flatMap(function collect(draft: ArticleDraft): string[] {
       return [...(draft.image ? [draft.image] : []), ...(draft.children ?? []).flatMap(collect)];
@@ -83,7 +83,7 @@ export class PageCopier {
 }
 
 /** Asked for a link the server has not heard of yet (made offline a moment ago): its `copy` could not be set. */
-export const LINK_NOT_HERE = 'Ce lien n’est pas encore arrivé sur le serveur : réessayez dans un instant';
+export const LINK_NOT_HERE = 'This link has not reached the server yet: try again in a moment';
 
 export interface CopyMakerOptions {
   readonly reader: PageCopier;

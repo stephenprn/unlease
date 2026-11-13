@@ -6,7 +6,7 @@
  * Claude, an address any collection holds is not added: it would land beside itself.
  */
 import { t } from '@unlease/core/i18n';
-import { INBOX_ID, INBOX_TITLE, shownTitle, type LinkItem, type Note } from '../models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownTitle, type LinkItem, type Note } from '../models/entities';
 import { plural } from '@unlease/core/services/format';
 import { cleanUrl } from '@unlease/core/services/url';
 import { collectionTemplate, type Templates } from './templates';
@@ -112,7 +112,7 @@ export function capSharedUrls(urls: readonly string[]): { readonly urls: readonl
 
 /** What a slip says of a share cut short: « 20 liens gardés sur les 25 partagés ». */
 export function cappedMessage(more: number): string {
-  return t('{kept} liens gardés sur les {offered} partagés', { kept: MAX_SHARED_URLS, offered: MAX_SHARED_URLS + more });
+  return t('{kept} of the {offered} shared links kept', { kept: MAX_SHARED_URLS, offered: MAX_SHARED_URLS + more });
 }
 
 export interface AddedWording {
@@ -136,20 +136,20 @@ export function addedTone(plans: readonly Pick<LinkPlan, 'existing'>[]): 'succes
 export function addedMessage(plans: readonly Pick<LinkPlan, 'existing' | 'savedIn' | 'cleaned'>[], wording: AddedWording, notes: Readonly<Record<string, Note>>): string | null {
   const message = placementMessage(plans, wording, notes);
   const cleaned = wording.announce && wording.into !== null ? plans.reduce((sum, plan) => sum + (plan.existing === null ? plan.cleaned : 0), 0) : 0;
-  return message && cleaned > 0 ? `${message} · ${plural(cleaned, 'traceur retiré', 'traceurs retirés')}` : message;
+  return message && cleaned > 0 ? `${message} · ${plural(cleaned, 'tracker removed', 'trackers removed')}` : message;
 }
 
 function placementMessage(plans: readonly Pick<LinkPlan, 'existing' | 'savedIn'>[], wording: AddedWording, notes: Readonly<Record<string, Note>>): string | null {
   const { into, here = false, announce = false } = wording;
   const name = (id: string): string => {
-    if (here && id === into) return t('cette collection');
+    if (here && id === into) return t('this collection');
     const title = notes[id]?.title.trim();
     if (title) return shownTitle({ id, title });
-    return id === INBOX_ID ? t(INBOX_TITLE) : t('Sans titre');
+    return id === INBOX_ID ? t(INBOX_SHOWN_TITLE) : t('Untitled');
   };
   const names = (ids: readonly string[]): string => {
     const unique = [...new Set(ids)];
-    if (unique.length === 2) return t('{first} et {second}', { first: name(unique[0]!), second: name(unique[1]!) });
+    if (unique.length === 2) return t('{first} and {second}', { first: name(unique[0]!), second: name(unique[1]!) });
     return unique.length < 2 ? unique.map(name).join('') : plural(unique.length, 'collection');
   };
   // Not added: it was in the collection asked for, or, filed by Claude, anywhere.
@@ -160,21 +160,21 @@ function placementMessage(plans: readonly Pick<LinkPlan, 'existing' | 'savedIn'>
 
   if (plans.length === 1) {
     const plan = plans[0]!;
-    if (plan.existing !== null) return t('Ce lien est déjà dans {names}', { names: names(heldBy(plan)) });
+    if (plan.existing !== null) return t('This link is already in {names}', { names: names(heldBy(plan)) });
     if (plan.savedIn.length > 0) {
       const params = { names: names(plan.savedIn), collection: into === null ? '' : name(into) };
-      if (here) return t('Ce lien est déjà dans {names} : ajouté ici aussi', params);
-      return into === null ? t('Ce lien est déjà dans {names} : ajouté aussi', params) : t('Ce lien est déjà dans {names} : ajouté aussi à {collection}', params);
+      if (here) return t('This link is already in {names}: added here too', params);
+      return into === null ? t('This link is already in {names}: added too', params) : t('This link is already in {names}: also added to {collection}', params);
     }
     if (!announce || into === null) return null;
-    return here ? t('Ajouté ici') : t('Ajouté à {collection}', { collection: name(into) });
+    return here ? t('Added here') : t('Added to {collection}', { collection: name(into) });
   }
   const parts: string[] = [];
   if (added.length > 0 && into !== null && (announce || twins.length > 0)) {
-    const params = { links: plural(added.length, 'lien ajouté', 'liens ajoutés'), collection: name(into), count: twins.length, names: names(twins.flatMap(plan => plan.savedIn)) };
-    if (twins.length > 0) parts.push(here ? t('{links} ici, dont {count} déjà dans {names}', params) : t('{links} à {collection}, dont {count} déjà dans {names}', params));
-    else parts.push(here ? t('{links} ici', params) : t('{links} à {collection}', params));
+    const params = { links: plural(added.length, 'link added', 'links added'), collection: name(into), count: twins.length, names: names(twins.flatMap(plan => plan.savedIn)) };
+    if (twins.length > 0) parts.push(here ? t('{links} here, {count} of them already in {names}', params) : t('{links} to {collection}, {count} of them already in {names}', params));
+    else parts.push(here ? t('{links} here', params) : t('{links} to {collection}', params));
   }
-  if (kept.length > 0) parts.push(t('{links} déjà dans {names}', { links: plural(kept.length, 'lien'), names: names(kept.flatMap(heldBy)) }));
+  if (kept.length > 0) parts.push(t('{links} already in {names}', { links: plural(kept.length, 'link'), names: names(kept.flatMap(heldBy)) }));
   return parts.length > 0 ? parts.join(' · ') : null;
 }

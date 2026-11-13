@@ -6,7 +6,7 @@
  */
 import type { CSSProperties } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { tc } from '@unlease/core/i18n';
 import { pebbleTurn } from '@unlease/design/pebbles';
 
 import { Icon } from './Icon';
@@ -34,7 +34,7 @@ export function StepTrail({ steps, current, label, small = false }: { steps: rea
             </span>
             <span className={state === 'here' ? 't-meta-strong' : 't-meta'}>
               {entry.name}
-              {state === 'done' ? <span className="sr-only">{` · ${t('Fait')}`}</span> : null}
+              {state === 'done' ? <span className="sr-only">{` · ${tc('ticked', 'Done')}`}</span> : null}
             </span>
           </li>
         );

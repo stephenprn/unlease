@@ -70,7 +70,7 @@ export function PageResults({ hits, query }: { hits: readonly PageSearchHit[]; q
       </ul>
       {hits.length > FIRST && !all ? (
         <button type="button" className={styles.moreHits} onClick={() => setAll(true)}>
-          {t('Voir {pages}', { pages: plural(hits.length - FIRST, 'autre page', 'autres pages') })}
+          {t('Show {pages}', { pages: plural(hits.length - FIRST, 'more page', 'more pages') })}
         </button>
       ) : null}
     </section>

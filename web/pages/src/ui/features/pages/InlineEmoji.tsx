@@ -61,7 +61,7 @@ export function InlineEmojiPicker() {
     <>
       {/* The caret's place, for the picker to drop from as from a button. */}
       {shown ? createPortal(<span ref={anchor} className={styles.caretAnchor} style={{ left: shown.left, top: shown.top, height: shown.height }} aria-hidden="true" />, overlayRoot('live')) : null}
-      <Popover open={target !== null} anchor={anchor} onDismiss={() => finish(null)} label={t('Insérer un emoji')} width={348} align="start" initialFocus={fine ? field : scroll}>
+      <Popover open={target !== null} anchor={anchor} onDismiss={() => finish(null)} label={t('Insert an emoji')} width={348} align="start" initialFocus={fine ? field : scroll}>
         <EmojiPanel value={null} allowNone={false} field={field} scroll={scroll} onPick={finish} />
       </Popover>
     </>

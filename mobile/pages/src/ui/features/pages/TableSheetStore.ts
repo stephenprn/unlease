@@ -1,7 +1,7 @@
 /** Which sheet a table asked for: a cell's, a column's or a row's (`TableSheetHost` shows it). */
 import { create } from 'zustand';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { deleteBlocks } from '@app/store/pages';
 import { commit } from '@app/store/pageHistory';
 import { showSnack } from '@shared/app/store/uiStore';
@@ -24,5 +24,5 @@ export function closeTableSheet(): void {
 /** A row gone, with the way back. */
 export function deleteRowWithUndo(page: string, row: string): void {
   deleteBlocks(page, [row]);
-  showSnack(t('Ligne supprimée'), { label: tc('undo', 'Annuler'), run: () => commit(page, [{ type: 'block', id: row, patch: { deletedAt: null } }]) }, { tone: 'success' });
+  showSnack(t('Row deleted'), { label: t('Undo'), run: () => commit(page, [{ type: 'block', id: row, patch: { deletedAt: null } }]) }, { tone: 'success' });
 }

@@ -387,18 +387,18 @@ describe('POST /api/notes/template-try', () => {
       const answer = await post(body);
       expect(answer.status).toBe(400);
     }
-    expect((await post({ url: WINE, lang: 'fr', fields: [] })).body).toEqual({ error: 'Essai de modèle invalide' });
+    expect((await post({ url: WINE, lang: 'fr', fields: [] })).body).toEqual({ error: 'Invalid template try' });
     expect(server.claude.requests).toHaveLength(0);
   });
 
   it('says why when Claude cannot read: no key, the budget spent, a page gone', async () => {
     serverWith(new FakeFetcher(PAGES), { envApiKey: null });
-    expect(await post({ url: WINE, lang: 'fr', fields: FIELDS })).toEqual({ status: 409, body: { error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' } });
+    expect(await post({ url: WINE, lang: 'fr', fields: FIELDS })).toEqual({ status: 409, body: { error: 'Claude is not reading links: add a key in Administration.' } });
 
     const fetcher = new FakeFetcher(PAGES);
     serverWith(fetcher);
     server.settings.update({ budgetUsd: 0 });
-    expect(await post({ url: WINE, lang: 'fr', fields: FIELDS })).toEqual({ status: 409, body: { error: 'Budget mensuel atteint' } });
+    expect(await post({ url: WINE, lang: 'fr', fields: FIELDS })).toEqual({ status: 409, body: { error: 'Monthly budget reached' } });
 
     server.settings.update({ budgetUsd: 15 });
     const gone = await post({ url: 'https://www.cave-exemple.fr/disparu', lang: 'fr', fields: FIELDS });
@@ -411,7 +411,7 @@ describe('POST /api/notes/template-try', () => {
     serverWith(new FakeFetcher(PAGES));
     server.claude.reply(claudeMessage('{"title": 3}'), claudeMessage(wineAnswer));
     const failed = await post({ url: WINE, lang: 'fr', fields: FIELDS });
-    expect(failed).toEqual({ status: 502, body: { error: 'Réponse de Claude illisible' } });
+    expect(failed).toEqual({ status: 502, body: { error: 'Unreadable answer from Claude' } });
     expect((await post({ url: WINE, lang: 'fr', fields: FIELDS })).body.costUsd).toBeGreaterThan(0);
     expect(server.db.prepare('SELECT task, ok FROM analyses ORDER BY id').all()).toEqual([
       { task: 'template', ok: 0 },
@@ -423,7 +423,7 @@ describe('POST /api/notes/template-try', () => {
     serverWith(new FakeFetcher(PAGES));
     for (let index = 0; index <= TRIES_PER_HOUR; index++) server.claude.reply(claudeMessage(wineAnswer));
     for (let index = 0; index < TRIES_PER_HOUR; index++) expect((await post({ url: WINE, lang: 'fr', fields: [field('domaine', 'Domaine', 'text', `Essai ${index}`)] })).status).toBe(200);
-    expect(await post({ url: WINE, lang: 'fr', fields: [field('domaine', 'Domaine', 'text', 'Encore')] })).toEqual({ status: 409, body: { error: 'Trop d’essais : réessayez dans un moment.' } });
+    expect(await post({ url: WINE, lang: 'fr', fields: [field('domaine', 'Domaine', 'text', 'Encore')] })).toEqual({ status: 409, body: { error: 'Too many tries: try again in a moment.' } });
     // A try kept still answers.
     expect((await post({ url: WINE, lang: 'fr', fields: [field('domaine', 'Domaine', 'text', 'Essai 0')] }))).toMatchObject({ status: 200, body: { costUsd: 0 } });
     server.time.value = T0 + 61 * 60_000;

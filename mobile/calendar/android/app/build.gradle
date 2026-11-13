@@ -80,11 +80,13 @@ android {
     namespace "com.stephenprn.agenda"
     // The suite's shared Kotlin and resources (mobile/shared/android: the organic view, haptics,
     // connectivity, media, the clipboard, SuiteLink), compiled into every app of the suite; and the
-    // reminders kept on time (src/reminders), into the apps that ring.
+    // reminders kept on time (src/reminders), into the apps that ring; and the mirror account
+    // (src/mirror), into the apps that copy their records into the phone's own (Contacts, Agenda).
     sourceSets {
         main {
             java.srcDirs += "${rootDir}/../../shared/android/src/main/java"
             java.srcDirs += "${rootDir}/../../shared/android/src/reminders/java"
+            java.srcDirs += "${rootDir}/../../shared/android/src/mirror/java"
             res.srcDirs += "${rootDir}/../../shared/android/src/main/res"
         }
     }

@@ -37,10 +37,10 @@ export function resizedTimes(item: Occurrence, minutes: number): { start: string
 /** Writes a move, asking which events of a series first; the slip offers to take it back. */
 export async function commitMove(item: Occurrence, times: { readonly start: string; readonly end?: string }): Promise<void> {
   if (times.start === item.start && (times.end === undefined || times.end === item.end)) return;
-  const scope = asksScope(item) ? await askScope(t('Déplacer un événement périodique')) : 'all';
+  const scope = asksScope(item) ? await askScope(t('Move a repeating event')) : 'all';
   if (!scope) return;
   const undo = moveEvent(item, times, scope);
-  showUndo(t('Événement déplacé'), undo);
+  showUndo(t('Event moved'), undo);
 }
 
 /** How far a pointer must go before a press becomes a drag. */

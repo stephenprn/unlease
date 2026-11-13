@@ -32,7 +32,7 @@ interface Candidate extends MentionEntry {
 
 /** The kinds' heads, translated where shown. */
 const PEOPLE = tx('Contacts');
-const EVENTS = tx('Événements');
+const EVENTS = tx('Events');
 
 export interface MentionPickerProps {
   readonly query: string;
@@ -71,7 +71,7 @@ export const MentionPicker = forwardRef<MentionPickerHandle, MentionPickerProps>
   const feeds = useEventsStore(s => s.feeds);
   // Agenda's own search reads an event's place and notes too: its order is kept.
   const found = useMemo(
-    (): readonly Candidate[] => findEvents(events, feeds, query, target => nameOfMention(target) ?? '', 5).map(hit => ({ target: { type: 'event', id: hit.id }, title: hit.title || t('Sans titre'), detail: hit.when, icon: 'calendar' as const })),
+    (): readonly Candidate[] => findEvents(events, feeds, query, target => nameOfMention(target) ?? '', 5).map(hit => ({ target: { type: 'event', id: hit.id }, title: hit.title || t('Untitled'), detail: hit.when, icon: 'calendar' as const })),
     [events, feeds, query],
   );
   const rows = useMemo((): readonly MenuRow[] => {
@@ -102,9 +102,9 @@ export const MentionPicker = forwardRef<MentionPickerHandle, MentionPickerProps>
       active={keys.active}
       onActive={keys.setActive}
       id="note-mention-menu"
-      label={t('Mentionner un contact ou un événement')}
-      listLabel={t('Contacts et événements')}
-      empty={query.trim() ? t('Aucun contact ni événement ne s’appelle ainsi.') : t('Aucun contact pour l’instant.')}
+      label={t('Mention a contact or an event')}
+      listLabel={t('Contacts and events')}
+      empty={query.trim() ? t('No contact or event goes by that name.') : t('No contacts yet.')}
     />
   );
 });

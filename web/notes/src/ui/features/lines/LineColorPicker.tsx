@@ -5,7 +5,7 @@
 import { memo, useRef, type KeyboardEvent } from 'react';
 
 import { pebbleTurn } from '@unlease/design/pebbles';
-import { t } from '@unlease/core/i18n';
+import { tc } from '@unlease/core/i18n';
 import { LINE_COLORS, LINE_COLOR_NAMES, type LineColor } from '@unlease/design/colors';
 
 import { Icon } from '@shared/ui/components/Icon';
@@ -42,8 +42,8 @@ function LineColorPickerComponent({ value, onChange, allowNone = false, label }:
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={color ? LINE_COLOR_NAMES[color] : t('Aucune couleur')}
-            data-tip={color ? LINE_COLOR_NAMES[color] : t('Aucune couleur')}
+            aria-label={color ? LINE_COLOR_NAMES[color] : tc('collection', 'No colour')}
+            data-tip={color ? LINE_COLOR_NAMES[color] : tc('collection', 'No colour')}
             data-color={color ?? 'none'}
             data-line={color ?? undefined}
             tabIndex={color === focusable ? 0 : -1}

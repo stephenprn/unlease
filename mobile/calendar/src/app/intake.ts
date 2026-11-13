@@ -76,7 +76,7 @@ async function receive(share: Share, arrivals: Arrivals): Promise<void> {
   handled.add(share.id);
   const read = await readCalendarFiles(share.files);
   if (read.status === 'error') showSnack(read.message, undefined, { tone: 'error' });
-  else if (read.status === 'empty') showSnack(t('Aucun événement dans ce fichier.'), undefined, { tone: 'warning' });
+  else if (read.status === 'empty') showSnack(t('No events in this file.'), undefined, { tone: 'warning' });
   else {
     setPendingImport({ files: read.files });
     arrivals.import();
@@ -87,6 +87,6 @@ async function receive(share: Share, arrivals: Arrivals): Promise<void> {
 export function listenForShares(arrivals: Arrivals): () => void {
   takePendingShare()
     .then(share => (share ? receive(share, arrivals) : undefined))
-    .catch(() => showSnack(t('Fichier illisible'), undefined, { tone: 'error' }));
+    .catch(() => showSnack(t('Unreadable file'), undefined, { tone: 'error' }));
   return onShare(share => later(receive(share, arrivals)));
 }

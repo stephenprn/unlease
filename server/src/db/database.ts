@@ -172,6 +172,22 @@ const MIGRATIONS: readonly string[] = [
     UNIQUE (key, clock)
   ) STRICT;
   `,
+  // Pages' version history (`apps/pages/versions.ts`): each page's past versions, and the pages edited since their last one.
+  `
+  CREATE TABLE page_versions (
+    id INTEGER PRIMARY KEY,
+    page_id TEXT NOT NULL,
+    at INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    blocks TEXT NOT NULL,
+    count INTEGER NOT NULL
+  ) STRICT;
+  CREATE INDEX page_versions_by_page ON page_versions (page_id, at);
+  CREATE TABLE page_versions_pending (
+    page_id TEXT PRIMARY KEY,
+    changed_at INTEGER NOT NULL
+  ) STRICT;
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

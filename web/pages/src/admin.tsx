@@ -6,5 +6,5 @@ import type { AdminSection } from '@shared/modules';
 import { PagesAskSection } from './ui/features/settings/PagesAskSection';
 
 export const PAGES_ADMIN_SECTIONS: readonly AdminSection[] = [
-  { id: 'pages-ask', app: 'pages', title: () => t('Questions sur les pages'), glyph: 'bubble', line: settings => pagesAskLine(settings.pages), info: PAGES_ASK_INFO, claude: true, Body: PagesAskSection },
+  { id: 'pages-ask', app: 'pages', title: () => t('Questions about pages'), glyph: 'bubble', line: settings => pagesAskLine(settings.pages), info: PAGES_ASK_INFO, claude: true, Body: PagesAskSection },
 ];

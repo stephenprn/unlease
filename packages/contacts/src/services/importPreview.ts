@@ -22,33 +22,33 @@ export interface PreviewLibrary {
 
 /** The words both clients' wizards share. */
 export const CONTACTS_IMPORT_WORDS = localized({
-  sourceTitle: tx('Depuis Google Contacts'),
-  sourceLead: tx('L’export de Google Contacts, en vCard ou en CSV Google, ou le fichier .vcf d’une archive Takeout.'),
-  phoneTitle: tx('Depuis ce téléphone'),
-  phoneLead: tx('Les contacts enregistrés sur ce téléphone, dont ceux de votre compte Google, avec leurs photos et leurs groupes.'),
-  phoneBlocked: tx('L’accès aux contacts du téléphone est refusé : il se donne dans les réglages d’Android.'),
-  phoneFailed: tx('Les contacts du téléphone n’ont pas pu être lus.'),
-  phoneEmpty: tx('Aucun contact sur ce téléphone.'),
-  notContacts: tx('Ce fichier n’est ni une vCard (.vcf) ni un CSV de Google Contacts.'),
-  emptyFile: tx('Aucun contact dans ce fichier.'),
-  unreadable: tx('Fichier illisible.'),
-  kept: tx('Les contacts gardent leurs numéros, e-mails, adresses, anniversaires, notes, libellés et favoris. Importer le même fichier une seconde fois ne double personne.'),
-  listLabel: tx('Les personnes du fichier'),
-  existingTitle: tx('Contacts déjà là'),
-  complete: tx('Compléter les contacts déjà là'),
-  labelsTitle: tx('Libellés'),
-  labelsLead: tx('Les libellés de Google deviennent ceux d’ici ; un libellé du même nom déjà là les accueille.'),
+  sourceTitle: tx('From Google Contacts'),
+  sourceLead: tx('Google Contacts’ export, as vCard or Google CSV, or the .vcf file of a Takeout archive.'),
+  phoneTitle: tx('From this phone'),
+  phoneLead: tx('The contacts saved on this phone, your Google account’s included, with their photos and groups.'),
+  phoneBlocked: tx('Access to the phone’s contacts is denied: it is given in Android’s settings.'),
+  phoneFailed: tx('The phone’s contacts couldn’t be read.'),
+  phoneEmpty: tx('No contacts on this phone.'),
+  notContacts: tx('This file is neither a vCard (.vcf) nor a Google Contacts CSV.'),
+  emptyFile: tx('No contacts in this file.'),
+  unreadable: tx('Unreadable file.'),
+  kept: tx('Contacts keep their numbers, emails, addresses, birthdays, notes, labels and favourites. Importing the same file twice duplicates no one.'),
+  listLabel: tx('The people in the file'),
+  existingTitle: tx('Contacts already here'),
+  complete: tx('Complete the contacts already here'),
+  labelsTitle: tx('Labels'),
+  labelsLead: tx('Google’s labels become labels here; a label of the same name already here takes them in.'),
   photosTitle: tx('Photos'),
-  photos: tx('Reprendre les photos'),
-  favoritesTitle: tx('Favoris'),
-  favorites: tx('Garder les favoris de Google'),
-  nothingToChoose: tx('Rien à décider pour ce fichier : les réglages proposés suffisent.'),
-  nothingToWrite: tx('Rien à importer avec ces choix : tout est déjà là ou laissé de côté.'),
-  writing: tx('Écriture des contacts…'),
-  undo: tx('Annuler l’import'),
-  undone: tx('Import annulé'),
-  undoneLead: tx('Les contacts et les libellés ajoutés sont partis ; ceux déjà là ont retrouvé ce qu’ils avaient.'),
-  seeContacts: tx('Voir les contacts'),
+  photos: tx('Bring the photos over'),
+  favoritesTitle: tx('Favourites'),
+  favorites: tx('Keep Google’s favourites'),
+  nothingToChoose: tx('Nothing to decide for this file: the settings offered will do.'),
+  nothingToWrite: tx('Nothing to import with these choices: everything is already here or left out.'),
+  writing: tx('Writing the contacts…'),
+  undo: tx('Undo the import'),
+  undone: tx('Import undone'),
+  undoneLead: tx('The contacts and labels added are gone; those already here have what they had back.'),
+  seeContacts: tx('See the contacts'),
 });
 
 // ── one person ──────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ export function personTitle(person: ImportedContact): string {
   const email = person.emails.find(entry => entry.value.trim())?.value.trim();
   if (email) return email;
   const phone = person.phones.find(entry => entry.value.trim())?.value.trim();
-  return phone ?? t('Fiche sans nom');
+  return phone ?? t('Card without a name');
 }
 
 /** One value, and how many more there are: « 06 12 34 56 78 (+2) ». */
@@ -87,17 +87,17 @@ export function personDetail(person: ImportedContact): string {
 /** What a person adds, in a few words: « 2 numéros, un e-mail, son anniversaire ». */
 export function gainsWords(gains: Gains): string {
   const words: string[] = [];
-  if (gains.name) words.push(t('son nom'));
-  if (gains.phones > 0) words.push(plural(gains.phones, 'numéro'));
-  if (gains.emails > 0) words.push(plural(gains.emails, 'e-mail'));
-  if (gains.addresses > 0) words.push(plural(gains.addresses, 'adresse'));
-  if (gains.birthday) words.push(t('son anniversaire'));
-  if (gains.company) words.push(t('son entreprise'));
-  if (gains.jobTitle) words.push(t('sa fonction'));
-  if (gains.note) words.push(t('une note'));
-  if (gains.labels > 0) words.push(plural(gains.labels, 'libellé'));
-  if (gains.favorite) words.push(t('l’étoile des favoris'));
-  if (gains.photo) words.push(t('sa photo'));
+  if (gains.name) words.push(t('their name'));
+  if (gains.phones > 0) words.push(plural(gains.phones, 'number'));
+  if (gains.emails > 0) words.push(plural(gains.emails, 'email'));
+  if (gains.addresses > 0) words.push(plural(gains.addresses, 'address', 'addresses'));
+  if (gains.birthday) words.push(t('their birthday'));
+  if (gains.company) words.push(t('their company'));
+  if (gains.jobTitle) words.push(t('their job title'));
+  if (gains.note) words.push(t('a note'));
+  if (gains.labels > 0) words.push(plural(gains.labels, 'label'));
+  if (gains.favorite) words.push(t('the favourites’ star'));
+  if (gains.photo) words.push(t('their photo'));
   return words.join(', ');
 }
 
@@ -139,23 +139,23 @@ function labelNames(ids: readonly string[], plan: ImportPlan, library: PreviewLi
 function whyOf(fate: PersonFate, imported: readonly ImportedContact[], library: PreviewLibrary): string | undefined {
   const here = (id: string): string => {
     const contact = library.contacts[id];
-    return contact ? contactName(contact) : t('Sans nom');
+    return contact ? contactName(contact) : t('No name');
   };
   switch (fate.kind) {
     case 'new':
       return undefined;
     case 'update':
-      return t('Complète {name} : {gains}', { name: here(fate.id), gains: gainsWords(fate.gains) });
+      return t('Completes {name}: {gains}', { name: here(fate.id), gains: gainsWords(fate.gains) });
     case 'same':
-      return fate.missed ? t('Déjà là : {name}, laissé tel quel (le fichier ajouterait {gains})', { name: here(fate.id), gains: gainsWords(fate.missed) }) : t('Déjà là : {name}, rien à ajouter', { name: here(fate.id) });
+      return fate.missed ? t('Already here: {name}, left as is (the file would add {gains})', { name: here(fate.id), gains: gainsWords(fate.missed) }) : t('Already here: {name}, nothing to add', { name: here(fate.id) });
     case 'joined': {
-      const name = imported[fate.into] ? personTitle(imported[fate.into]!) : t('Sans nom');
-      return gainsWords(fate.gains) ? t('Même personne que {name}, plus haut dans le fichier : y ajoute {gains}', { name, gains: gainsWords(fate.gains) }) : t('Même personne que {name}, plus haut dans le fichier : rien de plus', { name });
+      const name = imported[fate.into] ? personTitle(imported[fate.into]!) : t('No name');
+      return gainsWords(fate.gains) ? t('Same person as {name}, earlier in the file: adds {gains}', { name, gains: gainsWords(fate.gains) }) : t('Same person as {name}, earlier in the file: nothing more', { name });
     }
     case 'anonymous':
-      return t('Ni nom, ni numéro, ni e-mail : rien pour le reconnaître');
+      return t('No name, number or email: nothing to know them by');
     case 'left':
-      return t('Décoché : ne sera pas importé');
+      return t('Unticked: won’t be imported');
   }
 }
 
@@ -168,7 +168,7 @@ export function previewEntries(imported: readonly ImportedContact[], plan: Impor
     if (fate.kind === 'new') {
       const write = created.get(fate.id);
       const labels = write ? labelNames((write.fields.labelIds as readonly string[] | undefined) ?? [], plan, library) : [];
-      const parts = [write?.fields.favorite === true ? t('Favori') : null, labels.length > 0 ? t('Libellés : {labels}', { labels: labels.join(', ') }) : null, write?.photo ? t('Avec sa photo') : null];
+      const parts = [write?.fields.favorite === true ? t('Favourite') : null, labels.length > 0 ? t('Labels: {labels}', { labels: labels.join(', ') }) : null, write?.photo ? t('With their photo') : null];
       note = parts.filter((part): part is string => part !== null).join(' · ') || undefined;
     }
     return { key: `person-${at}`, title: personTitle(person), detail: personDetail(person), fate: fateOf(fate), why: whyOf(fate, imported, library), glyph: GLYPHS[fate.kind], ...(note ? { note } : {}) };
@@ -186,18 +186,18 @@ export interface CountWords {
 
 /** Where the people came from, said under their count. */
 export function sourceWords(source: ImportFormat | 'phone' | 'shared', name: string): string {
-  if (source === 'phone') return t('Les contacts de ce téléphone');
-  if (source === 'shared') return name ? t('Fiche partagée « {file} »', { file: name }) : t('Une fiche partagée');
-  return source === 'vcard' ? t('vCard « {file} »', { file: name }) : t('CSV « {file} »', { file: name });
+  if (source === 'phone') return t('This phone’s contacts');
+  if (source === 'shared') return name ? t('Shared card “{file}”', { file: name }) : t('A shared card');
+  return source === 'vcard' ? t('vCard “{file}”', { file: name }) : t('CSV “{file}”', { file: name });
 }
 
 /** How many of each kind are left out, said. */
 function leftOutWords(plan: ImportPlan): string | null {
   const count = (kind: PersonFate['kind']): number => plan.people.filter(fate => fate.kind === kind).length;
   const parts = [
-    count('anonymous') > 0 ? t('{count} sans nom, numéro ni e-mail', { count: count('anonymous') }) : null,
-    count('joined') > 0 ? t('{count} en double dans le fichier', { count: count('joined') }) : null,
-    count('left') > 0 ? plural(count('left'), 'décochée', 'décochées') : null,
+    count('anonymous') > 0 ? t('{count} without a name, number or email', { count: count('anonymous') }) : null,
+    count('joined') > 0 ? t('{count} twice in the file', { count: count('joined') }) : null,
+    count('left') > 0 ? plural(count('left'), 'unticked', 'unticked [many]') : null,
   ];
   const said = parts.filter((part): part is string => part !== null);
   return said.length > 0 ? said.join(' · ') : null;
@@ -214,55 +214,55 @@ export function previewCounts(plan: ImportPlan, source: string, serverless: bool
   const left = plan.people.filter(fate => fate.kind === 'anonymous' || fate.kind === 'joined' || fate.kind === 'left').length;
   const kept = plan.people.filter(fate => fate.kind === 'same' && fate.missed !== null).length;
   const same = plan.people.filter(fate => fate.kind === 'same' && fate.missed === null).length;
-  const lines: CountWords[] = [{ icon: 'people', text: plural(people, 'personne lue', 'personnes lues'), meta: source }];
-  lines.push({ icon: 'personPlus', text: plural(plan.creates.length, 'nouveau contact', 'nouveaux contacts') });
-  if (plan.updates.length > 0) lines.push({ icon: 'person', text: plural(plan.updates.length, 'contact déjà là, complété', 'contacts déjà là, complétés'), meta: t('Ce qui leur manque est ajouté ; rien de ce qu’ils ont n’est remplacé.') });
-  if (kept > 0) lines.push({ icon: 'person', text: plural(kept, 'contact déjà là, laissé tel quel', 'contacts déjà là, laissés tels quels'), meta: t('Le fichier les compléterait : voyez les choix.') });
-  if (same > 0) lines.push({ icon: 'check', text: t('{contacts} déjà là, rien à ajouter', { contacts: plural(same, 'contact') }) });
-  if (left > 0) lines.push({ icon: 'minus', text: plural(left, 'personne laissée de côté', 'personnes laissées de côté'), meta: leftOutWords(plan) });
+  const lines: CountWords[] = [{ icon: 'people', text: plural(people, 'person read', 'people read'), meta: source }];
+  lines.push({ icon: 'personPlus', text: plural(plan.creates.length, 'new contact', 'new contacts') });
+  if (plan.updates.length > 0) lines.push({ icon: 'person', text: plural(plan.updates.length, 'contact already here, completed', 'contacts already here, completed'), meta: t('What they lack is added; nothing they have is replaced.') });
+  if (kept > 0) lines.push({ icon: 'person', text: plural(kept, 'contact already here, left as is', 'contacts already here, left as is'), meta: t('The file would complete them: see the choices.') });
+  if (same > 0) lines.push({ icon: 'check', text: t('{contacts} already here, nothing to add', { contacts: plural(same, 'contact') }) });
+  if (left > 0) lines.push({ icon: 'minus', text: plural(left, 'person left out', 'people left out'), meta: leftOutWords(plan) });
   if (plan.labels.length > 0) {
     const names = plan.labels.map(label => String(label.fields.name));
-    lines.push({ icon: 'tag', text: plural(plan.labels.length, 'libellé à créer', 'libellés à créer'), meta: names.length > 6 ? `${names.slice(0, 6).join(', ')}…` : names.join(', ') });
+    lines.push({ icon: 'tag', text: plural(plan.labels.length, 'label to create', 'labels to create'), meta: names.length > 6 ? `${names.slice(0, 6).join(', ')}…` : names.join(', ') });
   }
-  if (plan.photos > 0) lines.push({ icon: 'image', text: plural(plan.photos, 'photo à reprendre', 'photos à reprendre'), meta: serverless && linkedPhotos(plan) > 0 ? photosNeedServer(linkedPhotos(plan)) : null });
+  if (plan.photos > 0) lines.push({ icon: 'image', text: plural(plan.photos, 'photo to bring over', 'photos to bring over'), meta: serverless && linkedPhotos(plan) > 0 ? photosNeedServer(linkedPhotos(plan)) : null });
   return lines;
 }
 
 /** Google's photos are links: without a server, they stay behind. */
 export function photosNeedServer(count: number): string {
-  return t('{photos} de Google sont des liens : sans serveur relié, elles ne peuvent pas être reprises.', { photos: plural(count, 'photo') });
+  return t('{photos} from Google are links: without a connected server, they can’t be brought over.', { photos: plural(count, 'photo') });
 }
 
 // ── the choices ─────────────────────────────────────────────────────────────
 
 /** A label's line in the choices: how many wear it, and whether it is made or joined. */
 export function fileLabelWords(label: FileLabel): string {
-  const people = plural(label.people, 'personne');
-  if (label.marker) return t('{people} · Google l’ajoute à chaque import de fichier', { people });
-  return label.existing ? t('{people} · existe déjà ici', { people }) : t('{people} · nouveau libellé', { people });
+  const people = plural(label.people, 'person', 'people');
+  if (label.marker) return t('{people} · Google adds it at each file import', { people });
+  return label.existing ? t('{people} · already exists here', { people }) : t('{people} · new label', { people });
 }
 
 /** What « Compléter les contacts déjà là » does, on and off, counted. */
 export function completeWords(on: boolean, count: number): string {
-  if (!on) return t('Ceux déjà là restent tels quels ; seuls les nouveaux contacts sont ajoutés.');
-  return count === 1 ? t('Un contact déjà là gagne ce qui lui manque ; rien de ce qu’il a n’est remplacé.') : t('{count} contacts déjà là gagnent ce qui leur manque ; rien de ce qu’ils ont n’est remplacé.', { count });
+  if (!on) return t('Those already here stay as they are; only the new contacts are added.');
+  return count === 1 ? t('A contact already here gains what it lacks; nothing it has is replaced.') : t('{count} contacts already here gain what they lack; nothing they have is replaced.', { count });
 }
 
 /** What « Reprendre les photos » does, on and off, counted. */
 export function photosWords(on: boolean, count: number): string {
-  return on ? t('{photos} à reprendre, une fois les contacts écrits.', { photos: plural(count, 'photo') }) : t('Les contacts arrivent sans leur photo.');
+  return on ? t('{photos} to bring over, once the contacts are written.', { photos: plural(count, 'photo') }) : t('The contacts come without their photo.');
 }
 
 /** What « Garder les favoris de Google » does, counted. */
 export function favoritesWords(on: boolean, count: number): string {
-  return on ? t('L’étoile de Google en fait des favoris ici : {people}.', { people: plural(count, 'personne') }) : t('L’étoile de Google est ignorée ; vos favoris restent ceux d’ici.');
+  return on ? t('Google’s star makes them favourites here: {people}.', { people: plural(count, 'person', 'people') }) : t('Google’s star is ignored; your favourites stay those here.');
 }
 
 /** The import's foot button, counted. */
 export function importContactsAction(plan: ImportPlan | null): string {
-  if (!plan) return t('Importer');
-  if (plan.creates.length === 0 && plan.updates.length > 0) return t('Compléter {contacts}', { contacts: plural(plan.updates.length, 'contact') });
-  return plan.creates.length > 0 ? t('Importer {contacts}', { contacts: plural(plan.creates.length, 'contact') }) : t('Importer');
+  if (!plan) return t('Import');
+  if (plan.creates.length === 0 && plan.updates.length > 0) return t('Complete {contacts}', { contacts: plural(plan.updates.length, 'contact') });
+  return plan.creates.length > 0 ? t('Import {contacts}', { contacts: plural(plan.creates.length, 'contact') }) : t('Import');
 }
 
 // ── the report ──────────────────────────────────────────────────────────────
@@ -276,31 +276,31 @@ export interface PhotosTaken {
 /** The report's lines: what came in, then what was left out and why. */
 export function reportLines(plan: ImportPlan, photos: PhotosTaken | null, serverless: boolean): { readonly imported: string[]; readonly skipped: string[] } {
   const imported: string[] = [];
-  if (plan.creates.length > 0) imported.push(plural(plan.creates.length, 'contact ajouté', 'contacts ajoutés'));
-  if (plan.updates.length > 0) imported.push(plural(plan.updates.length, 'contact complété', 'contacts complétés'));
-  if (plan.labels.length > 0) imported.push(t('{labels} : {names}', { labels: plural(plan.labels.length, 'libellé créé', 'libellés créés'), names: plan.labels.map(label => String(label.fields.name)).join(', ') }));
-  if (photos && photos.taken > 0) imported.push(plural(photos.taken, 'photo reprise', 'photos reprises'));
+  if (plan.creates.length > 0) imported.push(plural(plan.creates.length, 'contact added', 'contacts added'));
+  if (plan.updates.length > 0) imported.push(plural(plan.updates.length, 'contact completed', 'contacts completed'));
+  if (plan.labels.length > 0) imported.push(t('{labels}: {names}', { labels: plural(plan.labels.length, 'label created', 'labels created'), names: plan.labels.map(label => String(label.fields.name)).join(', ') }));
+  if (photos && photos.taken > 0) imported.push(plural(photos.taken, 'photo brought over', 'photos brought over'));
   const skipped: string[] = [];
   const count = (kind: PersonFate['kind']): number => plan.people.filter(fate => fate.kind === kind).length;
   const same = plan.people.filter(fate => fate.kind === 'same' && fate.missed === null).length;
   const kept = plan.people.filter(fate => fate.kind === 'same' && fate.missed !== null).length;
-  if (same > 0) skipped.push(t('{contacts} déjà là, rien à ajouter', { contacts: plural(same, 'contact') }));
-  if (kept > 0) skipped.push(plural(kept, 'contact déjà là, laissé tel quel', 'contacts déjà là, laissés tels quels'));
-  if (count('joined') > 0) skipped.push(plural(count('joined'), 'personne en double dans le fichier, réunie à la première', 'personnes en double dans le fichier, réunies à la première'));
-  if (count('anonymous') > 0) skipped.push(t('{cards} sans nom, numéro ni e-mail', { cards: plural(count('anonymous'), 'fiche') }));
-  if (count('left') > 0) skipped.push(plural(count('left'), 'personne décochée', 'personnes décochées'));
-  if (photos && photos.missed > 0) skipped.push(serverless && linkedPhotos(plan) > 0 ? photosNeedServer(photos.missed) : t('{photos} n’ont pas pu être reprises.', { photos: plural(photos.missed, 'photo') }));
+  if (same > 0) skipped.push(t('{contacts} already here, nothing to add', { contacts: plural(same, 'contact') }));
+  if (kept > 0) skipped.push(plural(kept, 'contact already here, left as is', 'contacts already here, left as is'));
+  if (count('joined') > 0) skipped.push(plural(count('joined'), 'person twice in the file, joined to the first', 'people twice in the file, joined to the first'));
+  if (count('anonymous') > 0) skipped.push(t('{cards} without a name, number or email', { cards: plural(count('anonymous'), 'card') }));
+  if (count('left') > 0) skipped.push(plural(count('left'), 'person unticked', 'people unticked'));
+  if (photos && photos.missed > 0) skipped.push(serverless && linkedPhotos(plan) > 0 ? photosNeedServer(photos.missed) : t('{photos} couldn’t be brought over.', { photos: plural(photos.missed, 'photo') }));
   return { imported, skipped };
 }
 
 /** The report's title, over its sheets: what the import came to. */
 export function doneTitle(plan: ImportPlan): string {
-  return plan.creates.length > 0 ? t('Vos contacts sont là') : t('Vos contacts sont à jour');
+  return plan.creates.length > 0 ? t('Your contacts are here') : t('Your contacts are up to date');
 }
 
 /** The slip once written: what came in, in a line. */
 export function importedMessage(plan: ImportPlan): string {
-  const parts = [plan.creates.length > 0 ? plural(plan.creates.length, 'contact ajouté', 'contacts ajoutés') : null, plan.updates.length > 0 ? plural(plan.updates.length, 'contact complété', 'contacts complétés') : null];
+  const parts = [plan.creates.length > 0 ? plural(plan.creates.length, 'contact added', 'contacts added') : null, plan.updates.length > 0 ? plural(plan.updates.length, 'contact completed', 'contacts completed') : null];
   const said = parts.filter((part): part is string => part !== null);
-  return said.length > 0 ? said.join(' · ') : plural(plan.labels.length, 'libellé créé', 'libellés créés');
+  return said.length > 0 ? said.join(' · ') : plural(plan.labels.length, 'label created', 'labels created');
 }

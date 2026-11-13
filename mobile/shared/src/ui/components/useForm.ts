@@ -141,7 +141,7 @@ export function useForm<K extends string>(checks: { readonly [F in K]?: string |
     const count = Object.values(problems).filter(Boolean).length;
     if (count > 0) {
       focusFirst(problems);
-      AccessibilityInfo.announceForAccessibility(count === 1 ? t('Un champ est à corriger.') : t('{count} champs sont à corriger.', { count }));
+      AccessibilityInfo.announceForAccessibility(count === 1 ? t('One field needs correcting.') : t('{count} fields need correcting.', { count }));
       return false;
     }
     running.current = true;
@@ -169,7 +169,7 @@ export function useForm<K extends string>(checks: { readonly [F in K]?: string |
   };
 
   const count = sent ? names.filter(name => !!shownOf(name)).length + Object.keys(refused).filter(name => !names.includes(name as K)).length : 0;
-  const message = formError ?? (count === 1 ? t('Un champ est à corriger.') : count > 1 ? t('{count} champs sont à corriger.', { count }) : null);
+  const message = formError ?? (count === 1 ? t('One field needs correcting.') : count > 1 ? t('{count} fields need correcting.', { count }) : null);
 
   return {
     field: name => {

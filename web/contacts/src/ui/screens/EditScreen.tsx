@@ -14,7 +14,7 @@
  */
 import { useEffect, useEffectEvent, useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import type { Place } from '@unlease/core/sync/places';
 import { ADDRESS_KINDS, CONTACT_LIMITS, CONTACTS_TEXT_LIMITS, EMAIL_KINDS, PHONE_KINDS, PHONE_KIND_NAMES, PLACE_KIND_NAMES, type AddressEntry, type EmailEntry, type PhoneEntry } from '@unlease/contacts/models/contacts';
@@ -37,7 +37,10 @@ import { FormFoot } from '@shared/ui/components/FormFoot';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { SwitchMark } from '@shared/ui/components/Checkbox';
-import { Menu } from '@shared/ui/components/Menu';
+import { Menu, type MenuItem } from '@shared/ui/components/Menu';
+import { selectServerSettings, useServerSettingsStore } from '@shared/app/store/serverSettings';
+import { selectServer, useSettingsStore } from '@shared/app/store/settings';
+import { ImmichPeopleDialog } from '../features/ImmichPeopleDialog';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { PlaceField } from '@shared/ui/components/PlaceField';
 import { TextField } from '@shared/ui/components/TextField';
@@ -55,7 +58,7 @@ import { paths } from '../routes';
 
 /** The select's choice for a name of one's own. */
 const CUSTOM = 'custom';
-const CUSTOM_NAME = tx('Personnalisé');
+const CUSTOM_NAME = tx('Custom [kind]');
 
 /** A panel of the form under its glyph and title; without a glyph, its fields alone (the photo above leads them), its title said to screen readers. */
 function Group({ icon, title, children }: { icon?: GlyphName; title: string; children: ReactNode }) {
@@ -101,7 +104,7 @@ function KindPicker({ kinds, names, entry, custom, onKind, label }: { kinds: rea
         label={label}
         items={[
           ...kinds.map(kind => ({ label: names[kind] ?? kind, icon: 'check' as const, mark: mark(value === kind), onSelect: () => onKind(kind, false) })),
-          { label: t('Personnalisé…'), icon: 'edit' as const, mark: mark(value === CUSTOM), separatorBefore: true, onSelect: () => onKind(entry.kind, true) },
+          { label: tc('kind', 'Custom…'), icon: 'edit' as const, mark: mark(value === CUSTOM), separatorBefore: true, onSelect: () => onKind(entry.kind, true) },
         ]}
       />
     </>
@@ -167,6 +170,11 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
   const [picked, setPicked] = useState<{ readonly id: string; readonly mime: string; readonly file: File } | null>(null);
   const [over, setOver] = useState(false);
   const [photoMenu, setPhotoMenu] = useState(false);
+  const [fromImmich, setFromImmich] = useState(false);
+  // Immich linked on the server this browser reaches: a face it knows can be the photo.
+  const connected = useSettingsStore(selectServer) !== null;
+  const immichUrl = useServerSettingsStore(selectServerSettings)?.immich.url ?? '';
+  const immichOn = connected && immichUrl !== '';
   // Under a finger the face is touched, and nothing is dropped on it.
   const finger = useMedia('(pointer: coarse)');
   const photoButton = useRef<HTMLButtonElement>(null);
@@ -206,7 +214,7 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
     if (!file) return;
     const photo = pickPhoto(file);
     if (!photo) {
-      showError(t('Cette image n’est pas prise : une photo JPEG, PNG, WebP, GIF, HEIC ou AVIF de 25 Mo au plus.'));
+      showError(t('This image can’t be used: a JPEG, PNG, WebP, GIF, HEIC or AVIF photo of 25 MB at most.'));
       return;
     }
     setPicked(photo);
@@ -239,18 +247,18 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
   }, []);
 
   const phones = (
-    <Group icon="phoneCall" title={t('Téléphones')}>
+    <Group icon="phoneCall" title={t('Phones')}>
       {draft.phones.map((phone: PhoneEntry, index) => (
         <div key={phone.id} className={`${styles.entry} ${styles.phoneEntry}`}>
-          <CodePicker region={codeOf(phone.id)} fallback={fallback} onChange={region => setCode(phone.id, region)} label={t('Indicatif du numéro {index}', { index: index + 1 })} />
+          <CodePicker region={codeOf(phone.id)} fallback={fallback} onChange={region => setCode(phone.id, region)} label={t('Country code of number {index}', { index: index + 1 })} />
           <TextField
             kind="tel"
             className={styles.entryNumber}
             value={phone.number}
             onChange={number => set({ phones: replaced(draft.phones, phone.id, { number }) })}
             onBlur={() => takeCode(phone)}
-            ariaLabel={t('Numéro {index}', { index: index + 1 })}
-            placeholder={t('Numéro')}
+            ariaLabel={t('Number {index}', { index: index + 1 })}
+            placeholder={tc('phone', 'Number')}
             maxLength={CONTACT_LIMITS.number}
           />
           <KindPicker
@@ -258,20 +266,20 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
             names={PHONE_KIND_NAMES}
             entry={phone}
             custom={custom.has(phone.id)}
-            label={t('Type du numéro {index}', { index: index + 1 })}
+            label={t('Type of number {index}', { index: index + 1 })}
             onKind={(kind, own) => {
               setCustomRow(phone.id, own);
               set({ phones: replaced(draft.phones, phone.id, own ? { kind: 'other' } : { kind, label: '' }) });
             }}
           />
-          <IconButton icon="close" className={styles.entryRemove} label={t('Retirer le numéro {index}', { index: index + 1 })} shape={index} onClick={() => set({ phones: draft.phones.filter(row => row.id !== phone.id) })} />
-          {custom.has(phone.id) ? <TextField kind="text" className={styles.entryCustom} value={phone.label} onChange={label => set({ phones: replaced(draft.phones, phone.id, { label }) })} ariaLabel={t('Nom du type')} placeholder={t('Nom du type (Bureau Lyon…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : null}
+          <IconButton icon="close" className={styles.entryRemove} label={t('Remove number {index}', { index: index + 1 })} shape={index} onClick={() => set({ phones: draft.phones.filter(row => row.id !== phone.id) })} />
+          {custom.has(phone.id) ? <TextField kind="text" className={styles.entryCustom} value={phone.label} onChange={label => set({ phones: replaced(draft.phones, phone.id, { label }) })} ariaLabel={t('Type name')} placeholder={t('Type name (Lyon office…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : null}
         </div>
       ))}
       {draft.phones.length < CONTACT_LIMITS.phones ? (
         <div>
           <Button kind="text" icon="plus" onClick={() => set({ phones: [...draft.phones, newPhone(draft.phones.length === 0 ? 'mobile' : 'home')] })}>
-            {t('Ajouter un numéro')}
+            {t('Add number')}
           </Button>
         </div>
       ) : null}
@@ -279,29 +287,29 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
   );
 
   const emails = (
-    <Group icon="email" title={t('E-mails')}>
+    <Group icon="email" title={t('Emails')}>
       {draft.emails.map((email: EmailEntry, index) => (
         <div key={email.id} className={styles.entry}>
-          <TextField kind="email" field={form.field(`email:${email.id}`)} value={email.address} onChange={address => set({ emails: replaced(draft.emails, email.id, { address }) })} ariaLabel={t('E-mail {index}', { index: index + 1 })} placeholder={t('E-mail')} maxLength={CONTACT_LIMITS.email} />
+          <TextField kind="email" field={form.field(`email:${email.id}`)} value={email.address} onChange={address => set({ emails: replaced(draft.emails, email.id, { address }) })} ariaLabel={t('Email {index}', { index: index + 1 })} placeholder={t('Email')} maxLength={CONTACT_LIMITS.email} />
           <KindPicker
             kinds={EMAIL_KINDS}
             names={PLACE_KIND_NAMES}
             entry={email}
             custom={custom.has(email.id)}
-            label={t('Type de l’e-mail {index}', { index: index + 1 })}
+            label={t('Type of email {index}', { index: index + 1 })}
             onKind={(kind, own) => {
               setCustomRow(email.id, own);
               set({ emails: replaced(draft.emails, email.id, own ? { kind: 'other' } : { kind, label: '' }) });
             }}
           />
-          <IconButton icon="close" className={styles.entryRemove} label={t('Retirer l’e-mail {index}', { index: index + 1 })} shape={index} onClick={() => set({ emails: draft.emails.filter(row => row.id !== email.id) })} />
-          {custom.has(email.id) ? <TextField kind="text" className={styles.entryCustom} value={email.label} onChange={label => set({ emails: replaced(draft.emails, email.id, { label }) })} ariaLabel={t('Nom du type')} placeholder={t('Nom du type (Bureau Lyon…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : null}
+          <IconButton icon="close" className={styles.entryRemove} label={t('Remove email {index}', { index: index + 1 })} shape={index} onClick={() => set({ emails: draft.emails.filter(row => row.id !== email.id) })} />
+          {custom.has(email.id) ? <TextField kind="text" className={styles.entryCustom} value={email.label} onChange={label => set({ emails: replaced(draft.emails, email.id, { label }) })} ariaLabel={t('Type name')} placeholder={t('Type name (Lyon office…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : null}
         </div>
       ))}
       {draft.emails.length < CONTACT_LIMITS.emails ? (
         <div>
           <Button kind="text" icon="plus" onClick={() => set({ emails: [...draft.emails, newEmail(draft.emails.length === 0 ? 'home' : 'work')] })}>
-            {t('Ajouter un e-mail')}
+            {t('Add email')}
           </Button>
         </div>
       ) : null}
@@ -325,7 +333,7 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
   };
 
   const addresses = (
-    <Group icon="mapPin" title={t('Adresses')}>
+    <Group icon="mapPin" title={t('Addresses')}>
       {draft.addresses.map((address, index) => {
         const { first, rest } = streetLines(address);
         return (
@@ -336,47 +344,47 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
                 names={PLACE_KIND_NAMES}
                 entry={address}
                 custom={custom.has(address.id)}
-                label={t('Type de l’adresse {index}', { index: index + 1 })}
+                label={t('Type of address {index}', { index: index + 1 })}
                 onKind={(kind, own) => {
                   setCustomRow(address.id, own);
                   set({ addresses: replaced(draft.addresses, address.id, own ? { kind: 'other' } : { kind, label: '' }) });
                 }}
               />
-              {custom.has(address.id) ? <TextField kind="text" value={address.label} onChange={label => set({ addresses: replaced(draft.addresses, address.id, { label }) })} ariaLabel={t('Nom du type')} placeholder={t('Nom du type (Bureau Lyon…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : <span />}
-              <IconButton icon="close" label={t('Retirer l’adresse {index}', { index: index + 1 })} shape={index} onClick={() => set({ addresses: draft.addresses.filter(row => row.id !== address.id) })} />
+              {custom.has(address.id) ? <TextField kind="text" value={address.label} onChange={label => set({ addresses: replaced(draft.addresses, address.id, { label }) })} ariaLabel={t('Type name')} placeholder={t('Type name (Lyon office…)')} maxLength={CONTACT_LIMITS.entryLabel} /> : <span />}
+              <IconButton icon="close" label={t('Remove address {index}', { index: index + 1 })} shape={index} onClick={() => set({ addresses: draft.addresses.filter(row => row.id !== address.id) })} />
             </div>
             <PlaceField
               className={styles.addressWide}
-              label={t('Rue')}
+              label={t('Street')}
               value={first}
               onChange={value => setStreet(address, value, rest)}
               onPick={place => pickPlace(address, place)}
               known={known}
-              placeholder={t('Un numéro et une rue, un lieu, une ville…')}
-              help={t('Choisir une adresse proposée remplit le code postal, la ville et le pays.')}
+              placeholder={t('A number and a street, a place, a town…')}
+              help={t('Picking a suggested address fills in the postcode, the town and the country.')}
               autoFocus={address.street === '' && address.city === '' && index === draft.addresses.length - 1 && index > 0}
             />
             <TextField
               kind="street"
               className={styles.addressWide}
-              label={t('Complément')}
+              label={t('Address line 2')}
               value={rest}
               multiline={rest.includes('\n')}
               onChange={value => setStreet(address, first, value)}
-              placeholder={t('Bâtiment, étage, code…')}
+              placeholder={t('Building, floor, door code…')}
               maxLength={CONTACT_LIMITS.addressLine}
             />
-            {part(address, 'postalCode', t('Code postal'))}
-            {part(address, 'city', t('Ville'))}
-            {part(address, 'region', t('Région'))}
-            {part(address, 'country', t('Pays'))}
+            {part(address, 'postalCode', t('Postcode'))}
+            {part(address, 'city', t('City'))}
+            {part(address, 'region', t('Region'))}
+            {part(address, 'country', t('Country'))}
           </div>
         );
       })}
       {draft.addresses.length < CONTACT_LIMITS.addresses ? (
         <div>
           <Button kind="text" icon="plus" onClick={() => set({ addresses: [...draft.addresses, newAddress(draft.addresses.length === 0 ? 'home' : 'work')] })}>
-            {t('Ajouter une adresse')}
+            {t('Add address')}
           </Button>
         </div>
       ) : null}
@@ -408,9 +416,9 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
           className={styles.photoButton}
           aria-haspopup="menu"
           aria-expanded={photoMenu}
-          aria-label={draft.photoId ? t('Changer la photo') : t('Ajouter une photo')}
-          data-tip={draft.photoId ? t('Changer la photo') : t('Ajouter une photo')}
-          onClick={() => (draft.photoId ? setPhotoMenu(true) : fileInput.current?.click())}
+          aria-label={draft.photoId ? t('Change photo') : t('Add photo')}
+          data-tip={draft.photoId ? t('Change photo') : t('Add photo')}
+          onClick={() => (draft.photoId || immichOn ? setPhotoMenu(true) : fileInput.current?.click())}
         >
           <Avatar contact={{ id: id ?? 'new', firstName: draft.firstName, lastName: draft.lastName, company: draft.company, emails: draft.emails, phones: draft.phones, photoId: draft.photoId, photoUploaded: draft.photoUploaded }} size={96} />
           <span className={styles.photoBadge} data-pebble-under={3} aria-hidden="true">
@@ -418,7 +426,7 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
           </span>
         </button>
         {/* The face and its camera say they choose the photo; what they cannot show is the drop, under a pointer. */}
-        {finger ? null : <p className={`${styles.photoHint} t-meta`}>{t('Une image déposée ici devient sa photo.')}</p>}
+        {finger ? null : <p className={`${styles.photoHint} t-meta`}>{t('An image dropped here becomes their photo.')}</p>}
         <Menu
           open={photoMenu}
           anchor={photoButton}
@@ -426,10 +434,24 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
           onDismiss={() => setPhotoMenu(false)}
           label={t('Photo')}
           items={[
-            { label: t('Choisir une autre photo…'), icon: 'image', onSelect: () => fileInput.current?.click() },
-            { label: t('Retirer la photo'), icon: 'trash', danger: true, onSelect: () => set({ photoId: null, photoMime: '', photoUploaded: false }) },
+            { label: draft.photoId ? t('Choose another photo…') : t('Choose a photo…'), icon: 'image', onSelect: () => fileInput.current?.click() },
+            ...(immichOn ? [{ label: t('From Immich…'), icon: 'people', onSelect: () => setFromImmich(true) } satisfies MenuItem] : []),
+            ...(draft.photoId ? [{ label: t('Remove photo'), icon: 'trash', danger: true, onSelect: () => set({ photoId: null, photoMime: '', photoUploaded: false }) } satisfies MenuItem] : []),
           ]}
         />
+        {immichOn ? (
+          <ImmichPeopleDialog
+            open={fromImmich}
+            name={`${draft.firstName} ${draft.lastName}`.trim()}
+            onDismiss={() => setFromImmich(false)}
+            onChosen={photo => {
+              setFromImmich(false);
+              // The server holds it already: nothing to keep here, nothing to send.
+              setPicked(null);
+              set({ photoId: photo.id, photoMime: photo.mime, photoUploaded: true });
+            }}
+          />
+        ) : null}
         <input
           ref={fileInput}
           type="file"
@@ -443,18 +465,18 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
         />
       </div>
       {/* Who they are: the photo leads these fields, so they take no title of their own (« Nom » then « Prénom » read twice). */}
-      <Group title={t('Nom')}>
+      <Group title={t('Name')}>
         <div className={styles.pair}>
-          <TextField kind="person" field={form.field('firstName')} label={t('Prénom')} value={draft.firstName} onChange={firstName => set({ firstName })} maxLength={CONTACT_LIMITS.name} autoFocus={!id} />
-          <TextField kind="person" label={t('Nom de famille')} value={draft.lastName} onChange={lastName => set({ lastName })} maxLength={CONTACT_LIMITS.name} />
-          <TextField kind="organization" label={t('Entreprise')} value={draft.company} onChange={company => set({ company })} maxLength={CONTACT_LIMITS.company} />
-          <TextField kind="text" label={t('Fonction')} value={draft.jobTitle} onChange={jobTitle => set({ jobTitle })} maxLength={CONTACT_LIMITS.jobTitle} />
+          <TextField kind="person" field={form.field('firstName')} label={t('First name')} value={draft.firstName} onChange={firstName => set({ firstName })} maxLength={CONTACT_LIMITS.name} autoFocus={!id} />
+          <TextField kind="person" label={t('Last name')} value={draft.lastName} onChange={lastName => set({ lastName })} maxLength={CONTACT_LIMITS.name} />
+          <TextField kind="organization" label={t('Company')} value={draft.company} onChange={company => set({ company })} maxLength={CONTACT_LIMITS.company} />
+          <TextField kind="text" label={t('Job title')} value={draft.jobTitle} onChange={jobTitle => set({ jobTitle })} maxLength={CONTACT_LIMITS.jobTitle} />
         </div>
       </Group>
       {phones}
       {emails}
       {addresses}
-      <Group icon="cake" title={t('Anniversaire')}>
+      <Group icon="cake" title={t('Birthday')}>
         <TextField
           kind="number"
           field={form.field('birthday')}
@@ -464,43 +486,43 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
           // Its separators are written as it is typed (« 27 » -> « 27/ »): digits alone are enough.
           onChange={text => setBirthdayText(before => typeDate(before, text, monthFirst ? 'monthFirst' : 'dayFirst'))}
           onBlur={() => setBirthdayText(before => settleDate(before))}
-          placeholder={monthFirst ? t('MM/JJ/AAAA') : t('JJ/MM/AAAA')}
+          placeholder={monthFirst ? t('MM/DD/YYYY') : t('DD/MM/YYYY')}
           inputMode="numeric"
           className={styles.birthdayField}
-          help={`${monthFirst ? t('MM/JJ/AAAA, année facultative') : t('JJ/MM/AAAA, année facultative')}${parsedBirthday ? ` · ${formatBirthday(parsedBirthday)}` : ''}`}
+          help={`${monthFirst ? t('MM/DD/YYYY, year optional') : t('DD/MM/YYYY, year optional')}${parsedBirthday ? ` · ${formatBirthday(parsedBirthday)}` : ''}`}
         />
       </Group>
-      <Group icon="tag" title={t('Libellés')}>
+      <Group icon="tag" title={t('Labels')}>
         <LabelChips
           labels={labels}
           chosen={draft.labelIds}
           onToggle={id => set({ labelIds: draft.labelIds.includes(id) ? draft.labelIds.filter(other => other !== id) : [...draft.labelIds, id] })}
           onCreate={name => {
-            if (labelNameTaken(name)) return { problem: t('Ce libellé existe déjà : choisissez un autre nom.') };
+            if (labelNameTaken(name)) return { problem: t('This label already exists: choose another name.') };
             const id = createLabel(name);
             set({ labelIds: [...draft.labelIds, id] });
             return { id };
           }}
           maxLength={CONTACT_LIMITS.labelName}
-          words={{ add: t('Nouveau libellé'), placeholder: t('Nom du libellé'), field: t('Nom du nouveau libellé'), create: t('Créer le libellé') }}
+          words={{ add: t('New label'), placeholder: t('Label name'), field: t('New label’s name'), create: t('Create the label') }}
         />
         <button type="button" role="switch" aria-checked={draft.favorite} className={styles.switchRow} onClick={() => set({ favorite: !draft.favorite })}>
           <span className={styles.switchText}>
-            <span className="t-body">{t('Favori')}</span>
-            <span className="t-meta">{t('En tête de la liste, et dans les appels rapides.')}</span>
+            <span className="t-body">{t('Favourite')}</span>
+            <span className="t-meta">{t('At the top of the list, and in quick calls.')}</span>
           </span>
           <SwitchMark checked={draft.favorite} />
         </button>
       </Group>
       <Group icon="note" title={t('Note')}>
-        <TextField kind="prose" ariaLabel={t('Note')} value={note} onChange={setNote} multiline maxLength={CONTACTS_TEXT_LIMITS.contact.note} placeholder={t('Ce que vous voulez retenir')} />
+        <TextField kind="prose" ariaLabel={t('Note')} value={note} onChange={setNote} multiline maxLength={CONTACTS_TEXT_LIMITS.contact.note} placeholder={t('What you want to remember')} />
       </Group>
       <FormFoot form={form}>
         <Button kind="text" onClick={() => goBack(id ? paths.contact(id) : paths.contacts)}>
-          {t('Annuler')}
+          {t('Cancel')}
         </Button>
         <Button type="submit" icon="check" busy={form.busy}>
-          {t('Enregistrer')}
+          {t('Save')}
         </Button>
       </FormFoot>
       {unsaved.dialog}
@@ -511,7 +533,7 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
 /** A new contact's form, from what « Créer un contact » was given (a name typed, a label's list). */
 export function NewContactScreen() {
   const [seed] = useState(takeSeed);
-  return <ContactForm id={null} initial={emptyDraft(seed?.name ?? '', seed?.labelIds ?? [])} initialNote="" title={t('Créer un contact')} />;
+  return <ContactForm id={null} initial={emptyDraft(seed?.name ?? '', seed?.labelIds ?? [])} initialNote="" title={t('Create contact')} />;
 }
 
 /** A contact's form, as it stands when opened. */
@@ -521,9 +543,9 @@ export function EditContactScreen({ id }: { id: string }) {
   if (!opened || opened.deletedAt !== null) {
     return (
       <div className={`${styles.screen} ${styles.narrowScreen}`}>
-        <EmptyState scene="trash" as="h1" title={t('Ce contact n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" as="h1" title={t('This contact no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }
-  return <ContactForm id={id} initial={draftOf(opened)} initialNote={opened.note} title={t('Modifier le contact')} />;
+  return <ContactForm id={id} initial={draftOf(opened)} initialNote={opened.note} title={t('Edit contact')} />;
 }

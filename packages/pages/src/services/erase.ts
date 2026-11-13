@@ -86,11 +86,11 @@ function sort(library: PagesEraseLibrary): Sorted {
 /** The parts as Réglages › Données › « Effacer des données » lists them, counted now. */
 export function pagesEraseParts(library: PagesEraseLibrary): ErasePart[] {
   const { ids, pages, binned } = sort(library);
-  const pagesDetail = pages.pages > 0 ? (binned > 0 ? t('{pages}, dont {binned} dans la corbeille', { pages: plural(pages.pages, 'page'), binned }) : plural(pages.pages, 'page')) : plural(ids.pages.length, 'bloc sans page', 'blocs sans page');
-  const journalDetail = pages.journal > 0 ? t('« Journal » et {days}', { days: plural(pages.journal, 'note du jour', 'notes du jour') }) : t('La page « Journal », sans note du jour');
+  const pagesDetail = pages.pages > 0 ? (binned > 0 ? t('{pages}, {binned} of them in the bin', { pages: plural(pages.pages, 'page'), binned }) : plural(pages.pages, 'page')) : plural(ids.pages.length, 'block without a page', 'blocks without a page');
+  const journalDetail = pages.journal > 0 ? t('“Journal” and {days}', { days: plural(pages.journal, 'daily note', 'daily notes') }) : t('The “Journal” page, with no daily note');
   return [
-    { id: 'pages', title: t('Vos pages'), detail: pagesDetail, count: ids.pages.length, glyph: 'page' },
-    { id: 'journal', title: t('Le journal'), detail: journalDetail, count: ids.journal.length, glyph: 'today' },
+    { id: 'pages', title: t('Your pages'), detail: pagesDetail, count: ids.pages.length, glyph: 'page' },
+    { id: 'journal', title: t('The journal'), detail: journalDetail, count: ids.journal.length, glyph: 'today' },
   ];
 }
 

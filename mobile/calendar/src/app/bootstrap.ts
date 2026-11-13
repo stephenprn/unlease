@@ -11,6 +11,7 @@ import { databaseDirectory } from '@shared/platform/storage';
 
 import { startFileUploads } from './eventFiles';
 import { nameOf } from './mentionNames';
+import { calendarMirror } from './phoneMirror';
 import { loadCalendarUi } from './store/calendarUi';
 import { loadLibrary, useLibraryStore } from './store/libraryStore';
 import { startWidgets } from './widgets';
@@ -37,6 +38,8 @@ export function bootstrap(): BootResult {
     startFileUploads();
     // The home-screen widgets are handed what they draw now, and whenever it changes.
     startWidgets();
+    // The events copied into the phone's own calendar, when turned on, whenever they change.
+    calendarMirror.start();
     // The suite's other apps on this phone read this one's connection and appearance.
     startSuiteLink();
     // The launcher's icon in this app's primary, switched once the app has left the screen.

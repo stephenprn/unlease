@@ -28,23 +28,23 @@ function LinkReading({ model, enabled, links }: { model: keyof typeof CLAUDE_COS
   return (
     <View>
       <AppText variant="meta" style={styles.cost}>
-        {t('Environ {cost} par lien lu, {search} par recherche d’un module sur le web.', { cost: usd(CLAUDE_COST_PER_LINK[model]), search: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) })}
-        {links !== null ? ` ${t('Ce mois-ci : {links}.', { links: plural(links, 'lien lu', 'liens lus') })}` : ''}
+        {t('About {cost} per link read, {search} per web search by a module.', { cost: usd(CLAUDE_COST_PER_LINK[model]), search: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) })}
+        {links !== null ? ` ${t('This month: {links}.', { links: plural(links, 'link read', 'links read') })}` : ''}
       </AppText>
       {enabled && skipped > 0 ? (
         <ListRow
           icon="refresh"
-          title={skipped === 1 ? t('Lire le lien non lu') : t('Lire les {links}', { links: plural(skipped, 'lien non lu', 'liens non lus') })}
-          supporting={skipped === 1 ? t('Gardé tel quel quand la lecture était désactivée · environ {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) }) : t('Gardés tels quels quand la lecture était désactivée · environ {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) })}
-          onPress={() => showSnack(t('{links} en lecture', { links: plural(readSkippedLinks(), 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' })}
+          title={skipped === 1 ? t('Read the unread link') : t('Read the {links}', { links: plural(skipped, 'unread link', 'unread links') })}
+          supporting={skipped === 1 ? t('Kept as it was while reading was off · about {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) }) : t('Kept as they were while reading was off · about {cost}', { cost: usd(skipped * CLAUDE_COST_PER_LINK[model]) })}
+          onPress={() => showSnack(t('{links} for reading', { links: plural(readSkippedLinks(), 'link sent', 'links sent') }), undefined, { tone: 'success' })}
         />
       ) : null}
       {/* Without a key, the facts lead nowhere: they wait for one. */}
       {enabled ? (
         <ListRow
           icon="list"
-          title={t('Ce que Claude relève')}
-          supporting={t('Ce que Claude relève sur chaque lien qu’il lit')}
+          title={t('Facts Claude notes')}
+          supporting={t('What Claude notes on each link it reads')}
           trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />}
           onPress={() => navigate('Templates')}
         />

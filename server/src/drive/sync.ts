@@ -218,7 +218,7 @@ export class DriveSync implements RemoteFiles {
       bytes: stored.reduce((sum, row) => sum + row.bytes, 0),
       waiting: config?.leaving ? rows.length : this.waiting,
       lastPassAt: this.lastPassAt,
-      error: config ? (this.error ?? (lost > 0 ? `${plural(lost, 'fichier introuvable', 'fichiers introuvables')} dans Seafile, sans copie sur le serveur` : null)) : null,
+      error: config ? (this.error ?? (lost > 0 ? `${plural(lost, 'file not found', 'files not found')} dans Seafile, sans copie sur le serveur` : null)) : null,
     };
   }
 
@@ -401,7 +401,7 @@ export class DriveSync implements RemoteFiles {
     }
     this.waiting = failed;
     if (failed > 0) {
-      this.error = `${plural(failed, 'fichier n’a', 'fichiers n’ont')} pas pu revenir : ${problem}`;
+      this.error = `${plural(failed, 'file has', 'files have')} pas pu revenir : ${problem}`;
       return;
     }
     this.error = null;

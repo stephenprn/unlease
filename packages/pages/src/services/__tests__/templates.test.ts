@@ -27,7 +27,7 @@ const flat = (drafts: readonly BlockDraft[]): BlockDraft[] => drafts.flatMap(dra
 describe('page templates', () => {
   it('offers each template once, by a glyph and a name', () => {
     expect(TEMPLATE_CHOICES.map(choice => choice.key)).toEqual([...PAGE_TEMPLATES]);
-    expect(TEMPLATE_CHOICES.map(choice => choice.label)).toEqual(['Journal du jour', 'Réunion', 'Voyage', 'Liste de lecture', 'Projet']);
+    expect(TEMPLATE_CHOICES.map(choice => choice.label)).toEqual(['Today’s journal', 'Meeting', 'Trip', 'Reading list', 'Project']);
   });
 
   it('writes blocks every device takes: each field passes the schema', () => {

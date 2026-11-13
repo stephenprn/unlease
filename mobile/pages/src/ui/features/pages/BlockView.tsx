@@ -40,22 +40,23 @@ import { TableBlock } from './TableBlock';
 import { TargetBlock } from './TargetBlock';
 import { TocBlock } from './TocBlock';
 import { CalendarBlock } from './CalendarBlock';
+import { ImmichBlock } from './ImmichBlock';
 
 const NO_IDS: readonly string[] = [];
 /** A nested block's step in: one list mark's width. */
 export const NEST = 26;
 
 export const PLACEHOLDERS: Partial<Record<BlockKind, string>> = {
-  text: tx('Écrivez, ou tapez « / » pour les commandes'),
-  h1: tx('Titre 1'),
-  h2: tx('Titre 2'),
-  h3: tx('Titre 3'),
-  h4: tx('Titre 4'),
-  bullet: tx('Liste'),
-  numbered: tx('Liste'),
-  todo: tx('À faire'),
-  toggle: tx('Liste dépliante'),
-  callout: tx('Écrivez quelque chose…'),
+  text: tx('Write, or type “/” for commands'),
+  h1: tx('Heading 1'),
+  h2: tx('Heading 2'),
+  h3: tx('Heading 3'),
+  h4: tx('Heading 4'),
+  bullet: tx('List'),
+  numbered: tx('List'),
+  todo: tx('To-do'),
+  toggle: tx('Toggle list'),
+  callout: tx('Write something…'),
 };
 
 /**
@@ -160,7 +161,7 @@ function ToggleChevron({ block }: { block: Block }) {
   }, [open, turn]);
   const turned = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value * 90}deg` }] }));
   return (
-    <Tappable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={open ? t('Replier') : t('Déplier')} onPress={() => setToggleOpen(block.id, !open)} hitSlop={8} style={[styles.lead, styles.chevron, { height: lineHeightOf(block.kind) }]}>
+    <Tappable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={open ? t('Collapse') : t('Expand')} onPress={() => setToggleOpen(block.id, !open)} hitSlop={8} style={[styles.lead, styles.chevron, { height: lineHeightOf(block.kind) }]}>
       <Animated.View style={turned}>
         <Icon name="chevronRight" size={18} color={theme.color.ink} />
       </Animated.View>
@@ -179,7 +180,7 @@ function Lead({ block, siblings, index }: { block: Block; siblings: readonly str
     case 'todo':
       return (
         <View style={[styles.lead, styles.box, { height: lineHeightOf(block.kind) }]}>
-          <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} compact recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
+          <Checkbox checked={block.checked} label={block.checked ? t('Mark as not done') : t('Mark as done')} disabled={readOnly} compact recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
         </View>
       );
     case 'toggle':
@@ -214,7 +215,7 @@ function TextBlock({ block, depth, siblings, index }: { block: Block; depth: num
           style={styles.emptyToggle}
         >
           <AppText variant="meta" color={undefined}>
-            {t('Liste vide. Touchez pour y écrire.')}
+            {t('Empty list. Tap to write in it.')}
           </AppText>
         </Tappable>
       ) : null}
@@ -229,7 +230,7 @@ function Callout({ block, depth }: { block: Block; depth: number }) {
   const { readOnly } = usePageContext();
   return (
     <Organic outline="panel" style={[styles.callout, { backgroundColor: isLineColor(block.color) ? theme.line[block.color].tint : theme.color.paperHigh }]}>
-      <Tappable accessibilityLabel={t('Changer l’icône de l’encadré')} disabled={readOnly} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: block.id, allowNone: false })} pebble={2} style={styles.calloutIcon}>
+      <Tappable accessibilityLabel={t('Change the callout’s icon')} disabled={readOnly} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: block.id, allowNone: false })} pebble={2} style={styles.calloutIcon}>
         <AppText style={styles.calloutEmoji}>{block.icon ?? '💡'}</AppText>
       </Tappable>
       <View style={styles.main}>
@@ -335,6 +336,14 @@ function Content({ block, depth, siblings, index }: { block: Block; depth: numbe
         <HoldForActions id={block.id}>
           <View>
             <CalendarBlock block={block} />
+          </View>
+        </HoldForActions>
+      );
+    case 'immich':
+      return (
+        <HoldForActions id={block.id}>
+          <View>
+            <ImmichBlock block={block} />
           </View>
         </HoldForActions>
       );

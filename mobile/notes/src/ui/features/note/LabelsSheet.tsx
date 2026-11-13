@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
 import { createLabel } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -33,13 +33,13 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
   };
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Labels')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={tc('notes', 'Labels')} tall>
       <View style={styles.field}>
         {/* The keyboard's key creates the label typed when none bears its name, as Entrée on the web. */}
         <TextField
           value={filter}
           onChangeText={setFilter}
-          placeholder={t('Chercher ou créer un label')}
+          placeholder={t('Search or create a label')}
           autoCorrect={false}
           returnKeyType="done"
           onSubmitEditing={() => {
@@ -55,7 +55,7 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
               <Icon name="plus" size={24} color={theme.color.link} />
             </View>
             <AppText variant="body" color={theme.color.link} style={styles.name}>
-              {t('Créer « {label} »', { label: filter.trim() })}
+              {t('Create “{label}”', { label: filter.trim() })}
             </AppText>
           </Tappable>
         ) : null}
@@ -78,7 +78,7 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
             />
           );
         })}
-        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant. Tapez un nom pour en créer un.')} slot={24} gap={16} style={styles.empty} /> : null}
+        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('No labels yet. Type a name to create one.')} slot={24} gap={16} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );

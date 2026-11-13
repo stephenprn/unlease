@@ -18,7 +18,7 @@ describe('the Administration’s sections', () => {
   afterEach(() => setLocale('fr'));
 
   it('are addressed by ids that never change, Claude’s titled with its name in every language', () => {
-    expect(SHARED_ADMIN_SECTIONS).toEqual(['apps', 'server', 'reading', 'backup', 'drive']);
+    expect(SHARED_ADMIN_SECTIONS).toEqual(['apps', 'server', 'reading', 'backup', 'drive', 'immich']);
     expect(isSharedAdminSection('reading')).toBe(true);
     expect(isSharedAdminSection('seerr')).toBe(false);
     setLocale('en');

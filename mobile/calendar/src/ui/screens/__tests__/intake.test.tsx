@@ -10,6 +10,7 @@ import { act } from 'react-test-renderer';
 import { selectDay, selectView, useCalendarUiStore } from '@app/store/calendarUi';
 import { useLibraryStore, writeLocal } from '@app/store/libraryStore';
 import { HANDED } from '@platform/intake';
+import { setServer } from '@shared/app/store/settingsStore';
 import { navigationRef } from '@ui/navigation/navigationRef';
 
 import { __emitShare, __queueShare, __reset as resetIntake, state as intake } from '../../../../../shared/__mocks__/NativeIntake';
@@ -63,7 +64,7 @@ describe('Agenda, what other apps hand it', () => {
     const tree = await boot({ onboarded: true });
     await settle();
     expect(navigationRef.getCurrentRoute()?.name).toBe('Feeds');
-    expect(inputs(tree, 'Adresse de l’agenda (iCal)')[0]!.props.value).toBe('https://example.org/club.ics');
+    expect(inputs(tree, 'Adresse de l’agenda')[0]!.props.value).toBe('https://example.org/club.ics');
     const followed = (): number => Object.values(useLibraryStore.getState().feeds).filter(feed => feed.deletedAt === null && feed.url === 'https://example.org/club.ics').length;
     expect(followed()).toBe(0);
     await act(async () => {
@@ -71,6 +72,33 @@ describe('Agenda, what other apps hand it', () => {
     });
     await settle();
     expect(followed()).toBe(1);
+  });
+
+  it('asks for a login when the address does, and follows the calendar over CalDAV with its account', async () => {
+    const dav = 'https://mail.example.org/dav/caldav/Y2FsOi8vMC8x';
+    __queueShare({ id: 'feed-2', mimeType: HANDED.subscribe, text: dav });
+    const tree = await boot({ onboarded: true });
+    // With a server, the address is tried before it is followed.
+    await act(async () => setServer({ url: 'https://suite.test', token: 'jeton' }));
+    await settle();
+    const followed = () => Object.values(useLibraryStore.getState().feeds).filter(feed => feed.deletedAt === null && feed.url === dav);
+    await act(async () => {
+      pressableWithText(tree, 'S’abonner').props.onPress();
+    });
+    await settle();
+    expect(followed()).toHaveLength(0);
+    expect(textOf(tree)).toContain('Cet agenda demande un identifiant : celui du compte qui le tient.');
+    await act(async () => {
+      inputs(tree, 'Identifiant')[0]!.props.onChangeText('lea@example.org');
+      inputs(tree, 'Mot de passe')[0]!.props.onChangeText('secret');
+    });
+    await act(async () => {
+      pressableWithText(tree, 'S’abonner').props.onPress();
+    });
+    await settle();
+    expect(followed()).toEqual([expect.objectContaining({ kind: 'caldav', name: 'Travail', account: 'lea@example.org' })]);
+    expect(textOf(tree)).toContain('en tant que lea@example.org');
+    await act(async () => setServer(null));
   });
 
   it('opens quick add with words selected in another app', async () => {

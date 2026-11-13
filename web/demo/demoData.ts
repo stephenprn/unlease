@@ -99,13 +99,13 @@ const WINE_FIELDS: readonly TemplateField[] = [
   field('accords', 'Pairings', 'text', 'The dishes to serve it with'),
 ];
 /** The recipe kind's preset fields as an English speaker keeps them, by id (written out: `tools/demo/seed-server.ts` runs without the dictionary). */
-const RECIPE_ENGLISH: Readonly<Record<string, readonly [name: string, hint: string]>> = {
+const RECIPE_FRENCH: Readonly<Record<string, readonly [name: string, hint: string]>> = {
   totalTime: ['Total time', 'Preparation and cooking included'],
   servings: ['Servings', 'For how many people, or how many pieces'],
   difficulty: ['Difficulty', 'Easy, medium or hard'],
 };
 const RECIPE_FIELDS: readonly TemplateField[] = [
-  ...KIND_TEMPLATES.recipe.map(preset => field(preset.id, RECIPE_ENGLISH[preset.id]?.[0] ?? presetNames(preset).en, preset.type, RECIPE_ENGLISH[preset.id]?.[1] ?? preset.hint)),
+  ...KIND_TEMPLATES.recipe.map(preset => field(preset.id, RECIPE_FRENCH[preset.id]?.[0] ?? presetNames(preset).en, preset.type, RECIPE_FRENCH[preset.id]?.[1] ?? preset.hint)),
   field('vegetarien', 'Vegetarian', 'yesno', 'No meat or fish'),
 ];
 const WINE_READ = templateSignature(WINE_FIELDS);
@@ -399,7 +399,7 @@ const LINKS: readonly LinkSeed[] = [
     ago: 6 * DAY,
     status: 'failed',
     // The server's own sentence, stored in French as the real server writes it: the apps show it in their language (`t`).
-    error: 'Page protégée contre les robots',
+    error: 'Page protected against robots',
   },
   {
     line: 'line-mode',

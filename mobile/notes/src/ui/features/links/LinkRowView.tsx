@@ -18,7 +18,7 @@ import { Image, Linking, StyleSheet, View, useWindowDimensions } from 'react-nat
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, FadeOut, Keyframe, interpolate, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { formatDay } from '@unlease/core/services/format';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { priceChangeText } from '@unlease/notes/services/priceWatch';
@@ -102,7 +102,7 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
     if (!current) return;
     setPressedHere(true);
     const undo = onSetDone(id, !current.done);
-    showSnack(current.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(current.kind) }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(current.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(current.kind) }), { label: t('Undo'), run: undo }, { tone: 'success' });
   }, [id, link, onSetDone]);
 
   const pan = useMemo(
@@ -166,16 +166,16 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
   const image = kept ?? (link.imageUrl && !unloaded.includes(link.imageUrl) ? { uri: link.imageUrl } : null);
   // What the row shows of its state, heard after its name: read now, not read, done on a day.
   const state = pending
-    ? t('Lecture de la page…')
+    ? t('Reading the page…')
     : failed
       ? link.error
         ? t(link.error)
-        : t('Lecture impossible')
+        : t('Couldn’t read it')
       : done && link.doneAt
-        ? t('{stamp} le {date}', { stamp: stampWord(link.kind), date: formatDay(link.doneAt, Date.now()) })
+        ? t('{stamp} on {date}', { stamp: stampWord(link.kind), date: formatDay(link.doneAt, Date.now()) })
         : null;
   const undoing = held ?? done;
-  const verb = undoing ? t('À faire') : stampWord(link.kind);
+  const verb = undoing ? t('To-do') : stampWord(link.kind);
   // Stamping turns "done" on: matcha. Putting it back to do turns it off: the plain well.
   const holeInk = undoing ? theme.color.ink : theme.color.onActionContainer;
   const glyph = undoing ? 'undo' : 'stamp';
@@ -213,8 +213,8 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
             onLongPress={() => onLongPress?.(id)}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
-            accessibilityLabel={[text.title, text.source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, Date.now())?.text, state, note ? t('Votre note : {note}', { note }) : null].filter(Boolean).join(', ')}
-            accessibilityActions={pending ? undefined : [{ name: 'stamp', label: done ? t('Remettre à faire') : t('Marquer : {stamp}', { stamp: stampWord(link.kind).toLowerCase() }) }]}
+            accessibilityLabel={[text.title, text.source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, Date.now())?.text, state, note ? t('Your note: {note}', { note }) : null].filter(Boolean).join(', ')}
+            accessibilityActions={pending ? undefined : [{ name: 'stamp', label: done ? t('Put back to do') : t('Mark as {stamp}', { stamp: stampWord(link.kind).toLowerCase() }) }]}
             onAccessibilityAction={toggle}
             outline={outline}
             style={styles.row}
@@ -261,18 +261,18 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
               {pending ? (
                 <View style={styles.reading}>
                   <ReadingTrack width={72} />
-                  <AppText variant="meta">{t('Lecture de la page…')}</AppText>
+                  <AppText variant="meta">{t('Reading the page…')}</AppText>
                 </View>
               ) : failed ? (
                 <View style={styles.failed}>
                   <Icon name="alert" size={14} color={theme.color.danger} />
                   <AppText variant="meta" numberOfLines={1} style={styles.shrink}>
-                    {link.error ? t(link.error) : t('Lecture impossible')}
+                    {link.error ? t(link.error) : t('Couldn’t read it')}
                   </AppText>
                   {claude ? (
-                    <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Relire la page')} hitSlop={RETRY_SLOP} style={styles.retry}>
+                    <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Read the page again')} hitSlop={RETRY_SLOP} style={styles.retry}>
                       <AppText variant="metaStrong" color={theme.color.link}>
-                        {t('Réessayer')}
+                        {t('Try again')}
                       </AppText>
                     </Tappable>
                   ) : null}
@@ -280,9 +280,9 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
               ) : unread && claude ? (
                 // Kept without being read, while the server can read it: one tap reads it (the web's).
                 <View style={styles.failed}>
-                  <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Lire {title}', { title: text.title })} hitSlop={RETRY_SLOP} style={[styles.retry, styles.retryAlone]}>
+                  <Tappable onPress={() => onRetry(id)} accessibilityLabel={t('Read {title}', { title: text.title })} hitSlop={RETRY_SLOP} style={[styles.retry, styles.retryAlone]}>
                     <AppText variant="metaStrong" color={theme.color.link}>
-                      {t('Lire la page')}
+                      {t('Read the page')}
                     </AppText>
                   </Tappable>
                 </View>
@@ -298,7 +298,7 @@ function LinkRowViewComponent({ id, link, onOpen, onLongPress, onSetDone, onRetr
               ) : null}
             </View>
             {/* The page itself, one tap away from the list; the rest of the row opens what was kept of it. */}
-            <IconButton icon="external" label={t('Ouvrir le lien')} shape={1} onPress={() => Linking.openURL(link.url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }))} />
+            <IconButton icon="external" label={t('Open the link')} shape={1} onPress={() => Linking.openURL(link.url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }))} />
           </Tappable>
         </Animated.View>
       </GestureDetector>

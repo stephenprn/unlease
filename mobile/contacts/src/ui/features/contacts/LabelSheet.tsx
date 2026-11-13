@@ -18,7 +18,7 @@ export function LabelSheet({ visible, chosen, onChange, onDismiss }: { visible: 
     const clean = name.trim();
     if (!clean) return;
     if (labelNameTaken(clean)) {
-      setProblem(t('Ce libellé existe déjà : choisissez un autre nom.'));
+      setProblem(t('This label already exists: choose another name.'));
       return;
     }
     const id = createLabel(clean);
@@ -26,7 +26,7 @@ export function LabelSheet({ visible, chosen, onChange, onDismiss }: { visible: 
     onChange([...chosen, id]);
   };
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Libellés')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Labels')}>
       <SheetScroll keyboardShouldPersistTaps="handled">
         {order.map(id => {
           const label = labels[id];
@@ -41,9 +41,9 @@ export function LabelSheet({ visible, chosen, onChange, onDismiss }: { visible: 
             if (problem) setProblem(null);
           }}
           onSubmit={add}
-          placeholder={t('Créer un libellé')}
-          accessibilityLabel={t('Nom du nouveau libellé')}
-          submitLabel={t('Créer')}
+          placeholder={t('Create label')}
+          accessibilityLabel={t('New label’s name')}
+          submitLabel={t('Create')}
           maxLength={CONTACT_LIMITS.labelName}
           problem={problem}
           keepKeyboard

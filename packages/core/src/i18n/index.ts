@@ -1,28 +1,36 @@
 /**
- * The interface's language, French or English, shared by the phone, the web and the server's words.
- * French is the source: a sentence is its own key (`t('Nouvelle note')`), English comes from the
- * dictionary, and a sentence it lacks shows in French. The core's part is here (`en/`); the design
- * system and each app bring theirs, added once by every program that shows them (`addEnglish`).
+ * The interface's language, English or French, shared by the phone, the web and the server's words.
+ * English is the source: a sentence is its own key (`t('New note')`), French comes from the
+ * dictionary, and a sentence it lacks shows in English. The core's part is here (`fr/`); the design
+ * system and each app bring theirs, added once by every program that shows them (`addFrench`).
  * Parameters fill `{name}` slots, so a sentence is translated whole, never in pieces. Never call `t`
- * at module scope: a constant keeps its French (marked `tx`) and is translated where it is shown.
+ * at module scope: a constant keeps its English (marked `tx`) and is translated where it is shown.
+ *
+ * Where one English needs two French (« Cancel » and « Undo » are both « Annuler »; a word French
+ * genders or makes plural), the key carries a context: `Labels [notes]`, read as `tc('notes', 'Labels')`
+ * or `t('Labels [notes]')`; English shows the sentence alone. French that reaches `t` from stored data
+ * (a seeded title, an older server's message) still reads in both languages.
  */
-import { CORE_ENGLISH } from './en';
+import { CORE_FRENCH } from './fr';
 
 export type Dictionary = Readonly<Record<string, string>>;
 
-const EN: Record<string, string> = { ...CORE_ENGLISH };
+const FR: Record<string, string> = { ...CORE_FRENCH };
+/** The French sentences back to their keys, built when first needed: French from stored data, shown in English. */
+let keysOfFrench: Map<string, string> | null = null;
 
-/** Adds a package's English (the design system's, an app's) to the dictionary `t` reads. */
-export function addEnglish(...parts: readonly Dictionary[]): void {
-  for (const part of parts) Object.assign(EN, part);
+/** Adds a package's French (the design system's, an app's) to the dictionary `t` reads. */
+export function addFrench(...parts: readonly Dictionary[]): void {
+  for (const part of parts) Object.assign(FR, part);
+  keysOfFrench = null;
 }
 
-export type Locale = 'fr' | 'en';
+export type Locale = 'en' | 'fr';
 
-export const LOCALES: readonly Locale[] = ['fr', 'en'];
+export const LOCALES: readonly Locale[] = ['en', 'fr'];
 
 /** Each language named in itself, as a language picker shows it. */
-export const LOCALE_NAMES: Readonly<Record<Locale, string>> = { fr: 'Français', en: 'English' };
+export const LOCALE_NAMES: Readonly<Record<Locale, string>> = { en: 'English', fr: 'Français' };
 
 export function isLocale(value: unknown): value is Locale {
   return value === 'fr' || value === 'en';
@@ -52,44 +60,65 @@ function fill(text: string, params: Params): string {
   return text.replace(/\{(\w+)\}/g, (slot, name: string) => (Object.hasOwn(params, name) ? String(params[name]) : slot));
 }
 
-/** A French sentence in the interface's language, its `{slots}` filled. */
-export function t(french: string, params?: Params): string {
-  const text = current === 'en' ? (EN[french] ?? withStatus(french)) : french;
+const CONTEXT = / \[[a-z]\w*\]$/;
+
+/** A key's English: the sentence, its context left out. */
+function bare(key: string): string {
+  return key.replace(CONTEXT, '');
+}
+
+function frenchKeys(): Map<string, string> {
+  if (!keysOfFrench) {
+    keysOfFrench = new Map();
+    for (const [key, french] of Object.entries(FR)) if (!keysOfFrench.has(french)) keysOfFrench.set(french, key);
+  }
+  return keysOfFrench;
+}
+
+/** A key in French: its dictionary's French; a server's sentence ending in its HTTP status (« Page inaccessible (403) ») translated, the status kept; French already (stored data) as it is; else the English. */
+function french(key: string): string {
+  const found = FR[key] ?? (CONTEXT.test(key) ? FR[bare(key)] : undefined);
+  if (found !== undefined) return found;
+  const status = / \((\d{3})\)$/.exec(key);
+  const sentence = status ? FR[key.slice(0, status.index)] : undefined;
+  return sentence === undefined ? bare(key) : `${sentence} (${status![1]})`;
+}
+
+/** A key in English: the sentence; French from stored data back to its English. */
+function english(key: string): string {
+  if (Object.hasOwn(FR, key)) return bare(key);
+  const back = frenchKeys().get(key);
+  return back === undefined ? bare(key) : bare(back);
+}
+
+/** An English sentence in the interface's language, its `{slots}` filled. */
+export function t(key: string, params?: Params): string {
+  const text = current === 'fr' ? french(key) : english(key);
   return params ? fill(text, params) : text;
 }
 
-/** A server's sentence ending in its HTTP status (« Page inaccessible (403) »): the sentence translated, the status kept. */
-function withStatus(french: string): string {
-  const found = / \((\d{3})\)$/.exec(french);
-  const english = found ? EN[french.slice(0, found.index)] : undefined;
-  return english === undefined ? french : `${english} (${found![1]})`;
+/** A sentence whose French depends on where it is shown (« Undo » on a slip): its dictionary key is `English [context]`. */
+export function tc(context: string, english: string, params?: Params): string {
+  return t(`${english} [${context}]`, params);
 }
 
-/**
- * A sentence whose English depends on where it is shown (« Annuler »: Undo on a slip, Cancel in a
- * dialog): its dictionary key is `French [context]`, its French the sentence alone.
- */
-export function tc(context: string, french: string, params?: Params): string {
-  const english = current === 'en' ? EN[`${french} [${context}]`] : undefined;
-  if (english === undefined) return t(french, params);
-  return params ? fill(english, params) : english;
+/** A key's French, whatever the interface's language (a search that understands both: `settingsSearch`). */
+export function inFrench(key: string): string {
+  return french(key);
 }
 
-/** A French sentence's English, whatever the interface's language (a search that understands both: `settingsSearch`); the French itself when the dictionary lacks it. */
-export function inEnglish(french: string): string {
-  return EN[french] ?? french;
+/** A key's English, whatever the interface's language: the sentence, its context left out. */
+export function inEnglish(key: string): string {
+  return english(key);
 }
 
-/** A French sentence kept in a constant, translated where it is shown (`t(constant)`): marks it for the dictionary's check. */
-export const tx = <T extends string>(french: T): T => french;
+/** An English sentence kept in a constant, translated where it is shown (`t(constant)`): marks it for the dictionary's check. */
+export const tx = <T extends string>(english: T): T => english;
 
-/** A map of French names (marked `tx`) read through `t` on every access, so code that reads it needs no change; a name written `French [context]` reads through `tc`. */
+/** A map of English names (marked `tx`, a context if one needs it) read through `t` on every access, so code that reads it needs no change. */
 export function localized<K extends string>(names: Readonly<Record<K, string>>): Readonly<Record<K, string>> {
   const out = {} as Record<K, string>;
-  for (const key of Object.keys(names) as K[]) {
-    const contextual = /^(.+) \[(\w+)\]$/.exec(names[key]);
-    Object.defineProperty(out, key, { enumerable: true, get: () => (contextual ? tc(contextual[2]!, contextual[1]!) : t(names[key])) });
-  }
+  for (const key of Object.keys(names) as K[]) Object.defineProperty(out, key, { enumerable: true, get: () => t(names[key]) });
   return out;
 }
 

@@ -30,7 +30,7 @@ import { Avatar } from './Avatar';
 /** A favourite or no longer, with its way back. */
 export function toggleFavorite(contact: Contact): void {
   const undo = setFavorite([contact.id], !contact.favorite);
-  showUndo(contact.favorite ? t('Retiré des favoris') : t('Ajouté aux favoris'), undo);
+  showUndo(contact.favorite ? t('Removed from favourites') : t('Added to favourites'), undo);
 }
 
 const ContactRow = memo(function ContactRow({ id, order, picking, run }: { id: string; order: SortOrder; picking: boolean; run: readonly string[] }) {
@@ -44,7 +44,7 @@ const ContactRow = memo(function ContactRow({ id, order, picking, run }: { id: s
   const worn = contact.labelIds.map(labelId => labels[labelId]).filter(label => label && label.deletedAt === null);
   return (
     <li className={styles.row} data-motion={id} data-picked={picked || undefined} data-picking={picking || undefined}>
-      <button type="button" className={styles.pick} role="checkbox" aria-checked={picked} aria-label={t('Sélectionner {name}', { name })} onClick={event => (event.shiftKey ? pickRange(run, id) : toggleSelected(id))}>
+      <button type="button" className={styles.pick} role="checkbox" aria-checked={picked} aria-label={t('Select {name}', { name })} onClick={event => (event.shiftKey ? pickRange(run, id) : toggleSelected(id))}>
         <Avatar contact={contact} size={40} />
         <span className={styles.pickBox}>
           <CheckMark checked={picked} />
@@ -64,10 +64,10 @@ const ContactRow = memo(function ContactRow({ id, order, picking, run }: { id: s
         </span>
       </Link>
       <span className={styles.rowEnd}>
-        <IconButton icon="edit" label={t('Modifier {name}', { name })} className={styles.quiet} shape={1} onClick={() => navigate(paths.edit(id))} />
+        <IconButton icon="edit" label={t('Edit {name}', { name })} className={styles.quiet} shape={1} onClick={() => navigate(paths.edit(id))} />
         <IconButton
           icon="star"
-          label={contact.favorite ? t('Retirer {name} des favoris', { name }) : t('Ajouter {name} aux favoris', { name })}
+          label={contact.favorite ? t('Remove {name} from favourites', { name }) : t('Add {name} to favourites', { name })}
           pressed={contact.favorite}
           className={contact.favorite ? styles.listStar : `${styles.listStar} ${styles.quiet}`}
           shape={2}
@@ -152,10 +152,10 @@ export function ContactList({ sections }: { sections: readonly ListSection[] }) 
           <OutlinedBox kind="panel" lift="card" className={`${styles.table} paper`}>
             {index === 0 ? (
               <div className={`${styles.columns} t-meta-strong`} aria-hidden="true">
-                <span>{t('Nom')}</span>
-                <span>{t('E-mail')}</span>
-                <span>{t('Téléphone')}</span>
-                <span>{t('Libellés')}</span>
+                <span>{t('Name')}</span>
+                <span>{t('Email')}</span>
+                <span>{t('Phone')}</span>
+                <span>{t('Labels')}</span>
               </div>
             ) : null}
             <SectionRows section={section} order={order} picking={picking} />

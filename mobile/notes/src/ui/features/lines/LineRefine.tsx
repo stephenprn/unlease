@@ -56,8 +56,8 @@ function LineRefineBarComponent({ view, onOpen }: LineRefineBarProps) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.bar}>
-      <RefineButton icon="eye" value={LINE_FILTER_NAMES[view.filter]} label={t('Liens affichés : {filter}', { filter: LINE_FILTER_NAMES[view.filter] })} active={view.filter !== 'all'} onPress={() => onOpen('filter')} />
-      <RefineButton icon="sort" value={LINE_SORT_NAMES[view.sort]} label={t('Ordre : {order}', { order: LINE_SORT_NAMES[view.sort] })} active={view.sort !== 'own'} onPress={() => onOpen('sort')} />
+      <RefineButton icon="eye" value={LINE_FILTER_NAMES[view.filter]} label={t('Links shown: {filter}', { filter: LINE_FILTER_NAMES[view.filter] })} active={view.filter !== 'all'} onPress={() => onOpen('filter')} />
+      <RefineButton icon="sort" value={LINE_SORT_NAMES[view.sort]} label={t('Order: {order}', { order: LINE_SORT_NAMES[view.sort] })} active={view.sort !== 'own'} onPress={() => onOpen('sort')} />
     </View>
   );
 }
@@ -113,7 +113,7 @@ export function LineViewSheets({ open, view, counts, priced, onChange, onDismiss
   };
   return (
     <>
-      <Sheet visible={open === 'layout'} onDismiss={onDismiss} title={t('Afficher comme')}>
+      <Sheet visible={open === 'layout'} onDismiss={onDismiss} title={t('Show as')}>
         <SheetScroll>
           {LINE_LAYOUTS.map(layout => (
             <ChoiceRow
@@ -128,7 +128,7 @@ export function LineViewSheets({ open, view, counts, priced, onChange, onDismiss
           ))}
         </SheetScroll>
       </Sheet>
-      <Sheet visible={open === 'filter'} onDismiss={onDismiss} title={t('Afficher')}>
+      <Sheet visible={open === 'filter'} onDismiss={onDismiss} title={t('Show')}>
         <SheetScroll>
           {LINE_FILTERS.map(filter => (
             <ChoiceRow
@@ -142,7 +142,7 @@ export function LineViewSheets({ open, view, counts, priced, onChange, onDismiss
           ))}
         </SheetScroll>
       </Sheet>
-      <Sheet visible={open === 'sort'} onDismiss={onDismiss} title={t('Trier')}>
+      <Sheet visible={open === 'sort'} onDismiss={onDismiss} title={t('Sort')}>
         <SheetScroll>
           {LINE_SORTS.map(sort => (
             <ChoiceRow
@@ -193,7 +193,7 @@ export function FilteredEmpty({ filter, collection, onClear }: { filter: LineFil
         <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
           {sentence}
         </AppText>
-        <Button kind="text" small label={t('Tout afficher')} onPress={onClear} />
+        <Button kind="text" small label={t('Show all')} onPress={onClear} />
       </Organic>
     </Animated.View>
   );

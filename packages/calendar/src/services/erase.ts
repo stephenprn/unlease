@@ -68,29 +68,29 @@ export function calendarEraseParts(library: CalendarEraseLibrary): ErasePart[] {
   const eventsDetail = (events: readonly CalendarEvent[], lead: string): string => {
     const series = events.filter(event => event.rrule).length;
     const binned = events.filter(event => event.trashedAt !== null).length;
-    const parts = [series > 0 ? plural(series, 'qui se répète', 'qui se répètent') : '', binned > 0 ? plural(binned, 'dans la corbeille', 'dans la corbeille') : ''].filter(Boolean);
+    const parts = [series > 0 ? plural(series, 'repeating', 'repeating [many]') : '', binned > 0 ? plural(binned, 'in the bin', 'in the bin') : ''].filter(Boolean);
     if (parts.length === 0) return lead;
-    return t('{events}, dont {list}', { events: lead, list: parts.length === 2 ? t('{list} et {last}', { list: parts[0]!, last: parts[1]! }) : parts[0]! });
+    return t('{events}, including {list}', { events: lead, list: parts.length === 2 ? t('{list} and {last}', { list: parts[0]!, last: parts[1]! }) : parts[0]! });
   };
   const feeds = subscriptions(library);
   const served = Object.values(library.events).filter(event => alive(event) && event.recurringId === null && feeds.some(feed => feed.id === event.feedId)).length;
   const labels = Object.values(library.labels).filter(alive);
   const worn = Object.values(library.events).filter(event => alive(event) && event.recurringId === null && event.labelIds.some(id => labels.some(label => label.id === id))).length;
   const holidays = library.feeds[HOLIDAYS_FEED_ID];
-  const names = feeds.slice(0, 3).map(feed => feed.name.trim() || t('Sans nom')).join(', ') + (feeds.length > 3 ? '…' : '');
-  const followed = { calendars: plural(feeds.length, 'agenda'), names, events: plural(served, 'événement') };
+  const names = feeds.slice(0, 3).map(feed => feed.name.trim() || t('No name')).join(', ') + (feeds.length > 3 ? '…' : '');
+  const followed = { calendars: plural(feeds.length, 'calendar'), names, events: plural(served, 'event') };
   return [
-    { id: 'events', title: t('Vos événements'), detail: eventsDetail(own.events, plural(own.events.length, 'événement')), count: records.events, glyph: 'calendar' },
-    { id: 'imported', title: t('Événements importés'), detail: eventsDetail(own.imported, plural(own.imported.length, 'événement venu d’un fichier ou d’une invitation', 'événements venus d’un fichier ou d’une invitation')), count: records.imported, glyph: 'download' },
+    { id: 'events', title: t('Your events'), detail: eventsDetail(own.events, plural(own.events.length, 'event')), count: records.events, glyph: 'calendar' },
+    { id: 'imported', title: t('Imported events'), detail: eventsDetail(own.imported, plural(own.imported.length, 'event from a file or an invitation', 'events from a file or an invitation')), count: records.imported, glyph: 'download' },
     {
       id: 'subscriptions',
-      title: t('Vos abonnements'),
+      title: t('Your subscriptions'),
       // The holidays are no part: they are set in the Administration.
-      detail: holidays && alive(holidays) ? t('{calendars} ({names}), {events} en tout. Les jours fériés restent : ils se règlent dans l’Administration.', followed) : t('{calendars} ({names}), {events} en tout', followed),
+      detail: holidays && alive(holidays) ? t('{calendars} ({names}), {events} in all. The public holidays stay: they are set in the Administration.', followed) : t('{calendars} ({names}), {events} in all', followed),
       count: feeds.length,
       glyph: 'globe',
     },
-    { id: 'labels', title: t('Libellés'), detail: worn > 0 ? t('{labels} · les événements qui les portent restent, sans eux', { labels: plural(labels.length, 'libellé') }) : plural(labels.length, 'libellé'), count: labels.length, glyph: 'tag' },
+    { id: 'labels', title: t('Labels'), detail: worn > 0 ? t('{labels} · the events wearing them stay, without them', { labels: plural(labels.length, 'label') }) : plural(labels.length, 'label'), count: labels.length, glyph: 'tag' },
   ];
 }
 

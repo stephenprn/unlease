@@ -46,7 +46,7 @@ export function CalendarBlock({ block }: { block: Block }) {
   const year = Number(today.slice(0, 4));
 
   const labelItems: MenuItem[] = [
-    { label: t('Tous les événements'), icon: block.calendarLabelId === null ? 'check' : 'calendar', onSelect: () => updateBlock(page, block.id, { calendarLabelId: null }) },
+    { label: t('All events'), icon: block.calendarLabelId === null ? 'check' : 'calendar', onSelect: () => updateBlock(page, block.id, { calendarLabelId: null }) },
     ...calendarLabels(labels).map(each => ({
       label: each.name,
       icon: each.id === block.calendarLabelId ? ('check' as const) : ('tag' as const),
@@ -56,31 +56,31 @@ export function CalendarBlock({ block }: { block: Block }) {
   ];
 
   return (
-    <section className={styles.calendarBlock} data-outline="frame" aria-label={t('Agenda')}>
+    <section className={styles.calendarBlock} data-outline="frame" aria-label={t('Calendar')}>
       <header className={styles.calendarHead}>
         <Icon name="calendar" size={20} />
-        <span className="t-body-strong">{label ? label.name : t('Agenda')}</span>
+        <span className="t-body-strong">{label ? label.name : t('Calendar')}</span>
         {readOnly ? null : (
           <>
             <button ref={labelButton} type="button" className={`${styles.calendarPick} t-meta`} aria-haspopup="menu" onClick={() => setPicking(true)}>
-              {label ? t('Libellé') : t('Tous les événements')}
+              {label ? t('Label') : t('All events')}
               <Icon name="chevronDown" size={16} />
             </button>
-            <Menu open={picking} anchor={labelButton} onDismiss={() => setPicking(false)} items={labelItems} label={t('Événements montrés')} align="start" />
+            <Menu open={picking} anchor={labelButton} onDismiss={() => setPicking(false)} items={labelItems} label={t('Events shown')} align="start" />
             <Segmented
-              label={t('Jours montrés')}
+              label={t('Days shown')}
               value={String(block.calendarDays)}
-              options={CALENDAR_BLOCK_DAYS.map(count => ({ value: String(count), label: t('{count} j', { count }) }))}
+              options={CALENDAR_BLOCK_DAYS.map(count => ({ value: String(count), label: t('{count} d', { count }) }))}
               onChange={value => updateBlock(page, block.id, { calendarDays: Number(value) })}
             />
           </>
         )}
         <a className={`${styles.calendarOpen} t-meta`} href={browserPath('/agenda')} target="_blank" rel="noopener">
-          {t('Ouvrir l’agenda')}
+          {t('Open the calendar')}
         </a>
       </header>
       {days.length === 0 ? (
-        <EmptyLine className={styles.calendarEmpty} text={t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })} />
+        <EmptyLine className={styles.calendarEmpty} text={t('Nothing planned in the next {count} days.', { count: block.calendarDays })} />
       ) : (
         <ol className={styles.calendarDays}>
           {days.map(({ day, items }) => (
@@ -95,7 +95,7 @@ export function CalendarBlock({ block }: { block: Block }) {
                     <a className={styles.calendarItem} href={eventHref(occurrence.seriesId, occurrence.occurrence, occurrence.repeats)} target="_blank" rel="noopener">
                       <span className={styles.calendarDot} data-line={color ?? undefined} aria-hidden="true" />
                       <span className={`${styles.calendarTime} t-meta`}>{timeRange(occurrence)}</span>
-                      <span className="t-body">{occurrence.event.title.trim() || t('Sans titre')}</span>
+                      <span className="t-body">{occurrence.event.title.trim() || t('Untitled')}</span>
                       {occurrence.event.place.trim() ? <span className="t-meta"> · {occurrence.event.place.trim()}</span> : null}
                     </a>
                   </li>

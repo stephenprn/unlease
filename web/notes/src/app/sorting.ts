@@ -45,7 +45,7 @@ function targets(): SortTarget[] {
 
 async function ask(task: SortTask, from: string | null, into: readonly SortTarget[], links: readonly LinkItem[], signal?: AbortSignal): Promise<SortResponse> {
   const server = useSettingsStore.getState().server;
-  if (!server) throw new SyncError('network', t('Aucun serveur n’est connecté'));
+  if (!server) throw new SyncError('network', t('No server is connected'));
   return sortLinks(server, { task, from, targets: capTargets(into, from), links: links.slice(0, SORT_LIMITS.links).map(sortLink) }, signal);
 }
 

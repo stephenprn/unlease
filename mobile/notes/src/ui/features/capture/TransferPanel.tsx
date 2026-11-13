@@ -87,7 +87,7 @@ export function TransferPanel() {
           moveLink(movingId, target);
           endTransfer(movingId);
           const moved = useLibraryStore.getState().notes[target];
-          showSnack(t('Déplacé dans {collection}', { collection: moved ? shownTitle(moved) : '' }), undefined, { tone: 'success' });
+          showSnack(t('Moved to {collection}', { collection: moved ? shownTitle(moved) : '' }), undefined, { tone: 'success' });
         }}
       />
     </>
@@ -154,16 +154,16 @@ const Transfer = memo(function TransferView({ linkId, cleaned, queued, paused, o
   const host = link.siteName && link.siteName.trim().toLowerCase() !== link.title.trim().toLowerCase() ? link.siteName : displayHost(link.url);
   const destination = settled ? line : undefined;
   const headline = !server
-    ? t('Pas de serveur : le lien attend dans Non classé')
+    ? t('No server: the link waits in Unsorted')
     : link.status === 'skipped'
-      ? t('Lecture désactivée : gardé dans Non classé')
+      ? t('Reading turned off: kept in Unsorted')
       : !settled
-        ? t('Claude lit la page…')
+        ? t('Claude is reading the page…')
         : link.status === 'failed'
-          ? t('Lecture impossible, gardé dans Non classé')
+          ? t('Couldn’t read it, kept in Unsorted')
           : filed
-            ? t('Rangé dans {collection}', { collection: line ? shownTitle(line) : '' })
-            : t('Gardé dans Non classé');
+            ? t('Filed in {collection}', { collection: line ? shownTitle(line) : '' })
+            : t('Kept in Unsorted');
   const cutInk = destination && filed ? theme.slipLine[asLineColor(destination.color) ?? 'grey'].fill : theme.color.onSlipMuted;
 
   return (
@@ -176,14 +176,14 @@ const Transfer = memo(function TransferView({ linkId, cleaned, queued, paused, o
               {link.title || prettyUrl(link.url)}
             </AppText>
             {queued > 0 ? (
-              <AppText variant="metaStrong" color={theme.color.onSlipMuted} accessibilityLabel={t('{others} en attente', { others: plural(queued, 'autre') })}>
+              <AppText variant="metaStrong" color={theme.color.onSlipMuted} accessibilityLabel={t('{others} waiting', { others: plural(queued, 'other') })}>
                 {`+${queued}`}
               </AppText>
             ) : null}
-            <IconButton icon="close" label={t('Fermer')} color={theme.color.onSlip} onDark size={20} onPress={() => endTransfer(linkId)} />
+            <IconButton icon="close" label={t('Close')} color={theme.color.onSlip} onDark size={20} onPress={() => endTransfer(linkId)} />
           </View>
           <AppText variant="meta" color={theme.color.onSlipMuted} numberOfLines={1} style={styles.site}>
-            {cleaned > 0 ? `${host} · ${plural(cleaned, 'traceur retiré', 'traceurs retirés')}` : host}
+            {cleaned > 0 ? `${host} · ${plural(cleaned, 'tracker removed', 'trackers removed')}` : host}
           </AppText>
 
           <View style={styles.trackRow}>
@@ -215,9 +215,9 @@ const Transfer = memo(function TransferView({ linkId, cleaned, queued, paused, o
             </AppText>
             {settled ? (
               <>
-                <Tappable onDark onPress={onMove} accessibilityLabel={t('Changer de collection')} style={[styles.action, CHIP]}>
+                <Tappable onDark onPress={onMove} accessibilityLabel={t('Change collection')} style={[styles.action, CHIP]}>
                   <AppText variant="label" color={theme.color.slipAction}>
-                    {t('Changer')}
+                    {t('Change')}
                   </AppText>
                 </Tappable>
                 <Tappable
@@ -226,11 +226,11 @@ const Transfer = memo(function TransferView({ linkId, cleaned, queued, paused, o
                     endTransfer(linkId);
                     navigate('Line', { id: link.noteId });
                   }}
-                  accessibilityLabel={t('Voir la collection')}
+                  accessibilityLabel={t('View the collection')}
                   style={[styles.action, CHIP]}
                 >
                   <AppText variant="label" color={theme.color.slipAction}>
-                    {t('Voir')}
+                    {t('View')}
                   </AppText>
                 </Tappable>
               </>

@@ -40,7 +40,7 @@ export type PickOutcome = { readonly status: 'ok'; readonly count: number } | { 
 export async function pickInto(noteId: string, source: 'gallery' | 'camera'): Promise<PickOutcome> {
   const result = source === 'camera' ? await capturePhoto() : await pickImages(10);
   if (result.status === 'cancelled') return { status: 'cancelled' };
-  if (result.status !== 'ok') return { status: 'error', message: result.message ? t(result.message) : t('Impossible d’ajouter la photo') };
-  if (result.files.length === 0) return { status: 'error', message: t('Cette photo n’a pas pu être lue') };
+  if (result.status !== 'ok') return { status: 'error', message: result.message ? t(result.message) : t('Couldn’t add the photo') };
+  if (result.files.length === 0) return { status: 'error', message: t('This photo couldn’t be read') };
   return { status: 'ok', count: attachFiles(noteId, result.files) };
 }

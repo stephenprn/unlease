@@ -39,7 +39,7 @@ function leaveIfShown(id: string): void {
 export function trashWithUndo(id: string): void {
   const undo = trashPage(id);
   leaveIfShown(id);
-  showUndo(t('Page placée dans la corbeille'), undo);
+  showUndo(t('Page moved to the bin'), undo);
 }
 
 /** A new page (inside `parentId`), opened with its title ready to type. */
@@ -75,16 +75,16 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
   const open = expanded && children.length > 0;
 
   const items: MenuItem[] = [
-    { label: t('Ajouter une sous-page'), icon: 'pagePlus', onSelect: () => openNewPage(id) },
+    { label: t('Add a sub-page'), icon: 'pagePlus', onSelect: () => openNewPage(id) },
     {
-      label: t('Dupliquer'),
+      label: t('Duplicate'),
       icon: 'copy',
       onSelect: () => {
         const [copy] = duplicateBlocks(null, [id]);
         if (copy) navigate(paths.page(copy));
       },
     },
-    { label: t('Mettre à la corbeille'), icon: 'trash', danger: true, separatorBefore: true, onSelect: () => trashWithUndo(id) },
+    { label: t('Move to bin'), icon: 'trash', danger: true, separatorBefore: true, onSelect: () => trashWithUndo(id) },
   ];
 
   const onPointerDown = (event: ReactPointerEvent<HTMLAnchorElement>): void => {
@@ -127,7 +127,7 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
           className={styles.chevron}
           data-open={open || undefined}
           data-empty={children.length === 0 || undefined}
-          aria-label={open ? t('Replier {title}', { title }) : t('Déplier {title}', { title })}
+          aria-label={open ? t('Collapse {title}', { title }) : t('Expand {title}', { title })}
           tabIndex={-1}
           onClick={() => setExpanded(id, !expanded)}
         >
@@ -160,10 +160,10 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
           <span className={styles.title}>{title}</span>
         </a>
         <span className={styles.actions}>
-          <button ref={more} type="button" className={styles.action} tabIndex={-1} aria-label={t('Plus d’actions pour {title}', { title })} aria-haspopup="menu" aria-expanded={menu} data-tip={t('Plus d’actions')} onClick={() => setMenu(true)}>
+          <button ref={more} type="button" className={styles.action} tabIndex={-1} aria-label={t('More actions for {title}', { title })} aria-haspopup="menu" aria-expanded={menu} data-tip={t('More actions')} onClick={() => setMenu(true)}>
             <Icon name="more" size={18} />
           </button>
-          <button type="button" className={`${styles.action} ${styles.addAction}`} tabIndex={-1} {...pebbleUnder(1)} aria-label={t('Ajouter une sous-page à {title}', { title })} data-tip={t('Ajouter une sous-page')} onClick={() => openNewPage(id)}>
+          <button type="button" className={`${styles.action} ${styles.addAction}`} tabIndex={-1} {...pebbleUnder(1)} aria-label={t('Add a sub-page to {title}', { title })} data-tip={t('Add a sub-page')} onClick={() => openNewPage(id)}>
             <Icon name="plus" size={18} />
           </button>
         </span>
@@ -175,7 +175,7 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
           ))}
         </ul>
       ) : null}
-      <Menu open={menu} anchor={more} onDismiss={() => setMenu(false)} items={items} label={t('Actions pour {title}', { title })} />
+      <Menu open={menu} anchor={more} onDismiss={() => setMenu(false)} items={items} label={t('Actions for {title}', { title })} />
     </li>
   );
 });
@@ -230,7 +230,7 @@ export function PagesSection({ route, onNavigate }: { route: Route; onNavigate?:
         <span className={navStyles.markSlot}>
           <Icon name="plus" size={20} />
         </span>
-        <span className={navStyles.itemName}>{t('Nouvelle page')}</span>
+        <span className={navStyles.itemName}>{t('New page')}</span>
       </button>
     </>
   );

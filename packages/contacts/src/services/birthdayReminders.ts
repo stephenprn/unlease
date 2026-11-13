@@ -20,7 +20,7 @@ export const reminderHour = (hour: number): string => formatClock(new Date(2000,
 /** « Rappel le jour même à 09:00 », « Rappel le jour même à 09:00, et la veille ». */
 export function reminderRuleWords(rule: ReminderRule): string {
   const hour = reminderHour(rule.hour);
-  return rule.dayBefore ? t('Rappel le jour même à {hour}, et la veille', { hour }) : t('Rappel le jour même à {hour}', { hour });
+  return rule.dayBefore ? t('Reminder on the day at {hour}, and the day before', { hour }) : t('Reminder on the day at {hour}', { hour });
 }
 
 /** How many days ahead a contact's page tells of their birthday's notification: the week before it (the list's « Cette semaine »), the day itself included. */

@@ -32,7 +32,7 @@ export function LabelsScreen() {
     for (const event of Object.values(events)) if (event.deletedAt === null && event.trashedAt === null && !event.recurringId) for (const id of event.labelIds) out.set(id, (out.get(id) ?? 0) + 1);
     return out;
   }, [events]);
-  const taken = (typed: string, except: string | null = null): string | null => (labelNameTaken(labels, typed, except) ? t('Ce libellé existe déjà : choisissez un autre nom.') : null);
+  const taken = (typed: string, except: string | null = null): string | null => (labelNameTaken(labels, typed, except) ? t('This label already exists: choose another name.') : null);
   const form = useForm({ name: taken(name) });
   const list = useRef<HTMLUListElement>(null);
   // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
@@ -45,16 +45,16 @@ export function LabelsScreen() {
   };
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
-      <PageHead title={t('Libellés')} />
-      <p className={`${styles.lead} t-body`}>{t('Un libellé range vos événements et leur donne sa couleur ; décochez-le dans la navigation pour cacher ses événements.')}</p>
+      <PageHead title={t('Labels')} />
+      <p className={`${styles.lead} t-body`}>{t('A label sorts your events and gives them its colour; untick it in the navigation to hide its events.')}</p>
       <form className={styles.newLabel} onSubmit={form.onSubmit(create)} noValidate>
-        <TextField label={t('Nouveau libellé')} value={name} onChange={setName} field={form.field('name')} maxLength={EVENT_LIMITS.labelName} placeholder={t('Travail, Famille, Sport…')} className={styles.newLabelField} />
+        <TextField label={t('New label')} value={name} onChange={setName} field={form.field('name')} maxLength={EVENT_LIMITS.labelName} placeholder={t('Work, Family, Sport…')} className={styles.newLabelField} />
         <Button type="submit" icon="plus" disabled={!name.trim()} className={styles.newLabelButton}>
-          {t('Créer')}
+          {t('Create')}
         </Button>
       </form>
       {live.length === 0 ? (
-        <EmptyState scene="label" title={t('Aucun libellé')} text={t('Créez-en un pour ranger vos événements : Travail, Famille, Sport…')} />
+        <EmptyState scene="label" title={t('No labels')} text={t('Make one to sort your events: Work, Family, Sport…')} />
       ) : (
         <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
           <ul ref={list} className={styles.list}>
@@ -63,16 +63,16 @@ export function LabelsScreen() {
               <li key={label.id} className={styles.item} data-motion={label.id}>
                 <div className={styles.itemHead}>
                   <div className={styles.itemName}>
-                    <NameField ariaLabel={t('Nom')} value={label.name} onSave={value => renameLabel(label.id, value)} maxLength={EVENT_LIMITS.labelName} check={value => taken(value, label.id)} />
+                    <NameField ariaLabel={t('Name')} value={label.name} onSave={value => renameLabel(label.id, value)} maxLength={EVENT_LIMITS.labelName} check={value => taken(value, label.id)} />
                   </div>
                   <span className={styles.itemLine}>
                     <Link to={paths.label(label.id)} className={`${styles.itemCount} t-meta`}>
-                      {plural(counts.get(label.id) ?? 0, 'événement')}
+                      {plural(counts.get(label.id) ?? 0, 'event')}
                     </Link>
-                    <IconButton icon="trash" label={t('Supprimer le libellé {name}', { name: label.name })} onClick={() => showUndo(t('Libellé « {name} » supprimé', { name: label.name }), deleteLabel(label.id))} />
+                    <IconButton icon="trash" label={t('Delete the label {name}', { name: label.name })} onClick={() => showUndo(t('Label “{name}” deleted', { name: label.name }), deleteLabel(label.id))} />
                   </span>
                 </div>
-                <ColorPicker label={t('Couleur de {name}', { name: label.name })} value={label.color} onChange={color => setLabelColor(label.id, color)} />
+                <ColorPicker label={t('Colour of {name}', { name: label.name })} value={label.color} onChange={color => setLabelColor(label.id, color)} />
               </li>
             ))}
           </ul>

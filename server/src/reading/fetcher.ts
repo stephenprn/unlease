@@ -1,12 +1,13 @@
 /**
- * HTTP(S) GET for untrusted URLs.
+ * HTTP(S) requests to untrusted URLs: a GET, or WebDAV's PROPFIND and REPORT with their body.
  *
  * Every hop is checked before connecting: the host is resolved, every answer
  * must be a public address, and the connection goes to that checked address
  * (the hostname only travels in the Host header and TLS SNI), so a DNS answer
  * cannot change between the check and the connect. Redirects are followed by
  * hand so each one gets the same check. Bodies stop at a byte limit, measured
- * after decompression.
+ * after decompression. A login (Basic) goes only to the first address's origin: a redirect to
+ * another host, or down to plain http, goes on without it.
  */
 import { lookup } from 'node:dns/promises';
 import http from 'node:http';
@@ -28,6 +29,11 @@ export class FetchError extends Error {
 }
 
 export interface FetchOptions {
+  /** GET by default. A 303 turns it into a GET without its body; other redirects keep both. */
+  readonly method?: 'GET' | 'PROPFIND' | 'REPORT';
+  readonly body?: string;
+  /** Sent as Basic authorization to the first address's origin only. */
+  readonly login?: { readonly username: string; readonly password: string };
   readonly headers?: Readonly<Record<string, string>>;
   /** A limit, or one chosen from the response's content type. */
   readonly maxBytes: number | ((contentType: string) => number);
@@ -55,6 +61,8 @@ export type Resolver = (hostname: string) => Promise<string[]>;
 
 export interface TransportRequest {
   readonly url: URL;
+  readonly method: string;
+  readonly body: string | null;
   /** The checked IP to connect to. */
   readonly address: string;
   readonly headers: Readonly<Record<string, string>>;
@@ -151,11 +159,15 @@ export function createFetcher(options: FetcherOptions = {}): Fetcher {
   }
 
   return {
-    async fetch(input, { headers = {}, maxBytes, timeoutMs, signal: outer }) {
+    async fetch(input, { headers = {}, maxBytes, timeoutMs, signal: outer, method: firstMethod = 'GET', body: firstBody, login }) {
       const deadline = AbortSignal.timeout(timeoutMs);
       const signal = outer ? AbortSignal.any([deadline, outer]) : deadline;
       const cookies = new Map<string, Map<string, string>>();
       let url = parseHttpUrl(input);
+      const origin = url.origin;
+      const authorization = login ? `Basic ${Buffer.from(`${login.username}:${login.password}`, 'utf8').toString('base64')}` : null;
+      let method: string = firstMethod;
+      let body: string | null = firstBody ?? null;
       for (let hop = 0; ; hop += 1) {
         const addresses = await addressesFor(url, signal, deadline);
         const jar = cookies.get(url.hostname);
@@ -163,11 +175,12 @@ export function createFetcher(options: FetcherOptions = {}): Fetcher {
           ...DEFAULT_HEADERS,
           ...headers,
           ...(jar && jar.size > 0 ? { cookie: [...jar].map(([name, value]) => `${name}=${value}`).join('; ') } : {}),
+          ...(authorization && url.origin === origin ? { authorization } : {}),
         };
         let response: TransportResponse | null = null;
         for (const [index, address] of addresses.slice(0, 3).entries()) {
           try {
-            response = await transport({ url, address, headers: hopHeaders, signal, maxBytes });
+            response = await transport({ url, method, body, address, headers: hopHeaders, signal, maxBytes });
             break;
           } catch (error) {
             if (signal.aborted) throw abortError(signal, deadline);
@@ -197,6 +210,10 @@ export function createFetcher(options: FetcherOptions = {}): Fetcher {
             throw new FetchError('invalid_url', 'bad redirect');
           }
           url = parseHttpUrl(next);
+          if (response.status === 303) {
+            method = 'GET';
+            body = null;
+          }
           continue;
         }
         return { url: url.href, status: response.status, headers: response.headers, body: response.body, truncated: response.truncated };
@@ -233,8 +250,8 @@ function decoder(encoding: string | undefined): zlib.Gunzip | zlib.Inflate | zli
   }
 }
 
-/** The real network: one GET to a pinned address. */
-export const nodeTransport: Transport = ({ url, address, headers, signal, maxBytes }) =>
+/** The real network: one request to a pinned address. */
+export const nodeTransport: Transport = ({ url, method, body: sent, address, headers, signal, maxBytes }) =>
   new Promise((resolve, reject) => {
     const secure = url.protocol === 'https:';
     const hostIsIp = isIP(url.hostname.replace(/^\[|\]$/g, '')) !== 0;
@@ -250,8 +267,8 @@ export const nodeTransport: Transport = ({ url, address, headers, signal, maxByt
       family: isIP(address),
       port: url.port ? Number(url.port) : secure ? 443 : 80,
       path: `${url.pathname}${url.search}`,
-      method: 'GET',
-      headers: { ...headers, host: url.host },
+      method,
+      headers: { ...headers, host: url.host, ...(sent !== null ? { 'content-length': String(Buffer.byteLength(sent, 'utf8')) } : {}) },
       agent: false,
       // SNI and certificate checks use the hostname, not the pinned address.
       ...(secure ? { servername: hostIsIp ? '' : url.hostname } : {}),
@@ -307,5 +324,6 @@ export const nodeTransport: Transport = ({ url, address, headers, signal, maxByt
         if (!response.complete) settle(() => reject(new Error('connection closed before the end of the response')));
       });
     });
-    request.end();
+    if (sent !== null) request.end(sent, 'utf8');
+    else request.end();
   });

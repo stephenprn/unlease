@@ -53,6 +53,6 @@ export function addField(fields: readonly TemplateField[], suggestion?: Template
 /** « Essayer »: the fields as they stand, read by Claude on `url`, in the interface's language. */
 export function tryFields(url: string, fields: readonly TemplateField[], signal?: AbortSignal): Promise<TemplateTryResponse> {
   const server = useSettingsStore.getState().server;
-  if (!server) return Promise.reject(new SyncError('network', t('Aucun serveur n’est connecté')));
+  if (!server) return Promise.reject(new SyncError('network', t('No server is connected')));
   return tryTemplate(server, { url: url.trim(), lang: getLocale(), fields }, signal);
 }

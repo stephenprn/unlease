@@ -50,7 +50,7 @@ function TopBarComponent({ title, onBack, closes, actions, background, emblem, o
       {fill ? <Grain /> : null}
       <StatusBar barStyle={theme.barStyle} />
       <View style={styles.row}>
-        {onBack ? <IconButton icon={closes ? 'close' : 'back'} label={closes ? t('Fermer') : t('Retour')} onPress={onBack} /> : <View style={styles.spacer} />}
+        {onBack ? <IconButton icon={closes ? 'close' : 'back'} label={closes ? t('Close') : t('Back')} onPress={onBack} /> : <View style={styles.spacer} />}
         {emblem && onTitlePress ? (
           <View style={styles.title}>
             <Tappable onPress={onTitlePress} accessibilityLabel={titleLabel ?? title} accessibilityRole="button" style={styles.sign}>

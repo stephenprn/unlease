@@ -77,7 +77,7 @@ export function EventsPanel({ places, title }: { places: readonly MentionPlace[]
         {title}
       </AppText>
       {byWhen(places, today).map(place => {
-        const name = place.title.trim() || t('Sans titre');
+        const name = place.title.trim() || t('Untitled');
         const when = placeWhen(place, year);
         return (
           <PanelTappable key={place.id} onPress={() => void openInApp('calendar', eventPlace(place.id))} style={styles.row} accessibilityRole="link" accessibilityLabel={when ? `${name}, ${when}` : name}>
@@ -105,7 +105,7 @@ export function EventsPanel({ places, title }: { places: readonly MentionPlace[]
 /** The events that mention a note or a page, under « Dans l’agenda ». */
 export function EventsMentioning({ type, id }: { type: 'note' | 'page'; id: string }) {
   const places = useEventsMentioning(type, [id]);
-  return <EventsPanel places={places} title={t('Dans l’agenda')} />;
+  return <EventsPanel places={places} title={t('In the calendar')} />;
 }
 
 const makeStyles = (theme: Theme) =>

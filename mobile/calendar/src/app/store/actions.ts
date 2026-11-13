@@ -219,19 +219,26 @@ export function deleteLabel(id: string, now: number = Date.now()): Undo {
 
 // ── subscriptions ──────────────────────────────────────────────────────────
 
+/** How a calendar is followed: as an iCalendar address, or over CalDAV with the login the server kept under `id`. */
+export interface FeedAccess {
+  readonly id?: string;
+  readonly kind?: 'ics' | 'caldav';
+  readonly account?: string;
+}
+
 /** « S'abonner »: a calendar at an address, read by the server from then on. Its id. */
-export function subscribe(url: string, name: string, now: number = Date.now()): string {
+export function subscribe(url: string, name: string, now: number = Date.now(), access: FeedAccess = {}): string {
   const state = useLibraryStore.getState();
   const used = state.feedOrder.map(id => state.feeds[id]!.color);
-  const id = createId(now);
+  const id = access.id ?? createId(now);
   writeLocal(
-    [{ type: 'calendarFeed', id, patch: feedFields({ kind: 'ics', name: name.trim().slice(0, EVENT_LIMITS.feedName), url, color: nextColor(used, [...LINE_COLORS].reverse()), hidden: false, position: positionBetween(lastPosition(state.feedOrder, state.feeds), null), refreshedAt: null, error: '', createdAt: now, deletedAt: null }) }],
+    [{ type: 'calendarFeed', id, patch: feedFields({ kind: access.kind ?? 'ics', name: name.trim().slice(0, EVENT_LIMITS.feedName), url, account: (access.account ?? '').slice(0, EVENT_LIMITS.feedAccount), color: nextColor(used, [...LINE_COLORS].reverse()), hidden: false, position: positionBetween(lastPosition(state.feedOrder, state.feeds), null), refreshedAt: null, error: '', createdAt: now, deletedAt: null }) }],
     now,
   );
   return id;
 }
 
-export function updateFeed(id: string, patch: Partial<{ name: string; color: LineColor; hidden: boolean; url: string }>): void {
+export function updateFeed(id: string, patch: Partial<{ name: string; color: LineColor; hidden: boolean; url: string; account: string; error: string }>): void {
   writeLocal([{ type: 'calendarFeed', id, patch }]);
 }
 

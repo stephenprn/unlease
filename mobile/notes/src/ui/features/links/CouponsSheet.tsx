@@ -29,7 +29,7 @@ type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly r
 
 export function CouponsSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Codes promo')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Promo codes')} tall>
       <CouponsBody id={id} />
     </Sheet>
   );
@@ -50,7 +50,7 @@ function CouponsBody({ id }: { id: string }) {
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -69,9 +69,9 @@ function CouponsBody({ id }: { id: string }) {
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Claude cherche des codes promo pour {shop}…', { shop })}
+          {t('Claude is looking for promo codes for {shop}…', { shop })}
         </AppText>
-        <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText>
+        <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText>
       </View>
     );
   }
@@ -80,7 +80,7 @@ function CouponsBody({ id }: { id: string }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu chercher de codes : {reason}', { reason: phase.reason })}
+            {t('Claude couldn’t look for codes: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <SearchFoot failed url={link.url} onSearch={search} />
@@ -93,9 +93,9 @@ function CouponsBody({ id }: { id: string }) {
     <>
     <SheetScroll contentContainerStyle={styles.body}>
       {coupons.length === 0 ? (
-        <EmptyLine size="body" text={t('Aucun code en cours trouvé pour {shop}.', { shop })} />
+        <EmptyLine size="body" text={t('No current code found for {shop}.', { shop })} />
       ) : (
-        <Organic outline="panel" style={styles.well} accessibilityLabel={t('Codes promo')}>
+        <Organic outline="panel" style={styles.well} accessibilityLabel={t('Promo codes')}>
           {coupons.map((coupon, index) => (
             <CouponRow key={coupon.code} coupon={coupon} price={couponPrice(coupon, link)} first={index === 0} now={now} />
           ))}
@@ -104,7 +104,7 @@ function CouponsBody({ id }: { id: string }) {
       {tips.length > 0 ? (
         <View style={styles.tips}>
           <AppText variant="section" accessibilityRole="header">
-            {t('Autres façons de payer moins')}
+            {t('Other ways to pay less')}
           </AppText>
           {tips.map(tip => (
             <AppText key={tip.text} variant="body">
@@ -113,7 +113,7 @@ function CouponsBody({ id }: { id: string }) {
                 <>
                   {' '}
                   <AppText variant="body" color={theme.color.link} onPress={() => open(tip.url!)} accessibilityRole="link">
-                    {t('Voir la page')}
+                    {t('See the page')}
                   </AppText>
                 </>
               ) : null}
@@ -122,7 +122,7 @@ function CouponsBody({ id }: { id: string }) {
         </View>
       ) : null}
       <AppText variant="meta">
-        {t('Trouvé sur le web par Claude le {day} à {time}. Un code peut ne plus marcher au moment de payer.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
+        {t('Found on the web by Claude on {day} at {time}. A code may no longer work by the time you pay.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
       </AppText>
     </SheetScroll>
     <SearchFoot failed={false} url={link.url} onSearch={search} />
@@ -138,7 +138,7 @@ function CouponRow({ coupon, price, first, now }: { coupon: Coupon; price: strin
   const source = coupon.sourceUrl;
   const copy = () =>
     copyText(coupon.code).then(copied =>
-      copied ? showSnack(t('Code {code} copié', { code: coupon.code }), undefined, { tone: 'success' }) : showSnack(t('Impossible de copier le code'), undefined, { tone: 'error' }),
+      copied ? showSnack(t('Code {code} copied', { code: coupon.code }), undefined, { tone: 'success' }) : showSnack(t('Couldn’t copy the code'), undefined, { tone: 'error' }),
     );
   return (
     <View style={[styles.coupon, first ? null : styles.couponRule]}>
@@ -165,7 +165,7 @@ function CouponRow({ coupon, price, first, now }: { coupon: Coupon; price: strin
           </AppText>
         ) : null}
       </View>
-      <IconButton icon="copy" label={t('Copier le code {code}', { code: coupon.code })} onPress={copy} style={styles.copy} />
+      <IconButton icon="copy" label={t('Copy the code {code}', { code: coupon.code })} onPress={copy} style={styles.copy} />
     </View>
   );
 }

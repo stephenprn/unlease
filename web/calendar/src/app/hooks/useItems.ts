@@ -97,13 +97,13 @@ export function useItems(from: string, to: string): readonly Occurrence[] {
     if (prefs.noteReminders) {
       for (const reminder of remindersIn(Object.values(notes), dayToInstant(from), dayToInstant(to))) {
         const start = instantToWall(reminder.at, '');
-        out.push(layerOccurrence(reminder.key, reminder.title || t('Rappel'), start, addMinutes(start, 30)));
+        out.push(layerOccurrence(reminder.key, reminder.title || t('Reminder'), start, addMinutes(start, 30)));
       }
     }
     if (prefs.pageDates) {
       for (const date of pageDatesIn(blocks, from, to)) {
         const start = date.time ? `${date.day}T${date.time}` : date.day;
-        out.push(layerOccurrence(date.key, date.title || t('Sans titre'), start, date.time ? addMinutes(start, 30) : addDays(date.day, 1)));
+        out.push(layerOccurrence(date.key, date.title || t('Untitled'), start, date.time ? addMinutes(start, 30) : addDays(date.day, 1)));
       }
     }
     return out.sort(compareOccurrences);

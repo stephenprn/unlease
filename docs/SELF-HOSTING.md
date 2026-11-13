@@ -21,6 +21,7 @@ Why one container rather than one per app: the apps share one process, one datab
 | S3: service address, region, bucket, access key and secret | Backups of every app, away from home | Your provider's console. **Scaleway**: create a bucket in **Object Storage** (its region, `fr-par`, gives the address `https://s3.fr-par.scw.cloud`), then **IAM**, **API keys**, **Generate an API key** (the access key and the secret, shown once). **AWS**: an S3 bucket, then an IAM user with access to it and an **access key**. **OVHcloud**: **Public Cloud**, **Object Storage**, a bucket and an **S3 user**. The key needs to list, write and delete in the bucket; the setup tries all three before it keeps it. |
 | Seafile: its address and a library API token | Your photos and files in a Seafile library | In Seafile, open the library's menu (⋯), **API Token**, add one with **read-write** rights. A LAN address is fine (`http://192.168.1.20:8000`): only the server talks to Seafile. |
 | Seerr: its address and API key | Carnet's films and series modules | In Seerr (Jellyseerr, Overseerr): **Settings**, **General**, **API Key**. Give the address it answers on: the server does not follow redirects. |
+| Immich: its address and an API key | Pages' albums and photos from Immich; a contact's photo from the faces Immich recognised | In Immich: **Account Settings**, **API Keys**, **New API Key**, with the permissions `album.read`, `asset.read`, `asset.view` and `person.read` (or all). Give the address it answers on (a LAN address is fine, `http://192.168.1.20:2283`: only the server talks to Immich, and it does not follow redirects). |
 | A country, and maybe a region | Agenda's public holidays | Pick it in the list: the server fetches its days from [Nager.Date](https://date.nager.at) (no account, no key). A region adds its own days (Alsace and Moselle's `FR-67`, `FR-68`, `FR-57`). |
 
 ## Run it
@@ -128,7 +129,8 @@ Open your address in a browser: it opens the first app the server runs (Carnet a
    3. **Sauvegarde sur S3**: service address, region, bucket, an optional folder (`unlease` by default) and the key, then a storage class ([below](#the-storage-class-of-s3-backups)). Daily by default; « Garder les sauvegardes, en jours » is a number of days (30 by default): the server deletes its own snapshots older than that, and always keeps its newest one.
    4. **Fichiers sur Seafile**: the address, the library token and a folder (`/Unlease` by default). Photos and files then live there, each app's under its own folder (`Unlease/Carnet/Notes/<note>/…`, `Unlease/Pages/<page>/…`), named after what holds them, and the server keeps only small previews.
    5. **Films et séries avec Seerr** (with Carnet only): the address and, optionally, the API key. With the key, the films and series modules open the title's own page and say whether it is already there; without it, they open Seerr's search.
-   6. **Jours fériés** (with Agenda only): a country, and a region if it has days of its own. The server fetches last year's, this year's and the next two years' days and shows them in every device's calendar, as a calendar of its own you can hide.
+   6. **Photos sur Immich** (with Pages or Contacts): the address and an API key, tried before they are kept (the server pings Immich, then reads its albums and people). Pages then shows an album or picked photos in a page, and Contacts takes a contact's photo from Immich's faces (the server keeps a copy of it). The key stays on the server.
+   7. **Jours fériés** (with Agenda only): a country, and a region if it has days of its own. The server fetches last year's, this year's and the next two years' days and shows them in every device's calendar, as a calendar of its own you can hide.
 4. **Apparence** (Appearance): this device's colours and background, kept as they come with « Garder l’apparence d’origine ».
 
 « Commencer » (Start) opens your first app and marks the server set up. Everything here can be changed later in Administration.
@@ -147,7 +149,7 @@ Administration, « Applications »: a switch per app, on the web or in any phone
 
 Agenda's server does a few things on its own, all optional:
 
-- **Subscribed calendars**: each address you subscribe to (Google's « Adresse secrète au format iCal », a Nextcloud or Proton calendar's link, a sports team's fixtures) is read by the server when you add it, then every 6 hours, and kept as events every device has offline. The server reads public addresses only (its guard refuses your LAN, as it does for links), up to 10 MB a calendar; Google's address works as it is.
+- **Subscribed calendars**: each address you subscribe to (Google's « Adresse secrète au format iCal », a Nextcloud or Proton calendar's link, a sports team's fixtures) is tried by the server before it is followed, read again every 6 hours, and kept as events every device has offline. The server reads public addresses only (its guard refuses your LAN, as it does for links), up to 10 MB a calendar; Google's address works as it is. A calendar behind a login (a mailbox's, such as an Open-Xchange messagerie, Nextcloud, Fastmail, iCloud) is read over CalDAV: the apps ask for the login when the address does, and the server finds the calendar from the calendar's address, the account's or the server's own (`/.well-known/caldav`). Its password is kept in the server's database alone (never synced, never in the archives: after a restore on a new server, each such calendar asks for it again), and is sent only over `https://`, as Basic authentication, to that calendar's own host (a redirect elsewhere goes on without it).
 - **Public holidays** come from Nager.Date ([above](#before-you-start)), once when the country is set and once a year after.
 - **The weather** of a day with a placed event comes from [Open-Meteo](https://open-meteo.com) (no account, no key), asked by the server, 16 days ahead at most.
 - **Places as you type** (an event's place, a contact's address) come from [Photon](https://photon.komoot.io), komoot's geocoder on OpenStreetMap's data (no account, no key), asked by the server with what you typed and nothing else, each answer kept a day. `UNLEASE_PLACES_URL` points it at your own Photon, or `off` turns it off: the apps then offer only the places they already know (your contacts' addresses, the places of your events).
@@ -203,7 +205,7 @@ Most of Unlease is set from the apps. The environment holds what must be known a
 
 Everything lives in the `/data` volume:
 
-- `unlease.sqlite`: every app's records (Carnet's notes and links, Pages' pages), whether they are on or not, and every setting (the Claude key, the S3 secret, the Seafile token and the Seerr key included: protect the volume).
+- `unlease.sqlite`: every app's records (Carnet's notes and links, Pages' pages), whether they are on or not, and every setting (the Claude key, the S3 secret, the Seafile token, the Seerr key and the Immich key included: protect the volume).
 - `blobs/`: photos, page files and the pictures kept from links (originals move to Seafile when the drive is set).
 - `backups/`: a consistent copy of the database each day, the last few kept.
 

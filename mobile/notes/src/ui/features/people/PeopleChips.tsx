@@ -31,7 +31,7 @@ export function PersonChip({ person }: { person: NotePerson }) {
       hitSlop={SLOP}
       style={[styles.chip, { borderColor: theme.color.outline }]}
       accessibilityRole="link"
-      accessibilityLabel={t('{name}, dans {app}', { name, app: APPS.contacts.name })}
+      accessibilityLabel={t('{name}, in {app}', { name, app: APPS.contacts.name })}
     >
       <PersonFace contact={person.contact} size={24} />
       <AppText variant="label" numberOfLines={1} style={styles.name}>

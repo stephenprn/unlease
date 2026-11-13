@@ -7,7 +7,7 @@ import React, { memo, useMemo } from 'react';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { asLineColor } from '@unlease/design/colors';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { collectionsByName, labelsByName } from '@unlease/notes/services/navOrder';
 import type { BoardView } from '@app/hooks/useBoard';
@@ -60,9 +60,9 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
   return (
     <NavDrawer open={open} app="notes" onClose={onClose}>
       <DrawerItem label={t('Notes')} icon="note" selected={current === 'notes'} onPress={() => onView('notes')} />
-      <DrawerItem label={t('Rappels')} icon="bell" selected={current === 'reminders'} onPress={() => onView('reminders')} />
+      <DrawerItem label={t('Reminders')} icon="bell" selected={current === 'reminders'} onPress={() => onView('reminders')} />
       <DrawerDivider />
-      <DrawerHeading title={t('Collections')} action={{ label: t('Tout voir'), accessibilityLabel: t('Toutes les collections'), onPress: onLines }} />
+      <DrawerHeading title={t('Collections')} action={{ label: t('See all'), accessibilityLabel: t('All collections'), onPress: onLines }} />
       {lines.map(line => (
         <DrawerItem
           key={`line-${line.id}`}
@@ -73,19 +73,19 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
         />
       ))}
       {/* Always, after them, as the web's navigation (and Pages' « Nouvelle page »). */}
-      <DrawerItem label={t('Nouvelle collection')} icon="plus" onPress={onNewLine} />
+      <DrawerItem label={t('New collection')} icon="plus" onPress={onNewLine} />
       <DrawerDivider />
-      <DrawerHeading title={t('Labels')} action={{ label: t('Modifier'), accessibilityLabel: t('Modifier les labels'), onPress: onLabels }} />
+      <DrawerHeading title={tc('notes', 'Labels')} action={{ label: t('Edit'), accessibilityLabel: tc('notes', 'Edit labels'), onPress: onLabels }} />
       {labels.map(label => {
         const view: BoardView = `label:${label.id}`;
         return <DrawerItem key={`label-${label.id}`} label={label.name} selected={current === view} onPress={() => onView(view)} leading={<LabelTag color={label.color} size={20} />} wash={theme.line[label.color].tint} />;
       })}
-      {labels.length === 0 ? <DrawerItem label={t('Créer un label')} icon="tag" onPress={onLabels} /> : null}
+      {labels.length === 0 ? <DrawerItem label={t('Create a label')} icon="tag" onPress={onLabels} /> : null}
       <DrawerDivider />
-      <DrawerItem label={t('Archives')} icon="archive" selected={current === 'archive'} onPress={() => onView('archive')} />
+      <DrawerItem label={tc('place', 'Archive')} icon="archive" selected={current === 'archive'} onPress={() => onView('archive')} />
       <DrawerDivider />
-      <DrawerItem label={t('Corbeille')} icon="trash" selected={current === 'trash'} onPress={() => onView('trash')} />
-      <DrawerItem label={t('Réglages')} icon="settings" selected={current === 'settings'} onPress={onSettings} />
+      <DrawerItem label={t('Bin')} icon="trash" selected={current === 'trash'} onPress={() => onView('trash')} />
+      <DrawerItem label={t('Settings')} icon="settings" selected={current === 'settings'} onPress={onSettings} />
       <DrawerItem label={t('Administration')} icon="server" selected={current === 'admin'} onPress={onAdmin} />
     </NavDrawer>
   );

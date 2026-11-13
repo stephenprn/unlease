@@ -41,12 +41,12 @@ export function BottomBar({ route, enter = null }: { route: Route; enter?: Arriv
   return (
     <div className={`${styles.bottomBar} paper`} data-enter={(!closing && arrival) || undefined} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
       <div className={styles.bottomActions}>
-        <IconButton icon="checklist" label={t('Nouvelle liste')} size={26} onClick={newChecklist} />
-        <IconButton icon="draw" label={t('Nouveau dessin')} size={26} shape={3} onClick={newDrawing} />
-        <IconButton icon="image" label={t('Nouvelle note avec photo')} size={26} shape={1} onClick={() => input.current?.click()} />
-        <IconButton icon="link" label={t('Classer un lien')} size={26} shape={2} onClick={() => openCapture('')} />
+        <IconButton icon="checklist" label={t('New list')} size={26} onClick={newChecklist} />
+        <IconButton icon="draw" label={t('New drawing')} size={26} shape={3} onClick={newDrawing} />
+        <IconButton icon="image" label={t('New note with photo')} size={26} shape={1} onClick={() => input.current?.click()} />
+        <IconButton icon="link" label={t('File a link')} size={26} shape={2} onClick={() => openCapture('')} />
       </div>
-      <button type="button" className={styles.fab} data-pebble-under={0} aria-label={t('Nouvelle note')} onClick={newNote}>
+      <button type="button" className={styles.fab} data-pebble-under={0} aria-label={t('New note')} onClick={newNote}>
         <Icon name="plus" size={26} />
       </button>
       <input

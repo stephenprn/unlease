@@ -69,7 +69,7 @@ export function cellText(value: CellValue | undefined, column: TableColumn): str
     case 'number':
       return typeof value === 'number' ? formatNumberCell(value, column.unit) : String(value);
     case 'checkbox':
-      return value === true ? t('Oui') : '';
+      return value === true ? t('Yes') : '';
     case 'date':
       return typeof value === 'string' ? formatIsoDay(value) : '';
     case 'select':
@@ -77,7 +77,7 @@ export function cellText(value: CellValue | undefined, column: TableColumn): str
     case 'multi':
       return Array.isArray(value) ? value.flatMap(id => optionName(column, id) ?? []).join(', ') : '';
     default:
-      return Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? t('Oui') : '') : String(value);
+      return Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? t('Yes') : '') : String(value);
   }
 }
 
@@ -177,11 +177,11 @@ export function isPhone(text: string): boolean {
 
 /** What a column of a strict type holds, as a person is told when what they typed does not fit. */
 export const CELL_FORMATS: Readonly<Partial<Record<ColumnType, { readonly expected: string; readonly example: string }>>> = {
-  number: localized({ expected: tx('un nombre'), example: tx('12,5') }),
-  date: localized({ expected: tx('une date'), example: '21/10/2026' }),
-  email: localized({ expected: tx('une adresse e-mail'), example: tx('nom@exemple.fr') }),
-  url: localized({ expected: tx('un lien'), example: tx('exemple.fr') }),
-  phone: localized({ expected: tx('un numéro de téléphone'), example: tx('06 12 34 56 78') }),
+  number: localized({ expected: tx('a number'), example: tx('12.5') }),
+  date: localized({ expected: tx('a date'), example: '21/10/2026' }),
+  email: localized({ expected: tx('an email address'), example: tx('name@example.com') }),
+  url: localized({ expected: tx('a link'), example: tx('example.com') }),
+  phone: localized({ expected: tx('a phone number'), example: tx('020 7946 0958') }),
 };
 
 export type CellInput = { readonly ok: true; readonly value: CellValue } | { readonly ok: false };

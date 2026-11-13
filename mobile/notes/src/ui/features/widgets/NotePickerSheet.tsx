@@ -37,12 +37,12 @@ function summary(note: Note, state: LibraryState): { readonly title: string; rea
   if (note.kind === 'checklist') {
     const items = (state.checksByNote[note.id] ?? []).map(id => state.checks[id]).filter(item => !!item && item.text.trim());
     const open = items.filter(item => !item!.checked);
-    const title = note.title.trim() || open[0]?.text || items[0]?.text || t('Liste sans titre');
-    return { title, detail: open.length > 0 ? plural(open.length, 'élément à faire', 'éléments à faire') : t('Tout est coché') };
+    const title = note.title.trim() || open[0]?.text || items[0]?.text || t('Untitled list');
+    return { title, detail: open.length > 0 ? plural(open.length, 'item to do', 'items to do') : t('All ticked') };
   }
   const lines = bodyText(note).split('\n').map(line => line.trim()).filter(Boolean);
   if (note.title.trim()) return { title: note.title.trim(), detail: lines[0] ?? '' };
-  return { title: lines[0] ?? t('Note sans texte'), detail: lines[1] ?? '' };
+  return { title: lines[0] ?? t('Note with no text'), detail: lines[1] ?? '' };
 }
 
 export function NotePickerSheet({ visible, current, title, onDismiss, onPick }: NotePickerSheetProps) {
@@ -60,10 +60,10 @@ export function NotePickerSheet({ visible, current, title, onDismiss, onPick }: 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher une note')} returnKeyType="search" autoCorrect={false} accessibilityLabel={t('Rechercher une note')} />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a note')} returnKeyType="search" autoCorrect={false} accessibilityLabel={t('Search for a note')} />
       </View>
       <SheetScroll top={false} contentContainerStyle={styles.body}>
-        {ids.length === 0 ? <EmptyLine glyph={query.trim() ? 'search' : 'note'} text={query.trim() ? t('Aucune note ne correspond.') : t('Aucune note pour l’instant.')} slot={24} gap={16} style={styles.empty} /> : null}
+        {ids.length === 0 ? <EmptyLine glyph={query.trim() ? 'search' : 'note'} text={query.trim() ? t('No notes match.') : t('No notes yet.')} slot={24} gap={16} style={styles.empty} /> : null}
         {ids.map(id => (
           <NoteRow
             key={id}

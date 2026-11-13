@@ -41,9 +41,9 @@ function CoverageBody({ id }: { id: string }) {
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Claude cherche le même sujet dans d’autres médias…')}
+          {t('Claude is looking for the same story in other outlets…')}
         </AppText>
-        <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText>
+        <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText>
       </View>
     );
   }
@@ -52,7 +52,7 @@ function CoverageBody({ id }: { id: string }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+            {t('Claude couldn’t search: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <SearchFoot failed url={link.url} onSearch={search} />
@@ -68,7 +68,7 @@ function CoverageBody({ id }: { id: string }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {story ? <AppText variant="bodyStrong">{story}</AppText> : null}
       {outlets.length === 0 ? (
-        <EmptyLine size="body" text={t('Aucun autre média trouvé sur ce sujet pour l’instant.')} />
+        <EmptyLine size="body" text={t('No other outlet found on this story for now.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES.coverage}>
           {outlets.map((outlet, index) => (
@@ -77,7 +77,7 @@ function CoverageBody({ id }: { id: string }) {
         </Organic>
       )}
       {note ? <AppText variant="body">{note}</AppText> : null}
-      <AppText variant="meta">{t('Trouvé sur le web par Claude le {day} à {time}.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}</AppText>
+      <AppText variant="meta">{t('Found on the web by Claude on {day} at {time}.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}</AppText>
     </SheetScroll>
     <SearchFoot failed={false} url={link.url} onSearch={search} />
     </>
@@ -101,7 +101,7 @@ function OutletRow({ outlet, first, slot }: { outlet: CoverageOutlet; first: boo
         <AppText variant="metaStrong">{outlet.angle}</AppText>
         {outlet.adds ? <AppText variant="meta">{outlet.adds}</AppText> : null}
       </View>
-      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
+      {url ? <IconButton icon="external" label={t('Read on {outlet}', { outlet: outlet.outlet })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
     </View>
   );
 }

@@ -25,17 +25,17 @@ import { BirthdayLine, FavoritesStrip } from '../features/HomeExtras';
 import { openNewContact } from '../features/newContact';
 import { visibleContacts } from '../features/visible';
 
-const EMPTY_TEXT = tx('Créez un contact, ou importez ceux de Google : sur contacts.google.com, « Exporter », puis déposez le fichier ici.');
+const EMPTY_TEXT = tx('Create a contact, or import yours from Google: on contacts.google.com, “Export”, then drop the file here.');
 
 /** No contact at all, in every list (as on the phone): how to make one, or bring them all in. `labelId`: the label a new one wears. */
 function NoContactsYet({ labelId }: { labelId?: string }) {
   return (
-    <EmptyState scene="welcome" title={t('Aucun contact pour l’instant')} text={t(EMPTY_TEXT)}>
+    <EmptyState scene="welcome" title={t('No contacts yet')} text={t(EMPTY_TEXT)}>
       <Button icon="personPlus" onClick={() => openNewContact('', labelId ? [labelId] : undefined)}>
-        {t('Créer un contact')}
+        {t('Create contact')}
       </Button>
       <Button kind="text" icon="download" onClick={() => navigate(shellPaths.importer)}>
-        {t('Importer des contacts')}
+        {t('Import contacts')}
       </Button>
     </EmptyState>
   );
@@ -94,13 +94,13 @@ function Favorites() {
   return (
     <div className={styles.screen}>
       <div className={styles.listHead}>
-        <PageHead title={t('Favoris')} />
+        <PageHead title={t('Favourites')} />
         {favorites.length > 0 ? <p className={`${styles.count} t-meta tabular`}>{plural(favorites.length, 'contact')}</p> : null}
       </div>
       {all.length === 0 ? (
         <NoContactsYet />
       ) : favorites.length === 0 ? (
-        <EmptyState scene="label" title={t('Aucun favori')} text={t('L’étoile d’un contact le met ici, à portée de main, et dans le widget d’appels rapides du téléphone.')} />
+        <EmptyState scene="label" title={t('No favourites')} text={t('A contact’s star puts them here, within reach, and in the phone’s quick calls widget.')} />
       ) : (
         <ContactList sections={[{ id: 'favorites', contacts: favorites, letters: true }]} />
       )}
@@ -115,20 +115,20 @@ function LabelContacts({ id }: { id: string }) {
   if (!label || label.deletedAt !== null) {
     return (
       <div className={styles.screen}>
-        <EmptyState scene="label" as="h1" title={t('Ce libellé n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="label" as="h1" title={t('This label no longer exists')} text={t('It was deleted, on this device or another.')} />
       </div>
     );
   }
   return (
     <div className={styles.screen}>
       <div className={styles.listHead}>
-        <PageHead title={label.name} action={{ icon: 'personPlus', label: t('Créer un contact'), onClick: () => openNewContact('', [id]) }} />
+        <PageHead title={label.name} action={{ icon: 'personPlus', label: t('Create contact'), onClick: () => openNewContact('', [id]) }} />
       </div>
       {wearing.length > 0 ? <p className={`${styles.count} t-meta tabular`}>{plural(wearing.length, 'contact')}</p> : null}
       {all.length === 0 ? (
         <NoContactsYet labelId={id} />
       ) : wearing.length === 0 ? (
-        <EmptyState scene="label" title={t('Personne avec ce libellé')} text={t('Ouvrez un contact et ajoutez-lui ce libellé, ou sélectionnez-en plusieurs dans la liste.')} />
+        <EmptyState scene="label" title={t('No one with this label')} text={t('Open a contact and give them this label, or select several in the list.')} />
       ) : (
         <ContactList sections={[{ id: `label:${id}`, contacts: wearing, letters: true }]} />
       )}

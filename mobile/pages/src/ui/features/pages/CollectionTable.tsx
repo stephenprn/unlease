@@ -15,7 +15,7 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { parseHex } from '@unlease/design/palette';
 import { pebbleTurn } from '@unlease/design/pebbles';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import type { Block } from '@unlease/pages/models/blocks';
 import { arrangeColumns, collectionColumns, linkCell, type CollectionColumn } from '@unlease/pages/services/collectionTable';
 import { linkRowText } from '@unlease/notes/services/linkRow';
@@ -66,7 +66,7 @@ const LinkTableRow = memo(function LinkTableRow({ id, index, columns, spare, now
   const picture = kept ?? (link.imageUrl ? { uri: link.imageUrl } : null);
   const stamp = () => {
     const undo = setLinkDone(id, !link.done);
-    showSnack(link.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(link.kind) }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(link.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(link.kind) }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   return (
     <View style={[themed.row, last ? styles.closed : null]}>
@@ -89,7 +89,7 @@ const LinkTableRow = memo(function LinkTableRow({ id, index, columns, spare, now
         </View>
       ))}
       <View style={styles.end}>
-        {readOnly ? null : <IconButton icon={link.done ? 'undo' : 'stamp'} label={link.done ? t('Remettre « {title} » à faire', { title }) : t('Marquer « {title} » : {stamp}', { title, stamp: stampWord(link.kind).toLowerCase() })} size={18} shape={1} onPress={stamp} />}
+        {readOnly ? null : <IconButton icon={link.done ? 'undo' : 'stamp'} label={link.done ? t('Put “{title}” back to do', { title }) : t('Mark “{title}”: {stamp}', { title, stamp: stampWord(link.kind).toLowerCase() })} size={18} shape={1} onPress={stamp} />}
       </View>
     </View>
   );
@@ -115,7 +115,7 @@ function CollectionTableComponent({ block, ids, done, onOpen }: { block: Block; 
     setAvailable(event.nativeEvent.layout.width);
   };
   if (shownIds.length === 0) {
-    return <EmptyLine text={t('Aucun lien à faire dans cette collection.')} style={styles.empty} />;
+    return <EmptyLine text={t('No links to do in this collection.')} style={styles.empty} />;
   }
   // Narrower than the embed, the last column takes what is left, so the rows' lines reach its edge.
   const natural = TITLE_WIDTH + columns.reduce((sum, column) => sum + widthOf(column.key), 0) + END;
@@ -139,7 +139,7 @@ function CollectionTableComponent({ block, ids, done, onOpen }: { block: Block; 
                 <View style={styles.head}>
                   <Icon name="text" size={16} color={theme.color.inkMuted} />
                   <AppText variant="metaStrong" numberOfLines={1} style={styles.headName}>
-                    {t('Titre')}
+                    {t('Title')}
                   </AppText>
                 </View>
               </Held>

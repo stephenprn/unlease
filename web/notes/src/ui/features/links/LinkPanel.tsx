@@ -10,7 +10,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
 import { APP_NAME } from '@unlease/notes/brand';
 import { collectionEmblem } from '@unlease/notes/models/collections';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { formatDay, formatPrice } from '@unlease/core/services/format';
@@ -110,13 +110,13 @@ function Gallery({ blobIds, fallback, onLost }: { blobIds: readonly string[]; fa
   return (
     <div>
       {/* Focusable, so the arrow keys scroll it too. */}
-      <div ref={strip} className={styles.gallery} data-many={many || undefined} role="group" aria-label={t('Images de la page')} tabIndex={many ? 0 : undefined} onScroll={many ? follow : undefined}>
+      <div ref={strip} className={styles.gallery} data-many={many || undefined} role="group" aria-label={t('Pictures from the page')} tabIndex={many ? 0 : undefined} onScroll={many ? follow : undefined}>
         {blobIds.map((blobId, index) => (
           <GalleryImage key={blobId} blobId={blobId} fallback={index === 0 ? fallback : null} onLost={blobIds.length === 1 ? onLost : undefined} />
         ))}
       </div>
       {many ? (
-        <div className={styles.dots} role="img" aria-label={t('Image {index} sur {count}', { index: shown + 1, count: blobIds.length })}>
+        <div className={styles.dots} role="img" aria-label={t('Picture {index} of {count}', { index: shown + 1, count: blobIds.length })}>
           {blobIds.map((blobId, index) => (
             <span key={blobId} className={styles.dot} data-dot data-shown={index === shown || undefined} />
           ))}
@@ -135,7 +135,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const line = useLibraryStore(s => (link ? s.notes[link.noteId] : undefined));
   // Under 720px the link is a whole page, as on the phone: Back leaves it; wider, the side sheet closes.
   const narrow = useMedia(NARROW);
-  const leave = narrow ? ({ icon: 'back', label: t('Retour') } as const) : ({ icon: 'close', label: t('Fermer') } as const);
+  const leave = narrow ? ({ icon: 'back', label: t('Back') } as const) : ({ icon: 'close', label: t('Close') } as const);
   // How its reading stands (unknown counts as on: a link saved meanwhile waits for the server)…
   const reading = useCanRead();
   // …and what may be asked of Claude, once the server has said it has a key.
@@ -194,11 +194,11 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
 
   if (!link || link.deletedAt !== null) {
     return (
-      <Layer open={!closing} onDismiss={onClose} label={t('Lien introuvable')} routed>
+      <Layer open={!closing} onDismiss={onClose} label={t('Link not found')} routed>
         <div className={styles.panelHead}>
           <IconButton icon={leave.icon} label={leave.label} onClick={onClose} />
         </div>
-        <p className={`${styles.detailBody} t-body`}>{t('Ce lien n’existe plus.')}</p>
+        <p className={`${styles.detailBody} t-body`}>{t('This link no longer exists.')}</p>
       </Layer>
     );
   }
@@ -220,7 +220,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   // A failed reading was tried, not read.
   const added = formatDay(link.createdAt, now);
   const read = link.analyzedAt === null ? '' : formatDay(link.analyzedAt, now);
-  const dates = link.analyzedAt === null ? t('Ajouté le {added}', { added }) : link.status === 'ready' ? t('Ajouté le {added} · lu le {read}', { added, read }) : failed ? t('Ajouté le {added} · lecture tentée le {read}', { added, read }) : t('Ajouté le {added}', { added });
+  const dates = link.analyzedAt === null ? t('Added on {added}', { added }) : link.status === 'ready' ? t('Added on {added} · read on {read}', { added, read }) : failed ? t('Added on {added} · reading tried on {read}', { added, read }) : t('Added on {added}', { added });
   const saveComment = (text: string): void => {
     const from = typedFrom.current;
     typed.current = null;
@@ -255,16 +255,16 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   return (
     <Layer open={!closing} onDismiss={onClose} labelledBy={titleId} full routed initialFocus={heading} panelClassName={styles.dialog}>
       <div className={styles.panelHead}>
-        <IconButton icon={leave.icon} label={leave.label} onClick={onClose} shortcut={t('Échap')} />
+        <IconButton icon={leave.icon} label={leave.label} onClick={onClose} shortcut={t('Esc')} />
         {line ? (
-          <button type="button" className={`${styles.sign} t-title`} aria-label={t('Collection {title} : changer de collection', { title: shownTitle(line) })} aria-haspopup="dialog" onClick={() => setMoving(true)}>
+          <button type="button" className={`${styles.sign} t-title`} aria-label={t('Collection {title}: change collection', { title: shownTitle(line) })} aria-haspopup="dialog" onClick={() => setMoving(true)}>
             <Emblem emblem={collectionEmblem(line.id, line.emblem)} color={asLineColor(line.color)} size={30} className={styles.signEmblem} />
             <span className={styles.signName}>{shownTitle(line)}</span>
             <Icon name="chevronDown" size={18} className={styles.signChevron} />
           </button>
         ) : null}
         <span className={styles.panelHeadSpace} />
-        <IconButton ref={more} icon="more" label={t('Plus d’actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
+        <IconButton ref={more} icon="more" label={t('More actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
       </div>
       <div ref={scrollEdges} className={styles.panelScroll} data-scroll-sheet="">
         {pictureLost ? null : kept.length > 0 ? (
@@ -295,7 +295,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
           {link.status === 'pending' && reading ? (
             <p className={`${styles.reading} t-meta`}>
               <ReadingTrack width={96} />
-              {t('Lecture de la page par Claude…')}
+              {tc('status', 'Claude is reading the page…')}
             </p>
           ) : null}
           {unread || failed ? (
@@ -304,16 +304,16 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
               <div className={styles.noticeBody}>
                 <p>
                   {failed
-                    ? (link.error ? t(link.error) : t('La page n’a pas pu être lue.'))
+                    ? (link.error ? t(link.error) : t('The page couldn’t be read.'))
                     : !server
-                      ? t('Pas lu : Claude lit les liens depuis votre serveur {app}. Connectez-le dans l’administration.', { app: APP_NAME })
+                      ? t('Not read: Claude reads links from your {app} server. Connect it in the Administration.', { app: APP_NAME })
                       : !reading
-                        ? t('Pas lu : ajoutez une clé API Claude dans l’administration pour que les liens soient lus.')
-                        : t('Ce lien a été gardé sans être lu.')}
+                        ? t('Not read: add a Claude API key in the Administration to have links read.')
+                        : t('This link was kept without being read.')}
                 </p>
                 {claude ? (
                   <Button kind="text" small className={styles.noticeAction} onClick={() => reanalyzeLink(id)}>
-                    {failed ? t('Réessayer') : t('Lire la page')}
+                    {failed ? t('Try again') : t('Read the page')}
                   </Button>
                 ) : unread && !reading ? (
                   <Button kind="text" small className={styles.noticeAction} onClick={toAdmin}>
@@ -340,9 +340,9 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
               {/* Read before its facts changed: under them, the way to read it again. */}
               {claude && readBefore ? (
                 <p className={`${templateStyles.stale} t-meta`}>
-                  <span>{t('Lu avant le dernier changement de ses informations.')}</span>
+                  <span>{t('Read before its facts last changed.')}</span>
                   <Button kind="text" small onClick={() => reanalyzeLink(id)}>
-                    {t('Relire')}
+                    {t('Read again')}
                   </Button>
                 </p>
               ) : null}
@@ -352,11 +352,11 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
           <PeopleField type="link" id={id} ids={link.contactIds} />
 
           <TextField
-            label={t('Votre note')}
+            label={t('Your note')}
             value={value}
             multiline
             maxLength={TEXT_LIMITS.link.comment}
-            placeholder={t('Pour qui, pourquoi, quand…')}
+            placeholder={t('For whom, why, when…')}
             inputClassName={styles.noteInput}
             onChange={text => {
               if (typed.current === null) typedFrom.current = useLibraryStore.getState().links[id]?.comment ?? '';
@@ -384,10 +384,10 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
       {/* The two things done here, always in reach at the sheet's foot. */}
       <div className={styles.panelFoot}>
         <Button kind="tonal" icon={link.done ? 'undo' : 'stamp'} onClick={() => toggleDone(id)}>
-          {link.done ? t('Remettre à faire') : stampWord(link.kind)}
+          {link.done ? t('Put back to do') : stampWord(link.kind)}
         </Button>
         <Button icon="external" href={link.url} className={styles.open}>
-          {t('Ouvrir la page')}
+          {t('Open the page')}
         </Button>
       </div>
 
@@ -395,30 +395,30 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
         open={menu}
         anchor={more}
         onDismiss={() => setMenu(false)}
-        label={t('Plus d’actions')}
+        label={t('More actions')}
         items={[
-          { label: t('Changer de collection'), icon: 'transfer', onSelect: () => setMoving(true) },
+          { label: t('Change collection'), icon: 'transfer', onSelect: () => setMoving(true) },
           {
-            label: t('Copier l’adresse'),
+            label: t('Copy the address'),
             icon: 'copy',
             // Over plain http (a LAN address) the browser gives no clipboard: say so rather than nothing.
             onSelect: () =>
               navigator.clipboard
                 ? navigator.clipboard.writeText(link.url).then(
-                    () => showSnack(t('Adresse copiée'), undefined, { tone: 'success' }),
-                    () => showError(t('Impossible de copier l’adresse')),
+                    () => showSnack(t('Address copied'), undefined, { tone: 'success' }),
+                    () => showError(t('Couldn’t copy the address')),
                   )
-                : showError(t('Impossible de copier l’adresse')),
+                : showError(t('Couldn’t copy the address')),
           },
           ...(typeof navigator.share === 'function'
-            ? [{ label: t('Partager'), icon: 'share' as const, onSelect: () => void navigator.share({ url: link.url, title: link.title || undefined }).catch(() => {}) }]
+            ? [{ label: t('Share'), icon: 'share' as const, onSelect: () => void navigator.share({ url: link.url, title: link.title || undefined }).catch(() => {}) }]
             : []),
           // Reading again only means something when the server reads links.
-          ...(claude ? [{ label: link.status === 'skipped' ? t('Lire la page') : t('Relire la page'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
+          ...(claude ? [{ label: link.status === 'skipped' ? t('Read the page') : t('Read the page again'), icon: 'refresh' as const, onSelect: () => reanalyzeLink(id) }] : []),
           // What Claude notes on it: where its facts are chosen.
-          ...(factsPart && claude ? [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(factsPart)) }] : []),
+          ...(factsPart && claude ? [{ label: t('Facts Claude notes'), icon: 'list' as const, onSelect: () => navigate(paths.template(factsPart)) }] : []),
           {
-            label: t('Supprimer'),
+            label: t('Delete'),
             icon: 'trash',
             danger: true,
             separatorBefore: true,
@@ -426,7 +426,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
               setParting(link);
               const undo = deleteLink(id);
               onClose();
-              showUndo(t('Lien supprimé'), undo);
+              showUndo(t('Link deleted'), undo);
             },
           },
         ]}
@@ -438,7 +438,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
         onPick={target => {
           const undo = moveLink(id, target);
           const into = useLibraryStore.getState().notes[target];
-          showUndo(t('Déplacé dans {collection}', { collection: into ? shownTitle(into) : '' }), undo);
+          showUndo(t('Moved to {collection}', { collection: into ? shownTitle(into) : '' }), undo);
         }}
       />
     </Layer>

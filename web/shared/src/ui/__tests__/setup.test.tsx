@@ -44,6 +44,7 @@ function fakeServer(notes = 0, done = notes > 0) {
     drive: { provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false },
     calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
     seerr: { url: '', keyHint: null },
+    immich: { url: '', keyHint: null },
   });
   vi.stubGlobal(
     'fetch',
@@ -121,6 +122,8 @@ describe('the first run', () => {
       expect.stringMatching(/^Sauvegarde sur S3/),
       expect.stringMatching(/^Fichiers sur Seafile/),
       expect.stringMatching(/^Films et séries avec Seerr/),
+      // Pages is on: its albums come from Immich.
+      expect.stringMatching(/^Photos sur Immich/),
     ]);
 
     await user.click(screen.getByRole('button', { name: /^Sauvegarde sur S3/ }));

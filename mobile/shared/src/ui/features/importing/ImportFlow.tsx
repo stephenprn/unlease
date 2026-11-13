@@ -289,7 +289,7 @@ function PreviewItem({ entry, choice, extra, first }: { entry: PreviewEntry; cho
     <View style={[styles.item, first ? null : { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.hairline }]}>
       {choice && can ? (
         <View style={styles.itemBox}>
-          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Importer {item}', { item: entry.title })} />
+          <Checkbox checked={on} onToggle={() => choice.toggle(entry)} label={t('Import {item}', { item: entry.title })} />
         </View>
       ) : (
         <View style={styles.itemGlyph}>

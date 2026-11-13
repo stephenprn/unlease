@@ -43,7 +43,7 @@ export function EditLineSheet({ id, visible, onDismiss, onSaved }: { id: string;
   const lines = useLines();
   // A name it already had is never refused (two collections that came to share one keep it until renamed).
   const renamedTo = !inbox && 'title' in opened && title.trim() !== String(opened.title).trim();
-  const titleProblem = inbox ? null : isBlank(title) ? t('Donnez un nom à la collection.') : renamedTo && lineTitleTaken(lines, title, id) ? t('Une collection porte déjà ce nom : choisissez-en un autre.') : null;
+  const titleProblem = inbox ? null : isBlank(title) ? t('Give the collection a name.') : renamedTo && lineTitleTaken(lines, title, id) ? t('A collection already has this name: choose another.') : null;
   const form = useForm({ title: titleProblem }, { order: inbox ? ['hint'] : ['title', 'hint'] });
   const dirty = visible && 'title' in opened && (title !== opened.title || hint !== opened.hint || color !== opened.color || emblem !== opened.emblem);
   const unsaved = useUnsaved(dirty);
@@ -61,34 +61,34 @@ export function EditLineSheet({ id, visible, onDismiss, onSaved }: { id: string;
   };
   return (
     <>
-    <Sheet visible={visible} onDismiss={cancel} title={t('Modifier la collection')} tall>
+    <Sheet visible={visible} onDismiss={cancel} title={t('Edit the collection')} tall>
       <SheetScroll contentContainerStyle={styles.body}>
         <CollectionPreview
           emblem={inbox ? collectionEmblem(id, null) : emblem}
           color={color}
-          title={(inbox ? shownTitle(line) : title.trim()) || t('Sans nom')}
-          hint={hint.trim() || t('Une phrase sur ce qu’elle contient aide Claude à y ranger les bons liens.')}
+          title={(inbox ? shownTitle(line) : title.trim()) || t('No name')}
+          hint={hint.trim() || t('A sentence about what it holds helps Claude file the right links in it.')}
         />
-        {!inbox ? <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChangeText={setTitle} maxLength={60} /> : null}
+        {!inbox ? <TextField label={t('Name')} kind="text" field={form.field('title')} value={title} onChangeText={setTitle} maxLength={60} /> : null}
         <TextField
-          label={t('Ce qui va dans cette collection')}
+          label={t('What goes in this collection')}
           kind="prose"
           field={form.field('hint')}
           value={hint}
           onChangeText={setHint}
           multiline
           maxLength={500}
-          help={t('Claude lit cette phrase pour choisir la bonne collection.')}
+          help={t('Claude reads this sentence to pick the right collection.')}
         />
         {/* The cut-outs and the swatches say what they are, and the preview above wears them: no word over them, but for TalkBack. */}
         {!inbox ? <EmblemPicker value={emblem} color={color} onChange={setEmblem} /> : null}
-        <View accessibilityRole="radiogroup" accessibilityLabel={t('Couleur')}>
+        <View accessibilityRole="radiogroup" accessibilityLabel={t('Colour')}>
           <LineColorPicker value={color} onChange={next => next && setColor(next)} />
         </View>
       </SheetScroll>
       <FormFoot message={form.message}>
-        <Button kind="text" label={t('Annuler')} onPress={cancel} />
-        <Button label={t('Enregistrer')} onPress={() => void form.submit(save)} />
+        <Button kind="text" label={t('Cancel')} onPress={cancel} />
+        <Button label={t('Save')} onPress={() => void form.submit(save)} />
       </FormFoot>
     </Sheet>
     {unsaved.dialog}

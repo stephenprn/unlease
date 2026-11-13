@@ -51,18 +51,18 @@ function syncText(phase: SyncPhase, pending: number, lastSync: number | null, me
     case 'local':
       return localText;
     case 'unauthorized':
-      return t('Le serveur refuse le jeton. Vérifiez les réglages.');
+      return t('The server refuses the token. Check the settings.');
     case 'offline': {
       // Why, what waits (and that it is safe here), and since when: a server reached only at home or
       // through a VPN is out of reach for hours, and the person should know nothing is lost meanwhile.
-      const reason = message ? t(message) : t('Hors ligne');
-      const waiting = pending > 0 ? t('{reason} : {changes} en attente, à l’abri sur ce téléphone.', { reason, changes: plural(pending, 'modification') }) : message ? t('Hors ligne ({message}).', { message: reason }) : t('Hors ligne.');
-      return lastSync ? `${waiting} ${t('Dernière synchronisation {when}.', { when: formatRelative(lastSync, Date.now()) })}` : waiting;
+      const reason = message ? t(message) : t('Offline');
+      const waiting = pending > 0 ? t('{reason}: {changes} waiting, safe on this phone.', { reason, changes: plural(pending, 'change') }) : message ? t('Offline ({message}).', { message: reason }) : t('Offline.');
+      return lastSync ? `${waiting} ${t('Last synced {when}.', { when: formatRelative(lastSync, Date.now()) })}` : waiting;
     }
     case 'syncing':
-      return pending > 0 ? t('Envoi de {changes}…', { changes: plural(pending, 'modification') }) : t('Synchronisation…');
+      return pending > 0 ? t('Sending {changes}…', { changes: plural(pending, 'change') }) : t('Syncing…');
     default:
-      return `${lastSync ? t('Synchronisé {when}.', { when: formatRelative(lastSync, Date.now()) }) : t('Synchronisé.')}${clock ? ` ${clock}` : ''}`;
+      return `${lastSync ? t('Synced {when}.', { when: formatRelative(lastSync, Date.now()) }) : t('Synced.')}${clock ? ` ${clock}` : ''}`;
   }
 }
 
@@ -88,9 +88,9 @@ function SearchHeaderComponent({ query, onQuery, onMenu, onBack, layout, onToggl
       <StatusBar barStyle={theme.barStyle} />
       <Organic frost style={styles.search}>
         {onBack ? (
-          <IconButton icon="back" label={t('Fermer la recherche')} onPress={onBack} />
+          <IconButton icon="back" label={t('Close search')} onPress={onBack} />
         ) : searching ? (
-          <IconButton icon="back" label={t('Fermer la recherche')} onPress={() => { onQuery(''); input.current?.blur(); }} />
+          <IconButton icon="back" label={t('Close search')} onPress={() => { onQuery(''); input.current?.blur(); }} />
         ) : onMenu ? (
           <IconButton icon="menu" label={t('Menu')} onPress={onMenu} />
         ) : null}
@@ -104,20 +104,20 @@ function SearchHeaderComponent({ query, onQuery, onMenu, onBack, layout, onToggl
           selectionHandleColor={theme.color.focus}
           cursorColor={theme.color.focus}
           returnKeyType="search"
-          accessibilityLabel={t('Rechercher')}
+          accessibilityLabel={t('Search')}
           style={[variantStyle(theme, 'body'), styles.input]}
         />
         {searching ? (
-          <IconButton icon="close" label={t('Effacer')} onPress={() => onQuery('')} />
+          <IconButton icon="close" label={t('Clear')} onPress={() => onQuery('')} />
         ) : (
           <>
-            {layout && onToggleLayout ? <IconButton icon={layout === 'wall' ? 'rows' : 'grid'} label={layout === 'wall' ? t('Afficher en liste') : t('Afficher en mur')} onPress={onToggleLayout} shape={1} /> : null}
+            {layout && onToggleLayout ? <IconButton icon={layout === 'wall' ? 'rows' : 'grid'} label={layout === 'wall' ? t('Show as a list') : t('Show as a wall')} onPress={onToggleLayout} shape={1} /> : null}
             {onServer ? (
               <Tappable
                 accessibilityLabel={status}
                 hitSlop={8}
                 // Unless a sync is fine or under way, the fix is in the Administration (a server, a token, an address).
-                onPress={() => (phase === 'synced' || phase === 'syncing' ? showSnack(status, undefined, { tone: phase === 'synced' ? 'success' : 'info' }) : showSnack(status, { label: t('Serveur'), run: onServer }, { tone: phase === 'local' ? 'info' : phase === 'offline' ? 'warning' : 'error' }))}
+                onPress={() => (phase === 'synced' || phase === 'syncing' ? showSnack(status, undefined, { tone: phase === 'synced' ? 'success' : 'info' }) : showSnack(status, { label: t('Server'), run: onServer }, { tone: phase === 'local' ? 'info' : phase === 'offline' ? 'warning' : 'error' }))}
                 style={styles.dotTarget}
               >
                 <View style={[styles.dot, { backgroundColor: dot }]} />

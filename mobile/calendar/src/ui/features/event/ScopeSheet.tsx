@@ -7,14 +7,14 @@ import { EDIT_SCOPES, type EditScope } from '@unlease/calendar/services/editing'
 import { ListRow, Sheet } from '@shared/ui/components';
 
 const SCOPE_WORDS: Readonly<Record<EditScope, string>> = localized({
-  this: tx('Cet événement'),
-  following: tx('Cet événement et les suivants'),
-  all: tx('Tous les événements'),
+  this: tx('This event'),
+  following: tx('This and following events'),
+  all: tx('All events'),
 });
 
 export function ScopeSheet({ visible, deleting, onDismiss, onScope }: { visible: boolean; deleting: boolean; onDismiss: () => void; onScope: (scope: EditScope) => void }) {
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={deleting ? t('Supprimer un événement périodique') : t('Modifier un événement périodique')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={deleting ? t('Delete a repeating event') : t('Edit a repeating event')}>
       {EDIT_SCOPES.map(scope => (
         <ListRow
           key={scope}

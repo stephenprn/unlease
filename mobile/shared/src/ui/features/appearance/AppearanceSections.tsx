@@ -87,10 +87,10 @@ export function ColorsSection({ onEdit }: { onEdit: (role: ColorRole) => void })
     />
   );
   return (
-    <Section title={t('Couleurs')} info={COLORS_INFO} anchor={SETTINGS_SECTIONS.colors}>
+    <Section title={t('Colours')} info={COLORS_INFO} anchor={SETTINGS_SECTIONS.colors}>
       <View style={styles.body}>
         <AppearancePreview appearance={appearance} />
-        <SwatchGroup inset={HEAD_INSET} title={t('Palettes')} chosen={palette ? PALETTE_NAMES[palette] : t('Sur mesure')}>
+        <SwatchGroup inset={HEAD_INSET} title={t('Palettes')} chosen={palette ? PALETTE_NAMES[palette] : t('Custom')}>
           {pairs.map(({ key, seeds, paint }, index) => (
             <Swatch
               key={key}
@@ -107,7 +107,7 @@ export function ColorsSection({ onEdit }: { onEdit: (role: ColorRole) => void })
           ))}
         </SwatchGroup>
         <AppText variant="metaStrong" style={styles.rolesHead} accessibilityRole="header">
-          {t('Sur mesure')}
+          {t('Custom')}
         </AppText>
       </View>
       {roleRow('primary', appearance.primary)}
@@ -146,19 +146,19 @@ export function GroundSection({ onEditColor, onEditGradient }: { onEditColor: ()
   const turns = { color: 0, gradient: ownColor ? 1 : 0 };
   const after = (ownColor ? 1 : 0) + (ownGradient ? 1 : 0);
   return (
-    <Section title={t('Fond')} info={GROUND_INFO} anchor={SETTINGS_SECTIONS.ground}>
+    <Section title={t('Background')} info={GROUND_INFO} anchor={SETTINGS_SECTIONS.ground}>
       <View style={styles.body}>
-        <SwatchGroup inset={HEAD_INSET} title={t('Dégradés')} chosen={holder === 'gradients' ? chosen : null}>
+        <SwatchGroup inset={HEAD_INSET} title={t('Gradients')} chosen={holder === 'gradients' ? chosen : null}>
           {GROUND_GRADIENTS.map(preset)}
         </SwatchGroup>
-        <SwatchGroup inset={HEAD_INSET} title={t('Couleurs unies')} chosen={holder === 'colors' ? chosen : null}>
+        <SwatchGroup inset={HEAD_INSET} title={t('Plain colours')} chosen={holder === 'colors' ? chosen : null}>
           {GROUND_COLORS.map(preset)}
         </SwatchGroup>
-        <SwatchGroup inset={HEAD_INSET} title={t('Les vôtres')} chosen={holder === 'own' ? chosen : null}>
+        <SwatchGroup inset={HEAD_INSET} title={t('Your own')} chosen={holder === 'own' ? chosen : null}>
           {ownColor ? (
             <Swatch
-              label={t('Votre couleur')}
-              name={t('Votre couleur')}
+              label={t('Your colour')}
+              name={t('Your colour')}
               selected={ground.kind === 'color' && ground.color === ownColor}
               turn={swatchTurn(turns.color, 4)}
               paint={paint({ kind: 'color', color: ownColor })}
@@ -169,8 +169,8 @@ export function GroundSection({ onEditColor, onEditGradient }: { onEditColor: ()
           ) : null}
           {ownGradient ? (
             <Swatch
-              label={t('Votre dégradé')}
-              name={t('Votre dégradé')}
+              label={t('Your gradient')}
+              name={t('Your gradient')}
               selected={ground.kind === 'gradient' && sameGradient(ground, ownGradient)}
               turn={swatchTurn(turns.gradient, 4)}
               paint={paint({ kind: 'gradient', ...ownGradient })}
@@ -179,16 +179,16 @@ export function GroundSection({ onEditColor, onEditGradient }: { onEditColor: ()
               onPress={() => choose({ kind: 'gradient', ...ownGradient })}
             />
           ) : null}
-          <Swatch role="button" label={t('Couleur du fond')} name={t('Couleur…')} selected={false} turn={swatchTurn(after, 4)} paint={styles.add} ring="focus" cell={swatchCells.quarter} onPress={onEditColor}>
+          <Swatch role="button" label={t('Background colour')} name={t('Colour…')} selected={false} turn={swatchTurn(after, 4)} paint={styles.add} ring="focus" cell={swatchCells.quarter} onPress={onEditColor}>
             <Icon name="plus" size={22} color={theme.color.link} />
           </Swatch>
-          <Swatch role="button" label={t('Créer un dégradé')} name={t('Dégradé…')} selected={false} turn={swatchTurn(after + 1, 4)} paint={styles.add} ring="focus" cell={swatchCells.quarter} onPress={onEditGradient}>
+          <Swatch role="button" label={t('Make a gradient')} name={t('Gradient…')} selected={false} turn={swatchTurn(after + 1, 4)} paint={styles.add} ring="focus" cell={swatchCells.quarter} onPress={onEditGradient}>
             <Icon name="plus" size={22} color={theme.color.link} />
           </Swatch>
         </SwatchGroup>
       </View>
       {/* Said for what it is beside the paper's own grain (« Apparence »'s first panel), in the web's words. */}
-      <SwitchRow title={t('Grain sur le fond')} supporting={t('Le grain de film sur le fond de l’écran.')} value={appearance.grain} onChange={grain => setAppearance({ ...useSettingsStore.getState().appearance, grain })} />
+      <SwitchRow title={t('Grain on the background')} supporting={t('The film grain over the screen’s background.')} value={appearance.grain} onChange={grain => setAppearance({ ...useSettingsStore.getState().appearance, grain })} />
       <View style={styles.foot}>
         <LookShareButton />
         <View style={styles.servicesOpen}>

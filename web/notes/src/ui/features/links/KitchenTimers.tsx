@@ -33,9 +33,9 @@ export function TimerPill({ timer, now, here }: { timer: KitchenTimer; now: numb
         {recipe ? <span className={`${styles.timerRecipe} t-meta`}>{recipe}</span> : null}
       </span>
       <span className="t-label tabular" role={done ? 'status' : undefined}>
-        {done ? t('Terminé') : formatCountdown(left)}
+        {done ? t('Done') : formatCountdown(left)}
       </span>
-      <IconButton icon="close" compact onSlip={!done} label={done ? t('Fermer le minuteur') : t('Arrêter le minuteur')} onClick={() => stopTimer(timer.id)} />
+      <IconButton icon="close" compact onSlip={!done} label={done ? t('Dismiss the timer') : t('Stop the timer')} onClick={() => stopTimer(timer.id)} />
     </li>
   );
 }
@@ -49,14 +49,14 @@ export function KitchenTimers() {
       if (rung.current.has(timer.id)) return;
       rung.current.add(timer.id);
       chime();
-      showWarning(t('Minuteur terminé : {label}', { label: timer.label }));
+      showWarning(t('Timer done: {label}', { label: timer.label }));
     };
     const waits = timers.filter(timer => !rung.current.has(timer.id)).map(timer => setTimeout(() => ring(timer), Math.max(0, timer.endsAt - Date.now())));
     return () => waits.forEach(clearTimeout);
   }, [timers]);
   if (timers.length === 0) return null;
   return (
-    <ul className={styles.timerTray} aria-label={t('Minuteurs')}>
+    <ul className={styles.timerTray} aria-label={t('Timers')}>
       {timers.map(timer => (
         <TimerPill key={timer.id} timer={timer} now={now} />
       ))}

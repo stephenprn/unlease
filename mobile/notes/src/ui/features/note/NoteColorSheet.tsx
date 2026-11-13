@@ -49,18 +49,18 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   // The colours carry no name under them: the chosen one is named beside the group's title.
-  const colorName = color === null ? t('Sans couleur') : isLineColor(color) ? LINE_COLOR_NAMES[color] : null;
+  const colorName = color === null ? t('No colour') : isLineColor(color) ? LINE_COLOR_NAMES[color] : null;
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Couleur et papier')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Colour and paper')} tall>
       <SheetScroll contentContainerStyle={styles.body}>
         {note ? (
           <AppText variant="meta" color={theme.color.inkMuted} style={styles.note}>
             {note}
           </AppText>
         ) : null}
-        <Group title={t('Couleur')} chosen={colorName}>
+        <Group title={t('Colour')} chosen={colorName}>
           <Swatch
-            label={t('Sans couleur')}
+            label={t('No colour')}
             selected={color === null}
             turn={0}
             paint={{ backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.edge }}
@@ -84,7 +84,7 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
           ))}
         </Group>
 
-        <Group title={t('Dégradés')}>
+        <Group title={t('Gradients')}>
           {NOTE_GRADIENTS.map((key, index) => (
             <Swatch
               key={key}
@@ -100,9 +100,9 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
           ))}
         </Group>
 
-        <Group title={t('Papier')}>
+        <Group title={t('Paper')}>
           {([null, ...NOTE_PATTERNS] as const).map((key, index) => {
-            const name = key ? NOTE_PATTERN_NAMES[key] : t('Uni');
+            const name = key ? NOTE_PATTERN_NAMES[key] : t('Plain');
             return (
               // The paper over the note's own colour, as the note will wear it.
               <Swatch

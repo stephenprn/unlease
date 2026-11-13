@@ -8,6 +8,7 @@ import { startLauncherIcon } from '@shared/app/launcherIcon';
 import { startSuiteLink } from '@shared/app/suiteLink';
 import { databaseDirectory } from '@shared/platform/storage';
 
+import { contactsMirror } from './phoneMirror';
 import { startPhotoUploads } from './photos';
 import { loadContactsUi } from './store/contactsUi';
 import { loadLibrary } from './store/libraryStore';
@@ -33,6 +34,8 @@ export function bootstrap(): BootResult {
     startPhotoUploads();
     // The home-screen widgets are handed what they draw now, and whenever it changes.
     startWidgets();
+    // The people copied into the phone's own address book, when turned on, whenever they change.
+    contactsMirror.start();
     // The suite's other apps on this phone read this one's connection and appearance.
     startSuiteLink();
     // The launcher's icon in this app's primary, switched once the app has left the screen.

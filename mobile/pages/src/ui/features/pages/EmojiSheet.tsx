@@ -99,11 +99,11 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
     };
     if (pasted) return cellRows('pasted', [named(pasted)], columns);
     if (searching) {
-      if (!catalogue) return [{ kind: 'note', key: 'loading', text: failed ? t('La liste des emoji n’a pas pu se charger. Collez-en un.') : t('Chargement…') }];
+      if (!catalogue) return [{ kind: 'note', key: 'loading', text: failed ? t('The emoji list couldn’t load. Paste one.') : t('Loading…') }];
       const found = searchEmoji(catalogue, query, languages).map(emoji => ({ emoji: emoji.emoji, name: emojiName(emoji, languages) }));
-      return found.length > 0 ? cellRows('found', found, columns) : [{ kind: 'note', key: 'none', text: t('Aucun emoji pour « {query} ».', { query: query.trim() }) }];
+      return found.length > 0 ? cellRows('found', found, columns) : [{ kind: 'note', key: 'none', text: t('No emoji for “{query}”.', { query: query.trim() }) }];
     }
-    const out: Row[] = [{ kind: 'head', key: 'everyday', title: t('Courants') }, ...cellRows('everyday', EVERYDAY_EMOJI.map(named), columns)];
+    const out: Row[] = [{ kind: 'head', key: 'everyday', title: t('Frequently used') }, ...cellRows('everyday', EVERYDAY_EMOJI.map(named), columns)];
     catalogue?.groups.forEach((group, index) => {
       out.push({ kind: 'head', key: group.key, title: languages[0] === 'en' ? group.en : group.fr });
       out.push(...cellRows(group.key, catalogue.emojis.filter(emoji => emoji.group === index).map(emoji => ({ emoji: emoji.emoji, name: emojiName(emoji, languages) })), columns));
@@ -148,14 +148,14 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
   );
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={title ?? t('Icône')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={title ?? t('Icon')} tall>
       <View style={[styles.body, { height: height * 0.88 }]}>
         <View style={styles.top}>
           <TextField
             value={query}
             onChangeText={setQuery}
-            placeholder={t('Chercher : soleil, sun…')}
-            accessibilityLabel={t('Chercher un emoji par son nom, ou en coller un')}
+            placeholder={t('Search: sun, soleil…')}
+            accessibilityLabel={t('Search for an emoji by name, or paste one')}
             autoCorrect={false}
             autoCapitalize="none"
             returnKeyType="done"
@@ -164,7 +164,7 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
               if (first) pick(first);
             }}
           />
-          {allowNone && value !== null ? <Button kind="text" label={t('Retirer l’icône')} onPress={() => pick(null)} style={styles.none} /> : null}
+          {allowNone && value !== null ? <Button kind="text" label={t('Remove icon')} onPress={() => pick(null)} style={styles.none} /> : null}
         </View>
         <SheetFlatList top={false}
           data={rows}

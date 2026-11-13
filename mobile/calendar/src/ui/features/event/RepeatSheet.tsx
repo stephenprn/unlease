@@ -21,7 +21,7 @@ import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { DayPickerSheet } from '../calendar/DayPickerSheet';
 
-const FREQUENCY_NAMES: Readonly<Record<Frequency, string>> = localized({ DAILY: tx('Jours'), WEEKLY: tx('Semaines'), MONTHLY: tx('Mois [every]'), YEARLY: tx('Ans') });
+const FREQUENCY_NAMES: Readonly<Record<Frequency, string>> = localized({ DAILY: tx('Days'), WEEKLY: tx('Weeks'), MONTHLY: tx('Months'), YEARLY: tx('Years') });
 
 type End = 'never' | 'until' | 'count';
 
@@ -58,7 +58,7 @@ export function RepeatSheet({ visible, start, rrule, today, weekStart, onDismiss
 
   const every = readCount(interval);
   const times = readCount(count);
-  const form = useForm({ every: every === null ? t('Un nombre de 1 à 999.') : null, times: end === 'count' && times === null ? t('Un nombre de 1 à 999.') : null }, { order: ['every', 'times'] });
+  const form = useForm({ every: every === null ? t('A number from 1 to 999.') : null, times: end === 'count' && times === null ? t('A number from 1 to 999.') : null }, { order: ['every', 'times'] });
   const { reset } = form;
   useEffect(() => {
     if (visible) reset();
@@ -77,7 +77,7 @@ export function RepeatSheet({ visible, start, rrule, today, weekStart, onDismiss
 
   const current = choiceOf(rrule, start);
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={custom ? t('Répétition personnalisée') : t('Répéter')} tall={custom}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={custom ? t('Custom repeat') : t('Repeat')} tall={custom}>
       {!custom ? (
         // The current one ticked at the row's end, as the other choice sheets do: every choice's words on one column.
         repeatChoices(start).map(choice => (
@@ -95,21 +95,21 @@ export function RepeatSheet({ visible, start, rrule, today, weekStart, onDismiss
           <SheetScroll contentContainerStyle={styles.custom}>
             <View style={styles.group}>
               <AppText variant="metaStrong" style={styles.label}>
-                {t('Tous les')}
+                {t('Every')}
               </AppText>
               <View style={styles.row}>
                 <View style={styles.number}>
-                  <TextField kind="number" value={interval} onChangeText={setInterval} accessibilityLabel={t('Intervalle')} field={form.field('every')} maxLength={3} />
+                  <TextField kind="number" value={interval} onChangeText={setInterval} accessibilityLabel={t('Interval')} field={form.field('every')} maxLength={3} />
                 </View>
                 <View style={styles.fill}>
-                  <Segmented label={t('Fréquence')} options={(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map(value => ({ value, label: FREQUENCY_NAMES[value] }))} value={freq} onChange={setFreq} />
+                  <Segmented label={t('Frequency')} options={(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map(value => ({ value, label: FREQUENCY_NAMES[value] }))} value={freq} onChange={setFreq} />
                 </View>
               </View>
             </View>
             {freq === 'WEEKLY' ? (
               <View style={styles.group}>
                 <AppText variant="metaStrong" style={styles.label}>
-                  {t('Les jours')}
+                  {t('The days')}
                 </AppText>
                 <View style={styles.days}>
                   {weekCodesFrom(weekStart).map(weekday => {
@@ -135,14 +135,14 @@ export function RepeatSheet({ visible, start, rrule, today, weekStart, onDismiss
             ) : null}
             <View style={styles.group}>
               <AppText variant="metaStrong" style={styles.label}>
-                {t('Se termine')}
+                {t('Ends')}
               </AppText>
-              <Segmented label={t('Se termine')} options={[{ value: 'never' as End, label: t('Jamais') }, { value: 'until' as End, label: t('Le') }, { value: 'count' as End, label: t('Après') }]} value={end} onChange={setEnd} />
-              {end === 'until' ? <PickerField accessibilityLabel={t('Dernier jour')} value={shortDay(until, 0)} icon="calendar" onPress={() => setPickingUntil(true)} /> : null}
+              <Segmented label={t('Ends')} options={[{ value: 'never' as End, label: t('Never') }, { value: 'until' as End, label: t('On') }, { value: 'count' as End, label: t('After') }]} value={end} onChange={setEnd} />
+              {end === 'until' ? <PickerField accessibilityLabel={t('Last day')} value={shortDay(until, 0)} icon="calendar" onPress={() => setPickingUntil(true)} /> : null}
               {end === 'count' ? (
                 <View style={styles.row}>
                   <View style={styles.number}>
-                    <TextField kind="number" value={count} onChangeText={setCount} accessibilityLabel={t('Nombre de fois')} field={form.field('times')} maxLength={3} />
+                    <TextField kind="number" value={count} onChangeText={setCount} accessibilityLabel={t('Number of times')} field={form.field('times')} maxLength={3} />
                   </View>
                   <AppText variant="body" style={styles.word}>
                     {t('occurrences')}
@@ -155,12 +155,12 @@ export function RepeatSheet({ visible, start, rrule, today, weekStart, onDismiss
             </AppText>
           </SheetScroll>
           <FormFoot message={form.message}>
-            <Button label={t('Retour')} kind="text" onPress={() => setCustom(false)} />
+            <Button label={t('Back')} kind="text" onPress={() => setCustom(false)} />
             <Button label={t('OK')} onPress={() => later(form.submit(() => pick(built())))} />
           </FormFoot>
         </>
       )}
-      <DayPickerSheet visible={pickingUntil} title={t('Dernier jour')} day={until} today={today} weekStart={weekStart} onDismiss={() => setPickingUntil(false)} onDay={setUntil} />
+      <DayPickerSheet visible={pickingUntil} title={t('Last day')} day={until} today={today} weekStart={weekStart} onDismiss={() => setPickingUntil(false)} onDay={setUntil} />
     </Sheet>
   );
 }

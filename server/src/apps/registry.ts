@@ -20,6 +20,8 @@ import type { PushRepair, PushRule, SyncService } from '../sync/service';
 import { createFetcher, type Fetcher } from '../reading/fetcher';
 import { PlaceFinder } from '../places/finder';
 import { placesRoute } from '../places/routes';
+import { immichRoutes } from '../immich/routes';
+import { checkImmichServer } from '../immich/check';
 import { LinkModelProvider } from './notes/analysis/provider';
 import { READ_TASK } from './notes/analysis/usage';
 import { createNotesApp, NOTES_PUSH_RULES, type NotesApp } from './notes';
@@ -54,6 +56,8 @@ export interface AppDeps {
   readonly pushFetch?: typeof fetch;
   /** How the places' geocoder is reached. */
   readonly placesFetch?: typeof fetch;
+  /** How Immich is reached. */
+  readonly immichFetch?: typeof fetch;
   readonly now?: () => number;
 }
 
@@ -66,7 +70,7 @@ export interface Suite {
   readonly calendar: CalendarApp;
   /** What Claude has cost, month by month, every app's calls together. */
   readonly usage: UsageStore;
-  /** Routes the apps share, served whatever is on: Claude's spending, the places found as they are typed. */
+  /** Routes the apps share, served whatever is on: Claude's spending, the places found as they are typed, Immich. */
   readonly routes: (app: Hono<Env>) => void;
   /** How the Administration's settings that belong to an app are tried (Seerr, Carnet's; the holidays, Agenda's). */
   readonly checks: Partial<SettingsChecks>;
@@ -97,7 +101,8 @@ export function createApps(deps: AppDeps): Suite {
     routes: app => {
       usageRoute(app, { usage, settings, now });
       placesRoute(app, { places });
+      immichRoutes(app, { settings, blobs, now, ...(deps.immichFetch ? { fetcher: deps.immichFetch } : {}) });
     },
-    checks: { checkSeerr: config => checkSeerrServer(config, seerrFetch), checkHolidays: calendar.holidays.check },
+    checks: { checkSeerr: config => checkSeerrServer(config, seerrFetch), checkHolidays: calendar.holidays.check, checkImmich: config => checkImmichServer(config, deps.immichFetch) },
   };
 }

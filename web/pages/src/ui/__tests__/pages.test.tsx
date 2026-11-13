@@ -66,7 +66,7 @@ describe('a page', () => {
     render(<PageView id={page} />);
     expect(screen.getByText(/^Modifiée à \d\d:\d\d$/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Plus d’actions' }));
-    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ajouter une sous-page', 'Déplacer vers…', 'Dupliquer', 'Copier le lien', 'Exporter en Markdown', 'Mettre à la corbeille']);
+    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ajouter une sous-page', 'Déplacer vers…', 'Dupliquer', 'Copier le lien', 'Exporter en Markdown', 'Historique des versions', 'Mettre à la corbeille']);
     await user.click(screen.getByRole('menuitem', { name: 'Dupliquer' }));
     expect(Object.values(state().blocks).filter(block => block.kind === 'page').map(block => block.text)).toContain('Voyage (copie)');
     await user.click(screen.getByRole('button', { name: 'Plus d’actions' }));

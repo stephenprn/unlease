@@ -35,17 +35,17 @@ export function storageClassesFor(endpoint: string, current: StorageClass): Stor
 
 /** Each class's name and what it costs or delays, in French (translated where shown). */
 export const STORAGE_CLASS_WORDS: Readonly<Record<StorageClass, { readonly name: string; readonly meta: string }>> = {
-  STANDARD: localized({ name: tx('Standard'), meta: tx('Lisible à tout moment. Le plus simple.') }),
-  STANDARD_IA: localized({ name: tx('Accès rare'), meta: tx('Moins cher à garder ; chaque lecture est facturée.') }),
-  ONEZONE_IA: localized({ name: tx('Accès rare, une zone'), meta: tx('Moins cher à garder, dans un seul centre ; chaque lecture est facturée.') }),
-  GLACIER_IR: localized({ name: tx('Glacier, lecture immédiate'), meta: tx('Bien moins cher à garder, lisible à tout moment ; chaque lecture est facturée.') }),
-  GLACIER: localized({ name: tx('Glacier'), meta: tx('Le moins cher à garder. Pour restaurer, la sauvegarde sort d’abord du froid : comptez quelques heures.') }),
-  DEEP_ARCHIVE: localized({ name: tx('Archive profonde'), meta: tx('Le moins cher de tous. Jusqu’à 48 h pour sortir une sauvegarde du froid.') }),
+  STANDARD: localized({ name: tx('Standard'), meta: tx('Readable at any time. The simplest.') }),
+  STANDARD_IA: localized({ name: tx('Infrequent access'), meta: tx('Cheaper to keep; each read is billed.') }),
+  ONEZONE_IA: localized({ name: tx('Infrequent access, one zone'), meta: tx('Cheaper to keep, in a single data centre; each read is billed.') }),
+  GLACIER_IR: localized({ name: tx('Glacier, instant retrieval'), meta: tx('Much cheaper to keep, readable at any time; each read is billed.') }),
+  GLACIER: localized({ name: tx('Glacier'), meta: tx('The cheapest to keep. To restore, the backup first comes out of cold storage: allow a few hours.') }),
+  DEEP_ARCHIVE: localized({ name: tx('Deep archive'), meta: tx('The cheapest of all. Up to 48 hours to bring a backup out of cold storage.') }),
 };
 
 /** Under the choice, translated: what changes, and for a provider this does not know, why only two are offered. */
 export function storageClassHelp(endpoint: string): string[] {
-  const lines = [t('Vaut pour ce qui sera envoyé ensuite : ce qui est déjà sur S3 garde sa classe.')];
-  if (storageProviderOf(endpoint) === 'other') lines.push(t('Service non reconnu : Standard et Glacier sont proposés, et la classe est essayée sur le bucket avant d’être gardée.'));
+  const lines = [t('Applies to what is sent from now on: what is already on S3 keeps its class.')];
+  if (storageProviderOf(endpoint) === 'other') lines.push(t('Service not recognised: Standard and Glacier are offered, and the class is tried on the bucket before it is kept.'));
   return lines;
 }

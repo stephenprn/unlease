@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- How the phone's contacts app shows the mirror account's people (ContactsContract's
+     CONTACTS_STRUCTURE): no edit schema, so they are read-only there, and the row that opens a person
+     in the app (PhoneMirrorModule.MIME_PROFILE, ContactOpenActivity), its words in data2 and data3.
+     The contacts app reads the MIME type as written, so dev-builds.gradle rewrites it for the dev builds
+     (`vnd.unlease.dev.contact`): a tap never asks which of the two apps opens it. -->
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
+    <ContactsDataKind
+        android:mimeType="vnd.android.cursor.item/vnd.unlease.contact"
+        android:icon="@mipmap/ic_launcher"
+        android:summaryColumn="data2"
+        android:detailColumn="data3" />
+</ContactsAccountType>

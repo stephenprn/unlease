@@ -29,15 +29,15 @@ function Tips() {
   const labels = (theApp().spotLabels?.() ?? []).length > 0;
   const types = spotKinds().length > 1;
   const tips: readonly (readonly [string, string])[] = [
-    [t('"mots exacts"'), t('Ces mots, dans cet ordre')],
-    [t('-mot'), t('Sans ce mot')],
-    ...(labels ? [[t('#label'), t('Ce qui porte ce label')] as const] : []),
-    ...(types ? [['Tab', t('Un seul type à la fois')] as const] : []),
-    [`${modKey()} ↵`, t('Ouvrir dans un nouvel onglet')],
+    [t('"exact words"'), t('These words, in this order')],
+    [t('-word'), t('Without this word')],
+    ...(labels ? [[t('#label'), t('Everything with this label')] as const] : []),
+    ...(types ? [['Tab', t('One type at a time')] as const] : []),
+    [`${modKey()} ↵`, t('Open in a new tab')],
   ];
   return (
     <div className={styles.tips}>
-      <p className={`${styles.tipsLead} t-body`}>{t('Les titres d’abord, puis le contenu. Les accents, les débuts de mots et les fautes de frappe sont compris.')}</p>
+      <p className={`${styles.tipsLead} t-body`}>{t('Titles first, then the content. Accents, the start of a word and typos are understood.')}</p>
       <dl className={styles.tipList}>
         {tips.map(([key, what]) => (
           <div key={key}>
@@ -77,7 +77,7 @@ export const SpotPreview = memo(function SpotPreview({ doc, part, matcher, now }
     if (scroller.current) scrollToMatch(scroller.current, part);
   }, [doc, part, matcher]);
   return (
-    <aside ref={scroller} className={styles.preview} aria-label={t('Aperçu')}>
+    <aside ref={scroller} className={styles.preview} aria-label={t('Preview')}>
       {doc ? (
         <article className={styles.previewArticle}>
           <header className={styles.previewHead}>

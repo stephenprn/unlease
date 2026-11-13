@@ -53,7 +53,7 @@ export interface NotesServices {
 export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
   app.get('/api/notes/mentions', c => {
     const query = parseMentionsQuery(c.req.query('type'), c.req.query('ids'));
-    if (!query) return c.json({ error: 'Requête invalide' }, 400);
+    if (!query) return c.json({ error: 'Invalid request' }, 400);
     const answer: MentionsResponse = { places: notesMentioning(services.records, query.type, query.ids) };
     return c.json(answer, 200, { 'Cache-Control': 'no-store' });
   });
@@ -63,7 +63,7 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const request = parseGiftLinkRequest(body);
     if (!request) return c.json({ error: 'Idée de cadeau invalide' }, 400);
@@ -75,10 +75,10 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const request = parseSortRequest(body);
-    if (!request) return c.json({ error: 'Requête de tri invalide' }, 400);
+    if (!request) return c.json({ error: 'Invalid sorting request' }, 400);
     const outcome = await services.sorter.sort(request, AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(SORT_DEADLINE_MS)]));
     if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);
     return c.json({ moves: outcome.moves, ...(outcome.incomplete ? { incomplete: outcome.incomplete } : {}) });
@@ -91,7 +91,7 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
       try {
         body = await c.req.json();
       } catch {
-        return c.json({ error: 'Requête invalide' }, 400);
+        return c.json({ error: 'Invalid request' }, 400);
       }
       const request = parse(body);
       if (!request) return c.json({ error: invalid }, 400);
@@ -100,20 +100,20 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
       return c.json(outcome.answer as object, 200, { 'Cache-Control': 'no-store' });
     };
   const { searches, recipes, questions, templates, settings } = services;
-  app.post('/api/coupons', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCouponRequest, 'Demande de codes promo invalide', request => searches.coupons(request)));
-  app.post('/api/offers', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseOfferRequest, 'Demande d’offres invalide', request => searches.offers(request)));
-  app.post('/api/recipe', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecipeRequest, 'Demande d’ingrédients invalide', request => recipes.read(request)));
-  app.post('/api/ratings', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRatingsRequest, 'Demande de notes invalide', request => searches.ratings(request)));
-  app.post('/api/recap', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecapRequest, 'Demande de résumé invalide', request => searches.recap(request)));
-  app.post('/api/coverage', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCoverageRequest, 'Demande d’autres regards invalide', request => searches.coverage(request)));
-  app.post('/api/ask', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseAskRequest, 'Question invalide', request => questions.ask(request)));
+  app.post('/api/coupons', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCouponRequest, 'Invalid promo code request', request => searches.coupons(request)));
+  app.post('/api/offers', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseOfferRequest, 'Invalid offers request', request => searches.offers(request)));
+  app.post('/api/recipe', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecipeRequest, 'Invalid ingredients request', request => recipes.read(request)));
+  app.post('/api/ratings', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRatingsRequest, 'Invalid ratings request', request => searches.ratings(request)));
+  app.post('/api/recap', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseRecapRequest, 'Invalid recap request', request => searches.recap(request)));
+  app.post('/api/coverage', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseCoverageRequest, 'Invalid request for other takes', request => searches.coverage(request)));
+  app.post('/api/ask', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), moduleRoute(parseAskRequest, 'Invalid question', request => questions.ask(request)));
   app.post(TEMPLATE_TRY_PATH, bodyLimit({ maxSize: 64 * 1024, onError: tooLarge }), moduleRoute(parseTemplateTryRequest, TRY_WORDS.invalid, request => templates.try(request)));
   app.post(
     '/api/seerr',
     bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }),
-    moduleRoute(parseSeerrRequest, 'Demande Seerr invalide', async request => {
+    moduleRoute(parseSeerrRequest, 'Invalid Seerr request', async request => {
       const seerr = settings.seerr();
-      if (!seerr) return { ok: false, status: 409, error: 'Seerr n’est pas relié : ajoutez-le dans l’administration.' };
+      if (!seerr) return { ok: false, status: 409, error: 'Seerr is not linked: add it in Administration.' };
       try {
         return { ok: true, answer: await findInSeerr(seerr, request.link, services.seerrFetch) };
       } catch (error) {

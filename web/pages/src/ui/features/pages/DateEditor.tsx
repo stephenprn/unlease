@@ -195,11 +195,11 @@ function MonthCalendar({ chosen, today, onPick }: { chosen: string; today: strin
     <div className={styles.calendar}>
       <div className={styles.monthHead}>
         {/* The back chevron is the forward one turned round: Onde draws one. */}
-        <IconButton icon="chevronRight" label={t('Mois précédent')} compact shape={1} className={styles.previous} onClick={() => setShown(month => shiftMonth(month, -1))} />
+        <IconButton icon="chevronRight" label={t('Previous month')} compact shape={1} className={styles.previous} onClick={() => setShown(month => shiftMonth(month, -1))} />
         <span className={`${styles.monthName} t-body-strong`} aria-live="polite">
           {name}
         </span>
-        <IconButton icon="chevronRight" label={t('Mois suivant')} compact shape={2} onClick={() => setShown(month => shiftMonth(month, 1))} />
+        <IconButton icon="chevronRight" label={t('Next month')} compact shape={2} onClick={() => setShown(month => shiftMonth(month, 1))} />
       </div>
       <div className={styles.week} aria-hidden="true">
         {initials.map((initial, index) => (
@@ -247,9 +247,9 @@ function DatePanel({ target, run }: { target: DateTarget; run: DateRun }) {
   const set = (next: DateRun | null): void => writeDate(target, next);
   const setDay = (day: string): void => set(dateRun(day, run.time) ?? run);
   const quick = [
-    { label: t('Aujourd’hui'), day: today },
-    { label: t('Demain'), day: shiftDay(now, 1) },
-    { label: t('Lundi prochain'), day: shiftDay(now, (8 - new Date(now).getDay()) % 7 || 7) },
+    { label: t('Today'), day: today },
+    { label: t('Tomorrow'), day: shiftDay(now, 1) },
+    { label: t('Next Monday'), day: shiftDay(now, (8 - new Date(now).getDay()) % 7 || 7) },
   ];
   // The time as typed: the field may hold half a time a moment; a whole one is written.
   const [clock, setClock] = useState(run.time ?? '');
@@ -275,7 +275,7 @@ function DatePanel({ target, run }: { target: DateTarget; run: DateRun }) {
       <MonthCalendar chosen={run.date} today={today} onPick={setDay} />
       <button type="button" role="switch" aria-checked={run.time !== null} className={styles.switchRow} onClick={toggleTime}>
         <Icon name="clock" size={20} />
-        <span className="t-body">{t('Heure')}</span>
+        <span className="t-body">{t('Time')}</span>
         <SwitchMark checked={run.time !== null} />
       </button>
       {run.time !== null ? (
@@ -283,7 +283,7 @@ function DatePanel({ target, run }: { target: DateTarget; run: DateRun }) {
           type="time"
           className={`${inputs.input} ${styles.timeField}`}
           value={clock}
-          aria-label={t('Heure')}
+          aria-label={t('Time')}
           onChange={event => {
             const value = event.target.value;
             setClock(value);
@@ -293,7 +293,7 @@ function DatePanel({ target, run }: { target: DateTarget; run: DateRun }) {
       ) : null}
       <div className={styles.dateFoot}>
         <Button kind="dangerText" small onClick={() => set(null)}>
-          {t('Retirer la date')}
+          {t('Remove the date')}
         </Button>
       </div>
     </div>

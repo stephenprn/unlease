@@ -6,7 +6,7 @@
 import 'react-native-gesture-handler';
 
 import { AppRegistry } from 'react-native';
-import { addCalendarEnglish } from '@unlease/calendar/i18n';
+import { addCalendarFrench } from '@unlease/calendar/i18n';
 
 import App from './App';
 import { name as appName } from './app.json';
@@ -17,7 +17,7 @@ import { onBackgroundEvent } from './src/platform/notifications';
 import { runRemindersTask } from './src/app/reminders';
 
 // The design system's, Carnet's, Contacts' and Agenda's English, for every root below.
-addCalendarEnglish();
+addCalendarFrench();
 
 // Before registerComponent, as Notifee requires: a reminder pressed with the app closed opens it.
 onBackgroundEvent();

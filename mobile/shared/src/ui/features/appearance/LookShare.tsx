@@ -51,7 +51,7 @@ export function useLookShareHint(): void {
     const timer = setTimeout(() => {
       settled.current = key;
       if (!reachable.current) return;
-      showSnack(t('Apparence changée dans {app}', { app: APPS[ownApp()].name }), { label: t('Appliquer aux autres'), run: () => setLookShareOpen(true) });
+      showSnack(t('Appearance changed in {app}', { app: APPS[ownApp()].name }), { label: t('Apply to other apps'), run: () => setLookShareOpen(true) });
     }, HINT_DELAY_MS);
     return () => clearTimeout(timer);
   }, [key]);
@@ -67,7 +67,7 @@ export function LookShareButton() {
   if (!onboarded || others.length === 0) return null;
   return (
     <View style={styles.open}>
-      <Button kind="text" small icon="apps" label={t('Appliquer aux autres applications…')} onPress={() => setLookShareOpen(true)} style={FOOT_BUTTON} />
+      <Button kind="text" small icon="apps" label={t('Apply to other apps…')} onPress={() => setLookShareOpen(true)} style={FOOT_BUTTON} />
     </View>
   );
 }
@@ -78,7 +78,7 @@ export function LookShareSheet() {
   const others = useOtherApps();
   const close = (): void => setLookShareOpen(false);
   return (
-    <Sheet visible={open} onDismiss={close} title={t('Appliquer cette apparence')}>
+    <Sheet visible={open} onDismiss={close} title={t('Apply this appearance')}>
       {open ? <LookShareBody others={others} onClose={close} /> : null}
     </Sheet>
   );
@@ -104,7 +104,7 @@ function LookShareBody({ others, onClose }: { others: readonly AppId[]; onClose:
     <>
       <SheetScroll contentContainerStyle={styles.body}>
         <AppText variant="body" color={theme.color.inkMuted} style={styles.lead}>
-          {t('Le thème, les couleurs et le fond de {app}, pour les applications cochées. Chacune les prend à sa prochaine ouverture.', { app: APPS[ownApp()].name })}
+          {t('{app}’s theme, colours and background, for the apps ticked. Each takes them the next time it opens.', { app: APPS[ownApp()].name })}
         </AppText>
         <View>
           {others.map(app => {
@@ -124,8 +124,8 @@ function LookShareBody({ others, onClose }: { others: readonly AppId[]; onClose:
         </View>
       </SheetScroll>
       <FormFoot>
-        <Button kind="text" label={t('Annuler')} onPress={onClose} />
-        <Button label={t('Appliquer')} disabled={chosen.length === 0} onPress={apply} />
+        <Button kind="text" label={t('Cancel')} onPress={onClose} />
+        <Button label={t('Apply')} disabled={chosen.length === 0} onPress={apply} />
       </FormFoot>
     </>
   );
@@ -134,8 +134,8 @@ function LookShareBody({ others, onClose }: { others: readonly AppId[]; onClose:
 /** « Agenda prendra cette apparence… », « Pages et Agenda prendront… »: the names are brands, the same in every language. */
 function sentWords(apps: readonly AppId[]): string {
   const names = apps.map(app => APPS[app].name);
-  if (names.length === 1) return t('{app} prendra cette apparence à sa prochaine ouverture.', { app: names[0]! });
-  return t('{apps} et {last} prendront cette apparence à leur prochaine ouverture.', { apps: names.slice(0, -1).join(', '), last: names[names.length - 1]! });
+  if (names.length === 1) return t('{app} will take this appearance the next time it opens.', { app: names[0]! });
+  return t('{apps} and {last} will take this appearance the next time they open.', { apps: names.slice(0, -1).join(', '), last: names[names.length - 1]! });
 }
 
 const styles = StyleSheet.create({

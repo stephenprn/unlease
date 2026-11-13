@@ -24,7 +24,7 @@ export function useModuleSearch<T>(run: (fresh: boolean, signal: AbortSignal) =>
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('unknown error') });
       },
     );
     return () => controller.abort();

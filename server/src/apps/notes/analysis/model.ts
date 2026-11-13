@@ -488,11 +488,11 @@ export class ClaudeLinkModel implements LinkModel {
     const { message, usage, content } = await this.client.converse(buildRequest(request, this.client.model, this.client.effort), signal);
 
     // Checked before reading any content: a refusal carries none, or a partial answer.
-    if (message.stop_reason === 'refusal') throw new ModelError('Analyse refusée par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-    if (message.stop_reason === 'pause_turn') throw new ModelError('Analyse trop longue', usage);
+    if (message.stop_reason === 'refusal') throw new ModelError('Analysis refused by Claude', usage);
+    if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+    if (message.stop_reason === 'pause_turn') throw new ModelError('Analysis too long', usage);
     const raw = parseAnswer(message.content, LinkOutputSchema);
-    if (!raw) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!raw) throw new ModelError('Unreadable answer from Claude', usage);
     const asked = request.templates ?? NO_TEMPLATES;
     const counts = [...(asked.fields ? [asked.fields.length] : []), ...asked.kinds.map(kind => kind.fields.length), ...(request.lists ?? []).map(list => list.fields?.length ?? 0)];
     const output = normalizeOutput(raw, request.imageCount, attributeLimit(counts));
@@ -503,10 +503,10 @@ export class ClaudeLinkModel implements LinkModel {
 
   async sort(batch: SortBatch, signal: AbortSignal): Promise<SortAnswer> {
     const { message, usage } = await this.client.once(buildSortRequest(batch, this.client.model, this.client.effort), signal);
-    if (message.stop_reason === 'refusal') throw new ModelError('Tri refusé par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
+    if (message.stop_reason === 'refusal') throw new ModelError('Sorting refused by Claude', usage);
+    if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
     const answer = parseAnswer(message.content, SortOutputSchema);
-    if (!answer) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!answer) throw new ModelError('Unreadable answer from Claude', usage);
     return { moves: answer.moves, usage };
   }
 
@@ -529,7 +529,7 @@ export class ClaudeLinkModel implements LinkModel {
   async writeRecap(search: RecapSearch, signal: AbortSignal): Promise<RecapAnswer> {
     const { answer, usage } = await this.searchWeb(buildRecapRequest(search, this.client.model, this.client.effort), 'characters', signal);
     const recap = parseRecapLists(answer.recap, answer.characters, answer.stop);
-    if (!recap.recap) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!recap.recap) throw new ModelError('Unreadable answer from Claude', usage);
     return { ...recap, usage };
   }
 
@@ -540,32 +540,32 @@ export class ClaudeLinkModel implements LinkModel {
 
   async answerQuestion(request: QuestionRequest, signal: AbortSignal): Promise<QuestionAnswer> {
     const { message, usage, content } = await this.client.within(buildQuestionRequest(request, this.client.model, this.client.effort), signal);
-    if (message.stop_reason === 'refusal') throw new ModelError('Question refusée par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-    if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
+    if (message.stop_reason === 'refusal') throw new ModelError('Question refused by Claude', usage);
+    if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+    if (message.stop_reason === 'pause_turn') throw new ModelError('Search too long', usage);
     const answer = closingText(content).trim();
-    if (!answer) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!answer) throw new ModelError('Unreadable answer from Claude', usage);
     return { answer, sources: citedSources(content, request.link.url), usage };
   }
 
   async listIngredients(request: IngredientsRequest, signal: AbortSignal): Promise<IngredientsAnswer> {
     const { message, usage } = await this.client.within(buildIngredientsRequest(request, this.client.model, this.client.effort), signal);
-    if (message.stop_reason === 'refusal') throw new ModelError('Lecture refusée par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-    if (message.stop_reason === 'pause_turn') throw new ModelError('Analyse trop longue', usage);
+    if (message.stop_reason === 'refusal') throw new ModelError('Reading refused by Claude', usage);
+    if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+    if (message.stop_reason === 'pause_turn') throw new ModelError('Analysis too long', usage);
     const answer = parseAnswer(message.content, IngredientsOutputSchema);
-    if (!answer) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!answer) throw new ModelError('Unreadable answer from Claude', usage);
     return { ingredients: parseIngredients(answer.ingredients), servings: cleanText(answer.servings, RECIPE_LIMITS.servings), steps: parseSteps(answer.steps), usage };
   }
 
   /** A module's web search, its JSON read from Claude's words: after its last search, else all of them (it may have answered before one more look). */
   private async searchWeb(params: MessageCreateParamsNonStreaming, list: string, signal: AbortSignal): Promise<{ answer: Record<string, unknown>; usage: CallUsage }> {
     const { message, usage, content } = await this.client.within(params, signal);
-    if (message.stop_reason === 'refusal') throw new ModelError('Recherche refusée par Claude', usage);
-    if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-    if (message.stop_reason === 'pause_turn') throw new ModelError('Recherche trop longue', usage);
+    if (message.stop_reason === 'refusal') throw new ModelError('Search refused by Claude', usage);
+    if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+    if (message.stop_reason === 'pause_turn') throw new ModelError('Search too long', usage);
     const answer = jsonObject(closingText(content)) ?? jsonObject(allText(content));
-    if (!answer || !Array.isArray(answer[list])) throw new ModelError('Réponse de Claude illisible', usage);
+    if (!answer || !Array.isArray(answer[list])) throw new ModelError('Unreadable answer from Claude', usage);
     return { answer, usage };
   }
 

@@ -54,7 +54,7 @@ export function useDrawingSession(stored: string, save: (since: string, typed: s
   /** Saves `next` (its text `typed`); false when the drawing would be too long to keep. */
   const write = (next: readonly Stroke[], typed: string): boolean => {
     if (typed.length > DRAWING_LIMITS.chars) {
-      showWarning(t('Ce dessin est plein : effacez des traits pour en ajouter d’autres.'));
+      showWarning(t('This drawing is full: erase some strokes to add more.'));
       return false;
     }
     const now = save(view.data, typed);

@@ -96,10 +96,10 @@ function asWidgetItem(item: AgendaItem, day: string, twelve: boolean): WidgetIte
     case 'event': {
       const occurrence = item.occurrence;
       const allDay = occurrence.allDay || (occurrence.firstDay < day && occurrence.lastDay > day);
-      const time = allDay ? t('Toute la journée') : `${clockWords(formatClock(occurrence.startAt), twelve)} – ${clockWords(formatClock(occurrence.endAt), twelve)}`;
+      const time = allDay ? t('All day') : `${clockWords(formatClock(occurrence.startAt), twelve)} – ${clockWords(formatClock(occurrence.endAt), twelve)}`;
       return {
         key: `${item.key}|${day}`,
-        title: occurrence.event.title.trim() || t('Sans titre'),
+        title: occurrence.event.title.trim() || t('Untitled'),
         time,
         place: occurrence.event.place.trim(),
         color: item.color ?? '',
@@ -108,11 +108,11 @@ function asWidgetItem(item: AgendaItem, day: string, twelve: boolean): WidgetIte
       };
     }
     case 'birthday':
-      return { key: item.key, title: birthdayTitle(item.birthday.name, item.birthday.age), time: t('Toute la journée'), place: '', color: LAYER_COLORS.birthday, open: `birthday/${encodeURIComponent(item.birthday.contactId)}`, endAt: end };
+      return { key: item.key, title: birthdayTitle(item.birthday.name, item.birthday.age), time: t('All day'), place: '', color: LAYER_COLORS.birthday, open: `birthday/${encodeURIComponent(item.birthday.contactId)}`, endAt: end };
     case 'reminder':
-      return { key: item.key, title: item.reminder.title || t('Sans titre'), time: clockWords(formatClock(item.reminder.at), twelve), place: '', color: LAYER_COLORS.reminder, open: `${appScheme('notes')}://note/${encodeURIComponent(item.reminder.noteId)}`, endAt: item.reminder.at + 30 * 60_000 };
+      return { key: item.key, title: item.reminder.title || t('Untitled'), time: clockWords(formatClock(item.reminder.at), twelve), place: '', color: LAYER_COLORS.reminder, open: `${appScheme('notes')}://note/${encodeURIComponent(item.reminder.noteId)}`, endAt: item.reminder.at + 30 * 60_000 };
     case 'page':
-      return { key: item.key, title: item.page.title || t('Sans titre'), time: item.page.time ? clockWords(item.page.time, twelve) : t('Toute la journée'), place: '', color: LAYER_COLORS.page, open: `${appScheme('pages')}://page/${encodeURIComponent(item.page.pageId)}`, endAt: end };
+      return { key: item.key, title: item.page.title || t('Untitled'), time: item.page.time ? clockWords(item.page.time, twelve) : t('All day'), place: '', color: LAYER_COLORS.page, open: `${appScheme('pages')}://page/${encodeURIComponent(item.page.pageId)}`, endAt: end };
   }
 }
 
@@ -125,7 +125,7 @@ export function schedulePayload(state: LibraryState, prefs: CalendarPrefs, now: 
     const items = itemsOn(state, agenda, day).slice(0, MOST_PER_DAY).map(item => asWidgetItem(item, day, prefs.twelveHours));
     if (items.length > 0) days.push({ day, label: weekdayDay(day), items });
   }
-  return { id: 'schedule', title: t('Planning'), today: t('Aujourd’hui'), tomorrow: t('Demain'), empty: t('Rien de prévu pour ces deux semaines.'), days };
+  return { id: 'schedule', title: t('Schedule'), today: t('Today'), tomorrow: t('Tomorrow'), empty: t('Nothing planned for the next two weeks.'), days };
 }
 
 export function monthPayload(state: LibraryState, prefs: CalendarPrefs, now: number): MonthPayload {
@@ -179,7 +179,7 @@ export function nextPayload(state: LibraryState, prefs: CalendarPrefs, now: numb
       if (items.length >= 6) break;
     }
   }
-  return { id: 'next', title: t('Prochain événement'), empty: t('Rien de prévu'), items };
+  return { id: 'next', title: t('Next event'), empty: t('Nothing planned'), items };
 }
 
 /** How many of a repeating event's next occurrences a countdown carries: it moves on to the next without the app. */
@@ -253,14 +253,14 @@ function countdownOccurrence(occurrence: Occurrence, year: number, twelve: boole
   const several = occurrence.firstDay !== occurrence.lastDay;
   const from = weekdayDay(occurrence.firstDay, year);
   const clock = occurrence.allDay ? '' : clockWords(formatClock(occurrence.startAt), twelve);
-  const when = occurrence.allDay && several ? t('Du {from} au {to}', { from, to: weekdayDay(occurrence.lastDay, year) }) : clock ? `${from} · ${clock}` : from;
+  const when = occurrence.allDay && several ? t('{from} to {to}', { from, to: weekdayDay(occurrence.lastDay, year) }) : clock ? `${from} · ${clock}` : from;
   return {
     day: occurrence.firstDay,
     lastDay: occurrence.lastDay,
     endAt: occurrence.endAt,
     when,
     time: clock,
-    onDay: occurrence.allDay && several ? t('Jusqu’au {day}', { day: weekdayDay(occurrence.lastDay, year) }) : timeRange(occurrence, twelve),
+    onDay: occurrence.allDay && several ? t('Until {day}', { day: weekdayDay(occurrence.lastDay, year) }) : timeRange(occurrence, twelve),
     open: `event/${encodeURIComponent(occurrence.seriesId)}?at=${encodeURIComponent(occurrence.occurrence)}`,
   };
 }
@@ -278,7 +278,7 @@ export function countdownPayload(target: string, state: LibraryState, prefs: Cal
     id: 'countdown',
     target,
     gone: false,
-    title: shown.title.trim() || t('Sans titre'),
+    title: shown.title.trim() || t('Untitled'),
     color: eventColor(shown, state.calendarLabels, state.feeds) ?? '',
     occurrences: occurrences.map(occurrence => countdownOccurrence(occurrence, year, prefs.twelveHours)),
   };
@@ -302,10 +302,10 @@ function choice(state: LibraryState, occurrence: Occurrence, now: number, twelve
   const event = occurrence.event;
   return {
     eventId: occurrence.seriesId,
-    title: event.title.trim() || t('Sans titre'),
+    title: event.title.trim() || t('Untitled'),
     color: eventColor(event, state.calendarLabels, state.feeds),
     when: occurrence.allDay ? from : `${from} · ${clockWords(formatClock(occurrence.startAt), twelve)}`,
-    distance: occurrence.firstDay < first && occurrence.lastDay >= first ? t('En cours') : dayDistance(occurrence.firstDay, first),
+    distance: occurrence.firstDay < first && occurrence.lastDay >= first ? t('Happening now') : dayDistance(occurrence.firstDay, first),
   };
 }
 

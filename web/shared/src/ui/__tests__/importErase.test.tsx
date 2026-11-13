@@ -89,6 +89,7 @@ const settingsView = (backup: BackupSettings, done: boolean): ServerSettings => 
   drive: { provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false },
   calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
+  immich: { url: '', keyHint: null },
 });
 
 /** A server whose token is `bon-jeton`, holding `notes`, its backup to S3 when `backup`. */

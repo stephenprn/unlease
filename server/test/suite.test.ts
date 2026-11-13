@@ -30,8 +30,8 @@ describe('the apps a server runs', () => {
     expect((await health()).apps).toEqual(['pages']);
     expect((await putSettings(server, { apps: ['pages', 'notes', 'pages'] })).body.apps).toEqual({ enabled: ['notes', 'pages'] });
     expect((await putSettings(server, { apps: ['calendar', 'notes'] })).body.apps).toEqual({ enabled: ['notes', 'calendar'] });
-    expect(await putSettings(server, { apps: ['notes', 'agenda'] })).toEqual({ status: 400, body: { error: 'Application inconnue ou pas encore disponible' } });
-    expect(await putSettings(server, { apps: [] })).toEqual({ status: 400, body: { error: 'Gardez au moins une application' } });
+    expect(await putSettings(server, { apps: ['notes', 'agenda'] })).toEqual({ status: 400, body: { error: 'Unknown app, or not available yet' } });
+    expect(await putSettings(server, { apps: [] })).toEqual({ status: 400, body: { error: 'Keep at least one app' } });
     expect((await putSettings(server, { apps: 'notes' })).status).toBe(400);
     expect(server.settings.enabledApps()).toEqual(['notes', 'calendar']);
   });

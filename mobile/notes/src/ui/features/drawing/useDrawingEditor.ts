@@ -145,7 +145,7 @@ export function useDrawingEditor({ stored, read, save, editable }: DrawingEditor
     (typed: string, next?: readonly Stroke[]): boolean => {
       busy.current = false;
       if (typed.length > DRAWING_LIMITS.chars) {
-        showSnack(t('Ce dessin est plein : effacez des traits pour en ajouter d’autres.'), undefined, { tone: 'warning' });
+        showSnack(t('This drawing is full: erase some strokes to add more.'), undefined, { tone: 'warning' });
         return false;
       }
       const kept = io.current.save(data.current, typed);

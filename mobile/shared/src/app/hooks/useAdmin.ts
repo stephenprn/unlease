@@ -94,7 +94,7 @@ export function useAdmin(server: ServerConfig | null, active: boolean): AdminSta
     if (before.restore.running && !status.restore.running) {
       const { error, report, thawing } = status.restore;
       if (thawing) showSnack(`${thawingLine().title}. ${thawingLine().meta}`, undefined, { tone: 'warning' });
-      else showSnack(error ? t(error) : report ? restoreSummary(report) : t('Sauvegarde restaurée'), undefined, { tone: error ? 'error' : 'success' });
+      else showSnack(error ? t(error) : report ? restoreSummary(report) : t('Backup restored'), undefined, { tone: error ? 'error' : 'success' });
       loadSettings();
       setBackupsVersion(version => version + 1);
     }
@@ -104,7 +104,7 @@ export function useAdmin(server: ServerConfig | null, active: boolean): AdminSta
   const wasLeaving = useRef(false);
   useEffect(() => {
     if (!settings) return;
-    if (wasLeaving.current && !settings.drive.leaving) showSnack(t('Seafile désactivé : vos fichiers sont sur le serveur.'));
+    if (wasLeaving.current && !settings.drive.leaving) showSnack(t('Seafile turned off: your files are on the server.'));
     wasLeaving.current = settings.drive.leaving;
   }, [settings]);
 
@@ -140,7 +140,7 @@ export function useBackups(server: ServerConfig | null, configured: boolean, ver
         setError(null);
       },
       (failure: unknown) => {
-        if (current) setError(failure instanceof Error ? failure.message : t('Sauvegardes indisponibles'));
+        if (current) setError(failure instanceof Error ? failure.message : t('Backups unavailable'));
       },
     );
     return () => {

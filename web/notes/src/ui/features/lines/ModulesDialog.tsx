@@ -49,7 +49,7 @@ function ModulesBody({ id, titleId, onDismiss }: { id: string; titleId: string; 
 
   return (
     <DialogFrame kind="list" title={t('Modules')} titleId={titleId} onClose={onDismiss} className={styles.modulesFrame}>
-      <p className={`${styles.choiceLead} t-body`}>{t('Les modules choisis apparaissent sur les liens de {collection} qui s’y prêtent.', { collection: shownTitle(line) })}</p>
+      <p className={`${styles.choiceLead} t-body`}>{t('The modules you pick show on the links of {collection} that they fit.', { collection: shownTitle(line) })}</p>
       {groups.map(group => (
         <section key={group.title} className={styles.moduleGroup} aria-label={t(group.title)}>
           <h3 className={`${styles.moduleGroupTitle} t-section`}>{t(group.title)}</h3>

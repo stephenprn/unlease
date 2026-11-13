@@ -128,7 +128,7 @@ export class LinkAnalyzer {
     } catch (error) {
       if (signal.aborted) return;
       log.error('link analysis crashed', { id, error });
-      this.fail(job, 'Erreur interne', {}, null);
+      this.fail(job, 'Internal error', {}, null);
     }
   }
 
@@ -136,7 +136,7 @@ export class LinkAnalyzer {
     const { usage, fetcher, blobs } = this.options;
     const { model, budgetUsd } = this.options.analysis();
     if (!model) return this.skip(job);
-    if (!isHttpUrl(job.url)) return this.fail(job, 'Adresse invalide', {}, null);
+    if (!isHttpUrl(job.url)) return this.fail(job, 'Invalid address', {}, null);
 
     const templates = storedTemplates(this.options.records);
     // The same product shared twice costs one call, when it was read with the template this link would be read with. A re-analysis asks for fresh eyes.
@@ -158,9 +158,9 @@ export class LinkAnalyzer {
       if (!signal.aborted) this.fail(job, error, { ...learned, ...extra, imageIds: kept.ids }, cost);
     };
 
-    if (read.fatal) return failWith(read.error ?? 'Page inaccessible');
+    if (read.fatal) return failWith(read.error ?? 'Page unreachable');
     const hold = usage.hold(budgetUsd);
-    if (!hold) return failWith('Budget mensuel atteint');
+    if (!hold) return failWith('Monthly budget reached');
     try {
       const lists = job.autoFile ? routingLists(this.options.records, templates) : null;
       const image = read.image ? await processLinkImage(read.image.data) : null;
@@ -187,7 +187,7 @@ export class LinkAnalyzer {
       const { output } = description;
       if (!output.pageRead) {
         // web_fetch could not read it either: keep what Claude made of the URL, but say it failed.
-        return failWith(read.error ?? 'Page illisible', { title: learned.title || output.title, kind: output.kind, ...(output.site ? { siteName: output.site } : {}) }, description.usage);
+        return failWith(read.error ?? 'Unreadable page', { title: learned.title || output.title, kind: output.kind, ...(output.site ? { siteName: output.site } : {}) }, description.usage);
       }
 
       // A page only Claude could read shows its pictures through what web_fetch returned, best guess (og:image) first.

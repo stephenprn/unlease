@@ -26,20 +26,20 @@ export type LineColor = (typeof LINE_COLORS)[number];
 
 /** habits-garden's pigments, named for what they now are (the keys stay). */
 export const LINE_COLOR_NAMES: Record<LineColor, string> = localized({
-  yellow: tx('Safran'),
-  orange: tx('Orange brûlé'),
-  red: tx('Rouge'),
-  pink: tx('Framboise'),
-  magenta: tx('Bordeaux'),
-  lilac: tx('Lavande'),
+  yellow: tx('Saffron'),
+  orange: tx('Burnt orange'),
+  red: tx('Red'),
+  pink: tx('Raspberry'),
+  magenta: tx('Burgundy'),
+  lilac: tx('Lavender'),
   violet: tx('Violet'),
-  blue: tx('Bleu'),
-  sky: tx('Sarcelle'),
-  green: tx('Vert'),
+  blue: tx('Blue'),
+  sky: tx('Teal'),
+  green: tx('Green'),
   olive: tx('Olive'),
-  ochre: tx('Ocre'),
-  brown: tx('Brun'),
-  grey: tx('Sauge'),
+  ochre: tx('Ochre'),
+  brown: tx('Brown'),
+  grey: tx('Sage'),
 });
 
 export function isLineColor(value: unknown): value is LineColor {
@@ -52,14 +52,14 @@ export const NOTE_GRADIENTS = ['aube', 'lagon', 'matcha', 'abricot', 'lavande', 
 export type NoteGradient = (typeof NOTE_GRADIENTS)[number];
 
 export const NOTE_GRADIENT_NAMES: Record<NoteGradient, string> = localized({
-  aube: tx('Aube'),
-  lagon: tx('Lagon'),
+  aube: tx('Dawn'),
+  lagon: tx('Lagoon'),
   matcha: tx('Matcha latte'),
-  abricot: tx('Abricot'),
-  lavande: tx('Brume lavande'),
-  nacre: tx('Nacre'),
-  sousbois: tx('Sous-bois'),
-  terre: tx('Terre cuite'),
+  abricot: tx('Apricot'),
+  lavande: tx('Lavender mist'),
+  nacre: tx('Mother-of-pearl'),
+  sousbois: tx('Undergrowth'),
+  terre: tx('Terracotta'),
 });
 
 export function isNoteGradient(value: unknown): value is NoteGradient {
@@ -84,13 +84,13 @@ export const NOTE_PATTERNS = ['dots', 'grid', 'lines', 'seyes', 'millimetre', 'i
 export type NotePattern = (typeof NOTE_PATTERNS)[number];
 
 export const NOTE_PATTERN_NAMES: Record<NotePattern, string> = localized({
-  dots: tx('Pointillé'),
-  grid: tx('Quadrillé'),
-  lines: tx('Ligné'),
+  dots: tx('Dotted'),
+  grid: tx('Squared'),
+  lines: tx('Ruled'),
   seyes: tx('Seyès'),
-  millimetre: tx('Millimétré'),
-  iso: tx('Isométrique'),
-  speckle: tx('Moucheté'),
+  millimetre: tx('Graph paper'),
+  iso: tx('Isometric'),
+  speckle: tx('Speckled'),
 });
 
 /** Papers ruled under the text they rule (the editor lays them on each block of text, aligned on its lines). */

@@ -60,7 +60,7 @@ export function SelectField<T extends string>({ label, ariaLabel, value, options
       {label ? (
         <label htmlFor={id} className={`${styles.fieldLabel} t-meta-strong`}>
           {label}
-          {optional ? <span className={`${styles.optional} t-meta`}> {t('(facultatif)')}</span> : null}
+          {optional ? <span className={`${styles.optional} t-meta`}> {t('(optional)')}</span> : null}
         </label>
       ) : null}
       <button

@@ -14,13 +14,13 @@ type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'label';
 
 const COPY: Record<Kind, { title: string; body: string }> = {
   notes: {
-    title: tx('Le tableau est vide'),
-    body: tx('Le bouton +, en bas, crée une note, une liste ou un dessin. Pour un lien, partagez-le depuis n’importe quelle app : {app} le garde et, avec Claude, le range dans la bonne collection.'),
+    title: tx('The board is empty'),
+    body: tx('The + button, at the bottom, makes a note, a list or a drawing. For a link, share it from any app: {app} keeps it and, with Claude, files it in the right collection.'),
   },
-  reminders: { title: tx('Aucun rappel'), body: tx('Le bouton +, en bas, crée une note et vous demande quand la rappeler.') },
-  archive: { title: tx('Rien aux archives'), body: tx('Archivez une note pour la retirer du tableau sans la supprimer.') },
-  trash: { title: tx('La corbeille est vide'), body: tx('Les notes supprimées y restent {days} jours, le temps de changer d’avis.') },
-  label: { title: tx('Aucune note avec ce label'), body: tx('Ajoutez ce label à une note depuis son étiquette, en bas de la note, ou créez-en une ici.') },
+  reminders: { title: tx('No reminders'), body: tx('The + button, at the bottom, creates a note and asks you when to remind you.') },
+  archive: { title: tx('Nothing in the archive'), body: tx('Archive a note to take it off the board without deleting it.') },
+  trash: { title: tx('The bin is empty'), body: tx('Deleted notes stay here for {days} days, in case you change your mind.') },
+  label: { title: tx('No notes with this label'), body: tx('Add this label to a note from its tag, at the bottom of the note, or create one here.') },
 };
 
 const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', label: 'label' };

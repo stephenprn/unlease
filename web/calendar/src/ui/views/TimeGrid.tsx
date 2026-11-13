@@ -8,7 +8,7 @@
  */
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { pebbleTurn } from '@unlease/design/pebbles';
 import { hourLabel, shortWeekday, weekNumberShort, weekNumberWords } from '@unlease/calendar/services/eventText';
 import { layoutBars, layoutDay, minuteAt, minutesInDay, type TimedBox } from '@unlease/calendar/services/layout';
@@ -56,7 +56,7 @@ interface Drag {
 function DayHead({ day, today, weather }: { day: string; today: string; weather: ReturnType<typeof useWeather> extends ReadonlyMap<string, infer V> ? V | undefined : never }) {
   const isToday = day === today;
   return (
-    <button type="button" className={styles.head} onClick={() => navigate(paths.view('day', day))} aria-label={t('Voir le {day}', { day: `${shortWeekday(weekdayOf(day))} ${partsOf(day).day}` })}>
+    <button type="button" className={styles.head} onClick={() => navigate(paths.view('day', day))} aria-label={t('See {day}', { day: `${shortWeekday(weekdayOf(day))} ${partsOf(day).day}` })}>
       <span className="t-label-small">{shortWeekday(weekdayOf(day))}</span>
       <span className={styles.headDay} data-today={isToday || undefined} data-pebble-under={isToday ? pebbleTurn(partsOf(day).day) : undefined}>
         {partsOf(day).day}
@@ -223,7 +223,7 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
         ))}
       </div>
       <div className={styles.allDay}>
-        <span className={styles.allDayLabel}>{bars.bars.length > 0 ? t('Journée') : ''}</span>
+        <span className={styles.allDayLabel}>{bars.bars.length > 0 ? tc('short', 'All day') : ''}</span>
         <div className={styles.bars} style={{ '--lanes': Math.max(1, bars.lanes) } as CSSProperties}>
           {bars.bars.map(bar => {
             const shift = drag && drag.key === bar.occurrence.key ? drag.days : 0;
@@ -309,7 +309,7 @@ function DragGhost({ item, drag }: { item: Occurrence; drag: Drag }) {
   const length = Math.max(15, Math.round((item.endAt - item.startAt) / 60_000) + (drag.resize ? drag.minutes : 0));
   return (
     <div className={styles.ghost} style={{ top: (from / 60) * HOUR_PX, height: (length / 60) * HOUR_PX }} aria-hidden="true">
-      {`${item.event.title.trim() || t('Sans titre')} · ${clockOf(((from % 1440) + 1440) % 1440)}`}
+      {`${item.event.title.trim() || t('Untitled')} · ${clockOf(((from % 1440) + 1440) % 1440)}`}
     </div>
   );
 }

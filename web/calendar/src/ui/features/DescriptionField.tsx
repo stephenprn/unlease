@@ -235,7 +235,7 @@ export function DescriptionField({ markup, onChange, except = null, autoFocus = 
         rows={3}
         autoFocus={autoFocus}
         aria-label={t('Description')}
-        placeholder={t('Ajouter une description. « @ » mentionne une personne, une page, une note…')}
+        placeholder={t('Add a description. “@” mentions a person, a page, a note…')}
         aria-autocomplete="list"
         aria-controls={open ? MENU_ID : undefined}
         aria-activedescendant={open && rows.length > 0 ? `${MENU_ID}-${keys.active}` : undefined}
@@ -267,8 +267,8 @@ export function DescriptionField({ markup, onChange, except = null, autoFocus = 
           active={keys.active}
           onActive={keys.setActive}
           id={MENU_ID}
-          label={t('Mentionner')}
-          empty={query.query.trim() ? t('Rien ne s’appelle « {query} ».', { query: query.query.trim() }) : t('Rien à mentionner pour l’instant.')}
+          label={t('Mention')}
+          empty={query.query.trim() ? t('Nothing is called “{query}”.', { query: query.query.trim() }) : t('Nothing to mention yet.')}
         />
       ) : null}
     </div>

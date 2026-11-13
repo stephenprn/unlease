@@ -10,16 +10,27 @@
  * so one slow push service holds back no other. A push lives until its reminder stops being worth it
  * (its TTL), so a phone offline for the evening is not told of the morning's meeting. A browser the
  * push service no longer knows (404, 410) is forgotten.
+ *
+ * A browser may ask for the morning digest too (`PushSubscriptionRequest.digest`, `services/digest`):
+ * pushed at its time in its zone, in the tick whose window holds that moment, gathered from every
+ * record the server holds (the events, and the birthdays, Carnet's reminders and pages' days it keeps
+ * on), at normal urgency, living until the morning is over; a browser may want it alone (`reminders`).
  */
 import { APP_NAME } from '@unlease/calendar/brand';
 import { isLive, type CalendarEvent } from '@unlease/calendar/models/events';
 import { alarmStaleAt, alarmsBetween, LATE_RING_MS, stillWorthRinging, type Alarm } from '@unlease/calendar/services/alarms';
+import { digestMoment, writeDigest, zonedDigest, DIGEST_LATE_MS } from '@unlease/calendar/services/digest';
 import { weekdayDay } from '@unlease/calendar/services/eventText';
 import { hiddenFeedIds } from '@unlease/calendar/services/occurrences';
-import { dayToInstant, instantToDay, instantToWall } from '@unlease/calendar/services/time';
-import { addCalendarEnglish } from '@unlease/calendar/i18n';
+import { addDays, dayToInstant, instantToDay, instantToWall } from '@unlease/calendar/services/time';
+import { addCalendarFrench } from '@unlease/calendar/i18n';
 import type { PushReminder, PushSubscriptionRequest } from '@unlease/calendar/sync/routes';
 import { eventFromRecord, feedFromRecord } from '@unlease/calendar/sync/entities';
+import { contactFromRecord } from '@unlease/contacts/sync/entities';
+import { noteFromRecord } from '@unlease/notes/sync/entities';
+import { pageDatesIn } from '@unlease/pages/services/pageDates';
+import { blockFromRecord } from '@unlease/pages/sync/entities';
+import type { Block } from '@unlease/pages/models/blocks';
 import { SELF_HOSTING_GUIDE } from '@unlease/core/apps';
 import { getLocale, setLocale, t } from '@unlease/core/i18n';
 import { readMeta, writeMeta, type Database } from '../../db/database';
@@ -131,7 +142,7 @@ export class PushReminders {
   /** What a browser shows for one reminder, in its language. */
   reminder(alarm: Alarm, subscription: StoredSubscription): PushReminder {
     if (!englishAdded) {
-      addCalendarEnglish();
+      addCalendarFrench();
       englishAdded = true;
     }
     const before = getLocale();
@@ -139,7 +150,7 @@ export class PushReminders {
     try {
       const wall = instantToWall(alarm.startAt, alarm.allDay ? '' : subscription.timeZone);
       const day = weekdayDay(wall.slice(0, 10));
-      const when = alarm.allDay ? `${day} · ${t('Toute la journée')}` : `${day} · ${wall.slice(11, 16)}`;
+      const when = alarm.allDay ? `${day} · ${t('All day')}` : `${day} · ${wall.slice(11, 16)}`;
       return {
         title: alarm.title.trim() || APP_NAME,
         body: [when, alarm.place.trim()].filter(Boolean).join(' · '),
@@ -151,8 +162,45 @@ export class PushReminders {
     }
   }
 
+  /**
+   * The morning digest of `day` for a browser (`services/digest`), gathered in its zone with the layers
+   * it keeps on, worded in its language; null on a day with nothing it did not ask to hear of.
+   */
+  digest(subscription: StoredSubscription, day: string, events: readonly CalendarEvent[] = this.events()): PushReminder | null {
+    const wanted = subscription.digest;
+    if (!wanted) return null;
+    if (!englishAdded) {
+      addCalendarFrench();
+      englishAdded = true;
+    }
+    const { records } = this.options;
+    const before = getLocale();
+    setLocale(subscription.lang);
+    try {
+      let pages: ReturnType<typeof pageDatesIn> = [];
+      if (wanted.pageDates) {
+        const blocks: Record<string, Block> = {};
+        for (const record of records.ofType('block')) blocks[record.id] = blockFromRecord(record);
+        pages = pageDatesIn(blocks, day, addDays(day, 1));
+      }
+      const { entries, overdue } = zonedDigest({
+        events,
+        contacts: wanted.birthdays ? records.ofType('contact').map(contactFromRecord) : null,
+        notes: wanted.noteReminders ? records.ofType('note').map(noteFromRecord) : null,
+        pages,
+        day,
+        zone: subscription.timeZone,
+        twelveHours: wanted.twelveHours,
+      });
+      const digest = writeDigest(entries, overdue, { empty: wanted.empty });
+      return digest ? { title: digest.title, body: digest.body, path: '/agenda/today', tag: `digest:${day}` } : null;
+    } finally {
+      setLocale(before);
+    }
+  }
+
   /** One push to one browser, kept `ttl` seconds by its push service: false when it no longer knows the browser. */
-  async send(subscription: StoredSubscription, reminder: PushReminder, ttl = TTL_MIN_S): Promise<boolean> {
+  async send(subscription: StoredSubscription, reminder: PushReminder, ttl = TTL_MIN_S, urgency: 'high' | 'normal' = 'high'): Promise<boolean> {
     const now = this.options.now();
     const body = encryptPayload(Buffer.from(JSON.stringify(reminder)), subscription.keys);
     const response = await (this.options.pushFetch ?? fetch)(subscription.endpoint, {
@@ -162,7 +210,7 @@ export class PushReminders {
         'Content-Encoding': 'aes128gcm',
         'Content-Type': 'application/octet-stream',
         TTL: String(ttl),
-        Urgency: 'high',
+        Urgency: urgency,
         Topic: reminder.tag.replace(/[^A-Za-z0-9_-]/g, '').slice(-32),
       },
       body: new Uint8Array(body),
@@ -196,6 +244,24 @@ export class PushReminders {
     const gone = new Set<string>();
     await Promise.all(
       subscriptions.map(async subscription => {
+        // The morning digest, when its moment fell in this window (late after a stop while the morning lasts).
+        if (subscription.digest) {
+          const day = instantToDay(until, subscription.timeZone);
+          const moment = digestMoment(day, subscription.digest.at, subscription.timeZone);
+          if (moment >= from && moment < until && now < moment + DIGEST_LATE_MS) {
+            try {
+              const digest = this.digest(subscription, day, events);
+              if (digest && !(await this.send(subscription, digest, Math.max(TTL_MIN_S, Math.round((moment + DIGEST_LATE_MS - now) / 1000)), 'normal'))) {
+                gone.add(subscription.endpoint);
+                return;
+              }
+              if (digest) sent += 1;
+            } catch (error) {
+              log.warn('digest push failed', { error: error instanceof Error ? error.message : String(error) });
+            }
+          }
+        }
+        if (subscription.reminders === false) return;
         // Those that went by while the server was stopped ring only if still worth it.
         for (const alarm of this.alarmsFor(events, from, until, subscription.timeZone).filter(each => stillWorthRinging(each, now))) {
           try {

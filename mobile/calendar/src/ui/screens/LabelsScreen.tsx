@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { EVENT_LIMITS, isLive, labelNameTaken as takenIn } from '@unlease/calendar/models/events';
 import { createLabel, deleteLabel, renameLabel, setLabelColor } from '@app/store/actions';
@@ -46,12 +46,12 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Libellés')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Labels')} onBack={() => navigation.goBack()} />
       <NewLabelStrip
-        placeholder={t('Créer un libellé')}
-        accessibilityLabel={t('Nom du nouveau libellé')}
-        submitLabel={t('Créer')}
-        takenMessage={t('Ce libellé existe déjà : choisissez un autre nom.')}
+        placeholder={t('Create label')}
+        accessibilityLabel={t('New label’s name')}
+        submitLabel={t('Create')}
+        takenMessage={t('This label already exists: choose another name.')}
         maxLength={EVENT_LIMITS.labelName}
         isTaken={name => labelNameTaken(name)}
         onCreate={name => {
@@ -61,9 +61,9 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
       <LabelsList
         order={order}
         renderRow={id => <LabelRow id={id} onColor={() => openColors(id)} onOpen={() => navigation.navigate('Calendar', { label: id })} />}
-        empty={<EmptyState scene="label" title={t('Aucun libellé')} text={t('Créez-en un pour ranger vos événements : Travail, Famille, Sport…')} />}
+        empty={<EmptyState scene="label" title={t('No labels')} text={t('Make one to sort your events: Work, Family, Sport…')} />}
       />
-      <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringLabel?.name ?? t('Couleur')}>
+      <Sheet visible={coloring !== null} onDismiss={() => setColoring(null)} title={coloringLabel?.name ?? t('Colour')}>
         <View style={styles.sheet}>
           <LineColorPicker
             value={coloringLabel?.color ?? null}
@@ -88,10 +88,10 @@ function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; on
       color={label.color}
       maxLength={EVENT_LIMITS.labelName}
       words={{
-        color: t('Couleur de {name}', { name: label.name }),
-        rename: t('Renommer {name}', { name: label.name }),
-        remove: t('Supprimer {name}', { name: label.name }),
-        taken: t('Ce libellé existe déjà : choisissez un autre nom.'),
+        color: t('Colour of {name}', { name: label.name }),
+        rename: t('Rename {name}', { name: label.name }),
+        remove: t('Delete {name}', { name: label.name }),
+        taken: t('This label already exists: choose another name.'),
       }}
       stored={() => {
         const current = useLibraryStore.getState().calendarLabels[id];
@@ -102,9 +102,9 @@ function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; on
       onColor={onColor}
       onDelete={() => {
         const undo = deleteLabel(id);
-        showSnack(t('Libellé « {name} » supprimé', { name: label.name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+        showSnack(t('Label “{name}” deleted', { name: label.name }), { label: t('Undo'), run: undo }, { tone: 'success' });
       }}
-      count={{ text: plural(count, 'événement'), label: t('Voir les événements de {name}', { name: label.name }), onPress: onOpen }}
+      count={{ text: plural(count, 'event'), label: t('See {name}’s events', { name: label.name }), onPress: onOpen }}
     />
   );
 }

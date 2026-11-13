@@ -213,3 +213,29 @@ adb shell cmd jobscheduler run -f <pkg> <job-id>           # a run now, rather t
 
 The sync dot (and Administration › Serveur) then says « Synchronisé il y a … » for the run that got
 through, the app still closed.
+
+## Testing the phone's own address book and calendar
+
+Contacts and Agenda copy their records into Android's own when Réglages › « On this phone » is on
+(`docs/ARCHITECTURE.md`, *The phone's own address book and calendar*). A dev build writes under its
+own account type (`com.stephenprn.contacts.dev.mirror`, `com.stephenprn.agenda.dev.mirror`), never the
+released app's, so only a dev build's copy is ever looked at. Keep the dev apps' data made up (a
+`.vcf` of invented people shared to the dev Contacts, events typed in the dev Agenda): while it is on,
+its copy shows in the phone's own contacts and calendar apps, under « Unlease Dev ». Turn it on in the
+dev app, then:
+
+```bash
+adb shell dumpsys account | grep -A2 "\.dev\.mirror"       # the account, named « Unlease Dev »
+# the dev account's people (SOURCE_ID the contact's id, SYNC1 its fingerprint, SYNC2 its photo's blob)
+adb shell content query --uri content://com.android.contacts/raw_contacts \
+  --projection _id:sourceid:sync1:sync2:deleted --where "account_type='com.stephenprn.contacts.dev.mirror'"
+# the dev account's calendars and events (only those: never query without the account's type)
+adb shell content query --uri content://com.android.calendar/calendars \
+  --projection _id:_sync_id:calendar_displayName:calendar_access_level:visible --where "account_type='com.stephenprn.agenda.dev.mirror'"
+adb shell content query --uri content://com.android.calendar/events \
+  --projection _id:_sync_id:title:dtstart:dtend:duration:eventTimezone:rrule:exdate:hasAlarm --where "account_type='com.stephenprn.agenda.dev.mirror'"
+adb logcat --pid=$(adb shell pidof com.stephenprn.contacts.dev) | grep -i "phone mirror"   # a run that failed says so
+```
+
+Turning it off, or removing « Unlease Dev » in Android's Settings › Passwords & accounts, must leave
+none of these rows, and the switch off in the app.

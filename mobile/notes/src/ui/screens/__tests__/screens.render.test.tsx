@@ -189,7 +189,7 @@ describe('the board head and the drawer', () => {
     const tree = await boot(true);
     // Alone on the phone by choice: nothing to say.
     expect(textOf(tree)).not.toContain('Pas de serveur');
-    const waiting = `Serveur injoignable : ${plural(3, 'modification')} en attente, à l’abri sur ce téléphone.`;
+    const waiting = `Serveur injoignable : ${plural(3, 'change')} en attente, à l’abri sur ce téléphone.`;
     await act(async () => {
       setSyncState({ phase: 'offline', pending: 3, message: 'Serveur injoignable' });
     });
@@ -594,7 +594,7 @@ describe('the board and the note as on the web', () => {
     ]);
     expect(state.notes[list]!.trashedAt).not.toBeNull();
     const snack = useUiStore.getState().snack!;
-    expect(snack).toMatchObject({ message: `Collection « À lire » créée : ${plural(2, 'lien')}`, action: { label: 'Annuler' }, tone: 'success' });
+    expect(snack).toMatchObject({ message: `Collection « À lire » créée : ${plural(2, 'link')}`, action: { label: 'Annuler' }, tone: 'success' });
 
     // « Annuler »: the collection and its links gone, the note back, open again.
     await act(async () => {

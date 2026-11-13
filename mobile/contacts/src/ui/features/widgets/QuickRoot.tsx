@@ -48,9 +48,9 @@ export function QuickRoot({ launch }: { launch: QuickLaunch }) {
   return (
     <SheetScrim.Provider value={false}>
       <View style={styles.root}>
-        <Sheet visible={open} onDismiss={dismiss} title={launch.configuring ? t('Quels contacts afficher ?') : t('Afficher d’autres contacts')} tall>
+        <Sheet visible={open} onDismiss={dismiss} title={launch.configuring ? t('Which contacts to show?') : t('Show other contacts')} tall>
           <SheetScroll contentContainerStyle={styles.body}>
-            <ListRow title={t('Favoris')} supporting={plural(favorites, 'contact')} icon="star" trailing={check('favorites')} onPress={() => pick('favorites')} />
+            <ListRow title={t('Favourites')} supporting={plural(favorites, 'contact')} icon="star" trailing={check('favorites')} onPress={() => pick('favorites')} />
             {order.map(id => {
               const label = labels[id];
               if (!label) return null;
@@ -69,7 +69,7 @@ export function QuickRoot({ launch }: { launch: QuickLaunch }) {
                 />
               );
             })}
-            {order.length === 0 ? <EmptyLine glyph="tag" text={t('Un libellé créé dans l’application s’ajoute ici.')} slot={24} gap={16} style={styles.note} /> : null}
+            {order.length === 0 ? <EmptyLine glyph="tag" text={t('A label created in the app is added here.')} slot={24} gap={16} style={styles.note} /> : null}
           </SheetScroll>
         </Sheet>
       </View>

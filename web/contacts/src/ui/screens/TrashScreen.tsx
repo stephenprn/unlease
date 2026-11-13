@@ -35,12 +35,12 @@ const BinRow = memo(function BinRow({ contact, now, onDelete }: { contact: Conta
       <Link to={paths.contact(contact.id)} className={styles.rowLink} ariaLabel={name}>
         <span className={styles.nameCell}>
           <span className={`${styles.cell} t-body-strong`}>{name}</span>
-          <span className={`${styles.cell} t-meta`}>{t('Mis à la corbeille {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}</span>
+          <span className={`${styles.cell} t-meta`}>{t('Moved to the bin {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}</span>
         </span>
       </Link>
       <span className={styles.rowEnd}>
-        <IconButton icon="restore" label={t('Restaurer {name}', { name })} shape={1} onClick={() => showUndo(t('Contact restauré'), restoreContacts([contact.id]), { label: t('Voir le contact'), run: () => navigate(paths.contact(contact.id)) })} />
-        <IconButton icon="trash" label={t('Supprimer définitivement {name}', { name })} shape={2} onClick={() => onDelete(contact.id)} />
+        <IconButton icon="restore" label={t('Restore {name}', { name })} shape={1} onClick={() => showUndo(t('Contact restored'), restoreContacts([contact.id]), { label: t('See the contact'), run: () => navigate(paths.contact(contact.id)) })} />
+        <IconButton icon="trash" label={t('Delete {name} forever', { name })} shape={2} onClick={() => onDelete(contact.id)} />
       </span>
     </li>
   );
@@ -56,11 +56,11 @@ export function TrashScreen() {
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
       <div>
-        <PageHead title={t('Corbeille')} action={binned.length > 0 ? { icon: 'broom', label: t('Vider la corbeille'), onClick: () => setConfirm('all') } : undefined} />
-        {binned.length > 0 ? <p className={`${styles.count} t-meta`}>{t('Les contacts de la corbeille sont supprimés au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
+        <PageHead title={t('Bin')} action={binned.length > 0 ? { icon: 'broom', label: t('Empty the bin'), onClick: () => setConfirm('all') } : undefined} />
+        {binned.length > 0 ? <p className={`${styles.count} t-meta`}>{t('Contacts in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       </div>
       {binned.length === 0 ? (
-        <EmptyState scene="trash" title={t('La corbeille est vide')} text={t('Les contacts supprimés y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })} />
+        <EmptyState scene="trash" title={t('The bin is empty')} text={t('Deleted contacts stay there for {days} days, time enough to change your mind.', { days: TRASH_RETENTION_DAYS })} />
       ) : (
         <OutlinedBox kind="panel" lift="card" className={`${styles.table} paper`}>
           <ul ref={list} className={styles.group}>
@@ -72,18 +72,18 @@ export function TrashScreen() {
       )}
       <Confirm
         open={confirm !== null}
-        title={confirm === 'all' ? t('Vider la corbeille ?') : t('Supprimer définitivement ?')}
-        message={confirm === 'all' ? t('Tous les contacts de la corbeille seront supprimés définitivement, sur tous vos appareils.') : t('Ce contact disparaîtra de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={confirm === 'all' ? t('Vider') : t('Supprimer')}
+        title={confirm === 'all' ? t('Empty the bin?') : t('Delete forever?')}
+        message={confirm === 'all' ? t('Every contact in the bin will be deleted forever, on all your devices.') : t('This contact will disappear from all your devices. This cannot be undone.')}
+        confirmLabel={confirm === 'all' ? t('Empty') : t('Delete')}
         danger
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
           if (confirm === 'all') {
             const count = emptyContactsBin();
-            showSnack(t('{contacts} définitivement', { contacts: plural(count, 'contact supprimé', 'contacts supprimés') }), undefined, { tone: 'success' });
+            showSnack(t('{contacts} forever', { contacts: plural(count, 'contact deleted', 'contacts deleted') }), undefined, { tone: 'success' });
           } else if (confirm) {
             deleteForever([confirm]);
-            showSnack(t('Contact supprimé définitivement'), undefined, { tone: 'success' });
+            showSnack(t('Contact deleted forever'), undefined, { tone: 'success' });
           }
           setConfirm(null);
         }}

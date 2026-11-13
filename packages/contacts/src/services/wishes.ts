@@ -6,7 +6,7 @@
  * after: a wish a day late is still welcome. The message stays in GSM's alphabet where the name does
  * (a plain space before « ! »), so an SMS keeps its 160 characters.
  */
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import type { Contact } from '../models/contacts';
 import { mailtoHref } from './addresses';
@@ -39,11 +39,11 @@ export interface WishOptions {
 export function wishChannelName(channel: WishChannel): string {
   switch (channel) {
     case 'sms':
-      return t('SMS');
+      return tc('message', 'Text');
     case 'whatsapp':
       return t('WhatsApp');
     case 'email':
-      return t('E-mail');
+      return t('Email');
     default:
       return channel;
   }
@@ -52,11 +52,11 @@ export function wishChannelName(channel: WishChannel): string {
 /** « Joyeux anniversaire, Léa ! », by the first name; « Joyeux anniversaire ! » without one. */
 export function wishMessage(contact: Pick<Contact, 'firstName'>): string {
   const name = contact.firstName.trim();
-  return name ? t('Joyeux anniversaire, {name} !', { name }) : t('Joyeux anniversaire !');
+  return name ? t('Happy birthday, {name}!', { name }) : t('Happy birthday!');
 }
 
 /** An e-mail's subject: « Joyeux anniversaire ». */
-export const wishSubject = (): string => t('Joyeux anniversaire');
+export const wishSubject = (): string => t('Happy birthday');
 
 /** The SMS to `number` with `body` written; null when it has no number to text. */
 export function smsWishHref(number: string, region: string | null, body: string): string | null {

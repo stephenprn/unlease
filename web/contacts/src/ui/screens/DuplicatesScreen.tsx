@@ -25,7 +25,7 @@ import styles from '../contacts.module.css';
 import { Avatar } from '../features/Avatar';
 import { paths } from '../routes';
 
-const REASONS: Readonly<Record<DuplicateReason, string>> = { email: tx('même e-mail'), phone: tx('même numéro'), name: tx('même nom') };
+const REASONS: Readonly<Record<DuplicateReason, string>> = { email: tx('same email'), phone: tx('same number'), name: tx('same name') };
 
 /** « Même e-mail · même numéro ». */
 function reasonsLine(reasons: readonly DuplicateReason[]): string {
@@ -57,7 +57,7 @@ const Person = memo(function Person({ id, kept }: { id: string; kept: boolean })
             {email.address}
           </span>
         ))}
-        {kept ? <span className={`${styles.twinKept} t-label-small`}>{t('Gardé')}</span> : null}
+        {kept ? <span className={`${styles.twinKept} t-label-small`}>{t('Kept')}</span> : null}
       </span>
     </li>
   );
@@ -68,7 +68,7 @@ function merge(groups: readonly DuplicateGroup[]): void {
   const kept = groups.length === 1 ? useContactsStore.getState().contacts[groups[0]!.ids[0]!] : undefined;
   const undo = mergeGroups(groups.map(group => group.ids));
   const merged = groups.reduce((sum, group) => sum + group.ids.length - 1, 0);
-  showUndo(kept ? t('Fusionnés en {name}', { name: contactName(kept) }) : t('{contacts} fusionnés', { contacts: plural(merged, 'contact') }), undo);
+  showUndo(kept ? t('Merged into {name}', { name: contactName(kept) }) : t('{contacts} merged', { contacts: plural(merged, 'contact') }), undo);
 }
 
 function Group({ group }: { group: DuplicateGroup }) {
@@ -82,10 +82,10 @@ function Group({ group }: { group: DuplicateGroup }) {
       </ul>
       <div className={styles.groupTools}>
         <Button kind="text" onClick={() => dismissDuplicates(group.ids)}>
-          {t('Ignorer')}
+          {t('Ignore')}
         </Button>
         <Button kind="tonal" icon="people" onClick={() => merge([group])}>
-          {t('Fusionner')}
+          {t('Merge')}
         </Button>
       </div>
     </OutlinedBox>
@@ -97,11 +97,11 @@ export function DuplicatesScreen() {
   return (
     <div className={`${styles.screen} ${styles.narrowScreen}`}>
       <div>
-        <PageHead title={t('Doublons')} action={groups.length > 1 ? { icon: 'people', label: t('Tout fusionner'), onClick: () => merge(groups) } : undefined} />
-        {groups.length > 0 ? <p className={`${styles.count} t-meta`}>{t('Les contacts qui ont le même e-mail, le même numéro ou le même nom. La fusion garde le premier, le complète avec ce que les autres ont en plus, et met les autres à la corbeille.')}</p> : null}
+        <PageHead title={t('Duplicates')} action={groups.length > 1 ? { icon: 'people', label: t('Merge all'), onClick: () => merge(groups) } : undefined} />
+        {groups.length > 0 ? <p className={`${styles.count} t-meta`}>{t('Contacts with the same email, number or name. Merging keeps the first, completes it with what the others have besides, and moves the others to the bin.')}</p> : null}
       </div>
       {groups.length === 0 ? (
-        <EmptyState scene="label" title={t('Aucun doublon')} text={t('Chaque personne n’apparaît qu’une fois. Après un import, revenez ici : les contacts en double s’y rassemblent.')} />
+        <EmptyState scene="label" title={t('No duplicates')} text={t('Everyone appears once. After an import, come back here: duplicate contacts gather here.')} />
       ) : (
         groups.map(group => <Group key={group.ids.join(',')} group={group} />)
       )}

@@ -76,7 +76,7 @@ function MiniMonthComponent({ month, weekStart, today, chosen = null, marked, on
                 pebble={Number(day.slice(8, 10)) % 4}
                 style={[styles.cell, pebble, isChosen ? { backgroundColor: theme.color.action } : null]}
                 accessibilityRole="button"
-                accessibilityLabel={isToday ? t('{day}, aujourd’hui', { day: longDay(day) }) : longDay(day)}
+                accessibilityLabel={isToday ? t('{day}, today', { day: longDay(day) }) : longDay(day)}
                 accessibilityState={{ selected: isChosen }}
               >
                 <AppText

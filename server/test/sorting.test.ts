@@ -96,7 +96,7 @@ describe('POST /api/sort, filing', () => {
 
     expect(status).toBe(200);
     expect(server.claude.requests).toHaveLength(3);
-    expect(body).toEqual({ moves: [{ link: 'l60', to: 'mode' }, { link: 'l121', to: 'films' }], incomplete: 'Tri refusé par Claude' });
+    expect(body).toEqual({ moves: [{ link: 'l60', to: 'mode' }, { link: 'l121', to: 'films' }], incomplete: 'Sorting refused by Claude' });
   });
 
   it('starts no batch once the month’s budget is spent, or held by the batches in flight', async () => {
@@ -108,7 +108,7 @@ describe('POST /api/sort, filing', () => {
     // The first batch holds what it may cost, more than the budget: the two started beside it send nothing, and none follows it.
     expect(status).toBe(200);
     expect(server.claude.requests).toHaveLength(1);
-    expect(body).toEqual({ moves: [{ link: 'l0', to: 'mode' }], incomplete: 'Budget mensuel atteint' });
+    expect(body).toEqual({ moves: [{ link: 'l0', to: 'mode' }], incomplete: 'Monthly budget reached' });
   });
 
   it('bills each call to the month without counting it as a link read', async () => {
@@ -144,7 +144,7 @@ describe('POST /api/sort, reviewing a collection', () => {
   it('refuses a review whose collection is not among the targets', async () => {
     const { status, body } = await postSort({ ...reviewRequest, from: 'ailleurs' });
     expect(status).toBe(400);
-    expect(body.error).toBe('Requête de tri invalide');
+    expect(body.error).toBe('Invalid sorting request');
     expect(server.claude.requests).toHaveLength(0);
   });
 });
@@ -163,14 +163,14 @@ describe('POST /api/sort, refusals', () => {
     server = createTestServer({ envApiKey: null });
     const { status, body } = await postSort(fileRequest);
     expect(status).toBe(409);
-    expect(body.error).toBe('Claude ne lit pas les liens : ajoutez une clé dans l’administration.');
+    expect(body.error).toBe('Claude is not reading links: add a key in Administration.');
   });
 
   it('stops at the monthly budget', async () => {
     server.settings.update({ budgetUsd: 0 });
     const { status, body } = await postSort(fileRequest);
     expect(status).toBe(409);
-    expect(body.error).toBe('Budget mensuel atteint');
+    expect(body.error).toBe('Monthly budget reached');
     expect(server.claude.requests).toHaveLength(0);
   });
 
@@ -178,8 +178,8 @@ describe('POST /api/sort, refusals', () => {
     server.claude.reply(claudeMessage({ moves: [] }, { stop_reason: 'refusal' }));
     const { status, body } = await postSort(fileRequest);
     expect(status).toBe(502);
-    expect(body.error).toBe('Tri refusé par Claude');
-    expect(server.db.prepare('SELECT task, ok, error FROM analyses').all()).toEqual([{ task: 'sort', ok: 0, error: 'Tri refusé par Claude' }]);
+    expect(body.error).toBe('Sorting refused by Claude');
+    expect(server.db.prepare('SELECT task, ok, error FROM analyses').all()).toEqual([{ task: 'sort', ok: 0, error: 'Sorting refused by Claude' }]);
   });
 
   it('retries once when Claude is overloaded', async () => {

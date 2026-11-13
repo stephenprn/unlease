@@ -36,7 +36,7 @@ export function EventPickerSheet({ visible, title, current, onDismiss, onPick }:
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher un événement')} accessibilityLabel={t('Rechercher un événement')} returnKeyType="search" autoCorrect={false} />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search events')} accessibilityLabel={t('Search events')} returnKeyType="search" autoCorrect={false} />
       </View>
       <SheetFlatList top={false}
         data={choices}
@@ -45,7 +45,7 @@ export function EventPickerSheet({ visible, title, current, onDismiss, onPick }:
         keyboardShouldPersistTaps="handled"
         keyExtractor={item => item.eventId}
         renderItem={({ item }) => <EventChoiceRow choice={item} current={item.eventId === current} onPick={onPick} />}
-        ListEmptyComponent={<EmptyLine text={query.trim() ? t('Aucun événement ne correspond') : t('Aucun événement à venir : une recherche trouve aussi les passés.')} style={styles.none} />}
+        ListEmptyComponent={<EmptyLine text={query.trim() ? t('No event matches') : t('No upcoming events: a search finds past ones too.')} style={styles.none} />}
       />
     </Sheet>
   );

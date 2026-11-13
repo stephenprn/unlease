@@ -35,7 +35,7 @@ export function EventRows({ places }: { places: readonly MentionPlace[] }) {
       {sortByWhen(places, today).map(place => {
         const path = suitePlace('event', place.id);
         if (!path) return null;
-        const title = place.title.trim() || t('Sans titre');
+        const title = place.title.trim() || t('Untitled');
         const past = (place.when ?? '').slice(0, 10) < today;
         return (
           <li key={place.id}>
@@ -59,8 +59,8 @@ export function EventsMentioning({ type, id, className }: { type: 'page' | 'note
   const places = useEventsMentioning(type, [id]);
   if (!places || places.length === 0) return null;
   return (
-    <section className={[styles.section, className ?? ''].filter(Boolean).join(' ')} aria-label={t('Dans l’agenda')}>
-      <h2 className={`${styles.head} t-section`}>{t('Dans l’agenda')}</h2>
+    <section className={[styles.section, className ?? ''].filter(Boolean).join(' ')} aria-label={t('In the calendar')}>
+      <h2 className={`${styles.head} t-section`}>{t('In the calendar')}</h2>
       <EventRows places={places} />
     </section>
   );

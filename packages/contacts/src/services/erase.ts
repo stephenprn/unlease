@@ -59,28 +59,28 @@ export function eraseParts(library: EraseLibrary): ErasePart[] {
   const people = plural(contacts.length, 'contact');
   const contactsDetail =
     contacts.length === 0
-      ? t('Aucun contact hors favoris')
+      ? t('No contacts besides the favourites')
       : favorites.length > 0
         ? binned > 0
-          ? t('{contacts} hors favoris, dont {binned} dans la corbeille', { contacts: people, binned })
-          : t('{contacts} hors favoris', { contacts: people })
+          ? t('{contacts} besides the favourites, {binned} of them in the bin', { contacts: people, binned })
+          : t('{contacts} besides the favourites', { contacts: people })
         : binned > 0
-          ? t('{contacts}, dont {binned} dans la corbeille', { contacts: people, binned })
+          ? t('{contacts}, {binned} of them in the bin', { contacts: people, binned })
           : people;
-  const starredWords = t('{contacts} en favori', { contacts: plural(starred, 'contact') });
+  const starredWords = t('{contacts} in the favourites', { contacts: plural(starred, 'contact') });
   return [
     { id: 'contacts', title: t('Contacts'), detail: contactsDetail, count: contacts.length, glyph: 'people' },
     {
       id: 'favorites',
-      title: t('Favoris'),
-      detail: favorites.length === 0 ? t('Aucun favori') : merged > 0 ? t('{favorites}, et {merged} dans la corbeille', { favorites: starredWords, merged: plural(merged, 'doublon fusionné', 'doublons fusionnés') }) : starredWords,
+      title: t('Favourites'),
+      detail: favorites.length === 0 ? t('No favourites') : merged > 0 ? t('{favorites}, and {merged} in the bin', { favorites: starredWords, merged: plural(merged, 'merged duplicate', 'merged duplicates') }) : starredWords,
       count: favorites.length,
       glyph: 'star',
     },
     {
       id: 'labels',
-      title: t('Libellés'),
-      detail: labels.length === 0 ? t('Aucun libellé') : t('{labels} ; les contacts qui les portent restent', { labels: plural(labels.length, 'libellé') }),
+      title: t('Labels'),
+      detail: labels.length === 0 ? t('No labels') : t('{labels}; the contacts wearing them stay', { labels: plural(labels.length, 'label') }),
       count: labels.length,
       glyph: 'tag',
     },

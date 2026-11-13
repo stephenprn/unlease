@@ -33,6 +33,7 @@ import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { openDrawing } from '../drawing/openDrawing';
+import { pickImmichFor } from './ImmichBlock';
 import { LineColorPicker } from '@shared/ui/components/LineColorPicker';
 import { openCaption } from './Caption';
 import { DateSheetHost, openDateSheet } from './DateSheet';
@@ -45,11 +46,11 @@ import { closePageSheet, openPageSheet, useSheetOf } from './sheetStore';
 import { TargetSheet } from './TargetSheet';
 import { openReorder, ReorderHost } from './ReorderBlocks';
 
-const BASIC = tx('Blocs de base');
-const INLINE = tx('Dans le texte');
-const MEDIA = tx('Médias');
-const CARNET = tx('Notes, collections et liens');
-const LAYOUT = tx('Mise en page');
+const BASIC = tx('Basic blocks');
+const INLINE = tx('In the text');
+const MEDIA = tx('Media');
+const CARNET = tx('Notes, collections and links');
+const LAYOUT = tx('Layout');
 
 interface InsertCommand {
   readonly key: string;
@@ -61,59 +62,60 @@ interface InsertCommand {
 
 /** The web's « / » commands (`slashCommands.ts`), in its sections. */
 const COMMANDS: readonly InsertCommand[] = [
-  { key: 'text', label: tx('Texte'), hint: tx('Un paragraphe'), icon: 'text', section: BASIC },
-  { key: 'h1', label: tx('Titre 1'), hint: tx('Le titre d’une grande partie'), icon: 'heading1', section: BASIC },
-  { key: 'h2', label: tx('Titre 2'), hint: tx('Le titre d’une partie'), icon: 'heading2', section: BASIC },
-  { key: 'h3', label: tx('Titre 3'), hint: tx('Le titre d’une sous-partie'), icon: 'heading3', section: BASIC },
-  { key: 'h4', label: tx('Titre 4'), hint: tx('Un petit titre'), icon: 'heading4', section: BASIC },
-  { key: 'bullet', label: tx('Liste à puces'), hint: tx('Une liste simple'), icon: 'list', section: BASIC },
-  { key: 'numbered', label: tx('Liste numérotée'), hint: tx('Une liste dans l’ordre'), icon: 'numbered', section: BASIC },
-  { key: 'todo', label: tx('Liste de tâches'), hint: tx('Des cases à cocher'), icon: 'boxChecked', section: BASIC },
-  { key: 'toggle', label: tx('Liste dépliante'), hint: tx('Un contenu à déplier'), icon: 'toggle', section: BASIC },
-  { key: 'callout', label: tx('Encadré'), hint: tx('Un texte mis en avant'), icon: 'callout', section: BASIC },
-  { key: 'code', label: tx('Code'), hint: tx('Du code, en chasse fixe'), icon: 'codeBlock', section: BASIC },
-  { key: 'table', label: tx('Tableau'), hint: tx('Des colonnes typées : nombres, dates, choix…'), icon: 'table', section: BASIC },
-  { key: 'page', label: tx('Page'), hint: tx('Une sous-page dans cette page'), icon: 'page', section: BASIC },
-  { key: 'date', label: tx('Date'), hint: tx('Aujourd’hui, à changer ensuite'), icon: 'calendar', section: INLINE },
-  { key: 'emoji', label: tx('Emoji'), hint: tx('Un emoji dans la phrase'), icon: 'smiley', section: INLINE },
-  { key: 'image', label: tx('Image'), hint: tx('Une photo du téléphone, ou une adresse'), icon: 'image', section: MEDIA },
-  { key: 'video', label: tx('Vidéo'), hint: tx('Un fichier, ou une vidéo YouTube, Vimeo…'), icon: 'video', section: MEDIA },
-  { key: 'pdf', label: tx('PDF'), hint: tx('Un PDF du téléphone, ou une adresse'), icon: 'pdf', section: MEDIA },
-  { key: 'file', label: tx('Fichier'), hint: tx('N’importe quel fichier'), icon: 'file', section: MEDIA },
-  { key: 'drawing', label: tx('Dessin'), hint: tx('Une zone où dessiner'), icon: 'draw', section: MEDIA },
-  { key: 'mention', label: tx('Mention'), hint: tx('Citer une note, une collection, un lien ou une page'), icon: 'mention', section: CARNET },
-  { key: 'bookmark', label: tx('Signet'), hint: tx('Une note, une collection, un lien ou une page en carte'), icon: 'bookmark', section: CARNET },
-  { key: 'embed', label: tx('Intégration'), hint: tx('Une note, une collection ou un lien en entier'), icon: 'embed', section: CARNET },
-  { key: 'columns2', label: tx('2 colonnes'), hint: tx('Des blocs côte à côte sur un ordinateur'), icon: 'columns', section: LAYOUT },
-  { key: 'columns3', label: tx('3 colonnes'), hint: tx('Des blocs côte à côte sur un ordinateur'), icon: 'columns', section: LAYOUT },
-  { key: 'calendar', label: tx('Agenda'), hint: tx('Vos prochains événements, ceux d’un libellé ou tous'), icon: 'calendar', section: LAYOUT },
-  { key: 'toc', label: tx('Table des matières'), hint: tx('Les titres de la page, pour y aller'), icon: 'contents', section: LAYOUT },
+  { key: 'text', label: tx('Text'), hint: tx('A paragraph'), icon: 'text', section: BASIC },
+  { key: 'h1', label: tx('Heading 1'), hint: tx('A main section’s heading'), icon: 'heading1', section: BASIC },
+  { key: 'h2', label: tx('Heading 2'), hint: tx('A section’s heading'), icon: 'heading2', section: BASIC },
+  { key: 'h3', label: tx('Heading 3'), hint: tx('A subsection’s heading'), icon: 'heading3', section: BASIC },
+  { key: 'h4', label: tx('Heading 4'), hint: tx('A small heading'), icon: 'heading4', section: BASIC },
+  { key: 'bullet', label: tx('Bulleted list'), hint: tx('A simple list'), icon: 'list', section: BASIC },
+  { key: 'numbered', label: tx('Numbered list'), hint: tx('A list in order'), icon: 'numbered', section: BASIC },
+  { key: 'todo', label: tx('To-do list'), hint: tx('Boxes to tick'), icon: 'boxChecked', section: BASIC },
+  { key: 'toggle', label: tx('Toggle list'), hint: tx('Content to expand'), icon: 'toggle', section: BASIC },
+  { key: 'callout', label: tx('Callout'), hint: tx('Text that stands out'), icon: 'callout', section: BASIC },
+  { key: 'code', label: tx('Code'), hint: tx('Code, in a monospace font'), icon: 'codeBlock', section: BASIC },
+  { key: 'table', label: tx('Table'), hint: tx('Typed columns: numbers, dates, choices…'), icon: 'table', section: BASIC },
+  { key: 'page', label: tx('Page'), hint: tx('A sub-page in this page'), icon: 'page', section: BASIC },
+  { key: 'date', label: tx('Date'), hint: tx('Today, to change after'), icon: 'calendar', section: INLINE },
+  { key: 'emoji', label: tx('Emoji'), hint: tx('An emoji in the sentence'), icon: 'smiley', section: INLINE },
+  { key: 'image', label: tx('Image'), hint: tx('A photo from the phone, or an address'), icon: 'image', section: MEDIA },
+  { key: 'video', label: tx('Video'), hint: tx('A file, or a YouTube or Vimeo video…'), icon: 'video', section: MEDIA },
+  { key: 'pdf', label: tx('PDF'), hint: tx('A PDF from the phone, or an address'), icon: 'pdf', section: MEDIA },
+  { key: 'file', label: tx('File'), hint: tx('Any file'), icon: 'file', section: MEDIA },
+  { key: 'immich', label: tx('Photos from Immich'), hint: tx('An album or photos of your Immich'), icon: 'image', section: MEDIA },
+  { key: 'drawing', label: tx('Drawing'), hint: tx('A space to draw in'), icon: 'draw', section: MEDIA },
+  { key: 'mention', label: tx('Mention [noun]'), hint: tx('Mention a note, a collection, a link or a page'), icon: 'mention', section: CARNET },
+  { key: 'bookmark', label: tx('Bookmark'), hint: tx('A note, a collection, a link or a page as a card'), icon: 'bookmark', section: CARNET },
+  { key: 'embed', label: tx('Embed [block]'), hint: tx('A whole note, collection or link'), icon: 'embed', section: CARNET },
+  { key: 'columns2', label: tx('2 columns'), hint: tx('Blocks side by side on a computer'), icon: 'columns', section: LAYOUT },
+  { key: 'columns3', label: tx('3 columns'), hint: tx('Blocks side by side on a computer'), icon: 'columns', section: LAYOUT },
+  { key: 'calendar', label: tx('Calendar'), hint: tx('Your next events, a label’s or all of them'), icon: 'calendar', section: LAYOUT },
+  { key: 'toc', label: tx('Table of contents'), hint: tx('The page’s headings, to go to them'), icon: 'contents', section: LAYOUT },
 ];
 
 /** « Tableau » is also the board's name in the settings: the block's has its own English. */
-const commandLabel = (command: InsertCommand): string => (command.key === 'table' ? tc('block', 'Tableau') : t(command.label));
+const commandLabel = (command: InsertCommand): string => (command.key === 'table' ? t('Table') : t(command.label));
 
 const TURNS: Readonly<Record<string, BlockKind>> = { text: 'text', h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', bullet: 'bullet', numbered: 'numbered', todo: 'todo', toggle: 'toggle', callout: 'callout', code: 'code' };
 
 export const KIND_CHOICES: readonly { readonly kind: BlockKind; readonly label: string; readonly icon: GlyphName }[] = [
-  { kind: 'text', label: tx('Texte'), icon: 'text' },
-  { kind: 'h1', label: tx('Titre 1'), icon: 'heading1' },
-  { kind: 'h2', label: tx('Titre 2'), icon: 'heading2' },
-  { kind: 'h3', label: tx('Titre 3'), icon: 'heading3' },
-  { kind: 'h4', label: tx('Titre 4'), icon: 'heading4' },
-  { kind: 'bullet', label: tx('Liste à puces'), icon: 'list' },
-  { kind: 'numbered', label: tx('Liste numérotée'), icon: 'numbered' },
-  { kind: 'todo', label: tx('Liste de tâches'), icon: 'boxChecked' },
-  { kind: 'toggle', label: tx('Liste dépliante'), icon: 'toggle' },
-  { kind: 'callout', label: tx('Encadré'), icon: 'callout' },
+  { kind: 'text', label: tx('Text'), icon: 'text' },
+  { kind: 'h1', label: tx('Heading 1'), icon: 'heading1' },
+  { kind: 'h2', label: tx('Heading 2'), icon: 'heading2' },
+  { kind: 'h3', label: tx('Heading 3'), icon: 'heading3' },
+  { kind: 'h4', label: tx('Heading 4'), icon: 'heading4' },
+  { kind: 'bullet', label: tx('Bulleted list'), icon: 'list' },
+  { kind: 'numbered', label: tx('Numbered list'), icon: 'numbered' },
+  { kind: 'todo', label: tx('To-do list'), icon: 'boxChecked' },
+  { kind: 'toggle', label: tx('Toggle list'), icon: 'toggle' },
+  { kind: 'callout', label: tx('Callout'), icon: 'callout' },
   { kind: 'code', label: tx('Code'), icon: 'codeBlock' },
   { kind: 'page', label: tx('Page'), icon: 'page' },
 ];
 
 const DISPLAYS: readonly { readonly display: TargetDisplay; readonly label: string; readonly icon: GlyphName }[] = [
-  { display: 'mention', label: tx('Afficher en mention'), icon: 'mention' },
-  { display: 'bookmark', label: tx('Afficher en signet'), icon: 'bookmark' },
-  { display: 'embed', label: tx('Afficher en intégration'), icon: 'embed' },
+  { display: 'mention', label: tx('Show as a mention'), icon: 'mention' },
+  { display: 'bookmark', label: tx('Show as a bookmark'), icon: 'bookmark' },
+  { display: 'embed', label: tx('Show as an embed'), icon: 'embed' },
 ];
 
 const blockOf = (id: string): Block | undefined => useLibraryStore.getState().blocks[id];
@@ -208,6 +210,11 @@ function runCommand(command: InsertCommand, page: string, blockId: string, slash
     case 'calendar':
       placeBlock(page, blockId, { kind: 'calendar', calendarDays: 14 }, empty);
       return;
+    case 'immich': {
+      const id = placeBlock(page, blockId, { kind: 'immich' }, empty);
+      if (id) pickImmichFor(id);
+      return;
+    }
     case 'drawing': {
       const id = placeBlock(page, blockId, { kind: 'drawing' }, empty);
       if (id) openDrawing({ kind: 'block', page, block: id });
@@ -225,7 +232,7 @@ function InsertSheet({ page, openPage }: { page: string; openPage: (id: string) 
     if (visible) Keyboard.dismiss();
   }, [visible]);
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Ajouter un bloc')} tall>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Add a block')} tall>
       <SheetScroll contentContainerStyle={styles.list}>
         {sections.map(section => (
           <View key={section}>
@@ -257,7 +264,7 @@ function TurnSheet({ page }: { page: string }) {
   const styles = useThemedStyles(makeStyles);
   const kind = useLibraryStore(s => (sheet ? s.blocks[sheet.block]?.kind : undefined));
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Transformer en')} tall>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Turn into')} tall>
       <SheetScroll contentContainerStyle={styles.list}>
         {KIND_CHOICES.filter(choice => choice.kind !== kind).map(choice => (
           <ListRow
@@ -290,8 +297,8 @@ function BlockActionsSheet({ page, openPage }: { page: string; openPage: (id: st
   const rows: { readonly label: string; readonly icon: GlyphName; readonly run: () => void; readonly danger?: boolean; readonly opensSheet?: boolean }[] = [];
   if (block) {
     const id = block.id;
-    if (block.kind === 'page') rows.push({ label: t('Ouvrir'), icon: 'page', run: () => openPage(id) });
-    if (TURNABLE.has(block.kind) && block.kind !== 'page') rows.push({ label: t('Transformer en…'), icon: 'refresh', run: () => openPageSheet({ kind: 'turn', block: id }), opensSheet: true });
+    if (block.kind === 'page') rows.push({ label: t('Open'), icon: 'page', run: () => openPage(id) });
+    if (TURNABLE.has(block.kind) && block.kind !== 'page') rows.push({ label: t('Turn into…'), icon: 'refresh', run: () => openPageSheet({ kind: 'turn', block: id }), opensSheet: true });
     const shown = shownTarget(block);
     if (shown) {
       for (const { display, label, icon } of DISPLAYS) {
@@ -299,39 +306,39 @@ function BlockActionsSheet({ page, openPage }: { page: string; openPage: (id: st
         rows.push({ label: t(label), icon, run: () => showTargetAs(page, [id], display) });
       }
     }
-    if (embedsCollection) rows.push(block.showDone ? { label: t('Masquer les déjà faits'), icon: 'eyeOff', run: () => setShowDone(page, id, false) } : { label: t('Afficher les déjà faits'), icon: 'eye', run: () => setShowDone(page, id, true) });
-    if (block.kind === 'callout') rows.push({ label: t('Couleur…'), icon: 'palette', run: () => openPageSheet({ kind: 'calloutColor', block: id }), opensSheet: true });
-    if (CAPTION_KINDS.has(block.kind)) rows.push(block.caption ? { label: t('Retirer la légende'), icon: 'close', run: () => updateBlock(page, id, { caption: '' }) } : { label: t('Ajouter une légende'), icon: 'textAlign', run: () => openCaption(id) });
+    if (embedsCollection) rows.push(block.showDone ? { label: t('Hide done'), icon: 'eyeOff', run: () => setShowDone(page, id, false) } : { label: t('Show done'), icon: 'eye', run: () => setShowDone(page, id, true) });
+    if (block.kind === 'callout') rows.push({ label: t('Colour…'), icon: 'palette', run: () => openPageSheet({ kind: 'calloutColor', block: id }), opensSheet: true });
+    if (CAPTION_KINDS.has(block.kind)) rows.push(block.caption ? { label: t('Remove caption'), icon: 'close', run: () => updateBlock(page, id, { caption: '' }) } : { label: t('Add a caption'), icon: 'textAlign', run: () => openCaption(id) });
     rows.push(
       {
-        label: t('Dupliquer'),
+        label: t('Duplicate'),
         icon: 'copy',
         run: () => {
           const [copy] = duplicateBlocks(page, [id], visibleOutline(page));
           if (copy && RICH_KINDS.has(block.kind)) focusBlock(copy, 'end');
         },
       },
-      { label: t('Déplacer vers…'), icon: 'transfer', run: () => openPageSheet({ kind: 'move', blocks: [id] }), opensSheet: true },
+      { label: t('Move to…'), icon: 'transfer', run: () => openPageSheet({ kind: 'move', blocks: [id] }), opensSheet: true },
       // The page's blocks as rows to drag into place, this one chosen.
-      { label: t('Réorganiser les blocs'), icon: 'grip', run: () => openReorder(page, id) },
+      { label: t('Reorder blocks'), icon: 'grip', run: () => openReorder(page, id) },
     );
-    if (RICH_KINDS.has(block.kind) || block.kind === 'code' || block.kind === 'table') rows.push({ label: t('Partager le texte'), icon: 'share', run: () => { Share.share({ message: blocksMarkdown([id]) }).catch(() => {}); } });
+    if (RICH_KINDS.has(block.kind) || block.kind === 'code' || block.kind === 'table') rows.push({ label: t('Share the text'), icon: 'share', run: () => { Share.share({ message: blocksMarkdown([id]) }).catch(() => {}); } });
     rows.push(
       block.kind === 'page'
         ? {
-            label: t('Mettre à la corbeille'),
+            label: t('Move to bin'),
             icon: 'trash',
             danger: true,
             run: () => {
               const undo = trashPage(id);
-              showSnack(t('Page placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+              showSnack(t('Page moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
             },
           }
-        : { label: t('Supprimer'), icon: 'trash', danger: true, run: () => deleteBlocks(page, [id]) },
+        : { label: t('Delete'), icon: 'trash', danger: true, run: () => deleteBlocks(page, [id]) },
     );
   }
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Actions du bloc')}>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Block actions')}>
       <SheetScroll contentContainerStyle={styles.list}>
         {rows.map(row => (
           <ListRow
@@ -421,7 +428,7 @@ function EmojiInsertHost() {
     <EmojiSheet
       visible={visible}
       allowNone={false}
-      title={t('Insérer un emoji')}
+      title={t('Insert an emoji')}
       onDismiss={() => {
         closePageSheet();
         if (sheet) focusBlock(sheet.block, sheet.at);
@@ -506,36 +513,36 @@ function MoveHost({ page, openPage }: { page: string; openPage: (id: string) => 
     flushAll();
     const title = target ? useLibraryStore.getState().blocks[target]?.text.trim() || t(UNTITLED_PAGE) : '';
     if (pageSheet.visible && pageSheet.sheet) {
-      if (movePage(pageSheet.sheet.page, { into: target })) showSnack(target ? t('Page déplacée vers {page}', { page: title }) : t('Page déplacée au premier niveau'), undefined, { tone: 'success' });
+      if (movePage(pageSheet.sheet.page, { into: target })) showSnack(target ? t('Page moved to {page}', { page: title }) : t('Page moved to the top level'), undefined, { tone: 'success' });
       return;
     }
     if (!target) return;
     const ids = blocksSheet.sheet?.blocks ?? [];
     const last = (useLibraryStore.getState().blocksByParent[target] ?? []).filter(id => !ids.includes(id)).pop() ?? null;
     if (moveBlocks(page, ids, { parentId: target, afterId: last }, visibleOutline(page))) {
-      showSnack(ids.length > 1 ? t('{blocks} déplacés vers {page}', { blocks: plural(ids.length, 'bloc'), page: title }) : t('Bloc déplacé vers {page}', { page: title }), { label: t('Ouvrir'), run: () => openPage(target) }, { tone: 'success' });
+      showSnack(ids.length > 1 ? t('{blocks} moved to {page}', { blocks: plural(ids.length, 'block'), page: title }) : t('Block moved to {page}', { page: title }), { label: t('Open'), run: () => openPage(target) }, { tone: 'success' });
     }
   };
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Déplacer vers')} tall>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Move to')} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher une page')} accessibilityLabel={t('Chercher une page')} />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a page')} accessibilityLabel={t('Search for a page')} />
       </View>
       <SheetScroll top={false} contentContainerStyle={styles.list}>
         {headed ? (
           <>
             <AppText variant="section" style={styles.section} accessibilityRole="header">
-              {t('Récentes')}
+              {t('Recent')}
             </AppText>
             {recent.map(place => choice(place, `recent-${place.page.id}`))}
             <AppText variant="section" style={styles.section} accessibilityRole="header">
-              {t('Toutes les pages')}
+              {t('All pages')}
             </AppText>
           </>
         ) : null}
-        {pageSheet.visible && !query.trim() ? <PageChoice title={t('Au premier niveau')} icon={null} path={t('Avec les pages de l’accueil')} here={current === null} onPress={() => pick(null)} /> : null}
+        {pageSheet.visible && !query.trim() ? <PageChoice title={t('At the top level')} icon={null} path={t('Alongside the pages on the home page')} here={current === null} onPress={() => pick(null)} /> : null}
         {all.map(place => choice(place, place.page.id))}
-        {all.length === 0 ? <EmptyLine text={t('Aucune page ne correspond.')} style={styles.empty} /> : null}
+        {all.length === 0 ? <EmptyLine text={t('No page matches.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -561,9 +568,9 @@ function LanguageSheet({ page }: { page: string }) {
     updateBlock(page, sheet.block, { language: key });
   };
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Langage')} tall>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={tc('code', 'Language')} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher un langage')} accessibilityLabel={t('Chercher un langage')} autoCapitalize="none" autoCorrect={false} returnKeyType="done" onSubmitEditing={() => (found[0] ? pick(found[0].key) : undefined)} />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search languages')} accessibilityLabel={t('Search languages')} autoCapitalize="none" autoCorrect={false} returnKeyType="done" onSubmitEditing={() => (found[0] ? pick(found[0].key) : undefined)} />
       </View>
       <SheetScroll top={false} contentContainerStyle={styles.list}>
         {found.map(language => (
@@ -574,7 +581,7 @@ function LanguageSheet({ page }: { page: string }) {
             onPress={() => pick(language.key)}
           />
         ))}
-        {found.length === 0 ? <EmptyLine text={t('Aucun langage ne correspond.')} style={styles.empty} /> : null}
+        {found.length === 0 ? <EmptyLine text={t('No language matches.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -588,7 +595,7 @@ function CalloutColorSheet({ page }: { page: string }) {
   const styles = useThemedStyles(makeStyles);
   const color = useLibraryStore(s => (sheet ? asLineColorOf(s.blocks[sheet.block]?.color) : null));
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Couleur de l’encadré')}>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Callout colour')}>
       <View style={styles.pad}>
         <LineColorPicker allowNone value={color} onChange={next => sheet && updateBlock(page, sheet.block, { color: next })} />
       </View>
@@ -610,7 +617,7 @@ const TextSwatches = memo(function TextSwatches({ kind, value, onPick }: { kind:
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel={kind === 'fg' ? t('Couleur du texte') : t('Surlignage')}>
+    <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel={kind === 'fg' ? t('Text colour') : t('Highlight')}>
       {SWATCH_ROWS.map((row, at) => (
         <View key={at} style={styles.swatchRow}>
           {row.map(({ color, index }) => {
@@ -620,7 +627,7 @@ const TextSwatches = memo(function TextSwatches({ kind, value, onPick }: { kind:
                 key={color ?? 'none'}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: chosen }}
-                accessibilityLabel={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Couleur par défaut') : t('Sans surlignage')}
+                accessibilityLabel={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Default colour') : t('No highlight')}
                 onPress={() => onPick(color)}
                 hitSlop={4}
                 pebble={pebbleTurn(index)}
@@ -653,14 +660,14 @@ function TextColorSheet() {
     refresh(n => n + 1);
   };
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Couleur et surlignage')}>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={t('Colour and highlight')}>
       <SheetScroll contentContainerStyle={styles.pad}>
         <AppText variant="metaStrong" style={styles.label}>
-          {t('Couleur du texte')}
+          {t('Text colour')}
         </AppText>
         <TextSwatches kind="fg" value={value('fg')} onPick={color => apply('fg', color)} />
         <AppText variant="metaStrong" style={[styles.label, styles.labelGap]}>
-          {t('Surlignage')}
+          {t('Highlight')}
         </AppText>
         <TextSwatches kind="bg" value={value('bg')} onPick={color => apply('bg', color)} />
       </SheetScroll>
@@ -687,7 +694,7 @@ function LinkSheet() {
     if (link) write(normalizeUrl(link));
   };
   // Words that hold no address are said under the field, what was typed kept; the keyboard's « OK » saves.
-  const form = useForm({ address: trimmed && !link ? t('Ce n’est pas une adresse : tapez par exemple example.org ou https://example.org/page.') : null }, { order: ['address'], sendOnDone: save });
+  const form = useForm({ address: trimmed && !link ? t('That isn’t an address: type for example example.org or https://example.org/page.') : null }, { order: ['address'], sendOnDone: save });
   useEffect(() => {
     if (!visible) return;
     setAddress(current ?? '');
@@ -696,13 +703,13 @@ function LinkSheet() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   return (
-    <Sheet visible={visible} onDismiss={closePageSheet} title={current ? t('Modifier le lien') : t('Ajouter un lien')}>
+    <Sheet visible={visible} onDismiss={closePageSheet} title={current ? t('Edit link') : t('Add a link')}>
       <View style={styles.pad}>
-        <TextField label={t('Adresse')} kind="url" field={form.field('address')} value={address} onChangeText={setAddress} autoFocus placeholder="https://…" />
+        <TextField label={t('Address')} kind="url" field={form.field('address')} value={address} onChangeText={setAddress} autoFocus placeholder="https://…" />
       </View>
       <FormFoot message={form.message}>
-        {current ? <Button kind="dangerText" label={t('Retirer le lien')} onPress={() => write(null)} /> : null}
-        <Button kind="filled" label={t('Enregistrer')} disabled={!trimmed} onPress={() => void form.submit(save)} />
+        {current ? <Button kind="dangerText" label={t('Remove link')} onPress={() => write(null)} /> : null}
+        <Button kind="filled" label={t('Save')} disabled={!trimmed} onPress={() => void form.submit(save)} />
       </FormFoot>
     </Sheet>
   );

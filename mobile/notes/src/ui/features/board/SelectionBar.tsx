@@ -39,8 +39,8 @@ function SelectionBarComponent({ count, onClose, children }: { count: number; on
       style={[styles.bar, { top: insets.top + SEARCH_TOP }]}
       accessibilityLiveRegion="polite"
     >
-      <IconButton icon="close" label={t('Annuler la sélection')} color={styles.ink.color} onPress={onClose} />
-      <AppText variant="title" color={styles.ink.color} style={styles.count} accessibilityLabel={plural(count, 'sélectionnée')}>
+      <IconButton icon="close" label={t('Clear selection')} color={styles.ink.color} onPress={onClose} />
+      <AppText variant="title" color={styles.ink.color} style={styles.count} accessibilityLabel={plural(count, 'selected', 'selected [many]')}>
         {`${count}`}
       </AppText>
       <View style={styles.actions}>{children}</View>

@@ -112,7 +112,7 @@ function CodeBlockComponent({ block }: { block: Block }) {
   return (
     <Organic outline="frame" style={styles.frame}>
       <View style={styles.head}>
-        <Tappable accessibilityLabel={t('Langage : {language}', { language: t(language.name) })} disabled={readOnly} ownDisabled onPress={() => openPageSheet({ kind: 'language', block: block.id })} style={styles.language}>
+        <Tappable accessibilityLabel={t('Language: {language}', { language: t(language.name) })} disabled={readOnly} ownDisabled onPress={() => openPageSheet({ kind: 'language', block: block.id })} style={styles.language}>
           <AppText variant="labelSmall" color={theme.color.inkMuted}>
             {t(language.name)}
           </AppText>
@@ -121,12 +121,12 @@ function CodeBlockComponent({ block }: { block: Block }) {
         {/* As the web's bar: the code as it is, to paste elsewhere. */}
         <Tappable
           accessibilityRole="button"
-          onPress={() => void copyText(draftRef.current).then(done => (done ? showSnack(t('Code copié'), undefined, { tone: 'success' }) : showSnack(t('Impossible de copier le code'), undefined, { tone: 'error' })))}
+          onPress={() => void copyText(draftRef.current).then(done => (done ? showSnack(t('Code copied'), undefined, { tone: 'success' }) : showSnack(t('Couldn’t copy the code'), undefined, { tone: 'error' })))}
           style={[styles.language, styles.copy]}
         >
           <Icon name="copy" size={16} color={theme.color.inkMuted} />
           <AppText variant="labelSmall" color={theme.color.inkMuted}>
-            {t('Copier')}
+            {t('Copy')}
           </AppText>
         </Tappable>
       </View>
@@ -159,7 +159,7 @@ function CodeBlockComponent({ block }: { block: Block }) {
           setFocusedHere(false);
           if (useEditorStore.getState().focused === block.id) setFocused(null);
         }}
-        placeholder={t('Du code')}
+        placeholder={t('Some code')}
         placeholderTextColor={theme.color.inkFaint}
         selectionColor={theme.color.highlight}
         selectionHandleColor={theme.color.focus}

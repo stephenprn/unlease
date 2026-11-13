@@ -18,15 +18,15 @@ import type { Theme } from '@shared/ui/theme/theme';
 import type { NoteBodyEditor, TextRange } from './useNoteBody';
 
 const FLAGS: readonly { readonly flag: FlagMark; readonly icon: GlyphName; readonly label: string }[] = [
-  { flag: 'b', icon: 'bold', label: tx('Gras') },
-  { flag: 'i', icon: 'italic', label: tx('Italique') },
-  { flag: 'u', icon: 'underline', label: tx('Souligné') },
+  { flag: 'b', icon: 'bold', label: tx('Bold') },
+  { flag: 'i', icon: 'italic', label: tx('Italic') },
+  { flag: 'u', icon: 'underline', label: tx('Underline') },
 ];
 
 const HEADINGS: readonly { readonly level: Exclude<HeadingLevel, 0>; readonly icon: GlyphName; readonly label: string }[] = [
-  { level: 1, icon: 'heading1', label: tx('Titre 1') },
-  { level: 2, icon: 'heading2', label: tx('Titre 2') },
-  { level: 3, icon: 'heading3', label: tx('Titre 3') },
+  { level: 1, icon: 'heading1', label: tx('Heading 1') },
+  { level: 2, icon: 'heading2', label: tx('Heading 2') },
+  { level: 3, icon: 'heading3', label: tx('Heading 3') },
 ];
 
 export interface FormatBarProps {
@@ -64,7 +64,7 @@ export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
         />
       ))}
       <View style={styles.divider} />
-      <IconButton icon="eraser" label={t('Effacer la mise en forme')} shape={0} onPress={() => onFormat((current, at) => clearFormat(current, at.start, at.end))} />
+      <IconButton icon="eraser" label={t('Clear formatting')} shape={0} onPress={() => onFormat((current, at) => clearFormat(current, at.start, at.end))} />
     </ScrollView>
   );
 }

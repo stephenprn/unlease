@@ -24,11 +24,11 @@ const NOT_SEAFILE = -1;
 
 /** What went wrong, in the apps' words. */
 export function seafileProblem(error: unknown): string {
-  if (!(error instanceof SeafileError) || error.status === 0) return 'Seafile injoignable';
-  if (error.status === NOT_SEAFILE) return 'Cette adresse ne répond pas comme un serveur Seafile';
-  if (error.status === 401 || error.status === 403) return 'Jeton refusé par Seafile';
-  if (error.status === 443) return 'Quota Seafile dépassé';
-  if (error.status === 404) return 'Introuvable dans Seafile';
+  if (!(error instanceof SeafileError) || error.status === 0) return 'Seafile unreachable';
+  if (error.status === NOT_SEAFILE) return 'This address does not answer like a Seafile server';
+  if (error.status === 401 || error.status === 403) return 'Token refused by Seafile';
+  if (error.status === 443) return 'Seafile quota exceeded';
+  if (error.status === 404) return 'Not found in Seafile';
   return `Seafile a répondu ${error.status}`;
 }
 

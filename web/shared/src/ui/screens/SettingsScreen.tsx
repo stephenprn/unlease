@@ -39,8 +39,8 @@ const TRASH_DAYS = 7;
 
 /** "3 éléments supprimés définitivement": the app's bin. */
 function emptiedMessage(count: number): string {
-  if (count === 0) return t('La corbeille était déjà vide');
-  return t('{items} définitivement', { items: plural(count, 'élément supprimé', 'éléments supprimés') });
+  if (count === 0) return t('The bin was already empty');
+  return t('{items} for good', { items: plural(count, 'item deleted', 'items deleted') });
 }
 
 /**
@@ -58,7 +58,7 @@ function AppearanceRow() {
         <Icon name="palette" size={24} />
         <span className={styles.rowText}>
           <span id={titleId} className="t-body">
-            {t('Apparence')}
+            {t('Appearance')}
           </span>
           <span className="t-meta">{lookWords(theme, appearance)}</span>
         </span>
@@ -88,7 +88,7 @@ export function SettingsScreen() {
 
   return (
     <div className={styles.page}>
-      <PageHead title={t('Réglages')} />
+      <PageHead title={t('Settings')} />
 
       {/* The app's own first: what is set most (Carnet's board, Agenda's calendar, Contacts' order). */}
       {placed(undefined)}
@@ -96,14 +96,14 @@ export function SettingsScreen() {
       <AppearanceRow />
 
       {/* As on the phone: the app says what its language changes (Carnet's, what Claude writes of a link). */}
-      <Section title={t('Langue')} id={SETTINGS_SECTIONS.language}>
+      <Section title={t('Language')} id={SETTINGS_SECTIONS.language}>
         {/* The section's title and the note under the choice say what it is: its name is read out, not shown. */}
         <div className={styles.block}>
           {/* Each language named in itself, so it is found whichever is shown. */}
           <Segmented label={words.language} value={locale} onChange={setInterfaceLocale} options={LOCALES.map(id => ({ value: id, label: LOCALE_NAMES[id] }))} />
           <p className="t-meta">{words.languageNote}</p>
         </div>
-        <p className={`${styles.help} t-meta`}>{t('Les recherches par mot, comme celle d’un emoji par son nom, comprennent les langues cochées.')}</p>
+        <p className={`${styles.help} t-meta`}>{t('Searches by word, such as finding an emoji by its name, understand the ticked languages.')}</p>
         {LANGUAGES.map(language => {
           const on = languages.includes(language.id);
           // The last language left stays: a search needs one.
@@ -117,13 +117,13 @@ export function SettingsScreen() {
         })}
       </Section>
 
-      <Section title={t('Données')} id={SETTINGS_SECTIONS.data}>
+      <Section title={t('Data')} id={SETTINGS_SECTIONS.data}>
         {/* Imports first, wearing `download`; the app's exports and cleanings after. */}
         {app.importer ? (
           <button type="button" className={styles.row} onClick={() => navigate(paths.importer)}>
             <Icon name="download" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Importer')}</span>
+              <span className="t-body">{t('Import')}</span>
               <span className="t-meta">{app.importer.meta()}</span>
             </span>
             <Icon name="chevronRight" size={20} />
@@ -135,16 +135,16 @@ export function SettingsScreen() {
           <div className={styles.row}>
             <Icon name="trash" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Vider la corbeille')}</span>
-              <span className="t-meta">{t('La corbeille est vide.')}</span>
+              <span className="t-body">{t('Empty the bin')}</span>
+              <span className="t-meta">{t('The bin is empty.')}</span>
             </span>
           </div>
         ) : app.emptyBin ? (
           <button type="button" className={styles.row} onClick={() => setConfirmTrash(true)}>
             <Icon name="trash" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Vider la corbeille')}</span>
-              <span className="t-meta">{t('Sinon, le serveur supprime ce qui est dans la corbeille au bout de {days} jours.', { days: TRASH_DAYS })}</span>
+              <span className="t-body">{t('Empty the bin')}</span>
+              <span className="t-meta">{t('Otherwise, the server deletes what is in the bin after {days} days.', { days: TRASH_DAYS })}</span>
             </span>
           </button>
         ) : null}
@@ -152,8 +152,8 @@ export function SettingsScreen() {
         <button type="button" className={`${styles.row} ${styles.keysRow}`} onClick={() => setShortcutsOpen(true)}>
           <Icon name="info" size={24} />
           <span className={styles.rowText}>
-            <span className="t-body">{t('Raccourcis clavier')}</span>
-            <span className="t-meta">{t('Appuyez sur ? n’importe où pour les afficher.')}</span>
+            <span className="t-body">{t('Keyboard shortcuts')}</span>
+            <span className="t-meta">{t('Press ? anywhere to show them.')}</span>
           </span>
         </button>
         {/* Last, and in danger ink: its own page asks what goes, the token and the word. */}
@@ -179,19 +179,19 @@ export function SettingsScreen() {
             <span id={adminId} className="t-body">
               {t('Administration')}
             </span>
-            <span className="t-meta">{t('Serveur, applications, Claude, sauvegardes et fichiers')}</span>
+            <span className="t-meta">{t('Server, apps, Claude, backups and files')}</span>
           </span>
           <Icon name="chevronRight" size={20} />
         </button>
       </Section>
 
-      <p className={`${styles.about} t-meta`}>{t('{suite} · vos applications, chez vous', { suite: SUITE_NAME })}</p>
+      <p className={`${styles.about} t-meta`}>{t('{suite} · your apps, at home', { suite: SUITE_NAME })}</p>
 
       <Confirm
         open={confirmTrash}
-        title={t('Vider la corbeille ?')}
-        message={t('Ce qui est dans la corbeille de {app} sera supprimé définitivement, sur tous vos appareils.', { app: APPS[app.id].name })}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('What is in {app}’s bin will be deleted for good, on all your devices.', { app: APPS[app.id].name })}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmTrash(false)}
         onConfirm={() => {

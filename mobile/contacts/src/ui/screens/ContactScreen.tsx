@@ -143,7 +143,7 @@ function Card({ title, lines }: { title: string; lines: readonly (DetailProps & 
 }
 
 const copy = (text: string): void => {
-  later(copyText(text).then(done => done && showSnack(t('Copié'), undefined, { tone: 'success' })));
+  later(copyText(text).then(done => done && showSnack(t('Copied'), undefined, { tone: 'success' })));
 };
 
 /** An address on its card: its plan, its lines (the street first) and what it is; under them, where it opens (the maps app chosen, else the phone's offered). A press opens it, a long press copies it. */
@@ -155,7 +155,7 @@ function PlaceCard({ address }: { address: AddressEntry }) {
   const open = (): void => later(openPlace(addressLine(address)));
   return (
     <Organic outline="card" style={styles.placeCard}>
-      <Tappable onPress={open} onLongPress={() => copy(lines.join('\n'))} style={[styles.placeMain, rowCorners(0, 2)]} accessibilityLabel={`${lines.join(', ')}, ${placeKindName(address)}`} accessibilityHint={t('Un appui l’ouvre dans les cartes, un appui long la copie.')}>
+      <Tappable onPress={open} onLongPress={() => copy(lines.join('\n'))} style={[styles.placeMain, rowCorners(0, 2)]} accessibilityLabel={`${lines.join(', ')}, ${placeKindName(address)}`} accessibilityHint={t('A tap opens it in maps, a long press copies it.')}>
         <Organic outline="frame" style={styles.planFrame}>
           <AddressPlan address={addressLine(address)} />
         </Organic>
@@ -171,7 +171,7 @@ function PlaceCard({ address }: { address: AddressEntry }) {
         </View>
       </Tappable>
       <View style={styles.placeTools}>
-        <Button label={chosen ? t('Ouvrir dans {maps}', { maps: mapsChoiceName(chosen) }) : t('Ouvrir l’adresse')} icon="mapPin" kind="tonal" small onPress={open} />
+        <Button label={chosen ? t('Open in {maps}', { maps: mapsChoiceName(chosen) }) : t('Open the address')} icon="mapPin" kind="tonal" small onPress={open} />
       </View>
     </Organic>
   );
@@ -184,7 +184,7 @@ function Addresses({ contact }: { contact: Contact }) {
   return (
     <View style={styles.block}>
       <AppText variant="section" style={styles.blockHead} accessibilityRole="header">
-        {shown.length > 1 ? t('Adresses') : t('Adresse')}
+        {shown.length > 1 ? t('Addresses') : t('Address')}
       </AppText>
       {shown.map(address => (
         <PlaceCard key={address.id} address={address} />
@@ -233,7 +233,7 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Ce contact n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" title={t('This contact no longer exists')} text={t('It was deleted, on this device or another.')} />
       </View>
     );
   }
@@ -254,20 +254,20 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
   const toBin = (): void => {
     const undo = trashContacts([id]);
     navigation.goBack();
-    showSnack(t('Contact placé dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(t('Contact moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
   // The star says what it did, and takes it back from the slip, as on the web.
   const toggleFavorite = (): void => {
     const undo = setFavorite(id, !contact.favorite);
-    showSnack(contact.favorite ? t('Retiré des favoris') : t('Ajouté aux favoris'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(contact.favorite ? t('Removed from favourites') : t('Added to favourites'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const menuItems: MenuItem[] = [
-    { label: t('Partager'), icon: 'share', onPress: () => later(shareContact(contact)) },
-    { label: t('Libellés'), icon: 'tag', onPress: () => setLabelling(true) },
+    { label: t('Share'), icon: 'share', onPress: () => later(shareContact(contact)) },
+    { label: t('Labels'), icon: 'tag', onPress: () => setLabelling(true) },
     // Without a server running Carnet, the slip says why rather than a sheet that cannot keep it (as on the web).
     {
-      label: t('Idée cadeau…'),
+      label: t('Gift idea…'),
       icon: 'bag',
       onPress: () => {
         const why = giftsUnavailable();
@@ -275,14 +275,14 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
         else setGifting(true);
       },
     },
-    { label: t('Supprimer'), icon: 'trash', danger: true, onPress: toBin },
+    { label: t('Delete'), icon: 'trash', danger: true, onPress: toBin },
   ];
 
   const askWhatsapp = async (): Promise<void> => {
     const answer = await askPermission('contacts');
     if (answer === 'granted') setAsked(value => value + 1);
     else if (answer === 'blocked')
-      showSnack(t('L’accès aux contacts du téléphone est refusé : il se donne dans les réglages d’Android.'), { label: t('Réglages'), run: openAppSettings }, { tone: 'warning' });
+      showSnack(t('Access to the phone’s contacts is denied: it is given in Android’s settings.'), { label: t('Settings'), run: openAppSettings }, { tone: 'warning' });
   };
 
   let turn = 0;
@@ -299,7 +299,7 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
         link: true,
         onPress: () => later(callNumber(phone.number)),
         onLongPress: () => copy(shown),
-        trailing: <IconButton icon="bubble" label={t('Écrire à {number}', { number: shown })} onPress={() => later(textNumber(phone.number))} />,
+        trailing: <IconButton icon="bubble" label={t('Text {number}', { number: shown })} onPress={() => later(textNumber(phone.number))} />,
       };
     }),
     ...(waNumber && whatsapp.installed
@@ -313,13 +313,13 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
             trailing:
               whatsapp.calls.voice || whatsapp.calls.video ? (
                 <>
-                  {whatsapp.calls.voice ? <IconButton icon="phoneCall" label={t('Appel vocal WhatsApp')} onPress={() => later(whatsappCall(whatsapp.calls.voice, false))} /> : null}
-                  {whatsapp.calls.video ? <IconButton icon="video" label={t('Appel vidéo WhatsApp')} onPress={() => later(whatsappCall(whatsapp.calls.video, true))} /> : null}
+                  {whatsapp.calls.voice ? <IconButton icon="phoneCall" label={t('WhatsApp voice call')} onPress={() => later(whatsappCall(whatsapp.calls.voice, false))} /> : null}
+                  {whatsapp.calls.video ? <IconButton icon="video" label={t('WhatsApp video call')} onPress={() => later(whatsappCall(whatsapp.calls.video, true))} /> : null}
                 </>
               ) : undefined,
           },
           ...(!whatsapp.calls.voice && !whatsapp.calls.video && asked === 0
-            ? [{ key: 'whatsapp-calls', icon: null, value: t('Afficher les appels WhatsApp'), kind: t('Lit les contacts du téléphone, où WhatsApp note les numéros qu’il connaît.'), link: true, onPress: () => later(askWhatsapp()) }]
+            ? [{ key: 'whatsapp-calls', icon: null, value: t('Show WhatsApp calls'), kind: t('Reads the phone’s contacts, where WhatsApp notes the numbers it knows.'), link: true, onPress: () => later(askWhatsapp()) }]
             : []),
         ]
       : []),
@@ -332,8 +332,8 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
   const reminder: (DetailProps & { key: string }) | null =
     birthday && !trashed && reminderNear(birthday, now)
       ? reminders.enabled
-        ? { key: 'reminder', icon: 'bell', value: t('Prévenir la veille'), kind: reminderRuleWords(reminders), checked: reminders.dayBefore, hint: t('Pour tous les anniversaires, sur ce téléphone'), onPress: () => setBirthdaySettings({ dayBefore: !reminders.dayBefore }) }
-        : { key: 'reminder', icon: 'bellOff', value: t('Prévenir des anniversaires'), kind: t('Une notification le jour venu, sur ce téléphone.'), checked: false, onPress: () => later(turnBirthdaysOn(true)) }
+        ? { key: 'reminder', icon: 'bell', value: t('Remind me the day before'), kind: reminderRuleWords(reminders), checked: reminders.dayBefore, hint: t('For every birthday, on this phone'), onPress: () => setBirthdaySettings({ dayBefore: !reminders.dayBefore }) }
+        : { key: 'reminder', icon: 'bellOff', value: tc('contact', 'Birthday notifications'), kind: t('A notification on the day, on this phone.'), checked: false, onPress: () => later(turnBirthdaysOn(true)) }
       : null;
 
   const about: (DetailProps & { key: string })[] = [
@@ -350,9 +350,9 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
         actions={
           trashed ? undefined : (
             <>
-              <IconButton icon="star" label={contact.favorite ? t('Retirer des favoris') : t('Ajouter aux favoris')} selected={contact.favorite} onPress={toggleFavorite} />
-              <IconButton icon="edit" label={t('Modifier')} onPress={() => navigation.navigate('Edit', { id })} />
-              <IconButton icon="more" label={t('Plus d’actions')} onPress={() => setMenu(true)} />
+              <IconButton icon="star" label={contact.favorite ? t('Remove from favourites') : t('Add to favourites')} selected={contact.favorite} onPress={toggleFavorite} />
+              <IconButton icon="edit" label={t('Edit')} onPress={() => navigation.navigate('Edit', { id })} />
+              <IconButton icon="more" label={t('More actions')} onPress={() => setMenu(true)} />
             </>
           )
         }
@@ -365,9 +365,9 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
               <Icon name="trash" size={22} color={theme.color.inkMuted} />
             </View>
             <AppText variant="body" style={styles.binText}>
-              {t('Ce contact est dans la corbeille.')}
+              {t('This contact is in the bin.')}
             </AppText>
-            <Button kind="text" icon="restore" label={t('Restaurer')} onPress={() => showSnack(t('Contact restauré'), { label: tc('undo', 'Annuler'), run: restoreContacts([id]) }, { tone: 'success' })} />
+            <Button kind="text" icon="restore" label={t('Restore')} onPress={() => showSnack(t('Contact restored'), { label: t('Undo'), run: restoreContacts([id]) }, { tone: 'success' })} />
           </Organic>
         ) : null}
         <View style={styles.head}>
@@ -393,12 +393,12 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
 
         {toCall || email || waNumber || place ? (
           <Animated.View entering={ACTIONS_IN} style={styles.actions}>
-            {toCall ? <Action icon="phoneCall" label={t('Appeler')} turn={next()} onPress={() => later(callNumber(toCall.number))} /> : null}
-            {toCall ? <Action icon="bubble" label={t('SMS')} turn={next()} onPress={() => later(textNumber(toCall.number))} /> : null}
+            {toCall ? <Action icon="phoneCall" label={t('Call')} turn={next()} onPress={() => later(callNumber(toCall.number))} /> : null}
+            {toCall ? <Action icon="bubble" label={tc('message', 'Text')} turn={next()} onPress={() => later(textNumber(toCall.number))} /> : null}
             {waNumber && whatsapp.installed ? <Action icon="phone" label={t('WhatsApp')} turn={next()} onPress={() => later(whatsappChat(waNumber))} /> : null}
-            {whatsapp.calls.video ? <Action icon="video" label={t('Vidéo')} turn={next()} onPress={() => later(whatsappCall(whatsapp.calls.video, true))} /> : null}
-            {email ? <Action icon="email" label={t('E-mail')} turn={next()} onPress={() => later(writeEmail(email.address))} /> : null}
-            {place ? <Action icon="mapPin" label={t('Itinéraire')} turn={next()} onPress={() => later(openPlace(addressLine(place), { directions: true, title: t('Itinéraire jusqu’à {name}', { name }) }))} /> : null}
+            {whatsapp.calls.video ? <Action icon="video" label={t('Video')} turn={next()} onPress={() => later(whatsappCall(whatsapp.calls.video, true))} /> : null}
+            {email ? <Action icon="email" label={t('Email')} turn={next()} onPress={() => later(writeEmail(email.address))} /> : null}
+            {place ? <Action icon="mapPin" label={t('Directions')} turn={next()} onPress={() => later(openPlace(addressLine(place), { directions: true, title: t('Directions to {name}', { name }) }))} /> : null}
           </Animated.View>
         ) : null}
 
@@ -410,18 +410,18 @@ export function ContactScreen({ navigation, route }: ScreenProps<'Contact'>) {
                 <Icon name="cake" size={22} color={theme.color.action} />
               </View>
               <View style={styles.binText}>
-                <AppText variant="bodyStrong">{t('Son anniversaire')}</AppText>
-                <AppText variant="meta">{[late === 0 ? t('Aujourd’hui') : t('Hier'), age !== null && age > 0 ? plural(age, 'an') : null].filter(Boolean).join(' · ')}</AppText>
+                <AppText variant="bodyStrong">{t('Their birthday')}</AppText>
+                <AppText variant="meta">{[late === 0 ? t('Today') : t('Yesterday'), age !== null && age > 0 ? plural(age, 'year') : null].filter(Boolean).join(' · ')}</AppText>
               </View>
-              <Button kind="tonal" icon="bubble" label={t('Souhaiter')} accessibilityLabel={t('Souhaiter son anniversaire à {name}', { name })} onPress={() => wish(contact, ways)} />
+              <Button kind="tonal" icon="bubble" label={t('Send wishes')} accessibilityLabel={t('Wish {name} a happy birthday', { name })} onPress={() => wish(contact, ways)} />
             </Organic>
           ) : null}
-          <Card title={t('Coordonnées')} lines={reach} />
+          <Card title={t('Contact details')} lines={reach} />
           <Addresses contact={contact} />
-          <Card title={t('À propos')} lines={about} />
+          <Card title={t('About')} lines={about} />
           {/* Nothing but a name: where the details would be, how to add them (as on the web). */}
           {reach.length === 0 && !place && about.length === 0 && !trashed ? (
-            <EmptyLine text={t('Rien d’autre pour l’instant : « Modifier » ajoute un numéro, un e-mail, une adresse, un anniversaire.')} align="center" style={styles.none} />
+            <EmptyLine text={t('Nothing else yet: “Edit” adds a number, an email, an address, a birthday.')} align="center" style={styles.none} />
           ) : null}
 
           <MentionedIn id={id} />

@@ -11,7 +11,7 @@ import { memo, useDeferredValue, useEffect, useId, useMemo, useRef, useState, ty
 
 import type { GlyphName } from '@unlease/design/glyphs';
 import { APP_WORDS } from '@unlease/core/appWords';
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import { formatRelative, plural } from '@unlease/core/services/format';
 import { findSettings, settingsWhere } from '@unlease/core/services/settingsSearch';
 import { bestPart, foldWords, highlight, snippet, type Matcher, type SearchDoc, type SearchHit } from '@unlease/core/services/searchIndex';
@@ -46,20 +46,20 @@ const WIDE = '(min-width: 1100px)';
 const FINE = '(hover: hover) and (pointer: fine)';
 
 /** A scope's chip: « Tout », or the kind's own (« Pages », « Notes »…). */
-const scopeName = (scope: SpotScope): string => (scope === 'all' ? t('Tout') : t(kindOf(scope)?.label ?? scope));
-const SINCE_NAMES: Readonly<Record<SpotSince, string>> = { day: tx('Aujourd’hui'), week: tx('7 derniers jours'), month: tx('30 derniers jours'), year: tx('12 derniers mois') };
+const scopeName = (scope: SpotScope): string => (scope === 'all' ? t('All') : t(kindOf(scope)?.label ?? scope));
+const SINCE_NAMES: Readonly<Record<SpotSince, string>> = { day: tx('Today'), week: tx('Last 7 days'), month: tx('Last 30 days'), year: tx('Last 12 months') };
 
 type Group = 'labels' | 'widen' | 'recent' | 'browse' | 'title' | 'settings' | 'content' | 'partial' | 'actions';
 
 const GROUP_TITLES: Readonly<Record<Group, string | null>> = {
-  labels: tx('Labels'),
+  labels: tx('Labels [notes]'),
   widen: null,
-  recent: tx('Récents'),
-  browse: tx('Les plus récents'),
-  title: tx('Titres'),
-  settings: tx('Réglages'),
-  content: tx('Dans le contenu'),
-  partial: tx('Résultats approchants'),
+  recent: tx('Recent [items]'),
+  browse: tx('Most recent'),
+  title: tx('Titles'),
+  settings: tx('Settings'),
+  content: tx('In the content'),
+  partial: tx('Close matches'),
   actions: tx('Actions'),
 };
 
@@ -84,9 +84,9 @@ interface Action {
 
 /** The shell's own actions, after each app's (« Nouvelle page », « Nouvelle note »…). */
 const SHELL_ACTIONS: readonly Action[] = [
-  { title: tx('Réglages'), icon: 'settings', run: () => navigate(paths.settings) },
+  { title: tx('Settings'), icon: 'settings', run: () => navigate(paths.settings) },
   { title: tx('Administration'), icon: 'server', run: () => navigate(paths.admin) },
-  { title: tx('Raccourcis clavier'), icon: 'key', run: () => setShortcutsOpen(true) },
+  { title: tx('Keyboard shortcuts'), icon: 'key', run: () => setShortcutsOpen(true) },
 ];
 
 /** The app's actions, then the shell's. */
@@ -198,7 +198,7 @@ const RowView = memo(function RowView({ row, id, at, active, matcher, now }: Row
       mark = Mark ? <Mark doc={row.doc} /> : <Icon name="search" size={20} />;
       title = <Highlight text={shown} ranges={highlight(shown, matcher)} />;
       const facts = kind?.facts(row.doc) ?? [];
-      if (row.hit?.tier === 'partial') facts.push(t('Manque : {words}', { words: row.hit.missing.join(', ') }));
+      if (row.hit?.tier === 'partial') facts.push(t('Missing: {words}', { words: row.hit.missing.join(', ') }));
       meta = facts.join(' · ');
       if (row.hit && row.hit.tier !== 'title') {
         const part = bestPart(row.doc, matcher);
@@ -210,7 +210,7 @@ const RowView = memo(function RowView({ row, id, at, active, matcher, now }: Row
     case 'label':
       mark = <LabelTag color={row.label.color} size={16} />;
       title = row.label.name;
-      meta = `${t('Label')} · ${plural(row.notes, t('note'), t('notes'))}`;
+      meta = `${tc('notes', 'Label')} · ${plural(row.notes, t('note'), t('notes'))}`;
       break;
     case 'action':
       mark = <Icon name={row.icon} size={20} />;
@@ -225,12 +225,12 @@ const RowView = memo(function RowView({ row, id, at, active, matcher, now }: Row
       break;
     }
     case 'more':
-      title = t('Afficher {count} de plus', { count: row.hidden });
+      title = t('Show {count} more', { count: row.hidden });
       break;
     case 'widen':
       mark = <Icon name="search" size={20} />;
-      title = t('Chercher partout');
-      meta = t('{results} sans les filtres', { results: plural(row.count, t('résultat'), t('résultats')) });
+      title = t('Search everywhere');
+      meta = t('{results} without the filters', { results: plural(row.count, t('result'), t('results')) });
       break;
   }
   return (
@@ -258,7 +258,7 @@ function FilterToken({ filter, labels, onRemove }: { filter: Filter; labels: rea
     <span className={`${styles.token} t-meta-strong`}>
       {label ? <LabelTag color={label.color} size={13} /> : <Icon name="clock" size={15} />}
       <span className={styles.tokenName}>{name}</span>
-      <button type="button" className={styles.tokenRemove} aria-label={t('Retirer le filtre {name}', { name })} tabIndex={-1} onMouseDown={keepFocus} onClick={onRemove}>
+      <button type="button" className={styles.tokenRemove} aria-label={t('Remove the filter {name}', { name })} tabIndex={-1} onMouseDown={keepFocus} onClick={onRemove}>
         <Icon name="close" size={14} />
       </button>
     </span>
@@ -521,12 +521,12 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
     refocus();
   };
   const sinceItems: MenuItem[] = [
-    { label: t('N’importe quand'), icon: 'clock', mark: chosenMark(since === null), onSelect: () => chooseSince(null) },
+    { label: t('Any time'), icon: 'clock', mark: chosenMark(since === null), onSelect: () => chooseSince(null) },
     ...SPOT_SINCE.map(value => ({ label: t(SINCE_NAMES[value]), icon: 'clock' as const, mark: chosenMark(since === value), onSelect: () => chooseSince(value) })),
   ];
   const sortItems: MenuItem[] = [
-    { label: t('Pertinence'), icon: 'sort', mark: chosenMark(!byDate), onSelect: () => chooseOrder(false) },
-    { label: t('Plus récents d’abord'), icon: 'sort', mark: chosenMark(byDate), onSelect: () => chooseOrder(true) },
+    { label: t('Relevance'), icon: 'sort', mark: chosenMark(!byDate), onSelect: () => chooseOrder(false) },
+    { label: t('Newest first'), icon: 'sort', mark: chosenMark(byDate), onSelect: () => chooseOrder(true) },
   ];
   const removeFilter = (at: number): void => {
     setFilters(current => current.filter((_, k) => k !== at));
@@ -551,8 +551,8 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             className={styles.input}
             value={text}
             autoFocus
-            placeholder={filters.length > 0 ? t('Affiner…') : APP_WORDS[theApp().id].search}
-            aria-label={t('Rechercher')}
+            placeholder={filters.length > 0 ? t('Refine…') : APP_WORDS[theApp().id].search}
+            aria-label={t('Search')}
             role="combobox"
             aria-expanded="true"
             aria-controls={listId}
@@ -566,10 +566,10 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             onChange={event => onChange(event.target.value)}
             onKeyDown={onKeyDown}
           />
-          {text || filters.length > 0 ? <IconButton icon="close" label={t('Effacer la recherche')} compact size={18} onClick={clear} /> : null}
+          {text || filters.length > 0 ? <IconButton icon="close" label={t('Clear search')} compact size={18} onClick={clear} /> : null}
           {fine && !text && filters.length === 0 ? (
             <kbd className={styles.key} aria-hidden="true">
-              {t('Échap')}
+              {t('Esc')}
             </kbd>
           ) : null}
         </div>
@@ -597,28 +597,28 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <div className={styles.refines}>
-            {liveLabels.length > 0 ? <RefineButton icon="tag" label={t('Label')} menuLabel={t('Filtrer par label')} items={labelItems} active={labelIds.length > 0} compact={!wide} /> : null}
-            <RefineButton icon="clock" label={since ? t(SINCE_NAMES[since]) : t('Modifié')} menuLabel={t('Modifié')} items={sinceItems} active={since !== null} compact={!wide} />
-            <RefineButton icon="sort" label={byDate ? t('Plus récents') : t('Pertinence')} menuLabel={t('Trier')} items={sortItems} active={byDate} compact={!wide} />
+            {liveLabels.length > 0 ? <RefineButton icon="tag" label={tc('notes', 'Label')} menuLabel={t('Filter by label')} items={labelItems} active={labelIds.length > 0} compact={!wide} /> : null}
+            <RefineButton icon="clock" label={since ? t(SINCE_NAMES[since]) : t('Edited')} menuLabel={t('Edited')} items={sinceItems} active={since !== null} compact={!wide} />
+            <RefineButton icon="sort" label={byDate ? t('Newest') : t('Relevance')} menuLabel={t('Sort')} items={sortItems} active={byDate} compact={!wide} />
           </div>
         </div>
       </div>
       <div className={styles.body}>
         <div ref={resultEdges} className={styles.results}>
-          {results.typos ? <p className={`${styles.notice} t-meta`}>{t('Aucun mot exact : voici les plus proches.')}</p> : null}
+          {results.typos ? <p className={`${styles.notice} t-meta`}>{t('No exact words: here are the closest.')}</p> : null}
           {nothing ? (
             // Settles in once, as an empty line does; another hint (the filters changed) settles in afresh, more letters typed do not.
             <div key={filters.length > 0 || scope !== 'all' ? 'narrowed' : 'all'} className={`${styles.nothing} ${settleIn}`}>
-              <p className="t-body-strong">{t('Rien ne correspond à « {query} »', { query: query.trim() || '…' })}</p>
-              <p className="t-meta">{filters.length > 0 || scope !== 'all' ? t('Les filtres écartent peut-être ce que vous cherchez.') : t('Essayez un autre mot, ou moins de mots.')}</p>
+              <p className="t-body-strong">{t('Nothing matches “{query}”', { query: query.trim() || '…' })}</p>
+              <p className="t-meta">{filters.length > 0 || scope !== 'all' ? t('The filters may be hiding what you are looking for.') : t('Try another word, or fewer words.')}</p>
             </div>
           ) : bare ? (
-            <EmptyLine text={filters.length > 0 ? t('Rien ne correspond à ces filtres.') : t('Rien de ce type pour l’instant.')} glyph="search" className={styles.bare} />
+            <EmptyLine text={filters.length > 0 ? t('Nothing matches these filters.') : t('Nothing of this kind yet.')} glyph="search" className={styles.bare} />
           ) : null}
           <div
             id={listId}
             role="listbox"
-            aria-label={t('Résultats')}
+            aria-label={t('Results')}
             className={styles.list}
             onMouseDown={keepFocus}
             onPointerMove={event => {
@@ -660,14 +660,14 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
           <span className={styles.hints}>
             <span>
               <kbd className={board.kbd}>↑</kbd>
-              <kbd className={board.kbd}>↓</kbd> {t('choisir')}
+              <kbd className={board.kbd}>↓</kbd> {t('choose')}
             </span>
             <span>
-              <kbd className={board.kbd}>↵</kbd> {t('ouvrir')}
+              <kbd className={board.kbd}>↵</kbd> {t('open')}
             </span>
             <span>
               <kbd className={board.kbd}>{modKey()}</kbd>
-              <kbd className={board.kbd}>↵</kbd> {t('nouvel onglet')}
+              <kbd className={board.kbd}>↵</kbd> {t('new tab')}
             </span>
             {/* Only the keys that do something here: the types with more than one, the labels where there are some. */}
             {scopes.length > 2 ? (
@@ -677,14 +677,14 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             ) : null}
             {liveLabels.length > 0 ? (
               <span>
-                <kbd className={board.kbd}>#</kbd> {t('label')}
+                <kbd className={board.kbd}>#</kbd> {tc('notes', 'label')}
               </span>
             ) : null}
           </span>
         </div>
       ) : null}
       <p id={`${listId}-count`} className={styles.live} aria-live="polite">
-        {total === null ? '' : plural(total, t('résultat'), t('résultats'))}
+        {total === null ? '' : plural(total, t('result'), t('results'))}
       </p>
     </div>
   );
@@ -700,7 +700,7 @@ export function Spotlight() {
     return () => cancelIdleCallback(handle);
   }, []);
   return (
-    <Layer open={open} onDismiss={close} label={t('Rechercher')} panelClassName={styles.panel}>
+    <Layer open={open} onDismiss={close} label={t('Search')} panelClassName={styles.panel}>
       {open ? <SpotlightBody onClose={close} /> : null}
     </Layer>
   );

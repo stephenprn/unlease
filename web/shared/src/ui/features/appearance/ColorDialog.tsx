@@ -21,7 +21,7 @@ import styles from './appearance.module.css';
 import { ColorPicker } from './ColorPicker';
 
 export function colorTitle(target: PickTarget): string {
-  return target === 'ground' ? t('Couleur du fond') : COLOR_ROLE_WORDS[target].title;
+  return target === 'ground' ? t('Background colour') : COLOR_ROLE_WORDS[target].title;
 }
 
 /** The appearance with `color` in the place `target` names. */
@@ -107,9 +107,9 @@ export function ColorDialog({ open, target, initial, appearance, onCancel, onCho
           foot={
             <>
               <Button kind="text" onClick={onCancel}>
-                {t('Annuler')}
+                {t('Cancel')}
               </Button>
-              <Button type="submit">{t('Choisir')}</Button>
+              <Button type="submit">{t('Choose')}</Button>
             </>
           }
         >

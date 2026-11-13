@@ -216,7 +216,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
                 onLongPress={event => create(day, event)}
                 delayLongPress={350}
                 style={[styles.column, { left: GUTTER + index * column, width: column, height: HOUR_HEIGHT * 24 }]}
-                accessibilityLabel={t('Créer un événement le {day}', { day: longDay(day) })}
+                accessibilityLabel={t('Create an event on {day}', { day: longDay(day) })}
               >
                 {boxes[index]!.map(box => {
                   const item = eventItem(state, box.occurrence);

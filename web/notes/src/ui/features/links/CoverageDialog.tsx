@@ -46,7 +46,7 @@ function OutletRow({ outlet, index }: { outlet: CoverageOutlet; index: number })
         <p className="t-meta-strong">{outlet.angle}</p>
         {outlet.adds ? <p className="t-meta">{outlet.adds}</p> : null}
       </div>
-      {url ? <IconButton icon="external" label={t('Lire sur {outlet}', { outlet: outlet.outlet })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
+      {url ? <IconButton icon="external" label={t('Read on {outlet}', { outlet: outlet.outlet })} className={styles.offerEnd} onClick={() => window.open(url, '_blank', 'noopener,noreferrer')} /> : <span className={styles.offerSpace} aria-hidden="true" />}
     </li>
   );
 }
@@ -62,18 +62,18 @@ function CoverageBody({ id, titleId, onDismiss }: { id: string; titleId: string;
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Claude cherche le même sujet dans d’autres médias…')}</p>
-        <p className="t-meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</p>
+        <p className="t-body">{t('Claude is looking for the same story in other outlets…')}</p>
+        <p className="t-meta">{t('A web search often takes half a minute.')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Claude n’a pas pu chercher : {reason}', { reason: t(phase.reason) })}
+        {t('Claude couldn’t search: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
         {phase.answer.story ? <p className="t-body-strong">{phase.answer.story}</p> : null}
         {phase.answer.outlets.length === 0 ? (
-          <EmptyLine size="body" text={t('Aucun autre média trouvé sur ce sujet pour l’instant.')} />
+          <EmptyLine size="body" text={t('No other outlet found on this story for now.')} />
         ) : (
           <ul ref={wellRef} className={`${styles.couponsWell} paper`} style={wellVars} aria-label={MODULE_NAMES.coverage}>
             {phase.answer.outlets.map((outlet, index) => (
@@ -82,7 +82,7 @@ function CoverageBody({ id, titleId, onDismiss }: { id: string; titleId: string;
           </ul>
         )}
         {phase.answer.note ? <p className="t-body">{phase.answer.note}</p> : null}
-        <p className="t-meta">{t('Trouvé sur le web par Claude le {day} à {time}.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}</p>
+        <p className="t-meta">{t('Found on the web by Claude on {day} at {time}.', { day: formatDay(phase.answer.searchedAt, now), time: formatClock(phase.answer.searchedAt) })}</p>
       </>
     );
   const foot =
@@ -90,15 +90,15 @@ function CoverageBody({ id, titleId, onDismiss }: { id: string; titleId: string;
       <>
         {phase.kind === 'failed' ? (
           <Button kind="text" onClick={() => search(false)}>
-            {t('Réessayer')}
+            {t('Try again')}
           </Button>
         ) : (
           <Button kind="text" icon="refresh" onClick={() => search(true)}>
-            {t('Chercher à nouveau')}
+            {t('Search again')}
           </Button>
         )}
         <Button icon="external" href={link.url}>
-          {t('Ouvrir la page')}
+          {t('Open the page')}
         </Button>
       </>
     );

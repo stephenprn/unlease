@@ -23,7 +23,7 @@ import type { RecordStore } from '../../sync/records';
 /** Its rows in the suite's spending (`analyses.task`). */
 export const CALENDAR_TASK = 'calendar';
 export const CALENDAR_ASK_OFF = 'Les questions sur l’agenda sont désactivées dans l’administration';
-export const LINK_GONE = 'Lien introuvable';
+export const LINK_GONE = 'Link not found';
 
 const DEADLINE_MS = 60_000;
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -97,20 +97,20 @@ export class CalendarClaude {
     const record = (ok: boolean, error: string | null, spent: CallUsage | null) => usage.record(CALENDAR_TASK, { usage: spent, ok, error, durationMs: this.now() - started, result: null });
     try {
       const { message, usage: spent, content } = await client.holding(hold).within(build(client), deadline);
-      if (message.stop_reason === 'refusal') throw new ModelError('Question refusée par Claude', spent);
-      if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', spent);
+      if (message.stop_reason === 'refusal') throw new ModelError('Question refused by Claude', spent);
+      if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', spent);
       const text = content
         .filter(block => block.type === 'text')
         .map(block => (block as { text: string }).text)
         .join('')
         .trim();
-      if (!text) throw new ModelError('Réponse de Claude illisible', spent);
+      if (!text) throw new ModelError('Unreadable answer from Claude', spent);
       record(true, null, spent);
       log.info('calendar asked Claude', { what, costUsd: Math.round(spent.costUsd * 10_000) / 10_000 });
       return { ok: true, answer: text };
     } catch (error) {
       if (!deadline.aborted && !(error instanceof ModelError)) log.error('calendar call crashed', { what, error });
-      const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de Claude';
+      const message = deadline.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Erreur de Claude';
       record(false, message, error instanceof ModelError ? error.usage : null);
       return { ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message };
     } finally {

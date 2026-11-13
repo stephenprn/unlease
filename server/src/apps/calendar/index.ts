@@ -1,5 +1,6 @@
 /**
- * Agenda on the server: the calendars subscribed to (`feeds.ts`), the public holidays from Nager.Date
+ * Agenda on the server: the calendars subscribed to (`feeds.ts`; over CalDAV with a login, `caldav.ts`,
+ * the logins kept apart, `logins.ts`), the public holidays from Nager.Date
  * (`holidays.ts`), the weather (`weather.ts`), what it asks Claude (`claude.ts`), the web's reminders
  * as push notifications (`reminders.ts`, `webpush.ts`), the published calendar and its routes
  * (`routes.ts`), its bin (`bin.ts`), and how its files, its list and its calendar file look in the
@@ -21,6 +22,7 @@ import { reviveRule } from '../../sync/revive';
 import { emptyCalendarBin, exceptionsOf } from './bin';
 import { CalendarClaude } from './claude';
 import { FeedReader } from './feeds';
+import { FeedLogins } from './logins';
 import { calendarFilesInUse, FOLDER, layoutEvents, readEvents } from './files';
 import { HolidayKeeper } from './holidays';
 import { calendarMarkdown } from './markdown';
@@ -54,7 +56,7 @@ export interface CalendarApp extends ServerApp {
 export function createCalendarApp(options: CalendarAppOptions): CalendarApp {
   const { db, sync, records, settings, usage, claude, fetcher } = options;
   const now = options.now ?? Date.now;
-  const feeds = new FeedReader({ sync, records, fetcher, now });
+  const feeds = new FeedReader({ sync, records, fetcher, logins: new FeedLogins(db), now });
   const holidays = new HolidayKeeper({ sync, records, settings, fetcher, now });
   const weather = new WeatherService(fetcher, now);
   const asker = new CalendarClaude({ usage, claude, settings: () => settings.calendar(), records, now });

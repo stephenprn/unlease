@@ -25,7 +25,7 @@ export function useInfoBubble(): { readonly open: boolean; readonly id: string; 
 }
 
 export function InfoButton({ open, bubble, onClick }: { open: boolean; bubble: string; onClick: () => void }) {
-  return <IconButton icon="info" label={open ? t('Masquer l’explication') : t('Comment ça marche')} selected={open} expanded={open} controls={open ? bubble : undefined} size={20} onClick={onClick} />;
+  return <IconButton icon="info" label={open ? t('Hide the explanation') : t('How it works')} selected={open} expanded={open} controls={open ? bubble : undefined} size={20} onClick={onClick} />;
 }
 
 export function InfoBubble({ id, open, text }: { id: string; open: boolean; text: string }) {

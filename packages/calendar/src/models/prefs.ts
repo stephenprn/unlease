@@ -1,8 +1,9 @@
 /**
  * How the calendar looks on this device (Réglages, never synced): the view it opens on (« Aujourd'hui » too), the week's
  * first day, weekends and week numbers, the hours' format, a new event's length and reminders, and
- * the layers shown from the other apps.
+ * the layers shown from the other apps, and the morning digest.
  */
+import { DIGEST_AT, isDigestTime } from '../services/digest';
 import { isCalendarView, type CalendarView } from '../services/eventText';
 
 export interface CalendarPrefs {
@@ -27,6 +28,12 @@ export interface CalendarPrefs {
   readonly weather: boolean;
   /** Where the weather is asked for days without a placed event ('' none). */
   readonly homePlace: string;
+  /** The morning digest (`services/digest`): a notification summing up the day, at `digestAt`. */
+  readonly digest: boolean;
+  /** `07:30`, one of `DIGEST_TIMES`. */
+  readonly digestAt: string;
+  /** Rung on a day with nothing too (« Rien de prévu aujourd’hui »). */
+  readonly digestEmpty: boolean;
 }
 
 export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
@@ -43,6 +50,9 @@ export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
   pageDates: false,
   weather: true,
   homePlace: '',
+  digest: false,
+  digestAt: DIGEST_AT,
+  digestEmpty: false,
 };
 
 export const EVENT_LENGTHS = [15, 30, 45, 60, 90, 120] as const;
@@ -67,5 +77,8 @@ export function readCalendarPrefs(value: unknown): CalendarPrefs {
     pageDates: flag('pageDates', d.pageDates),
     weather: flag('weather', d.weather),
     homePlace: typeof raw.homePlace === 'string' ? raw.homePlace.slice(0, 200) : d.homePlace,
+    digest: flag('digest', d.digest),
+    digestAt: isDigestTime(raw.digestAt) ? raw.digestAt : d.digestAt,
+    digestEmpty: flag('digestEmpty', d.digestEmpty),
   };
 }

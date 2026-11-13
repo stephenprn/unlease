@@ -75,9 +75,9 @@ export function ModuleBar({ id }: { id: string }) {
     keepCopy(id).then(
       page => {
         const path = pathOfRef('page', page);
-        showSnack(t('Copie gardée dans {app}', { app: APPS.pages.name }), path ? { label: t('Ouvrir'), run: () => navigate(path) } : undefined, { tone: 'success' });
+        showSnack(t('Copy kept in {app}', { app: APPS.pages.name }), path ? { label: t('Open'), run: () => navigate(path) } : undefined, { tone: 'success' });
       },
-      (error: unknown) => showError(error instanceof Error ? t(error.message) : t('erreur inconnue')),
+      (error: unknown) => showError(error instanceof Error ? t(error.message) : t('unknown error')),
     ).finally(() => setCopying(false));
   };
 
@@ -85,7 +85,7 @@ export function ModuleBar({ id }: { id: string }) {
     setDating(true);
     agendaDraft(id).then(
       path => navigate(path),
-      (error: unknown) => showError(error instanceof Error ? t(error.message) : t('erreur inconnue')),
+      (error: unknown) => showError(error instanceof Error ? t(error.message) : t('unknown error')),
     ).finally(() => setDating(false));
   };
 
@@ -121,7 +121,7 @@ export function ModuleBar({ id }: { id: string }) {
     if (module === 'archive') {
       return copy ? (
         <Button key={module} kind="tonal" small icon="page" onClick={() => navigate(copy)}>
-          {t('Voir la copie')}
+          {t('See the copy')}
         </Button>
       ) : (
         <Button key={module} kind="tonal" small icon={icon} busy={copying} onClick={keep}>

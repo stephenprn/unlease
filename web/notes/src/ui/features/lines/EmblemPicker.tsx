@@ -17,7 +17,7 @@ export interface EmblemPickerProps {
   readonly label?: string;
 }
 
-function EmblemPickerComponent({ value, color, onChange, label = t('Emblème') }: EmblemPickerProps) {
+function EmblemPickerComponent({ value, color, onChange, label = t('Emblem') }: EmblemPickerProps) {
   const group = useRef<HTMLDivElement>(null);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;

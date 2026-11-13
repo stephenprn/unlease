@@ -5,6 +5,6 @@ import type { SeerrSettings } from '@unlease/core/sync/settings';
 
 /** « Seerr »: linked (its address), or not. */
 export function seerrLine(seerr: SeerrSettings | null): StatusLine {
-  if (!seerr?.url) return { tone: 'off', title: t('Seerr non relié'), meta: t('Le module Seerr n’apparaît qu’une fois relié.') };
-  return { tone: 'ok', title: t('Seerr relié'), meta: seerr.url.replace(/^https?:\/\//, '') };
+  if (!seerr?.url) return { tone: 'off', title: t('Seerr not linked'), meta: t('The Seerr module shows only once it is linked.') };
+  return { tone: 'ok', title: t('Seerr linked'), meta: seerr.url.replace(/^https?:\/\//, '') };
 }

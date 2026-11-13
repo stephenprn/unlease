@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
-import { t } from '@unlease/core/i18n';
+import { tc } from '@unlease/core/i18n';
 import { LINE_COLORS, LINE_COLOR_NAMES, type LineColor } from '@unlease/design/colors';
 
 import { Icon } from './Icon';
@@ -58,7 +58,7 @@ function LineColorPickerComponent({ value, onChange, allowNone = false, flush = 
   const columns = columnsFor(LINE_COLORS.length + (allowNone ? 1 : 0));
   const cell = { width: `${100 / columns}%` } as const;
   const swatches = [
-    ...(allowNone ? [<Swatch key="none" label={noneLabel ?? t('Aucune couleur')} turn={0} selected={value === null} fill="none" tick={theme.color.ink} onFill={false} onPress={() => onChange(null)} />] : []),
+    ...(allowNone ? [<Swatch key="none" label={noneLabel ?? tc('collection', 'No colour')} turn={0} selected={value === null} fill="none" tick={theme.color.ink} onFill={false} onPress={() => onChange(null)} />] : []),
     ...LINE_COLORS.map((color, index) => <Swatch key={color} label={LINE_COLOR_NAMES[color]} turn={index + 1} selected={color === value} fill={theme.line[color].fill} tick={theme.line[color].on} onFill onPress={() => onChange(color)} />),
   ];
   if (flush) {

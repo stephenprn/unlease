@@ -45,9 +45,9 @@ function RatingsBody({ id }: { id: string }) {
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Claude cherche les notes de {work}…', { work: link.title || linkShop(link) })}
+          {t('Claude is looking up the ratings of {work}…', { work: link.title || linkShop(link) })}
         </AppText>
-        <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText>
+        <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText>
       </View>
     );
   }
@@ -56,7 +56,7 @@ function RatingsBody({ id }: { id: string }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+            {t('Claude couldn’t search: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <SearchFoot failed url={link.url} onSearch={search} />
@@ -72,7 +72,7 @@ function RatingsBody({ id }: { id: string }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {work ? <AppText variant="bodyStrong">{work}</AppText> : null}
       {ratings.length === 0 ? (
-        <EmptyLine size="body" text={t('Aucune note trouvée pour l’instant.')} />
+        <EmptyLine size="body" text={t('No rating found for now.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES.ratings}>
           {ratings.map((rating, index) => (
@@ -81,7 +81,7 @@ function RatingsBody({ id }: { id: string }) {
         </Organic>
       )}
       <AppText variant="meta">
-        {t('Trouvé sur le web par Claude le {day} à {time}. Les notes bougent, vérifiez-les sur chaque site.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
+        {t('Found on the web by Claude on {day} at {time}. Ratings move: check them on each site.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
       </AppText>
     </SheetScroll>
     <SearchFoot failed={false} url={link.url} onSearch={search} />
@@ -110,7 +110,7 @@ function RatingRow({ rating, first, slot }: { rating: Rating; first: boolean; sl
         </Organic>
         {rating.count ? <AppText variant="meta">{rating.count}</AppText> : null}
       </View>
-      {url ? <IconButton icon="external" label={t('Voir sur {site}', { site: rating.source })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
+      {url ? <IconButton icon="external" label={t('See on {site}', { site: rating.source })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
     </View>
   );
 }

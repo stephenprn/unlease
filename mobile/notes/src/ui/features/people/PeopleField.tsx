@@ -21,7 +21,7 @@ export function PeopleField({ type, id, ids, editable = true }: { type: 'note' |
   if (!any && ids.length === 0) return null;
   return (
     <View style={styles.field}>
-      <AppText variant="metaStrong">{t('Personnes')}</AppText>
+      <AppText variant="metaStrong">{t('People')}</AppText>
       <View style={styles.chips}>
         {people.map(person => (
           <PersonChip key={person.contact.id} person={person} />
@@ -31,8 +31,8 @@ export function PeopleField({ type, id, ids, editable = true }: { type: 'note' |
             kind="text"
             small
             icon={people.length > 0 ? 'edit' : 'personPlus'}
-            label={people.length > 0 ? t('Modifier') : t('Ajouter une personne')}
-            accessibilityLabel={people.length > 0 ? t('Modifier les personnes') : undefined}
+            label={people.length > 0 ? t('Edit') : t('Add someone')}
+            accessibilityLabel={people.length > 0 ? t('Change the people') : undefined}
             onPress={() => {
               // The keyboard of the note field would cover the people.
               Keyboard.dismiss();

@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { labelKey } from '@unlease/notes/models/entities';
 import { createLabel } from '@app/store/actions';
@@ -52,7 +52,7 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <SheetScroll contentContainerStyle={styles.body}>
-        {order.length === 0 ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant : nommez le premier.')} slot={24} gap={16} style={styles.empty} /> : null}
+        {order.length === 0 ? <EmptyLine glyph="tag" text={t('No labels yet: name the first one.')} slot={24} gap={16} style={styles.empty} /> : null}
         {order.map(id => {
           const label = labels[id];
           if (!label) return null;
@@ -72,7 +72,7 @@ export function LabelPickerSheet({ visible, current, title, onDismiss, onPick }:
           );
         })}
         {/* On the rows' columns, its ✓ inside it: the field and its action one height. */}
-        <NewItemField value={name} onChangeText={setName} onSubmit={create} placeholder={t('Nouveau label')} accessibilityLabel={t('Nom du nouveau label')} submitLabel={t('Créer')} maxLength={60} icon="tag" style={styles.create} />
+        <NewItemField value={name} onChangeText={setName} onSubmit={create} placeholder={tc('notes', 'New label')} accessibilityLabel={tc('notes', 'New label’s name')} submitLabel={t('Create')} maxLength={60} icon="tag" style={styles.create} />
       </SheetScroll>
     </Sheet>
   );

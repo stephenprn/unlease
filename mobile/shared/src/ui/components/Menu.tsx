@@ -59,7 +59,7 @@ function MenuComponent({ visible, items, onDismiss, top = 56, bottom }: { visibl
   // The host stays, empty and untouchable, so the menu's own exit can play when it closes.
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none" collapsable={false}>
-      {visible ? <Tappable accessibilityLabel={t('Fermer le menu')} onPress={onDismiss} style={StyleSheet.absoluteFill} noTint /> : null}
+      {visible ? <Tappable accessibilityLabel={t('Close the menu')} onPress={onDismiss} style={StyleSheet.absoluteFill} noTint /> : null}
       {visible ? (
         <AnimatedOrganic
           entering={MENU_IN}

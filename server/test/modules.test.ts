@@ -104,7 +104,7 @@ describe('POST /api/recipe', () => {
   it('asks Claude when the page gives no list, and says why without a key', async () => {
     server = createTestServer({ envApiKey: null, fetcher: new FakeFetcher({ [RECIPE]: html(recipePage(false)) }) });
     const refused = await post('/api/recipe', { link: { id: 'r1', url: RECIPE }, lang: 'fr' });
-    expect(refused).toEqual({ status: 409, body: { error: 'Cette page ne donne pas ses ingrédients toute seule : ajoutez une clé Claude pour qu’il les lise.' } });
+    expect(refused).toEqual({ status: 409, body: { error: 'This page does not list its ingredients by itself: add a Claude key so Claude reads them.' } });
     server.close();
 
     server = createTestServer({ fetcher: new FakeFetcher({ [RECIPE]: html(recipePage(false)) }) });

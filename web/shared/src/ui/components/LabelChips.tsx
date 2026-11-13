@@ -97,7 +97,7 @@ export function LabelChips({ labels, chosen, onToggle, onCreate, maxLength, word
         <span className={styles.naming}>
           <span className={styles.field} data-wrong={problem ? true : undefined}>
             {/* The chip's plus becomes the way back. */}
-            <IconButton icon="close" label={t('Annuler')} shape={2} compact onClick={close} />
+            <IconButton icon="close" label={t('Cancel')} shape={2} compact onClick={close} />
             <input
               className={styles.input}
               value={name}

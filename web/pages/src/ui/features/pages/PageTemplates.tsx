@@ -30,7 +30,7 @@ export function PageTemplates({ page }: { page: string }) {
   return (
     <div className={styles.templates} role="group" aria-labelledby={leadId}>
       <p id={leadId} className={`${styles.templatesLead} t-meta`}>
-        {t('Partir d’un modèle')}
+        {t('Start from a template')}
       </p>
       <div className={styles.templateRow}>
         {TEMPLATE_CHOICES.map(choice => (

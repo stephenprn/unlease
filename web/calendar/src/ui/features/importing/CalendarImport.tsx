@@ -125,7 +125,7 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
       const count = applyImport(final);
       setReport(importReport(final, { files: read.files, now, period: choices.period }, useCalendarStore.getState().labels));
       if (count > 0) {
-        showUndo(t('{events} importés', { events: plural(count, 'événement') }), () => undoImport(final));
+        showUndo(t('{events} imported', { events: plural(count, 'event') }), () => undoImport(final));
         onImported?.();
       }
       onFlow?.(false);
@@ -136,31 +136,31 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
     setRemoving(false);
     if (!read) return;
     const { count, undo } = removeImported(together(read));
-    showUndo(plural(count, 'événement placé dans la corbeille', 'événements placés dans la corbeille'), undo);
+    showUndo(plural(count, 'event moved to the bin', 'events moved to the bin'), undo);
     if (embedded) restart();
     else navigate(paths.home);
   };
 
   if (step === 'source' || !read || !choices || !plan || !context) {
     return (
-      <ImportFrame step="source" embedded={embedded} title={t('Votre agenda Google')} lead={t('Un fichier .ics, d’où qu’il vienne : l’export de Google Agenda, un agenda d’Apple ou d’Outlook, une invitation.')}>
-        <ImportSheet title={t('Depuis Google Agenda')}>
+      <ImportFrame step="source" embedded={embedded} title={t('Your Google calendar')} lead={t('An .ics file, wherever it comes from: Google Calendar’s export, an Apple or Outlook calendar, an invitation.')}>
+        <ImportSheet title={t('From Google Calendar')}>
           <div className={settings.block}>
             <ImportInstructions
               steps={[
-                t('Sur un ordinateur, ouvrez Google Agenda, puis Paramètres › Importer et exporter › Exporter.'),
-                t('Google vous donne une archive .zip : un fichier .ics par agenda. Google Takeout, en ne cochant qu’Agenda, donne la même.'),
-                t('Déposez l’archive ici telle quelle, ou les fichiers .ics des agendas voulus.'),
+                t('On a computer, open Google Calendar, then Settings › Import & export › Export.'),
+                t('Google gives you a .zip archive: one .ics file per calendar. Google Takeout, with only Calendar ticked, gives the same.'),
+                t('Drop the archive here as it is, or the .ics files of the calendars you want.'),
               ]}
             />
             <ImportDrop
-              label={t('Déposez l’archive .zip ou les fichiers .ics')}
-              meta={t('ou cliquez pour les choisir')}
+              label={t('Drop the .zip archive or the .ics files')}
+              meta={t('or click to choose them')}
               accept=".ics,.ical,.ifb,.icalendar,.zip,text/calendar,application/zip"
               multiple
               reading={reading}
-              readingLabel={t('Lecture des agendas…')}
-              inputLabel={t('Fichiers d’agenda')}
+              readingLabel={t('Reading the calendars…')}
+              inputLabel={t('Calendar files')}
               onFiles={take}
             />
             {refused.length > 0 ? (
@@ -169,7 +169,7 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
                 <span className={styles.problemText}>
                   {refused.map(file => (
                     <span key={file.name} className="t-body">
-                      {t('{file} : {why}', { file: file.name, why: file.why })}
+                      {t('{file}: {why}', { file: file.name, why: file.why })}
                     </span>
                   ))}
                 </span>
@@ -192,24 +192,24 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
         lead={IMPORT_WORDS.previewLead}
         back={
           <Button kind="text" onClick={restart}>
-            {t('Retour')}
+            {t('Back')}
           </Button>
         }
-        forward={<Button onClick={() => setStep('choices')}>{t('Continuer')}</Button>}
+        forward={<Button onClick={() => setStep('choices')}>{t('Continue')}</Button>}
       >
         <ImportSheet label={IMPORT_WORDS.previewTitle}>
           <div className={settings.block}>
-            <ImportCounts lines={[...lines, ...(refused.length > 0 ? [{ icon: 'alert' as const, text: plural(refused.length, 'fichier mis de côté', 'fichiers mis de côté'), meta: refused.map(file => t('{file} : {why}', { file: file.name, why: file.why })).join(' · ') }] : [])]} />
+            <ImportCounts lines={[...lines, ...(refused.length > 0 ? [{ icon: 'alert' as const, text: plural(refused.length, 'file set aside', 'files set aside'), meta: refused.map(file => t('{file}: {why}', { file: file.name, why: file.why })).join(' · ') }] : [])]} />
           </div>
         </ImportSheet>
         {imported > 0 ? (
-          <ImportSheet title={t('Déjà importé')}>
+          <ImportSheet title={t('Imported already')}>
             <div className={settings.block}>
-              <p className="t-body">{t('{events} de ce fichier dans votre agenda', { events: plural(imported, 'événement') })}</p>
-              <p className="t-meta">{t('Pour repartir de zéro : retirez-les, puis importez le fichier à nouveau.')}</p>
+              <p className="t-body">{t('{events} from this file in your calendar', { events: plural(imported, 'event') })}</p>
+              <p className="t-meta">{t('To start afresh: remove them, then import the file again.')}</p>
               <div className={settings.buttons}>
                 <Button kind="dangerText" icon="trash" onClick={() => setRemoving(true)}>
-                  {t('Retirer ces événements')}
+                  {t('Remove these events')}
                 </Button>
               </div>
             </div>
@@ -217,7 +217,7 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
         ) : null}
         <ImportPreview
           entries={entries}
-          label={t('Les événements du fichier')}
+          label={t('The file’s events')}
           choice={{
             isOn: (entry: PreviewEntry) => !choices.leftOut.has(entry.key),
             can: (entry: PreviewEntry) => entry.fate === 'new' || entry.fate === 'update',
@@ -231,9 +231,9 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
         />
         <Confirm
           open={removing}
-          title={t('Retirer {events} ?', { events: plural(imported, 'événement') })}
-          message={t('Les événements de ce fichier qui sont dans votre agenda iront à la corbeille, même ceux modifiés depuis. Ils y restent {days} jours.', { days: TRASH_RETENTION_DAYS })}
-          confirmLabel={t('Retirer')}
+          title={t('Remove {events}?', { events: plural(imported, 'event') })}
+          message={t('The events from this file that are in your calendar go to the bin, even those changed since. They stay there for {days} days.', { days: TRASH_RETENTION_DAYS })}
+          confirmLabel={t('Remove')}
           danger
           onCancel={() => setRemoving(false)}
           onConfirm={remove}
@@ -255,22 +255,22 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
         lead={IMPORT_WORDS.choicesLead}
         back={
           <Button kind="text" onClick={() => setStep('preview')}>
-            {t('Retour')}
+            {t('Back')}
           </Button>
         }
         forward={
           <Button icon="download" onClick={write}>
-            {plan.count > 0 ? t('Importer {events}', { events: plural(plan.count, 'événement') }) : t('Importer')}
+            {plan.count > 0 ? t('Import {events}', { events: plural(plan.count, 'event') }) : t('Import')}
           </Button>
         }
       >
-        <ImportSheet label={t('Période')}>
-          <ChoiceRadios<ImportPeriod> title={t('Période')} meta={t('Une série qui se répète encore compte comme à venir, avec ses dates passées.')} value={choices.period} options={counts ? periodOptions(counts, now) : []} onChange={period => change({ period })} />
+        <ImportSheet label={t('Period')}>
+          <ChoiceRadios<ImportPeriod> title={t('Period')} meta={t('A series that still repeats counts as upcoming, with its past dates.')} value={choices.period} options={counts ? periodOptions(counts, now) : []} onChange={period => change({ period })} />
         </ImportSheet>
-        <ImportSheet label={t('Libellés')}>
+        <ImportSheet label={t('Labels')}>
           <ChoiceSwitch
-            title={t('Ranger sous un libellé')}
-            meta={several ? t('Un libellé par agenda, à son nom : pour retrouver, filtrer ou retirer ses événements d’un coup.') : t('Pour retrouver, filtrer ou retirer ces événements d’un coup.')}
+            title={t('File under a label')}
+            meta={several ? t('A label per calendar, at its name: to find, filter or remove its events at once.') : t('To find, filter or remove these events at once.')}
             checked={labelNames !== null}
             onChange={on => change({ labelNames: on ? importLabelNames(read.files) : null })}
           >
@@ -279,7 +279,7 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
                 {offered.map(index => (
                   <TextField
                     key={index}
-                    label={several ? t('Libellé de « {calendar} »', { calendar: importFileName(read.files[index]!) || t('Agenda sans nom') }) : t('Nom du libellé')}
+                    label={several ? t('Label for “{calendar}”', { calendar: importFileName(read.files[index]!) || t('Unnamed calendar') }) : t('Label name')}
                     value={labelNames[index] ?? ''}
                     maxLength={EVENT_LIMITS.labelName}
                     help={labelHelp(labelNames[index] ?? '', labels)}
@@ -291,11 +291,11 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
           </ChoiceSwitch>
         </ImportSheet>
         {showCalendars ? (
-          <ImportSheet title={t('Agendas')}>
+          <ImportSheet title={t('Calendars')}>
             {read.files.map((file, index) => (
               <ChoiceSwitch
                 key={index}
-                title={importFileName(file) || t('Agenda sans nom')}
+                title={importFileName(file) || t('Unnamed calendar')}
                 meta={calendarMeta(file, plan.items.filter(item => item.file === index && item.event !== null).length)}
                 checked={!choices.filesOff.has(index)}
                 onChange={on => {
@@ -308,26 +308,26 @@ export function CalendarImport({ embedded = false, onFlow, onImported }: ImportW
             ))}
           </ImportSheet>
         ) : null}
-        <ImportSheet label={t('Rappels')}>
-          <ChoiceRadios<ImportReminders> title={t('Rappels')} value={choices.reminders} options={reminderOptions(plan, defaults)} onChange={reminders => change({ reminders })} />
+        <ImportSheet label={t('Reminders')}>
+          <ChoiceRadios<ImportReminders> title={t('Reminders')} value={choices.reminders} options={reminderOptions(plan, defaults)} onChange={reminders => change({ reminders })} />
         </ImportSheet>
       </ImportFrame>
     );
   }
 
   return (
-    <ImportFrame step="import" embedded={embedded} title={report ? IMPORT_WORDS.doneTitle : IMPORT_WORDS.importingTitle} lead={report ? t('Tout ce qui vient d’arriver peut repartir : « Annuler » sur le message, ou plus tard « Retirer ces événements » en important les mêmes fichiers.') : IMPORT_WORDS.importingLead}>
+    <ImportFrame step="import" embedded={embedded} title={report ? IMPORT_WORDS.doneTitle : IMPORT_WORDS.importingTitle} lead={report ? t('Everything that just came in can go again: “Undo” on the message, or later “Remove these events” by importing the same files.') : IMPORT_WORDS.importingLead}>
       {report ? (
         <ImportReport imported={report.imported} skipped={report.skipped}>
           <div className={styles.actions}>
-            {embedded ? null : <Button onClick={() => navigate(paths.home)}>{t('Voir l’agenda')}</Button>}
+            {embedded ? null : <Button onClick={() => navigate(paths.home)}>{t('See the calendar')}</Button>}
             <Button kind="text" icon="download" onClick={restart}>
               {IMPORT_WORDS.another}
             </Button>
           </div>
         </ImportReport>
       ) : (
-        <ImportProgress label={t('Écriture des événements…')} />
+        <ImportProgress label={t('Writing the events…')} />
       )}
     </ImportFrame>
   );

@@ -110,12 +110,12 @@ function answerOf(texts: readonly string[]): { price?: unknown; currency?: unkno
 /** One reading of a price by Claude, through `client` (held against the budget by the caller). */
 export async function readPrice(client: ClaudeClient, request: PriceRequest, signal: AbortSignal): Promise<PriceAnswer> {
   const { message, usage, content } = await client.within(buildPriceRequest(request, client.model), signal);
-  if (message.stop_reason === 'refusal') throw new ModelError('Lecture refusée par Claude', usage);
-  if (message.stop_reason === 'max_tokens') throw new ModelError('Réponse de Claude incomplète', usage);
-  if (message.stop_reason === 'pause_turn') throw new ModelError('Analyse trop longue', usage);
+  if (message.stop_reason === 'refusal') throw new ModelError('Reading refused by Claude', usage);
+  if (message.stop_reason === 'max_tokens') throw new ModelError('Incomplete answer from Claude', usage);
+  if (message.stop_reason === 'pause_turn') throw new ModelError('Analysis too long', usage);
   const texts = content.flatMap(block => (block.type === 'text' ? [block.text] : []));
   const answer = answerOf(texts);
-  if (!answer) throw new ModelError('Réponse de Claude illisible', usage);
+  if (!answer) throw new ModelError('Unreadable answer from Claude', usage);
   const amount = typeof answer.price === 'number' && Number.isFinite(answer.price) && answer.price > 0 && answer.price < 1e9 ? Math.round(answer.price * 100) / 100 : null;
   const code = typeof answer.currency === 'string' ? answer.currency.trim().toUpperCase() : '';
   return { amount, currency: amount !== null && /^[A-Z]{3}$/.test(code) ? code : null, usage };

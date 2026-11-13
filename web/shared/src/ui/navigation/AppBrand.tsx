@@ -55,7 +55,7 @@ export function AppBrand({ size = 34, large = false }: { size?: number; large?: 
   const app = theApp();
   const name = APPS[app.id].name;
   return (
-    <a href={browserPath(app.home)} className={styles.brand} data-large={large || undefined} aria-label={t('{app}, accueil', { app: name })} onClick={event => follow(event, app.home, () => undefined)}>
+    <a href={browserPath(app.home)} className={styles.brand} data-large={large || undefined} aria-label={t('{app}, home', { app: name })} onClick={event => follow(event, app.home, () => undefined)}>
       <BrandMark app={app.id} size={size} />
       <span className={large ? 't-display' : undefined}>{name}</span>
     </a>
@@ -85,7 +85,7 @@ export function AppLauncher() {
   const on = useAppsOn();
   const app = theApp().id;
   const soon = APP_IDS.filter((id): boolean => !isReadyApp(id));
-  const label = t('Applications {suite}', { suite: SUITE_NAME });
+  const label = t('{suite} apps', { suite: SUITE_NAME });
   const close = (): void => setOpen(false);
   // As many columns as the longer row has tiles, up to three: no empty column at its end.
   const columns = { '--columns': Math.min(3, Math.max(on.length, soon.length)) } as CSSProperties;
@@ -93,7 +93,7 @@ export function AppLauncher() {
     <>
       <IconButton ref={anchor} icon="apps" label={label} hasPopup="dialog" expanded={open} onClick={() => setOpen(true)} />
       <Popover open={open} anchor={anchor} onDismiss={close} label={label} align="end" className={styles.launcher}>
-        <ul className={styles.tiles} style={columns} aria-label={t('Applications')}>
+        <ul className={styles.tiles} style={columns} aria-label={t('Apps')}>
           {on.map(id => (
             <li key={id}>
               <Tile to={appHome(id)} name={APPS[id].name} current={id === app} onChosen={close}>
@@ -104,8 +104,8 @@ export function AppLauncher() {
         </ul>
         {soon.length > 0 ? (
           <>
-            <p className={`${styles.soonHead} t-meta-strong`}>{t('Bientôt disponible')}</p>
-            <ul className={styles.tiles} style={columns} aria-label={t('Bientôt disponible')}>
+            <p className={`${styles.soonHead} t-meta-strong`}>{t('Coming soon')}</p>
+            <ul className={styles.tiles} style={columns} aria-label={t('Coming soon')}>
               {soon.map(id => (
                 <li key={id} className={styles.tile} aria-disabled="true">
                   <SoonMark app={id} size={44} />

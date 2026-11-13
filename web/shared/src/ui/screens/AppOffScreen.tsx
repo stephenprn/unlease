@@ -31,9 +31,9 @@ export function AppOffScreen() {
     setBusy(true);
     try {
       await saveApps(server, [...(apps ?? []).filter(id => id !== app), app]);
-      showSnack(t('{app} activé sur le serveur', { app: APPS[app].name }), undefined, { tone: 'success' });
+      showSnack(t('{app} turned on on the server', { app: APPS[app].name }), undefined, { tone: 'success' });
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Réglage refusé'));
+      showError(failure instanceof Error ? t(failure.message) : t('Setting refused'));
     } finally {
       setBusy(false);
     }
@@ -49,7 +49,7 @@ export function AppOffScreen() {
       </Button>
       {server ? <p className="t-meta">{server.url.replace(/^https?:\/\//, '')}</p> : null}
       <Button kind="text" icon="settings" onClick={() => navigate(paths.settings)}>
-        {t('Réglages')}
+        {t('Settings')}
       </Button>
     </div>
   );

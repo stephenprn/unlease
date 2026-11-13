@@ -20,10 +20,10 @@ export const DRAWING_TOOLS = ['pen', 'marker', 'highlighter'] as const;
 export type DrawingTool = (typeof DRAWING_TOOLS)[number];
 
 export const DRAWING_TOOL_NAMES: Record<DrawingTool | 'eraser', string> = localized({
-  pen: tx('Stylo'),
-  marker: tx('Feutre'),
-  highlighter: tx('Surligneur'),
-  eraser: tx('Gomme'),
+  pen: tx('Pen'),
+  marker: tx('Marker'),
+  highlighter: tx('Highlighter'),
+  eraser: tx('Eraser'),
 });
 
 /** Thin, medium, thick. */
@@ -32,7 +32,7 @@ export type DrawingSize = 0 | 1 | 2;
 export const DRAWING_SIZES: readonly DrawingSize[] = [0, 1, 2];
 
 /** Each size's name, in French: translate it where it is shown (`t(DRAWING_SIZE_NAMES[size])`). */
-export const DRAWING_SIZE_NAMES: readonly [string, string, string] = [tx('Fin'), tx('Moyen'), tx('Épais')];
+export const DRAWING_SIZE_NAMES: readonly [string, string, string] = [tx('Fine'), tx('Medium [stroke]'), tx('Thick')];
 
 /** Each tool's three widths, in drawing units (a thousandth of the sheet's width). */
 export const STROKE_WIDTHS: Readonly<Record<DrawingTool, readonly [number, number, number]>> = {
@@ -53,7 +53,7 @@ export const DRAWING_INKS = ['ink', 'red', 'orange', 'yellow', 'green', 'sky', '
 
 export type DrawingInk = 'ink' | LineColor;
 
-export const INK_NAME = tx('Encre');
+export const INK_NAME = tx('Ink');
 
 /** An ink's name in the interface's language, as a swatch's label says it. */
 export function drawingInkName(ink: DrawingInk): string {
@@ -83,8 +83,8 @@ export function drawingBackgroundOf(color: unknown): DrawingBackground {
   return isDrawingBackground(color) ? color : DRAWING_PAPER;
 }
 
-export const NO_BACKGROUND_NAME = tx('Sans fond');
-export const PAPER_BACKGROUND_NAME = tx('Papier');
+export const NO_BACKGROUND_NAME = tx('No background');
+export const PAPER_BACKGROUND_NAME = tx('Paper');
 
 /** A background's name in the interface's language, as its swatch's label says it. */
 export function drawingBackgroundName(background: DrawingBackground): string {

@@ -134,10 +134,10 @@ describe('POST /api/pages/copies', () => {
 
   it('says so when the page cannot be read or holds no text, or the link has not reached the server', async () => {
     await withLink('<!doctype html><html><head><title>Vide</title></head><body><nav>Menu</nav></body></html>');
-    expect(await ask()).toEqual({ status: 502, body: { error: 'Aucun texte à garder sur cette page' } });
+    expect(await ask()).toEqual({ status: 502, body: { error: 'No text to keep on this page' } });
     expect((await post('/api/pages/copies', { link: { id: LINK, url: 'https://ailleurs.example/' }, lang: 'fr' })).status).toBe(502);
     expect((await post('/api/pages/copies', { link: { id: LINK, url: 'pas une adresse' }, lang: 'fr' })).status).toBe(400);
-    expect(await post('/api/pages/copies', { link: { id: 'not-here', url: ARTICLE }, lang: 'fr' })).toEqual({ status: 409, body: { error: 'Ce lien n’est pas encore arrivé sur le serveur : réessayez dans un instant' } });
+    expect(await post('/api/pages/copies', { link: { id: 'not-here', url: ARTICLE }, lang: 'fr' })).toEqual({ status: 409, body: { error: 'This link has not reached the server yet: try again in a moment' } });
     expect(childrenOf(null)).toHaveLength(1);
   });
 

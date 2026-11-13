@@ -125,9 +125,10 @@ export function feedFromRecord(record: SyncRecord): CalendarFeed {
   const f = record.fields;
   return {
     id: record.id,
-    kind: f.kind === 'holidays' ? 'holidays' : 'ics',
+    kind: f.kind === 'holidays' || f.kind === 'caldav' ? f.kind : 'ics',
     name: asString(f.name),
     url: asString(f.url),
+    account: asString(f.account),
     color: isLineColor(f.color) ? f.color : 'grey',
     hidden: f.hidden === true,
     position: typeof f.position === 'string' && f.position ? f.position : 'a0',
@@ -138,11 +139,13 @@ export function feedFromRecord(record: SyncRecord): CalendarFeed {
   };
 }
 
-export function feedFields(feed: Omit<CalendarFeed, 'id'>): Fields {
+/** A calendar's fields to write; `account` only for one read with a login. */
+export function feedFields(feed: Omit<CalendarFeed, 'id' | 'account'> & { readonly account?: string }): Fields {
   return {
     kind: feed.kind,
     name: feed.name,
     url: feed.url,
+    account: feed.account ?? '',
     color: feed.color,
     hidden: feed.hidden,
     position: feed.position,

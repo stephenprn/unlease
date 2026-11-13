@@ -5,10 +5,12 @@
  * migration on every device.
  */
 import { REF_TYPE_PATTERN } from '@unlease/core/refs';
+import { IMMICH_BLOCK_ASSETS } from '@unlease/core/sync/immich';
 import {
   bool,
   defineRecordTypes,
   id,
+  ids,
   int,
   isObject,
   nullableId,
@@ -92,6 +94,8 @@ export const PAGES_RECORD_TYPES = defineRecordTypes({
       showDone: bool,
       calendarLabelId: nullableId,
       calendarDays: int(1, 92),
+      immichAlbumId: nullableId,
+      immichAssetIds: ids(IMMICH_BLOCK_ASSETS),
       ratio,
       private: bool,
       trashedAt: nullableTime,

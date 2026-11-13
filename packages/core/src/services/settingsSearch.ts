@@ -12,7 +12,7 @@
  * a whole word below (« S3 »); its plural matches too.
  */
 import type { AppId } from '../apps';
-import { inEnglish, t, tx } from '../i18n';
+import { inEnglish, inFrench, t, tx } from '../i18n';
 import { foldText } from './search';
 
 /** Réglages, this device's own, or the Administration, the server's for every app. */
@@ -47,7 +47,7 @@ export function settingsPageOf(section: string | null): SettingsPage | null {
 }
 
 /** A page's name, French (`tx`), as a place's second line says where it is. */
-const SETTINGS_PAGE_TITLES: Readonly<Record<SettingsPage, string>> = { appearance: tx('Apparence'), import: tx('Importer'), erase: tx('Effacer des données') };
+const SETTINGS_PAGE_TITLES: Readonly<Record<SettingsPage, string>> = { appearance: tx('Appearance'), import: tx('Import'), erase: tx('Erase data') };
 
 /** A place a search finds. `G` is the glyph's name: the design system's, which the core does not know (each app's package types its own). */
 export interface SettingsPlace<G extends string = string> {
@@ -77,32 +77,32 @@ const shared = (place: Omit<SettingsPlace, 'app'>): SettingsPlace => ({ ...place
 
 /** Every app's places: Réglages' sections and settings, then the Administration's shared sections and what they hold. */
 export const SHARED_SETTINGS_PLACES: readonly SettingsPlace[] = [
-  shared({ id: 'settings', area: 'settings', section: null, title: tx('Réglages'), within: null, glyph: 'settings', words: ['parametres', 'preferences', 'options', 'configuration', 'settings', 'preferences'] }),
-  shared({ id: 'appearance', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Apparence'), within: null, glyph: 'palette', words: ['affichage', 'aspect', 'look', 'display', 'style'] }),
-  shared({ id: 'theme', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Thème'), within: tx('Apparence'), glyph: 'moon', words: ['sombre', 'clair', 'nuit', 'jour', 'systeme', 'mode sombre', 'dark', 'light', 'night', 'dark mode', 'light mode', 'system'] }),
-  shared({ id: 'paper-grain', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Grain du papier'), within: tx('Apparence'), glyph: 'note', words: ['texture', 'feuille', 'papier', 'paper', 'sheet', 'noise'] }),
-  shared({ id: 'colors', area: 'settings', section: SETTINGS_SECTIONS.colors, title: tx('Couleurs'), within: null, glyph: 'palette', words: ['couleur', 'palette', 'primaire', 'accent', 'teinte', 'color', 'colour', 'primary', 'tint', 'hue'] }),
-  shared({ id: 'ground', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Fond'), within: null, glyph: 'image', words: ['fond d’ecran', 'arriere-plan', 'degrade', 'ground', 'wallpaper', 'gradient', 'backdrop'] }),
-  shared({ id: 'ground-grain', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Grain sur le fond'), within: tx('Fond'), glyph: 'image', words: ['texture', 'film', 'noise'] }),
-  shared({ id: 'services-css', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Habiller vos autres services'), within: tx('Fond'), glyph: 'palette', words: ['css', 'seafile', 'seerr', 'immich', 'theme', 'style', 'skin'] }),
-  shared({ id: 'language', area: 'settings', section: SETTINGS_SECTIONS.language, title: tx('Langue'), within: null, glyph: 'globe', words: ['francais', 'anglais', 'traduction', 'french', 'english', 'translation', 'locale'] }),
+  shared({ id: 'settings', area: 'settings', section: null, title: tx('Settings'), within: null, glyph: 'settings', words: ['parametres', 'preferences', 'options', 'configuration', 'settings', 'preferences'] }),
+  shared({ id: 'appearance', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Appearance'), within: null, glyph: 'palette', words: ['affichage', 'aspect', 'look', 'display', 'style'] }),
+  shared({ id: 'theme', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Theme'), within: tx('Appearance'), glyph: 'moon', words: ['sombre', 'clair', 'nuit', 'jour', 'systeme', 'mode sombre', 'dark', 'light', 'night', 'dark mode', 'light mode', 'system'] }),
+  shared({ id: 'paper-grain', area: 'settings', section: SETTINGS_SECTIONS.appearance, title: tx('Paper grain'), within: tx('Appearance'), glyph: 'note', words: ['texture', 'feuille', 'papier', 'paper', 'sheet', 'noise'] }),
+  shared({ id: 'colors', area: 'settings', section: SETTINGS_SECTIONS.colors, title: tx('Colours'), within: null, glyph: 'palette', words: ['couleur', 'palette', 'primaire', 'accent', 'teinte', 'color', 'colour', 'primary', 'tint', 'hue'] }),
+  shared({ id: 'ground', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Background'), within: null, glyph: 'image', words: ['fond d’ecran', 'arriere-plan', 'degrade', 'ground', 'wallpaper', 'gradient', 'backdrop'] }),
+  shared({ id: 'ground-grain', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Grain on the background'), within: tx('Background'), glyph: 'image', words: ['texture', 'film', 'noise'] }),
+  shared({ id: 'services-css', area: 'settings', section: SETTINGS_SECTIONS.ground, title: tx('Style your other services'), within: tx('Background'), glyph: 'palette', words: ['css', 'seafile', 'seerr', 'immich', 'theme', 'style', 'skin'] }),
+  shared({ id: 'language', area: 'settings', section: SETTINGS_SECTIONS.language, title: tx('Language'), within: null, glyph: 'globe', words: ['francais', 'anglais', 'traduction', 'french', 'english', 'translation', 'locale'] }),
   // The web's alone: the phone searches by word in the interface's language.
-  shared({ id: 'search-languages', area: 'settings', section: SETTINGS_SECTIONS.language, title: tx('Langues des recherches par mot'), within: tx('Langue'), glyph: 'globe', words: ['emoji', 'emojis', 'recherche', 'search'], only: 'web' }),
-  shared({ id: 'data', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Données'), within: null, glyph: 'download', words: ['import', 'export', 'importer', 'exporter', 'data'] }),
-  shared({ id: 'empty-bin', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Vider la corbeille'), within: tx('Données'), glyph: 'trash', words: ['poubelle', 'supprimer', 'trash', 'bin', 'empty', 'delete'] }),
-  shared({ id: 'shortcuts', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Raccourcis clavier'), within: tx('Données'), glyph: 'keyboard', words: ['touches', 'shortcuts', 'keyboard', 'keys', 'hotkeys'], only: 'web' }),
-  shared({ id: 'erase', area: 'settings', section: SETTINGS_SECTIONS.erase, title: tx('Effacer des données'), within: tx('Données'), glyph: 'eraser', words: ['effacer', 'tout supprimer', 'remise a zero', 'reinitialiser', 'vider', 'erase', 'delete all', 'wipe', 'reset', 'clear'] }),
+  shared({ id: 'search-languages', area: 'settings', section: SETTINGS_SECTIONS.language, title: tx('Languages of word searches'), within: tx('Language'), glyph: 'globe', words: ['emoji', 'emojis', 'recherche', 'search'], only: 'web' }),
+  shared({ id: 'data', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Data'), within: null, glyph: 'download', words: ['import', 'export', 'importer', 'exporter', 'data'] }),
+  shared({ id: 'empty-bin', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Empty the bin'), within: tx('Data'), glyph: 'trash', words: ['poubelle', 'supprimer', 'trash', 'bin', 'empty', 'delete'] }),
+  shared({ id: 'shortcuts', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Keyboard shortcuts'), within: tx('Data'), glyph: 'keyboard', words: ['touches', 'shortcuts', 'keyboard', 'keys', 'hotkeys'], only: 'web' }),
+  shared({ id: 'erase', area: 'settings', section: SETTINGS_SECTIONS.erase, title: tx('Erase data'), within: tx('Data'), glyph: 'eraser', words: ['effacer', 'tout supprimer', 'remise a zero', 'reinitialiser', 'vider', 'erase', 'delete all', 'wipe', 'reset', 'clear'] }),
 
   shared({ id: 'admin', area: 'admin', section: null, title: tx('Administration'), within: null, glyph: 'server', words: ['admin', 'server settings'] }),
-  shared({ id: 'admin-apps', area: 'admin', section: 'apps', title: tx('Applications'), within: null, glyph: 'apps', words: ['activer', 'desactiver', 'apps', 'enable', 'disable', 'turn on', 'turn off'] }),
-  shared({ id: 'admin-server', area: 'admin', section: 'server', title: tx('Serveur'), within: null, glyph: 'server', words: ['adresse', 'jeton', 'connexion', 'connecter', 'relier', 'synchronisation', 'address', 'url', 'token', 'connect', 'sync', 'host', 'version'] }),
+  shared({ id: 'admin-apps', area: 'admin', section: 'apps', title: tx('Apps'), within: null, glyph: 'apps', words: ['activer', 'desactiver', 'apps', 'enable', 'disable', 'turn on', 'turn off'] }),
+  shared({ id: 'admin-server', area: 'admin', section: 'server', title: tx('Server'), within: null, glyph: 'server', words: ['adresse', 'jeton', 'connexion', 'connecter', 'relier', 'synchronisation', 'address', 'url', 'token', 'connect', 'sync', 'host', 'version'] }),
   shared({ id: 'admin-claude', area: 'admin', section: 'reading', title: 'Claude', within: null, glyph: 'sparkle', words: ['ia', 'ai', 'anthropic', 'intelligence artificielle', 'artificial intelligence', 'lecture', 'reading'] }),
-  shared({ id: 'claude-key', area: 'admin', section: 'reading', title: tx('Clé API Claude'), within: 'Claude', glyph: 'key', words: ['anthropic', 'api key', 'secret'] }),
-  shared({ id: 'claude-model', area: 'admin', section: 'reading', title: tx('Modèle'), within: 'Claude', glyph: 'sparkle', words: ['sonnet', 'haiku', 'opus', 'model'] }),
-  shared({ id: 'claude-budget', area: 'admin', section: 'reading', title: tx('Budget mensuel'), within: 'Claude', glyph: 'sparkle', words: ['depenses', 'cout', 'prix', 'dollars', 'consommation', 'limite', 'spending', 'cost', 'price', 'usage', 'limit', 'monthly'] }),
-  shared({ id: 'admin-backup', area: 'admin', section: 'backup', title: tx('Sauvegarde sur S3'), within: null, glyph: 'cloud', words: ['backup', 'bucket', 'scaleway', 'aws', 'minio', 'glacier', 'copie', 'copy', 'archive'] }),
-  shared({ id: 'backup-restore', area: 'admin', section: 'backup', title: tx('Restaurer une sauvegarde'), within: tx('Sauvegarde sur S3'), glyph: 'restore', words: ['restauration', 'recuperer', 'restore', 'recover', 's3'] }),
-  shared({ id: 'admin-drive', area: 'admin', section: 'drive', title: tx('Fichiers sur Seafile'), within: null, glyph: 'file', words: ['photos', 'videos', 'documents', 'stockage', 'bibliotheque', 'dossier', 'drive', 'storage', 'library', 'folder'] }),
+  shared({ id: 'claude-key', area: 'admin', section: 'reading', title: tx('Claude API key'), within: 'Claude', glyph: 'key', words: ['anthropic', 'api key', 'secret'] }),
+  shared({ id: 'claude-model', area: 'admin', section: 'reading', title: tx('Model'), within: 'Claude', glyph: 'sparkle', words: ['sonnet', 'haiku', 'opus', 'model'] }),
+  shared({ id: 'claude-budget', area: 'admin', section: 'reading', title: tx('Monthly budget'), within: 'Claude', glyph: 'sparkle', words: ['depenses', 'cout', 'prix', 'dollars', 'consommation', 'limite', 'spending', 'cost', 'price', 'usage', 'limit', 'monthly'] }),
+  shared({ id: 'admin-backup', area: 'admin', section: 'backup', title: tx('Backup to S3'), within: null, glyph: 'cloud', words: ['backup', 'bucket', 'scaleway', 'aws', 'minio', 'glacier', 'copie', 'copy', 'archive'] }),
+  shared({ id: 'backup-restore', area: 'admin', section: 'backup', title: tx('Restore a backup'), within: tx('Backup to S3'), glyph: 'restore', words: ['restauration', 'recuperer', 'restore', 'recover', 's3'] }),
+  shared({ id: 'admin-drive', area: 'admin', section: 'drive', title: tx('Files on Seafile'), within: null, glyph: 'file', words: ['photos', 'videos', 'documents', 'stockage', 'bibliotheque', 'dossier', 'drive', 'storage', 'library', 'folder'] }),
 ];
 
 /** The places one app's search finds on one client: every app's, then its own (`own`, from its package). */
@@ -143,9 +143,9 @@ export function findSettings<G extends string>(places: readonly SettingsPlace<G>
   const whole = typed.join(' ');
   const found: { readonly place: SettingsPlace<G>; readonly score: number; readonly at: number }[] = [];
   places.forEach((place, at) => {
-    const titles = [place.title, inEnglish(place.title)];
+    const titles = [inEnglish(place.title), inFrench(place.title)];
     const title = titles.flatMap(wordsOf);
-    const rest = [...(place.within ? [place.within, inEnglish(place.within)] : []), ...place.words].flatMap(wordsOf);
+    const rest = [...(place.within ? [inEnglish(place.within), inFrench(place.within)] : []), ...place.words].flatMap(wordsOf);
     let score = 0;
     for (const word of typed) {
       const inTitle = best(title, word);
@@ -162,7 +162,7 @@ export function findSettings<G extends string>(places: readonly SettingsPlace<G>
 
 /** The area's name: « Réglages », « Administration ». */
 export function settingsAreaName(area: SettingsArea): string {
-  return area === 'admin' ? t('Administration') : t('Réglages');
+  return area === 'admin' ? t('Administration') : t('Settings');
 }
 
 /**

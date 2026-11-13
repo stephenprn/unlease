@@ -4,9 +4,9 @@
  * collection's own template, the kinds the person changed, the lists to file into), and the facts
  * Claude answers, matched back to those fields: labelled with their names exactly, in their order.
  */
-import { addEnglish } from '@unlease/core/i18n';
+import { addFrench } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
-import { EN_TEMPLATES } from '@unlease/notes/i18n/en/templates';
+import { FR_TEMPLATES } from '@unlease/notes/i18n/fr/templates';
 import { INBOX_ID, LINK_KINDS, type LinkAttribute, type LinkKind } from '@unlease/notes/models/entities';
 import { KIND_TEMPLATES, type TemplateField } from '@unlease/notes/models/templates';
 import { changedKindTemplate, collectionTemplate, linkTemplateSource, presetNames, readingSignature, type Templates, type TemplateSource } from '@unlease/notes/services/templates';
@@ -15,7 +15,7 @@ import type { RecordStore } from '../../../sync/records';
 
 // The presets' English names (`presetNames`) come from Carnet's dictionary: added when this module
 // loads, before the prompt (`prompt.ts`, which imports it) or the names below are written.
-addEnglish(EN_TEMPLATES);
+addFrench(FR_TEMPLATES);
 
 /** A preset field's names, French and English, as the prompt lists them. */
 export const presetLabels = presetNames;

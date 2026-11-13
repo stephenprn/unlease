@@ -64,8 +64,8 @@ export function collectionsWithLinks(ids: readonly string[], notes: Readonly<Rec
 /** "4 liens rangés dans Recettes", or "12 liens rangés dans 3 collections". */
 export function sortedSummary(moved: readonly SortMove[], titleOf: (lineId: string) => string): string {
   const targets = [...new Set(moved.map(move => move.to))];
-  const links = plural(moved.length, 'lien rangé', 'liens rangés');
-  return targets.length === 1 ? t('{links} dans {collection}', { links, collection: titleOf(targets[0]!) }) : t('{links} dans {count} collections', { links, count: targets.length });
+  const links = plural(moved.length, 'link sorted', 'links sorted');
+  return targets.length === 1 ? t('{links} into {collection}', { links, collection: titleOf(targets[0]!) }) : t('{links} into {count} collections', { links, count: targets.length });
 }
 
 /** False when an edit of a collection's name and sentence only fixed a typo; otherwise its links are worth checking again. */

@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { APPS } from '@unlease/core/apps';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
@@ -63,7 +63,7 @@ function Action({ icon, label, turn, onPress }: { icon: GlyphName; label: string
 }
 
 const open = (url: string | null): void => {
-  if (url) later(Linking.openURL(url).catch(() => showSnack(t('Aucune application ne l’ouvre sur ce téléphone.'), undefined, { tone: 'warning' })));
+  if (url) later(Linking.openURL(url).catch(() => showSnack(t('No app on this phone opens it.'), undefined, { tone: 'warning' })));
 };
 
 export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
@@ -97,7 +97,7 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
     closeGift();
     return true;
   };
-  const form = useForm({ url: !url.trim() ? t('Collez le lien du produit.') : /^https?:\/\/\S+\.\S+$/i.test(url.trim()) ? null : t('Un lien qui commence par https://, comme https://exemple.fr/produit.') }, { sendOnDone: addIdea });
+  const form = useForm({ url: !url.trim() ? t('Paste the product’s link.') : /^https?:\/\/\S+\.\S+$/i.test(url.trim()) ? null : t('A link starting with https://, such as https://example.com/product.') }, { sendOnDone: addIdea });
 
   if (!contact || contact.deletedAt !== null) {
     return (
@@ -105,7 +105,7 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
         {/* The web's words, the suite's empty place. */}
-        <EmptyState scene="reminders" title={t('Pas d’anniversaire')} text={t('Ce contact n’a pas de date d’anniversaire, ou n’existe plus.')} />
+        <EmptyState scene="reminders" title={t('No birthday')} text={t('This contact has no birthday, or no longer exists.')} />
       </View>
     );
   }
@@ -137,22 +137,22 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
           <AppText variant="body" color={theme.color.inkMuted}>
             {longDay(day)} · {dayDistance(day, today)}
           </AppText>
-          {ways.length > 0 ? <Button kind="tonal" icon="bubble" label={t('Souhaiter')} accessibilityLabel={t('Souhaiter son anniversaire à {name}', { name })} onPress={wishing.wish} style={styles.wish} /> : null}
+          {ways.length > 0 ? <Button kind="tonal" icon="bubble" label={t('Send wishes')} accessibilityLabel={t('Wish {name} a happy birthday', { name })} onPress={wishing.wish} style={styles.wish} /> : null}
         </View>
         <View style={styles.actions}>
-          {number ? <Action icon="phoneCall" label={t('Appeler')} turn={next()} onPress={() => open(telHref(number.number))} /> : null}
-          {number ? <Action icon="bubble" label={t('SMS')} turn={next()} onPress={() => open(smsHref(number.number))} /> : null}
+          {number ? <Action icon="phoneCall" label={t('Call')} turn={next()} onPress={() => open(telHref(number.number))} /> : null}
+          {number ? <Action icon="bubble" label={tc('message', 'Text')} turn={next()} onPress={() => open(smsHref(number.number))} /> : null}
           {waUrl ? <Action icon="phone" label={t('WhatsApp')} turn={next()} onPress={() => open(waUrl)} /> : null}
-          {email ? <Action icon="email" label={t('E-mail')} turn={next()} onPress={() => open(mailtoHref(email.address))} /> : null}
-          {place ? <Action icon="mapPin" label={t('Itinéraire')} turn={next()} onPress={() => later(openPlace(addressLine(place), { directions: true, title: t('Itinéraire jusqu’à {name}', { name }) }))} /> : null}
+          {email ? <Action icon="email" label={t('Email')} turn={next()} onPress={() => open(mailtoHref(email.address))} /> : null}
+          {place ? <Action icon="mapPin" label={t('Directions')} turn={next()} onPress={() => later(openPlace(addressLine(place), { directions: true, title: t('Directions to {name}', { name }) }))} /> : null}
           <Action icon="person" label={APPS.contacts.name} turn={next()} onPress={() => later(openInApp('contacts', contactPlace(contact.id)))} />
         </View>
         <RowPanel outline="card" style={styles.panel}>
           <AppText variant="section" style={styles.panelHead} accessibilityRole="header">
-            {t('Idées cadeaux')}
+            {t('Gift ideas')}
           </AppText>
           {/* On the rows' columns: the glyph on theirs, the words on theirs. */}
-          {ideas.length === 0 ? <EmptyLine glyph="bag" slot={24} gap={16} text={t('Aucune idée gardée pour {name} dans « Cadeaux ».', { name })} style={styles.none} /> : null}
+          {ideas.length === 0 ? <EmptyLine glyph="bag" slot={24} gap={16} text={t('No idea kept for {name} in “Gifts”.', { name })} style={styles.none} /> : null}
           {ideas.map(idea => (
             <Tappable key={idea.linkId} onPress={() => later(openInApp('notes', notesPlace('link', idea.linkId)))} style={styles.idea} accessibilityRole="link" accessibilityLabel={idea.title}>
               <View style={styles.slot}>
@@ -165,25 +165,25 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
             </Tappable>
           ))}
           {/* The list's last line, as the event form's « Ajouter un rappel »: on the rows' columns, in the link's ink. */}
-          <PanelTappable onPress={() => setGifting(true)} style={styles.idea} accessibilityRole="button" accessibilityLabel={t('Ajouter une idée')}>
+          <PanelTappable onPress={() => setGifting(true)} style={styles.idea} accessibilityRole="button" accessibilityLabel={t('Add an idea')}>
             <View style={styles.slot}>
               <Icon name="plus" size={22} color={theme.color.link} />
             </View>
             <AppText variant="body" color={theme.color.link} style={styles.fill}>
-              {t('Ajouter une idée')}
+              {t('Add an idea')}
             </AppText>
           </PanelTappable>
         </RowPanel>
         {/* Who tells of it: Contacts' notifications, set there (its birthdays open on them), never here. */}
         <RowPanel outline="card" style={[styles.panel, styles.panelBare]}>
           {contactsHere ? (
-            <PanelTappable onPress={() => later(openInApp('contacts', CONTACTS_BIRTHDAYS))} style={styles.idea} accessibilityRole="link" accessibilityLabel={t('Notifications d’anniversaire')} accessibilityHint={t('Ouvre les anniversaires de {app}', { app: APPS.contacts.name })}>
+            <PanelTappable onPress={() => later(openInApp('contacts', CONTACTS_BIRTHDAYS))} style={styles.idea} accessibilityRole="link" accessibilityLabel={t('Birthday notifications')} accessibilityHint={t('Opens {app}’s birthdays', { app: APPS.contacts.name })}>
               <View style={styles.slot}>
                 <Icon name="bell" size={22} color={theme.color.inkMuted} />
               </View>
               <View style={styles.fill}>
-                <AppText variant="body">{t('Notifications d’anniversaire')}</AppText>
-                <AppText variant="meta">{t('Envoyées par {app} : l’heure et la veille se choisissent là.', { app: APPS.contacts.name })}</AppText>
+                <AppText variant="body">{t('Birthday notifications')}</AppText>
+                <AppText variant="meta">{t('Sent by {app}: the hour and the day before are chosen there.', { app: APPS.contacts.name })}</AppText>
               </View>
               <Icon name="external" size={18} color={theme.color.inkMuted} />
             </PanelTappable>
@@ -193,29 +193,29 @@ export function BirthdayScreen({ navigation, route }: ScreenProps<'Birthday'>) {
                 <Icon name="bell" size={22} color={theme.color.inkMuted} />
               </View>
               <View style={styles.fill}>
-                <AppText variant="body">{t('Notifications d’anniversaire')}</AppText>
-                <AppText variant="meta">{t('Envoyées par {app}, une fois installé sur ce téléphone.', { app: APPS.contacts.name })}</AppText>
+                <AppText variant="body">{t('Birthday notifications')}</AppText>
+                <AppText variant="meta">{t('Sent by {app}, once it is installed on this phone.', { app: APPS.contacts.name })}</AppText>
               </View>
             </View>
           )}
         </RowPanel>
       </EdgeScrollView>
-      <Sheet visible={gifting} onDismiss={unsaved.guard(closeGift)} title={t('Idée cadeau pour {name}', { name })}>
+      <Sheet visible={gifting} onDismiss={unsaved.guard(closeGift)} title={t('Gift idea for {name}', { name })}>
         <View style={styles.sheet}>
           <TextField
             kind="url"
-            label={t('Lien du produit')}
+            label={t('Product link')}
             field={form.field('url')}
             value={url}
             onChangeText={setUrl}
             placeholder="https://"
             autoFocus
-            help={t('Gardé dans la collection « Cadeaux » de {app}.', { app: APPS.notes.name })}
+            help={t('Kept in {app}’s “Gifts” collection.', { app: APPS.notes.name })}
           />
         </View>
         <FormFoot message={form.message}>
-          <Button label={t('Annuler')} kind="text" onPress={closeGift} />
-          <Button label={t('Ajouter')} icon="plus" busy={form.busy} disabled={!url.trim()} onPress={() => later(form.submit(addIdea))} />
+          <Button label={t('Cancel')} kind="text" onPress={closeGift} />
+          <Button label={t('Add')} icon="plus" busy={form.busy} disabled={!url.trim()} onPress={() => later(form.submit(addIdea))} />
         </FormFoot>
       </Sheet>
       {unsaved.dialog}

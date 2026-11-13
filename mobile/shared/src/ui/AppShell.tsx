@@ -78,7 +78,7 @@ function Gate<P extends object>({ boot, app, linking, navigationRef, children, o
   if (!boot.ok) {
     return (
       <View style={styles.centre}>
-        <AppText variant="title">{t('L’application n’a pas pu s’ouvrir')}</AppText>
+        <AppText variant="title">{t('The app could not open')}</AppText>
         <AppText variant="meta" style={styles.error}>
           {boot.message}
         </AppText>

@@ -8,7 +8,7 @@ import { type CSSProperties, useEffect, useId, useState } from 'react';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
-import { INBOX_ID, INBOX_TITLE, shownTitle } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownTitle } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
 import { displayHost } from '@unlease/core/services/url';
 import type { SortMove } from '@unlease/notes/sync/sorting';
@@ -33,15 +33,15 @@ function ReviewRow({ move, kept, onToggle, index }: { move: SortMove; kept: bool
   const target = useLibraryStore(s => s.notes[move.to]);
   if (!link) return null;
   const title = link.title || displayHost(link.url);
-  const destination = move.to === INBOX_ID ? t(INBOX_TITLE) : (target?.title ?? '');
+  const destination = move.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : (target?.title ?? '');
   return (
-    <button type="button" role="checkbox" aria-checked={kept} aria-label={t('{title}, vers {collection}', { title, collection: destination })} className={`${styles.moveRow} ${styles.arriving}`} style={{ '--arrive': index } as CSSProperties} onClick={onToggle}>
+    <button type="button" role="checkbox" aria-checked={kept} aria-label={t('{title}, to {collection}', { title, collection: destination })} className={`${styles.moveRow} ${styles.arriving}`} style={{ '--arrive': index } as CSSProperties} onClick={onToggle}>
       <span className={styles.box}>
         <CheckMark checked={kept} />
       </span>
       <span className={styles.moveText}>
         <span className={`${styles.reviewTitle} t-body-strong`}>{title}</span>
-        <span className={`${styles.moveHint} t-meta`}>{t('Vers {collection}', { collection: destination })}</span>
+        <span className={`${styles.moveHint} t-meta`}>{t('To {collection}', { collection: destination })}</span>
       </span>
       <span className={styles.moveMark}>
         <Emblem emblem={collectionEmblem(move.to, target?.emblem ?? null)} color={asLineColor(target?.color ?? null)} size={28} />
@@ -76,7 +76,7 @@ function ReviewBody({ id, titleId, onDismiss }: { id: string; titleId: string; o
         setPhase({ kind: 'ready', moves, incomplete });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? error.message : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -98,7 +98,7 @@ function ReviewBody({ id, titleId, onDismiss }: { id: string; titleId: string; o
     if (phase.kind !== 'ready') return;
     const { moved, undo } = applyReview(id, phase.moves.filter(move => kept.has(move.link)));
     onDismiss();
-    if (moved.length > 0) showUndo(plural(moved.length, 'lien déplacé', 'liens déplacés'), undo);
+    if (moved.length > 0) showUndo(plural(moved.length, 'link moved', 'links moved'), undo);
   };
 
   // Nothing to move but part of it unread is no all-clear: it says so, as a failure does.
@@ -108,16 +108,16 @@ function ReviewBody({ id, titleId, onDismiss }: { id: string; titleId: string; o
     phase.kind === 'asking' ? (
       <div className={styles.reviewWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Claude relit {links} de {collection}…', { links: plural(count, 'lien'), collection: shownTitle(line) })}</p>
+        <p className="t-body">{t('Claude is rereading {links} from {collection}…', { links: plural(count, 'link'), collection: shownTitle(line) })}</p>
       </div>
     ) : failure !== null || phase.kind === 'failed' ? (
-      <p className={`${styles.reviewNote} ${styles.reviewError} t-body`} role="alert">{t('Claude n’a pas pu relire la collection : {reason}', { reason: failure ? t(failure) : '' })}</p>
+      <p className={`${styles.reviewNote} ${styles.reviewError} t-body`} role="alert">{t('Claude couldn’t reread the collection: {reason}', { reason: failure ? t(failure) : '' })}</p>
     ) : phase.moves.length === 0 ? (
-      <EmptyLine glyph="check" size="body" text={t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })} className={styles.reviewNote} role="status" />
+      <EmptyLine glyph="check" size="body" text={t('Every link belongs in {collection}.', { collection: shownTitle(line) })} className={styles.reviewNote} role="status" />
     ) : (
       <>
-        <p className={`${styles.choiceLead} t-body`}>{t('Claude propose d’en sortir {links} de {collection}. Décochez ceux qui y restent.', { links: plural(phase.moves.length, 'lien'), collection: shownTitle(line) })}</p>
-        {phase.incomplete ? <p className={`${styles.reviewNote} ${styles.reviewError} t-meta`}>{t('Une partie n’a pas pu être relue : {reason}', { reason: t(phase.incomplete) })}</p> : null}
+        <p className={`${styles.choiceLead} t-body`}>{t('Claude suggests moving {links} out of {collection}. Untick those that stay.', { links: plural(phase.moves.length, 'link'), collection: shownTitle(line) })}</p>
+        {phase.incomplete ? <p className={`${styles.reviewNote} ${styles.reviewError} t-meta`}>{t('Part of it couldn’t be reread: {reason}', { reason: t(phase.incomplete) })}</p> : null}
         {phase.moves.map((move, index) => (
           <ReviewRow key={move.link} move={move} kept={kept.has(move.link)} onToggle={() => toggle(move.link)} index={index} />
         ))}
@@ -126,25 +126,25 @@ function ReviewBody({ id, titleId, onDismiss }: { id: string; titleId: string; o
   const foot =
     phase.kind === 'asking' ? null : failure !== null || phase.kind === 'failed' ? (
       <Button kind="text" onClick={retry}>
-        {t('Réessayer')}
+        {t('Try again')}
       </Button>
     ) : phase.moves.length === 0 ? (
       <Button kind="text" onClick={onDismiss}>
-        {t('Fermer')}
+        {t('Close')}
       </Button>
     ) : (
       <>
         <Button kind="text" onClick={onDismiss}>
-          {t('Annuler')}
+          {t('Cancel')}
         </Button>
         <Button disabled={kept.size === 0} onClick={apply}>
-          {kept.size > 0 ? t('Déplacer {links}', { links: plural(kept.size, 'lien') }) : t('Déplacer')}
+          {kept.size > 0 ? t('Move {links}', { links: plural(kept.size, 'link') }) : t('Move')}
         </Button>
       </>
     );
 
   return (
-    <DialogFrame kind="list" title={t('Vérifier les liens')} titleId={titleId} onClose={onDismiss} foot={foot}>
+    <DialogFrame kind="list" title={t('Check links')} titleId={titleId} onClose={onDismiss} foot={foot}>
       {body}
     </DialogFrame>
   );

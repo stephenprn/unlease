@@ -13,7 +13,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { IMPORT_WORDS, importFilesProgress } from '@unlease/core/services/importFlow';
 import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
 import {
@@ -156,7 +156,7 @@ export function KeepWizard({ embedded = false, onFlow, onImported }: ImportWizar
 
   const back = (to: () => void) => (
     <Button kind="text" icon="back" onClick={to}>
-      {t('Retour')}
+      {t('Back')}
     </Button>
   );
 
@@ -165,15 +165,15 @@ export function KeepWizard({ embedded = false, onFlow, onImported }: ImportWizar
       <ImportFrame step="source" embedded={embedded} title={KEEP_WIZARD_WORDS.sourceTitle} lead={KEEP_WIZARD_WORDS.sourceLead}>
         <ImportSheet label={KEEP_WIZARD_WORDS.sourceTitle}>
           <div className={settings.block}>
-            <ImportInstructions steps={[t('Ouvrez takeout.google.com et connectez-vous.'), KEEP_WIZARD_WORDS.takeoutDeselect, KEEP_WIZARD_WORDS.takeoutDrop]} />
+            <ImportInstructions steps={[t('Open takeout.google.com and sign in.'), KEEP_WIZARD_WORDS.takeoutDeselect, KEEP_WIZARD_WORDS.takeoutDrop]} />
             <ImportDrop
-              label={t('Déposez l’archive Takeout (.zip)')}
-              meta={t('ou cliquez pour la choisir')}
+              label={t('Drop the Takeout archive (.zip)')}
+              meta={tc('f', 'or click to choose it')}
               accept={ACCEPT}
               multiple
               reading={step.reading}
-              readingLabel={t('Lecture de l’archive…')}
-              inputLabel={t('Archive Google Takeout')}
+              readingLabel={t('Reading the archive…')}
+              inputLabel={t('Google Takeout archive')}
               onFiles={files => void take(files)}
             />
             {/* An archive refused says why under the drop zone, as a form's own line. */}
@@ -221,7 +221,7 @@ export function KeepWizard({ embedded = false, onFlow, onImported }: ImportWizar
         title={IMPORT_WORDS.previewTitle}
         lead={IMPORT_WORDS.previewLead}
         back={back(toSource)}
-        forward={<Button onClick={() => setStep({ kind: 'choices' })}>{t('Continuer')}</Button>}
+        forward={<Button onClick={() => setStep({ kind: 'choices' })}>{t('Continue')}</Button>}
       >
         <ImportSheet label={KEEP_WIZARD_WORDS.previewLabel}>
           <div className={settings.block}>
@@ -317,7 +317,7 @@ export function KeepWizard({ embedded = false, onFlow, onImported }: ImportWizar
           {lists.length > LISTS_SHOWN ? (
             <div className={styles.more}>
               <Button kind="text" small onClick={() => setChoosing(open => !open)}>
-                {choosing ? t('Masquer la liste') : t('Choisir une par une')}
+                {choosing ? t('Hide the list') : t('Choose one by one')}
               </Button>
             </div>
           ) : null}

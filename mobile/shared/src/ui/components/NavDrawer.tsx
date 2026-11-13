@@ -164,7 +164,7 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
     >
       {open ? <StatusBar barStyle={theme.barStyle} /> : null}
       <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
-        <Tappable accessibilityLabel={t('Fermer le menu')} noTint onPress={onClose} style={styles.scrim} />
+        <Tappable accessibilityLabel={t('Close the menu')} noTint onPress={onClose} style={styles.scrim} />
       </Animated.View>
       <GestureDetector gesture={pan}>
         <Animated.View onLayout={onSheetLayout} style={[styles.sheet, { paddingTop: insets.top + 16 }, sheetStyle]} accessibilityViewIsModal={open}>
@@ -249,7 +249,7 @@ const SuiteApps = memo(function SuiteApps({ app }: { app: AppId }) {
   return (
     <>
       <DrawerDivider />
-      <DrawerHeading title={t('Applications')} />
+      <DrawerHeading title={t('Apps')} />
       {others.map(id => (
         <DrawerItem key={id} label={APPS[id].name} leading={<BrandMark app={id} size={28} />} onPress={() => void openInApp(id, appHome(id))} trailing={<ElsewhereMark />} />
       ))}

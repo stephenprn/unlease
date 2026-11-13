@@ -18,31 +18,31 @@ export type CssService = (typeof CSS_SERVICES)[number];
 
 /** The way to the sheets, the same words on both clients: the button at the foot of the ground, the dialog it opens, and the slip that points to it once the colours change. */
 export const SERVICES_CSS_WORDS = localized({
-  open: tx('Habiller vos autres services…'),
-  title: tx('Habiller vos autres services'),
-  intro: tx('Le CSS de vos couleurs et de votre fond, de jour comme de nuit, à coller dans chacun. Reprenez-le après avoir changé l’apparence.'),
-  hint: tx('Seafile, Seerr et Immich peuvent aussi prendre ces couleurs.'),
-  see: tx('Voir'),
-  copy: tx('Copier'),
-  notCopied: tx('Impossible de copier le CSS'),
+  open: tx('Style your other services…'),
+  title: tx('Style your other services'),
+  intro: tx('The CSS of your colours and background, by day and at night, to paste into each. Copy it again after changing the appearance.'),
+  hint: tx('Seafile, Seerr and Immich can take these colours too.'),
+  see: tx('View'),
+  copy: tx('Copy'),
+  notCopied: tx('Could not copy the CSS'),
 });
 
 /** What the dialog says of each service: the copy button's full name, where the sheet goes (in the service's own screens' words), and the slip once copied. */
 export const CUSTOM_CSS_WORDS: Readonly<Record<CssService, { readonly copy: string; readonly where: string; readonly copied: string }>> = {
   seafile: localized({
-    copy: tx('Copier le CSS pour Seafile'),
-    where: tx('Collez-le dans Administration système, Paramètres, « CSS personnalisé », validez avec ✓, puis cochez « Utiliser un CSS personalisé ».'),
-    copied: tx('CSS pour Seafile copié'),
+    copy: tx('Copy the CSS for Seafile'),
+    where: tx('Paste it in System Admin, Settings, “Custom CSS”, confirm with ✓, then tick “Use custom CSS”.'),
+    copied: tx('CSS for Seafile copied'),
   }),
   seerr: localized({
-    copy: tx('Copier le CSS pour Seerr'),
-    where: tx('Toujours sombre, Seerr prend vos couleurs de nuit. Il n’a pas encore de réglage pour le CSS : ajoutez-le avec une extension comme Stylus, ou par votre proxy.'),
-    copied: tx('CSS pour Seerr copié'),
+    copy: tx('Copy the CSS for Seerr'),
+    where: tx('Always dark, Seerr takes your night colours. It has no setting for CSS yet: add it with an extension such as Stylus, or through your proxy.'),
+    copied: tx('CSS for Seerr copied'),
   }),
   immich: localized({
-    copy: tx('Copier le CSS pour Immich'),
-    where: tx('Collez-le dans Administration, Paramètres, « Paramètres du thème », « CSS personnalisé », puis « Sauvegarder ».'),
-    copied: tx('CSS pour Immich copié'),
+    copy: tx('Copy the CSS for Immich'),
+    where: tx('Paste it in Administration, Settings, “Theme Settings”, “Custom CSS”, then “Save”.'),
+    copied: tx('CSS for Immich copied'),
   }),
 };
 

@@ -89,7 +89,7 @@ function ColorPickerComponent({ value, onChange, label }: { value: string; onCha
   const settle = (): boolean => {
     const hex = normalizeHex(typed);
     if (!hex) {
-      setError(t('Un code de six chiffres, comme #9CC15F.'));
+      setError(t('A six-digit code, like #9CC15F.'));
       return false;
     }
     setTyped(hex);
@@ -104,11 +104,11 @@ function ColorPickerComponent({ value, onChange, label }: { value: string; onCha
         style={saturationValuePaint(point.h)}
         role="slider"
         tabIndex={0}
-        aria-label={t('Saturation et luminosité')}
+        aria-label={t('Saturation and brightness')}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent(point.s)}
-        aria-valuetext={t('Saturation {saturation} %, luminosité {value} %', { saturation: percent(point.s), value: percent(point.v) })}
+        aria-valuetext={t('Saturation {saturation}%, brightness {value}%', { saturation: percent(point.s), value: percent(point.v) })}
         onKeyDown={onSquareKey}
         {...press(fromSquare)}
       >
@@ -119,7 +119,7 @@ function ColorPickerComponent({ value, onChange, label }: { value: string; onCha
         style={{ '--hues': HUE_SPECTRUM } as CSSProperties}
         role="slider"
         tabIndex={0}
-        aria-label={t('Teinte')}
+        aria-label={t('Hue')}
         aria-valuemin={0}
         aria-valuemax={359}
         aria-valuenow={Math.round(point.h)}
@@ -136,7 +136,7 @@ function ColorPickerComponent({ value, onChange, label }: { value: string; onCha
         <TextField
           className={styles.hexField}
           inputClassName={styles.hexInput}
-          label={t('Code hexadécimal')}
+          label={t('Hex code')}
           value={typed}
           onChange={onType}
           onBlur={() => void settle()}

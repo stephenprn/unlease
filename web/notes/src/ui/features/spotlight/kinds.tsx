@@ -7,7 +7,7 @@
 import { Fragment, memo } from 'react';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import { asLineColor, isLineColor, isNoteGradient } from '@unlease/design/colors';
 import { shownHint, shownTitle } from '@unlease/notes/models/entities';
 import { formatPrice, plural } from '@unlease/core/services/format';
@@ -156,7 +156,7 @@ function NotePreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher: Matc
           ))}
         </ul>
       ) : null}
-      {!body && items.length === 0 && drawing === null ? <p className={`${styles.quiet} t-meta`}>{t('Note vide')}</p> : null}
+      {!body && items.length === 0 && drawing === null ? <p className={`${styles.quiet} t-meta`}>{t('Empty note')}</p> : null}
     </div>
   );
 }
@@ -176,7 +176,7 @@ function CollectionPreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher
           <Marked text={hint} matcher={matcher} />
         </p>
       ) : null}
-      <p className={`${styles.quiet} t-meta`}>{done > 0 ? t('{links}, dont {done}', { links: plural(live.length, t('lien'), t('liens')), done: plural(done, t('fait'), t('faits')) }) : plural(live.length, t('lien'), t('liens'))}</p>
+      <p className={`${styles.quiet} t-meta`}>{done > 0 ? t('{links}, {done}', { links: plural(live.length, t('link'), t('links')), done: plural(done, t('done'), tc('many', 'done')) }) : plural(live.length, t('link'), t('links'))}</p>
       {live.length > 0 ? (
         <ul className={styles.linkList}>
           {live.slice(0, 8).map(link => (
@@ -217,7 +217,7 @@ function LinkPreview({ doc, matcher }: { doc: SearchDoc<SpotMeta>; matcher: Matc
       ) : null}
       {link.comment ? (
         <p className={`${styles.comment} t-body`}>
-          <span className={`${styles.commentLabel} t-meta`}>{t('Votre commentaire')}</span>
+          <span className={`${styles.commentLabel} t-meta`}>{t('Your comment')}</span>
           <Marked text={link.comment} matcher={matcher} />
         </p>
       ) : null}
@@ -239,13 +239,13 @@ export const NOTES_SPOT_KINDS: readonly SpotKind[] = [
       if (!note) return doc.title;
       if (note.title.trim()) return note.title.trim();
       const first = doc.parts.find(part => part.role !== 'meta');
-      return first ? first.text.slice(0, 120) : t('Note sans titre');
+      return first ? first.text.slice(0, 120) : t('Untitled note');
     },
     facts: doc => {
       const { notes, labels } = state();
       const note = notes[doc.meta.id];
       const worn = (note?.labelIds ?? []).map(labelId => labels[labelId]).filter(label => label && label.deletedAt === null).map(label => label!.name);
-      return [note?.kind === 'checklist' ? t('Liste à cocher') : note?.kind === 'drawing' ? t('Dessin') : t('Note'), ...worn, ...(note?.archived ? [t('Archivée')] : [])];
+      return [note?.kind === 'checklist' ? t('Checklist') : note?.kind === 'drawing' ? t('Drawing') : t('Note'), ...worn, ...(note?.archived ? [t('Archived')] : [])];
     },
     href: doc => paths.note(doc.meta.id),
     open: doc => openNote(doc.meta.id),
@@ -260,7 +260,7 @@ export const NOTES_SPOT_KINDS: readonly SpotKind[] = [
       const note = state().notes[doc.meta.id];
       return note ? shownTitle(note) : doc.title;
     },
-    facts: doc => [t('Collection'), plural((state().linksByNote[doc.meta.id] ?? []).length, t('lien'), t('liens'))],
+    facts: doc => [t('Collection'), plural((state().linksByNote[doc.meta.id] ?? []).length, t('link'), t('links'))],
     href: doc => paths.line(doc.meta.id),
     open: doc => navigate(paths.line(doc.meta.id)),
     Mark: CollectionMark,
@@ -268,7 +268,7 @@ export const NOTES_SPOT_KINDS: readonly SpotKind[] = [
   },
   {
     type: 'link',
-    label: tx('Liens'),
+    label: tx('Links'),
     docs: ofType('link'),
     title: doc => {
       const link = state().links[doc.meta.id];
@@ -278,9 +278,9 @@ export const NOTES_SPOT_KINDS: readonly SpotKind[] = [
       const { links, notes } = state();
       const link = links[doc.meta.id];
       const collection = doc.meta.within ? notes[doc.meta.within] : undefined;
-      if (!link) return [t('Lien')];
+      if (!link) return [t('Link')];
       const price = link.price !== null ? formatPrice(link.price, link.currency) : null;
-      return [t('Lien'), ...(collection ? [shownTitle(collection)] : []), cleanSiteName(link.siteName) ?? siteDomain(link.url), ...(price ? [price] : []), ...(link.done ? [t('Fait')] : [])];
+      return [t('Link'), ...(collection ? [shownTitle(collection)] : []), cleanSiteName(link.siteName) ?? siteDomain(link.url), ...(price ? [price] : []), ...(link.done ? [tc('ticked', 'Done')] : [])];
     },
     href: doc => paths.link(doc.meta.id),
     open: doc => openLink(doc.meta.id),

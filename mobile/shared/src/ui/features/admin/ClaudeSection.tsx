@@ -37,10 +37,10 @@ export function ClaudeSection({ server, ask, extra }: { server: ServerConfig; as
   // An emptied field is no budget: Number('') would read as 0 and stop all reading.
   const budgetValid = budget.trim() !== '' && Number.isFinite(amount) && amount >= 0;
   // Each typed value is its own little form: the key's « OK » saves the key, the budget's applies it.
-  const keyForm = useForm({ key: claudeKeyProblem(key) }, { order: ['key'], sendOnDone: () => save({ anthropicApiKey: key.trim() }, 'key', t('Clé enregistrée')) });
+  const keyForm = useForm({ key: claudeKeyProblem(key) }, { order: ['key'], sendOnDone: () => save({ anthropicApiKey: key.trim() }, 'key', t('Key saved')) });
   const budgetForm = useForm(
-    { budget: budgetValid ? null : t('Un montant en dollars, 0 ou plus.') },
-    { order: ['budget'], sendOnDone: () => (settings && amount === settings.analysis.budgetUsd ? true : save({ budgetUsd: amount }, 'budget', t('Budget enregistré'))) },
+    { budget: budgetValid ? null : t('An amount in dollars, 0 or more.') },
+    { order: ['budget'], sendOnDone: () => (settings && amount === settings.analysis.budgetUsd ? true : save({ budgetUsd: amount }, 'budget', t('Budget saved'))) },
   );
 
   const load = useCallback(() => {
@@ -68,7 +68,7 @@ export function ClaudeSection({ server, ask, extra }: { server: ServerConfig; as
       if (done) showSnack(done, undefined, { tone: 'success' });
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Réglage refusé');
+      const message = failure instanceof Error ? t(failure.message) : t('Setting refused');
       if (what === 'key') keyForm.fail('key', message);
       else if (what === 'budget') budgetForm.fail('budget', message);
       else showSnack(message, undefined, { tone: 'error' });
@@ -79,7 +79,7 @@ export function ClaudeSection({ server, ask, extra }: { server: ServerConfig; as
   }
 
   if (!settings) {
-    return <ListRow icon="info" title={t('Réglages du serveur indisponibles')} supporting={t('Le serveur ne répond pas pour l’instant.')} onPress={load} />;
+    return <ListRow icon="info" title={t('Server settings unavailable')} supporting={t('The server isn’t answering for now.')} onPress={load} />;
   }
   const analysis = settings.analysis;
   const model = analysis.model;
@@ -91,26 +91,26 @@ export function ClaudeSection({ server, ask, extra }: { server: ServerConfig; as
       <StatusRow
         line={{
           tone: analysis.enabled ? 'ok' : 'off',
-          title: analysis.enabled ? t('Claude activé') : t('Claude désactivé'),
+          title: analysis.enabled ? t('Claude on') : t('Claude off'),
           meta: analysis.enabled
             ? analysis.keySource === 'env'
-              ? t('Clé {hint} (définie sur le serveur)', { hint: analysis.keyHint ?? '' })
-              : t('Clé {hint}', { hint: analysis.keyHint ?? '' })
-            : t('Sans clé, rien n’est demandé à Claude : les applications marchent sans lui.'),
+              ? t('Key {hint} (set on the server)', { hint: analysis.keyHint ?? '' })
+              : t('Key {hint}', { hint: analysis.keyHint ?? '' })
+            : t('Without a key, nothing is asked of Claude: the apps work without it.'),
         }}
       >
         {analysis.keySource === 'app' ? (
           <Button
             kind="dangerText"
             small
-            label={t('Supprimer la clé')}
+            label={t('Delete the key')}
             onPress={() =>
               ask({
-                title: t('Supprimer la clé ?'),
-                message: t('Plus rien ne sera demandé à Claude, dans aucune application. Ce qu’il a déjà fait reste tel quel.'),
-                confirmLabel: t('Supprimer'),
+                title: t('Delete the key?'),
+                message: t('Nothing will be asked of Claude any more, in any app. What it has already done stays as it is.'),
+                confirmLabel: t('Delete'),
                 danger: true,
-                run: () => void save({ anthropicApiKey: null }, 'other', t('Clé supprimée')),
+                run: () => void save({ anthropicApiKey: null }, 'other', t('Key deleted')),
               })
             }
           />
@@ -133,44 +133,44 @@ export function ClaudeSection({ server, ask, extra }: { server: ServerConfig; as
 
       <View style={styles.fields}>
         <TextField
-          label={analysis.enabled ? t('Remplacer la clé API Claude') : t('Clé API Claude')}
+          label={analysis.enabled ? t('Replace the Claude API key') : t('Claude API key')}
           kind="secret"
           value={key}
           onChangeText={setKey}
           field={keyForm.field('key')}
           placeholder="sk-ant-…"
           help={<ConsoleHelp />}
-          revealLabels={{ show: t('Afficher la clé'), hide: t('Masquer la clé') }}
+          revealLabels={{ show: t('Show the key'), hide: t('Hide the key') }}
         />
         <View style={styles.row}>
-          <Button label={t('Enregistrer la clé')} icon="key" busy={keyForm.busy} onPress={() => void keyForm.submit(() => save({ anthropicApiKey: key.trim() }, 'key', t('Clé enregistrée')))} />
+          <Button label={t('Save the key')} icon="key" busy={keyForm.busy} onPress={() => void keyForm.submit(() => save({ anthropicApiKey: key.trim() }, 'key', t('Key saved')))} />
         </View>
 
-        <AppText variant="metaStrong">{t('Modèle')}</AppText>
+        <AppText variant="metaStrong">{t('Model')}</AppText>
         <Segmented<ClaudeModel>
-          label={t('Modèle')}
+          label={t('Model')}
           value={model}
           disabled={busy}
-          onChange={next => void save({ model: next }, 'other', t('Modèle : {model}', { model: CLAUDE_MODEL_NAMES[next] }))}
+          onChange={next => void save({ model: next }, 'other', t('Model: {model}', { model: CLAUDE_MODEL_NAMES[next] }))}
           options={CLAUDE_MODELS.map(id => ({ value: id, label: CLAUDE_MODEL_NAMES[id] }))}
         />
         <View style={styles.budgetRow}>
           <View style={styles.flex}>
             <TextField
-              label={t('Budget mensuel ($)')}
+              label={t('Monthly budget ($)')}
               kind="decimal"
               value={budget}
               onChangeText={setBudget}
               field={budgetForm.field('budget')}
-              help={t('Claude s’arrête pour le mois, dans toutes les applications, une fois le budget atteint.')}
+              help={t('Claude stops for the month, in every app, once the budget is reached.')}
             />
           </View>
           <Button
             kind="tonal"
-            label={t('Appliquer')}
+            label={t('Apply')}
             busy={budgetForm.busy}
             disabled={budgetValid && amount === analysis.budgetUsd}
-            onPress={() => void budgetForm.submit(() => (amount === analysis.budgetUsd ? true : save({ budgetUsd: amount }, 'budget', t('Budget enregistré'))))}
+            onPress={() => void budgetForm.submit(() => (amount === analysis.budgetUsd ? true : save({ budgetUsd: amount }, 'budget', t('Budget saved'))))}
             style={styles.apply}
           />
         </View>
@@ -188,24 +188,24 @@ function UsagePanel({ usage, budgetUsd }: { usage: Usage | null; budgetUsd: numb
   if (!usage) {
     return (
       <View style={styles.usage}>
-        <AppText variant="meta">{t('Consommation indisponible')}</AppText>
+        <AppText variant="meta">{t('Usage unavailable')}</AppText>
       </View>
     );
   }
   const share = budgetUsd > 0 ? Math.min(1, usage.month.costUsd / budgetUsd) : 0;
   return (
     <View style={styles.usage}>
-      <AppText variant="bodyStrong">{t('Ce mois-ci : {cost}', { cost: usd(usage.month.costUsd) })}</AppText>
+      <AppText variant="bodyStrong">{t('This month: {cost}', { cost: usd(usage.month.costUsd) })}</AppText>
       <Organic
         style={[styles.meter, { backgroundColor: theme.color.paperHigh, borderColor: theme.color.outline }]}
         accessible
         accessibilityRole="progressbar"
-        accessibilityLabel={t('Budget du mois utilisé')}
+        accessibilityLabel={t('Monthly budget used')}
         accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
       >
         <View style={[styles.meterFill, { width: `${share * 100}%`, backgroundColor: share > 0.8 ? theme.color.waiting : theme.color.action }]} />
       </Organic>
-      <AppText variant="meta">{t('Sur un budget de {budget} · depuis le début {total}', { budget: usd(budgetUsd), total: usd(usage.total.costUsd) })}</AppText>
+      <AppText variant="meta">{t('Out of a budget of {budget} · since the start {total}', { budget: usd(budgetUsd), total: usd(usage.total.costUsd) })}</AppText>
     </View>
   );
 }
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
 /** Where the key comes from, the console a link that opens in the browser (nested in the field's help line). */
 function ConsoleHelp() {
   const theme = useTheme();
-  const [before, after] = around(t('Créée sur {site}. Elle est vérifiée puis gardée sur votre serveur.'), 'site');
+  const [before, after] = around(t('Created on {site}. It is checked, then kept on your server.'), 'site');
   return (
     <>
       {before}

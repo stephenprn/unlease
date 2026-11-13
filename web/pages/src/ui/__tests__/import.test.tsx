@@ -102,6 +102,53 @@ describe('Pages’ import', () => {
     expect(screen.queryByText(/Ce fichier est vide/)).not.toBeInTheDocument();
   });
 
+  it('takes the pages’ icons from Notion’s HTML export dropped beside the Markdown one, each archive in its own folder', async () => {
+    const user = userEvent.setup();
+    const header = (icon: string, title: string): Uint8Array =>
+      strToU8(`<html><body><article id="1d0c5e2a" class="page sans"><header><div class="page-header-icon undefined">${icon}</div><h1 class="page-title">${title}</h1></header><div class="page-body"></div></article></body></html>`);
+    const markdown = new File(
+      [
+        zipSync({
+          [`Export-3f6b/Voyage ${V}.md`]: strToU8(`# Voyage\n\n![carte.png](Voyage%20${V}/carte.png)\n`),
+          [`Export-3f6b/Voyage ${V}/carte.png`]: new Uint8Array([137, 80, 78, 71, 1, 2, 3]),
+          [`Export-3f6b/Voyage ${V}/Lisbonne ${L}.md`]: strToU8('# Lisbonne\n\nLe tram.'),
+        }) as BlobPart,
+      ],
+      'Export-3f6b.zip',
+      { type: 'application/zip' },
+    );
+    const html = new File(
+      [
+        zipSync({
+          [`Export-7c1d/Voyage ${V}.html`]: header('<span class="icon">🌍</span>', 'Voyage'),
+          [`Export-7c1d/Voyage ${V}/Lisbonne ${L}.html`]: header(`<img class="icon" src="Lisbonne%20${L}/tram.png"/>`, 'Lisbonne'),
+          [`Export-7c1d/Voyage ${V}/Lisbonne ${L}/tram.png`]: new Uint8Array([137, 80, 78, 71, 4]),
+        }) as BlobPart,
+      ],
+      'Export-7c1d.zip',
+      { type: 'application/zip' },
+    );
+    render(<PagesImport />);
+    await user.upload(screen.getByLabelText('Export de Notion ou fichiers Markdown'), [markdown, html]);
+
+    const list = await screen.findByRole('list', { name: 'Les pages de l’export' });
+    const titles = within(list)
+      .getAllByRole('listitem')
+      .map(item => item.querySelector('.t-body')?.textContent);
+    expect(titles).toEqual(['🌍 Voyage', 'Lisbonne']);
+    expect(within(list).getByText(/icône est une image/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Continuer' }));
+    await user.click(screen.getByRole('button', { name: 'Importer 2 pages' }));
+    expect(await screen.findByRole('heading', { name: 'Import terminé' })).toBeInTheDocument();
+    const voyage = pagesNamed('Voyage')[0]!;
+    expect(voyage.icon).toBe('🌍');
+    expect(pagesNamed('Lisbonne')[0]!.icon).toBeNull();
+    // The picture's bytes found under its own archive's folder.
+    const picture = Object.values(pagesLibrary().blocks).find(block => block.kind === 'image' && block.parentId === voyage.id)!;
+    await waitFor(() => expect(pagesLibrary().blocks[picture.id]!.fileId).not.toBeNull());
+  });
+
   it('leaves a page out with its sub-pages, and adds nothing when the same files come again', async () => {
     const user = userEvent.setup();
     const { unmount } = render(<PagesImport />);

@@ -156,16 +156,16 @@ function Transfer({ linkId, cleaned, queued }: { linkId: string; cleaned: number
   const host = link.siteName && link.siteName.trim().toLowerCase() !== link.title.trim().toLowerCase() ? link.siteName : displayHost(link.url);
   const destination = filed ? line : undefined;
   const headline = !server
-    ? t('Pas de serveur : le lien attend dans Non classé')
+    ? t('No server: the link waits in Unsorted')
     : link.status === 'skipped'
-      ? t('Lecture désactivée : gardé dans Non classé')
+      ? t('Reading turned off: kept in Unsorted')
       : !settled
-        ? t('Claude lit la page…')
+        ? t('Claude is reading the page…')
         : link.status === 'failed'
-          ? t('Lecture impossible, gardé dans Non classé')
+          ? t('Couldn’t read it, kept in Unsorted')
           : filed
-            ? t('Rangé dans {collection}', { collection: line ? shownTitle(line) : '' })
-            : t('Gardé dans Non classé');
+            ? t('Filed in {collection}', { collection: line ? shownTitle(line) : '' })
+            : t('Kept in Unsorted');
 
   return (
     <>
@@ -176,7 +176,7 @@ function Transfer({ linkId, cleaned, queued }: { linkId: string; cleaned: number
         data-leaving={leaving || undefined}
         // Its own "Changer de collection" covers it, as the phone's sheet does: the slip lives above the layers.
         data-covered={moving || undefined}
-        aria-label={t('Classement du lien')}
+        aria-label={t('Filing the link')}
         onPointerEnter={() => setHeld(true)}
         onPointerLeave={() => setHeld(false)}
         onFocus={() => setHeld(true)}
@@ -185,13 +185,13 @@ function Transfer({ linkId, cleaned, queued }: { linkId: string; cleaned: number
         <div className={styles.slipHead}>
           <p className={`${styles.slipTitle} t-body-strong`}>{link.title || prettyUrl(link.url)}</p>
           {queued > 0 ? (
-            <span className={`${styles.queued} t-meta-strong`} aria-label={plural(queued, 'autre en attente', 'autres en attente')}>
+            <span className={`${styles.queued} t-meta-strong`} aria-label={plural(queued, 'other waiting', 'others waiting')}>
               +{queued}
             </span>
           ) : null}
-          <IconButton icon="close" label={t('Fermer')} onSlip compact size={18} className={styles.close} onClick={leave} />
+          <IconButton icon="close" label={t('Close')} onSlip compact size={18} className={styles.close} onClick={leave} />
         </div>
-        <p className={`${styles.site} t-meta`}>{cleaned > 0 ? `${host} · ${plural(cleaned, 'traceur retiré', 'traceurs retirés')}` : host}</p>
+        <p className={`${styles.site} t-meta`}>{cleaned > 0 ? `${host} · ${plural(cleaned, 'tracker removed', 'trackers removed')}` : host}</p>
         <div className={styles.cutRow} aria-hidden="true">
           <Emblem emblem="bac" color={asLineColor(inbox?.color ?? null) ?? 'grey'} size={MARK} />
           <span ref={track} className={styles.cutTrack}>
@@ -217,19 +217,19 @@ function Transfer({ linkId, cleaned, queued }: { linkId: string; cleaned: number
           </p>
           {settled ? (
             <>
-              <button type="button" className={styles.slipAction} aria-label={t('Changer de collection')} onClick={() => setMoving(true)}>
-                {t('Changer')}
+              <button type="button" className={styles.slipAction} aria-label={t('Change collection')} onClick={() => setMoving(true)}>
+                {t('Change')}
               </button>
               <button
                 type="button"
                 className={styles.slipAction}
-                aria-label={t('Voir la collection')}
+                aria-label={t('View the collection')}
                 onClick={() => {
                   endTransfer(linkId);
                   navigate(paths.line(link.noteId));
                 }}
               >
-                {t('Voir')}
+                {t('View')}
               </button>
             </>
           ) : null}
@@ -243,7 +243,7 @@ function Transfer({ linkId, cleaned, queued }: { linkId: string; cleaned: number
           moveLink(linkId, target);
           endTransfer(linkId);
           const into = useLibraryStore.getState().notes[target];
-          showSnack(t('Déplacé dans {collection}', { collection: into ? shownTitle(into) : '' }), undefined, { tone: 'success' });
+          showSnack(t('Moved to {collection}', { collection: into ? shownTitle(into) : '' }), undefined, { tone: 'success' });
         }}
       />
     </>

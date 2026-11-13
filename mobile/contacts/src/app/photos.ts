@@ -40,7 +40,7 @@ export async function pickPhoto(source: 'gallery' | 'camera'): Promise<PickedPho
   const result = source === 'camera' ? await capturePhoto() : await pickImages(1);
   if (result.status === 'cancelled') return { status: 'cancelled' };
   const file = result.files[0];
-  if (result.status !== 'ok' || !file) return { status: 'error', message: result.message ? t(result.message) : t('Impossible d’ajouter la photo') };
+  if (result.status !== 'ok' || !file) return { status: 'error', message: result.message ? t(result.message) : t('Couldn’t add the photo') };
   return { status: 'ok', photo: keepPhoto(file.path, file.mime) };
 }
 

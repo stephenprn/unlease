@@ -49,7 +49,7 @@ export function showOnlyCalendar(key: string): void {
   const remembered = usePrefsStore.getState().shownBefore;
   const only = showOnly(before, key, remembered);
   apply(only.shown, only.memory);
-  showUndo(t('Les autres agendas sont masqués'), () => apply(before, remembered));
+  showUndo(t('Other calendars hidden'), () => apply(before, remembered));
 }
 
 /** What showed before « uniquement » (every calendar, when nothing is remembered); the slip takes it back. */
@@ -57,5 +57,5 @@ export function showAllCalendars(): void {
   const before = shownHere();
   const remembered = usePrefsStore.getState().shownBefore;
   apply(showAll(before, remembered), null);
-  showUndo(t('Les agendas sont de nouveau affichés'), () => apply(before, remembered));
+  showUndo(t('Calendars shown again'), () => apply(before, remembered));
 }

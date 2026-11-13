@@ -42,13 +42,13 @@ const LAYER_GLYPHS: Readonly<Record<Exclude<DayItem['kind'], 'event'>, GlyphName
 function titleOf(item: DayItem): string {
   switch (item.kind) {
     case 'event':
-      return item.occurrence.event.title.trim() || t('Sans titre');
+      return item.occurrence.event.title.trim() || t('Untitled');
     case 'birthday':
       return birthdayTitle(item.birthday.name, item.birthday.age);
     case 'reminder':
-      return item.reminder.title || t('Sans titre');
+      return item.reminder.title || t('Untitled');
     case 'page':
-      return item.page.title || t('Sans titre');
+      return item.page.title || t('Untitled');
   }
 }
 
@@ -128,7 +128,7 @@ function OverdueRow({ reminder, today, twelveHours }: { reminder: ReminderItem; 
           </span>
         </span>
         <span className={styles.words}>
-          <span className={`${styles.title} t-body`}>{reminder.title || t('Sans titre')}</span>
+          <span className={`${styles.title} t-body`}>{reminder.title || t('Untitled')}</span>
           <span className={`${styles.meta} t-meta`}>
             <span className={styles.time} data-due>
               {overdueWords(reminder, today, twelveHours)}
@@ -144,7 +144,7 @@ function OverdueRow({ reminder, today, twelveHours }: { reminder: ReminderItem; 
 function NowLine({ now, twelveHours }: { now: number; twelveHours: boolean }) {
   return (
     <li className={styles.now}>
-      <span className="sr-only">{t('Maintenant, {clock}', { clock: clockWords(formatClock(now), twelveHours) })}</span>
+      <span className="sr-only">{t('Now, {clock}', { clock: clockWords(formatClock(now), twelveHours) })}</span>
     </li>
   );
 }
@@ -175,7 +175,7 @@ export function TodayView({ today, now }: { today: string; now: number }) {
           ) : null}
 
           {rows.length > 0 ? (
-            <ul className={styles.list} aria-label={t('Aujourd’hui')}>
+            <ul className={styles.list} aria-label={t('Today')}>
               {plan.allDay.map(row => (
                 <Row key={row.item.key} row={row} day={today} now={now} today={today} twelveHours={twelveHours} />
               ))}
@@ -190,9 +190,9 @@ export function TodayView({ today, now }: { today: string; now: number }) {
           ) : plan.overdue.length === 0 && !tomorrow ? (
             // Nothing today nor tomorrow: the view's empty place.
             <div className={styles.emptyView}>
-              <EmptyState scene="reminders" title={t('Rien de prévu aujourd’hui')} text={t('La journée est à vous.')}>
+              <EmptyState scene="reminders" title={t('Nothing planned today')} text={t('The day is yours.')}>
                 <Button kind="tonal" icon="plus" onClick={() => navigate(paths.newEvent())}>
-                  {t('Créer un événement')}
+                  {t('Create an event')}
                 </Button>
               </EmptyState>
             </div>
@@ -201,8 +201,8 @@ export function TodayView({ today, now }: { today: string; now: number }) {
             <EmptyLine
               className={styles.emptyDay}
               size="body"
-              text={t('Rien de prévu aujourd’hui : la journée est à vous.')}
-              action={{ label: t('Créer un événement'), onClick: () => navigate(paths.newEvent()) }}
+              text={t('Nothing planned today: the day is yours.')}
+              action={{ label: t('Create an event'), onClick: () => navigate(paths.newEvent()) }}
             />
           )}
 
@@ -225,7 +225,7 @@ export function TodayView({ today, now }: { today: string; now: number }) {
           {plan.overdue.length > 0 ? (
             <section className={styles.section} aria-labelledby={`${ids}-overdue`}>
               <h2 id={`${ids}-overdue`} className={`${styles.head} t-section`}>
-                {t('En retard')}
+                {t('Overdue')}
               </h2>
               <ul className={styles.list}>
                 {plan.overdue.map(reminder => (
@@ -239,7 +239,7 @@ export function TodayView({ today, now }: { today: string; now: number }) {
             <section className={styles.section} aria-labelledby={`${ids}-tomorrow`}>
               <div className={styles.head}>
                 <h2 id={`${ids}-tomorrow`} className="t-section">
-                  {t('Demain')}
+                  {t('Tomorrow')}
                 </h2>
                 <span className="t-meta">{weekdayDay(tomorrow.day, Number(today.slice(0, 4)))}</span>
               </div>
@@ -251,7 +251,7 @@ export function TodayView({ today, now }: { today: string; now: number }) {
               {tomorrow.more > 0 ? (
                 <div className={styles.more}>
                   <Link to={paths.view('day', tomorrow.day)} className={`${styles.moreLink} t-label`}>
-                    {t('Et {events} demain', { events: plural(tomorrow.more, 'autre événement', 'autres événements') })}
+                    {t('And {events} tomorrow', { events: plural(tomorrow.more, 'more event', 'more events') })}
                     <Icon name="chevronRight" size={18} />
                   </Link>
                 </div>
@@ -274,8 +274,8 @@ function JournalWords({ made }: { made: boolean }) {
         </span>
       </span>
       <span className={styles.words}>
-        <span className={`${styles.title} t-body`}>{t('Note du jour')}</span>
-        <span className={`${styles.meta} t-meta`}>{made ? t('Ouvrir dans {app}', { app: APPS.pages.name }) : t('À écrire dans {app}', { app: APPS.pages.name })}</span>
+        <span className={`${styles.title} t-body`}>{t('Today’s note')}</span>
+        <span className={`${styles.meta} t-meta`}>{made ? t('Open in {app}', { app: APPS.pages.name }) : t('To write in {app}', { app: APPS.pages.name })}</span>
       </span>
     </>
   );

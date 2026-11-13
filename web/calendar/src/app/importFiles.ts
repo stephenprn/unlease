@@ -24,9 +24,9 @@ const baseName = (path: string): string => path.split('/').pop() ?? path;
 
 /** One text: a calendar, or why not. */
 function readText(name: string, text: string): ImportFile | string {
-  if (!/BEGIN:VCALENDAR/i.test(text)) return t('Ce fichier ne se lit pas comme un agenda.');
+  if (!/BEGIN:VCALENDAR/i.test(text)) return t('This file does not read as a calendar.');
   const calendar = parseIcs(text);
-  if (calendar.events.length === 0 && (calendar.unreadable ?? []).length === 0) return t('Aucun événement dans ce fichier.');
+  if (calendar.events.length === 0 && (calendar.unreadable ?? []).length === 0) return t('No events in this file.');
   return { fileName: name, calendar };
 }
 
@@ -40,7 +40,7 @@ export async function readImportFiles(given: readonly File[]): Promise<ReadFiles
       if (isZip(file)) {
         const entries = unzipSync(new Uint8Array(await file.arrayBuffer()), { filter: entry => /\.ics$/i.test(entry.name) && !baseName(entry.name).startsWith('.') });
         const names = Object.keys(entries).sort();
-        if (names.length === 0) refused.push({ name: file.name, why: t('Cette archive ne contient aucun fichier .ics.') });
+        if (names.length === 0) refused.push({ name: file.name, why: t('This archive holds no .ics file.') });
         for (const name of names) {
           const read = readText(baseName(name), decoder.decode(entries[name]));
           if (typeof read === 'string') refused.push({ name: baseName(name), why: read });
@@ -52,7 +52,7 @@ export async function readImportFiles(given: readonly File[]): Promise<ReadFiles
       if (typeof read === 'string') refused.push({ name: file.name, why: read });
       else files.push(read);
     } catch {
-      refused.push({ name: file.name, why: isZip(file) ? t('Cette archive ne s’ouvre pas.') : t('Ce fichier ne se lit pas comme un agenda.') });
+      refused.push({ name: file.name, why: isZip(file) ? t('This archive does not open.') : t('This file does not read as a calendar.') });
     }
   }
   return { files, refused };

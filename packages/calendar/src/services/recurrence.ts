@@ -350,13 +350,13 @@ export function ruleUntilBefore(rule: Rule, occurrence: string, zone: string): R
 // ── words ──────────────────────────────────────────────────────────────────
 
 const ORDINALS: Readonly<Record<string, string>> = localized({
-  '1': tx('premier'),
-  '2': tx('deuxième'),
-  '3': tx('troisième'),
-  '4': tx('quatrième'),
-  '5': tx('cinquième'),
-  '-1': tx('dernier'),
-  '-2': tx('avant-dernier'),
+  '1': tx('first'),
+  '2': tx('second'),
+  '3': tx('third'),
+  '4': tx('fourth'),
+  '5': tx('fifth'),
+  '-1': tx('last'),
+  '-2': tx('second-to-last'),
 });
 
 const ordinal = (nth: number): string => ORDINALS[String(nth)] ?? String(nth);
@@ -364,9 +364,9 @@ const ordinal = (nth: number): string => ORDINALS[String(nth)] ?? String(nth);
 function weekdayList(days: readonly WeekdayRule[]): string {
   const names = weekdayNames();
   const sorted = [...days].sort((a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7));
-  const words = sorted.map(day => (day.nth ? t('le {nth} {weekday}', { nth: ordinal(day.nth), weekday: names[day.weekday]! }) : names[day.weekday]!));
+  const words = sorted.map(day => (day.nth ? t('the {nth} {weekday}', { nth: ordinal(day.nth), weekday: names[day.weekday]! }) : names[day.weekday]!));
   if (words.length <= 1) return words[0] ?? '';
-  return t('{list} et {last}', { list: words.slice(0, -1).join(', '), last: words[words.length - 1]! });
+  return t('{list} and {last}', { list: words.slice(0, -1).join(', '), last: words[words.length - 1]! });
 }
 
 const WORKDAYS = [1, 2, 3, 4, 5];
@@ -391,37 +391,37 @@ export function describeRule(rule: Rule, start: string, zone?: string): string {
   let head: string;
   switch (rule.freq) {
     case 'DAILY':
-      head = rule.byDay.length > 0 && isWorkdays(rule.byDay) ? t('Tous les jours ouvrés (du lundi au vendredi)') : rule.interval === 1 ? t('Tous les jours') : t('Tous les {count} jours', { count: rule.interval });
+      head = rule.byDay.length > 0 && isWorkdays(rule.byDay) ? t('Every weekday (Monday to Friday)') : rule.interval === 1 ? t('Daily') : t('Every {count} days', { count: rule.interval });
       break;
     case 'WEEKLY': {
       if (rule.interval === 1 && isWorkdays(rule.byDay)) {
-        head = t('Tous les jours ouvrés (du lundi au vendredi)');
+        head = t('Every weekday (Monday to Friday)');
         break;
       }
       const days = rule.byDay.length > 0 ? weekdayList(rule.byDay) : names[weekdayOf(start)]!;
-      head = rule.interval === 1 ? t('Toutes les semaines le {days}', { days }) : t('Toutes les {count} semaines le {days}', { count: rule.interval, days });
+      head = rule.interval === 1 ? t('Weekly on {days}', { days }) : t('Every {count} weeks on {days}', { count: rule.interval, days });
       break;
     }
     case 'MONTHLY': {
       let which: string;
       if (rule.byDay.length > 0 && rule.bySetPos.length === 0) which = weekdayList(rule.byDay);
-      else if (rule.byMonthDay.length > 0) which = rule.byMonthDay.map(day => (day === -1 ? t('le dernier jour') : t('le {day}', { day }))).join(', ');
-      else which = t('le {day}', { day: startParts.day });
-      head = rule.interval === 1 ? t('Tous les mois {which}', { which }) : t('Tous les {count} mois {which}', { count: rule.interval, which });
+      else if (rule.byMonthDay.length > 0) which = rule.byMonthDay.map(day => (day === -1 ? t('the last day') : t('on day {day}', { day }))).join(', ');
+      else which = t('on day {day}', { day: startParts.day });
+      head = rule.interval === 1 ? t('Monthly {which}', { which }) : t('Every {count} months {which}', { count: rule.interval, which });
       break;
     }
     case 'YEARLY': {
       const month = monthNames()[(rule.byMonth[0] ?? startParts.month) - 1]!;
-      const which = rule.byDay.length > 0 ? t('{days} de {month}', { days: weekdayList(rule.byDay), month }) : t('le {day} {month}', { day: rule.byMonthDay[0] ?? startParts.day, month });
-      head = rule.interval === 1 ? t('Tous les ans {which}', { which }) : t('Tous les {count} ans {which}', { count: rule.interval, which });
+      const which = rule.byDay.length > 0 ? t('{days} of {month}', { days: weekdayList(rule.byDay), month }) : t('on {month} {day}', { day: rule.byMonthDay[0] ?? startParts.day, month });
+      head = rule.interval === 1 ? t('Annually {which}', { which }) : t('Every {count} years {which}', { count: rule.interval, which });
       break;
     }
   }
-  if (rule.count !== null) return t('{rule}, {count} fois', { rule: head, count: rule.count });
+  if (rule.count !== null) return t('{rule}, {count} times', { rule: head, count: rule.count });
   if (rule.until) {
     const until = rule.until;
     const day = until.kind === 'day' ? until.day : until.kind === 'wall' ? lastDayBy(until.wall, start) : zone !== undefined ? lastDayBy(instantToWall(until.at, zone), start) : new Date(until.at).toISOString().slice(0, 10);
-    return t('{rule}, jusqu’au {day}', { rule: head, day: formatIsoDay(day) });
+    return t('{rule}, until {day}', { rule: head, day: formatIsoDay(day) });
   }
   return head;
 }
@@ -477,8 +477,8 @@ export function choiceOf(rrule: string, start: string): RepeatChoice {
 
 /** A choice in words, from the start: « Toutes les semaines le lundi ». */
 export function choiceWords(choice: RepeatChoice, start: string): string {
-  if (choice === 'none') return t('Ne se répète pas');
-  if (choice === 'custom') return t('Personnaliser…');
+  if (choice === 'none') return t('Does not repeat');
+  if (choice === 'custom') return t('Custom…');
   return describeRule(parseRule(choiceRule(choice, start))!, start);
 }
 

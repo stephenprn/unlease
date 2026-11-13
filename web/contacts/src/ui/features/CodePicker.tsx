@@ -16,7 +16,7 @@ import { callingCountries, callingCountry } from './callingCodes';
 export function CodePicker({ region, fallback, onChange, label }: { region: string | null; fallback: string | null; onChange: (region: string | null) => void; label: string }) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLButtonElement>(null);
-  const named = region ? callingCountry(region) : t('Aucun indicatif');
+  const named = region ? callingCountry(region) : t('No country code');
   const mark = (on: boolean): ReactNode => (on ? <Icon name="check" size={22} className={styles.kindTick} /> : <span className={styles.kindBlank} />);
   const countries = callingCountries();
   const ordered = [...countries.filter(country => country.value === fallback), ...countries.filter(country => country.value !== fallback)];
@@ -30,7 +30,7 @@ export function CodePicker({ region, fallback, onChange, label }: { region: stri
       separatorBefore: index === 1 && ordered[0]!.value === fallback,
       onSelect: () => onChange(country.value),
     })),
-    { label: t('Aucun : le numéro tel qu’il est écrit'), icon: 'check' as const, mark: mark(region === null), separatorBefore: true, onSelect: () => onChange(null) },
+    { label: t('None: the number as it is written'), icon: 'check' as const, mark: mark(region === null), separatorBefore: true, onSelect: () => onChange(null) },
   ];
   return (
     <>

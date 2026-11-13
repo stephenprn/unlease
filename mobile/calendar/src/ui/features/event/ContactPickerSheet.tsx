@@ -27,7 +27,7 @@ export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={title} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Rechercher un contact')} accessibilityLabel={t('Rechercher un contact')} autoFocus />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search contacts')} accessibilityLabel={t('Search contacts')} autoFocus />
       </View>
       <SheetFlatList top={false}
         data={found}
@@ -43,7 +43,7 @@ export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: 
           />
         )}
         // No contact at all, before a word: the address book is empty; else none answers the words or the kind asked for.
-        ListEmptyComponent={<EmptyLine glyph={query.trim() ? 'search' : 'person'} text={!query.trim() && !only ? t('Aucun contact pour l’instant') : t('Aucun contact ne correspond')} style={styles.none} />}
+        ListEmptyComponent={<EmptyLine glyph={query.trim() ? 'search' : 'person'} text={!query.trim() && !only ? t('No contacts yet') : t('No contact matches')} style={styles.none} />}
       />
     </Sheet>
   );

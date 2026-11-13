@@ -25,20 +25,20 @@ export const EMBLEMS = [
 export type Emblem = (typeof EMBLEMS)[number];
 
 export const EMBLEM_NAMES: Record<Emblem, string> = localized({
-  feuille: tx('Feuille'),
-  etoile: tx('Étoile'),
-  soleil: tx('Soleil'),
-  fleur: tx('Fleur'),
-  trefle: tx('Trèfle'),
-  galet: tx('Galet'),
-  coeur: tx('Cœur'),
-  lune: tx('Lune'),
-  goutte: tx('Goutte'),
-  nuage: tx('Nuage'),
-  vague: tx('Vague'),
-  poisson: tx('Poisson'),
-  oiseau: tx('Oiseau'),
-  arche: tx('Arche'),
+  feuille: tx('Leaf'),
+  etoile: tx('Star'),
+  soleil: tx('Sun'),
+  fleur: tx('Flower'),
+  trefle: tx('Clover'),
+  galet: tx('Pebble'),
+  coeur: tx('Heart'),
+  lune: tx('Moon'),
+  goutte: tx('Drop'),
+  nuage: tx('Cloud'),
+  vague: tx('Wave'),
+  poisson: tx('Fish'),
+  oiseau: tx('Bird'),
+  arche: tx('Arch'),
 });
 
 /** Fill paths on the 100 grid; the stone's hole and the fish's eye need the even-odd rule. */

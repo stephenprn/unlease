@@ -68,6 +68,6 @@ export async function openInApp(app: AppId, place: SuitePlace): Promise<boolean>
       // Nothing opens web addresses either.
     }
   }
-  showSnack(t('Impossible d’ouvrir {app} : installez son application, ou reliez un serveur.', { app: APPS[app].name }), undefined, { tone: 'error' });
+  showSnack(t('Could not open {app}: install its app, or connect a server.', { app: APPS[app].name }), undefined, { tone: 'error' });
   return false;
 }

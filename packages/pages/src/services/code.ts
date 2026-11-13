@@ -13,7 +13,7 @@ export interface CodeLanguage {
 }
 
 export const CODE_LANGUAGES: readonly CodeLanguage[] = [
-  { key: 'plain', get name() { return t('Texte brut'); }, hljs: null, aliases: ['texte', 'text', 'txt', 'plain'] },
+  { key: 'plain', get name() { return t('Plain text'); }, hljs: null, aliases: ['texte', 'text', 'txt', 'plain'] },
   { key: 'javascript', name: 'JavaScript', hljs: 'javascript', aliases: ['js', 'jsx', 'node'] },
   { key: 'typescript', name: 'TypeScript', hljs: 'typescript', aliases: ['ts', 'tsx'] },
   { key: 'python', name: 'Python', hljs: 'python', aliases: ['py'] },

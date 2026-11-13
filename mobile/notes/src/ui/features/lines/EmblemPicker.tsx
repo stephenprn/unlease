@@ -38,7 +38,7 @@ const EmblemCell = memo(function EmblemCell({ emblem, turn, selected, color, onC
 function EmblemPickerComponent({ value, color, onChange }: { value: EmblemKey; color: LineColor | null; onChange: (emblem: EmblemKey) => void }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={t('Emblème')}>
+    <View style={styles.grid} accessibilityRole="radiogroup" accessibilityLabel={t('Emblem')}>
       {EMBLEMS.map((emblem, index) => (
         <EmblemCell key={emblem} emblem={emblem} turn={index} selected={emblem === value} color={color} onChange={onChange} />
       ))}

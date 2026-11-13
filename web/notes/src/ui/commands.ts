@@ -78,7 +78,7 @@ export async function newPhotoNote(files: readonly File[]): Promise<void> {
   const outcome = await attachFiles(id, files);
   if (outcome.added === 0) {
     deleteForever([id]);
-    showError(t('Ces fichiers ne sont pas des images que le serveur accepte.'));
+    showError(t('These files aren’t images the server accepts.'));
     return;
   }
   setEditorFocus('body');

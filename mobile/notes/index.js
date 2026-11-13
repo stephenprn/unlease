@@ -7,7 +7,7 @@ import 'react-native-gesture-handler';
 
 import notifee from '@notifee/react-native';
 import { AppRegistry } from 'react-native';
-import { addNotesEnglish } from '@unlease/notes/i18n';
+import { addNotesFrench } from '@unlease/notes/i18n';
 
 import App from './App';
 import { name as appName } from './app.json';
@@ -19,7 +19,7 @@ import { runWidgetTask } from './src/app/widgetTask';
 import { runRemindersTask } from './src/app/remindersTask';
 
 // The design system's and Carnet's English, for every root below.
-addNotesEnglish();
+addNotesFrench();
 
 // Before registerComponent, as Notifee requires.
 notifee.onBackgroundEvent(handleBackgroundEvent);

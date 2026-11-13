@@ -28,7 +28,7 @@ import { restoreSummary } from './admin';
 export type SetupStep = 'server' | 'apps' | 'checklist' | 'import' | 'appearance';
 
 /** What "Votre serveur" lists, each opened from its row. */
-export type SetupTask = 'restore' | 'reading' | 'backup' | 'drive' | 'seerr' | 'holidays';
+export type SetupTask = 'restore' | 'reading' | 'backup' | 'drive' | 'seerr' | 'immich' | 'holidays';
 
 export interface SetupStepWords {
   readonly title: string;
@@ -39,29 +39,29 @@ export interface SetupStepWords {
 
 export const SETUP_WORDS: Record<SetupStep, SetupStepWords> = {
   server: localized({
-    title: tx('Connexion'),
-    short: tx('Connexion'),
-    lead: tx('Vos notes, vos pages, vos contacts et votre agenda, sur votre propre serveur.'),
+    title: tx('Connection'),
+    short: tx('Connection'),
+    lead: tx('Your notes, your pages, your contacts and your calendar, on your own server.'),
   }),
   apps: localized({
-    title: tx('Vos applications'),
-    short: tx('Applications'),
-    lead: tx('Choisissez ce que votre serveur fait tourner. Les applications partagent vos réglages, votre apparence et vos données ; vous en ajouterez ou en retirerez plus tard dans l’Administration.'),
+    title: tx('Your apps'),
+    short: tx('Apps'),
+    lead: tx('Choose what your server runs. The apps share your settings, your look and your data; you can add or remove some later in Administration.'),
   }),
   checklist: localized({
-    title: tx('Votre serveur'),
-    short: tx('Serveur'),
-    lead: tx('Ce que votre serveur peut faire de plus, réglé une fois pour toutes les applications. Tout est facultatif, et se règle aussi plus tard dans l’Administration.'),
+    title: tx('Your server'),
+    short: tx('Server'),
+    lead: tx('What more your server can do, set once for every app. All of it is optional, and can also be set later in Administration.'),
   }),
   import: localized({
-    title: tx('Vos données'),
-    short: tx('Données'),
-    lead: tx('Vous arrivez d’une autre application ? Importez vos données maintenant, ou plus tard depuis les Réglages. Rien n’est écrit avant que vous ayez tout vu.'),
+    title: tx('Your data'),
+    short: tx('Data'),
+    lead: tx('Coming from another app? Import your data now, or later from Settings. Nothing is written before you have seen it all.'),
   }),
   appearance: localized({
-    title: tx('Apparence'),
-    short: tx('Apparence'),
-    lead: tx('Les couleurs et le fond des applications sur cet appareil. Gardez ceux d’origine ou choisissez les vôtres : ils se changent ensuite dans les Réglages.'),
+    title: tx('Appearance'),
+    short: tx('Appearance'),
+    lead: tx('The apps’ colours and background on this device. Keep the original ones or choose your own: you can change them later in Settings.'),
   }),
 };
 
@@ -74,69 +74,73 @@ export function setupWelcomeLead(app: AppId | null): string {
 export function setupFieldHelp(field: 'address' | 'served' | 'token'): string {
   switch (field) {
     case 'address':
-      return t('L’adresse où vous avez installé {suite}, par exemple https://{slug}.exemple.fr.', { suite: SUITE_NAME, slug: SUITE_SLUG });
+      return t('The address where you installed {suite}, for example https://{slug}.example.org.', { suite: SUITE_NAME, slug: SUITE_SLUG });
     case 'served':
-      return t('L’adresse de cette page : c’est votre serveur qui la sert.');
+      return t('This page’s address: your server is serving it.');
     case 'token':
-      return t('La valeur de UNLEASE_TOKEN, dans le fichier .env posé à côté de docker-compose.yml sur votre serveur.');
+      return t('The value of UNLEASE_TOKEN, in the .env file next to docker-compose.yml on your server.');
   }
 }
 
 export const SETUP_TASK_WORDS: Record<SetupTask, Omit<SetupStepWords, 'short'>> = {
   restore: localized({
-    title: tx('Retrouver vos données'),
-    lead: tx('Votre serveur est vide. S’il en remplace un autre, restaurez sa dernière sauvegarde : les données de toutes les applications reviennent de S3, les fichiers de Seafile. Sinon, commencez à neuf.'),
+    title: tx('Recover your data'),
+    lead: tx('Your server is empty. If it replaces another one, restore its latest backup: every app’s data comes back from S3, the files from Seafile. Otherwise, start afresh.'),
   }),
   reading: localized({
     title: tx('Claude'),
-    lead: tx('Facultatif : une clé Claude, partagée par toutes les applications. Une clé se crée sur console.anthropic.com, rubrique API Keys ; le budget mensuel arrête tout une fois atteint.'),
+    lead: tx('Optional: a Claude key, shared by every app. Create one on console.anthropic.com, under API Keys; the monthly budget stops everything once reached.'),
   }),
   backup: localized({
-    title: tx('Sauvegarde sur S3'),
-    lead: tx('Une copie des données de toutes les applications loin de chez vous, chez Scaleway, OVH, AWS… et de vos photos et fichiers, sauf si Seafile les garde. La clé se crée dans la console de votre fournisseur (clés d’accès, ou IAM) ; elle est vérifiée (lecture, écriture, suppression) puis gardée sur votre serveur.'),
+    title: tx('Backup to S3'),
+    lead: tx('A copy of every app’s data away from home, at Scaleway, OVH, AWS… and of your photos and files, unless Seafile keeps them. Create the key in your provider’s console (access keys, or IAM); it is checked (read, write, delete) then kept on your server.'),
   }),
   drive: localized({
-    title: tx('Fichiers sur Seafile'),
-    lead: tx('Facultatif : les photos, vidéos et documents de toutes les applications rangés dans un dossier Seafile, chacune dans le sien ; le serveur n’en garde que des aperçus. Sans Seafile, il les garde, et la sauvegarde S3 en a une copie.'),
+    title: tx('Files on Seafile'),
+    lead: tx('Optional: every app’s photos, videos and documents filed in a Seafile folder, each app in its own; the server keeps only previews. Without Seafile, it keeps them, and the S3 backup has a copy.'),
   }),
   holidays: localized({
-    title: tx('Jours fériés'),
-    lead: tx('Facultatif, pour Agenda : les jours fériés d’un pays (et de sa région, s’il en a), que le serveur va chercher sur Nager.Date et montre dans l’agenda de chaque appareil.'),
+    title: tx('Public holidays'),
+    lead: tx('Optional, for Agenda: a country’s public holidays (and its region’s, if it has any), which the server fetches from Nager.Date and shows in every device’s calendar.'),
   }),
   seerr: localized({
-    title: tx('Films et séries avec Seerr'),
-    lead: tx('Facultatif, pour les collections de films et de séries : votre Seerr (Jellyseerr, Overseerr), pour demander un titre depuis son lien. Sa clé API est dans Seerr, Réglages, Général.'),
+    title: tx('Films and series with Seerr'),
+    lead: tx('Optional, for collections of films and series: your Seerr (Jellyseerr, Overseerr), to request a title from its link. Its API key is in Seerr, Settings, General.'),
+  }),
+  immich: localized({
+    title: tx('Photos on Immich'),
+    lead: tx('Optional: your Immich photo library, to show an album or photos in a page and take a contact’s photo from the faces it knows. Create an API key in Immich, Account Settings, API Keys, with album.read, asset.read, asset.view and person.read.'),
   }),
 };
 
 /** What « Retrouver vos données » says as it goes, the same on every client. */
 export const SETUP_RESTORE_WORDS = localized({
-  noStorage: tx('Pas de stockage S3'),
-  noStorageMeta: tx('Ajoutez-le pour retrouver ses sauvegardes. Sans S3, une archive téléchargée auparavant peut tout de même revenir.'),
-  addStorage: tx('Ajouter le stockage S3'),
-  reading: tx('Lecture des sauvegardes sur S3…'),
-  unreadable: tx('Sauvegardes illisibles'),
-  none: tx('Aucune sauvegarde sur S3'),
-  restore: tx('Restaurer cette sauvegarde'),
-  running: tx('Restauration en cours…'),
-  runningMeta: tx('Les données reviennent d’abord, puis les photos et les fichiers.'),
-  failed: tx('La restauration a échoué'),
-  back: tx('Vos données sont revenues'),
-  file: tx('Restaurer depuis un fichier'),
-  fileMeta: tx('Une archive .tar.gz téléchargée depuis S3 ou depuis l’Administration.'),
-  refused: tx('Restauration refusée'),
+  noStorage: tx('No S3 storage'),
+  noStorageMeta: tx('Add it to find its backups. Without S3, an archive downloaded before can still come back.'),
+  addStorage: tx('Add S3 storage'),
+  reading: tx('Reading the backups on S3…'),
+  unreadable: tx('Backups unreadable'),
+  none: tx('No backups on S3'),
+  restore: tx('Restore this backup'),
+  running: tx('Restoring…'),
+  runningMeta: tx('The data comes back first, then photos and files.'),
+  failed: tx('The restore failed'),
+  back: tx('Your data is back'),
+  file: tx('Restore from a file'),
+  fileMeta: tx('A .tar.gz archive downloaded from S3 or from the Administration.'),
+  refused: tx('Restore refused'),
 });
 
 /** « Aucune sauvegarde sur S3 »'s line: where the server looked. */
 export function setupNoBackupsMeta(bucket: string, prefix: string): string {
-  return t('Rien à restaurer dans {place}.', { place: `${bucket}${prefix ? `/${prefix.replace(/\/$/, '')}` : ''}` });
+  return t('Nothing to restore in {place}.', { place: `${bucket}${prefix ? `/${prefix.replace(/\/$/, '')}` : ''}` });
 }
 
 /** A row's title and lead as the server stands: once a backup came back, its lead no longer calls the server empty. */
 export function setupTaskWords(task: SetupTask, status: AdminStatus | null): Omit<SetupStepWords, 'short'> {
   const words = SETUP_TASK_WORDS[task];
   if (task !== 'restore' || !setupRestored(status)) return words;
-  return { ...words, lead: t('Les données de la sauvegarde sont revenues sur ce serveur. Vous pouvez en restaurer une autre, ou continuer.') };
+  return { ...words, lead: t('The backup’s data is back on this server. You can restore another one, or carry on.') };
 }
 
 /** What Claude does for an app, in the Claude form of the setup and the Administration; null for an app that does not ask it. */
@@ -144,11 +148,11 @@ export function claudeUse(app: AppId): string | null {
   const name = APPS[app].name;
   switch (app) {
     case 'notes':
-      return t('{app} : chaque lien enregistré est lu (titre, prix, résumé, images) et rangé dans la bonne collection.', { app: name });
+      return t('{app}: each saved link is read (title, price, summary, pictures) and filed in the right collection.', { app: name });
     case 'pages':
-      return t('{app} : des questions sur vos pages, auxquelles Claude répond en citant les passages.', { app: name });
+      return t('{app}: questions about your pages, which Claude answers citing the passages.', { app: name });
     case 'calendar':
-      return t('{app} : un événement tapé en quelques mots, un événement tiré d’un lien enregistré, des questions sur votre agenda.', { app: name });
+      return t('{app}: an event typed in a few words, an event drawn from a saved link, questions about your calendar.', { app: name });
     default:
       return null;
   }
@@ -209,11 +213,11 @@ export function setupImportShown(app: AppId, hasImport: boolean, connected: bool
 }
 
 /** The apps that use a task: Claude for those that ask it, Seerr for Carnet; S3, Seafile and a restore for all. */
-const TASK_APPS: Partial<Record<SetupTask, readonly AppId[]>> = { reading: ['notes', 'pages', 'calendar'], seerr: ['notes'], holidays: ['calendar'] };
+const TASK_APPS: Partial<Record<SetupTask, readonly AppId[]>> = { reading: ['notes', 'pages', 'calendar'], seerr: ['notes'], immich: ['pages', 'contacts'], holidays: ['calendar'] };
 
-/** "Votre serveur"'s rows, in order: a backup to bring back first (only on a server that held nothing), then Claude, S3, Seafile, Seerr, those the apps on use. */
+/** "Votre serveur"'s rows, in order: a backup to bring back first (only on a server that held nothing), then Claude, S3, Seafile, Seerr, Immich, those the apps on use. */
 export function setupTasks(startedEmpty: boolean, apps: readonly AppId[]): SetupTask[] {
-  const all: SetupTask[] = ['restore', 'reading', 'backup', 'drive', 'seerr', 'holidays'];
+  const all: SetupTask[] = ['restore', 'reading', 'backup', 'drive', 'seerr', 'immich', 'holidays'];
   return all.filter(task => (task === 'restore' ? startedEmpty : (TASK_APPS[task] ?? APP_IDS).some(id => apps.includes(id))));
 }
 
@@ -264,6 +268,8 @@ export function setupTaskSet(task: SetupTask, settings: ServerSettings | null, s
       return settings !== null && settings.drive.provider !== null;
     case 'seerr':
       return settings !== null && settings.seerr.url !== '';
+    case 'immich':
+      return settings !== null && settings.immich.url !== '';
     case 'holidays':
       return settings !== null && settings.calendar.holidays.country !== null;
   }
@@ -274,20 +280,20 @@ export function setupTaskSet(task: SetupTask, settings: ServerSettings | null, s
  * on the appearance step, what it shows is kept: left as it came, it says so.
  */
 export function setupForward(step: SetupStep, set: boolean, last: boolean): string {
-  if (last) return t('Commencer');
-  if (step === 'appearance' && !set) return t('Garder l’apparence d’origine');
-  if (step === 'import' && !set) return t('Plus tard');
-  return t('Continuer');
+  if (last) return t('Start');
+  if (step === 'appearance' && !set) return t('Keep the original look');
+  if (step === 'import' && !set) return t('Later');
+  return t('Continue');
 }
 
 /** The forward button of a task opened from "Votre serveur": back to the list, done or left for later. */
 export function setupTaskForward(set: boolean): string {
-  return set ? t('Continuer') : t('Plus tard');
+  return set ? t('Continue') : t('Later');
 }
 
 /** "Étape 2 sur 4". */
 export function setupProgress(steps: readonly SetupStep[], step: SetupStep): string {
-  return t('Étape {step} sur {count}', { step: steps.indexOf(step) + 1, count: steps.length });
+  return t('Step {step} of {count}', { step: steps.indexOf(step) + 1, count: steps.length });
 }
 
 /** The step after `step` (itself at the end). */
@@ -305,35 +311,35 @@ export function previousSetupStep(steps: readonly SetupStep[], step: SetupStep):
 /** A phone app finding its sibling's connection on the welcome: the one tap that saves typing it. */
 export function siblingConnectionWords(app: AppId, server: string): { readonly action: string; readonly note: string } {
   const name = APPS[app].name;
-  return { action: t('Utiliser la connexion de {app}', { app: name }), note: t('{app} est déjà relié à {server} sur ce téléphone.', { app: name, server: server.replace(/^https?:\/\//, '') }) };
+  return { action: t('Use {app}’s connection', { app: name }), note: t('{app} is already connected to {server} on this phone.', { app: name, server: server.replace(/^https?:\/\//, '') }) };
 }
 
 /** The appearance step's note when it starts from a sibling phone app's colours. */
 export function siblingAppearanceNote(app: AppId): string {
-  return t('Les couleurs de {app} sur ce téléphone, reprises ici.', { app: APPS[app].name });
+  return t('The colours of {app} on this phone, taken up here.', { app: APPS[app].name });
 }
 
 /** What a client shows when its app is off on the server it connects to. */
 export function appOffWords(app: AppId): { readonly title: string; readonly lead: string; readonly action: string } {
   const name = APPS[app].name;
   return {
-    title: t('{app} n’est pas activé sur ce serveur', { app: name }),
-    lead: t('Votre serveur ne fait pas tourner {app} pour l’instant. Activez-le pour l’utiliser ici : rien d’autre ne change, et ses données sont gardées même désactivé.', { app: name }),
-    action: t('Activer {app}', { app: name }),
+    title: t('{app} is not turned on on this server', { app: name }),
+    lead: t('Your server doesn’t run {app} for now. Turn it on to use it here: nothing else changes, and its data is kept even while it is off.', { app: name }),
+    action: t('Turn on {app}', { app: name }),
   };
 }
 
 /** What the connection's fields say once left empty, or sent so (null: filled). */
 export function connectionProblem(field: 'address' | 'token', value: string): string | null {
   if (value.trim()) return null;
-  return field === 'address' ? t('Saisissez l’adresse de votre serveur.') : t('Saisissez le jeton de votre serveur.');
+  return field === 'address' ? t('Enter your server’s address.') : t('Enter your server’s token.');
 }
 
 /** What is wrong with a Claude key typed: nothing pasted, or too short to be one (null: it may be one; the server tries it). */
 export function claudeKeyProblem(key: string): string | null {
   const typed = key.trim();
-  if (!typed) return t('Collez votre clé API Claude.');
-  return typed.length < 20 ? t('Cette clé est trop courte : collez-la en entier, elle commence par sk-ant-.') : null;
+  if (!typed) return t('Paste your Claude API key.');
+  return typed.length < 20 ? t('This key is too short: paste all of it, it starts with sk-ant-.') : null;
 }
 
 /**
@@ -343,14 +349,35 @@ export function claudeKeyProblem(key: string): string | null {
 export function serviceAddressProblem(address: string, missing: string, example: string): string | null {
   const typed = address.trim();
   if (!typed) return missing;
-  return /^https?:\/\/[^\s/]+\S*$/i.test(typed) ? null : t('Une adresse commençant par https:// ou http://, comme {example}.', { example });
+  return /^https?:\/\/[^\s/]+\S*$/i.test(typed) ? null : t('An address starting with https:// or http://, like {example}.', { example });
 }
 
 /** A field of a service's form (S3, Seafile, Seerr) that the server's refusal can point at. */
 export type ServiceField = 'address' | 'region' | 'bucket' | 'key';
 
-/** The server's refusals of a service, by the field they concern (its French words, as it sends them). */
+/**
+ * The server's refusals of a service, by the field they concern, as it sends them: in English, or in
+ * French from a server older than English keys.
+ */
 const SERVICE_REFUSALS: Readonly<Record<string, ServiceField>> = {
+  'S3 storage unreachable': 'address',
+  'Seafile unreachable': 'address',
+  'Seerr unreachable': 'address',
+  'This address does not answer like a Seafile server': 'address',
+  'This address does not answer like a Seerr server': 'address',
+  'This address redirects elsewhere: give the one Seerr answers on': 'address',
+  'Immich unreachable': 'address',
+  'Invalid Immich address': 'address',
+  'This address does not answer like an Immich server': 'address',
+  'This address redirects elsewhere: give the one Immich answers on': 'address',
+  'API key refused by Immich': 'key',
+  'This API key lacks a permission: give it album.read, asset.read, asset.view and person.read': 'key',
+  'Bucket not found': 'bucket',
+  'Wrong region for this bucket': 'region',
+  'Token refused by Seafile': 'key',
+  'This token is read-only: it needs read and write access': 'key',
+  'This token opens another library: turn Seafile off first to bring your files back': 'key',
+  'API key refused by Seerr': 'key',
   'Stockage S3 injoignable': 'address',
   'Seafile injoignable': 'address',
   'Seerr injoignable': 'address',
@@ -381,8 +408,8 @@ export function connectFailureField(kind: string, status: number | null): 'addre
 
 /** A failed connection's words: when nothing answered at all, what to check comes with them. */
 export function connectFailureMessage(kind: string, message: string): string {
-  const silent = kind === 'network' && (message === t('Serveur injoignable') || message === t('Le serveur ne répond pas'));
-  return silent ? t('{problem} : vérifiez l’adresse, et que le serveur est en marche.', { problem: message }) : message;
+  const silent = kind === 'network' && (message === t('Server unreachable') || message === t('The server isn’t responding'));
+  return silent ? t('{problem}: check the address, and that the server is running.', { problem: message }) : message;
 }
 
 /** What the backup form starts from on a new setup: Scaleway in Paris, a folder named after the suite, as the drive's. */
@@ -416,34 +443,34 @@ export function countryName(code: string): string {
 /** The countries Nager.Date has holidays for that people pick most, by name; any other is its code. */
 export const COUNTRY_NAMES: Readonly<Record<string, string>> = {
   FR: tx('France'),
-  BE: tx('Belgique'),
-  CH: tx('Suisse'),
+  BE: tx('Belgium'),
+  CH: tx('Switzerland'),
   LU: tx('Luxembourg'),
   CA: tx('Canada'),
-  GB: tx('Royaume-Uni'),
-  IE: tx('Irlande'),
-  US: tx('États-Unis'),
-  DE: tx('Allemagne'),
-  AT: tx('Autriche'),
-  ES: tx('Espagne'),
+  GB: tx('United Kingdom'),
+  IE: tx('Ireland'),
+  US: tx('United States'),
+  DE: tx('Germany'),
+  AT: tx('Austria'),
+  ES: tx('Spain'),
   PT: tx('Portugal'),
-  IT: tx('Italie'),
-  NL: tx('Pays-Bas'),
+  IT: tx('Italy'),
+  NL: tx('Netherlands'),
   MC: tx('Monaco'),
-  MA: tx('Maroc'),
-  TN: tx('Tunisie'),
-  SN: tx('Sénégal'),
-  AU: tx('Australie'),
-  NZ: tx('Nouvelle-Zélande'),
-  SE: tx('Suède'),
-  NO: tx('Norvège'),
-  DK: tx('Danemark'),
-  FI: tx('Finlande'),
-  PL: tx('Pologne'),
-  GR: tx('Grèce'),
-  JP: tx('Japon'),
-  BR: tx('Brésil'),
-  MX: tx('Mexique'),
+  MA: tx('Morocco'),
+  TN: tx('Tunisia'),
+  SN: tx('Senegal'),
+  AU: tx('Australia'),
+  NZ: tx('New Zealand'),
+  SE: tx('Sweden'),
+  NO: tx('Norway'),
+  DK: tx('Denmark'),
+  FI: tx('Finland'),
+  PL: tx('Poland'),
+  GR: tx('Greece'),
+  JP: tx('Japan'),
+  BR: tx('Brazil'),
+  MX: tx('Mexico'),
 };
 
 /** A row of "Votre serveur": the task, what it holds now (or what it would do), and whether it is in place. */
@@ -461,25 +488,27 @@ export function setupTaskLine(task: SetupTask, settings: ServerSettings | null, 
   const line = (meta: string, tone: SetupTaskLine['tone'] = set ? 'ok' : 'off'): SetupTaskLine => ({ task, title, meta, tone });
   switch (task) {
     case 'restore':
-      if (status?.restore.running) return line(t('Restauration en cours…'), 'waiting');
-      return set && status?.restore.report ? line(restoreSummary(status.restore.report)) : line(t('Le serveur est vide : une sauvegarde de S3 ou une archive peut revenir.'));
+      if (status?.restore.running) return line(t('Restoring…'), 'waiting');
+      return set && status?.restore.report ? line(restoreSummary(status.restore.report)) : line(t('The server is empty: a backup from S3 or an archive can come back.'));
     case 'reading':
-      return set ? line(t('Claude {model}, pour toutes les applications', { model: CLAUDE_MODEL_NAMES[settings!.analysis.model] })) : line(t('Lire vos liens, répondre sur vos pages.'));
+      return set ? line(t('Claude {model}, for every app', { model: CLAUDE_MODEL_NAMES[settings!.analysis.model] })) : line(t('Read your links, answer about your pages.'));
     case 'backup': {
-      if (!set) return line(t('Une copie de tout, loin de chez vous.'));
+      if (!set) return line(t('A copy of everything, far from home.'));
       const { bucket, prefix, recurrence } = settings!.backup;
       return line(`${bucket}${prefix ? `/${prefix.replace(/\/$/, '')}` : ''} · ${BACKUP_RECURRENCE_NAMES[recurrence].toLowerCase()}`);
     }
     case 'drive': {
-      if (!set) return line(t('Vos photos et fichiers dans un dossier Seafile.'));
+      if (!set) return line(t('Your photos and files in a Seafile folder.'));
       const { library, folder } = settings!.drive;
-      return line(`${library ? t('Seafile « {library} »', { library }) : 'Seafile'}, ${folder}`);
+      return line(`${library ? t('Seafile “{library}”', { library }) : 'Seafile'}, ${folder}`);
     }
     case 'seerr':
-      return set ? line(settings!.seerr.url.replace(/^https?:\/\//, '')) : line(t('Demander un film ou une série depuis son lien.'));
+      return set ? line(settings!.seerr.url.replace(/^https?:\/\//, '')) : line(t('Request a film or a series from its link.'));
+    case 'immich':
+      return set ? line(settings!.immich.url.replace(/^https?:\/\//, '')) : line(t('Your albums in pages, faces for your contacts.'));
     case 'holidays': {
       const { country, region } = settings?.calendar.holidays ?? { country: null, region: null };
-      return country ? line(region ? `${countryName(country)} · ${region}` : countryName(country)) : line(t('Les jours fériés de votre pays dans l’agenda.'));
+      return country ? line(region ? `${countryName(country)} · ${region}` : countryName(country)) : line(t('Your country’s public holidays in the calendar.'));
     }
   }
 }

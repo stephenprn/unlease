@@ -3,7 +3,7 @@
  * reminders (« 10 minutes avant »), the views' titles (« novembre 2026 », « 2 – 8 nov. 2026 »).
  * Hand-written like `core/services/format`: the same on Hermes, the browsers and Node.
  */
-import { getLocale, localized, t, tx } from '@unlease/core/i18n';
+import { getLocale, localized, t, tc, tx } from '@unlease/core/i18n';
 import { formatClock, monthNames, plural, weekdayNames } from '@unlease/core/services/format';
 import { birthdayOf, elides } from '@unlease/contacts/services/birthdays';
 import type { CalendarEvent, Day } from '../models/events';
@@ -60,9 +60,9 @@ export function rangeTitle(first: Day, last: Day): string {
 }
 
 /** « Semaine 45 ». */
-export const weekNumberWords = (day: Day): string => t('Semaine {week}', { week: isoWeek(day) });
+export const weekNumberWords = (day: Day): string => t('Week {week}', { week: isoWeek(day) });
 /** « S45 » (English « W45 »): a week's number in a view's gutter, the month's and the days', on both clients. */
-export const weekNumberShort = (day: Day): string => t('S{week}', { week: isoWeek(day) });
+export const weekNumberShort = (day: Day): string => t('W{week}', { week: isoWeek(day) });
 
 /** A time of day as the interface writes it: `14:30`, or English's `2:30 PM` when the device asked for 12 hours. */
 export function clockWords(clock: string, twelveHours = false): string {
@@ -79,7 +79,7 @@ export const hourLabel = (hour: number, twelveHours = false): string => clockWor
 
 /** « 14:30 – 15:30 », for an occurrence on this device (its own day's part when it spans days). */
 export function timeRange(item: Pick<Occurrence, 'startAt' | 'endAt' | 'allDay'>, twelveHours = false): string {
-  if (item.allDay) return t('Toute la journée');
+  if (item.allDay) return t('All day');
   const start = clockWords(formatClock(item.startAt), twelveHours);
   if (item.endAt <= item.startAt) return start;
   return `${start} – ${clockWords(formatClock(item.endAt), twelveHours)}`;
@@ -92,8 +92,8 @@ export function timeRange(item: Pick<Occurrence, 'startAt' | 'endAt' | 'allDay'>
 export function whenLine(item: Pick<Occurrence, 'startAt' | 'endAt' | 'allDay' | 'firstDay' | 'lastDay'>, now: number, twelveHours = false): string {
   const year = partsOf(new Date(now).toISOString().slice(0, 10)).year;
   if (item.allDay) {
-    if (item.firstDay === item.lastDay) return `${weekdayDay(item.firstDay, year)} · ${t('Toute la journée')}`;
-    return t('Du {from} au {to}', { from: weekdayDay(item.firstDay, year), to: weekdayDay(item.lastDay, year) });
+    if (item.firstDay === item.lastDay) return `${weekdayDay(item.firstDay, year)} · ${t('All day')}`;
+    return t('{from} to {to}', { from: weekdayDay(item.firstDay, year), to: weekdayDay(item.lastDay, year) });
   }
   if (item.firstDay === item.lastDay) return `${weekdayDay(item.firstDay, year)} · ${timeRange(item, twelveHours)}`;
   return `${weekdayDay(item.firstDay, year)} ${clockWords(formatClock(item.startAt), twelveHours)} – ${weekdayDay(item.lastDay, year)} ${clockWords(formatClock(item.endAt), twelveHours)}`;
@@ -102,21 +102,21 @@ export function whenLine(item: Pick<Occurrence, 'startAt' | 'endAt' | 'allDay' |
 /** The event's own zone, when it is not this device's: « Heure de New York (America/New_York) ». */
 export function zoneNote(event: Pick<CalendarEvent, 'timeZone' | 'start'>): string | null {
   if (isDay(event.start) || !event.timeZone || event.timeZone === deviceZone()) return null;
-  return t('Fuseau : {zone} ({clock} sur place)', { zone: event.timeZone.replace(/_/g, ' '), clock: clockPart(event.start) });
+  return t('Time zone: {zone} ({clock} there)', { zone: event.timeZone.replace(/_/g, ' '), clock: clockPart(event.start) });
 }
 
 /** A reminder in words: « 10 minutes avant », « 1 heure avant », « 2 jours avant », « Le jour même à 09:00 ». */
 export function reminderWords(minutes: number, allDay: boolean): string {
-  if (allDay && minutes <= 0) return t('Le jour même à {clock}', { clock: clockFromMinutes(-minutes) });
+  if (allDay && minutes <= 0) return t('On the day at {clock}', { clock: clockFromMinutes(-minutes) });
   if (allDay && minutes % 1440 !== 0) {
     const days = Math.ceil(minutes / 1440);
-    return t('{days} avant à {clock}', { days: plural(days, 'jour'), clock: clockFromMinutes(days * 1440 - minutes) });
+    return t('{days} before at {clock}', { days: plural(days, 'day'), clock: clockFromMinutes(days * 1440 - minutes) });
   }
-  if (minutes === 0) return t('Au début');
-  if (minutes % 10_080 === 0) return t('{count} avant', { count: plural(minutes / 10_080, 'semaine') });
-  if (minutes % 1440 === 0) return t('{count} avant', { count: plural(minutes / 1440, 'jour') });
-  if (minutes % 60 === 0) return t('{count} avant', { count: plural(minutes / 60, 'heure') });
-  return t('{count} avant', { count: plural(minutes, 'minute') });
+  if (minutes === 0) return t('At the start');
+  if (minutes % 10_080 === 0) return t('{count} before', { count: plural(minutes / 10_080, 'week') });
+  if (minutes % 1440 === 0) return t('{count} before', { count: plural(minutes / 1440, 'day') });
+  if (minutes % 60 === 0) return t('{count} before', { count: plural(minutes / 60, 'hour') });
+  return t('{count} before', { count: plural(minutes, 'minute') });
 }
 
 const clockFromMinutes = (minutes: number): string => `${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
@@ -127,11 +127,11 @@ export const REMINDER_CHOICES = { timed: [0, 5, 10, 15, 30, 60, 120, 1440, 2880,
 /** « dans 3 jours », « demain », « aujourd’hui », « il y a 2 jours »: how far a day is. */
 export function dayDistance(day: Day, today: Day): string {
   const delta = daysBetween(today, day);
-  if (delta === 0) return t('aujourd’hui');
-  if (delta === 1) return t('demain');
-  if (delta === -1) return t('hier');
-  if (delta > 1) return t('dans {count}', { count: plural(delta, 'jour') });
-  return t('il y a {count}', { count: plural(-delta, 'jour') });
+  if (delta === 0) return t('today');
+  if (delta === 1) return t('tomorrow');
+  if (delta === -1) return t('yesterday');
+  if (delta > 1) return t('in {count}', { count: plural(delta, 'day') });
+  return t('{count} ago', { count: plural(-delta, 'day') });
 }
 
 /**
@@ -140,11 +140,11 @@ export function dayDistance(day: Day, today: Day): string {
  */
 export function relativeWhen(item: Pick<Occurrence, 'startAt' | 'endAt' | 'allDay' | 'firstDay' | 'lastDay'>, now: number, today: Day): string {
   const ongoing = item.allDay ? item.firstDay <= today && today <= item.lastDay : item.startAt <= now && now < item.endAt;
-  if (ongoing) return t('En cours');
+  if (ongoing) return t('Happening now');
   if (!item.allDay && item.firstDay === today) {
-    if (item.endAt <= now) return t('Terminé');
+    if (item.endAt <= now) return t('Done');
     const minutes = Math.max(1, Math.round((item.startAt - now) / 60_000));
-    return minutes < 60 ? t('Dans {minutes} min', { minutes }) : t('Dans {count}', { count: plural(Math.round(minutes / 60), 'heure') });
+    return minutes < 60 ? t('In {minutes} min', { minutes }) : t('In {count}', { count: plural(Math.round(minutes / 60), 'hour') });
   }
   return capitalize(dayDistance(item.firstDay, today));
 }
@@ -162,13 +162,13 @@ export type PeriodView = (typeof PERIOD_VIEWS)[number];
 export const isPeriodView = (view: CalendarView): view is PeriodView => view !== 'today';
 
 export const VIEW_NAMES: Readonly<Record<CalendarView, string>> = localized({
-  today: tx('Aujourd’hui'),
-  day: tx('Jour'),
-  threeDays: tx('3 jours'),
-  week: tx('Semaine'),
-  month: tx('Mois'),
-  year: tx('Année'),
-  schedule: tx('Planning'),
+  today: tx('Today'),
+  day: tx('Day'),
+  threeDays: tx('3 days'),
+  week: tx('Week'),
+  month: tx('Month'),
+  year: tx('Year'),
+  schedule: tx('Schedule'),
 });
 
 /** The view's keys on the web (Google's: D, X, W, M, Y, A; O for « Aujourd'hui », T being « go to today » in any view). */
@@ -249,7 +249,7 @@ export function viewTitle(view: CalendarView, day: Day, weekStart: number, hideW
 /** « Anniversaire de Léa (34 ans) », « Anniversaire de Léa ». */
 export function birthdayTitle(name: string, age: number | null): string {
   if (age === null) return birthdayOf(name);
-  return elides(name) ? t('Anniversaire d’{name} ({age})', { name, age: plural(age, 'an') }) : t('Anniversaire de {name} ({age})', { name, age: plural(age, 'an') });
+  return elides(name) ? tc('elided', '{name}’s birthday ({age})', { name, age: plural(age, 'year') }) : t('{name}’s birthday ({age})', { name, age: plural(age, 'year') });
 }
 
 /**
@@ -258,15 +258,15 @@ export function birthdayTitle(name: string, age: number | null): string {
  */
 export function deletedWords(occurrence: Pick<Occurrence, 'repeats' | 'occurrence'>, seriesStart: string, scope: 'this' | 'following' | 'all'): string {
   const binned = !occurrence.repeats || scope === 'all' || (scope === 'following' && occurrence.occurrence === seriesStart);
-  return binned ? t('Événement placé dans la corbeille') : t('Événement supprimé');
+  return binned ? t('Event moved to the bin') : t('Event deleted');
 }
 
 /** A new event's length in words, on both clients: « 45 minutes », « 1 heure », « 1 h 30 ». */
 export function lengthWords(minutes: number): string {
   if (minutes < 60) return plural(minutes, 'minute');
-  if (minutes % 60 === 0) return plural(minutes / 60, 'heure');
+  if (minutes % 60 === 0) return plural(minutes / 60, 'hour');
   return t('{hours} h {minutes}', { hours: Math.floor(minutes / 60), minutes: String(minutes % 60).padStart(2, '0') });
 }
 
 /** « 3 événements supprimés définitivement »: the bin emptied, or rows of it deleted for good. */
-export const deletedForGoodWords = (count: number): string => t('{deleted} définitivement', { deleted: plural(count, 'événement supprimé', 'événements supprimés') });
+export const deletedForGoodWords = (count: number): string => t('{deleted} forever', { deleted: plural(count, 'event deleted', 'events deleted') });

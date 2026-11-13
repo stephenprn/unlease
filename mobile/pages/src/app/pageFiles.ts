@@ -75,7 +75,7 @@ export async function attachPickedImage(page: string, blockId: string, now: numb
   const result = await pickImages(1);
   if (result.status === 'cancelled') return { status: 'cancelled' };
   const file = result.files[0];
-  if (result.status !== 'ok' || !file) return { status: 'error', message: result.message ? t(result.message) : t('Impossible d’ajouter la photo') };
+  if (result.status !== 'ok' || !file) return { status: 'error', message: result.message ? t(result.message) : t('Couldn’t add the photo') };
   const fileId = createId(now);
   saveLocalFile({ id: fileId, path: file.path, mime: file.mime }, now);
   forgetLocalPaths();
@@ -87,8 +87,8 @@ export async function attachPickedImage(page: string, blockId: string, now: numb
 export async function attachPickedDocument(page: string, blockId: string, kind: Exclude<MediaKind, 'image'>, now: number = Date.now()): Promise<AttachOutcome> {
   const picked = await pickDocument(PICKED_TYPES[kind]);
   if (picked.status === 'cancelled') return { status: 'cancelled' };
-  if (picked.status !== 'ok' || !picked.path) return { status: 'error', message: picked.message ? t(picked.message) : t('Fichier illisible') };
-  const refusal = picked.bytes === 0 ? t('Ce fichier est vide.') : picked.bytes > MAX_FILE_BYTES ? t('Ce fichier dépasse 100 Mo.') : null;
+  if (picked.status !== 'ok' || !picked.path) return { status: 'error', message: picked.message ? t(picked.message) : t('Unreadable file') };
+  const refusal = picked.bytes === 0 ? t('This file is empty.') : picked.bytes > MAX_FILE_BYTES ? t('This file is over 100 MB.') : null;
   if (refusal) {
     await removePath(picked.path);
     return { status: 'error', message: refusal };
@@ -115,12 +115,12 @@ async function uploadPageFile(config: ServerConfig, file: { readonly id: string;
   try {
     response = await fetch(`${config.url}/api/files/${encodeURIComponent(file.id)}`, { method: 'PUT', headers: authHeader(config.token), body: form, signal: abort.signal });
   } catch {
-    throw new SyncError('network', t('Serveur injoignable'));
+    throw new SyncError('network', t('Server unreachable'));
   } finally {
     clearTimeout(timer);
   }
-  if (response.status === 401) throw new SyncError('unauthorized', t('Jeton refusé'));
-  if (!response.ok) throw new SyncError('http', t('Envoi refusé ({status})', { status: response.status }), response.status);
+  if (response.status === 401) throw new SyncError('unauthorized', t('Token refused'));
+  if (!response.ok) throw new SyncError('http', t('Upload refused ({status})', { status: response.status }), response.status);
 }
 
 /** Files the server refused (too large, unreadable): not retried until the app starts again. */

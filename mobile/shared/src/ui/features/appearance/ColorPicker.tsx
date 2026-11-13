@@ -183,7 +183,7 @@ function ColorPickerComponent({ value, onChange }: ColorPickerProps) {
     typing.current = false;
     const hex = normalizeHex(text);
     if (hex) setText(hex);
-    else setError(t('Un code de six chiffres, comme #9CC15F.'));
+    else setError(t('A six-digit code, like #9CC15F.'));
   };
 
   // TalkBack's swipes: the square steps its brightness, the strip its hue.
@@ -212,8 +212,8 @@ function ColorPickerComponent({ value, onChange }: ColorPickerProps) {
           }}
           accessible
           accessibilityRole="adjustable"
-          accessibilityLabel={t('Saturation et luminosité')}
-          accessibilityValue={{ text: t('Saturation {saturation} %, luminosité {value} %', { saturation: Math.round(point.s * 100), value: Math.round(point.v * 100) }) }}
+          accessibilityLabel={t('Saturation and brightness')}
+          accessibilityValue={{ text: t('Saturation {saturation}%, brightness {value}%', { saturation: Math.round(point.s * 100), value: Math.round(point.v * 100) }) }}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={onSquareAction}
         >
@@ -233,7 +233,7 @@ function ColorPickerComponent({ value, onChange }: ColorPickerProps) {
           }}
           accessible
           accessibilityRole="adjustable"
-          accessibilityLabel={t('Teinte')}
+          accessibilityLabel={t('Hue')}
           accessibilityValue={{ min: 0, max: 360, now: Math.round(point.h) }}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={onStripAction}
@@ -247,7 +247,7 @@ function ColorPickerComponent({ value, onChange }: ColorPickerProps) {
         <Organic pebble={1} style={[styles.sample, { backgroundColor: value }]} />
         <View style={styles.field}>
           <TextField
-            label={t('Code hexadécimal')}
+            label={t('Hex code')}
             value={text}
             onChangeText={typed}
             onFocus={() => {

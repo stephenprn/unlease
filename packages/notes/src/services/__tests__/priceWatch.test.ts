@@ -1,6 +1,6 @@
-import { addEnglish, setLocale } from '@unlease/core/i18n';
+import { addFrench, setLocale } from '@unlease/core/i18n';
 import type { Fields } from '@unlease/core/sync/record';
-import { EN_PRICE_WATCH } from '../../i18n/en/priceWatch';
+import { FR_PRICE_WATCH } from '../../i18n/fr/priceWatch';
 import { INBOX_ID, type LinkItem } from '../../models/entities';
 import { LINK_MODULES, MODULE_GROUPS, MODULE_NEEDS } from '../../models/modules';
 import { linkFromRecord } from '../../sync/entities';
@@ -30,7 +30,7 @@ describe('the price watch module', () => {
   it('is a lowercase key the synced check takes, in « Achats », off by default, needing a server', () => {
     expect(PRICE_WATCH).toMatch(/^[a-z]{1,20}$/);
     expect(LINK_MODULES).toContain(PRICE_WATCH);
-    expect(MODULE_GROUPS.find(group => group.modules.includes(PRICE_WATCH))?.title).toBe('Achats');
+    expect(MODULE_GROUPS.find(group => group.modules.includes(PRICE_WATCH))?.title).toBe('Shopping');
     expect(MODULE_NEEDS[PRICE_WATCH]).toBe('server');
     expect(watchesPrices({ modules: null })).toBe(false);
     expect(watchesPrices({ modules: withModule({ modules: null }, PRICE_WATCH, true) })).toBe(true);
@@ -108,7 +108,7 @@ describe('what the link page says', () => {
   });
 
   it('reads in English too', () => {
-    addEnglish(EN_PRICE_WATCH);
+    addFrench(FR_PRICE_WATCH);
     setLocale('en');
     expect(priceChangeText(link({ price: 79, priceBefore: 89, priceChangedAt: new Date(2026, 10, 3, 9).getTime() }), NOW)?.text).toBe('Was €89 · down since 3 Nov');
     expect(priceCheckedText(link({ priceCheckedAt: new Date(2026, 10, 9, 9, 12).getTime() }), NOW)).toBe('Checked today at 09:12');

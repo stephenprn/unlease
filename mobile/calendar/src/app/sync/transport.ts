@@ -12,10 +12,12 @@ import { authHeader } from '@unlease/core/sync/protocol';
 import {
   ASK_PATH,
   COUNTRIES_PATH,
+  FEED_CONNECT_PATH,
   feedRefreshPath,
   PARSE_PATH,
   parseCalendarAskResponse,
   parseCountries,
+  parseFeedConnectResponse,
   parseProposalResponse,
   parseRegions,
   parseWeatherResponse,
@@ -23,6 +25,8 @@ import {
   weatherPath,
   type CalendarAskRequest,
   type CalendarAskResponse,
+  type FeedConnectRequest,
+  type FeedConnectResponse,
   type HolidayCountry,
   type ParseRequest,
   type ProposalResponse,
@@ -47,10 +51,10 @@ async function getFrom<T>(config: ServerConfig, path: string, parse: (value: unk
     try {
       response = await fetch(`${config.url}${path}`, { method: 'GET', headers: authHeader(config.token), signal: controller.signal });
     } catch {
-      throw new SyncError('network', t('Serveur injoignable'));
+      throw new SyncError('network', t('Server unreachable'));
     }
     if (response.status === 404) return null;
-    if (!response.ok) throw new SyncError('http', t('Le serveur a répondu {status}', { status: response.status }), response.status);
+    if (!response.ok) throw new SyncError('http', t('The server answered {status}', { status: response.status }), response.status);
     return parse(await response.json());
   } finally {
     clearTimeout(timer);
@@ -81,6 +85,11 @@ export function parseWithClaude(config: ServerConfig, request: ParseRequest, sig
 /** `POST /api/calendar/ask`: a question about the calendar. */
 export function askCalendar(config: ServerConfig, request: CalendarAskRequest, signal?: AbortSignal): Promise<CalendarAskResponse> {
   return askServer(config, ASK_PATH, request, parseCalendarAskResponse, signal);
+}
+
+/** `POST /api/calendar/feeds/connect`: an address tried before it is followed (a login, when given, kept by the server under the calendar's id). */
+export function connectFeed(config: ServerConfig, request: FeedConnectRequest): Promise<FeedConnectResponse> {
+  return askServer(config, FEED_CONNECT_PATH, request, parseFeedConnectResponse);
 }
 
 /** `POST /api/calendar/feeds/<id>/refresh`: the server reads the address again now. */

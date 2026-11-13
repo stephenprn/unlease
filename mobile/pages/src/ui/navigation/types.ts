@@ -6,6 +6,8 @@ export type RootStackParamList = {
   Pages: { readonly capture?: 'page' | 'search' } | undefined;
   /** `block`: opened at that block (a source Claude cited, a link's `#block`), scrolled to and lit a moment. */
   Page: { id: string; block?: string };
+  /** A page's past versions, kept by the server: the list, then one read-only and restored. */
+  Versions: { page: string };
   /** A page's drawing block, drawn on the whole screen. */
   Drawing: { page: string; block: string };
   /** The pages in the bin. */

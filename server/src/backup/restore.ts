@@ -116,7 +116,7 @@ export class RestoreService {
       try {
         const read = JSON.parse(stored) as RestoreStatus;
         const last: RestoreStatus = { ...read, thawing: read.thawing === true, report: read.report ? { ...read.report, coldFiles: read.report.coldFiles ?? 0 } : null };
-        this.state = last.running ? { ...last, running: false, finishedAt: last.startedAt, error: 'Interrompue : le serveur s’est arrêté. Relancez la restauration pour finir.' } : last;
+        this.state = last.running ? { ...last, running: false, finishedAt: last.startedAt, error: 'Interrupted: the server stopped. Start the restore again to finish.' } : last;
       } catch {
         // Unreadable: no last restore.
       }
@@ -152,7 +152,7 @@ export class RestoreService {
         log.info('backup restored', { ...report });
       })
       .catch(error => {
-        const message = error instanceof RestoreError ? error.message : error instanceof S3Error ? s3Problem(error) : error instanceof TarError || String((error as { code?: unknown }).code ?? '').startsWith('Z_') ? 'Archive illisible : ce n’est pas une sauvegarde .tar.gz' : 'La restauration a échoué';
+        const message = error instanceof RestoreError ? error.message : error instanceof S3Error ? s3Problem(error) : error instanceof TarError || String((error as { code?: unknown }).code ?? '').startsWith('Z_') ? 'Unreadable archive: not a .tar.gz backup' : 'The restore failed';
         this.setState({ ...this.state, running: false, finishedAt: this.now(), error: message });
         log.error('restore failed', { error });
       });
@@ -166,7 +166,7 @@ export class RestoreService {
     try {
       if (source.kind === 's3') {
         const config = settings.backup();
-        if (!config) throw new RestoreError('Sauvegarde S3 non configurée');
+        if (!config) throw new RestoreError('S3 backup not set up');
         const client = s3Client(config, this.options.fetcher, this.options.s3RetryDelaysMs);
         const key = `${snapshotsPrefix(config)}${source.name}`;
         try {
@@ -242,13 +242,13 @@ export class RestoreService {
     for await (const entry of readTar(pipe(createReadStream(archive), createGunzip(), () => undefined))) {
       const depth = entry.name.split('/').length;
       if ((entry.name === ARCHIVE_DOCUMENT || entry.name.endsWith(`/${ARCHIVE_DOCUMENT}`)) && depth <= 2 && !document) {
-        if (entry.size > JSON_LIMIT) throw new RestoreError(`${ARCHIVE_DOCUMENT} trop gros`);
+        if (entry.size > JSON_LIMIT) throw new RestoreError(`${ARCHIVE_DOCUMENT} too big`);
         const chunks: Buffer[] = [];
         for await (const piece of entry.body) chunks.push(piece);
         try {
           document = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>;
         } catch {
-          throw new RestoreError(`${ARCHIVE_DOCUMENT} illisible`);
+          throw new RestoreError(`${ARCHIVE_DOCUMENT} unreadable`);
         }
         root = entry.name.slice(0, -ARCHIVE_DOCUMENT.length);
       } else if (/(^|\/)Fichiers\//.test(entry.name)) {
@@ -257,9 +257,9 @@ export class RestoreService {
         extracted.set(entry.name, path);
       }
     }
-    if (!document) throw new RestoreError(`Archive sans ${ARCHIVE_DOCUMENT} : ce n’est pas une sauvegarde faite par ${SUITE_NAME}`);
-    if (document.format !== BACKUP_FORMAT || !Array.isArray(document.records)) throw new RestoreError(`${ARCHIVE_DOCUMENT} illisible`);
-    if (typeof document.version !== 'number' || document.version > BACKUP_FORMAT_VERSION) throw new RestoreError('Sauvegarde faite par une version plus récente du serveur');
+    if (!document) throw new RestoreError(`Archive without ${ARCHIVE_DOCUMENT}: not a backup made by ${SUITE_NAME}`);
+    if (document.format !== BACKUP_FORMAT || !Array.isArray(document.records)) throw new RestoreError(`${ARCHIVE_DOCUMENT} unreadable`);
+    if (typeof document.version !== 'number' || document.version > BACKUP_FORMAT_VERSION) throw new RestoreError('Backup made by a newer version of the server');
     return { document, root, extracted };
   }
 

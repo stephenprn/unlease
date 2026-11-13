@@ -19,7 +19,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { IMPORT_WORDS, type ImportStep, type PreviewEntry } from '@unlease/core/services/importFlow';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
@@ -58,14 +58,14 @@ interface Report {
 async function pickExportFile(): Promise<{ readonly file: ExportFile } | { readonly problem: string } | null> {
   const picked = await pickDocument(PICKED_TYPES);
   if (picked.status === 'cancelled') return null;
-  if (picked.status !== 'ok' || !picked.path) return { problem: picked.message ? t(picked.message) : t('Fichier illisible') };
+  if (picked.status !== 'ok' || !picked.path) return { problem: picked.message ? t(picked.message) : t('Unreadable file') };
   try {
-    if (isExportArchive(picked.name)) return { problem: t('Une archive .zip, comme l’export de Notion, s’importe depuis Pages sur le web pour l’instant.') };
-    if (!isExportText(picked.name)) return { problem: t('Ni un fichier Markdown, ni un tableau CSV.') };
+    if (isExportArchive(picked.name)) return { problem: t('A .zip archive, like Notion’s export, imports from Pages on the web for now.') };
+    if (!isExportText(picked.name)) return { problem: t('Neither a Markdown file nor a CSV table.') };
     const text = await readText(picked.path);
     return { file: { path: picked.name, text, bytes: picked.bytes } };
   } catch {
-    return { problem: t('Fichier illisible') };
+    return { problem: t('Unreadable file') };
   } finally {
     await removePath(picked.path);
   }
@@ -109,7 +109,7 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
     const all = [...(adding ? (files ?? []) : []).filter(file => file.path !== got.file.path), got.file];
     if (Object.keys(readExport(all).pages).length === 0) {
       if (adding) showSnack(WORDS.noPages, undefined, { tone: 'warning' });
-      else setProblem(t('{file} : {why}', { file: got.file.path, why: WORDS.noPages }));
+      else setProblem(t('{file}: {why}', { file: got.file.path, why: WORDS.noPages }));
       return;
     }
     setProblem(null);
@@ -139,7 +139,7 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
       const final = planImport(read, { ...choices, containerTitle: choices.containerTitle.trim() || importContainerTitle(read, Date.now()) }, useLibraryStore.getState());
       const written = importPages(final);
       if (written.created.length > 0) {
-        showSnack(plural(written.pages, 'page importée', 'pages importées'), { label: tc('undo', 'Annuler'), run: () => undoImport(written.created) }, { tone: 'success' });
+        showSnack(plural(written.pages, 'page imported', 'pages imported'), { label: t('Undo'), run: () => undoImport(written.created, written.iconed) }, { tone: 'success' });
         onImported?.();
       }
       // The phone reads words alone: a picture or a file a page names stays an empty place, said why.
@@ -153,8 +153,8 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
       <ImportFrame step="source" title={WORDS.title} lead={WORDS.lead}>
         <ImportSheet title={WORDS.fromMarkdown}>
           <ImportBlock>
-            <AppText variant="body">{t('Choisissez un fichier .md : il devient une page, ses tâches, ses tableaux et ses liens compris. D’autres s’ajoutent à l’étape suivante.')}</AppText>
-            <Button label={t('Choisir un fichier Markdown')} icon="download" busy={reading} onPress={() => void pick(false)} />
+            <AppText variant="body">{t('Choose a .md file: it becomes a page, its tasks, tables and links included. More can be added at the next step.')}</AppText>
+            <Button label={t('Choose a Markdown file')} icon="download" busy={reading} onPress={() => void pick(false)} />
             {problem ? (
               <View style={styles.problem} accessibilityLiveRegion="polite">
                 <Icon name="alert" size={20} color={theme.color.danger} />
@@ -168,7 +168,7 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
         </ImportSheet>
         <ImportSheet title={WORDS.fromNotion}>
           <ImportBlock>
-            <AppText variant="body">{t('L’export de Notion est une archive .zip, avec ses sous-pages et ses images : importez-la depuis Pages sur le web, dans Réglages › Données › Importer. Les pages arrivent ensuite ici d’elles-mêmes.')}</AppText>
+            <AppText variant="body">{t('Notion’s export is a .zip archive, with its sub-pages and pictures: import it from Pages on the web, in Settings › Data › Import. The pages then arrive here by themselves.')}</AppText>
           </ImportBlock>
         </ImportSheet>
       </ImportFrame>
@@ -184,13 +184,13 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
         title={IMPORT_WORDS.previewTitle}
         lead={WORDS.previewLead}
         onBack={restart}
-        back={<Button kind="text" label={t('Retour')} onPress={restart} />}
-        forward={<Button label={t('Continuer')} onPress={() => setStep('choices')} />}
+        back={<Button kind="text" label={t('Back')} onPress={restart} />}
+        forward={<Button label={t('Continue')} onPress={() => setStep('choices')} />}
       >
         <ImportSheet>
           <ImportCounts lines={importCountLines(plan)} />
           <View style={styles.more}>
-            <Button kind="text" small icon="plus" label={t('Ajouter un fichier')} busy={reading} onPress={() => void pick(true)} />
+            <Button kind="text" small icon="plus" label={t('Add a file')} busy={reading} onPress={() => void pick(true)} />
           </View>
         </ImportSheet>
         <ImportPreview
@@ -225,7 +225,7 @@ export function PagesImport({ onFlow, onImported }: ImportWizardProps) {
           title={IMPORT_WORDS.choicesTitle}
           lead={IMPORT_WORDS.choicesLead}
           onBack={toPreview}
-          back={<Button kind="text" label={t('Retour')} onPress={toPreview} />}
+          back={<Button kind="text" label={t('Back')} onPress={toPreview} />}
           forward={<Button icon="download" label={importPagesAction(plan.totals.pages)} onPress={write} />}
         >
           <ImportSheet>
@@ -302,22 +302,22 @@ function PagePickSheet({ visible, current, onDismiss, onPick }: { visible: boole
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={WORDS.pickTitle} tall>
       <View style={styles.search}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Chercher une page')} accessibilityLabel={t('Chercher une page')} />
+        <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a page')} accessibilityLabel={t('Search for a page')} />
       </View>
       <SheetScroll top={false} contentContainerStyle={styles.list}>
         {recent.length > 0 ? (
           <>
             <AppText variant="section" style={styles.section} accessibilityRole="header">
-              {t('Récentes')}
+              {t('Recent')}
             </AppText>
             {recent.map(place => choice(place, `recent-${place.page.id}`))}
             <AppText variant="section" style={styles.section} accessibilityRole="header">
-              {t('Toutes les pages')}
+              {t('All pages')}
             </AppText>
           </>
         ) : null}
         {all.map(place => choice(place, place.page.id))}
-        {all.length === 0 ? <EmptyLine text={t('Aucune page ne correspond.')} style={styles.empty} /> : null}
+        {all.length === 0 ? <EmptyLine text={t('No page matches.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );

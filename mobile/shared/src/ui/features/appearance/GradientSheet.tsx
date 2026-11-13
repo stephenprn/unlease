@@ -44,7 +44,7 @@ function StopComponent({ color, index, selected, onPress }: { color: string; ind
     <Tappable
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={t('Couleur {n} : {color}', { n: index + 1, color })}
+      accessibilityLabel={t('Colour {n}: {color}', { n: index + 1, color })}
       onPress={onPress}
       pebble={index}
       style={[styles.stop, { backgroundColor: color }]}
@@ -100,27 +100,27 @@ function GradientSheetComponent({ visible, initial, initialGrain, onDismiss, onU
 
   return (
     <>
-      <Sheet visible={visible} onDismiss={unsaved.guard(onDismiss)} title={t('Créer un dégradé')} tall>
+      <Sheet visible={visible} onDismiss={unsaved.guard(onDismiss)} title={t('Make a gradient')} tall>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppearancePreview appearance={draft} />
 
           {/* The colours as pebbles say what they are: no word over them (TalkBack hears « Couleurs »); the dice at their row's end. */}
           <View style={styles.colors}>
-            <View style={styles.stops} accessibilityRole="radiogroup" accessibilityLabel={t('Couleurs')}>
+            <View style={styles.stops} accessibilityRole="radiogroup" accessibilityLabel={t('Colours')}>
               {gradient.colors.map((color, index) => (
                 <Stop key={index} color={color} index={index} selected={index === at} onPress={() => setPicked(index)} />
               ))}
               {gradient.colors.length < GRADIENT_COLORS.max ? (
-                <Tappable accessibilityLabel={t('Ajouter une couleur')} onPress={add} pebble={gradient.colors.length} style={[styles.stop, styles.add]}>
+                <Tappable accessibilityLabel={t('Add a colour')} onPress={add} pebble={gradient.colors.length} style={[styles.stop, styles.add]}>
                   <Icon name="plus" size={20} color={theme.color.link} />
                 </Tappable>
               ) : null}
             </View>
-            <IconButton icon="dice" label={t('Couleurs au hasard')} onPress={roll} shape={3} />
+            <IconButton icon="dice" label={t('Random colours')} onPress={roll} shape={3} />
           </View>
 
           <ColorPicker value={gradient.colors[at]!} onChange={recolour} />
-          {gradient.colors.length > GRADIENT_COLORS.min ? <Button kind="text" icon="minus" label={t('Retirer cette couleur')} onPress={remove} small style={styles.remove} /> : null}
+          {gradient.colors.length > GRADIENT_COLORS.min ? <Button kind="text" icon="minus" label={t('Remove this colour')} onPress={remove} small style={styles.remove} /> : null}
 
           <View style={styles.group}>
             <AppText variant="metaStrong">{t('Style')}</AppText>
@@ -128,13 +128,13 @@ function GradientSheetComponent({ visible, initial, initialGrain, onDismiss, onU
           </View>
 
           <View style={styles.row}>
-            <SwitchRow title={t('Grain sur le fond')} value={grain} onChange={setGrain} />
+            <SwitchRow title={t('Grain on the background')} value={grain} onChange={setGrain} />
           </View>
         </SheetScroll>
         <FormFoot>
-          <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
+          <Button kind="text" label={t('Cancel')} onPress={onDismiss} />
           <Button
-            label={t('Utiliser ce fond')}
+            label={t('Use this background')}
             onPress={() => {
               unsaved.saved();
               onUse(gradient, grain);

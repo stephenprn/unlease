@@ -15,7 +15,7 @@ import React, { memo, useEffect, useState } from 'react';
 import { Image, Linking, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeOut, Keyframe, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { formatDay } from '@unlease/core/services/format';
 import { linkRowText } from '@unlease/notes/services/linkRow';
 import { priceChangeText } from '@unlease/notes/services/priceWatch';
@@ -90,40 +90,40 @@ function LinkTileComponent({ id, shape, width, onOpen, onLongPress, onHeight }: 
   const known = image ? (ratio ?? pictureRatio(image.uri)) : null;
   const frameHeight = mosaic ? (image ? width / (known ?? 0.8) : undefined) : width * 1.25;
   const changeInk = priceChange?.direction === 'down' && !done ? theme.color.ok : theme.color.inkMuted;
-  const state = pending ? t('Lecture de la page…') : failed ? (link.error ? t(link.error) : t('Lecture impossible')) : done && link.doneAt ? t('{stamp} le {date}', { stamp: stampWord(link.kind), date: formatDay(link.doneAt, Date.now()) }) : null;
+  const state = pending ? t('Reading the page…') : failed ? (link.error ? t(link.error) : t('Couldn’t read it')) : done && link.doneAt ? t('{stamp} on {date}', { stamp: stampWord(link.kind), date: formatDay(link.doneAt, Date.now()) }) : null;
 
   const toggle = (): void => {
     setPressedHere(true);
     const undo = setLinkDone(id, !link.done);
-    showSnack(link.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(link.kind) }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(link.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(link.kind) }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const status = pending ? (
     <View style={styles.status}>
       <ReadingTrack width={56} />
       <AppText variant="meta" numberOfLines={1} style={styles.shrink}>
-        {t('Lecture de la page…')}
+        {t('Reading the page…')}
       </AppText>
     </View>
   ) : failed ? (
     <View style={styles.status}>
       <Icon name="alert" size={14} color={theme.color.danger} />
       <AppText variant="meta" numberOfLines={1} style={styles.shrink}>
-        {link.error ? t(link.error) : t('Lecture impossible')}
+        {link.error ? t(link.error) : t('Couldn’t read it')}
       </AppText>
       {claude ? (
-        <Tappable onPress={() => reanalyzeLink(id)} accessibilityLabel={t('Relire la page')} hitSlop={RETRY_SLOP} style={styles.retry}>
+        <Tappable onPress={() => reanalyzeLink(id)} accessibilityLabel={t('Read the page again')} hitSlop={RETRY_SLOP} style={styles.retry}>
           <AppText variant="metaStrong" color={theme.color.link}>
-            {t('Réessayer')}
+            {t('Try again')}
           </AppText>
         </Tappable>
       ) : null}
     </View>
   ) : unread && claude ? (
     <View style={styles.status}>
-      <Tappable onPress={() => reanalyzeLink(id)} accessibilityLabel={t('Lire {title}', { title: text.title })} hitSlop={RETRY_SLOP} style={[styles.retry, styles.retryAlone]}>
+      <Tappable onPress={() => reanalyzeLink(id)} accessibilityLabel={t('Read {title}', { title: text.title })} hitSlop={RETRY_SLOP} style={[styles.retry, styles.retryAlone]}>
         <AppText variant="metaStrong" color={theme.color.link}>
-          {t('Lire la page')}
+          {t('Read the page')}
         </AppText>
       </Tappable>
     </View>
@@ -155,11 +155,11 @@ function LinkTileComponent({ id, shape, width, onOpen, onLongPress, onHeight }: 
       unstable_pressDelay={listPressDelay}
       onPress={() => onOpen(id)}
       onLongPress={() => onLongPress?.(id)}
-      accessibilityLabel={[text.title, text.source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, Date.now())?.text, people.length > 0 ? people.join(', ') : null, state, note ? t('Votre note : {note}', { note }) : null].filter(Boolean).join(', ')}
-      accessibilityActions={[...(pending ? [] : [{ name: 'stamp', label: done ? t('Remettre à faire') : t('Marquer : {stamp}', { stamp: stampWord(link.kind).toLowerCase() }) }]), { name: 'open', label: t('Ouvrir le lien') }]}
+      accessibilityLabel={[text.title, text.source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, Date.now())?.text, people.length > 0 ? people.join(', ') : null, state, note ? t('Your note: {note}', { note }) : null].filter(Boolean).join(', ')}
+      accessibilityActions={[...(pending ? [] : [{ name: 'stamp', label: done ? t('Put back to do') : t('Mark as {stamp}', { stamp: stampWord(link.kind).toLowerCase() }) }]), { name: 'open', label: t('Open the link') }]}
       onAccessibilityAction={event => {
         if (event.nativeEvent.actionName === 'stamp') toggle();
-        else Linking.openURL(link.url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+        else Linking.openURL(link.url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
       }}
       outline={mosaic ? 'frame' : 'card'}
       onLayout={mosaic && onHeight ? (event: LayoutChangeEvent) => onHeight(id, event.nativeEvent.layout.height) : undefined}

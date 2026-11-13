@@ -83,7 +83,7 @@ function CollectionHeaderComponent({ title, emblem, color, id, hint, meta, onBac
         </Animated.View>
       ) : null}
       <View style={[styles.bar, { marginTop: insets.top }]}>
-        <IconButton icon="back" label={t('Retour')} onPress={onBack} />
+        <IconButton icon="back" label={t('Back')} onPress={onBack} />
         <View style={styles.flex} />
         {actions}
       </View>

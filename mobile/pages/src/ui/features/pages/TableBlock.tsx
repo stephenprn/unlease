@@ -108,18 +108,18 @@ const Cell = memo(function CellBody({ table, rowId, column, value, width, index,
   const address = cellAddress(column, value);
   const text = cellText(value, column);
   const format = CELL_FORMATS[type];
-  const shown = text || t('vide');
-  const label = format && !cellFits(value, column) ? t('{column} : {value} (ce n’est pas {expected})', { column: column.name, value: shown, expected: t(format.expected) }) : t('{column} : {value}', { column: column.name, value: shown });
+  const shown = text || t('empty');
+  const label = format && !cellFits(value, column) ? t('{column}: {value} (not {expected})', { column: column.name, value: shown, expected: t(format.expected) }) : t('{column}: {value}', { column: column.name, value: shown });
   const body =
     type === 'checkbox' ? (
       <View style={styles.box}>
-        <Checkbox checked={value === true} label={value === true ? t('{column} : coché', { column: column.name }) : t('{column} : non coché', { column: column.name })} disabled={readOnly} onToggle={() => setCell(page, rowId, column.id, value !== true)} />
+        <Checkbox checked={value === true} label={value === true ? t('{column}: ticked', { column: column.name }) : t('{column}: not ticked', { column: column.name })} disabled={readOnly} onToggle={() => setCell(page, rowId, column.id, value !== true)} />
       </View>
     ) : (
       <Tappable
         accessibilityRole="button"
         accessibilityLabel={label}
-        accessibilityHint={readOnly ? undefined : t('Toucher pour modifier, maintenir pour les actions de la ligne')}
+        accessibilityHint={readOnly ? undefined : t('Tap to edit, hold for the row’s actions')}
         disabled={readOnly && !address}
         onPress={() => {
           if (!readOnly) openTableSheet({ kind: 'cell', page, table, row: rowId, column: column.id });
@@ -182,8 +182,8 @@ const ColumnHead = memo(function ColumnHeadView({ table, column, width, index, s
   const head = (
     <Tappable
       accessibilityRole="button"
-      accessibilityLabel={t('Colonne {name}', { name: column.name })}
-      accessibilityHint={t('Toucher pour les réglages de la colonne, maintenir pour les actions du tableau')}
+      accessibilityLabel={t('Column {name}', { name: column.name })}
+      accessibilityHint={t('Tap for the column’s settings, hold for the table’s actions')}
       disabled={readOnly}
       ownDisabled
       onPress={() => openTableSheet({ kind: 'column', page, table, column: column.id })}
@@ -273,7 +273,7 @@ function TableBlockComponent({ block }: { block: Block }) {
               ))}
               {readOnly ? null : (
                 <View style={styles.end}>
-                  <IconButton icon="plus" label={t('Ajouter une colonne')} size={20} shape={1} onPress={addAndName} onLongPress={holdTable} />
+                  <IconButton icon="plus" label={t('Add a column')} size={20} shape={1} onPress={addAndName} onLongPress={holdTable} />
                 </View>
               )}
             </View>
@@ -285,10 +285,10 @@ function TableBlockComponent({ block }: { block: Block }) {
         <Animated.View pointerEvents="none" style={[styles.fade, { backgroundImage: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0), rgba(${r}, ${g}, ${b}, 1))` }, fade]} />
       </View>
       {readOnly ? null : (
-        <Tappable accessibilityRole="button" accessibilityLabel={t('Nouvelle ligne')} accessibilityHint={t('Maintenir pour les actions du tableau')} onPress={() => addRow(page, block.id)} onLongPress={holdTable} style={styles.addRow}>
+        <Tappable accessibilityRole="button" accessibilityLabel={t('New row')} accessibilityHint={t('Hold for the table’s actions')} onPress={() => addRow(page, block.id)} onLongPress={holdTable} style={styles.addRow}>
           <Icon name="plus" size={18} color={theme.color.link} />
           <AppText variant="label" color={theme.color.link}>
-            {t('Nouvelle ligne')}
+            {t('New row')}
           </AppText>
         </Tappable>
       )}

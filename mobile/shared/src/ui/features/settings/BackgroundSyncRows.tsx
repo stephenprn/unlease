@@ -19,11 +19,11 @@ function ProblemRow({ problem }: { readonly problem: BackgroundProblem }) {
     return (
       <ListRow
         icon="alert"
-        title={t('Batterie « Restreinte »')}
+        title={t('Battery set to “Restricted”')}
         supporting={
           appRings()
-            ? t('Android empêche la synchronisation et retient les notifications tant que l’application est fermée : touchez ici, puis dans « Batterie », choisissez « Optimisée » ou « Sans restriction ».')
-            : t('Android empêche la synchronisation tant que l’application est fermée : touchez ici, puis dans « Batterie », choisissez « Optimisée » ou « Sans restriction ».')
+            ? t('Android stops sync and holds back notifications while the app is closed: tap here, then under “Battery”, choose “Optimized” or “Unrestricted”.')
+            : t('Android stops sync while the app is closed: tap here, then under “Battery”, choose “Optimized” or “Unrestricted”.')
         }
         onPress={() => fixBackgroundProblem(problem)}
       />
@@ -32,8 +32,8 @@ function ProblemRow({ problem }: { readonly problem: BackgroundProblem }) {
   return (
     <ListRow
       icon="cloudOff"
-      title={t('Économiseur de données')}
-      supporting={t('Sur les données mobiles, Android empêche la synchronisation tant que l’application est fermée : touchez ici et autorisez l’utilisation des données sans restriction.')}
+      title={t('Data Saver')}
+      supporting={t('On mobile data, Android stops sync while the app is closed: tap here and allow unrestricted data usage.')}
       onPress={() => fixBackgroundProblem(problem)}
     />
   );
@@ -57,7 +57,7 @@ export function BackgroundSyncSection(): React.ReactElement | null {
   const problems = backgroundProblems(useBackgroundHealth());
   if (problems.length === 0) return null;
   return (
-    <Section title={t('Synchronisation en arrière-plan')}>
+    <Section title={t('Background sync')}>
       {problems.map(problem => (
         <ProblemRow key={problem.kind} problem={problem} />
       ))}

@@ -37,7 +37,7 @@ export interface QuickAddSheetProps {
 
 /** What a draft says of when: « jeu. 5 nov. · 20:00 – 21:00 ». */
 function whenWords(draft: Pick<QuickDraft, 'start' | 'end'>, zone: string): string {
-  if (isDay(draft.start)) return [weekdayDay(draft.start), t('Toute la journée')].join(' · ');
+  if (isDay(draft.start)) return [weekdayDay(draft.start), t('All day')].join(' · ');
   return `${weekdayDay(draft.start)} · ${timeRange({ allDay: false, startAt: wallToInstant(draft.start, zone), endAt: wallToInstant(draft.end, zone) })}`;
 }
 
@@ -74,16 +74,16 @@ export function QuickAddSheet({ visible, words = '', today, onDismiss, onCreated
       if (answer.proposal) {
         onDismiss();
         onDetails(answer.proposal);
-      } else setProblem(t('Claude n’a pas trouvé d’événement dans ces mots.'));
+      } else setProblem(t('Claude found no event in these words.'));
     } catch (error) {
-      setProblem(error instanceof SyncError && error.status === 409 ? t(error.message) : error instanceof Error && error.message ? t(error.message) : t('Serveur injoignable'));
+      setProblem(error instanceof SyncError && error.status === 409 ? t(error.message) : error instanceof Error && error.message ? t(error.message) : t('Server unreachable'));
     } finally {
       setAsking(false);
     }
   };
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Ajouter en quelques mots')}>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Add in a few words')}>
       <View style={styles.body}>
         <TextField
           kind="text"
@@ -92,8 +92,8 @@ export function QuickAddSheet({ visible, words = '', today, onDismiss, onCreated
             setText(value);
             setProblem(null);
           }}
-          placeholder={t('Dîner chez Paul jeudi 20h')}
-          accessibilityLabel={t('L’événement en quelques mots')}
+          placeholder={t('Dinner at Paul’s Thursday 8pm')}
+          accessibilityLabel={t('The event in a few words')}
           autoFocus
           returnKeyType="done"
           submitBehavior="blurAndSubmit"
@@ -101,21 +101,21 @@ export function QuickAddSheet({ visible, words = '', today, onDismiss, onCreated
         />
         {draft ? (
           <View style={styles.preview}>
-            <AppText variant="bodyStrong">{draft.title || t('Sans titre')}</AppText>
+            <AppText variant="bodyStrong">{draft.title || t('Untitled')}</AppText>
             <AppText variant="meta">{draft.place ? `${whenWords(draft, zone)} · ${draft.place}` : whenWords(draft, zone)}</AppText>
-            {!understood ? <AppText variant="meta">{t('Aucune date reconnue : l’événement sera pour aujourd’hui.')}</AppText> : null}
+            {!understood ? <AppText variant="meta">{t('No date recognised: the event will be today.')}</AppText> : null}
             {/* Under the line it answers, beside text: three buttons in the foot run off a 360 phone. */}
-            {server && claude && !understood ? <Button label={t('Demander à Claude')} icon="sparkle" kind="text" small busy={asking} onPress={() => later(ask())} style={styles.claude} /> : null}
+            {server && claude && !understood ? <Button label={t('Ask Claude')} icon="sparkle" kind="text" small busy={asking} onPress={() => later(ask())} style={styles.claude} /> : null}
           </View>
         ) : (
           <AppText variant="meta" style={styles.preview}>
-            {t('Un titre, un jour, une heure, un lieu : « Congrès du 12 au 14 mars à Lyon », « Sport lundi 18h pendant 1h ».')}
+            {t('A title, a day, a time, a place: “Conference March 12 to 14 at Lyon”, “Gym Monday 6pm for 1h”.')}
           </AppText>
         )}
       </View>
       <FormFoot message={problem}>
-        <Button label={t('Détails')} kind="tonal" disabled={!draft} onPress={() => draft && (onDismiss(), onDetails(draft))} />
-        <Button label={t('Créer')} icon="check" disabled={!draft?.title} onPress={create} />
+        <Button label={t('Details')} kind="tonal" disabled={!draft} onPress={() => draft && (onDismiss(), onDetails(draft))} />
+        <Button label={t('Create')} icon="check" disabled={!draft?.title} onPress={create} />
       </FormFoot>
     </Sheet>
   );

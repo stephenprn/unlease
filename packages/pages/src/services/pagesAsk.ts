@@ -22,16 +22,17 @@ import { buildIndex, parseQuery, search, type SearchDoc } from '@unlease/core/se
 import { linkTitle } from '@unlease/notes/services/spotlight';
 import { cellText } from './table';
 import { calendarBlockLines, type CalendarBlockSource } from './calendarBlock';
+import { immichBlockWords } from './immichBlock';
 
 /** The Administration's « how it works » for the questions on the pages, the same on both apps. */
 export const PAGES_ASK_INFO = tx(
-  'Une question sur une page, ses sous-pages ou toutes vos pages : l’appareil envoie leur texte à Claude par votre serveur, avec la clé et le budget de la lecture des liens. Claude répond d’après elles et cite les passages ; rien n’est gardé sur le serveur. Une page « gardée hors de Claude » n’est jamais envoyée, ni ses sous-pages.',
+  'A question about a page, its sub-pages or all your pages: the device sends their text to Claude through your server, with the key and budget of link reading. Claude answers from them and cites the passages; nothing is kept on the server. A page “kept away from Claude” is never sent, nor are its sub-pages.',
 );
 
 /** « Questions sur les pages » in one line, for the Administration's home. */
 export function pagesAskLine(ask: PagesAskSettings | null): StatusLine {
-  if (!ask?.enabled) return { tone: 'off', title: t('Questions sur les pages désactivées'), meta: t('Désactivé : rien de vos pages n’est envoyé à Claude.') };
-  return { tone: 'ok', title: t('Questions sur les pages activées'), meta: t('Lecture par question : {reach}', { reach: PAGES_REACH_NAMES[ask.reach] }) };
+  if (!ask?.enabled) return { tone: 'off', title: t('Questions about pages turned off'), meta: t('Off: nothing from your pages is sent to Claude.') };
+  return { tone: 'ok', title: t('Questions about pages turned on'), meta: t('Reading per question: {reach}', { reach: PAGES_REACH_NAMES[ask.reach] }) };
 }
 
 /** The library as a question reads it: the pages, and what they embed or point at. */
@@ -165,6 +166,8 @@ function blockWords(library: AskLibrary, block: Block, siblings: readonly string
       return `Sub-page "${sentTitle(block)}"`;
     case 'drawing':
       return `[Drawing]${caption}`;
+    case 'immich':
+      return `[${immichBlockWords(block)}]${caption}`;
     case 'calendar': {
       const lines = library.calendar ? calendarBlockLines(library.calendar, block, Date.now()) : [];
       return `${indent}Calendar, next ${block.calendarDays} days:${lines.length > 0 ? `\n${lines.map(entry => `${indent}- ${entry}`).join('\n')}` : ' nothing planned'}`;
@@ -425,7 +428,7 @@ export function citedPages(answer: Pick<PagesAskResponse, 'parts' | 'citations'>
 export function answerCopy(answer: PagesAskResponse, title: (pageId: string) => string): string {
   const pages = citedPages(answer).map(title);
   const lines = [answerText(answer)];
-  if (pages.length > 0) lines.push(t('Sources : {pages}', { pages: pages.join(', ') }));
+  if (pages.length > 0) lines.push(t('Sources: {pages}', { pages: pages.join(', ') }));
   for (const source of answer.sources) lines.push(`${source.title} : ${source.url}`);
   return lines.join('\n\n');
 }
@@ -439,7 +442,7 @@ export function answerDraft(question: string, answer: PagesAskResponse): BlockDr
   const children = blocksFromText(answerText(answer));
   const pages = citedPages(answer);
   if (pages.length > 0) {
-    const runs: Run[] = [{ kind: 'text', text: t('Sources : '), marks: { i: true } }];
+    const runs: Run[] = [{ kind: 'text', text: t('Sources: '), marks: { i: true } }];
     pages.forEach((id, at) => {
       if (at > 0) runs.push({ kind: 'text', text: ', ', marks: {} });
       runs.push({ kind: 'mention', target: { type: 'page', id } });
@@ -473,9 +476,9 @@ export function citationNumbers(parts: readonly PagesAnswerPart[]): Map<number, 
 
 /** Questions to start from, by scope: what people ask of their own notes. */
 const STARTERS: Readonly<Record<PageScope, readonly string[]>> = {
-  page: [tx('Résume cette page en quelques points'), tx('Quelles tâches restent à faire ?'), tx('Qu’est-ce qui manque ou se contredit ?')],
-  tree: [tx('Résume ces pages en quelques points'), tx('Quelles décisions ont été prises ?'), tx('Quelles tâches restent à faire ?')],
-  all: [tx('Qu’ai-je écrit sur ce sujet ?'), tx('Quelles tâches restent à faire ?'), tx('Quelles idées reviennent souvent ?')],
+  page: [tx('Sum up this page in a few points'), tx('Which tasks are still open?'), tx('What is missing or contradicts itself?')],
+  tree: [tx('Sum up these pages in a few points'), tx('Which decisions were made?'), tx('Which tasks are still open?')],
+  all: [tx('What have I written on this subject?'), tx('Which tasks are still open?'), tx('Which ideas come back often?')],
 };
 
 /** "Demander à Claude": questions to start from, for a scope, in the interface's language. */

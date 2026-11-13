@@ -33,7 +33,7 @@ export function PagesAskSection({ server, admin }: { server: ServerConfig; admin
       admin.setSettings(await saveServerSettings(server, { pages: patch }));
       showSnack(done, undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -53,40 +53,40 @@ export function PagesAskSection({ server, admin }: { server: ServerConfig; admin
     <>
       <ListRow
         icon="sparkle"
-        title={t('« Demander à Claude » sur les pages')}
-        supporting={!keyed ? t('Ajoutez d’abord une clé Claude, plus haut.') : on ? t('Un bouton discret sur chaque page : Claude répond d’après vos pages et cite les passages.') : t('Désactivé : rien de vos pages n’est envoyé à Claude.')}
-        {...(keyed ? toggle(on, next => void save({ enabled: next }, next ? t('Questions sur les pages activées') : t('Questions sur les pages désactivées'))) : {})}
+        title={t('“Ask Claude” on pages')}
+        supporting={!keyed ? t('Add a Claude key first, above.') : on ? t('A quiet button on each page: Claude answers from your pages and cites the passages.') : t('Off: nothing from your pages is sent to Claude.')}
+        {...(keyed ? toggle(on, next => void save({ enabled: next }, next ? t('Questions about pages turned on') : t('Questions about pages turned off'))) : {})}
       />
       {on ? (
         <>
           <ListRow
             icon="collections"
-            title={t('Questions sur toutes les pages')}
-            supporting={t('Claude lit alors les pages les plus proches de la question, pas seulement celle ouverte et ses sous-pages.')}
-            {...toggle(pages.everywhere, next => void save({ everywhere: next }, t('Réglage enregistré')))}
+            title={t('Questions about all pages')}
+            supporting={t('Claude then reads the pages closest to the question, not only the open one and its sub-pages.')}
+            {...toggle(pages.everywhere, next => void save({ everywhere: next }, t('Setting saved')))}
           />
           <ListRow
             icon="globe"
-            title={t('Compléter par le web')}
-            supporting={t('Chaque question peut aussi chercher sur le web, si vous le cochez (plus cher).')}
-            {...toggle(pages.web, next => void save({ web: next }, t('Réglage enregistré')))}
+            title={t('Add the web')}
+            supporting={t('Each question may also search the web, when you tick it (dearer).')}
+            {...toggle(pages.web, next => void save({ web: next }, t('Setting saved')))}
           />
           <View style={styles.block}>
-            <AppText variant="metaStrong">{t('Lecture par question')}</AppText>
+            <AppText variant="metaStrong">{t('Reading per question')}</AppText>
             <Segmented
               options={PAGES_REACHES.map(reach => ({ value: reach, label: PAGES_REACH_NAMES[reach] }))}
               value={pages.reach}
               disabled={busy}
-              onChange={reach => void save({ reach }, t('Lecture par question : {reach}', { reach: PAGES_REACH_NAMES[reach] }))}
+              onChange={reach => void save({ reach }, t('Reading per question: {reach}', { reach: PAGES_REACH_NAMES[reach] }))}
             />
             <AppText variant="meta">
-              {t('Jusqu’à environ {words} mots de vos pages par question, {cost} au plus avec {model}. Une suite de conversation coûte moins : les pages déjà lues sont en cache.', {
+              {t('Up to about {words} words of your pages per question, {cost} at most with {model}. A follow-up costs less: the pages already read are cached.', {
                 words: askWords(chars),
                 cost: formatUsd(askCost(chars, model, false)),
                 model: CLAUDE_MODEL_NAMES[model],
               })}
             </AppText>
-            <AppText variant="meta">{t('« Garder hors de Claude », dans le menu d’une page, la retire de toute question, avec ses sous-pages.')}</AppText>
+            <AppText variant="meta">{t('“Keep away from Claude”, in a page’s menu, leaves it out of every question, with its sub-pages.')}</AppText>
           </View>
         </>
       ) : null}

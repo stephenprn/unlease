@@ -51,24 +51,24 @@ function spotLabels(): readonly SpotLabel[] {
 
 /** Its keys in the shortcuts dialog beyond its commands': a link pasted anywhere, a note's, a checklist's. */
 const NOTES_SHORTCUTS: readonly ShortcutGroup[] = [
-  { rows: [[[MOD_KEY, 'V'], tx('Coller un lien sur le tableau : il est rangé dans la bonne collection')]] },
+  { rows: [[[MOD_KEY, 'V'], tx('Paste a link on the board: it is filed in the right collection')]] },
   {
-    title: tx('Sur une note'),
+    title: tx('On a note'),
     rows: [
-      [['E'], tx('Archiver')],
-      [['#'], tx('Supprimer')],
-      [['X'], tx('Sélectionner (sur le tableau)')],
-      [[tx('Maj'), tx('clic')], tx('Sélectionner plusieurs notes')],
-      [[MOD_KEY, tx('Entrée')], tx('Fermer l’éditeur')],
+      [['E'], tx('Archive')],
+      [['#'], tx('Delete')],
+      [['X'], tx('Select (on the board)')],
+      [[tx('Shift'), tx('click')], tx('Select several notes')],
+      [[MOD_KEY, tx('Enter')], tx('Close the editor')],
     ],
   },
   {
-    title: tx('Dans une liste à cocher'),
+    title: tx('In a checklist'),
     rows: [
-      [[tx('Entrée')], tx('Élément suivant')],
-      [['Retour'], tx('Sur un élément vide : le supprimer')],
-      [['Alt', '↑'], tx('Monter l’élément')],
-      [['Alt', '↓'], tx('Descendre l’élément')],
+      [[tx('Enter')], tx('Next item')],
+      [[tx('Backspace')], tx('On an empty item: delete it')],
+      [['Alt', '↑'], tx('Move the item up')],
+      [['Alt', '↓'], tx('Move the item down')],
     ],
   },
 ];
@@ -104,13 +104,13 @@ export const notesModule: AppModule = {
   spotKinds: NOTES_SPOT_KINDS,
   spotLabels,
   commands: [
-    { title: tx('Nouvelle note'), icon: 'note', key: 'c', run: () => void newNote() },
-    { title: tx('Nouvelle liste à cocher'), icon: 'checklist', key: 'l', run: () => void newChecklist() },
-    { title: tx('Nouveau dessin'), icon: 'draw', key: 'd', run: () => void newDrawing() },
-    { title: tx('Classer un lien'), icon: 'link', key: 'k', run: () => openCapture('') },
-    { title: tx('Classer le lien copié'), icon: 'link', key: 'v', spotlight: false, run: () => void classifyClipboard() },
+    { title: tx('New note'), icon: 'note', key: 'c', run: () => void newNote() },
+    { title: tx('New checklist'), icon: 'checklist', key: 'l', run: () => void newChecklist() },
+    { title: tx('New drawing'), icon: 'draw', key: 'd', run: () => void newDrawing() },
+    { title: tx('File a link'), icon: 'link', key: 'k', run: () => openCapture('') },
+    { title: tx('File the copied link'), icon: 'link', key: 'v', spotlight: false, run: () => void classifyClipboard() },
   ],
-  spotCreates: [{ type: 'note', title: typed => t('Créer la note « {title} »', { title: typed }), icon: 'note', run: typed => void newTitledNote(typed) }],
+  spotCreates: [{ type: 'note', title: typed => t('Create the note “{title}”', { title: typed }), icon: 'note', run: typed => void newTitledNote(typed) }],
   onKey: onNotesKey,
   shortcuts: NOTES_SHORTCUTS,
   onPaste: onNotesPaste,

@@ -35,7 +35,7 @@ export function TocBlock({ block }: { block: Block }) {
   const key = useBlocksStore(s => JSON.stringify(pageHeadings(s.blocks, s.blocksByParent, page).map(entry => [entry.id, entry.depth, markupToPlain(entry.text, mentionLabel, dateWords)])));
   const entries = useMemo(() => (JSON.parse(key) as [string, number, string][]).map<Entry>(([id, depth, words]) => ({ id, depth, words })), [key]);
 
-  if (entries.length === 0) return <EmptyLine glyph="contents" className={styles.tocEmpty} text={t('Ajoutez des titres à la page : ils apparaîtront ici.')} />;
+  if (entries.length === 0) return <EmptyLine glyph="contents" className={styles.tocEmpty} text={t('Add headings to the page: they will show here.')} />;
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     const links = [...event.currentTarget.querySelectorAll<HTMLElement>('[data-toc-entry]')];
@@ -52,7 +52,7 @@ export function TocBlock({ block }: { block: Block }) {
   };
 
   return (
-    <nav aria-label={t('Table des matières')}>
+    <nav aria-label={t('Table of contents')}>
       <ul className={styles.toc} onKeyDown={onKeyDown}>
         {entries.map(entry => (
           <li key={entry.id}>

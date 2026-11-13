@@ -53,7 +53,7 @@ export async function pickEventPhoto(now: number = Date.now()): Promise<PickOutc
   const result = await pickImages(1);
   if (result.status === 'cancelled') return { status: 'cancelled' };
   const picked = result.files[0];
-  if (result.status !== 'ok' || !picked) return { status: 'error', message: result.message ? t(result.message) : t('Impossible d’ajouter la photo') };
+  if (result.status !== 'ok' || !picked) return { status: 'error', message: result.message ? t(result.message) : t('Couldn’t add the photo') };
   const id = createId(now);
   saveLocalFile({ id, path: picked.path, mime: picked.mime }, now);
   forgetLocalPaths();
@@ -64,8 +64,8 @@ export async function pickEventPhoto(now: number = Date.now()): Promise<PickOutc
 export async function pickEventDocument(now: number = Date.now()): Promise<PickOutcome> {
   const picked = await pickDocument(['*/*']);
   if (picked.status === 'cancelled') return { status: 'cancelled' };
-  if (picked.status !== 'ok' || !picked.path) return { status: 'error', message: picked.message ? t(picked.message) : t('Fichier illisible') };
-  const refusal = picked.bytes === 0 ? t('Ce fichier est vide.') : picked.bytes > MAX_FILE_BYTES ? t('Ce fichier dépasse 100 Mo.') : null;
+  if (picked.status !== 'ok' || !picked.path) return { status: 'error', message: picked.message ? t(picked.message) : t('Unreadable file') };
+  const refusal = picked.bytes === 0 ? t('This file is empty.') : picked.bytes > MAX_FILE_BYTES ? t('This file is over 100 MB.') : null;
   if (refusal) {
     await removePath(picked.path);
     return { status: 'error', message: refusal };
@@ -74,7 +74,7 @@ export async function pickEventDocument(now: number = Date.now()): Promise<PickO
   const mime = mimeFromName(picked.name);
   saveLocalFile({ id, path: picked.path, mime }, now);
   forgetLocalPaths();
-  return { status: 'ok', file: { id, name: picked.name || t('fichier'), mime, bytes: picked.bytes, uploaded: false } };
+  return { status: 'ok', file: { id, name: picked.name || t('file'), mime, bytes: picked.bytes, uploaded: false } };
 }
 
 const FILE_UPLOAD_TIMEOUT_MS = 10 * 60_000;
@@ -89,12 +89,12 @@ async function uploadDocument(config: ServerConfig, file: { readonly id: string;
   try {
     response = await fetch(`${config.url}/api/files/${encodeURIComponent(file.id)}`, { method: 'PUT', headers: authHeader(config.token), body: form, signal: abort.signal });
   } catch {
-    throw new SyncError('network', t('Serveur injoignable'));
+    throw new SyncError('network', t('Server unreachable'));
   } finally {
     clearTimeout(timer);
   }
-  if (response.status === 401) throw new SyncError('unauthorized', t('Jeton refusé'));
-  if (!response.ok) throw new SyncError('http', t('Envoi refusé ({status})', { status: response.status }), response.status);
+  if (response.status === 401) throw new SyncError('unauthorized', t('Token refused'));
+  if (!response.ok) throw new SyncError('http', t('Upload refused ({status})', { status: response.status }), response.status);
 }
 
 const refused = new Set<string>();

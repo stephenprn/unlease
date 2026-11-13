@@ -59,16 +59,16 @@ async function backupFirst(server: ServerConfig): Promise<string | null> {
   try {
     status = await startBackup(server);
     while (status?.backup.running) {
-      if (Date.now() - asked > BACKUP_WAIT_MS) return t('La sauvegarde prend trop de temps : rien n’a été effacé. Réessayez une fois finie.');
+      if (Date.now() - asked > BACKUP_WAIT_MS) return t('The backup is taking too long: nothing was erased. Try again once it is done.');
       await wait(2_000);
       status = (await fetchAdminStatus(server)) ?? status;
     }
   } catch (failure) {
-    return t('La sauvegarde n’a pas pu démarrer : {problem}. Rien n’a été effacé.', { problem: failure instanceof Error ? t(failure.message) : t('Serveur injoignable') });
+    return t('The backup could not start: {problem}. Nothing was erased.', { problem: failure instanceof Error ? t(failure.message) : t('Server unreachable') });
   }
   const last = status?.backup.last ?? null;
   if (last && last.ok && (last.finishedAt ?? 0) >= asked) return null;
-  return t('La sauvegarde a échoué : {problem}. Rien n’a été effacé.', { problem: last?.error ? t(last.error) : t('raison inconnue') });
+  return t('The backup failed: {problem}. Nothing was erased.', { problem: last?.error ? t(last.error) : t('unknown reason') });
 }
 
 export interface EraseScreenProps {
@@ -120,9 +120,9 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
         try {
           await checkServer({ url: server.url, token: token.trim() });
         } catch (failure) {
-          const message = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+          const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
           if (failure instanceof SyncError && connectFailureField(failure.kind, failure.status) === 'token') form.fail('token', message);
-          else form.fail(null, t('{problem} : rien n’a été effacé.', { problem: message }));
+          else form.fail(null, t('{problem}: nothing was erased.', { problem: message }));
           return false;
         }
         // What waits here goes first, and what the server holds comes, so the tombstones cover everything.
@@ -154,12 +154,12 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.screen}>
       <Ground />
-      <TopBar title={t('Effacer des données')} onBack={onBack} />
+      <TopBar title={t('Erase data')} onBack={onBack} />
       <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <AppText variant="body" color={theme.color.inkMuted} style={styles.lead}>
           {eraseLead(APPS[app].name, connected)}
         </AppText>
-        <Section title={t('Ce qui sera effacé')}>
+        <Section title={t('What will be erased')}>
           {parts.map(part => {
             const empty = part.count === 0;
             const on = !empty && chosen.has(part.id);
@@ -167,7 +167,7 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
               <ListRow
                 key={part.id}
                 title={part.title}
-                supporting={empty ? t('Rien à effacer') : part.detail}
+                supporting={empty ? t('Nothing to erase') : part.detail}
                 leading={<CheckMark checked={on} />}
                 trailing={<Icon name={part.glyph as GlyphName} size={22} color={theme.color.inkMuted} />}
                 accessibilityRole="checkbox"
@@ -179,24 +179,24 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
           })}
         </Section>
         {connected ? (
-          <Section title={t('Avant d’effacer')}>
+          <Section title={t('Before erasing')}>
             {configured ? <SwitchRow title={backupWords.title} supporting={backupWords.meta} value={backup} onChange={setBackup} /> : <StatusRow line={{ tone: 'waiting', title: backupWords.title, meta: backupWords.meta }} />}
           </Section>
         ) : null}
-        <Section title={t('Confirmer')}>
+        <Section title={t('Confirm')}>
           <View style={styles.fields}>
             {connected ? (
               <TextField
-                label={t('Jeton du serveur')}
+                label={t('Server token')}
                 kind="serverToken"
                 value={token}
                 onChangeText={setToken}
                 field={form.field('token')}
-                help={t('Le même que pour vous connecter. {where}', { where: setupFieldHelp('token') })}
-                revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }}
+                help={t('The same one you connect with. {where}', { where: setupFieldHelp('token') })}
+                revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }}
               />
             ) : null}
-            <TextField label={t('Pour confirmer, tapez {word}', { word: eraseWord() })} kind="confirmWord" value={word} onChangeText={setWord} field={form.field('word')} />
+            <TextField label={t('To confirm, type {word}', { word: eraseWord() })} kind="confirmWord" value={word} onChangeText={setWord} field={form.field('word')} />
             {stage ? (
               <AppText variant="meta" accessibilityLiveRegion="polite">
                 {t(ERASE_PROGRESS[stage])}
@@ -208,7 +208,7 @@ export function EraseScreen({ app, parts, run, onBack, onDone }: EraseScreenProp
       {/* Pinned over the keyboard, the screen's own room under it. */}
       <View style={{ paddingBottom: insets.bottom + 12 }}>
         <FormFoot message={form.message}>
-          <Button kind="text" label={t('Annuler')} disabled={form.busy} onPress={onBack} />
+          <Button kind="text" label={t('Cancel')} disabled={form.busy} onPress={onBack} />
           <Button kind="danger" icon="eraser" label={eraseAction(total)} busy={form.busy} onPress={() => void form.submit(erase)} />
         </FormFoot>
       </View>

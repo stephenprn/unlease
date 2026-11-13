@@ -31,13 +31,13 @@ import { DateField } from './Fields';
 function unitWords(freq: Frequency): string {
   switch (freq) {
     case 'DAILY':
-      return t('jours');
+      return t('days');
     case 'WEEKLY':
-      return t('semaines');
+      return t('weeks');
     case 'MONTHLY':
-      return t('mois');
+      return t('months');
     case 'YEARLY':
-      return t('ans');
+      return t('years');
   }
 }
 
@@ -65,8 +65,8 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
   const every = readCount(interval);
   const times = readCount(count);
   const form = useForm({
-    every: every === null ? t('Un nombre de 1 à 999.') : null,
-    times: ends === 'after' && times === null ? t('Un nombre de 1 à 999.') : null,
+    every: every === null ? t('A number from 1 to 999.') : null,
+    times: ends === 'after' && times === null ? t('A number from 1 to 999.') : null,
   });
   const build = (): string => {
     const base = makeRule({ freq, interval: every ?? 1 });
@@ -85,7 +85,7 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
   useEffect(() => onDirty(dirty), [dirty, onDirty]);
   return (
     <DialogFrame
-      title={t('Répétition personnalisée')}
+      title={t('Custom repeat')}
       titleId={titleId}
       onClose={onCancel}
       className={layers.dialog}
@@ -94,7 +94,7 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
         <>
           <FormMessage form={form} className={styles.footMessage} />
           <Button kind="text" onClick={onCancel}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button type="submit">{t('OK')}</Button>
         </>
@@ -102,11 +102,11 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
     >
       <div className={styles.repeatForm}>
         <div className={styles.repeatEvery}>
-          <TextField label={t('Tous les')} kind="number" value={interval} onChange={setInterval} field={form.field('every')} maxLength={3} className={styles.repeatCount} />
-          <SelectField label={t('Fréquence')} value={freq} onChange={setFreq} options={FREQUENCIES.map(each => ({ value: each, label: unitWords(each) }))} className={styles.repeatUnit} />
+          <TextField label={t('Every')} kind="number" value={interval} onChange={setInterval} field={form.field('every')} maxLength={3} className={styles.repeatCount} />
+          <SelectField label={t('Frequency')} value={freq} onChange={setFreq} options={FREQUENCIES.map(each => ({ value: each, label: unitWords(each) }))} className={styles.repeatUnit} />
         </div>
         {freq === 'WEEKLY' ? (
-          <div className={styles.picker} role="group" aria-label={t('Les jours')}>
+          <div className={styles.picker} role="group" aria-label={t('The days')}>
             {weekCodesFrom(prefs.weekStart).map(weekday => (
               <button
                 key={weekday}
@@ -123,31 +123,31 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
         ) : null}
         {freq === 'MONTHLY' ? (
           <SelectField<'day' | 'weekday'>
-            label={t('Quel jour du mois')}
+            label={t('Which day of the month')}
             value={monthly}
             onChange={setMonthly}
             options={[
-              { value: 'day', label: t('Le {day} de chaque mois', { day: p.day }) },
-              { value: 'weekday', label: last && nth > 4 ? t('Le dernier {weekday} du mois', { weekday: names[weekdayOf(start)]! }) : t('Le {nth}e {weekday} du mois', { nth, weekday: names[weekdayOf(start)]! }) },
+              { value: 'day', label: t('On day {day} of each month', { day: p.day }) },
+              { value: 'weekday', label: last && nth > 4 ? t('On the last {weekday} of the month', { weekday: names[weekdayOf(start)]! }) : t('On {weekday} number {nth} of the month', { nth, weekday: names[weekdayOf(start)]! }) },
             ]}
           />
         ) : null}
         <div className={styles.repeatEnds}>
-          <span className="t-meta-strong">{t('Se termine')}</span>
+          <span className="t-meta-strong">{t('Ends')}</span>
           <Segmented<Ends>
-            label={t('Se termine')}
+            label={t('Ends')}
             value={ends}
             onChange={setEnds}
             options={[
-              { value: 'never', label: t('Jamais') },
-              { value: 'on', label: t('Le') },
-              { value: 'after', label: t('Après') },
+              { value: 'never', label: t('Never') },
+              { value: 'on', label: t('On') },
+              { value: 'after', label: t('After') },
             ]}
           />
-          {ends === 'on' ? <DateField value={until} label={t('Dernier jour')} weekStart={prefs.weekStart} today={today} onChange={day => setUntil(day < start.slice(0, 10) ? start.slice(0, 10) : day)} /> : null}
+          {ends === 'on' ? <DateField value={until} label={t('Last day')} weekStart={prefs.weekStart} today={today} onChange={day => setUntil(day < start.slice(0, 10) ? start.slice(0, 10) : day)} /> : null}
           {ends === 'after' ? (
             <div className={styles.repeatEvery}>
-              <TextField ariaLabel={t('Nombre de fois')} kind="number" value={count} onChange={setCount} field={form.field('times')} maxLength={3} className={styles.repeatCount} />
+              <TextField ariaLabel={t('Number of times')} kind="number" value={count} onChange={setCount} field={form.field('times')} maxLength={3} className={styles.repeatCount} />
               <span className={`${styles.repeatWord} t-body`}>{t('occurrences')}</span>
             </div>
           ) : null}
@@ -163,7 +163,7 @@ export function RepeatDialog({ open, start, rrule, onDone, onCancel }: { open: b
   const unsaved = useUnsaved(open && dirty);
   return (
     <>
-      <Layer open={open} onDismiss={unsaved.guard(onCancel)} label={t('Répétition personnalisée')}>
+      <Layer open={open} onDismiss={unsaved.guard(onCancel)} label={t('Custom repeat')}>
         {open ? <RepeatForm start={start} rrule={rrule} onDone={onDone} onCancel={onCancel} onDirty={setDirty} /> : null}
       </Layer>
       {unsaved.dialog}

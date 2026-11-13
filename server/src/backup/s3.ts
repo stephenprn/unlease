@@ -33,7 +33,7 @@ export const THAW_DAYS = 7;
 export type ThawState = 'started' | 'ready' | 'ongoing';
 
 /** Said of a snapshot asked out of cold storage: it can be fetched once S3 has brought it out. */
-export const GLACIER_WAIT = 'Cette sauvegarde est dans Glacier : sa sortie est demandée, réessayez dans quelques heures';
+export const GLACIER_WAIT = 'This backup is in Glacier: it has been asked out, try again in a few hours';
 
 /** A cold object S3 will not hand over before it is brought out (`thaw`). */
 export const isFrozen = (error: unknown): boolean => error instanceof S3Error && error.code === 'InvalidObjectState';
@@ -52,15 +52,15 @@ export class S3Error extends Error {
 
 /** What went wrong, in the apps' words. */
 export function s3Problem(error: unknown): string {
-  if (!(error instanceof S3Error)) return 'Stockage S3 injoignable';
-  if (error.code === 'network') return 'Stockage S3 injoignable';
-  if (error.code === 'NoSuchBucket') return 'Bucket introuvable';
-  if (error.code === 'InvalidStorageClass') return 'Ce stockage ne propose pas cette classe';
+  if (!(error instanceof S3Error)) return 'S3 storage unreachable';
+  if (error.code === 'network') return 'S3 storage unreachable';
+  if (error.code === 'NoSuchBucket') return 'Bucket not found';
+  if (error.code === 'InvalidStorageClass') return 'This storage does not offer this class';
   if (error.code === 'InvalidObjectState') return GLACIER_WAIT;
-  if (error.code === 'InvalidAccessKeyId' || error.code === 'SignatureDoesNotMatch' || error.status === 401) return 'Clés refusées par S3';
-  if (error.code === 'AuthorizationHeaderMalformed' || error.code === 'PermanentRedirect' || error.status === 301) return 'Mauvaise région pour ce bucket';
-  if (error.code === 'AccessDenied' || error.status === 403) return 'Accès refusé par S3 : vérifiez les droits de la clé';
-  return `S3 a répondu ${error.status}`;
+  if (error.code === 'InvalidAccessKeyId' || error.code === 'SignatureDoesNotMatch' || error.status === 401) return 'Keys refused by S3';
+  if (error.code === 'AuthorizationHeaderMalformed' || error.code === 'PermanentRedirect' || error.status === 301) return 'Wrong region for this bucket';
+  if (error.code === 'AccessDenied' || error.status === 403) return 'Access denied by S3: check the key’s permissions';
+  return `S3 answered ${error.status}`;
 }
 
 const EMPTY_HASH = createHash('sha256').update('').digest('hex');

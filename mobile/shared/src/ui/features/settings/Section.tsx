@@ -27,7 +27,7 @@ export function Section({ title, info, children, anchor }: { title?: string; inf
           <AppText variant="section" style={styles.sectionTitle} accessibilityRole="header">
             {title}
           </AppText>
-          {info ? <InfoButton open={bubble.open} label={bubble.open ? t('Masquer l’explication') : t('Comment ça marche')} onPress={bubble.toggle} style={styles.info} /> : null}
+          {info ? <InfoButton open={bubble.open} label={bubble.open ? t('Hide the explanation') : t('How it works')} onPress={bubble.toggle} style={styles.info} /> : null}
         </View>
       ) : null}
       {title && info && bubble.open ? <InfoBubble text={t(info)} style={styles.bubble} /> : null}

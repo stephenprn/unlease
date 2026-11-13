@@ -26,7 +26,7 @@ export interface MentionCandidate extends MentionEntry {
   readonly detail: () => string;
 }
 
-const KINDS = { contact: tx('Contacts'), event: tx('Événements'), page: tx('Pages'), note: tx('Notes'), line: tx('Collections'), link: tx('Liens') } as const;
+const KINDS = { contact: tx('Contacts'), event: tx('Events'), page: tx('Pages'), note: tx('Notes'), line: tx('Collections'), link: tx('Links') } as const;
 type Kind = (typeof KINDS)[keyof typeof KINDS];
 
 const DAY = 86_400_000;
@@ -73,18 +73,18 @@ export function mentionSections(state: LibraryState, except: string | null, now:
     .filter(block => block.kind === 'page' && block.deletedAt === null && !isInBin(blocks, block.id))
     .sort((a, b) => b.editedAt - a.editedAt)
     .map(block => {
-      const path = ancestorPages(blocks, block.id).map(page => page.text.trim() || t('Sans titre')).join(' / ');
-      return { target: { type: 'page', id: block.id }, title: block.text.trim() || t('Sans titre'), also: path, boost: recency(block.editedAt, now), icon: 'page', ...(block.icon ? { emoji: block.icon } : {}), detail: () => path };
+      const path = ancestorPages(blocks, block.id).map(page => page.text.trim() || t('Untitled')).join(' / ');
+      return { target: { type: 'page', id: block.id }, title: block.text.trim() || t('Untitled'), also: path, boost: recency(block.editedAt, now), icon: 'page', ...(block.icon ? { emoji: block.icon } : {}), detail: () => path };
     });
   const kept = Object.values(carnet.notes)
     .filter(note => note.deletedAt === null && note.trashedAt === null && shownTitle(note).trim())
     .sort((a, b) => b.editedAt - a.editedAt);
   const notes: MentionCandidate[] = kept
     .filter(note => note.kind !== 'links')
-    .map(note => ({ target: { type: 'note', id: note.id }, title: shownTitle(note).trim(), boost: recency(note.editedAt, now), icon: note.kind === 'checklist' ? 'checklist' : 'note', detail: () => (note.kind === 'checklist' ? t('Liste') : note.kind === 'drawing' ? t('Dessin') : t('Note')) }));
+    .map(note => ({ target: { type: 'note', id: note.id }, title: shownTitle(note).trim(), boost: recency(note.editedAt, now), icon: note.kind === 'checklist' ? 'checklist' : 'note', detail: () => (note.kind === 'checklist' ? t('List') : note.kind === 'drawing' ? t('Drawing') : t('Note')) }));
   const collections: MentionCandidate[] = kept
     .filter(note => note.kind === 'links')
-    .map(note => ({ target: { type: 'note', id: note.id }, title: shownTitle(note).trim(), boost: recency(note.editedAt, now), icon: 'collections', detail: () => plural((carnet.linksByNote[note.id] ?? []).length, 'lien') }));
+    .map(note => ({ target: { type: 'note', id: note.id }, title: shownTitle(note).trim(), boost: recency(note.editedAt, now), icon: 'collections', detail: () => plural((carnet.linksByNote[note.id] ?? []).length, 'link') }));
   const links: MentionCandidate[] = Object.values(carnet.links)
     .filter(link => link.deletedAt === null)
     .sort((a, b) => b.createdAt - a.createdAt)

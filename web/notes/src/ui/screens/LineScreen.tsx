@@ -20,7 +20,7 @@ import { sortable } from '@unlease/notes/services/sorting';
 import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { extractUrls } from '@unlease/core/services/url';
 import { isBlank } from '@unlease/core/services/formChecks';
-import { INBOX_ID, INBOX_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
 import { collectionTemplate, linksReadBefore } from '@unlease/notes/services/templates';
 
 import { useLines } from '../../app/hooks/useLines';
@@ -113,7 +113,7 @@ export function LineScreen({ id }: { id: string }) {
   const otherLines = useLines().some(other => other.id !== id && other.id !== INBOX_ID);
   const [url, setUrl] = useState('');
   // Words with no link in them are said under the strip, what was typed kept.
-  const form = useForm({ url: !isBlank(url) && extractUrls(url).length === 0 ? t('Aucun lien ici : collez une adresse, comme https://example.org/page.') : null });
+  const form = useForm({ url: !isBlank(url) && extractUrls(url).length === 0 ? t('No link here: paste an address, like https://example.org/page.') : null });
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [modules, setModules] = useState(false);
@@ -130,7 +130,7 @@ export function LineScreen({ id }: { id: string }) {
   const order = useCallback((s: LibraryState) => orderOf(s, id, view), [id, view]);
   useFilingMotion(list, order);
 
-  if (!line || line.deletedAt !== null || line.kind !== 'links') return <NotFound what={t('Cette collection n’existe plus.')} />;
+  if (!line || line.deletedAt !== null || line.kind !== 'links') return <NotFound what={t('This collection no longer exists.')} />;
 
   const inbox = id === INBOX_ID;
   // Opened from the bin, it reads as it is and takes nothing until it is restored (the note editor's way).
@@ -140,7 +140,7 @@ export function LineScreen({ id }: { id: string }) {
     if (found.length === 0) {
       // Pasted words with no link: shown in the strip with the problem under it.
       if (text !== url) setUrl(text);
-      form.fail('url', t('Aucun lien ici : collez une adresse, comme https://example.org/page.'));
+      form.fail('url', t('No link here: paste an address, like https://example.org/page.'));
       return;
     }
     const placed = addLinks(found, { noteId: id });
@@ -153,12 +153,12 @@ export function LineScreen({ id }: { id: string }) {
     try {
       add(await navigator.clipboard.readText());
     } catch {
-      showError(t('Le navigateur refuse la lecture du presse-papiers : collez avec Ctrl+V.'));
+      showError(t('The browser won’t read the clipboard: paste with Ctrl+V.'));
     }
   };
 
   // What is left to do. With none, it says nothing: the empty panel, or « Déjà faits · n », says it (never « 0 lien » over them), as on the phone.
-  const summary = toDo === 0 ? '' : total ? t('{links} · total {total}', { links: plural(toDo, 'lien'), total }) : plural(toDo, 'lien');
+  const summary = toDo === 0 ? '' : total ? t('{links} · total {total}', { links: plural(toDo, 'link'), total }) : plural(toDo, 'link');
   const canReview = !inbox && reading && sortableCount > 0;
   const filtered = view.filter !== 'all';
   // Claude could read some links here now: those kept unread while the filter shows them, or those that failed under their own filter.
@@ -168,7 +168,7 @@ export function LineScreen({ id }: { id: string }) {
     const links = linksOf(useLibraryStore.getState(), id).filter(link => (retrying ? link.status === 'failed' : link.status === 'skipped'));
     const sent = readLinks(links.map(link => link.id));
     // No « Annuler »: the server starts reading at once, and a reading begun is spent.
-    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+    if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
   };
   const cost = formatUsd(toRead * CLAUDE_COST_PER_LINK[model]);
   // Never with the unread well: reading what was never read comes first.
@@ -176,7 +176,7 @@ export function LineScreen({ id }: { id: string }) {
   const rereadCost = formatUsd(toReread * CLAUDE_COST_PER_LINK[model]);
   const rereadAll = (): void => {
     const sent = readLinks(stale);
-    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+    if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
   };
 
   /** The collection goes to the bin; its links where the person said. */
@@ -184,17 +184,17 @@ export function LineScreen({ id }: { id: string }) {
     const ids = [...(useLibraryStore.getState().linksByNote[id] ?? [])];
     navigate(paths.lines, { replace: true });
     if (fate.kind === 'bin') {
-      showUndo(t('Collection et liens placés dans la corbeille'), trashLines([id], null));
+      showUndo(t('Collection and links moved to the bin'), trashLines([id], null));
     } else if (fate.kind === 'move') {
       const undo = trashLines([id], fate.to);
-      const name = fate.to === INBOX_ID ? t(INBOX_TITLE) : (useLibraryStore.getState().notes[fate.to]?.title ?? '');
-      showUndo(t('Collection supprimée : {links} dans {name}', { links: plural(ids.length, 'lien déplacé', 'liens déplacés'), name }), undo);
+      const name = fate.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : (useLibraryStore.getState().notes[fate.to]?.title ?? '');
+      showUndo(t('Collection deleted: {links} to {name}', { links: plural(ids.length, 'link moved', 'links moved'), name }), undo);
     } else {
-      sortDeletedLinksOnSlip(ids, trashLines([id], INBOX_ID), tx('Collection supprimée'));
+      sortDeletedLinksOnSlip(ids, trashLines([id], INBOX_ID), tx('Collection deleted'));
     }
   };
-  const doneHeading = t('Déjà faits · {count}', { count: doneIds.length });
-  const listLabel = t('Liens de {collection}', { collection: shownTitle(line) });
+  const doneHeading = t('Done · {count}', { count: doneIds.length });
+  const listLabel = t('Links in {collection}', { collection: shownTitle(line) });
   // One flat run of keyed rows: a row changing sides is moved, never remounted, so its stamp lands.
   const rows = [
     ...openIds.map(lid => <LinkRow key={lid} id={lid} now={now} onOpen={openLink} />),
@@ -254,13 +254,13 @@ export function LineScreen({ id }: { id: string }) {
         emblem={collectionEmblem(id, line.emblem)}
         color={asLineColor(line.color)}
         id={id}
-        hint={shownHint(line) || (inbox ? t('Les liens que Claude ne sait pas où ranger.') : '')}
+        hint={shownHint(line) || (inbox ? t('The links Claude doesn’t know where to file.') : '')}
         meta={summary}
         actions={
           trashed ? null : (
             <>
-              <IconButton icon="edit" label={t('Modifier la collection')} onClick={() => setEditing(true)} />
-              <IconButton ref={more} icon="more" label={t('Plus d’actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
+              <IconButton icon="edit" label={t('Edit the collection')} onClick={() => setEditing(true)} />
+              <IconButton ref={more} icon="more" label={t('More actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
             </>
           )
         }
@@ -268,9 +268,9 @@ export function LineScreen({ id }: { id: string }) {
       <div className={styles.page} data-layout={view.layout}>
         {trashed ? (
           <OutlinedBox kind="panel" edge={false} className={`${styles.trashBanner} t-meta`}>
-            <span>{t('Une collection dans la corbeille ne peut pas être modifiée.')}</span>
+            <span>{t('A collection in the bin can’t be edited.')}</span>
             <Button kind="tonal" small icon="restore" onClick={() => restoreNotes([id])}>
-              {t('Restaurer')}
+              {t('Restore')}
             </Button>
           </OutlinedBox>
         ) : (
@@ -291,8 +291,8 @@ export function LineScreen({ id }: { id: string }) {
             className={styles.addInput}
             value={url}
             onChange={setUrl}
-            placeholder={t('Ajouter un lien à {collection}', { collection: shownTitle(line) })}
-            aria-label={t('Ajouter un lien à {collection}', { collection: shownTitle(line) })}
+            placeholder={t('Add a link to {collection}', { collection: shownTitle(line) })}
+            aria-label={t('Add a link to {collection}', { collection: shownTitle(line) })}
             inputMode="url"
             enterKeyHint="done"
             autoComplete="off"
@@ -301,9 +301,9 @@ export function LineScreen({ id }: { id: string }) {
             spellCheck={false}
           />
           {url.trim() ? (
-            <IconButton icon="check" label={t('Ajouter')} onClick={() => add(url)} />
+            <IconButton icon="check" label={t('Add')} onClick={() => add(url)} />
           ) : canPaste() ? (
-            <IconButton icon="copy" label={t('Coller le lien copié')} onClick={() => void paste()} />
+            <IconButton icon="copy" label={t('Paste the copied link')} onClick={() => void paste()} />
           ) : null}
         </form>
         <FieldProblem field={form.field('url')} id="line-add-problem" className={styles.addProblem} />
@@ -313,28 +313,28 @@ export function LineScreen({ id }: { id: string }) {
         {all === 0 ? (
           <OutlinedBox kind="panel" className={`${styles.empty} ${settleIn} t-body`}>
             {inbox
-              ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
-              : t('Aucun lien pour l’instant. Collez une adresse ici, ou n’importe où sur cette page : Claude y rangera aussi ceux qui lui correspondent.')}
+              ? t('Links Claude doesn’t know where to file arrive here, as do those kept without reading.')
+              : t('No links yet. Paste an address here, or anywhere on this page: Claude will also file the ones that fit here.')}
           </OutlinedBox>
         ) : null}
         {toRead >= 2 ? (
           <ReadAllBanner
             text={
               retrying
-                ? t('{links} · environ {cost} pour tout relire', { links: plural(toRead, 'lecture impossible', 'lectures impossibles'), cost })
-                : t('{links} · environ {cost} pour tout lire', { links: plural(toRead, 'lien gardé sans lecture', 'liens gardés sans lecture'), cost })
+                ? t('{links} · about {cost} to read them all again', { links: plural(toRead, 'link that couldn’t be read', 'links that couldn’t be read'), cost })
+                : t('{links} · about {cost} to read them all', { links: plural(toRead, 'link kept unread', 'links kept unread'), cost })
             }
-            action={retrying ? t('Tout réessayer') : t('Tout lire')}
+            action={retrying ? t('Retry all') : t('Read all')}
             onRead={readAll}
           />
         ) : toReread > 0 ? (
           <ReadAllBanner
             text={
               toReread === 1
-                ? t('{links} avant ce changement · environ {cost} pour le relire', { links: plural(1, 'lien lu', 'liens lus'), cost: rereadCost })
-                : t('{links} avant ce changement · environ {cost} pour les relire', { links: plural(toReread, 'lien lu', 'liens lus'), cost: rereadCost })
+                ? t('{links} before this change · about {cost} to read it again', { links: plural(1, 'link read', 'links read'), cost: rereadCost })
+                : t('{links} before this change · about {cost} to read them again', { links: plural(toReread, 'link read', 'links read'), cost: rereadCost })
             }
-            action={toReread === 1 ? t('Relire') : t('Tout relire')}
+            action={toReread === 1 ? t('Read again') : t('Read all again')}
             onRead={rereadAll}
           />
         ) : null}
@@ -348,27 +348,27 @@ export function LineScreen({ id }: { id: string }) {
         open={menu}
         anchor={more}
         onDismiss={() => setMenu(false)}
-        label={t('Plus d’actions')}
+        label={t('More actions')}
         items={[
-          { label: t('Modifier la collection'), icon: 'edit', onSelect: () => setEditing(true) },
+          { label: t('Edit the collection'), icon: 'edit', onSelect: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onSelect: () => setModules(true) },
           // What Claude notes on its links: « Non classé » reads each link by its kind.
-          ...(inbox || !reading ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onSelect: () => navigate(paths.template(id)) }]),
-          ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onSelect: () => setReviewing(true) }] : []),
-          ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onSelect: sortInboxOnSlip }] : []),
+          ...(inbox || !reading ? [] : [{ label: t('Facts Claude notes'), icon: 'list' as const, onSelect: () => navigate(paths.template(id)) }]),
+          ...(canReview ? [{ label: t('Check links'), icon: 'sparkle' as const, onSelect: () => setReviewing(true) }] : []),
+          ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Sort Unsorted'), icon: 'sparkle' as const, onSelect: sortInboxOnSlip }] : []),
           {
-            label: line.pinned ? t('Retirer du tableau') : t('Épingler sur le tableau'),
+            label: line.pinned ? t('Remove from the board') : t('Pin to the board'),
             icon: line.pinned ? 'pinOff' : 'pin',
             onSelect: () => {
               const undo = setPinned(id, !line.pinned);
-              showUndo(line.pinned ? t('Retirée du tableau') : t('Épinglée sur le tableau'), undo);
+              showUndo(line.pinned ? t('Removed from the board') : t('Pinned to the board'), undo);
             },
           },
           ...(inbox
             ? []
             : [
                 {
-                  label: t('Supprimer la collection'),
+                  label: t('Delete the collection'),
                   icon: 'trash' as const,
                   danger: true,
                   separatorBefore: true,
@@ -379,7 +379,7 @@ export function LineScreen({ id }: { id: string }) {
                     }
                     const undo = trashNotes([id]);
                     navigate(paths.lines, { replace: true });
-                    showUndo(t('Collection placée dans la corbeille'), undo);
+                    showUndo(t('Collection moved to the bin'), undo);
                   },
                 },
               ]),
@@ -390,13 +390,13 @@ export function LineScreen({ id }: { id: string }) {
         open={editing}
         onDismiss={() => setEditing(false)}
         onSaved={meaning => {
-          if (meaning && canReview) showSnack(t('Collection modifiée'), { label: t('Vérifier les liens'), run: () => setReviewing(true) }, { tone: 'success' });
+          if (meaning && canReview) showSnack(t('Collection updated'), { label: t('Check links'), run: () => setReviewing(true) }, { tone: 'success' });
         }}
       />
       <ReviewDialog id={id} open={reviewing} onDismiss={() => setReviewing(false)} />
       <ModulesDialog id={id} open={modules} onDismiss={() => setModules(false)} />
       <DeleteLineDialog ids={[id]} open={deleting} onDismiss={() => setDeleting(false)} onChoose={remove} onPickLine={() => setPicking(true)} />
-      <MoveDialog open={picking} currentLineId={null} exclude={[id]} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
+      <MoveDialog open={picking} currentLineId={null} exclude={[id]} title={t('Move the links to')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
     </div>
   );
 }

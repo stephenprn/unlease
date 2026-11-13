@@ -13,7 +13,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { asLineColor } from '@unlease/design/colors';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 import { formatPrice, formatUsd, plural, totalPrice } from '@unlease/core/services/format';
 import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
 import { arrangeLine, DEFAULT_LINE_VIEW, LINE_LAYOUT_NAMES } from '@unlease/notes/services/lineView';
@@ -21,7 +21,7 @@ import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { sortable } from '@unlease/notes/services/sorting';
 import { collectionTemplate, linksReadBefore } from '@unlease/notes/services/templates';
 import { extractUrls } from '@unlease/core/services/url';
-import { INBOX_ID, INBOX_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
 import { useLines } from '@app/hooks/useLines';
 import { addLinks, moveLink, readLinks, restoreNotes, setPinned, trashLines, trashNotes } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -155,7 +155,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   const { width: screen } = useWindowDimensions();
   const layout = view.layout;
   const rows: Row[] = useMemo(() => {
-    const heading: Row[] = doneIds.length > 0 ? [{ kind: 'heading', title: t('Déjà faits · {count}', { count: doneIds.length }) }] : [];
+    const heading: Row[] = doneIds.length > 0 ? [{ kind: 'heading', title: t('Done · {count}', { count: doneIds.length }) }] : [];
     switch (layout) {
       case 'gallery':
         return [...pairs(openIds), ...heading, ...pairs(doneIds)];
@@ -180,7 +180,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Cette collection n’existe plus.')} />
+        <EmptyState scene="trash" title={t('Not found')} text={t('This collection no longer exists.')} />
       </View>
     );
   }
@@ -192,7 +192,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
     const found = extractUrls(text);
     if (found.length === 0) {
       setUrl(text);
-      setProblem(t('Aucun lien ici : collez une adresse, comme https://example.org/page.'));
+      setProblem(t('No link here: paste an address, like https://example.org/page.'));
       return;
     }
     const placed = addLinks(found, { noteId: id });
@@ -203,7 +203,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   };
 
   // What is left to do. With none, it says nothing: the empty panel, or "Déjà faits · n", says it (never « 0 lien » over them).
-  const summary = toDo > 0 ? [plural(toDo, 'lien'), total ? t('total {amount}', { amount: total }) : null].filter(Boolean).join(' · ') : '';
+  const summary = toDo > 0 ? [plural(toDo, 'link'), total ? t('total {amount}', { amount: total }) : null].filter(Boolean).join(' · ') : '';
   const canReview = !inbox && reading && sortableCount > 0;
   // Claude could read some links here now: those kept unread while the filter shows them, or those that failed under their own filter.
   const retrying = view.filter === 'failed';
@@ -212,7 +212,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
     const links = linksOf(useLibraryStore.getState(), id).filter(link => (retrying ? link.status === 'failed' : link.status === 'skipped'));
     const sent = readLinks(links.map(link => link.id));
     // No « Annuler »: the server starts reading at once, and a reading begun is spent.
-    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+    if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
   };
   const cost = formatUsd(toRead * CLAUDE_COST_PER_LINK[model]);
 
@@ -227,13 +227,13 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
     const ids = [...(useLibraryStore.getState().linksByNote[id] ?? [])];
     navigation.goBack();
     if (fate.kind === 'bin') {
-      showSnack(t('Collection et liens placés dans la corbeille'), { label: tc('undo', 'Annuler'), run: trashLines([id], null) }, { tone: 'success' });
+      showSnack(t('Collection and links moved to the bin'), { label: t('Undo'), run: trashLines([id], null) }, { tone: 'success' });
     } else if (fate.kind === 'move') {
       const undo = trashLines([id], fate.to);
-      const name = fate.to === INBOX_ID ? t(INBOX_TITLE) : (useLibraryStore.getState().notes[fate.to]?.title ?? '');
-      showSnack(t('Collection supprimée : {links} dans {name}', { links: plural(ids.length, 'lien déplacé', 'liens déplacés'), name }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+      const name = fate.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : (useLibraryStore.getState().notes[fate.to]?.title ?? '');
+      showSnack(t('Collection deleted: {links} to {name}', { links: plural(ids.length, 'link moved', 'links moved'), name }), { label: t('Undo'), run: undo }, { tone: 'success' });
     } else {
-      sortDeletedLinksOnSlip(ids, trashLines([id], INBOX_ID), tx('Collection supprimée'));
+      sortDeletedLinksOnSlip(ids, trashLines([id], INBOX_ID), tx('Collection deleted'));
     }
   };
 
@@ -267,7 +267,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                   {all > 0 ? (
                     <IconButton
                       icon={LAYOUT_GLYPHS[layout]}
-                      label={t('Affichage : {layout}', { layout: LINE_LAYOUT_NAMES[layout] })}
+                      label={t('Layout: {layout}', { layout: LINE_LAYOUT_NAMES[layout] })}
                       onPress={() => {
                         Keyboard.dismiss();
                         setRefining('layout');
@@ -276,7 +276,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                   ) : null}
                   <IconButton
                     icon="more"
-                    label={t('Plus d’actions')}
+                    label={t('More actions')}
                     onPress={() => {
                       // Its sheets would open under the keyboard of the add field.
                       Keyboard.dismiss();
@@ -290,9 +290,9 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
             {trashed ? (
               <Organic style={styles.trashBanner}>
                 <AppText variant="meta" style={styles.trashText}>
-                  {t('Une collection dans la corbeille ne peut pas être modifiée.')}
+                  {t('A collection in the bin can’t be edited.')}
                 </AppText>
-                <Button kind="tonal" label={t('Restaurer')} icon="restore" onPress={() => restoreNotes([id])} />
+                <Button kind="tonal" label={t('Restore')} icon="restore" onPress={() => restoreNotes([id])} />
               </Organic>
             ) : (
             <>
@@ -304,7 +304,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                   setProblem(null);
                 }}
                 onSubmitEditing={() => add(url)}
-                placeholder={t('Ajouter un lien à {name}', { name: shownTitle(line) })}
+                placeholder={t('Add a link to {name}', { name: shownTitle(line) })}
                 placeholderTextColor={theme.color.inkFaint}
                 selectionColor={theme.color.highlight}
                 selectionHandleColor={theme.color.focus}
@@ -314,11 +314,11 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                 autoCorrect={false}
                 returnKeyType="done"
                 style={[variantStyle(theme, 'body'), styles.input, problem ? styles.inputInvalid : null]}
-                accessibilityLabel={[t('Adresse du lien'), problem].filter(Boolean).join(', ')}
+                accessibilityLabel={[t('Link address'), problem].filter(Boolean).join(', ')}
               />
               <IconButton
                 icon={url ? 'check' : 'copy'}
-                label={url ? t('Ajouter') : t('Coller le lien copié')}
+                label={url ? t('Add') : t('Paste the copied link')}
                 onPress={async () => (url ? add(url) : add(await readClipboard()))}
               />
             </Organic>
@@ -336,10 +336,10 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
             {toRead < 2 && reading && !trashed && readBefore.length > 0 ? (
               <ReadAllBanner
                 text={readAgainWords(readBefore.length, formatUsd(readBefore.length * CLAUDE_COST_PER_LINK[model]))}
-                action={readBefore.length === 1 ? t('Relire') : t('Tout relire')}
+                action={readBefore.length === 1 ? t('Read again') : t('Read all again')}
                 onRead={() => {
                   const sent = readLinks(readBefore);
-                  if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+                  if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
                 }}
               />
             ) : null}
@@ -347,10 +347,10 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
               <ReadAllBanner
                 text={
                   retrying
-                    ? t('{links} · environ {cost} pour tout relire', { links: plural(toRead, 'lecture impossible', 'lectures impossibles'), cost })
-                    : t('{links} · environ {cost} pour tout lire', { links: plural(toRead, 'lien gardé sans lecture', 'liens gardés sans lecture'), cost })
+                    ? t('{links} · about {cost} to read them all again', { links: plural(toRead, 'link that couldn’t be read', 'links that couldn’t be read'), cost })
+                    : t('{links} · about {cost} to read them all', { links: plural(toRead, 'link kept unread', 'links kept unread'), cost })
                 }
-                action={retrying ? t('Tout réessayer') : t('Tout lire')}
+                action={retrying ? t('Retry all') : t('Read all')}
                 onRead={readAll}
               />
             ) : null}
@@ -372,8 +372,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                 <Organic outline="panel" style={styles.empty}>
                   <AppText variant="body" color={theme.color.inkMuted} style={styles.emptyText}>
                     {inbox
-                      ? t('Les liens que Claude ne sait pas où ranger arrivent ici, comme ceux gardés sans lecture.')
-                      : t('Aucun lien pour l’instant. Partagez un lien depuis une autre app ou collez-le ici : Claude y rangera aussi ceux qui lui correspondent.')}
+                      ? t('Links Claude doesn’t know where to file arrive here, as do those kept without reading.')
+                      : t('No links yet. Share a link from another app or paste it here: Claude will also file the ones that fit here.')}
                   </AppText>
                 </Organic>
               </Animated.View>
@@ -421,25 +421,25 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         visible={menu}
         onDismiss={() => setMenu(false)}
         items={[
-          { label: t('Modifier la collection'), icon: 'edit', onPress: () => setEditing(true) },
+          { label: t('Edit the collection'), icon: 'edit', onPress: () => setEditing(true) },
           { label: t('Modules'), icon: 'puzzle', onPress: () => setModulesOpen(true) },
           // What Claude reads on its links: « Non classé » reads each by its kind.
-          ...(inbox || !reading ? [] : [{ label: t('Ce que Claude relève'), icon: 'list' as const, onPress: () => navigation.navigate('Template', { collection: id }) }]),
-          ...(canReview ? [{ label: t('Vérifier les liens'), icon: 'sparkle' as const, onPress: () => setReviewing(true) }] : []),
-          ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Ranger Non classé'), icon: 'sparkle' as const, onPress: sortInboxOnSlip }] : []),
+          ...(inbox || !reading ? [] : [{ label: t('Facts Claude notes'), icon: 'list' as const, onPress: () => navigation.navigate('Template', { collection: id }) }]),
+          ...(canReview ? [{ label: t('Check links'), icon: 'sparkle' as const, onPress: () => setReviewing(true) }] : []),
+          ...(inbox && reading && sortableCount > 0 && otherLines && !sorting ? [{ label: t('Sort Unsorted'), icon: 'sparkle' as const, onPress: sortInboxOnSlip }] : []),
           {
-            label: line.pinned ? t('Retirer du tableau') : t('Épingler sur le tableau'),
+            label: line.pinned ? t('Remove from the board') : t('Pin to the board'),
             icon: line.pinned ? 'pinOff' : 'pin',
             onPress: () => {
               const undo = setPinned(id, !line.pinned);
-              showSnack(line.pinned ? t('Retirée du tableau') : t('Épinglée sur le tableau'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+              showSnack(line.pinned ? t('Removed from the board') : t('Pinned to the board'), { label: t('Undo'), run: undo }, { tone: 'success' });
             },
           },
           ...(inbox
             ? []
             : [
                 {
-                  label: t('Supprimer la collection'),
+                  label: t('Delete the collection'),
                   icon: 'trash' as const,
                   danger: true,
                   onPress: () => {
@@ -449,7 +449,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
                     }
                     const undo = trashNotes([id]);
                     navigation.goBack();
-                    showSnack(t('Collection placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+                    showSnack(t('Collection moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
                   },
                 },
               ]),
@@ -460,14 +460,14 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
         visible={editing}
         onDismiss={() => setEditing(false)}
         onSaved={meaning => {
-          if (meaning && canReview) showSnack(t('Collection modifiée'), { label: t('Vérifier les liens'), run: () => setReviewing(true) }, { tone: 'success' });
+          if (meaning && canReview) showSnack(t('Collection updated'), { label: t('Check links'), run: () => setReviewing(true) }, { tone: 'success' });
         }}
       />
       <ModulesSheet id={id} visible={modulesOpen} onDismiss={() => setModulesOpen(false)} />
       <LineViewSheets open={refining} view={view} counts={{ all, unread, failed, priceDrop }} priced={priced} onChange={next => setLineView(id, next)} onDismiss={() => setRefining(null)} />
       <ReviewSheet id={id} visible={reviewing} onDismiss={() => setReviewing(false)} />
       <DeleteLineSheet ids={[id]} visible={deleting} onDismiss={() => setDeleting(false)} onChoose={remove} onPickLine={() => setPicking(true)} />
-      <MoveSheet visible={picking} currentLineId={null} exclude={[id]} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
+      <MoveSheet visible={picking} currentLineId={null} exclude={[id]} title={t('Move the links to')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
       <MoveSheet
         visible={moving !== null}
         currentLineId={id}
@@ -476,7 +476,7 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
           if (!moving) return;
           const undo = moveLink(moving, target);
           const into = useLibraryStore.getState().notes[target];
-          showSnack(t('Déplacé dans {name}', { name: into ? shownTitle(into) : '' }), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+          showSnack(t('Moved to {name}', { name: into ? shownTitle(into) : '' }), { label: t('Undo'), run: undo }, { tone: 'success' });
         }}
       />
     </View>

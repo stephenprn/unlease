@@ -19,13 +19,13 @@ export function CaretLink({ href }: { readonly href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={t('Ouvrir {address}', { address: shown })}
+      aria-label={t('Open {address}', { address: shown })}
       onMouseDown={event => event.preventDefault()}
     >
       <Icon name="external" size={18} className={styles.caretLinkGlyph} />
       <span className={`${styles.caretLinkUrl} t-label`}>{shown}</span>
       <span className={`${styles.caretLinkHint} t-meta`} aria-hidden="true">
-        {t('ou {key}+clic sur le lien', { key: modKey() })}
+        {t('or {key}+click the link', { key: modKey() })}
       </span>
     </a>
   );

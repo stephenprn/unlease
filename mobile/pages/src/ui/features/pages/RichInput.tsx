@@ -35,7 +35,7 @@ const SAVE_AFTER_MS = 350;
 /** Leaving one field for another, the caret is nowhere for a moment: the bar waits this long before it goes. */
 const LEAVE_MS = 120;
 
-const GONE = tx('(supprimé)');
+const GONE = tx('(deleted)');
 
 const keyOf = (target: BlockTarget): string => `${target.type}:${target.id}`;
 

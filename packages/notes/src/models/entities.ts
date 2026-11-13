@@ -82,19 +82,19 @@ export const LINK_KINDS = [
 export type LinkKind = (typeof LINK_KINDS)[number];
 
 export const LINK_KIND_NAMES: Record<LinkKind, string> = localized({
-  product: tx('Article'),
+  product: tx('Product'),
   film: tx('Film'),
-  series: tx('Série'),
-  book: tx('Livre'),
-  music: tx('Musique'),
-  game: tx('Jeu vidéo'),
+  series: tx('Series'),
+  book: tx('Book'),
+  music: tx('Music'),
+  game: tx('Video game'),
   restaurant: tx('Restaurant'),
-  place: tx('Lieu'),
-  recipe: tx('Recette'),
-  article: tx('Lecture'),
-  video: tx('Vidéo'),
-  event: tx('Événement'),
-  other: tx('Lien'),
+  place: tx('Place'),
+  recipe: tx('Recipe'),
+  article: tx('Article'),
+  video: tx('Video'),
+  event: tx('Event'),
+  other: tx('Link'),
 });
 
 /** `skipped`: no Claude key is set, so the link is kept plain (a key set later can re-queue it). */
@@ -201,18 +201,24 @@ export interface Attachment {
 
 /** The list every unfiled link lands in. One id on every device, so they merge. */
 export const INBOX_ID = 'inbox';
-/** Its seeded name and sentence, stored in French on every device (Claude reads them too). */
-export const INBOX_TITLE = tx('Non classé');
-export const INBOX_HINT = tx('Les liens qui ne vont dans aucune autre liste.');
+/**
+ * Its seeded name and sentence, stored in French on every device since the first version (Claude reads
+ * them too): data, never rewritten, so every device keeps seeding the same record.
+ */
+export const INBOX_TITLE = 'Non classé';
+export const INBOX_HINT = 'Les liens qui ne vont dans aucune autre liste.';
+/** The same, as the interface shows them (`t(INBOX_SHOWN_TITLE)`). */
+export const INBOX_SHOWN_TITLE = tx('Unsorted');
+const INBOX_SHOWN_HINT = tx('Links that go in no other collection.');
 
 /** A note's or a collection's title as the interface shows it: « Non classé » in its language while it keeps its seeded name. */
 export function shownTitle(note: { readonly id: string; readonly title: string }): string {
-  return note.id === INBOX_ID && note.title === INBOX_TITLE ? t(INBOX_TITLE) : note.title;
+  return note.id === INBOX_ID && note.title === INBOX_TITLE ? t(INBOX_SHOWN_TITLE) : note.title;
 }
 
 /** A collection's sentence as shown: the inbox's seeded one in the interface's language. */
 export function shownHint(note: { readonly id: string; readonly hint: string }): string {
-  return note.id === INBOX_ID && note.hint === INBOX_HINT ? t(INBOX_HINT) : note.hint;
+  return note.id === INBOX_ID && note.hint === INBOX_HINT ? t(INBOX_SHOWN_HINT) : note.hint;
 }
 
 export const TRASH_RETENTION_DAYS = 7;

@@ -23,12 +23,12 @@ export const TrashedPageRow = memo(function TrashedPageRowView({ id, now, onOpen
   return (
     <BinRow
       title={page.text.trim() || t(UNTITLED_PAGE)}
-      meta={t('Mise à la corbeille {when}', { when: formatRelative(page.trashedAt ?? now, now) })}
+      meta={tc('f', 'Moved to the bin {when}', { when: formatRelative(page.trashedAt ?? now, now) })}
       leading={page.icon ? <AppText style={styles.emoji}>{page.icon}</AppText> : <Icon name="page" size={24} color={theme.color.ink} />}
       onOpen={() => onOpen(id)}
       onRestore={() => {
         const undo = restorePage(id);
-        showSnack(t('Page restaurée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+        showSnack(t('Page restored'), { label: t('Undo'), run: undo }, { tone: 'success' });
       }}
       onDelete={() => onDelete(id)}
     />
@@ -43,16 +43,16 @@ export function DeletePageDialog({ id, onClose, onDeleted }: { id: string | null
   return (
     <Dialog
       visible={id !== null}
-      title={t('Supprimer définitivement ?')}
-      message={t('Cette page disparaîtra de tous vos appareils, avec tout ce qu’elle contient.')}
-      confirmLabel={t('Supprimer')}
+      title={t('Delete forever?')}
+      message={t('This page will disappear from all your devices, with everything in it.')}
+      confirmLabel={t('Delete')}
       danger
       onCancel={onClose}
       onConfirm={() => {
         if (id) deletePageForever([id]);
         onClose();
         onDeleted?.();
-        showSnack(t('Page supprimée définitivement'), undefined, { tone: 'success' });
+        showSnack(t('Page deleted forever'), undefined, { tone: 'success' });
       }}
     />
   );

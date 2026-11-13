@@ -165,7 +165,7 @@ function LabelChipsComponent({ labels, chosen, onToggle, onCreate, maxLength, wo
           <Animated.View key="naming" entering={SETTLE} layout={REFLOW} style={styles.namingBox}>
             <Organic frost style={[styles.naming, { borderColor: problem ? theme.color.danger : theme.color.focus, backgroundColor: theme.color.fieldVeil }]}>
               {/* The chip's plus becomes the way back. */}
-              <IconButton icon="close" label={t('Annuler')} onPress={close} />
+              <IconButton icon="close" label={t('Cancel')} onPress={close} />
               <TextInput
                 ref={input}
                 value={name}

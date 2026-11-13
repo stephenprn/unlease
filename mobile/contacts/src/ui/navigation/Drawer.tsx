@@ -39,10 +39,10 @@ function DrawerComponent({ open, current, onClose, onPlace }: DrawerProps) {
   return (
     <NavDrawer open={open} app="contacts" onClose={onClose}>
       <DrawerItem label={t('Contacts')} icon="people" selected={current === 'contacts'} onPress={() => onPlace('contacts')} trailing={<Count count={total} />} />
-      <DrawerItem label={t('Favoris')} icon="star" selected={current === 'favorites'} onPress={() => onPlace('favorites')} />
-      <DrawerItem label={t('Anniversaires')} icon="cake" selected={current === 'birthdays'} onPress={() => onPlace('birthdays')} />
+      <DrawerItem label={t('Favourites')} icon="star" selected={current === 'favorites'} onPress={() => onPlace('favorites')} />
+      <DrawerItem label={t('Birthdays')} icon="cake" selected={current === 'birthdays'} onPress={() => onPlace('birthdays')} />
       <DrawerDivider />
-      <DrawerHeading title={t('Libellés')} action={order.length > 0 ? { label: t('Modifier'), accessibilityLabel: t('Gérer les libellés'), onPress: () => onPlace('labels') } : undefined} />
+      <DrawerHeading title={t('Labels')} action={order.length > 0 ? { label: t('Edit'), accessibilityLabel: t('Manage labels'), onPress: () => onPlace('labels') } : undefined} />
       {order.map(id => {
         const label = labels[id];
         if (!label) return null;
@@ -60,11 +60,11 @@ function DrawerComponent({ open, current, onClose, onPlace }: DrawerProps) {
         );
       })}
       {/* The heading's « Modifier » leads to them; with none yet, a row makes the first (Carnet's and Agenda's drawers). */}
-      {order.length === 0 ? <DrawerItem label={t('Créer un libellé')} icon="tag" selected={current === 'labels'} onPress={() => onPlace('labels')} /> : null}
+      {order.length === 0 ? <DrawerItem label={t('Create label')} icon="tag" selected={current === 'labels'} onPress={() => onPlace('labels')} /> : null}
       <DrawerDivider />
-      {duplicates > 0 ? <DrawerItem label={t('Doublons')} icon="copy" selected={current === 'duplicates'} onPress={() => onPlace('duplicates')} trailing={<Count count={duplicates} />} /> : null}
-      <DrawerItem label={t('Corbeille')} icon="trash" selected={current === 'trash'} onPress={() => onPlace('trash')} />
-      <DrawerItem label={t('Réglages')} icon="settings" selected={current === 'settings'} onPress={() => onPlace('settings')} />
+      {duplicates > 0 ? <DrawerItem label={t('Duplicates')} icon="copy" selected={current === 'duplicates'} onPress={() => onPlace('duplicates')} trailing={<Count count={duplicates} />} /> : null}
+      <DrawerItem label={t('Bin')} icon="trash" selected={current === 'trash'} onPress={() => onPlace('trash')} />
+      <DrawerItem label={t('Settings')} icon="settings" selected={current === 'settings'} onPress={() => onPlace('settings')} />
       <DrawerItem label={t('Administration')} icon="server" selected={current === 'admin'} onPress={() => onPlace('admin')} />
     </NavDrawer>
   );

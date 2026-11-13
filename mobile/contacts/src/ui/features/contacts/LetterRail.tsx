@@ -95,7 +95,7 @@ function LetterRailComponent({ letters, current = null, onLetter }: LetterRailPr
         <View
           style={styles.track}
           accessibilityRole="adjustable"
-          accessibilityLabel={t('Aller à une lettre')}
+          accessibilityLabel={t('Jump to a letter')}
           accessibilityValue={lit ? { text: lit } : undefined}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={event => step(event.nativeEvent.actionName === 'increment' ? 1 : -1)}

@@ -46,22 +46,22 @@ export function ReminderHealthSection({ wanted = true, makerSettings }: Reminder
   if (!wanted || !health) return null;
   const rows: React.ReactNode[] = [];
   if (!health.notifications) {
-    rows.push(<ListRow key="notifications" icon="bellOff" title={t('Notifications désactivées')} supporting={t('Autorisez-les dans les réglages d’Android : sans elles, rien ne s’affiche.')} onPress={() => void openReminderSetting('notifications')} />);
+    rows.push(<ListRow key="notifications" icon="bellOff" title={t('Notifications turned off')} supporting={t('Allow them in Android’s settings: without them, nothing shows.')} onPress={() => void openReminderSetting('notifications')} />);
   }
   if (!health.exactAlarms) {
-    rows.push(<ListRow key="exact" icon="clock" title={t('Rappels à l’heure approximative')} supporting={t('Autorisez « Alarmes et rappels » pour qu’ils sonnent à la minute près.')} onPress={() => void openReminderSetting('exactAlarms')} />);
+    rows.push(<ListRow key="exact" icon="clock" title={t('Reminders at an approximate time')} supporting={t('Allow “Alarms & reminders” so they ring on the minute.')} onPress={() => void openReminderSetting('exactAlarms')} />);
   }
   if (health.backgroundRestricted && !server) {
     rows.push(
-      <ListRow key="battery" icon="alert" title={t('Batterie « Restreinte »')} supporting={t('Android retient les notifications tant que l’application est fermée : dans « Batterie », choisissez « Optimisée » ou « Sans restriction ».')} onPress={() => void openReminderSetting('battery')} />,
+      <ListRow key="battery" icon="alert" title={t('Battery set to “Restricted”')} supporting={t('Android holds the notifications back while the app is closed: under “Battery”, choose “Optimized” or “Unrestricted”.')} onPress={() => void openReminderSetting('battery')} />,
     );
   }
   if (maker) {
-    rows.push(<ListRow key="maker" icon="settings" title={t('Économie d’énergie du fabricant')} supporting={t('Ce téléphone peut fermer l’application et retarder ses notifications : laissez-la démarrer et s’exécuter en arrière-plan.')} onPress={maker} />);
+    rows.push(<ListRow key="maker" icon="settings" title={t('Maker’s battery saver')} supporting={t('This phone may close the app and delay its notifications: let it start and run in the background.')} onPress={maker} />);
     if (!health.unrestricted) {
-      rows.push(<ListRow key="unrestricted" icon="alert" title={t('Batterie sans restriction')} supporting={t('Que l’application reste prête à sonner, même après des jours sans l’ouvrir.')} onPress={() => void openReminderSetting('unrestricted')} />);
+      rows.push(<ListRow key="unrestricted" icon="alert" title={t('Unrestricted battery')} supporting={t('So the app stays ready to ring, even after days without opening it.')} onPress={() => void openReminderSetting('unrestricted')} />);
     }
   }
   if (rows.length === 0) return null;
-  return <Section title={t('Notifications à l’heure')}>{rows}</Section>;
+  return <Section title={t('Notifications on time')}>{rows}</Section>;
 }

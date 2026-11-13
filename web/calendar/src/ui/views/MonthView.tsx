@@ -126,7 +126,7 @@ export function MonthView({ day, items, today }: { day: string; items: readonly 
                         className={styles.cellDay}
                         data-today={isToday || undefined}
                         data-pebble-under={isToday ? pebbleTurn(partsOf(each).day) : undefined}
-                        aria-label={t('Voir le {day}', { day: each })}
+                        aria-label={t('See {day}', { day: each })}
                         onClick={() => navigate(paths.view('day', each))}
                       >
                         {partsOf(each).day === 1 ? shortDay(each) : partsOf(each).day}
@@ -161,7 +161,7 @@ export function MonthView({ day, items, today }: { day: string; items: readonly 
                       className={styles.more}
                       style={{ top: LANES * LANE_PX, left: `${(column / columns) * 100}%` }}
                       onClick={() => navigate(paths.view('day', week[column]!))}
-                      aria-label={t('{count} autres le {day}', { count, day: week[column]! })}
+                      aria-label={t('{count} more on {day}', { count, day: week[column]! })}
                     >
                       {t('+{count}', { count })}
                     </button>

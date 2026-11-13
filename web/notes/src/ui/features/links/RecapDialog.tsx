@@ -71,34 +71,34 @@ function RecapBody({ id, titleId, onDismiss }: { id: string; titleId: string; on
         foot={
           <>
             <Button kind="text" onClick={onDismiss}>
-              {t('Annuler')}
+              {t('Cancel')}
             </Button>
             <Button icon="rewind" onClick={recap}>
-              {t('Résumer')}
+              {t('Recap')}
             </Button>
           </>
         }
       >
-        <p className="t-body-strong">{t('Où vous êtes-vous arrêté ?')}</p>
+        <p className="t-body-strong">{t('Where did you stop?')}</p>
         <div className={styles.recapPicker}>
           <Stepper
-            label={t('Saison')}
-            value={t('Saison {season}', { season })}
-            lessLabel={t('Saison précédente')}
-            moreLabel={t('Saison suivante')}
+            label={t('Season')}
+            value={t('Season {season}', { season })}
+            lessLabel={t('Previous season')}
+            moreLabel={t('Next season')}
             onLess={season > 1 ? () => pick({ season: season - 1, episode }) : undefined}
             onMore={season < RECAP_LIMITS.seasons ? () => pick({ season: season + 1, episode }) : undefined}
           />
           <Stepper
-            label={t('Épisode')}
-            value={episode === null ? t('Toute la saison') : t('Épisode {episode}', { episode })}
-            lessLabel={t('Épisode précédent')}
-            moreLabel={t('Épisode suivant')}
+            label={t('Episode')}
+            value={episode === null ? t('The whole season') : t('Episode {episode}', { episode })}
+            lessLabel={t('Previous episode')}
+            moreLabel={t('Next episode')}
             onLess={episode !== null ? () => pick({ season, episode: episode > 1 ? episode - 1 : null }) : undefined}
             onMore={(episode ?? 0) < RECAP_LIMITS.episodes ? () => pick({ season, episode: (episode ?? 0) + 1 }) : undefined}
           />
         </div>
-        <p className="t-meta">{t('Claude s’arrête là : rien de la suite, ni d’indice sur ce qui vient.')}</p>
+        <p className="t-meta">{t('Claude stops there: nothing after it, not even a hint of what comes next.')}</p>
       </DialogFrame>
     );
   }
@@ -107,12 +107,12 @@ function RecapBody({ id, titleId, onDismiss }: { id: string; titleId: string; on
     phase.kind === 'asking' ? (
       <div className={styles.couponsWaiting} role="status">
         <ReadingTrack width={120} />
-        <p className="t-body">{t('Claude résume {series} jusqu’à {stop}…', { series, stop: recapStopWords(stop.season, stop.episode) })}</p>
-        <p className="t-meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</p>
+        <p className="t-body">{t('Claude is recapping {series} up to {stop}…', { series, stop: recapStopWords(stop.season, stop.episode) })}</p>
+        <p className="t-meta">{t('A web search often takes half a minute.')}</p>
       </div>
     ) : phase.kind === 'failed' ? (
       <p className={`${styles.couponsError} t-body`} role="alert">
-        {t('Claude n’a pas pu chercher : {reason}', { reason: t(phase.reason) })}
+        {t('Claude couldn’t search: {reason}', { reason: t(phase.reason) })}
       </p>
     ) : (
       <>
@@ -127,7 +127,7 @@ function RecapBody({ id, titleId, onDismiss }: { id: string; titleId: string; on
         {phase.answer.characters.length > 0 ? (
           <section className={styles.couponTips} aria-labelledby={`${titleId}-people`}>
             <h3 id={`${titleId}-people`} className="t-section">
-              {t('Personnages')}
+              {t('Characters')}
             </h3>
             <dl ref={wellRef} className={`${styles.couponsWell} ${styles.people} paper`} style={wellVars}>
               {phase.answer.characters.map(person => (
@@ -139,20 +139,20 @@ function RecapBody({ id, titleId, onDismiss }: { id: string; titleId: string; on
             </dl>
           </section>
         ) : null}
-        <p className="t-meta">{t('Écrit par Claude le {day} d’après des résumés trouvés sur le web, sans rien de la suite.', { day: formatDay(phase.answer.searchedAt, now) })}</p>
+        <p className="t-meta">{t('Written by Claude on {day} from summaries found on the web, with nothing from later on.', { day: formatDay(phase.answer.searchedAt, now) })}</p>
       </>
     );
   const foot =
     phase.kind === 'asking' ? null : (
       <>
         <Button kind="text" onClick={() => setPicking(true)}>
-          {t('Changer d’épisode')}
+          {t('Change episode')}
         </Button>
         {phase.kind === 'failed' ? (
-          <Button onClick={() => search(false)}>{t('Réessayer')}</Button>
+          <Button onClick={() => search(false)}>{t('Try again')}</Button>
         ) : (
           <Button kind="tonal" icon="refresh" onClick={() => search(true)}>
-            {t('Chercher à nouveau')}
+            {t('Search again')}
           </Button>
         )}
       </>

@@ -64,7 +64,7 @@ export function RichBody({ editor, editable, autoFocus, style }: RichBodyProps) 
       textAlignVertical="top"
       style={[noteFieldStyle(theme), style]}
       maxLength={TEXT_LIMITS.note.body}
-      accessibilityLabel={t('Texte de la note')}
+      accessibilityLabel={t('Note text')}
     >
       <NoteRuns lines={editor.lines} place="editor" names={editor.names} />
     </TextInput>

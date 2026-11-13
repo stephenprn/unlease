@@ -140,6 +140,6 @@ export function linkRowText(link: LinkRowSource): LinkRowText {
     facts: factsOf(link.attributes, link.kind, source, title),
     price: amount === null ? null : formatPrice(amount, currency),
     priceChange: change ? { direction: change.direction, amount: formatPrice(change.amount, currency) } : null,
-    note: note ? t('« {note} »', { note }) : '',
+    note: note ? t('“{note}”', { note }) : '',
   };
 }

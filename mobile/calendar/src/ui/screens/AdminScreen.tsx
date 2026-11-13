@@ -20,15 +20,15 @@ export const SECTIONS: readonly AppAdminSection[] = [
   {
     // The web's ids (its addresses: `/agenda/admin/calendar-holidays`), so a section is the same place on both.
     id: 'calendar-holidays',
-    title: () => t('Jours fériés'),
+    title: () => t('Public holidays'),
     icon: 'sun',
     info: HOLIDAYS_INFO,
     // The web's words (`calendar/services/admin`).
     line: holidaysLine,
     render: ({ server, admin }) => <HolidaysSection server={server} admin={admin} />,
   },
-  { id: 'calendar-publish', title: () => t('Publication'), icon: 'share', info: PUBLISH_INFO, line: publishLine, render: ({ server, admin, overlays }) => <PublishSection server={server} admin={admin} overlays={overlays} /> },
-  { id: 'calendar-ask', title: () => t('Questions sur l’agenda'), icon: 'bubble', info: ASK_INFO, line: askLine, render: ({ server, admin }) => <AskSection server={server} admin={admin} />, claude: true },
+  { id: 'calendar-publish', title: () => t('Publishing'), icon: 'share', info: PUBLISH_INFO, line: publishLine, render: ({ server, admin, overlays }) => <PublishSection server={server} admin={admin} overlays={overlays} /> },
+  { id: 'calendar-ask', title: () => t('Questions about the calendar'), icon: 'bubble', info: ASK_INFO, line: askLine, render: ({ server, admin }) => <AskSection server={server} admin={admin} />, claude: true },
 ];
 
 export function AdminScreen({ navigation, route }: ScreenProps<'Admin'>) {

@@ -519,7 +519,7 @@ describe('when the analysis fails', () => {
     server.usage.record('read', { linkId: 'y', url: 'https://b.fr/', usage: { model: 'claude-opus-5-5', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 1.2 }, ok: true, cached: false, error: null, durationMs: 1, result: null });
     server.sync.push([pendingLink('l2', `${SHOP}?couleur=noir`, T0 - 900)]);
     await queue.idle();
-    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Budget mensuel atteint', title: 'Veste en jean oversize délavée' });
+    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Monthly budget reached', title: 'Veste en jean oversize délavée' });
     expect(claude.requests).toHaveLength(1);
   });
 
@@ -528,7 +528,7 @@ describe('when the analysis fails', () => {
     const { queue } = analysisOf(server, { fetcher: new FakeFetcher(shopRoutes), claude });
     server.sync.push([pendingLink('l1', SHOP, T0 - 1000)]);
     await queue.idle();
-    expect(linkFields(server, 'l1')).toMatchObject({ status: 'failed', error: 'Analyse refusée par Claude' });
+    expect(linkFields(server, 'l1')).toMatchObject({ status: 'failed', error: 'Analysis refused by Claude' });
   });
 
   it('retries once after a rate limit, and gives up after a second overload', async () => {
@@ -543,7 +543,7 @@ describe('when the analysis fails', () => {
 
     server.sync.push([pendingLink('l2', `${SHOP}?couleur=noir`, T0 - 900)]);
     await queue.idle();
-    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Claude est surchargé' });
+    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Claude is overloaded' });
     expect(claude.requests).toHaveLength(4);
   });
 
@@ -554,7 +554,7 @@ describe('when the analysis fails', () => {
     const { queue } = analysisOf(server, { fetcher, claude });
     server.sync.push([pendingLink('l1', url, T0 - 1000)]);
     await queue.idle();
-    expect(linkFields(server, 'l1')).toMatchObject({ status: 'failed', error: 'Adresse non autorisée' });
+    expect(linkFields(server, 'l1')).toMatchObject({ status: 'failed', error: 'Address not allowed' });
     expect(claude.requests).toHaveLength(0);
   });
 
@@ -643,7 +643,7 @@ describe('the 30-day cache', () => {
     const { queue } = analysisOf(server, { fetcher: new FakeFetcher(shopRoutes), claude, budget: 0 });
     server.sync.push([pendingLink('l2', SHOP, T0 - 1000)]);
     await queue.idle();
-    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Budget mensuel atteint' });
+    expect(linkFields(server, 'l2')).toMatchObject({ status: 'failed', error: 'Monthly budget reached' });
 
     // The owner raises the budget; another device's link to the same page is read; asking again for l2 reuses it for free.
     const second = analysisOf(server, { fetcher: new FakeFetcher(shopRoutes), claude, budget: 15 });
@@ -686,7 +686,7 @@ describe('the queue', () => {
 });
 
 describe('the Claude request', () => {
-  const describeRequest = { url: SHOP, digest: 'URL: x', lists: null, lang: 'fr' as const, webFetch: { reason: 'Délai dépassé' }, image: null, imageCount: 0 };
+  const describeRequest = { url: SHOP, digest: 'URL: x', lists: null, lang: 'fr' as const, webFetch: { reason: 'Timed out' }, image: null, imageCount: 0 };
 
   it('names the language the link asks for on the message\'s first line', () => {
     const text = (request: ReturnType<typeof buildRequest>) => JSON.stringify(request.messages[0]!.content);
@@ -763,7 +763,7 @@ describe('the Claude request', () => {
   it('fails cleanly on an answer that is not the schema', async () => {
     const claude = new FakeClaude().reply(claudeMessage('{"title": 3}'));
     const model = new ClaudeLinkModel(new ClaudeClient(claude, { model: 'claude-opus-5-5', effort: 'low' }));
-    await expect(model.describe({ ...describeRequest, webFetch: null }, new AbortController().signal)).rejects.toThrow('Réponse de Claude illisible');
+    await expect(model.describe({ ...describeRequest, webFetch: null }, new AbortController().signal)).rejects.toThrow('Unreadable answer from Claude');
   });
 });
 

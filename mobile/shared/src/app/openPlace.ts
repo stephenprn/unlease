@@ -41,7 +41,7 @@ export async function openPlaceIn(choice: MapsChoice, place: string, directions:
       await Linking.openURL(url);
       return true;
     } catch {
-      showSnack(t('Aucune application de ce téléphone ne sait ouvrir ceci.'), undefined, { tone: 'error' });
+      showSnack(t('No app on this phone can open this.'), undefined, { tone: 'error' });
       return false;
     }
   }
@@ -78,15 +78,15 @@ export async function answerPlace(question: PlaceQuestion, choice: MapsChoice, r
   closePlaceQuestion();
   if (remember) {
     setMapsChoice(choice);
-    showSnack(t('Les adresses s’ouvriront dans {app}. Réglages change ce choix.', { app: mapsChoiceName(choice) }), undefined, { tone: 'success' });
+    showSnack(t('Addresses will open in {app}. Settings change this choice.', { app: mapsChoiceName(choice) }), undefined, { tone: 'success' });
   }
   if (await openPlaceIn(choice, question.place, question.directions)) return;
   if (remember) setMapsChoice(null);
-  if (choice.kind === 'app') showSnack(t('{app} n’a pas pu ouvrir l’adresse.', { app: choice.label }), undefined, { tone: 'error' });
+  if (choice.kind === 'app') showSnack(t('{app} could not open the address.', { app: choice.label }), undefined, { tone: 'error' });
 }
 
 /** The chooser's « Copier l’adresse ». */
 export async function copyPlace(question: PlaceQuestion): Promise<void> {
   closePlaceQuestion();
-  if (await copyText(question.place)) showSnack(t('Adresse copiée'), undefined, { tone: 'success' });
+  if (await copyText(question.place)) showSnack(t('Address copied'), undefined, { tone: 'success' });
 }

@@ -6,7 +6,7 @@
  */
 import { memo, useRef, useState } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { formatRelative, plural } from '@unlease/core/services/format';
 
@@ -33,7 +33,7 @@ const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: nu
       <span className={styles.binIcon}>{page.icon ? <span className={styles.tileEmoji}>{page.icon}</span> : <Icon name="page" size={22} />}</span>
       <span className={styles.binText}>
         <span className="t-body-strong">{title}</span>
-        <span className="t-meta">{t('Mise à la corbeille {when}', { when: formatRelative(page.trashedAt ?? now, now) })}</span>
+        <span className="t-meta">{tc('f', 'Moved to the bin {when}', { when: formatRelative(page.trashedAt ?? now, now) })}</span>
       </span>
       <Button
         kind="tonal"
@@ -41,13 +41,13 @@ const BinRow = memo(function BinRow({ id, now, onDelete }: { id: string; now: nu
         icon="restore"
         onClick={() => {
           const undo = restorePage(id);
-          showUndo(t('Page restaurée'), undo, { label: t('Voir la page'), run: () => navigate(paths.page(id)) });
+          showUndo(t('Page restored'), undo, { label: t('See the page'), run: () => navigate(paths.page(id)) });
         }}
       >
-        {t('Restaurer')}
+        {t('Restore')}
       </Button>
       {/* Compact, as high as « Restaurer » beside it (Agenda's bin pairs them the same way). */}
-      <IconButton icon="trash" label={t('Supprimer définitivement')} shape={2} compact onClick={() => onDelete(id)} />
+      <IconButton icon="trash" label={t('Delete forever')} shape={2} compact onClick={() => onDelete(id)} />
     </li>
   );
 });
@@ -72,15 +72,15 @@ export function PagesBinSection() {
       {/* Kept while the last page goes, so the confirmation plays its exit. */}
       <Confirm
         open={confirm !== null}
-        title={t('Supprimer définitivement ?')}
-        message={t('Cette page disparaîtra de tous vos appareils, avec tout ce qu’elle contient.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('This page will disappear from all your devices, with everything in it.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
           if (confirm) {
             deletePageForever([confirm]);
-            showSnack(t('Page supprimée définitivement'), undefined, { tone: 'success' });
+            showSnack(t('Page deleted forever'), undefined, { tone: 'success' });
           }
           setConfirm(null);
         }}
@@ -94,15 +94,15 @@ export function EmptyPagesBinDialog({ open, onClose }: { open: boolean; onClose:
   return (
     <Confirm
       open={open}
-      title={t('Vider la corbeille ?')}
-      message={t('Toutes les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-      confirmLabel={t('Vider')}
+      title={t('Empty the bin?')}
+      message={t('Every page in the bin will be deleted for good, on all your devices.')}
+      confirmLabel={t('Empty')}
       danger
       onCancel={onClose}
       onConfirm={() => {
         onClose();
         const count = emptyPagesBin();
-        showSnack(t('{deleted} définitivement', { deleted: plural(count, 'page supprimée', 'pages supprimées') }), undefined, { tone: 'success' });
+        showSnack(t('{deleted} forever', { deleted: plural(count, 'page deleted', 'pages deleted') }), undefined, { tone: 'success' });
       }}
     />
   );

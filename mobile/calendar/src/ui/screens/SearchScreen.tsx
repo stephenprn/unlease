@@ -75,7 +75,7 @@ export function SearchScreen({ navigation }: ScreenProps<'Search'>) {
           const day = next?.firstDay ?? item.start.slice(0, 10);
           return (
             <ListRow
-              title={item.title.trim() || t('Sans titre')}
+              title={item.title.trim() || t('Untitled')}
               supporting={[weekdayDay(day), item.place.trim()].filter(Boolean).join(' · ')}
               icon={item.rrule ? 'refresh' : 'calendar'}
               onPress={() => navigation.navigate('Event', { id: item.id, at: next?.occurrence })}

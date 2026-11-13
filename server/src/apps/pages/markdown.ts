@@ -2,7 +2,8 @@
  * Pages in a backup, as people read it: one Markdown file per page under the app's folder, its
  * sub-pages in a folder named after it, with a front matter and its files linked where the archive
  * keeps them (`Fichiers/`). A mention of Carnet's notes and links, of a contact or of an event, reads
- * as their names; a calendar block as the events it listed when the backup was made.
+ * as their names; a calendar block as the events it listed when the backup was made; an Immich block
+ * as a link to its album or its photos in Immich (its address as the Administration linked it).
  */
 import { comparePositions } from '@unlease/core/services/fractionalIndex';
 import { contactNamer } from '../contacts/names';
@@ -10,6 +11,7 @@ import { calendarNamer } from '../calendar/names';
 import { eventFromRecord, feedFromRecord, labelFromRecord } from '@unlease/calendar/sync/entities';
 import type { CalendarEvent, CalendarFeed, CalendarLabel } from '@unlease/calendar/models/events';
 import { calendarBlockLines, type CalendarBlockSource } from '@unlease/pages/services/calendarBlock';
+import { immichBlockMarkdown } from '@unlease/pages/services/immichBlock';
 import { richFromPlain, serializeRich } from '@unlease/core/services/richText';
 import { drawingSvg, isDrawingEmpty } from '@unlease/notes/services/drawing';
 import { linkFromRecord, noteFromRecord, checkFromRecord } from '@unlease/notes/sync/entities';
@@ -68,7 +70,7 @@ function calendarSource(all: readonly StoredRecord[]): CalendarBlockSource {
   return { events, labels, feeds };
 }
 
-export function pagesMarkdown(blocks: readonly Block[], all: readonly StoredRecord[], layout: PagesLayout, now: number = Date.now()): MarkdownFile[] {
+export function pagesMarkdown(blocks: readonly Block[], all: readonly StoredRecord[], layout: PagesLayout, now: number = Date.now(), immichBase: string | null = null): MarkdownFile[] {
   const files: MarkdownFile[] = [];
   let calendar: CalendarBlockSource | null = null;
   const byId = new Map(blocks.map(block => [block.id, block]));
@@ -111,6 +113,10 @@ export function pagesMarkdown(blocks: readonly Block[], all: readonly StoredReco
         const lines = calendarBlockLines(calendar, child, now);
         const items = (lines.length > 0 ? lines : ['Rien de prévu']).map((line): BlockDraft => ({ kind: 'bullet', text: serializeRich(richFromPlain(line)) }));
         return { kind: 'text', text: serializeRich(richFromPlain(`Agenda, les ${child.calendarDays} prochains jours :`)), children: items };
+      }
+      if (child.kind === 'immich') {
+        const caption = child.caption.trim();
+        return { kind: 'text', text: serializeRich(richFromPlain(immichBlockMarkdown(child, immichBase))), ...(caption ? { children: [{ kind: 'text', text: serializeRich(richFromPlain(caption)) }] } : {}) };
       }
       const nested = depth < 100 ? (children.get(child.id) ?? []).map(next => draft(next, depth + 1)) : [];
       return { kind: child.kind, text: child.text, checked: child.checked, language: child.language, extra, ...(nested.length > 0 ? { children: nested } : {}) };

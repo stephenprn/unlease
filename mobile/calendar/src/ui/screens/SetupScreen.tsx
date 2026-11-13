@@ -12,7 +12,7 @@ import { CalendarImport } from '../features/importing/CalendarImport';
 import type { ScreenProps } from '../navigation/types';
 import { SECTIONS } from './AdminScreen';
 
-const IMPORTER = { source: () => t('Google Agenda'), Wizard: CalendarImport };
+const IMPORTER = { source: () => t('Google Calendar'), Wizard: CalendarImport };
 
 export function SetupScreen({ navigation }: ScreenProps<'Setup'>) {
   return <SuiteSetup app="calendar" appSections={SECTIONS} importer={IMPORTER} onDone={() => navigation.reset({ index: 0, routes: [{ name: 'Calendar' }] })} />;

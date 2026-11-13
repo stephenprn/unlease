@@ -43,8 +43,8 @@ const DEADLINE_MS = 85_000;
 const READ_DEADLINE_MS = 30_000;
 
 export const TRY_WORDS = {
-  invalid: 'Essai de modèle invalide',
-  tooMany: 'Trop d’essais : réessayez dans un moment.',
+  invalid: 'Invalid template try',
+  tooMany: 'Too many tries: try again in a moment.',
 } as const;
 
 const TASK = 'template' satisfies ModuleTask;
@@ -102,7 +102,7 @@ export class TemplateTrier {
     if (!model) return { ok: false, status: 409, error: NO_KEY };
     const kept = this.kept(request, url, signature);
     if (kept) return { ok: true, answer: kept };
-    if (!isHttpUrl(url)) return { ok: false, status: 502, error: 'Adresse invalide' };
+    if (!isHttpUrl(url)) return { ok: false, status: 502, error: 'Invalid address' };
     const now = this.now();
     this.asks = this.asks.filter(at => now - at < HOUR);
     if (this.asks.length >= TRIES_PER_HOUR) return { ok: false, status: 409, error: TRY_WORDS.tooMany };
@@ -113,7 +113,7 @@ export class TemplateTrier {
     const record = (ok: boolean, error: string | null, spent: CallUsage | null, result: KeptTry | null) =>
       usage.record(TASK, { url, usage: spent, ok, error, durationMs: this.now() - started, result: result ? { ...result, lang: request.lang } : null });
     // A page gone or refused for good: Claude would be paid to find nothing.
-    if (read.fatal) return { ok: false, status: 502, error: read.error ?? 'Page inaccessible' };
+    if (read.fatal) return { ok: false, status: 502, error: read.error ?? 'Page unreachable' };
     const hold = usage.hold(budgetUsd);
     if (!hold) return { ok: false, status: 409, error: BUDGET_SPENT };
     this.asks.push(now);
@@ -134,7 +134,7 @@ export class TemplateTrier {
         deadline,
       );
       if (!output.pageRead) {
-        const error = read.error ?? 'Page illisible';
+        const error = read.error ?? 'Unreadable page';
         record(false, error, spent, null);
         return { ok: false, status: 502, error };
       }
@@ -144,7 +144,7 @@ export class TemplateTrier {
       return { ok: true, answer: { title: tried.title, values: valuesOf(request.fields, tried.attributes), costUsd: spent.costUsd } };
     } catch (error) {
       if (!deadline.aborted && !(error instanceof ModelError)) log.error('template try crashed', { error });
-      const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la lecture';
+      const message = deadline.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Reading error';
       const spent = error instanceof ModelError ? error.usage : null;
       // Cut off, it was reading the page (with web_fetch at most), not searching the web.
       record(false, message, deadline.aborted ? withCutOffCall(spent, model.model, true) : spent, null);

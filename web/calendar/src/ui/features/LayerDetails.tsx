@@ -70,8 +70,8 @@ export function useGiftIdeas(contactId: string | null, name: string): readonly L
 /** What is wrong with a product's link typed, or null. */
 function giftLinkProblem(url: string): string | null {
   const typed = url.trim();
-  if (!typed) return t('Collez le lien du produit.');
-  return /^https?:\/\/\S+\.\S+$/i.test(typed) ? null : t('Un lien qui commence par https://, comme https://exemple.fr/produit.');
+  if (!typed) return t('Paste the product’s link.');
+  return /^https?:\/\/\S+\.\S+$/i.test(typed) ? null : t('A link starting with https://, such as https://example.com/product.');
 }
 
 function GiftForm({ contactId, name, url, onUrl, onClose }: { contactId: string; name: string; url: string; onUrl: (url: string) => void; onClose: () => void }) {
@@ -80,7 +80,7 @@ function GiftForm({ contactId, name, url, onUrl, onClose }: { contactId: string;
   const form = useForm({ url: giftLinkProblem(url) });
   const submit = async (): Promise<boolean> => {
     if (!server) {
-      form.fail(null, t('Les idées passent par votre serveur : connectez-en un d’abord.'));
+      form.fail(null, t('Ideas go through your server: connect one first.'));
       return false;
     }
     try {
@@ -89,19 +89,19 @@ function GiftForm({ contactId, name, url, onUrl, onClose }: { contactId: string;
       // As Contacts' slip: where it went, and « Ouvrir » on Carnet's collection (its web app's address).
       const place = `/notes/line/${encodeURIComponent(answer.collectionId)}`;
       showSnack(
-        answer.existing ? t('Déjà dans Cadeaux, dans {app} : {name} s’y ajoute.', { app: APPS.notes.name, name }) : t('Ajouté à Cadeaux dans {app}', { app: APPS.notes.name }),
-        { label: t('Ouvrir'), run: () => window.open(browserPath(place), '_blank', 'noopener') },
+        answer.existing ? t('Already in Gifts, in {app}: {name} is added to it.', { app: APPS.notes.name, name }) : t('Added to Gifts in {app}', { app: APPS.notes.name }),
+        { label: t('Open'), run: () => window.open(browserPath(place), '_blank', 'noopener') },
         { tone: 'success' },
       );
       return true;
     } catch (error) {
-      form.fail(null, error instanceof Error ? t(error.message) : t('Le serveur ne répond pas'));
+      form.fail(null, error instanceof Error ? t(error.message) : t('The server isn’t responding'));
       return false;
     }
   };
   return (
     <DialogFrame
-      title={t('Idée cadeau pour {name}', { name })}
+      title={t('Gift idea for {name}', { name })}
       titleId={titleId}
       onClose={onClose}
       className={layers.dialog}
@@ -110,23 +110,23 @@ function GiftForm({ contactId, name, url, onUrl, onClose }: { contactId: string;
         <>
           <FormMessage form={form} className={styles.footMessage} />
           <Button kind="text" onClick={onClose}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button type="submit" icon="plus" busy={form.busy} disabled={!url.trim()}>
-            {t('Ajouter')}
+            {t('Add')}
           </Button>
         </>
       }
     >
       <TextField
-        label={t('Lien du produit')}
+        label={t('Product link')}
         kind="url"
         value={url}
         onChange={onUrl}
         field={form.field('url')}
         autoFocus
         placeholder="https://"
-        help={t('Il rejoint la collection Cadeaux de {app}, au nom de {name}.', { app: APPS.notes.name, name })}
+        help={t('It goes to the Gifts collection in {app}, for {name}.', { app: APPS.notes.name, name })}
       />
     </DialogFrame>
   );
@@ -150,7 +150,7 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
   };
   const name = contact ? contactName(contact) : '';
   const gifts = useGiftIdeas(contact?.id ?? null, name);
-  if (!contact) return <p className="t-body">{t('Ce contact n’existe plus')}</p>;
+  if (!contact) return <p className="t-body">{t('This contact no longer exists')}</p>;
   const birthday = readBirthday(contact.birthday);
   const age = birthday && birthday.year !== null && Number(day.slice(0, 4)) > birthday.year ? Number(day.slice(0, 4)) - birthday.year : null;
   const region = callingRegion();
@@ -170,11 +170,11 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
       </Detail>
       {soon >= 0 && soon <= 7 && notesOn ? (
         <div className={styles.gift}>
-          <span className="t-body">{gifts.length > 0 ? t('Trouver un cadeau : vos idées sont là.') : t('Trouver un cadeau : gardez une idée dans {app}.', { app: APPS.notes.name })}</span>
+          <span className="t-body">{gifts.length > 0 ? t('Find a gift: your ideas are here.') : t('Find a gift: keep an idea in {app}.', { app: APPS.notes.name })}</span>
         </div>
       ) : null}
       {gifts.length > 0 ? (
-        <Detail icon="bag" label={t('Idées cadeaux')}>
+        <Detail icon="bag" label={t('Gift ideas')}>
           {gifts.map(link => (
             <Link key={link.id} to={suitePlace('link', link.id)!} className="t-body">
               {link.title.trim() || link.url}
@@ -187,7 +187,7 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
         {wishDueAfter(-soon) ? <WishButton contact={contact} region={region} small /> : null}
         {call ? (
           <Button kind="text" icon="phoneCall" small href={telHref(call.number, region) ?? undefined}>
-            {t('Appeler')}
+            {t('Call')}
           </Button>
         ) : null}
         {whatsapp ? (
@@ -197,23 +197,23 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
         ) : null}
         {email ? (
           <Button kind="text" icon="email" small href={mailtoHref(email.address) ?? undefined}>
-            {t('E-mail')}
+            {t('Email')}
           </Button>
         ) : null}
         {place ? (
           // The menu of map apps hangs from it (Contacts' « Itinéraire »).
           <span ref={routeButton}>
             <Button kind="text" icon="mapPin" small onClick={() => setRouteOpen(true)}>
-              {t('Itinéraire')}
+              {t('Directions')}
             </Button>
           </span>
         ) : null}
         <Button kind="tonal" icon="person" small onClick={() => navigate(suitePlace('contact', contact.id)!)}>
-          {t('Ouvrir dans {app}', { app: APPS.contacts.name })}
+          {t('Open in {app}', { app: APPS.contacts.name })}
         </Button>
         {notesOn ? (
           <Button kind="text" icon="plus" small onClick={() => setGifting(true)}>
-            {t('Ajouter une idée')}
+            {t('Add an idea')}
           </Button>
         ) : null}
       </div>
@@ -223,11 +223,11 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
           anchor={routeButton}
           align="start"
           onDismiss={() => setRouteOpen(false)}
-          label={t('Itinéraire jusqu’à {name}', { name })}
-          items={OFFERED_MAP_APPS.map(app => ({ label: t('Itinéraire dans {maps}', { maps: MAP_APP_NAMES[app] }), icon: 'external' as const, onSelect: () => window.open(directionsUrl(place, app)!, '_blank', 'noopener,noreferrer') }))}
+          label={t('Directions to {name}', { name })}
+          items={OFFERED_MAP_APPS.map(app => ({ label: t('Directions in {maps}', { maps: MAP_APP_NAMES[app] }), icon: 'external' as const, onSelect: () => window.open(directionsUrl(place, app)!, '_blank', 'noopener,noreferrer') }))}
         />
       ) : null}
-      <Layer open={gifting} onDismiss={unsaved.guard(closeGift)} label={t('Idée cadeau')}>
+      <Layer open={gifting} onDismiss={unsaved.guard(closeGift)} label={t('Gift idea')}>
         {gifting ? <GiftForm contactId={contact.id} name={name} url={giftUrl} onUrl={setGiftUrl} onClose={closeGift} /> : null}
       </Layer>
       {unsaved.dialog}
@@ -239,16 +239,16 @@ export function BirthdayDetails({ contactId, day }: { contactId: string; day: st
 export function ReminderDetails({ noteId }: { noteId: string }) {
   const note = useLibraryStore(s => s.notes[noteId]);
   const twelve = usePrefsStore(s => s.twelveHours);
-  if (!note || note.reminderAt === null) return <p className="t-body">{t('Ce rappel n’existe plus')}</p>;
+  if (!note || note.reminderAt === null) return <p className="t-body">{t('This reminder no longer exists')}</p>;
   return (
     <>
       <Detail icon="bell">
         <span className="t-body">{`${longDay(instantToDay(note.reminderAt))} · ${clockWords(formatClock(note.reminderAt), twelve)}`}</span>
-        <span className="t-meta">{t('Rappel d’une note de {app}', { app: APPS.notes.name })}</span>
+        <span className="t-meta">{t('Reminder of a note in {app}', { app: APPS.notes.name })}</span>
       </Detail>
       <div className={styles.detailActions}>
         <Button kind="tonal" icon="note" small onClick={() => navigate(suitePlace('note', noteId)!)}>
-          {t('Ouvrir dans {app}', { app: APPS.notes.name })}
+          {t('Open in {app}', { app: APPS.notes.name })}
         </Button>
       </div>
     </>
@@ -259,16 +259,16 @@ export function ReminderDetails({ noteId }: { noteId: string }) {
 export function PageDateDetails({ pageId, day, time }: { pageId: string; day: string; time: string | null }) {
   usePageBlocksStore(s => s.blocks[pageId]);
   const title = pageTitle(pageId);
-  if (title === null) return <p className="t-body">{t('Cette page n’existe plus')}</p>;
+  if (title === null) return <p className="t-body">{t('This page no longer exists')}</p>;
   return (
     <>
       <Detail icon="page">
         <span className="t-body">{time ? `${longDay(day)} · ${time}` : longDay(day)}</span>
-        <span className="t-meta">{t('Une date écrite dans une page de {app}', { app: APPS.pages.name })}</span>
+        <span className="t-meta">{t('A date written in a page of {app}', { app: APPS.pages.name })}</span>
       </Detail>
       <div className={styles.detailActions}>
         <Button kind="tonal" icon="page" small onClick={() => navigate(suitePlace('page', pageId)!)}>
-          {t('Ouvrir dans {app}', { app: APPS.pages.name })}
+          {t('Open in {app}', { app: APPS.pages.name })}
         </Button>
       </div>
     </>

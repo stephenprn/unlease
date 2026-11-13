@@ -18,7 +18,7 @@
 import { useContext, useEffect, useEffectEvent, useMemo, useState, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { formatUsd, plural } from '@unlease/core/services/format';
 import { CLAUDE_COST_PER_LINK } from '@unlease/core/sync/settings';
 import { asLineColor } from '@unlease/design/colors';
@@ -78,9 +78,9 @@ function ownsFacts(note: Note | undefined): note is Note {
 /** The tab's name for the page at `part`. */
 export function factsTitle(state: LibraryState, part: string): string {
   const key = templateKey(part);
-  if (key.kind === 'kind') return t('Informations habituelles · {kind}', { kind: LINK_KIND_NAMES[key.linkKind] });
+  if (key.kind === 'kind') return t('Usual facts · {kind}', { kind: LINK_KIND_NAMES[key.linkKind] });
   const line = state.notes[part];
-  return ownsFacts(line) ? t('{collection} · Ce que Claude relève', { collection: shownTitle(line) }) : t('Ce que Claude relève');
+  return ownsFacts(line) ? t('{collection} · Facts Claude notes', { collection: shownTitle(line) }) : t('Facts Claude notes');
 }
 
 export function FactsEditScreen({ part }: { part: string }) {
@@ -96,9 +96,9 @@ export function FactsEditScreen({ part }: { part: string }) {
   if (moved) return null;
   return (
     <div className={styles.editor}>
-      <EmptyState scene="trash" as="h1" title={t('Cette liste d’informations n’existe plus')} text={t('Elle a été supprimée, sur cet appareil ou sur un autre.')}>
+      <EmptyState scene="trash" as="h1" title={t('This list of facts no longer exists')} text={tc('template', 'It was deleted, on this device or another.')}>
         <Button kind="tonal" icon="list" onClick={() => navigate(paths.templates, { replace: true })}>
-          {t('Ce que Claude relève')}
+          {t('Facts Claude notes')}
         </Button>
       </EmptyState>
     </div>
@@ -180,9 +180,9 @@ function FactsEditor({ kind, lineId }: EditorProps) {
   const save = (): void => {
     if (kind) {
       saveTemplate({ id: null, name: '', kind, fields: draft.fields });
-      showSnack(t('Informations enregistrées'), undefined, { tone: 'success' });
+      showSnack(t('Facts saved'), undefined, { tone: 'success' });
     } else {
-      showUndo(t('Informations enregistrées'), saveCollectionFacts(lineId!, draft.own ? draft.fields : null));
+      showUndo(t('Facts saved'), saveCollectionFacts(lineId!, draft.own ? draft.fields : null));
     }
     const kept = trimmed(draft);
     setDraft(kept);
@@ -207,17 +207,17 @@ function FactsEditor({ kind, lineId }: EditorProps) {
     if (!kind) return;
     const undo = resetKindTemplate(kind);
     unsaved.saved();
-    showUndo(t('Informations de Claude rétablies'), undo);
+    showUndo(t('Claude’s facts restored'), undo);
   };
 
   const cost = formatUsd(before.length * CLAUDE_COST_PER_LINK[model]);
   const readAgain = (): void => {
     const sent = readLinks(before);
     // No « Annuler »: the server starts reading at once, and a reading begun is spent.
-    if (sent > 0) showSnack(t('{links} en lecture', { links: plural(sent, 'lien envoyé', 'liens envoyés') }), undefined, { tone: 'success' });
+    if (sent > 0) showSnack(t('{links} for reading', { links: plural(sent, 'link sent', 'links sent') }), undefined, { tone: 'success' });
   };
 
-  const title = kind ? t('Informations habituelles · {kind}', { kind: LINK_KIND_NAMES[kind] }) : t('Ce que Claude relève');
+  const title = kind ? t('Usual facts · {kind}', { kind: LINK_KIND_NAMES[kind] }) : t('Facts Claude notes');
   const head = slot ? <PageHead title={title} /> : (
     <div className={shell.pageHead}>
       <h1 className={`${shell.pageTitle} t-display`}>{title}</h1>
@@ -230,17 +230,17 @@ function FactsEditor({ kind, lineId }: EditorProps) {
       <div className={slot ? styles.lead2 : `${styles.lead2} ${styles.leadUnderTitle}`}>
         {kind ? (
           <>
-            <p className="t-meta">{t('Claude les relève sur chaque lien qu’il reconnaît comme « {kind} », sauf dans une collection qui a les siennes.', { kind: LINK_KIND_NAMES[kind] })}</p>
+            <p className="t-meta">{t('Claude notes these on every link it recognises as “{kind}”, except in a collection that has its own.', { kind: LINK_KIND_NAMES[kind] })}</p>
             {changed ? (
               <Button kind="text" small icon="restore" onClick={reset}>
-                {t('Rétablir celles de Claude')}
+                {t('Restore Claude’s facts')}
               </Button>
             ) : null}
           </>
         ) : (
           <button type="button" className={`${styles.collectionLink} t-label`} onClick={() => navigate(paths.line(lineId!))}>
             <EmblemStone id={lineId!} emblem={collectionEmblem(lineId!, line!.emblem)} color={asLineColor(line!.color)} size={18} width={30} height={27} />
-            <span>{t('Sur les liens de {collection}', { collection })}</span>
+            <span>{t('On the links in {collection}', { collection })}</span>
           </button>
         )}
       </div>
@@ -249,10 +249,10 @@ function FactsEditor({ kind, lineId }: EditorProps) {
           <ReadAllBanner
             text={
               before.length === 1
-                ? t('{links} avant ce changement · environ {cost} pour le relire', { links: plural(1, 'lien lu', 'liens lus'), cost })
-                : t('{links} avant ce changement · environ {cost} pour les relire', { links: plural(before.length, 'lien lu', 'liens lus'), cost })
+                ? t('{links} before this change · about {cost} to read it again', { links: plural(1, 'link read', 'links read'), cost })
+                : t('{links} before this change · about {cost} to read them again', { links: plural(before.length, 'link read', 'links read'), cost })
             }
-            action={before.length === 1 ? t('Relire') : t('Tout relire')}
+            action={before.length === 1 ? t('Read again') : t('Read all again')}
             onRead={readAgain}
           />
         </div>
@@ -261,9 +261,9 @@ function FactsEditor({ kind, lineId }: EditorProps) {
       <div className={styles.columns}>
         <div className={styles.main}>
           {draft.own ? (
-            <Section title={t('Informations')}>
+            <Section title={t('Facts')}>
               <FactRows fields={draft.fields} problems={problems.fields} kinds={expected} onChange={fields => setDraft(current => ({ ...current, fields }))} binding={id => form.field(`field:${id}`)} />
-              {others.length > 0 ? <p className={`${styles.shared} t-meta`}>{t('Aussi relevées sur les liens de {collections}.', { collections: others.join(', ') })}</p> : null}
+              {others.length > 0 ? <p className={`${styles.shared} t-meta`}>{t('Also noted on the links in {collections}.', { collections: others.join(', ') })}</p> : null}
             </Section>
           ) : (
             <UsualFacts kinds={kinds} />
@@ -271,7 +271,7 @@ function FactsEditor({ kind, lineId }: EditorProps) {
         </div>
         {draft.own && reading ? (
           <div className={styles.side}>
-            <Section title={t('Aperçu sur un lien')}>
+            <Section title={t('Preview on a link')}>
               <TryPanel fields={draft.fields} links={tryLinks} />
             </Section>
           </div>
@@ -279,7 +279,7 @@ function FactsEditor({ kind, lineId }: EditorProps) {
       </div>
       <FormFoot form={form}>
         <Button type="submit" icon="check" busy={form.busy} disabled={!dirty}>
-          {t('Enregistrer')}
+          {t('Save')}
         </Button>
       </FormFoot>
       {unsaved.dialog}
@@ -302,7 +302,7 @@ function SourceChoice({ own, onChoose, stone }: { own: boolean; onChoose: (own: 
   return (
     <div
       role="radiogroup"
-      aria-label={t('Ce que Claude relève')}
+      aria-label={t('Facts Claude notes')}
       className={styles.choices}
       onKeyDown={event => {
         // The arrows move between the two, as a radio group's do.
@@ -313,8 +313,8 @@ function SourceChoice({ own, onChoose, stone }: { own: boolean; onChoose: (own: 
         next?.focus();
       }}
     >
-      {choice(false, <Icon name="sparkle" size={24} />, t('Informations adaptatives'), t('Claude les choisit selon le type de chaque lien : la marque d’un produit, le réalisateur d’un film…'))}
-      {choice(true, stone, t('Informations personnalisées'), t('Celles que vous choisissez, les mêmes sur chaque lien d’ici.'))}
+      {choice(false, <Icon name="sparkle" size={24} />, t('Adaptive facts'), t('Claude picks them by each link’s kind: a product’s brand, a film’s director…'))}
+      {choice(true, stone, t('Custom facts'), t('The ones you choose, the same on every link here.'))}
     </div>
   );
 }
@@ -323,8 +323,8 @@ function SourceChoice({ own, onChoose, stone }: { own: boolean; onChoose: (own: 
 function UsualFacts({ kinds }: { kinds: readonly LinkKind[] }) {
   const templates = useLibraryStore(s => s.linkTemplates);
   return (
-    <Section title={t('Types de liens ici')}>
-      {kinds.length === 0 ? <EmptyLine text={t('Ses liens n’ont pas encore de type : Claude en donne un à chaque lien qu’il lit.')} className={styles.usualEmpty} /> : null}
+    <Section title={t('Kinds of link here')}>
+      {kinds.length === 0 ? <EmptyLine text={t('Its links have no kind yet: Claude gives one to each link it reads.')} className={styles.usualEmpty} /> : null}
       {kinds.map(kind => {
         const names = kindFields(templates, kind)
           .map(field => field.name)
@@ -334,14 +334,14 @@ function UsualFacts({ kinds }: { kinds: readonly LinkKind[] }) {
             <Icon name={KIND_ICONS[kind]} size={24} />
             <span className={page.rowText}>
               <span className="t-body">{LINK_KIND_NAMES[kind]}</span>
-              <span className={`${styles.rowMeta} t-meta`}>{names || t('Aucune information')}</span>
+              <span className={`${styles.rowMeta} t-meta`}>{names || t('No facts')}</span>
             </span>
             <Icon name="chevronRight" size={20} className={styles.chevron} />
           </button>
         );
       })}
       <button type="button" className={`${styles.usualAll} t-label`} onClick={() => navigate(paths.templates)}>
-        {t('Informations habituelles, par type de lien')}
+        {t('Usual facts, by kind of link')}
         <Icon name="chevronRight" size={18} />
       </button>
     </Section>

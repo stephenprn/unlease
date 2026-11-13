@@ -91,18 +91,18 @@ function glimpse(s: PagesLibrary, target: BlockTarget): Glimpse {
         // A collection shows its emblem on its stone, never one of its links' pictures.
         const ids = (s.linksByNote[target.id] ?? []).filter(id => s.links[id] && !s.links[id]!.done);
         const titles = ids.slice(0, 3).map(id => s.links[id]!.title || prettyUrl(s.links[id]!.url));
-        return { text: shownHint(note) || titles.join(' · '), meta: t('Collection · {links}', { links: plural(ids.length, 'lien') }), picture: null, pictureUrl: null };
+        return { text: shownHint(note) || titles.join(' · '), meta: t('Collection · {links}', { links: plural(ids.length, 'link') }), picture: null, pictureUrl: null };
       }
       const items = (s.checksByNote[target.id] ?? []).flatMap(id => (s.checks[id] && !s.checks[id]!.checked ? [s.checks[id]!.text] : []));
       const picture = s.attachmentsByNote[target.id]?.[0] ?? null;
       const text = note.kind === 'checklist' ? items.slice(0, 4).join(' · ') : note.kind === 'drawing' ? '' : bodyText(note).slice(0, 280);
-      return { text, meta: note.kind === 'checklist' ? t('Liste') : note.kind === 'drawing' ? t('Dessin') : t('Note'), picture, pictureUrl: null };
+      return { text, meta: note.kind === 'checklist' ? t('List') : note.kind === 'drawing' ? t('Drawing') : t('Note'), picture, pictureUrl: null };
     }
     case 'link': {
       const link = s.links[target.id];
       if (!link) return none;
       const { source } = linkRowText(link);
-      return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Lien'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
+      return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Link'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
     }
     case 'page': {
       let text = '';
@@ -122,7 +122,7 @@ function glimpse(s: PagesLibrary, target: BlockTarget): Glimpse {
     case 'event': {
       // Only ever mentioned from here too: its next occurrence, in Agenda.
       const event = s.events[target.id];
-      return { text: event ? eventWhen(s.events, target.id) : '', meta: t('Événement'), picture: null, pictureUrl: null };
+      return { text: event ? eventWhen(s.events, target.id) : '', meta: t('Event'), picture: null, pictureUrl: null };
     }
     default:
       // A type a newer client added (another app's): nothing to show of it here.
@@ -182,7 +182,7 @@ function Bookmark({ target }: { target: BlockTarget }) {
 }
 
 function GoneCard({ target }: { target: BlockTarget }) {
-  const gone = target.type === 'page' ? t('Cette page n’existe plus.') : target.type === 'link' ? t('Ce lien n’existe plus.') : target.type === 'contact' ? t('Ce contact n’existe plus.') : target.type === 'event' ? t('Cet événement n’existe plus.') : t('Cette note n’existe plus.');
+  const gone = target.type === 'page' ? t('This page no longer exists.') : target.type === 'link' ? t('This link no longer exists.') : target.type === 'contact' ? t('This contact no longer exists.') : target.type === 'event' ? t('This event no longer exists.') : t('This note no longer exists.');
   return (
     <div className={styles.goneCard} data-outline="frame">
       <Icon name="info" size={20} />
@@ -227,7 +227,7 @@ function NoteField({ id, field, className, placeholder }: { id: string; field: '
       value={value}
       rows={1}
       placeholder={placeholder}
-      aria-label={field === 'title' ? t('Titre de la note') : t('Texte de la note')}
+      aria-label={field === 'title' ? t('Note title') : t('Note text')}
       maxLength={field === 'title' ? TEXT_LIMITS.note.title : TEXT_LIMITS.note.body}
       onChange={event => {
         if (since.current === null) since.current = stored;
@@ -248,15 +248,15 @@ function NoteEmbed({ id }: { id: string }) {
   return (
     <OutlineLift lift="card">
       <div className={`${styles.embedNote} paper`} data-outline="card" data-edge data-line={isLineColor(note.color) ? note.color : undefined} data-gradient={isNoteGradient(note.color) ? note.color : undefined}>
-        <IconButton icon="external" label={t('Ouvrir la note')} compact size={18} className={styles.embedOpen} onClick={() => openTarget(null, { type: 'note', id })} />
+        <IconButton icon="external" label={t('Open note')} compact size={18} className={styles.embedOpen} onClick={() => openTarget(null, { type: 'note', id })} />
         <PhotoGrid noteId={id} editable={editable} />
-        <NoteField id={id} field="title" className={`${styles.embedTitle} t-editor-title`} placeholder={t('Titre')} />
+        <NoteField id={id} field="title" className={`${styles.embedTitle} t-editor-title`} placeholder={t('Title')} />
         {note.kind === 'checklist' ? (
           <ChecklistEditor noteId={id} editable={editable} />
         ) : note.kind === 'drawing' ? (
           drawing !== null ? <DrawingFit data={note.drawing} ratio={drawing} max={DRAWING_MAX} /> : null
         ) : (
-          <RichBody noteId={id} editable={editable} className={`${styles.embedBody} t-editor-body`} placeholder={t('Note')} label={t('Texte de la note')} />
+          <RichBody noteId={id} editable={editable} className={`${styles.embedBody} t-editor-body`} placeholder={t('Note')} label={t('Note text')} />
         )}
       </div>
     </OutlineLift>
@@ -264,8 +264,8 @@ function NoteEmbed({ id }: { id: string }) {
 }
 
 const viewOptions = (): readonly SegmentedOption<CollectionView>[] => [
-  { value: 'list', label: t('Liste'), icon: 'list' },
-  { value: 'table', label: t('Tableau'), icon: 'table' },
+  { value: 'list', label: t('List'), icon: 'list' },
+  { value: 'table', label: t('Table'), icon: 'table' },
 ];
 
 /**
@@ -300,7 +300,7 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
     ...(doneIds.length > 0
       ? [
           <li key="done-heading" className={`${styles.embedDoneHeading} t-section`} data-flip="done-heading">
-            {t('Déjà faits · {count}', { count: doneIds.length })}
+            {t('Done · {count}', { count: doneIds.length })}
           </li>,
         ]
       : []),
@@ -314,11 +314,11 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
             <Emblem emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={34} />
             <span className="t-title">{shownTitle(line)}</span>
           </a>
-          <span className="t-meta">{plural(ids.length, 'lien')}</span>
+          <span className="t-meta">{plural(ids.length, 'link')}</span>
           {readOnly ? null : (
             <span className={styles.embedTools}>
               <span className={styles.embedViews}>
-                <Segmented options={viewOptions()} value={block.view} label={t('Afficher la collection en')} onChange={view => setCollectionView(page, block.id, view)} />
+                <Segmented options={viewOptions()} value={block.view} label={t('Show the collection as')} onChange={view => setCollectionView(page, block.id, view)} />
               </span>
               {block.view === 'table' ? <ColumnsButton block={block} ids={shownIds} /> : null}
             </span>
@@ -327,11 +327,11 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
         {block.view === 'table' ? (
           <CollectionTable block={block} lineId={id} name={shownTitle(line)} ids={ids} done={doneIds} />
         ) : rows.length > 0 ? (
-          <ul ref={list} className={styles.embedLinks} aria-label={t('Liens de {name}', { name: shownTitle(line) })}>
+          <ul ref={list} className={styles.embedLinks} aria-label={t('Links in {name}', { name: shownTitle(line) })}>
             {rows}
           </ul>
         ) : (
-          <EmptyLine className={styles.embedEmpty} text={t('Aucun lien à faire dans cette collection.')} />
+          <EmptyLine className={styles.embedEmpty} text={t('No links to do in this collection.')} />
         )}
       </div>
     </OutlineLift>
@@ -362,13 +362,13 @@ function LinkEmbed({ id }: { id: string }) {
           {facts.length > 0 ? <span className="t-meta">{facts.join(' · ')}</span> : null}
           <span className={styles.embedLinkActions}>
             <Button kind="filled" small icon="external" href={link.url}>
-              {t('Ouvrir la page')}
+              {t('Open the page')}
             </Button>
             <Button kind="tonal" small icon="stamp" onClick={() => toggleDone(id)}>
-              {link.done ? t('Remettre à faire') : stampWord(link.kind)}
+              {link.done ? t('Put back to do') : stampWord(link.kind)}
             </Button>
             <Button kind="text" small onClick={() => openLink(id)}>
-              {t('Détails')}
+              {t('Details')}
             </Button>
           </span>
         </div>
@@ -388,7 +388,7 @@ function PageEmbed({ id }: { id: string }) {
           {page.icon ? `${page.icon} ` : ''}
           {page.text.trim() || t(UNTITLED_PAGE)}
         </span>
-        <span className="t-body">{seen.text || t('Page vide')}</span>
+        <span className="t-body">{seen.text || t('Empty page')}</span>
       </a>
     </OutlineLift>
   );

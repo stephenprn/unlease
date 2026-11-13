@@ -49,11 +49,11 @@ function CalendarBlockComponent({ block }: { block: Block }) {
       <View style={styles.head}>
         <Icon name="calendar" size={20} color={theme.color.ink} />
         <AppText variant="bodyStrong" style={styles.fill} numberOfLines={1}>
-          {label ? label.name : t('Agenda')}
+          {label ? label.name : t('Calendar')}
         </AppText>
         {readOnly ? null : (
-          <Tappable onPress={() => setPicking(true)} hitSlop={CHIP_SLOP} style={styles.chip} accessibilityRole="button" accessibilityLabel={t('Événements montrés')}>
-            <AppText variant="meta">{label ? t('Libellé') : t('Tous les événements')}</AppText>
+          <Tappable onPress={() => setPicking(true)} hitSlop={CHIP_SLOP} style={styles.chip} accessibilityRole="button" accessibilityLabel={t('Events shown')}>
+            <AppText variant="meta">{label ? t('Label') : t('All events')}</AppText>
             <Icon name="chevronDown" size={16} color={theme.color.inkMuted} />
           </Tappable>
         )}
@@ -61,12 +61,12 @@ function CalendarBlockComponent({ block }: { block: Block }) {
       {readOnly ? null : (
         <Segmented
           value={String(block.calendarDays)}
-          options={CALENDAR_BLOCK_DAYS.map(count => ({ value: String(count), label: t('{count} j', { count }) }))}
+          options={CALENDAR_BLOCK_DAYS.map(count => ({ value: String(count), label: t('{count} d', { count }) }))}
           onChange={value => updateBlock(page, block.id, { calendarDays: Number(value) })}
         />
       )}
       {days.length === 0 ? (
-        <EmptyLine text={t('Rien de prévu les {count} prochains jours.', { count: block.calendarDays })} />
+        <EmptyLine text={t('Nothing planned in the next {count} days.', { count: block.calendarDays })} />
       ) : (
         days.map(({ day, items }) => (
           <View key={day} style={styles.day}>
@@ -74,7 +74,7 @@ function CalendarBlockComponent({ block }: { block: Block }) {
               {`${weekdayDay(day, year)} · ${dayDistance(day, today)}`}
             </AppText>
             {items.map(({ occurrence, color }) => {
-              const title = occurrence.event.title.trim() || t('Sans titre');
+              const title = occurrence.event.title.trim() || t('Untitled');
               const when = timeRange(occurrence);
               return (
                 <Tappable
@@ -98,9 +98,9 @@ function CalendarBlockComponent({ block }: { block: Block }) {
           </View>
         ))
       )}
-      <Sheet visible={picking} onDismiss={() => setPicking(false)} title={t('Événements montrés')}>
+      <Sheet visible={picking} onDismiss={() => setPicking(false)} title={t('Events shown')}>
         <SheetScroll>
-          <ListRow icon={block.calendarLabelId === null ? 'check' : 'calendar'} title={t('Tous les événements')} onPress={() => pick(null)} />
+          <ListRow icon={block.calendarLabelId === null ? 'check' : 'calendar'} title={t('All events')} onPress={() => pick(null)} />
           {calendarLabels(agenda.labels).map(each => (
             <ListRow
               key={each.id}

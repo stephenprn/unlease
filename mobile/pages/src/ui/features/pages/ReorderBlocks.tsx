@@ -26,7 +26,7 @@ import { create } from 'zustand';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 import { dateWords } from '@unlease/core/services/dates';
 import { plural } from '@unlease/core/services/format';
 import { markupToPlain } from '@unlease/core/services/richText';
@@ -110,30 +110,32 @@ const KIND_GLYPHS: Partial<Record<BlockKind, GlyphName>> = {
   toc: 'contents',
   drawing: 'draw',
   calendar: 'calendar',
+  immich: 'image',
 };
 
 const KIND_LABELS: Partial<Record<BlockKind, string>> = {
-  text: tx('Texte'),
-  h1: tx('Titre 1'),
-  h2: tx('Titre 2'),
-  h3: tx('Titre 3'),
-  h4: tx('Titre 4'),
-  bullet: tx('Élément de liste'),
-  numbered: tx('Élément de liste numérotée'),
-  todo: tx('Tâche'),
-  toggle: tx('Liste dépliante'),
-  callout: tx('Encadré'),
+  text: tx('Text'),
+  h1: tx('Heading 1'),
+  h2: tx('Heading 2'),
+  h3: tx('Heading 3'),
+  h4: tx('Heading 4'),
+  bullet: tx('List item'),
+  numbered: tx('Numbered list item'),
+  todo: tx('Task'),
+  toggle: tx('Toggle list'),
+  callout: tx('Callout'),
   code: tx('Code'),
   page: tx('Page'),
   image: tx('Image'),
-  video: tx('Vidéo'),
+  video: tx('Video'),
   pdf: tx('PDF'),
-  file: tx('Fichier'),
-  bookmark: tx('Signet'),
-  embed: tx('Intégration'),
-  toc: tx('Table des matières'),
-  drawing: tx('Dessin'),
-  calendar: tx('Agenda'),
+  file: tx('File'),
+  bookmark: tx('Bookmark'),
+  embed: tx('Embed [block]'),
+  toc: tx('Table of contents'),
+  drawing: tx('Drawing'),
+  calendar: tx('Calendar'),
+  immich: tx('Photos from Immich'),
 };
 
 /** What a row says: its kind, its first words (none: the kind alone), and what stands for it. */
@@ -153,7 +155,7 @@ const firstLine = (text: string): string =>
     .find(line => line !== '') ?? '';
 
 function rowLook(block: Block | undefined, row: OutlineRow, columnNumber: number, columnCount: number): RowLook {
-  const kind = row.kind === 'table' ? tc('block', 'Tableau') : row.kind === 'columns' ? plural(columnCount, 'colonne') : row.kind === 'column' ? t('Colonne {number}', { number: columnNumber }) : t(KIND_LABELS[row.kind] ?? 'Texte');
+  const kind = row.kind === 'table' ? t('Table') : row.kind === 'columns' ? plural(columnCount, 'column') : row.kind === 'column' ? t('Column {number}', { number: columnNumber }) : t(KIND_LABELS[row.kind] ?? 'Text');
   const look = { kind, glyph: KIND_GLYPHS[row.kind] ?? null, emoji: null, strong: false, quiet: false };
   if (!block) return { ...look, words: '' };
   if (row.kind === 'column') return { ...look, words: '', quiet: true };
@@ -191,7 +193,7 @@ const RowBody = memo(function RowBodyView({ look, carried, grip }: { look: RowLo
       </AppText>
       {carried > 0 ? (
         <AppText variant="meta" numberOfLines={1} style={styles.carried}>
-          {t('avec {blocks}', { blocks: plural(carried, 'bloc') })}
+          {t('with {blocks}', { blocks: plural(carried, 'block') })}
         </AppText>
       ) : null}
       {grip ? (
@@ -224,10 +226,10 @@ interface RowProps {
 }
 
 const ACTIONS = [
-  { name: 'moveUp', label: tx('Monter le bloc') },
-  { name: 'moveDown', label: tx('Descendre le bloc') },
-  { name: 'indent', label: tx('Imbriquer le bloc') },
-  { name: 'outdent', label: tx('Désimbriquer le bloc') },
+  { name: 'moveUp', label: tx('Move block up') },
+  { name: 'moveDown', label: tx('Move block down') },
+  { name: 'indent', label: tx('Indent block') },
+  { name: 'outdent', label: tx('Outdent block') },
 ] as const;
 
 const OutlineRowView = memo(function OutlineRowItem({ row, look, chosen, hidden, canLift, dragY, onLift, onMove, onRelease, onAction }: RowProps) {
@@ -256,14 +258,14 @@ const OutlineRowView = memo(function OutlineRowItem({ row, look, chosen, hidden,
     [id, canLift, dragY, onLift, onMove, onRelease],
   );
   const actions = useMemo(() => (row.movable ? ACTIONS.map(action => ({ name: action.name, label: t(action.label) })) : undefined), [row.movable]);
-  const label = look.words ? t('{kind} : {words}', { kind: look.kind, words: look.words }) : look.kind;
+  const label = look.words ? t('{kind}: {words}', { kind: look.kind, words: look.words }) : look.kind;
   return (
     <GestureDetector gesture={pan}>
       <View
         collapsable={false}
         accessible
         accessibilityLabel={label}
-        accessibilityHint={row.movable ? t('Maintenir pour déplacer') : undefined}
+        accessibilityHint={row.movable ? t('Hold to move') : undefined}
         accessibilityState={chosen ? { selected: true } : undefined}
         accessibilityActions={actions}
         onAccessibilityAction={(event: AccessibilityActionEvent) => onAction(id, event.nativeEvent.actionName)}
@@ -593,12 +595,12 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
     <Animated.View entering={IN} exiting={OUT} style={styles.layer} accessibilityViewIsModal>
       <Ground />
       <TopBar
-        title={t('Réorganiser')}
+        title={t('Reorder')}
         actions={
           <>
-            <IconButton icon="undo" label={tc('undo', 'Annuler')} shape={1} disabled={busy || !canUndo(page)} onPress={() => history('undo')} />
-            <IconButton icon="undo" label={t('Rétablir')} shape={2} disabled={busy || !canRedo(page)} onPress={() => history('redo')} style={styles.mirrored} />
-            <Button label={t('Terminé')} small onPress={leave} style={styles.done} />
+            <IconButton icon="undo" label={t('Undo')} shape={1} disabled={busy || !canUndo(page)} onPress={() => history('undo')} />
+            <IconButton icon="undo" label={t('Redo')} shape={2} disabled={busy || !canRedo(page)} onPress={() => history('redo')} style={styles.mirrored} />
+            <Button label={t('Done')} small onPress={leave} style={styles.done} />
           </>
         }
       />
@@ -624,7 +626,7 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         >
           <AppText variant="meta" style={styles.hint}>
-            {t('Maintenez un bloc, puis faites-le glisser. Vers la droite, il se range sous celui du dessus.')}
+            {t('Hold a block, then drag it. Drag it right to tuck it under the one above.')}
           </AppText>
           <View
             onLayout={(event: LayoutChangeEvent) => {
@@ -632,7 +634,7 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
               placeChosen();
             }}
           >
-            {shown.length === 0 ? <EmptyLine size="body" text={t('Cette page n’a pas encore de blocs.')} style={styles.empty} /> : null}
+            {shown.length === 0 ? <EmptyLine size="body" text={t('This page has no blocks yet.')} style={styles.empty} /> : null}
             {/* The list as it opens is simply there; what changes after it moves. */}
             <LayoutAnimationConfig skipEntering>
               {laid}

@@ -225,14 +225,14 @@ describe('POST /api/coupons, refusals', () => {
     server = createTestServer({ envApiKey: null });
     const { status, body } = await post(ask());
     expect(status).toBe(409);
-    expect(body.error).toBe('Claude ne lit pas les liens : ajoutez une clé dans l’administration.');
+    expect(body.error).toBe('Claude is not reading links: add a key in Administration.');
   });
 
   it('stops at the monthly budget', async () => {
     server.settings.update({ budgetUsd: 0 });
     const { status, body } = await post(ask());
     expect(status).toBe(409);
-    expect(body.error).toBe('Budget mensuel atteint');
+    expect(body.error).toBe('Monthly budget reached');
     expect(server.claude.requests).toHaveLength(0);
   });
 
@@ -240,9 +240,9 @@ describe('POST /api/coupons, refusals', () => {
     server.claude.reply(searchMessage('Désolé, rien de récent.'), searchMessage(found));
     const { status, body } = await post(ask());
     expect(status).toBe(502);
-    expect(body.error).toBe('Réponse de Claude illisible');
+    expect(body.error).toBe('Unreadable answer from Claude');
     const row = server.db.prepare('SELECT task, ok, error, cost_usd AS cost FROM analyses').get() as { task: string; ok: number; error: string; cost: number };
-    expect(row).toMatchObject({ task: 'coupons', ok: 0, error: 'Réponse de Claude illisible' });
+    expect(row).toMatchObject({ task: 'coupons', ok: 0, error: 'Unreadable answer from Claude' });
     expect(row.cost).toBeGreaterThan(0);
 
     // Nothing was kept: asking again searches again.
@@ -264,9 +264,9 @@ describe('POST /api/coupons, refusals', () => {
     const provider = new LinkModelProvider(new ClaudeProvider(server.settings, { effort: 'low', createApi: () => api, sleep: async () => {} }));
     const finder = new LinkSearches({ usage: server.usage, analysis: () => provider.current(), now: server.now, deadlineMs: 50 });
 
-    expect(await finder.coupons(parseCouponRequest(ask())!)).toEqual({ ok: false, status: 502, error: 'Claude a mis trop de temps' });
+    expect(await finder.coupons(parseCouponRequest(ask())!)).toEqual({ ok: false, status: 502, error: 'Claude took too long' });
     const row = server.db.prepare('SELECT ok, error, cost_usd AS cost FROM analyses').get() as { ok: number; error: string; cost: number };
-    expect(row).toMatchObject({ ok: 0, error: 'Claude a mis trop de temps' });
+    expect(row).toMatchObject({ ok: 0, error: 'Claude took too long' });
     expect(row.cost).toBeCloseTo((3000 * 4 + 500 * 20 + 1500 * 0.2) / 1e6 + 2 * 0.01 + 0.25, 4);
   });
 
@@ -274,6 +274,6 @@ describe('POST /api/coupons, refusals', () => {
     server.claude.reply(searchMessage(found, { stop_reason: 'refusal' }));
     const { status, body } = await post(ask());
     expect(status).toBe(502);
-    expect(body.error).toBe('Recherche refusée par Claude');
+    expect(body.error).toBe('Search refused by Claude');
   });
 });

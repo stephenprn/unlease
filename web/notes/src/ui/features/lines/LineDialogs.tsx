@@ -37,9 +37,9 @@ import styles from './lines.module.css';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { fillLineOnSlip } from './sortingSlips';
 
-const HINT_LABEL = tx('Ce qui va dans cette collection');
-const HINT_HELP = tx('Claude lit cette phrase pour choisir la bonne collection.');
-const HINT_PREVIEW = tx('Une phrase sur ce qu’elle contient aide Claude à y ranger les bons liens.');
+const HINT_LABEL = tx('What goes in this collection');
+const HINT_HELP = tx('Claude reads this sentence to pick the right collection.');
+const HINT_PREVIEW = tx('A sentence about what it holds helps Claude file the right links in it.');
 
 /** The collection as it will hang: a new emblem settles onto it as it is picked, a new colour comes over it. */
 function Preview({ emblem, color, title, hint }: { emblem: CollectionEmblem; color: LineColor | null; title: string; hint: string }) {
@@ -68,7 +68,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 
 /** A collection's name: given, and not another collection's (`except`, the one being edited). */
 const nameProblem = (title: string, lines: readonly { id: string; title: string }[], except: string | null = null): string | null =>
-  isBlank(title) ? t('Donnez un nom à la collection.') : lineTitleTaken(lines, title, except) ? t('Une collection porte déjà ce nom : choisissez-en un autre.') : null;
+  isBlank(title) ? t('Give the collection a name.') : lineTitleTaken(lines, title, except) ? t('A collection already has this name: choose another.') : null;
 
 interface FormProps {
   readonly titleId: string;
@@ -105,29 +105,29 @@ function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProp
 
   return (
     <DialogFrame
-      title={t('Nouvelle collection')}
+      title={t('New collection')}
       titleId={titleId}
       onClose={onCancel}
       onSubmit={form.onSubmit(() => create({ title, hint: hint.trim(), color, emblem }))}
       foot={
         <>
           <Button kind="text" onClick={onCancel}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button type="submit" icon="plus">
-            {t('Créer la collection')}
+            {t('Create the collection')}
           </Button>
         </>
       }
     >
       {suggestions.length > 0 ? (
-        <div className={styles.suggestions} role="group" aria-label={t('Collections suggérées')}>
+        <div className={styles.suggestions} role="group" aria-label={t('Suggested collections')}>
           {suggestions.map(suggestion => (
             <button
               key={suggestion.id}
               type="button"
               className={`${styles.suggestion} paper`}
-              aria-label={t('Créer la collection {title}', { title: suggestion.title })}
+              aria-label={t('Create the collection {title}', { title: suggestion.title })}
               onClick={() => create(suggestion)}
             >
               <Emblem emblem={suggestion.emblem} color={suggestion.color} size={22} />
@@ -136,14 +136,14 @@ function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProp
           ))}
         </div>
       ) : null}
-      <Preview emblem={emblem} color={color} title={title.trim() || t('Nom de la collection')} hint={hint.trim() || t(HINT_PREVIEW)} />
-      <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChange={setTitle} help={t('Ex. Cadeaux, Films à voir, Restaurants')} maxLength={60} autoFocus />
-      <TextField label={t(HINT_LABEL)} kind="prose" value={hint} onChange={setHint} multiline maxLength={500} help={t('Claude lit cette phrase pour choisir la bonne collection. Ex. idées de cadeaux pour les proches.')} inputClassName={styles.hintInput} />
-      <Group label={t('Emblème')}>
+      <Preview emblem={emblem} color={color} title={title.trim() || t('Collection name')} hint={hint.trim() || t(HINT_PREVIEW)} />
+      <TextField label={t('Name')} kind="text" field={form.field('title')} value={title} onChange={setTitle} help={t('E.g. Gifts, Films to watch, Restaurants')} maxLength={60} autoFocus />
+      <TextField label={t(HINT_LABEL)} kind="prose" value={hint} onChange={setHint} multiline maxLength={500} help={t('Claude reads this sentence to pick the right collection. E.g. gift ideas for family and friends.')} inputClassName={styles.hintInput} />
+      <Group label={t('Emblem')}>
         <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
       </Group>
-      <Group label={t('Couleur')}>
-        <LineColorPicker value={color} onChange={next => next && setColor(next)} label={t('Couleur de la collection')} />
+      <Group label={t('Colour')}>
+        <LineColorPicker value={color} onChange={next => next && setColor(next)} label={t('Collection colour')} />
       </Group>
       {offerFill ? (
         <button type="button" role="checkbox" aria-checked={fill} className={styles.fillOption} onClick={() => setFill(!fill)}>
@@ -151,8 +151,8 @@ function NewLineForm({ titleId, onCancel, onDone, onDirty, onCreated }: FormProp
             <CheckMark checked={fill} />
           </span>
           <span className={styles.moveText}>
-            <span className="t-body">{t('Y ranger les liens de Non classé qui lui correspondent')}</span>
-            <span className="t-meta">{inboxLinks === 1 ? t('Claude choisit parmi le lien de Non classé.') : t('Claude choisit parmi les {count} liens de Non classé.', { count: inboxLinks })}</span>
+            <span className="t-body">{t('File the links from Unsorted that fit it')}</span>
+            <span className="t-meta">{inboxLinks === 1 ? t('Claude picks from the link in Unsorted.') : t('Claude picks from the {count} links in Unsorted.', { count: inboxLinks })}</span>
           </span>
         </button>
       ) : null}
@@ -191,15 +191,15 @@ function EditLineForm({ id, titleId, onCancel, onDone, onDirty, onSaved }: FormP
   if (!line) return null;
   return (
     <DialogFrame
-      title={t('Modifier la collection')}
+      title={t('Edit the collection')}
       titleId={titleId}
       onClose={onCancel}
       foot={
         <>
           <Button kind="text" onClick={onCancel}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
-          <Button type="submit">{t('Enregistrer')}</Button>
+          <Button type="submit">{t('Save')}</Button>
         </>
       }
       onSubmit={form.onSubmit(() => {
@@ -213,16 +213,16 @@ function EditLineForm({ id, titleId, onCancel, onDone, onDirty, onSaved }: FormP
         }
       })}
     >
-      <Preview emblem={inbox ? collectionEmblem(id, null) : emblem} color={color} title={(inbox ? shownTitle(line) : title.trim()) || t('Sans nom')} hint={hint.trim() || t(HINT_PREVIEW)} />
-      {!inbox ? <TextField label={t('Nom')} kind="text" field={form.field('title')} value={title} onChange={setTitle} maxLength={60} autoFocus /> : null}
+      <Preview emblem={inbox ? collectionEmblem(id, null) : emblem} color={color} title={(inbox ? shownTitle(line) : title.trim()) || t('No name')} hint={hint.trim() || t(HINT_PREVIEW)} />
+      {!inbox ? <TextField label={t('Name')} kind="text" field={form.field('title')} value={title} onChange={setTitle} maxLength={60} autoFocus /> : null}
       <TextField label={t(HINT_LABEL)} kind="prose" value={hint} onChange={setHint} multiline maxLength={500} help={t(HINT_HELP)} inputClassName={styles.hintInput} />
       {!inbox ? (
-        <Group label={t('Emblème')}>
+        <Group label={t('Emblem')}>
           <EmblemPicker value={emblem} color={color} onChange={setEmblem} />
         </Group>
       ) : null}
-      <Group label={t('Couleur')}>
-        <LineColorPicker value={color} onChange={next => next && setColor(next)} label={t('Couleur de la collection')} />
+      <Group label={t('Colour')}>
+        <LineColorPicker value={color} onChange={next => next && setColor(next)} label={t('Collection colour')} />
       </Group>
     </DialogFrame>
   );

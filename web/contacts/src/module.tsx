@@ -46,10 +46,10 @@ function spotLabels(): readonly SpotLabel[] {
 /** Its keys in the shortcuts dialog beyond its commands' (C): a pick's. */
 const CONTACTS_SHORTCUTS: readonly ShortcutGroup[] = [
   {
-    title: tx('Contacts sélectionnés'),
+    title: tx('Selected contacts'),
     rows: [
-      [['#'], tx('Supprimer')],
-      [[tx('Maj'), tx('clic')], tx('Sélectionner jusqu’à ce contact')],
+      [['#'], tx('Delete')],
+      [[tx('Shift'), tx('click')], tx('Select up to this contact')],
     ],
   },
 ];
@@ -80,12 +80,12 @@ export const contactsModule: AppModule = {
   spotKinds: CONTACTS_SPOT_KINDS,
   spotLabels,
   commands: [
-    { title: tx('Créer un contact'), icon: 'personPlus', key: 'c', run: () => openNewContact() },
-    { title: tx('Importer des contacts'), icon: 'download', run: () => navigate(shellPaths.importer) },
-    { title: tx('Exporter tous les contacts'), icon: 'upload', run: () => exportContacts(Object.values(useContactsStore.getState().contacts).filter(isLive)) },
-    { title: tx('Anniversaires'), icon: 'cake', run: () => navigate(paths.birthdays) },
+    { title: tx('Create contact'), icon: 'personPlus', key: 'c', run: () => openNewContact() },
+    { title: tx('Import contacts'), icon: 'download', run: () => navigate(shellPaths.importer) },
+    { title: tx('Export all contacts'), icon: 'upload', run: () => exportContacts(Object.values(useContactsStore.getState().contacts).filter(isLive)) },
+    { title: tx('Birthdays'), icon: 'cake', run: () => navigate(paths.birthdays) },
   ],
-  spotCreates: [{ type: 'contact', title: typed => t('Créer le contact « {name} »', { name: typed }), icon: 'personPlus', run: typed => openNewContact(typed) }],
+  spotCreates: [{ type: 'contact', title: typed => t('Create the contact “{name}”', { name: typed }), icon: 'personPlus', run: typed => openNewContact(typed) }],
   // Escape ends a pick before the search; # sends what is picked to the bin, as the selection bar's « Supprimer » (in the bin, deleting for good asks first: its bar).
   onKey: (event, route) => {
     const picked = useContactsUi.getState().selection;
@@ -100,7 +100,7 @@ export const contactsModule: AppModule = {
     if (ids.length === 0) return false;
     const undo = trashContacts(ids);
     clearSelection();
-    showUndo(ids.length > 1 ? t('Contacts placés dans la corbeille') : t('Contact placé dans la corbeille'), undo);
+    showUndo(ids.length > 1 ? t('Contacts moved to the bin') : t('Contact moved to the bin'), undo);
     return true;
   },
   shortcuts: CONTACTS_SHORTCUTS,
@@ -119,7 +119,7 @@ export const contactsModule: AppModule = {
   importer: {
     // A product's name, the same in every language.
     source: () => 'Google Contacts',
-    meta: () => t('Un fichier exporté de Google Contacts (.vcf ou .csv)'),
+    meta: () => t('A file exported from Google Contacts (.vcf or .csv)'),
     Wizard: ContactsImport,
   },
   erase: {

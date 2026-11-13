@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { formatClock } from '@unlease/core/services/format';
 import { turnBirthdaysOn } from '@app/birthdayAlerts';
 import { later } from '@app/later';
@@ -48,17 +48,17 @@ function HourStepper({ hour, onChange }: { hour: number; onChange: (hour: number
     );
   };
   return (
-    <Organic role="group" accessibilityLabel={t('Heure de la notification')} style={styles.track}>
-      {end('minus', t('Une heure plus tôt'), hour - 1, 0)}
+    <Organic role="group" accessibilityLabel={t('Notification time')} style={styles.track}>
+      {end('minus', t('An hour earlier'), hour - 1, 0)}
       <View style={styles.value}>
         <Icon name="bell" size={18} color={theme.color.inkMuted} />
         <Animated.View key={hour} entering={last.rising ? LATER_IN : EARLIER_IN}>
           <AppText variant="bodyStrong" style={styles.hour} accessibilityLiveRegion="polite">
-            {t('À {hour}', { hour: hourWords(hour) })}
+            {t('At {hour}', { hour: hourWords(hour) })}
           </AppText>
         </Animated.View>
       </View>
-      {end('plus', t('Une heure plus tard'), hour + 1, 2)}
+      {end('plus', t('An hour later'), hour + 1, 2)}
     </Organic>
   );
 }
@@ -67,15 +67,15 @@ export function BirthdayNotices() {
   const settings = useContactsUiStore(selectBirthdays);
   return (
     <>
-      <SwitchRow title={t('Prévenir des anniversaires')} supporting={t('Une notification le jour venu, sur ce téléphone.')} value={settings.enabled} onChange={on => later(turnBirthdaysOn(on))} />
+      <SwitchRow title={tc('contact', 'Birthday notifications')} supporting={t('A notification on the day, on this phone.')} value={settings.enabled} onChange={on => later(turnBirthdaysOn(on))} />
       {settings.enabled ? (
         <View style={staticStyles.fields}>
           <Segmented
             value={settings.dayBefore ? 'before' : 'day'}
             onChange={value => setBirthdaySettings({ dayBefore: value === 'before' })}
             options={[
-              { value: 'day', label: t('Le jour même') },
-              { value: 'before', label: t('La veille aussi') },
+              { value: 'day', label: t('On the day') },
+              { value: 'before', label: t('The day before too') },
             ]}
           />
           <HourStepper hour={settings.hour} onChange={hour => setBirthdaySettings({ hour })} />

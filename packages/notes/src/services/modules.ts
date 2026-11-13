@@ -108,22 +108,22 @@ export function linkModules(link: LinkItem, line: Pick<Note, 'modules'> | null |
 
 /** What a module costs, in a few words (« Environ 0,25 $ par recherche », « Gratuit »); `usd` writes dollars as the client does. */
 export function moduleCost(module: LinkModule, model: ClaudeModel, usd: (value: number) => string): string {
-  if (module === 'ask') return t('Environ {cost} par question, davantage avec le web', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
-  if (MODULE_NEEDS[module] === 'claude') return t('Environ {cost} par recherche', { cost: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) });
-  if (module === 'agenda') return t('Environ {cost} par événement', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
-  if (module === 'groceries') return t('Gratuit, ou Claude si la page ne donne pas ses ingrédients');
-  if (module === 'cooking') return t('Gratuit, ou Claude si la page ne donne pas ses étapes');
-  if (module === 'pricewatch') return t('Gratuit, ou Claude une fois par semaine si la page cache son prix');
-  return t('Gratuit');
+  if (module === 'ask') return t('About {cost} per question, more with the web', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
+  if (MODULE_NEEDS[module] === 'claude') return t('About {cost} a search', { cost: usd(CLAUDE_COST_PER_WEB_SEARCH[model]) });
+  if (module === 'agenda') return t('About {cost} per event', { cost: usd(CLAUDE_COST_PER_QUESTION[model]) });
+  if (module === 'groceries') return t('Free, or Claude when the page does not list its ingredients');
+  if (module === 'cooking') return t('Free, or Claude when the page does not give its steps');
+  if (module === 'pricewatch') return t('Free, or Claude once a week when the page hides its price');
+  return t('Free');
 }
 
 /** Why a module would not show here, or '' when it would. */
 export function moduleMissing(module: LinkModule, can: ModuleAbilities): string {
   if (moduleWorks(module, can)) return '';
-  if (MODULE_NEEDS[module] === 'server' || !can.server) return t('Il faut un serveur relié');
-  if (MODULE_NEEDS[module] === 'pages') return t('Il faut activer {app} sur le serveur', { app: APPS.pages.name });
-  if (MODULE_NEEDS[module] === 'agenda' && !can.agenda) return t('Il faut activer {app} sur le serveur', { app: APPS.calendar.name });
-  return MODULE_NEEDS[module] === 'seerr' ? t('Il faut relier Seerr dans l’administration') : t('Il faut une clé Claude');
+  if (MODULE_NEEDS[module] === 'server' || !can.server) return t('Needs a connected server');
+  if (MODULE_NEEDS[module] === 'pages') return t('{app} must be turned on on the server', { app: APPS.pages.name });
+  if (MODULE_NEEDS[module] === 'agenda' && !can.agenda) return t('{app} must be turned on on the server', { app: APPS.calendar.name });
+  return MODULE_NEEDS[module] === 'seerr' ? t('Needs Seerr linked in Administration') : t('Needs a Claude key');
 }
 
 /**
@@ -170,19 +170,19 @@ export function workTitle(link: Pick<LinkItem, 'title' | 'url'>): string {
 
 /** Questions to start from, by kind: the sort people ask of such a link. */
 const ASK_SUGGESTIONS: Readonly<Record<LinkKind, readonly string[]>> = {
-  product: [tx('Quelle taille choisir ?'), tx('Qu’en disent les acheteurs ?'), tx('Quelle garantie ?')],
-  film: [tx('De quoi ça parle, sans rien dévoiler ?'), tx('Où le voir ?'), tx('Pour quel âge ?')],
-  series: [tx('Combien de saisons, et finie ou pas ?'), tx('Où la voir ?'), tx('Pour quel âge ?')],
-  book: [tx('Par quoi commencer de cet auteur ?'), tx('Combien de pages ?'), tx('Fait-il partie d’une série ?')],
-  music: [tx('Quels morceaux écouter d’abord ?'), tx('Dans le même genre ?')],
-  game: [tx('Sur quelles consoles ?'), tx('Combien d’heures pour le finir ?'), tx('Jouable à plusieurs ?')],
-  restaurant: [tx('Faut-il réserver ?'), tx('Quels plats recommande-t-on ?'), tx('Des options végétariennes ?')],
-  place: [tx('Quels horaires ?'), tx('Combien de temps prévoir ?'), tx('Comment y aller ?')],
-  recipe: [tx('Par quoi remplacer le beurre ?'), tx('Se prépare-t-elle la veille ?'), tx('Quel vin servir avec ?')],
-  article: [tx('Quels sont les chiffres clés ?'), tx('Résume-le en trois points'), tx('Qui l’a écrit ?')],
-  video: [tx('Résume-la en trois points'), tx('Combien de temps dure-t-elle ?')],
-  event: [tx('Quand et où exactement ?'), tx('Combien coûtent les places ?')],
-  other: [tx('Résume cette page en trois points'), tx('À quoi ça sert ?')],
+  product: [tx('Which size should I pick?'), tx('What do buyers say?'), tx('What warranty?')],
+  film: [tx('What is it about, without spoilers?'), tx('Where can I watch it?'), tx('For what age?')],
+  series: [tx('How many seasons, and is it finished?'), tx('Where can I watch it? [series]'), tx('For what age?')],
+  book: [tx('Where should I start with this author?'), tx('How many pages?'), tx('Is it part of a series?')],
+  music: [tx('Which tracks should I hear first?'), tx('Anything similar?')],
+  game: [tx('On which consoles?'), tx('How many hours to finish it?'), tx('Can several people play?')],
+  restaurant: [tx('Do I need to book?'), tx('Which dishes do people recommend?'), tx('Any vegetarian options?')],
+  place: [tx('What are the opening hours?'), tx('How much time should I allow?'), tx('How do I get there?')],
+  recipe: [tx('What can I use instead of butter?'), tx('Can it be made the day before?'), tx('Which wine goes with it?')],
+  article: [tx('What are the key figures?'), tx('Sum it up in three points'), tx('Who wrote it?')],
+  video: [tx('Sum it up in three points [f]'), tx('How long is it?')],
+  event: [tx('When and where exactly?'), tx('How much are tickets?')],
+  other: [tx('Sum up this page in three points'), tx('What is it for?')],
 };
 
 /** "Demander à Claude": a few questions to start from, for a link of this kind, in the interface's language. */

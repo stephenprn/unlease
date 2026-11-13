@@ -26,7 +26,7 @@ export function ImportScreen({ navigation }: ScreenProps<'Import'>) {
     <View style={styles.screen}>
       <Ground />
       {/* Leaving mid-way sets the archive read aside: the wizard removes its files as it goes. */}
-      <TopBar title={t('Importer')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Import')} onBack={() => navigation.goBack()} />
       <KeepWizard onBoard={toBoard} />
     </View>
   );

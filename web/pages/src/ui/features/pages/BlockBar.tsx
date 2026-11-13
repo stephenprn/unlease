@@ -109,7 +109,7 @@ export function BlockBar() {
           data-edge
           data-hidden={!shown || undefined}
           role="toolbar"
-          aria-label={t('Actions du bloc')}
+          aria-label={t('Block actions')}
           // While its menu is open it holds still, wherever the keyboard goes.
           style={{ bottom: (menu?.inset ?? inset) + LIFT }}
           // A press here keeps the caret, and so the keyboard, in the text.
@@ -117,7 +117,7 @@ export function BlockBar() {
         >
           <IconButton
             icon="plus"
-            label={t('Ajouter un bloc')}
+            label={t('Add a block')}
             onClick={() => {
               if (!block) return;
               flushAll();
@@ -127,14 +127,14 @@ export function BlockBar() {
               focusBlock(added, 1);
             }}
           />
-          <IconButton icon="outdent" label={t('Désimbriquer le bloc')} shape={1} onClick={() => move((blockId, caret) => outdentBlocks(page, [blockId], [blockId], { block: blockId, offset: caret }))} />
-          <IconButton icon="indent" label={t('Imbriquer le bloc')} shape={2} onClick={() => move((blockId, caret) => indentBlocks(page, [blockId], [blockId], { block: blockId, offset: caret }))} />
-          <IconButton icon="arrowUp" label={t('Monter le bloc')} onClick={() => move(blockId => nudgeBlocks(page, [blockId], -1, selectableOutline()))} />
-          <IconButton icon="arrowDown" label={t('Descendre le bloc')} shape={1} onClick={() => move(blockId => nudgeBlocks(page, [blockId], 1, selectableOutline()))} />
+          <IconButton icon="outdent" label={t('Outdent block')} shape={1} onClick={() => move((blockId, caret) => outdentBlocks(page, [blockId], [blockId], { block: blockId, offset: caret }))} />
+          <IconButton icon="indent" label={t('Indent block')} shape={2} onClick={() => move((blockId, caret) => indentBlocks(page, [blockId], [blockId], { block: blockId, offset: caret }))} />
+          <IconButton icon="arrowUp" label={t('Move block up')} onClick={() => move(blockId => nudgeBlocks(page, [blockId], -1, selectableOutline()))} />
+          <IconButton icon="arrowDown" label={t('Move block down')} shape={1} onClick={() => move(blockId => nudgeBlocks(page, [blockId], 1, selectableOutline()))} />
           <IconButton
             ref={more}
             icon="more"
-            label={t('Plus d’actions sur le bloc')}
+            label={t('More block actions')}
             shape={2}
             hasPopup="menu"
             expanded={menu !== null}

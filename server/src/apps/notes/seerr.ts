@@ -28,11 +28,11 @@ const TIMEOUT_MS = 10_000;
 
 /** What went wrong, in the apps' words. */
 export function seerrProblem(error: unknown): string {
-  if (!(error instanceof SeerrError) || error.status === 0) return 'Seerr injoignable';
-  if (error.status === NOT_SEERR || error.status === 404) return 'Cette adresse ne répond pas comme un serveur Seerr';
-  if (error.status >= 300 && error.status < 400) return 'Cette adresse renvoie ailleurs : donnez celle où Seerr répond';
-  if (error.status === 401 || error.status === 403) return 'Clé API refusée par Seerr';
-  return 'Seerr a répondu par une erreur';
+  if (!(error instanceof SeerrError) || error.status === 0) return 'Seerr unreachable';
+  if (error.status === NOT_SEERR || error.status === 404) return 'This address does not answer like a Seerr server';
+  if (error.status >= 300 && error.status < 400) return 'This address redirects elsewhere: give the one Seerr answers on';
+  if (error.status === 401 || error.status === 403) return 'API key refused by Seerr';
+  return 'Seerr answered with an error';
 }
 
 /** Seerr's media states: 5 there, 4 partly, 3 being added, 2 asked for, anything else not there. */

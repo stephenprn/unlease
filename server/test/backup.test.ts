@@ -84,39 +84,39 @@ describe('S3 settings', () => {
   it('refuses a key that may list the bucket but not write or delete in it', async () => {
     const target = server();
     target.s3.failOn = method => (method === 'PUT' ? { status: 403, code: 'AccessDenied' } : null);
-    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Accès refusé par S3 : vérifiez les droits de la clé' } });
+    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Access denied by S3: check the key’s permissions' } });
     target.s3.failOn = method => (method === 'DELETE' ? { status: 403, code: 'AccessDenied' } : null);
-    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Accès refusé par S3 : vérifiez les droits de la clé' } });
+    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Access denied by S3: check the key’s permissions' } });
     expect(target.settings.backup()).toBeNull();
   });
 
   it('refuses a bucket S3 does not know, unreachable S3, and a first save without its secret', async () => {
     const target = server();
     target.s3.failWith = { status: 404, code: 'NoSuchBucket' };
-    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Bucket introuvable' } });
+    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 400, body: { error: 'Bucket not found' } });
     target.s3.failWith = null;
     target.s3.unreachable = true;
-    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 502, body: { error: 'Stockage S3 injoignable' } });
+    expect(await putSettings(target, { backup: S3 })).toMatchObject({ status: 502, body: { error: 'S3 storage unreachable' } });
     const { secretAccessKey: _secret, ...withoutSecret } = S3;
-    expect(await putSettings(target, { backup: withoutSecret })).toMatchObject({ status: 400, body: { error: 'Clé secrète manquante' } });
-    expect(await putSettings(target, { backup: { recurrence: 'daily' } })).toMatchObject({ status: 400, body: { error: 'Renseignez d’abord le stockage S3' } });
-    expect(await putSettings(target, { backup: { ...S3, bucket: 'Pas Un Bucket' } })).toMatchObject({ status: 400, body: { error: 'Nom de bucket invalide' } });
+    expect(await putSettings(target, { backup: withoutSecret })).toMatchObject({ status: 400, body: { error: 'Secret key missing' } });
+    expect(await putSettings(target, { backup: { recurrence: 'daily' } })).toMatchObject({ status: 400, body: { error: 'Set up the S3 storage first' } });
+    expect(await putSettings(target, { backup: { ...S3, bucket: 'Pas Un Bucket' } })).toMatchObject({ status: 400, body: { error: 'Invalid bucket name' } });
     expect(target.settings.backup()).toBeNull();
   });
 
   it('tries a storage class on the bucket before keeping it, and refuses one the store does not offer', async () => {
     const target = server();
     expect((await putSettings(target, { backup: S3 })).body.backup).toMatchObject({ storageClass: 'STANDARD' });
-    expect(await putSettings(target, { backup: { storageClass: 'FROID' } })).toMatchObject({ status: 400, body: { error: 'Classe de stockage inconnue' } });
+    expect(await putSettings(target, { backup: { storageClass: 'FROID' } })).toMatchObject({ status: 400, body: { error: 'Unknown storage class' } });
     target.s3.refusedClasses.add('DEEP_ARCHIVE');
-    expect(await putSettings(target, { backup: { storageClass: 'DEEP_ARCHIVE' } })).toMatchObject({ status: 400, body: { error: 'Ce stockage ne propose pas cette classe' } });
+    expect(await putSettings(target, { backup: { storageClass: 'DEEP_ARCHIVE' } })).toMatchObject({ status: 400, body: { error: 'This storage does not offer this class' } });
     expect(target.settings.backup()?.storageClass).toBe('STANDARD');
     target.s3.log.length = 0;
     // The class alone counts as a change of connection: the probe goes in it.
     const saved = await putSettings(target, { backup: { storageClass: 'GLACIER' } });
     expect(saved).toMatchObject({ status: 200, body: { backup: { storageClass: 'GLACIER' } } });
     expect(target.s3.log).toEqual(['GET ', 'PUT carnet/.unlease-essai', 'DELETE carnet/.unlease-essai']);
-    expect(await putSettings(target, { backup: { keep: 0 } })).toMatchObject({ status: 400, body: { error: 'Durée de conservation invalide' } });
+    expect(await putSettings(target, { backup: { keep: 0 } })).toMatchObject({ status: 400, body: { error: 'Invalid number of days to keep' } });
     expect((await putSettings(target, { backup: { keep: 400 } })).body.backup).toMatchObject({ keep: 400 });
   });
 });
@@ -161,7 +161,7 @@ describe('a backup run', () => {
     target.s3.failWith = { status: 403, code: 'SignatureDoesNotMatch' };
     await target.backups.run('schedule');
     const status = target.backups.status();
-    expect(status.last).toMatchObject({ ok: false, error: 'Clés refusées par S3', trigger: 'schedule' });
+    expect(status.last).toMatchObject({ ok: false, error: 'Keys refused by S3', trigger: 'schedule' });
     expect(status.nextAt).toBe(status.last!.startedAt + 3_600_000);
   });
 
@@ -278,7 +278,7 @@ describe('a backup run', () => {
     target.time.value -= 2 * 86_400_000;
     await target.backups.run('manual');
     expect(snapshots(target)).toHaveLength(2);
-    expect(target.backups.status().last).toMatchObject({ ok: true, error: 'L’horloge du serveur semble en retard : les anciennes sauvegardes sont gardées' });
+    expect(target.backups.status().last).toMatchObject({ ok: true, error: 'The server’s clock seems to be behind: the older backups are kept' });
   });
 
   it('sends files and snapshots in the class chosen, and lists the cold ones as such', async () => {
@@ -307,7 +307,7 @@ describe('a backup run', () => {
     const ask = () => target.app.request('/api/admin/downloads', { method: 'POST', headers: { ...AUTH, 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot: name }) });
     const first = await ask();
     expect(first.status).toBe(409);
-    expect(await first.json()).toEqual({ error: 'Cette sauvegarde est dans Glacier : sa sortie est demandée, réessayez dans quelques heures' });
+    expect(await first.json()).toEqual({ error: 'This backup is in Glacier: it has been asked out, try again in a few hours' });
     expect(target.s3.log).toContain(`POST carnet/sauvegardes/${name}`);
     expect((await ask()).status).toBe(409);
     target.s3.thawAll();
@@ -418,7 +418,7 @@ describe('restoring', () => {
     // A restore under way when the server stops reads, at the next start, as cut short.
     writeMeta(target.db, 'restore', JSON.stringify({ running: true, startedAt: T0, finishedAt: null, error: null, report: null }));
     const restarted = new RestoreService({ sync: target.sync, records: target.records, blobs: target.blobs, settings: target.settings, tmpDir: target.dir });
-    expect(restarted.status()).toMatchObject({ running: false, error: expect.stringMatching(/^Interrompue/) });
+    expect(restarted.status()).toMatchObject({ running: false, error: expect.stringMatching(/^Interrupted/) });
   });
 
   /** A server whose files live in Seafile, backed up to S3, and a new one on the same bucket and the same library. */
@@ -581,7 +581,7 @@ describe('restoring', () => {
     const target = server();
     expect((await restore(target, 'merge', new TextEncoder().encode('pas une archive'), 'application/gzip')).status).toBe(202);
     await settle(target);
-    expect(target.restore.status().error).toBe('Archive illisible : ce n’est pas une sauvegarde .tar.gz');
+    expect(target.restore.status().error).toBe('Unreadable archive: not a .tar.gz backup');
     expect((await restore(target, 'oops', { snapshot: 'x' })).status).toBe(400);
     expect((await restore(target, 'merge', { snapshot: '../etc/passwd' })).status).toBe(400);
   });

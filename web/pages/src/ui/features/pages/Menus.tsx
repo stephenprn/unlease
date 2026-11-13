@@ -9,7 +9,7 @@ import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState, 
 import { useShallow } from 'zustand/react/shallow';
 
 import type { GlyphName } from '@unlease/design/glyphs';
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import type { BlockTarget } from '@unlease/pages/models/blocks';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { asLineColor } from '@unlease/design/colors';
@@ -48,7 +48,7 @@ interface Row {
   readonly pick: () => void;
 }
 
-const SECTION_ICONS: Record<TargetHit['section'], GlyphName> = { Pages: 'page', Contacts: 'person', Événements: 'calendar', Notes: 'note', Collections: 'collections', Liens: 'link' };
+const SECTION_ICONS: Record<TargetHit['section'], GlyphName> = { Pages: 'page', Contacts: 'person', Events: 'calendar', Notes: 'note', Collections: 'collections', Links: 'link' };
 /** Shown through `t` where the list draws them. */
 const DATES = tx('Dates');
 const EMOJI = tx('Emoji');
@@ -196,8 +196,8 @@ function SlashPanel({ menu }: { menu: Extract<MenuState, { kind: 'slash' }> }) {
   );
   const [active, setActive] = useListKeys(rows, () => setMenu(null), true);
   return (
-    <Floating anchor={anchor} label={t('Ajouter un bloc')} className={styles.menuPanel} id="slash-menu">
-      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Aucun bloc ne correspond.')} label={t('Blocs')} details="active" />
+    <Floating anchor={anchor} label={t('Add a block')} className={styles.menuPanel} id="slash-menu">
+      <PickerList rows={rows} active={active} onActive={setActive} empty={t('No block matches.')} label={t('Blocks')} details="active" />
     </Floating>
   );
 }
@@ -272,14 +272,14 @@ function MentionPanel({ menu }: { menu: Extract<MenuState, { kind: 'mention' | '
   }, [menu.query, menu.block, menu.start, cite, page, library, now]);
   const [active, setActive] = useListKeys(rows, () => setMenu(null), true);
   return (
-    <Floating anchor={anchor} label={cite ? t('Citer une page') : t('Mentionner')} className={styles.menuPanel} id={panel}>
+    <Floating anchor={anchor} label={cite ? t('Cite a page') : t('Mention')} className={styles.menuPanel} id={panel}>
       <PickerList
         rows={rows}
         active={active}
         onActive={setActive}
         // As on the phone: what was typed matches nothing, or there is nothing yet to name.
-        empty={menu.query.replace(/\]+$/, '').trim() ? t('Rien ne correspond.') : cite ? t('Aucune autre page pour l’instant.') : t('Rien à mentionner pour l’instant.')}
-        label={cite ? t('Pages') : t('Pages, contacts, événements, notes, collections, liens et dates')}
+        empty={menu.query.replace(/\]+$/, '').trim() ? t('Nothing matches.') : cite ? t('No other page yet.') : t('Nothing to mention yet.')}
+        label={cite ? t('Pages') : t('Pages, contacts, events, notes, collections, links and dates')}
       />
     </Floating>
   );
@@ -342,7 +342,7 @@ function EmojiList({ menu, found, languages }: { menu: Extract<MenuState, { kind
   );
   return (
     <Floating anchor={anchor} label={t('Emoji')} className={`${styles.menuPanel} ${inline.emojiMenu}`} id="emoji-menu">
-      <PickerList rows={rows} active={active} onActive={setActive} empty="" label={t('Emoji pour « {query} »', { query: menu.query })} />
+      <PickerList rows={rows} active={active} onActive={setActive} empty="" label={t('Emoji for “{query}”', { query: menu.query })} />
     </Floating>
   );
 }
@@ -369,19 +369,19 @@ function TargetPanel({ menu }: { menu: Extract<MenuState, { kind: 'target' }> })
     focusBlock(menu.block, 'end');
   }, false);
   return (
-    <Floating anchor={anchor} label={menu.display === 'bookmark' ? t('Ajouter un signet') : t('Intégrer')} className={styles.menuPanel} id="target-menu">
+    <Floating anchor={anchor} label={menu.display === 'bookmark' ? t('Add a bookmark') : t('Embed')} className={styles.menuPanel} id="target-menu">
       <input
         className={styles.pickerField}
         value={query}
         autoFocus
-        placeholder={menu.display === 'bookmark' ? t('Une page, une note, une collection ou un lien') : t('Une note, une collection ou un lien')}
-        aria-label={t('Chercher')}
+        placeholder={menu.display === 'bookmark' ? t('A page, a note, a collection or a link') : t('A note, a collection or a link')}
+        aria-label={tc('short', 'Search')}
         onChange={event => setQuery(event.target.value)}
         onKeyDown={event => {
           if (take(event.key)) event.preventDefault();
         }}
       />
-      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Rien ne correspond.')} label={t('Résultats')} />
+      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Nothing matches.')} label={t('Results')} />
     </Floating>
   );
 }

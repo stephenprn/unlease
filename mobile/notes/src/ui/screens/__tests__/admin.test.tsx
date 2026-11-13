@@ -35,6 +35,7 @@ const SETTINGS: ServerSettings = {
   drive: { provider: 'seafile', url: 'https://drive.exemple.fr', folder: '/Carnet', library: 'Documents', tokenHint: '…ab12', leaving: false },
   calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
   seerr: { url: '', keyHint: null },
+  immich: { url: '', keyHint: null },
 };
 
 function status(notes: number, restoring = false): AdminStatus {

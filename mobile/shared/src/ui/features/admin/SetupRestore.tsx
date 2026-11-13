@@ -64,7 +64,7 @@ export function SetupRestore({ server, admin, backups, now, onSetBackup }: { ser
   const restoreFromFile = async () => {
     const file = await pickBackupArchive();
     // Said where a refusal is, by the choices, rather than on a slip that leaves.
-    if (file.status === 'error') setRefusal(file.message ? t(file.message) : t('Fichier illisible'));
+    if (file.status === 'error') setRefusal(file.message ? t(file.message) : t('Unreadable file'));
     if (file.status !== 'ok') return;
     // The picked copy lives in the cache only until it is sent.
     await start('file', () => restoreFile(server, file.path, file.name, 'merge')).finally(() => removePath(file.path));
@@ -103,7 +103,7 @@ export function SetupRestore({ server, admin, backups, now, onSetBackup }: { ser
 
       {choosing ? (
         <>
-          <Section title={t('Sauvegardes sur S3')}>
+          <Section title={t('Backups on S3')}>
             {s3Line ? (
               <>
                 {s3Line.title === SETUP_RESTORE_WORDS.none ? (
@@ -134,7 +134,7 @@ export function SetupRestore({ server, admin, backups, now, onSetBackup }: { ser
                 </View>
                 {!all && snapshots.length > FIRST_SNAPSHOTS ? (
                   <View style={styles.more}>
-                    <Button kind="text" label={t('Tout afficher ({count})', { count: snapshots.length })} onPress={() => setAll(true)} style={styles.moreButton} />
+                    <Button kind="text" label={t('Show all ({count})', { count: snapshots.length })} onPress={() => setAll(true)} style={styles.moreButton} />
                   </View>
                 ) : null}
                 <View style={styles.action}>
@@ -144,11 +144,11 @@ export function SetupRestore({ server, admin, backups, now, onSetBackup }: { ser
             )}
           </Section>
 
-          <Section title={t('Depuis un fichier')}>
+          <Section title={t('From a file')}>
             <ListRow
               icon="restore"
               title={SETUP_RESTORE_WORDS.file}
-              supporting={sending === 'file' ? t('Envoi de l’archive…') : SETUP_RESTORE_WORDS.fileMeta}
+              supporting={sending === 'file' ? t('Sending the archive…') : SETUP_RESTORE_WORDS.fileMeta}
               onPress={sending ? undefined : () => restoreFromFile()}
             />
           </Section>

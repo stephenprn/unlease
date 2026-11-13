@@ -33,12 +33,12 @@ export interface ChipProps {
 
 /** What a screen reader reads of it: its title, then when. */
 export function chipLabel(item: Occurrence, twelveHours: boolean): string {
-  const title = item.event.title.trim() || t('Sans titre');
+  const title = item.event.title.trim() || t('Untitled');
   return `${title}, ${timeRange(item, twelveHours)}`;
 }
 
 function ChipComponent({ item, color, variant, twelveHours, lines = 1, dragging = false, onOpen, onPointerDown, children }: ChipProps) {
-  const title = item.event.title.trim() || t('Sans titre');
+  const title = item.event.title.trim() || t('Untitled');
   const layer = kindOf(item.key) !== 'event';
   const start = item.allDay ? null : clockWords(formatClock(item.startAt), twelveHours);
   return (

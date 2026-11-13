@@ -89,12 +89,12 @@ function AppearancePreviewComponent({ appearance, compact = false }: { appearanc
   const theme = useTheme();
   return (
     // One picture for assistive tech: what it shows is said by the choices around it.
-    <View accessible accessibilityRole="image" accessibilityLabel={t('Aperçu de jour et de nuit')} style={[styles.row, compact ? styles.compactRow : null]}>
+    <View accessible accessibilityRole="image" accessibilityLabel={t('Day and night preview')} style={[styles.row, compact ? styles.compactRow : null]}>
       {MODES.map(mode => (
         <View key={mode} style={[styles.column, compact ? styles.compactColumn : null]} importantForAccessibility="no-hide-descendants">
           <Mini appearance={appearance} mode={mode} />
           <AppText variant="labelSmall" color={mode === theme.mode ? theme.color.ink : theme.color.inkMuted} style={styles.caption}>
-            {mode === 'light' ? t('Jour') : t('Nuit')}
+            {mode === 'light' ? t('Day') : t('Night')}
           </AppText>
         </View>
       ))}

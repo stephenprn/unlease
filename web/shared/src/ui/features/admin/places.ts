@@ -1,13 +1,13 @@
 /**
  * The Administration's places: the sections every app shares (`SHARED_ADMIN_SECTIONS`: the apps on,
- * the server, Claude, the backups, the files), then the app's own, under its name, as its module
+ * the server, Claude, the backups, the files, Immich), then the app's own, under its name, as its module
  * brings them (`AppModule.adminSections`: Carnet's Seerr in `notes/src/admin.tsx`, Pages' questions
  * in `pages/src/admin.tsx`). Its navigation, its home
  * and its pages all read this one list, so a section an app adds shows everywhere at once.
  */
 import { APP_IDS, APPS, type AppId } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
-import { appsLine, backupLine, claudeLine, driveLine, serverLine, SERVER_ONLY_SECTIONS, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
+import { appsLine, backupLine, claudeLine, driveLine, immichLine, serverLine, SERVER_ONLY_SECTIONS, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
 import type { AdminStatus } from '@unlease/core/sync/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -16,6 +16,7 @@ import { theApp, type AdminSection } from '../../../modules';
 import { APPS_INFO } from '../settings/AppsSection';
 import { BACKUP_INFO } from '../settings/BackupSection';
 import { DRIVE_INFO } from '../settings/DriveSection';
+import { IMMICH_INFO } from '../settings/ImmichSection';
 import { SERVER_INFO } from '../settings/ServerSection';
 
 /** What a section's line is read from. */
@@ -53,9 +54,9 @@ export interface AdminGroup {
   readonly places: readonly AdminPlace[];
 }
 
-const SHARED_GLYPHS: Record<SharedAdminSection, GlyphName> = { apps: 'apps', server: 'server', reading: 'sparkle', backup: 'cloud', drive: 'file' };
+const SHARED_GLYPHS: Record<SharedAdminSection, GlyphName> = { apps: 'apps', server: 'server', reading: 'sparkle', backup: 'cloud', drive: 'file', immich: 'image' };
 
-const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO };
+const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO, immich: IMMICH_INFO };
 
 const SHARED_LINES: Record<SharedAdminSection, (facts: AdminFacts) => StatusLine | null> = {
   // With a server, nothing is said of its apps or of Claude before its settings are read (never « Aucune clé » while they load).
@@ -64,6 +65,7 @@ const SHARED_LINES: Record<SharedAdminSection, (facts: AdminFacts) => StatusLine
   reading: ({ url, settings }) => (url && !settings ? null : claudeLine(settings?.analysis ?? null)),
   backup: ({ settings, status, now }) => (settings ? backupLine(settings.backup, status?.backup ?? null, now) : null),
   drive: ({ settings, status, now }) => (settings ? driveLine(settings.drive, status?.drive ?? null, now) : null),
+  immich: ({ settings }) => (settings ? immichLine(settings.immich) : null),
 };
 
 function sharedPlace(id: SharedAdminSection): AdminPlace {
@@ -79,7 +81,7 @@ function ownPlace(app: AppId, own: AdminSection): AdminPlace {
  * in the suite's order, for the apps the server runs (`on`; every app until it says).
  */
 export function adminGroups(on: readonly AppId[] | null): readonly AdminGroup[] {
-  const shared: AdminGroup = { app: null, title: t('Pour toutes les applications'), places: SHARED_ADMIN_SECTIONS.map(sharedPlace) };
+  const shared: AdminGroup = { app: null, title: t('For every app'), places: SHARED_ADMIN_SECTIONS.map(sharedPlace) };
   const sections = theApp().adminSections ?? [];
   const owned = APP_IDS.filter(app => (on === null || on.includes(app)) && sections.some(own => own.app === app)).map(app => ({
     app,

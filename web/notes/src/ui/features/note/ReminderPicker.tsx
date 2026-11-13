@@ -7,7 +7,7 @@
  */
 import { useState, type RefObject } from 'react';
 
-import { getLocale, t } from '@unlease/core/i18n';
+import { getLocale, t, tc } from '@unlease/core/i18n';
 import { dayDelta, formatDay, formatReminder, weekdayNames } from '@unlease/core/services/format';
 
 import { Button } from '@shared/ui/components/Button';
@@ -33,10 +33,10 @@ export function quickReminders(now: number): { label: string; time: number }[] {
   const monday = new Date(now);
   monday.setDate(today.getDate() + ((8 - today.getDay()) % 7 || 7));
   const options: { label: string; time: number }[] = [];
-  if (hour < 17) options.push({ label: t('Plus tard aujourd’hui'), time: at(today, 18) });
-  else if (hour < 20) options.push({ label: t('Ce soir'), time: at(today, 21) });
-  options.push({ label: t('Demain matin'), time: at(tomorrow, 8) });
-  options.push({ label: t('Lundi prochain'), time: at(monday, 8) });
+  if (hour < 17) options.push({ label: t('Later today'), time: at(today, 18) });
+  else if (hour < 20) options.push({ label: t('Tonight'), time: at(today, 21) });
+  options.push({ label: t('Tomorrow morning'), time: at(tomorrow, 8) });
+  options.push({ label: t('Next Monday'), time: at(monday, 8) });
   return options;
 }
 
@@ -85,17 +85,17 @@ function CustomTime({ current, now, onSet }: { current: number | null; now: numb
       }}
     >
       <label className={`${styles.customField} t-meta-strong`}>
-        {t('Jour')}
+        {t('Day')}
         <input type="date" className={inputs.input} value={day} min={dateValue(now)} onChange={event => setDay(event.target.value)} required />
       </label>
       <label className={`${styles.customField} t-meta-strong`}>
-        {t('Heure')}
+        {t('Time')}
         <input type="time" className={inputs.input} value={clock} step={300} onChange={event => setClock(event.target.value)} required />
       </label>
       <div className={styles.customFoot}>
         <When chosen={chosen} valid={valid} tried={tried} now={now} />
         <Button type="submit" small>
-          {t('Enregistrer')}
+          {t('Save')}
         </Button>
       </div>
     </form>
@@ -105,11 +105,11 @@ function CustomTime({ current, now, onSet }: { current: number | null; now: numb
 /** The moment chosen, read in words; once a moment gone was sent, the problem in its place. */
 function When({ chosen, valid, tried, now, strong }: { chosen: number | null; valid: boolean; tried: boolean; now: number; strong?: boolean }) {
   if (chosen !== null && valid) return <span className={strong ? 't-body-strong' : 't-meta'}>{formatReminder(chosen, now)}</span>;
-  if (!tried) return <span className="t-meta">{t('Choisissez un moment à venir')}</span>;
+  if (!tried) return <span className="t-meta">{t('Pick a time in the future')}</span>;
   return (
     <span className={`${inputs.error} t-meta`} role="status">
       <Icon name="error" size={16} className={inputs.errorGlyph} />
-      <span>{t('Ce moment est passé : choisissez un moment à venir.')}</span>
+      <span>{t('That moment has passed: choose one still to come.')}</span>
     </span>
   );
 }
@@ -148,15 +148,15 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
   const indexes = days.map((_, index) => index);
   return (
     <div className={styles.when}>
-      <h3 className="t-meta-strong">{t('Jour')}</h3>
-      <div className={styles.days} role="radiogroup" aria-label={t('Jour')} onKeyDown={arrowKeys(indexes, day, setDay, String)}>
+      <h3 className="t-meta-strong">{t('Day')}</h3>
+      <div className={styles.days} role="radiogroup" aria-label={t('Day')} onKeyDown={arrowKeys(indexes, day, setDay, String)}>
         {days.map((date, index) => (
           <button
             key={index}
             type="button"
             role="radio"
             aria-checked={index === day}
-            aria-label={`${index === 0 ? t('Aujourd’hui') : index === 1 ? t('Demain') : longDay(date.getDay())}, ${formatDay(date.getTime(), now)}`}
+            aria-label={`${index === 0 ? t('Today') : index === 1 ? t('Tomorrow') : longDay(date.getDay())}, ${formatDay(date.getTime(), now)}`}
             data-key={index}
             tabIndex={index === day ? 0 : -1}
             // Opened on the day already chosen, scrolled into view.
@@ -164,13 +164,13 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
             className={`${styles.whenChip} ${styles.day}`}
             onClick={() => setDay(index)}
           >
-            <span className={`${styles.dayName} t-meta`}>{index === 0 ? t('auj.') : index === 1 ? t('dem.') : shortDay(date.getDay())}</span>
+            <span className={`${styles.dayName} t-meta`}>{index === 0 ? tc('short', 'Today') : index === 1 ? t('Tmrw') : shortDay(date.getDay())}</span>
             <span className="t-body-strong">{date.getDate()}</span>
           </button>
         ))}
       </div>
-      <h3 className="t-meta-strong">{t('Heure')}</h3>
-      <div className={styles.hours} role="radiogroup" aria-label={t('Heure')} onKeyDown={arrowKeys(HOURS, hour, setHour, String)}>
+      <h3 className="t-meta-strong">{t('Time')}</h3>
+      <div className={styles.hours} role="radiogroup" aria-label={t('Time')} onKeyDown={arrowKeys(HOURS, hour, setHour, String)}>
         {HOURS.map(value => (
           <button
             key={value}
@@ -182,7 +182,7 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
             className={`${styles.whenChip} ${styles.hour} t-label`}
             onClick={() => setHour(value)}
           >
-            {t('{hour} h', { hour: value })}
+            {t('{hour}:00', { hour: value })}
           </button>
         ))}
       </div>
@@ -211,7 +211,7 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
             else setTried(true);
           }}
         >
-          {t('Enregistrer')}
+          {t('Save')}
         </Button>
       </div>
     </div>
@@ -232,10 +232,10 @@ export function ReminderPicker({ open, anchor, current, now, onDismiss, onSet }:
     onDismiss();
   };
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Rappel')} width={340} rows>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Reminder')} width={340} rows>
       <div className={styles.picker}>
         {/* A sheet on a phone says what it holds; by the bell it came from, the times do. */}
-        {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Rappel')}</h2> : null}
+        {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Reminder')}</h2> : null}
         {/* On a phone the chips take the list's place, as in the phone's sheet. */}
         {narrow && custom ? (
           <CustomChips current={current} now={now} onSet={set} />
@@ -250,19 +250,19 @@ export function ReminderPicker({ open, anchor, current, now, onDismiss, onSet }:
             ))}
             <button type="button" className={styles.pickerRow} aria-expanded={custom} onClick={() => setCustom(value => !value)}>
               <Icon name="calendar" size={20} />
-              {t('Choisir la date et l’heure')}
+              {t('Pick a date and time')}
             </button>
             {custom ? <CustomTime current={current} now={now} onSet={set} /> : null}
             {current !== null ? (
               <button type="button" className={styles.pickerRow} data-danger onClick={() => set(null)}>
                 <Icon name="bellOff" size={20} />
-                {t('Supprimer le rappel')}
+                {t('Delete the reminder')}
                 <span className={styles.pickerWhen}>{formatReminder(current, now)}</span>
               </button>
             ) : null}
           </>
         )}
-        <p className={`${styles.pickerNote} t-meta`}>{t('Votre téléphone sonnera à l’heure dite.')}</p>
+        <p className={`${styles.pickerNote} t-meta`}>{t('Your phone will ring at that time.')}</p>
       </div>
     </Popover>
   );

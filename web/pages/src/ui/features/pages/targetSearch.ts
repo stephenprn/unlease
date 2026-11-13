@@ -22,7 +22,7 @@ import { useEventsStore } from '@notes/app/events/store';
 import { targetTitle } from '../../../app/hooks/usePages';
 import { type PagesLibrary } from '../../../app/store/blocks';
 
-export type TargetSection = 'Pages' | 'Notes' | 'Collections' | 'Liens' | 'Contacts' | 'Événements';
+export type TargetSection = 'Pages' | 'Notes' | 'Collections' | 'Links' | 'Contacts' | 'Events';
 
 export interface TargetHit {
   readonly target: BlockTarget;
@@ -37,13 +37,13 @@ export interface TargetHit {
 }
 
 /** Shown through `t` where the menu draws them: what « @ » offers. */
-const SECTIONS: readonly TargetSection[] = [tx('Pages'), tx('Contacts'), tx('Événements'), tx('Notes'), tx('Collections'), tx('Liens')];
+const SECTIONS: readonly TargetSection[] = [tx('Pages'), tx('Contacts'), tx('Events'), tx('Notes'), tx('Collections'), tx('Links')];
 
 /** What a bookmark can show: anything but a contact or an event. */
-export const BOOKMARK_SECTIONS: readonly TargetSection[] = ['Pages', 'Notes', 'Collections', 'Liens'];
+export const BOOKMARK_SECTIONS: readonly TargetSection[] = ['Pages', 'Notes', 'Collections', 'Links'];
 
 /** What an embed can show whole: a note, a collection or a link (a page is better opened, as a bookmark). */
-export const EMBED_SECTIONS: readonly TargetSection[] = ['Notes', 'Collections', 'Liens'];
+export const EMBED_SECTIONS: readonly TargetSection[] = ['Notes', 'Collections', 'Links'];
 
 export function searchTargets(s: PagesLibrary, query: string, options: { readonly sections?: readonly TargetSection[]; readonly perSection?: number } = {}): TargetHit[] {
   const wanted = foldText(query.trim());
@@ -64,14 +64,14 @@ export function searchTargets(s: PagesLibrary, query: string, options: { readonl
     if (!sections.includes(section)) continue;
     const title = targetTitle(s, { type: 'note', id }) ?? '';
     // A note's glyph says its kind: « Liste », « Dessin » or « Note » beside it would say it twice, so they only help find it.
-    const kind = note.kind === 'checklist' ? t('Liste') : note.kind === 'drawing' ? t('Dessin') : t('Note');
-    const detail = note.kind === 'links' ? plural((s.linksByNote[id] ?? []).length, 'lien') : note.kind !== 'checklist' && note.kind !== 'drawing' && note.title.trim() ? bodyText(note).split('\n')[0]!.slice(0, 80) : '';
+    const kind = note.kind === 'checklist' ? t('List') : note.kind === 'drawing' ? t('Drawing') : t('Note');
+    const detail = note.kind === 'links' ? plural((s.linksByNote[id] ?? []).length, 'link') : note.kind !== 'checklist' && note.kind !== 'drawing' && note.title.trim() ? bodyText(note).split('\n')[0]!.slice(0, 80) : '';
     found.push({ target: { type: 'note', id }, title, detail, ...(note.kind === 'links' ? {} : { words: kind }), section, edited: note.editedAt });
   }
-  if (sections.includes('Liens')) {
+  if (sections.includes('Links')) {
     for (const link of Object.values(s.links)) {
       if (link.deletedAt !== null) continue;
-      found.push({ target: { type: 'link', id: link.id }, title: link.title || prettyUrl(link.url), detail: link.siteName || displayHost(link.url), section: 'Liens', edited: link.analyzedAt ?? link.createdAt });
+      found.push({ target: { type: 'link', id: link.id }, title: link.title || prettyUrl(link.url), detail: link.siteName || displayHost(link.url), section: 'Links', edited: link.analyzedAt ?? link.createdAt });
     }
   }
   if (sections.includes('Contacts')) {
@@ -81,10 +81,10 @@ export function searchTargets(s: PagesLibrary, query: string, options: { readonl
       found.push({ target: { type: 'contact', id: contact.id }, title: contactName(contact), detail, section: 'Contacts', edited: contact.editedAt });
     }
   }
-  if (sections.includes('Événements')) {
+  if (sections.includes('Events')) {
     // Already ranked by Agenda's search (or the coming ones first when nothing is typed): kept in that order.
     findEvents(s.events, useEventsStore.getState().feeds, query, target => targetTitle(s, target) ?? '', perSection).forEach((hit, at) => {
-      found.push({ target: { type: 'event', id: hit.id }, title: hit.title || t('Sans titre'), detail: hit.when, section: 'Événements', edited: -at });
+      found.push({ target: { type: 'event', id: hit.id }, title: hit.title || t('Untitled'), detail: hit.when, section: 'Events', edited: -at });
     });
   }
   // Ranked as every « @ » of the suite ranks (`mentionSearch`): the names the words start first, the kind of the best
@@ -95,7 +95,7 @@ export function searchTargets(s: PagesLibrary, query: string, options: { readonl
     found
       .filter(hit => hit.section === section)
       .sort((a, b) => b.edited - a.edited)
-      .map(hit => ({ ...hit, also: hit.words ? `${hit.detail} ${hit.words}` : hit.detail, boost: section === 'Événements' ? 0 : Math.max(0, 1 - (newest - hit.edited) / (30 * 86_400_000)) }));
-  const kinds: MentionSection<TargetSection, TargetHit & MentionEntry>[] = sections.map(section => ({ section, entries: entries(section), ranked: section === 'Événements' }));
+      .map(hit => ({ ...hit, also: hit.words ? `${hit.detail} ${hit.words}` : hit.detail, boost: section === 'Events' ? 0 : Math.max(0, 1 - (newest - hit.edited) / (30 * 86_400_000)) }));
+  const kinds: MentionSection<TargetSection, TargetHit & MentionEntry>[] = sections.map(section => ({ section, entries: entries(section), ranked: section === 'Events' }));
   return mentionList(kinds, wanted ? query : '', { grouped: true, perSection, idle: perSection }).map(hit => hit.entry);
 }

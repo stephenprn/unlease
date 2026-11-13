@@ -55,7 +55,7 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     setPicking(false);
     search(false);
   };
-  const change = <Button kind="text" label={t('Changer d’épisode')} onPress={() => setPicking(true)} />;
+  const change = <Button kind="text" label={t('Change episode')} onPress={() => setPicking(true)} />;
 
   if (picking) {
     const { season, episode } = stop;
@@ -63,30 +63,30 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       <>
       <SheetScroll contentContainerStyle={styles.body}>
         <AppText variant="bodyStrong" accessibilityRole="header">
-          {t('Où vous êtes-vous arrêté ?')}
+          {t('Where did you stop?')}
         </AppText>
         <Stepper
-          label={t('Saison')}
-          value={t('Saison {season}', { season })}
-          lessLabel={t('Saison précédente')}
-          moreLabel={t('Saison suivante')}
+          label={t('Season')}
+          value={t('Season {season}', { season })}
+          lessLabel={t('Previous season')}
+          moreLabel={t('Next season')}
           onLess={season > 1 ? () => setStop({ season: season - 1, episode }) : undefined}
           onMore={season < RECAP_LIMITS.seasons ? () => setStop({ season: season + 1, episode }) : undefined}
         />
         <Stepper
-          label={t('Épisode')}
-          value={episode === null ? t('Toute la saison') : t('Épisode {episode}', { episode })}
-          lessLabel={t('Épisode précédent')}
-          moreLabel={t('Épisode suivant')}
+          label={t('Episode')}
+          value={episode === null ? t('The whole season') : t('Episode {episode}', { episode })}
+          lessLabel={t('Previous episode')}
+          moreLabel={t('Next episode')}
           // Below the first episode: the whole season.
           onLess={episode !== null ? () => setStop({ season, episode: episode > 1 ? episode - 1 : null }) : undefined}
           onMore={(episode ?? 0) < RECAP_LIMITS.episodes ? () => setStop({ season, episode: (episode ?? 0) + 1 }) : undefined}
         />
-        <AppText variant="meta">{t('Claude s’arrête là : rien de la suite, ni d’indice sur ce qui vient.')}</AppText>
+        <AppText variant="meta">{t('Claude stops there: nothing after it, not even a hint of what comes next.')}</AppText>
       </SheetScroll>
       <FormFoot>
-        <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
-        <Button label={t('Résumer')} icon="rewind" onPress={summarize} />
+        <Button kind="text" label={t('Cancel')} onPress={onDismiss} />
+        <Button label={t('Recap')} icon="rewind" onPress={summarize} />
       </FormFoot>
       </>
     );
@@ -97,9 +97,9 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Claude résume {series} jusqu’à {stop}…', { series: workTitle(link) || linkShop(link), stop: recapStopWords(stop.season, stop.episode) })}
+          {t('Claude is recapping {series} up to {stop}…', { series: workTitle(link) || linkShop(link), stop: recapStopWords(stop.season, stop.episode) })}
         </AppText>
-        <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText>
+        <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText>
       </View>
     );
   }
@@ -108,12 +108,12 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+            {t('Claude couldn’t search: {reason}', { reason: phase.reason })}
           </AppText>
         </SheetScroll>
         <FormFoot>
           {change}
-          <Button label={t('Réessayer')} onPress={() => search(false)} />
+          <Button label={t('Try again')} onPress={() => search(false)} />
         </FormFoot>
       </>
     );
@@ -134,7 +134,7 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       {characters.length > 0 ? (
         <View style={styles.people}>
           <AppText variant="section" accessibilityRole="header">
-            {t('Personnages')}
+            {t('Characters')}
           </AppText>
           <Organic outline="panel" style={styles.well}>
             {characters.map((person, index) => (
@@ -146,11 +146,11 @@ function RecapBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
           </Organic>
         </View>
       ) : null}
-      <AppText variant="meta">{t('Écrit par Claude le {day} d’après des résumés trouvés sur le web, sans rien de la suite.', { day: formatDay(searchedAt, Date.now()) })}</AppText>
+      <AppText variant="meta">{t('Written by Claude on {day} from summaries found on the web, with nothing from later on.', { day: formatDay(searchedAt, Date.now()) })}</AppText>
     </SheetScroll>
     <FormFoot>
       {change}
-      <Button kind="tonal" label={t('Chercher à nouveau')} icon="refresh" onPress={() => search(true)} />
+      <Button kind="tonal" label={t('Search again')} icon="refresh" onPress={() => search(true)} />
     </FormFoot>
     </>
   );

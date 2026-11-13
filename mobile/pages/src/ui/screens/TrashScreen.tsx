@@ -33,28 +33,28 @@ export function TrashScreen({ navigation }: ScreenProps<'Trash'>) {
     <View style={styles.screen}>
       <Ground />
       <TopBar
-        title={t('Corbeille')}
+        title={t('Bin')}
         onBack={() => navigation.goBack()}
-        actions={binned > 0 ? <IconButton icon="broom" label={t('Vider la corbeille')} onPress={() => setConfirmEmpty(true)} /> : undefined}
+        actions={binned > 0 ? <IconButton icon="broom" label={t('Empty the bin')} onPress={() => setConfirmEmpty(true)} /> : undefined}
       />
       <BinList
         ids={ids}
-        retention={t('Les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
-        emptyText={t('Les pages supprimées y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })}
+        retention={t('Pages in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}
+        emptyText={t('Deleted pages stay there for {days} days, in case you change your mind.', { days: TRASH_RETENTION_DAYS })}
         renderRow={id => <TrashedPageRow id={id} now={now} onOpen={open} onDelete={setPageToDelete} />}
       />
       <DeletePageDialog id={pageToDelete} onClose={() => setPageToDelete(null)} />
       <Dialog
         visible={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Toutes les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every page in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const pages = emptyPagesBin();
-          showSnack(t('{deleted} définitivement', { deleted: plural(pages, 'page supprimée', 'pages supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(pages, 'page deleted', 'pages deleted') }), undefined, { tone: 'success' });
         }}
       />
     </View>

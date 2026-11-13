@@ -102,21 +102,21 @@ export function priceChangeText(link: Pick<LinkItem, 'price' | 'currency' | 'pri
   const delta = dayDelta(change.since, now);
   const day = formatDay(change.since, now);
   if (change.down) {
-    const text = delta >= 0 ? t('Avant {price} · en baisse aujourd’hui', { price }) : delta === -1 ? t('Avant {price} · en baisse depuis hier', { price }) : t('Avant {price} · en baisse depuis le {day}', { price, day });
+    const text = delta >= 0 ? t('Was {price} · down today', { price }) : delta === -1 ? t('Was {price} · down since yesterday', { price }) : t('Was {price} · down since {day}', { price, day });
     return { text, down: true };
   }
-  const text = delta >= 0 ? t('Avant {price} · en hausse aujourd’hui', { price }) : delta === -1 ? t('Avant {price} · en hausse depuis hier', { price }) : t('Avant {price} · en hausse depuis le {day}', { price, day });
+  const text = delta >= 0 ? t('Was {price} · up today', { price }) : delta === -1 ? t('Was {price} · up since yesterday', { price }) : t('Was {price} · up since {day}', { price, day });
   return { text, down: false };
 }
 
 /** When the watch last read the price: « Vérifié aujourd’hui à 09:12 », « Vérifié hier à 18:40 », « Vérifié le 3 nov. », or that it has not yet. */
 export function priceCheckedText(link: Pick<LinkItem, 'priceCheckedAt'>, now: number): string {
   const at = link.priceCheckedAt;
-  if (at === null) return t('Suivi chaque jour, pas encore vérifié');
+  if (at === null) return t('Watched daily, not checked yet');
   const delta = dayDelta(at, now);
-  if (delta >= 0) return t('Vérifié aujourd’hui à {time}', { time: formatClock(at) });
-  if (delta === -1) return t('Vérifié hier à {time}', { time: formatClock(at) });
-  return t('Vérifié le {day}', { day: formatDay(at, now) });
+  if (delta >= 0) return t('Checked today at {time}', { time: formatClock(at) });
+  if (delta === -1) return t('Checked yesterday at {time}', { time: formatClock(at) });
+  return t('Checked on {day}', { day: formatDay(at, now) });
 }
 
 export type PriceSlipTone = 'info' | 'success' | 'warning';
@@ -124,9 +124,9 @@ export type PriceSlipTone = 'info' | 'success' | 'warning';
 /** « Vérifier le prix »'s answer as its slip: a drop is good news, a rise or the same price is news, a hidden price a warning. */
 export function priceCheckSlip(answer: PriceCheckResponse): { readonly text: string; readonly tone: PriceSlipTone } {
   const price = answer.price === null ? '' : formatPrice(answer.price, answer.currency);
-  if (answer.outcome === 'hidden' || answer.price === null) return { text: answer.note ? t(answer.note) : t('Cette page ne montre pas son prix.'), tone: 'warning' };
-  if (answer.outcome === 'same') return { text: t('Prix inchangé : {price}', { price }), tone: 'info' };
-  if (answer.outcome === 'found' || answer.before === null) return { text: t('Prix relevé : {price}', { price }), tone: 'success' };
+  if (answer.outcome === 'hidden' || answer.price === null) return { text: answer.note ? t(answer.note) : t('This page does not show its price.'), tone: 'warning' };
+  if (answer.outcome === 'same') return { text: t('Price unchanged: {price}', { price }), tone: 'info' };
+  if (answer.outcome === 'found' || answer.before === null) return { text: t('Price read: {price}', { price }), tone: 'success' };
   const before = formatPrice(answer.before, answer.currency);
-  return answer.price < answer.before ? { text: t('Le prix a baissé : {price}, contre {before} avant', { price, before }), tone: 'success' } : { text: t('Le prix a augmenté : {price}, contre {before} avant', { price, before }), tone: 'info' };
+  return answer.price < answer.before ? { text: t('The price went down: {price}, from {before}', { price, before }), tone: 'success' } : { text: t('The price went up: {price}, from {before}', { price, before }), tone: 'info' };
 }

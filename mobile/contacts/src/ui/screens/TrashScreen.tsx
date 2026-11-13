@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { formatRelative, plural } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS } from '@unlease/contacts/models/contacts';
 import { contactName } from '@unlease/contacts/services/names';
@@ -28,10 +28,10 @@ function TrashedRow({ id, now, onOpen, onDelete }: { id: string; now: number; on
   return (
     <BinRow
       title={contactName(contact)}
-      meta={t('Mis à la corbeille {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}
+      meta={t('Moved to the bin {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}
       leading={<ContactAvatar contact={contact} size={40} />}
       onOpen={() => onOpen(id)}
-      onRestore={() => showSnack(t('Contact restauré'), { label: tc('undo', 'Annuler'), run: restoreContacts([id]) }, { tone: 'success' })}
+      onRestore={() => showSnack(t('Contact restored'), { label: t('Undo'), run: restoreContacts([id]) }, { tone: 'success' })}
       onDelete={() => onDelete(id)}
     />
   );
@@ -48,39 +48,39 @@ export function TrashScreen({ navigation }: ScreenProps<'Trash'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Corbeille')} onBack={() => navigation.goBack()} actions={ids.length > 0 ? <IconButton icon="broom" label={t('Vider la corbeille')} onPress={() => setConfirmEmpty(true)} /> : undefined} />
+      <TopBar title={t('Bin')} onBack={() => navigation.goBack()} actions={ids.length > 0 ? <IconButton icon="broom" label={t('Empty the bin')} onPress={() => setConfirmEmpty(true)} /> : undefined} />
       <BinList
         ids={ids}
-        retention={t('Les contacts de la corbeille sont supprimés au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}
-        emptyText={t('Les contacts supprimés y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })}
+        retention={t('Contacts in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}
+        emptyText={t('Deleted contacts stay there for {days} days, time enough to change your mind.', { days: TRASH_RETENTION_DAYS })}
         renderRow={id => <TrashedRow id={id} now={now} onOpen={open} onDelete={setToDelete} />}
       />
       <Dialog
         visible={toDelete !== null}
-        title={t('Supprimer définitivement ?')}
-        message={t('Ce contact disparaîtra de tous vos appareils. Cette action est irréversible.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete forever?')}
+        message={t('This contact will disappear from all your devices. This cannot be undone.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setToDelete(null)}
         onConfirm={() => {
           if (toDelete) {
             deleteContactsForever([toDelete]);
-            showSnack(t('Contact supprimé définitivement'), undefined, { tone: 'success' });
+            showSnack(t('Contact deleted forever'), undefined, { tone: 'success' });
           }
           setToDelete(null);
         }}
       />
       <Dialog
         visible={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Tous les contacts de la corbeille seront supprimés définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every contact in the bin will be deleted forever, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const gone = emptyContactsBin();
-          showSnack(t('{deleted} définitivement', { deleted: plural(gone, 'contact supprimé', 'contacts supprimés') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(gone, 'contact deleted', 'contacts deleted') }), undefined, { tone: 'success' });
         }}
       />
     </View>

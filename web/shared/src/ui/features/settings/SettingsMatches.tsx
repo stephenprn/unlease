@@ -49,11 +49,11 @@ export function SettingsMatches({ query }: { query: string }) {
     <section className={styles.group} aria-labelledby={headId}>
       <div className={styles.head}>
         <p id={headId} className="t-meta-strong">
-          {t('Réglages')}
+          {t('Settings')}
         </p>
         {found.length > shown.length ? (
-          <button type="button" className={`${styles.all} t-meta-strong`} aria-label={t('Tous les réglages trouvés')} onClick={() => setWhole(query)}>
-            {t('Tout voir')}
+          <button type="button" className={`${styles.all} t-meta-strong`} aria-label={t('Every setting found')} onClick={() => setWhole(query)}>
+            {t('See all')}
           </button>
         ) : null}
       </div>

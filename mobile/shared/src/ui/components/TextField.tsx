@@ -94,13 +94,13 @@ const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
   const atRest = !multiline && !focused && !rest.autoFocus ? AT_START : undefined;
   // The form's chain first (next field, or done), then what the caller adds.
   const chained = field && !multiline ? { returnKeyType: field.returnKeyType, submitBehavior: field.submitBehavior } : {};
-  const spoken = [accessibilityLabel ?? label, optional ? t('facultatif') : null, problem].filter(Boolean).join(', ');
+  const spoken = [accessibilityLabel ?? label, optional ? t('optional') : null, problem].filter(Boolean).join(', ');
   return (
     <View style={styles.wrap}>
       {label ? (
         <AppText variant="metaStrong" style={styles.label}>
           {label}
-          {optional ? <AppText variant="meta" color={theme.color.inkMuted}>{` ${t('(facultatif)')}`}</AppText> : null}
+          {optional ? <AppText variant="meta" color={theme.color.inkMuted}>{` ${t('(optional)')}`}</AppText> : null}
         </AppText>
       ) : null}
       <Organic frost style={[styles.field, strong ? styles.fieldStrong : styles.fieldIdle, { borderColor: border, backgroundColor: theme.color.fieldVeil }]}>
@@ -155,7 +155,7 @@ const TextFieldComponent = forwardRef<Input, TextFieldProps>(function TextField(
         {hidden ? (
           <IconButton
             icon={shown ? 'eyeOff' : 'eye'}
-            label={shown ? (revealLabels?.hide ?? t('Masquer')) : (revealLabels?.show ?? t('Afficher'))}
+            label={shown ? (revealLabels?.hide ?? t('Hide')) : (revealLabels?.show ?? t('Show'))}
             onPress={() => setShown(current => !current)}
             style={styles.reveal}
           />

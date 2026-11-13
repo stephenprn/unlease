@@ -77,11 +77,11 @@ function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: NoteF
   return (
     <div className={styles.finishes}>
       <section className={styles.group}>
-        <Heading title={t('Couleur')} chosen={gradient || mixed ? undefined : pigment ? LINE_COLOR_NAMES[pigment] : t('Sans couleur')} />
-        <div className={`${styles.grid} ${styles.colors}`} role="radiogroup" aria-label={t('Couleur de la note')} onKeyDown={onColorKeys}>
+        <Heading title={t('Colour')} chosen={gradient || mixed ? undefined : pigment ? LINE_COLOR_NAMES[pigment] : t('No colour')} />
+        <div className={`${styles.grid} ${styles.colors}`} role="radiogroup" aria-label={t('Note colour')} onKeyDown={onColorKeys}>
           {COLORS.map((key, index) => {
             const chosen = !mixed && gradient === null && key === pigment;
-            const name = key ? LINE_COLOR_NAMES[key] : t('Sans couleur');
+            const name = key ? LINE_COLOR_NAMES[key] : t('No colour');
             return (
               <button
                 key={key ?? 'none'}
@@ -107,8 +107,8 @@ function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: NoteF
         </div>
       </section>
       <section className={styles.group}>
-        <Heading title={t('Dégradés')} />
-        <div className={`${styles.grid} ${styles.finishGrid}`} role="radiogroup" aria-label={t('Dégradé de la note')} onKeyDown={onGradientKeys}>
+        <Heading title={t('Gradients')} />
+        <div className={`${styles.grid} ${styles.finishGrid}`} role="radiogroup" aria-label={t('Note gradient')} onKeyDown={onGradientKeys}>
           {NOTE_GRADIENTS.map((key, index) => (
             <button
               key={key}
@@ -130,8 +130,8 @@ function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: NoteF
         </div>
       </section>
       <section className={styles.group}>
-        <Heading title={t('Papier')} />
-        <div className={`${styles.grid} ${styles.finishGrid}`} role="radiogroup" aria-label={t('Papier de la note')} onKeyDown={onPaperKeys}>
+        <Heading title={t('Paper')} />
+        <div className={`${styles.grid} ${styles.finishGrid}`} role="radiogroup" aria-label={t('Note paper')} onKeyDown={onPaperKeys}>
           {PAPERS.map((key, index) => (
             <button
               key={key ?? 'plain'}
@@ -149,7 +149,7 @@ function NoteFinishPickerComponent({ color, pattern, onColor, onPattern }: NoteF
                 <PebbleEdge turn={pebbleTurn(index + 1)} />
                 {key === pattern ? <Check /> : null}
               </span>
-              <span className={`${styles.name} t-label-small`}>{key ? NOTE_PATTERN_NAMES[key] : t('Uni')}</span>
+              <span className={`${styles.name} t-label-small`}>{key ? NOTE_PATTERN_NAMES[key] : t('Plain')}</span>
             </button>
           ))}
         </div>

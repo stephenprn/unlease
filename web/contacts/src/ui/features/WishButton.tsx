@@ -43,8 +43,8 @@ export function WishButton({ contact, region, small = false, className }: { cont
     <span ref={anchor} className={className}>
       <Button kind="tonal" icon="bubble" small={small} onClick={() => (ways.length === 1 ? openWish(ways[0]!) : setOpen(true))}>
         {/* The word in sight; the whole sentence heard, so a list of them says whose each is. */}
-        <span aria-hidden="true">{t('Souhaiter')}</span>
-        <span className="sr-only">{t('Souhaiter son anniversaire à {name}', { name })}</span>
+        <span aria-hidden="true">{t('Send wishes')}</span>
+        <span className="sr-only">{t('Wish {name} a happy birthday', { name })}</span>
       </Button>
       {ways.length > 1 ? (
         <Menu
@@ -52,7 +52,7 @@ export function WishButton({ contact, region, small = false, className }: { cont
           anchor={anchor}
           align="end"
           onDismiss={() => setOpen(false)}
-          label={t('Souhaiter son anniversaire à {name}', { name })}
+          label={t('Wish {name} a happy birthday', { name })}
           items={ways.map(way => ({ label: wishChannelName(way.channel), icon: WISH_GLYPHS[way.channel], onSelect: () => openWish(way) }))}
         />
       ) : null}

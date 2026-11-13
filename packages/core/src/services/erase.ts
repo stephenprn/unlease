@@ -53,7 +53,7 @@ export function tombstones(type: string, ids: Iterable<string>, now: number): Er
 }
 
 /** The word typed to confirm, in the interface's language: « SUPPRIMER », "DELETE". */
-const ERASE_WORD = tx('SUPPRIMER');
+const ERASE_WORD = tx('DELETE');
 
 export function eraseWord(): string {
   return t(ERASE_WORD);
@@ -63,20 +63,20 @@ export function eraseWord(): string {
 export function eraseWordProblem(typed: string): string | null {
   const word = eraseWord();
   const given = typed.trim();
-  if (!given) return t('Tapez {word} pour confirmer.', { word });
+  if (!given) return t('Type {word} to confirm.', { word });
   if (given === word) return null;
-  return given.toUpperCase() === word ? t('Tapez {word} en capitales.', { word }) : t('Tapez exactement {word}.', { word });
+  return given.toUpperCase() === word ? t('Type {word} in capitals.', { word }) : t('Type exactly {word}.', { word });
 }
 
 /** What is wrong with the token typed again: nothing typed (the server says when it is the wrong one). */
 export function eraseTokenProblem(typed: string): string | null {
-  return typed.trim() ? null : t('Saisissez le jeton de votre serveur.');
+  return typed.trim() ? null : t('Enter your server’s token.');
 }
 
 /** Nothing ticked, or nothing in what is ticked. */
 export function erasePartsProblem(parts: readonly ErasePart[], chosen: ReadonlySet<string>): string | null {
-  if (parts.every(part => !chosen.has(part.id))) return t('Cochez au moins une partie à effacer.');
-  return eraseTotal(parts, chosen) > 0 ? null : t('Ce qui est coché ne contient rien.');
+  if (parts.every(part => !chosen.has(part.id))) return t('Tick at least one part to erase.');
+  return eraseTotal(parts, chosen) > 0 ? null : t('What is ticked holds nothing.');
 }
 
 /** How many records the ticked parts hold. */
@@ -92,40 +92,40 @@ export function eraseDefaults(parts: readonly ErasePart[]): Set<string> {
 /** The page's lead: what goes where, said before anything is ticked. */
 export function eraseLead(app: string, connected: boolean): string {
   return connected
-    ? t('Ce que vous effacez disparaît de {app} sur cet appareil, sur votre serveur et sur tous vos autres appareils. Rien ne passe par la corbeille.', { app })
-    : t('Ce que vous effacez disparaît de {app} sur cet appareil. Rien ne passe par la corbeille.', { app });
+    ? t('What you erase leaves {app} on this device, on your server and on all your other devices. Nothing goes through the bin.', { app })
+    : t('What you erase leaves {app} on this device. Nothing goes through the bin.', { app });
 }
 
 /** The danger button's words: what it erases, counted. */
 export function eraseAction(total: number): string {
-  return total > 0 ? t('Effacer {items}', { items: plural(total, 'élément') }) : t('Effacer');
+  return total > 0 ? t('Erase {items}', { items: plural(total, 'item') }) : t('Clear');
 }
 
 /** The slip once done. */
 export function erasedMessage(total: number): string {
-  return plural(total, 'élément effacé', 'éléments effacés');
+  return plural(total, 'item erased', 'items erased');
 }
 
 /** Réglages › Données' row: its title and line. */
 export function eraseRowWords(app: string): { readonly title: string; readonly meta: string } {
-  return { title: t('Effacer des données'), meta: t('Tout ou partie de {app}, pour de bon, sur tous vos appareils', { app }) };
+  return { title: t('Erase data'), meta: t('All or part of {app}, for good, on all your devices', { app }) };
 }
 
 /** What the backup panel says, from the server's backup as it stands. */
 export function eraseBackupWords(configured: boolean, lastSuccessAt: number | null, when: (at: number) => string): { readonly title: string; readonly meta: string } {
-  if (!configured) return { title: t('Aucune sauvegarde sur S3'), meta: t('Ce qui est effacé ne pourra pas revenir. Une sauvegarde se règle dans l’Administration.') };
+  if (!configured) return { title: t('No backups on S3'), meta: t('What is erased cannot come back. A backup is set up in the Administration.') };
   return {
-    title: t('Sauvegarder avant d’effacer'),
-    meta: lastSuccessAt ? t('Une sauvegarde sur S3 juste avant, pour pouvoir revenir en arrière. La dernière date de {when}.', { when: when(lastSuccessAt) }) : t('Une sauvegarde sur S3 juste avant, pour pouvoir revenir en arrière.'),
+    title: t('Back up before erasing'),
+    meta: lastSuccessAt ? t('A backup to S3 just before, so you can go back. The last one is from {when}.', { when: when(lastSuccessAt) }) : t('A backup to S3 just before, so you can go back.'),
   };
 }
 
 /** What the form says while it works, step by step. */
 export const ERASE_PROGRESS = {
-  checking: tx('Vérification du jeton…'),
-  syncing: tx('Synchronisation…'),
-  backup: tx('Sauvegarde sur S3…'),
-  erasing: tx('Effacement…'),
+  checking: tx('Checking the token…'),
+  syncing: tx('Syncing…'),
+  backup: tx('Backing up to S3…'),
+  erasing: tx('Erasing…'),
 } as const;
 
 export type EraseProgress = keyof typeof ERASE_PROGRESS;

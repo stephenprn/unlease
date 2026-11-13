@@ -94,10 +94,10 @@ placedRow(Field);
 function ColorLine({ own, shown, onPress }: { own: LineColor | null; shown: LineColor | null; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const words = own ? LINE_COLOR_NAMES[own] : shown ? t('Couleur de ses libellés') : t('Couleur par défaut');
+  const words = own ? LINE_COLOR_NAMES[own] : shown ? t('Its labels’ colour') : t('Default colour');
   return (
     <View style={styles.choiceRow}>
-      <Tappable onPress={onPress} style={styles.choice} accessibilityRole="button" accessibilityLabel={t('Couleur : {name}', { name: words })}>
+      <Tappable onPress={onPress} style={styles.choice} accessibilityRole="button" accessibilityLabel={t('Colour: {name}', { name: words })}>
         <View style={styles.fieldIcon}>
           <Organic pebble={2} style={[styles.colorStone, { backgroundColor: paintOf(theme, shown).fill }]} />
         </View>
@@ -241,8 +241,8 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
   const unsaved = useUnsaved(dirty, { screen: true });
   const endsBefore = draft.end < draft.start || (allDay && draft.end <= draft.start);
   const form = useForm({
-    end: endsBefore ? t('La fin vient avant le début : choisissez un jour ou une heure de fin plus tard.') : null,
-    url: readsAsEventUrl(draft.url) ? null : t('Un lien comme https://exemple.fr/billets, ou visio.exemple.org.'),
+    end: endsBefore ? t('The end comes before the start: choose a later end day or time.') : null,
+    url: readsAsEventUrl(draft.url) ? null : t('A link such as https://example.com/tickets, or meet.example.org.'),
   });
   const endField = form.field('end');
   const endProblem = form.error('end');
@@ -259,11 +259,11 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
     if (initial.occurrence) {
       const undo = saveEvent(initial.occurrence, clean, scope, { title: initial.draft.title, description: initial.draft.description });
       navigation.goBack();
-      showSnack(t('Événement enregistré'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+      showSnack(t('Event saved'), { label: t('Undo'), run: undo }, { tone: 'success' });
     } else {
       const id = addEvent(clean);
       navigation.replace('Event', { id });
-      showSnack(t('Événement enregistré'), undefined, { tone: 'success' });
+      showSnack(t('Event saved'), undefined, { tone: 'success' });
     }
   };
   const save = (): void => {
@@ -311,7 +311,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={editing ? t('Modifier l’événement') : t('Nouvel événement')} closes onBack={() => navigation.goBack()} actions={<Button label={t('Enregistrer')} small busy={form.busy} onPress={save} style={styles.saveButton} />} />
+      <TopBar title={editing ? t('Edit event') : t('New event')} closes onBack={() => navigation.goBack()} actions={<Button label={t('Save')} small busy={form.busy} onPress={save} style={styles.saveButton} />} />
       {/* Sent with problems, how many is said by the action, as every form does (`FormMessage`). */}
       {form.message ? (
         <View style={styles.message}>
@@ -323,11 +323,11 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
         <RevealScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* The form as it opens is simply there; what changes after (a reminder added or removed) moves. */}
           <LayoutAnimationConfig skipEntering>
-            <TextField kind="text" value={draft.title} onChangeText={title => set({ title })} placeholder={t('Ajouter un titre')} accessibilityLabel={t('Titre')} style={styles.title} returnKeyType="done" maxLength={EVENT_LIMITS.title} autoFocus={!editing && !draft.title} />
+            <TextField kind="text" value={draft.title} onChangeText={title => set({ title })} placeholder={t('Add a title')} accessibilityLabel={t('Title')} style={styles.title} returnKeyType="done" maxLength={EVENT_LIMITS.title} autoFocus={!editing && !draft.title} />
 
             <RowPanel outline="card" style={styles.panel}>
               <ListRow
-                title={t('Toute la journée')}
+                title={t('All day')}
                 icon="clock"
                 onPress={() => setAllDay(!allDay)}
                 accessibilityRole="switch"
@@ -337,29 +337,29 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
               <WhenLine
                 day={weekdayDay(draft.start.slice(0, 10))}
                 time={allDay ? null : clockWords(clockPart(draft.start), prefs.twelveHours)}
-                dayLabel={t('Jour de début')}
-                timeLabel={t('Heure de début')}
+                dayLabel={t('Start day')}
+                timeLabel={t('Start time')}
                 onDay={() => setSheet('startDay')}
                 onTime={() => setSheet('startTime')}
               />
               <WhenLine
                 day={weekdayDay(lastDay)}
                 time={allDay ? null : clockWords(clockPart(draft.end), prefs.twelveHours)}
-                dayLabel={t('Jour de fin')}
-                timeLabel={t('Heure de fin')}
+                dayLabel={t('End day')}
+                timeLabel={t('End time')}
                 onDay={() => setSheet('endDay')}
                 onTime={() => setSheet('endTime')}
                 wrong={endProblem}
               />
               {endProblem ? <ProblemLine text={endProblem} /> : null}
               {!allDay && showZone ? (
-                <Field icon="globe" onPress={() => setSheet('zone')} label={t('Fuseau horaire')}>
+                <Field icon="globe" onPress={() => setSheet('zone')} label={t('Time zone')}>
                   <AppText variant="body">{(draft.timeZone || zone).replace(/_/g, ' ')}</AppText>
-                  {draft.timeZone && draft.timeZone !== zone ? <AppText variant="meta">{t('Heures sur place, à {zone}', { zone: draft.timeZone.replace(/_/g, ' ').split('/').pop() ?? draft.timeZone })}</AppText> : null}
+                  {draft.timeZone && draft.timeZone !== zone ? <AppText variant="meta">{t('Local times, in {zone}', { zone: draft.timeZone.replace(/_/g, ' ').split('/').pop() ?? draft.timeZone })}</AppText> : null}
                 </Field>
               ) : null}
-              {!allDay && !showZone ? <ChoiceLine icon="globe" words={t('Fuseau horaire')} link onPress={() => (setShowZone(true), setSheet('zone'))} /> : null}
-              <Field icon="refresh" onPress={() => setSheet('repeat')} label={t('Répéter')}>
+              {!allDay && !showZone ? <ChoiceLine icon="globe" words={t('Time zone')} link onPress={() => (setShowZone(true), setSheet('zone'))} /> : null}
+              <Field icon="refresh" onPress={() => setSheet('repeat')} label={t('Repeat')}>
                 <AppText variant="body">{repeatWords}</AppText>
               </Field>
             </RowPanel>
@@ -371,17 +371,17 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                   <View style={styles.grow}>
                     <Field
                       icon="mapPin"
-                      onPress={() => searchPlace({ value: draft.place, known, label: t('Lieu'), onChangeText: place => set({ place }) })}
-                      label={draft.place.trim() ? t('Lieu : {place}', { place: draft.place.trim() }) : t('Ajouter un lieu')}
+                      onPress={() => searchPlace({ value: draft.place, known, label: t('Place'), onChangeText: place => set({ place }) })}
+                      label={draft.place.trim() ? t('Place: {place}', { place: draft.place.trim() }) : t('Add a place')}
                     >
                       <AppText variant="body" color={draft.place.trim() ? theme.color.ink : theme.color.link}>
-                        {draft.place.trim() || t('Ajouter un lieu')}
+                        {draft.place.trim() || t('Add a place')}
                       </AppText>
                     </Field>
                   </View>
-                  <IconButton icon="person" label={t('L’adresse d’un contact')} onPress={() => setSheet('address')} />
+                  <IconButton icon="person" label={t('A contact’s address')} onPress={() => setSheet('address')} />
                 </View>
-                <Field icon="people" onPress={() => setSheet('guests')} label={t('Ajouter des personnes')}>
+                <Field icon="people" onPress={() => setSheet('guests')} label={t('Add people')}>
                   {draft.contactIds.length > 0 ? (
                     <View style={styles.people}>
                       {draft.contactIds.map(id => (
@@ -390,7 +390,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     </View>
                   ) : null}
                   <AppText variant="body" color={theme.color.link}>
-                    {draft.contactIds.length > 0 ? t('Ajouter quelqu’un') : t('Ajouter des personnes')}
+                    {draft.contactIds.length > 0 ? tc('event', 'Add someone') : t('Add people')}
                   </AppText>
                 </Field>
               </Organic>
@@ -405,24 +405,24 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     <ChoiceLine
                       icon={index === 0 ? 'bell' : null}
                       words={words}
-                      hint={t('Modifier le rappel')}
+                      hint={t('Edit the reminder')}
                       onPress={() => openReminder(minutes)}
                       onRemove={() => set({ reminders: draft.reminders.filter(each => each !== minutes) })}
-                      removeLabel={t('Retirer le rappel {when}', { when: words })}
+                      removeLabel={t('Remove the reminder {when}', { when: words })}
                     />
                   </Animated.View>
                 );
               })}
               {moreReminders ? (
                 <Animated.View layout={ROW_MOVE} entering={ROW_IN} exiting={ROW_OUT}>
-                  <ChoiceLine icon={draft.reminders.length === 0 ? 'bell' : null} words={t('Ajouter un rappel')} link onPress={() => openReminder(null)} />
+                  <ChoiceLine icon={draft.reminders.length === 0 ? 'bell' : null} words={t('Add a reminder')} link onPress={() => openReminder(null)} />
                 </Animated.View>
               ) : null}
               <Animated.View layout={ROW_MOVE} style={styles.labelsRow}>
                 <View style={[styles.fieldIcon, styles.labelsGlyph, namingLabel && labels.length === 0 ? styles.labelsGlyphNaming : null]}>
                   <Icon name="tag" size={22} color={theme.color.inkMuted} />
                 </View>
-                <View style={styles.grow} accessibilityRole="list" accessibilityLabel={t('Libellés')}>
+                <View style={styles.grow} accessibilityRole="list" accessibilityLabel={t('Labels')}>
                   <LabelChips
                     onNaming={setNamingLabel}
                     labels={labels}
@@ -434,13 +434,13 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                       }))
                     }
                     onCreate={name => {
-                      if (labelNameTaken(useLibraryStore.getState().calendarLabels, name)) return { problem: t('Ce libellé existe déjà : choisissez un autre nom.') };
+                      if (labelNameTaken(useLibraryStore.getState().calendarLabels, name)) return { problem: t('This label already exists: choose another name.') };
                       const id = createLabel(name);
                       setDraft(current => ({ ...current, labelIds: current.labelIds.length < EVENT_LIMITS.labels ? [...current.labelIds, id] : current.labelIds }));
                       return { id };
                     }}
                     maxLength={EVENT_LIMITS.labelName}
-                    words={{ add: t('Nouveau libellé'), placeholder: t('Nom du libellé'), field: t('Nom du nouveau libellé'), create: t('Créer le libellé') }}
+                    words={{ add: t('New label'), placeholder: t('Label name'), field: t('New label’s name'), create: t('Create the label') }}
                   />
                 </View>
               </Animated.View>
@@ -458,8 +458,8 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     <Icon name="text" size={22} color={theme.color.inkMuted} />
                   </View>
                   <View style={[styles.grow, styles.description]}>
-                    <RichField ref={description} value={draft.description} onChange={value => set({ description: value })} label={t('Description')} placeholder={t('Ajouter une description')} except={initial.occurrence?.seriesId ?? null} onSuggestions={setMentions} />
-                    <Button label={t('Mentionner')} icon="mention" kind="text" small onPress={() => description.current?.startMention()} />
+                    <RichField ref={description} value={draft.description} onChange={value => set({ description: value })} label={t('Description')} placeholder={t('Add a description')} except={initial.occurrence?.seriesId ?? null} onSuggestions={setMentions} />
+                    <Button label={t('Mention')} icon="mention" kind="text" small onPress={() => description.current?.startMention()} />
                   </View>
                 </View>
                 <View style={styles.linkRow}>
@@ -482,9 +482,9 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                         setRemoved(cleaned.removed);
                         if (cleaned.url !== draft.url) set({ url: cleaned.url });
                       }}
-                      placeholder={t('Ajouter un lien (billetterie, visio…)')}
-                      accessibilityLabel={t('Lien')}
-                      help={removed.length > 0 ? t('Pistage retiré : {names}', { names: removed.join(', ') }) : undefined}
+                      placeholder={t('Add a link (tickets, video call…)')}
+                      accessibilityLabel={t('Link')}
+                      help={removed.length > 0 ? t('Tracking removed: {names}', { names: removed.join(', ') }) : undefined}
                     />
                   </View>
                 </View>
@@ -496,12 +496,12 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     <AppText variant="body" numberOfLines={1} style={styles.grow}>
                       {file.name}
                     </AppText>
-                    <IconButton icon="close" size={20} label={t('Retirer {name}', { name: file.name })} onPress={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
+                    <IconButton icon="close" size={20} label={t('Remove {name}', { name: file.name })} onPress={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
                   </View>
                 ))}
                 {/* Lines of the form, as « Ajouter un rappel »: the glyph in its slot, the words on the rows' column. */}
-                <ChoiceLine icon="image" words={t('Joindre une photo')} link onPress={() => later(attach(true))} />
-                <ChoiceLine icon="file" words={t('Joindre un fichier')} link onPress={() => later(attach(false))} />
+                <ChoiceLine icon="image" words={t('Attach a photo')} link onPress={() => later(attach(true))} />
+                <ChoiceLine icon="file" words={t('Attach a file')} link onPress={() => later(attach(false))} />
               </Organic>
             </Animated.View>
           </LayoutAnimationConfig>
@@ -509,20 +509,20 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
         {mentions}
       </KeyboardAvoidingView>
 
-      <DayPickerSheet visible={sheet === 'startDay'} title={t('Jour de début')} day={draft.start.slice(0, 10)} today={today} weekStart={prefs.weekStart} onDismiss={() => setSheet(null)} onDay={day => setStart(allDay ? day : `${day}${draft.start.slice(10)}`)} />
+      <DayPickerSheet visible={sheet === 'startDay'} title={t('Start day')} day={draft.start.slice(0, 10)} today={today} weekStart={prefs.weekStart} onDismiss={() => setSheet(null)} onDay={day => setStart(allDay ? day : `${day}${draft.start.slice(10)}`)} />
       <DayPickerSheet
         visible={sheet === 'endDay'}
-        title={t('Jour de fin')}
+        title={t('End day')}
         day={lastDay}
         today={today}
         weekStart={prefs.weekStart}
         onDismiss={() => setSheet(null)}
         onDay={day => setEnd(allDay ? addDays(day < draft.start ? draft.start : day, 1) : `${day}${draft.end.slice(10)}`)}
       />
-      <TimeSheet visible={sheet === 'startTime'} title={t('Heure de début')} value={clockPart(draft.start)} twelveHours={prefs.twelveHours} onDismiss={() => setSheet(null)} onTime={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} />
+      <TimeSheet visible={sheet === 'startTime'} title={t('Start time')} value={clockPart(draft.start)} twelveHours={prefs.twelveHours} onDismiss={() => setSheet(null)} onTime={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} />
       <TimeSheet
         visible={sheet === 'endTime'}
-        title={t('Heure de fin')}
+        title={t('End time')}
         value={clockPart(draft.end)}
         twelveHours={prefs.twelveHours}
         onDismiss={() => setSheet(null)}
@@ -532,7 +532,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
           setEnd(end <= draft.start ? `${addDays(draft.start, 1)}T${clock}` : end);
         }}
       />
-      <Sheet visible={sheet === 'color'} onDismiss={() => setSheet(null)} title={t('Couleur')}>
+      <Sheet visible={sheet === 'color'} onDismiss={() => setSheet(null)} title={t('Colour')}>
         {/* A pick is the answer: the sheet goes with it, as Google Calendar's. */}
         <View style={styles.colorSheet}>
           <LineColorPicker
@@ -542,18 +542,18 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
               setSheet(null);
             }}
             allowNone
-            noneLabel={t('Couleur de ses libellés')}
-            accessibilityLabel={t('Couleur')}
+            noneLabel={t('Its labels’ colour')}
+            accessibilityLabel={t('Colour')}
           />
         </View>
       </Sheet>
       <ZoneSheet visible={sheet === 'zone'} zone={draft.timeZone || zone} onDismiss={() => setSheet(null)} onZone={timeZone => set({ timeZone })} />
       <RepeatSheet visible={sheet === 'repeat'} start={draft.start} rrule={draft.rrule} today={today} weekStart={prefs.weekStart} onDismiss={() => setSheet(null)} onRule={rrule => set({ rrule })} />
       <ReminderSheet visible={sheet === 'reminder'} allDay={allDay} chosen={draft.reminders} replacing={replacing} onDismiss={() => setSheet(null)} onPick={pickReminder} />
-      <ContactPickerSheet visible={sheet === 'guests'} title={t('Ajouter des personnes')} onDismiss={() => setSheet(null)} onPick={contact => set({ contactIds: [...new Set([...draft.contactIds, contact.id])] })} />
+      <ContactPickerSheet visible={sheet === 'guests'} title={t('Add people')} onDismiss={() => setSheet(null)} onPick={contact => set({ contactIds: [...new Set([...draft.contactIds, contact.id])] })} />
       <ContactPickerSheet
         visible={sheet === 'address'}
-        title={t('L’adresse d’un contact')}
+        title={t('A contact’s address')}
         only={contact => contact.addresses.some(address => addressLine(address))}
         onDismiss={() => setSheet(null)}
         onPick={contact => set({ place: addressLine(contact.addresses.find(address => addressLine(address))!) })}

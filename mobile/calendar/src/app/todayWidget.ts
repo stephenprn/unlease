@@ -74,13 +74,13 @@ export interface TodayPayload {
 function titleOf(item: DayItem): string {
   switch (item.kind) {
     case 'event':
-      return item.occurrence.event.title.trim() || t('Sans titre');
+      return item.occurrence.event.title.trim() || t('Untitled');
     case 'birthday':
       return birthdayTitle(item.birthday.name, item.birthday.age);
     case 'reminder':
-      return item.reminder.title || t('Sans titre');
+      return item.reminder.title || t('Untitled');
     case 'page':
-      return item.page.title || t('Sans titre');
+      return item.page.title || t('Untitled');
   }
 }
 
@@ -129,19 +129,19 @@ export function todayPayload(state: LibraryState, prefs: CalendarPrefs, now: num
       label: weekdayDay(day, year),
       weather: weather && weather.day === day ? weatherWords(weather) : '',
       rows: [...plan.allDay, ...plan.timed].map(row => asRow(row, day, prefs.twelveHours)),
-      tomorrowTitle: `${t('Demain')} · ${weekdayDay(addDays(day, 1), year)}`,
+      tomorrowTitle: `${t('Tomorrow')} · ${weekdayDay(addDays(day, 1), year)}`,
       tomorrow: tomorrow ? tomorrow.rows.map(row => asRow(row, tomorrow.day, prefs.twelveHours)) : [],
-      more: tomorrow && tomorrow.more > 0 ? t('Et {events} demain', { events: plural(tomorrow.more, 'autre événement', 'autres événements') }) : '',
+      more: tomorrow && tomorrow.more > 0 ? t('And {events} tomorrow', { events: plural(tomorrow.more, 'more event', 'more events') }) : '',
       moreOpen: `day/${addDays(day, 1)}`,
     };
   });
   return {
     id: 'today',
     days,
-    overdueTitle: t('En retard'),
+    overdueTitle: t('Overdue'),
     overdue: gathered.overdue.map(reminder => ({
       key: reminder.key,
-      title: reminder.title || t('Sans titre'),
+      title: reminder.title || t('Untitled'),
       time: overdueWords(reminder, first, prefs.twelveHours),
       place: '',
       color: LAYER_COLORS.reminder,
@@ -151,7 +151,7 @@ export function todayPayload(state: LibraryState, prefs: CalendarPrefs, now: num
       startAt: reminder.at,
       endAt: reminder.at,
     })),
-    words: { now: t('En cours'), empty: t('Rien de prévu aujourd’hui'), done: t('Rien d’autre aujourd’hui'), more: t('+{count}') },
+    words: { now: t('Happening now'), empty: t('Nothing planned today'), done: t('Nothing else today'), more: t('+{count}') },
   };
 }
 

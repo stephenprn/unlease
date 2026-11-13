@@ -32,7 +32,7 @@ export function PublishSection({ server, admin, overlays }: { server: ServerConf
       admin.setSettings(await saveServerSettings(server, { calendar: patch }));
       showSnack(done, undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -42,10 +42,10 @@ export function PublishSection({ server, admin, overlays }: { server: ServerConf
     <>
       <ListRow
         icon="share"
-        title={t('Publier mon agenda')}
-        supporting={path ? t('Vos événements, à l’adresse ci-dessous.') : t('Désactivé : rien n’est servi hors de l’application.')}
+        title={t('Publish my calendar')}
+        supporting={path ? t('Your events, at the address below.') : t('Off: nothing is served outside the app.')}
         disabled={busy}
-        onPress={() => later(save({ publish: !path }, path ? t('Agenda dépublié') : t('Agenda publié')))}
+        onPress={() => later(save({ publish: !path }, path ? t('Calendar unpublished') : t('Calendar published')))}
         trailing={<SwitchMark checked={!!path} />}
         accessibilityRole="switch"
         accessibilityState={{ checked: !!path, disabled: busy }}
@@ -56,25 +56,25 @@ export function PublishSection({ server, admin, overlays }: { server: ServerConf
             {address}
           </AppText>
           <View style={styles.row}>
-            <Button label={t('Copier l’adresse')} icon="copy" kind="tonal" small onPress={() => later(copyText(address).then(done => done && showSnack(t('Adresse copiée'), undefined, { tone: 'success' })))} />
-            <Button label={t('Partager')} icon="share" kind="text" small onPress={() => later(Share.share({ message: address }))} />
+            <Button label={t('Copy the address')} icon="copy" kind="tonal" small onPress={() => later(copyText(address).then(done => done && showSnack(t('Address copied'), undefined, { tone: 'success' })))} />
+            <Button label={t('Share')} icon="share" kind="text" small onPress={() => later(Share.share({ message: address }))} />
             <Button
-              label={t('Nouvelle adresse')}
+              label={t('New address')}
               icon="refresh"
               kind="text"
               small
               disabled={busy}
               onPress={() =>
                 overlays.ask({
-                  title: t('Nouvelle adresse ?'),
-                  message: t('L’adresse actuelle cesse de marcher : les agendas abonnés devront prendre la nouvelle.'),
-                  confirmLabel: t('Nouvelle adresse'),
-                  run: () => later(save({ publish: 'renew' }, t('Nouvelle adresse créée'))),
+                  title: t('New address?'),
+                  message: t('The current address stops working: subscribed calendars will need the new one.'),
+                  confirmLabel: t('New address'),
+                  run: () => later(save({ publish: 'renew' }, t('New address made'))),
                 })
               }
             />
           </View>
-          <AppText variant="meta">{t('Dans Google Agenda : Autres agendas, +, « À partir de l’URL », puis collez l’adresse. Google la relit de lui-même, toutes les quelques heures.')}</AppText>
+          <AppText variant="meta">{t('In Google Calendar: Other calendars, +, “From URL”, then paste the address. Google reads it again on its own every few hours.')}</AppText>
         </View>
       ) : null}
     </>

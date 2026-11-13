@@ -12,12 +12,12 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, vi } from 'vitest';
 
-import { addPagesEnglish } from '@unlease/pages/i18n';
+import { addPagesFrench } from '@unlease/pages/i18n';
 
 import { installApp } from '../src/modules';
 
 // Every app's English (Pages' brings Carnet's): a sentence is the same in either app's tests.
-addPagesEnglish();
+addPagesFrench();
 // The app loads once the test file has set its mocks (`vi.mock`), so it takes the mocked modules too.
 beforeAll(async () => {
   if (import.meta.env.UNLEASE_TEST_APP === 'calendar') {

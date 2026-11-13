@@ -15,7 +15,7 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 
 import type { GlyphName } from '@unlease/design/glyphs';
 import { pebbleTurn } from '@unlease/design/pebbles';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import {
   DRAWING_INKS,
   DRAWING_SIZES,
@@ -109,7 +109,7 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0,
   const [inksAt, setInksAt] = useState(0);
   const inkWidth = inkCellWidth(paletteWidth - inksAt);
   return (
-    <View style={[styles.tools, edge ? styles.edge : null, { paddingBottom: inset }]} accessibilityRole="toolbar" accessibilityLabel={t('Outils de dessin')}>
+    <View style={[styles.tools, edge ? styles.edge : null, { paddingBottom: inset }]} accessibilityRole="toolbar" accessibilityLabel={t('Drawing tools')}>
       <View style={styles.row}>
         {TOOLS.map((each, index) => (
           <IconButton key={each} icon={GLYPHS[each]} label={DRAWING_TOOL_NAMES[each]} selected={tool === each} tone={tone} shape={index} onPress={() => editor.chooseTool(each)} />
@@ -117,18 +117,18 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0,
         <View style={styles.spring} />
         {history ? (
           <>
-            <IconButton icon="undo" label={tc('undo', 'Annuler')} shape={1} disabled={!editor.canUndo} onPress={editor.undo} />
-            <IconButton icon="undo" label={t('Rétablir')} shape={2} disabled={!editor.canRedo} onPress={editor.redo} style={styles.mirrored} />
+            <IconButton icon="undo" label={t('Undo')} shape={1} disabled={!editor.canUndo} onPress={editor.undo} />
+            <IconButton icon="undo" label={t('Redo')} shape={2} disabled={!editor.canRedo} onPress={editor.redo} style={styles.mirrored} />
           </>
         ) : null}
-        <IconButton icon="trash" label={t('Tout effacer')} shape={3} disabled={editor.strokes.length === 0} onPress={editor.clear} />
+        <IconButton icon="trash" label={t('Clear all')} shape={3} disabled={editor.strokes.length === 0} onPress={editor.clear} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.palette} contentContainerStyle={styles.row} onLayout={event => setPaletteWidth(event.nativeEvent.layout.width)}>
         {background ? (
           <>
             <IconButton
               icon="palette"
-              label={t('Fond : {name}', { name: drawingBackgroundName(background.value) })}
+              label={t('Background: {name}', { name: drawingBackgroundName(background.value) })}
               shape={3}
               onPress={background.onPress}
               style={background.value === DRAWING_NONE ? null : backgroundPaint(theme, background.value)}
@@ -136,13 +136,13 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0,
             <View style={styles.divider} />
           </>
         ) : null}
-        <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Épaisseur')}>
+        <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Thickness')}>
           {DRAWING_SIZES.map(size => (
             <SizeChoice key={size} size={size} dot={sizeDot(pen, size)} turn={pebbleTurn(size)} selected={size === sizes[pen]} fill={fill} onPress={() => editor.chooseSize(size)} />
           ))}
         </View>
         <View style={styles.divider} />
-        <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Couleur du trait')} onLayout={event => setInksAt(event.nativeEvent.layout.x)}>
+        <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Stroke colour')} onLayout={event => setInksAt(event.nativeEvent.layout.x)}>
           {DRAWING_INKS.map((key, index) => (
             <InkChoice key={key} ink={key} turn={pebbleTurn(index)} selected={key === ink} color={palette[key]} width={inkWidth} onPress={() => editor.chooseInk(key)} />
           ))}

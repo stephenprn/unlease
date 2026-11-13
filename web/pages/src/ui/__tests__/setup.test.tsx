@@ -44,6 +44,7 @@ function fakeServer(notes = 0, done = notes > 0) {
     drive: { provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false },
     calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
     seerr: { url: '', keyHint: null },
+    immich: { url: '', keyHint: null },
   });
   vi.stubGlobal(
     'fetch',

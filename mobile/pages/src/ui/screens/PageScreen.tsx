@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommonActions, StackActions } from '@react-navigation/native';
 
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE, type BlockTarget } from '@unlease/pages/models/blocks';
 import { ancestorPages, isInBin } from '@unlease/pages/services/blocks';
 import { isPrivatePage } from '@unlease/pages/services/pagesAsk';
@@ -68,7 +68,7 @@ function Breadcrumb({ id, onOpen, onFold }: { id: string; onOpen: (id: string) =
   const folded = ids.length - 2;
   const shown = folded > 0 ? [ids[0]!, null, ids[ids.length - 1]!] : ids;
   return (
-    <View style={styles.crumbs} accessibilityRole="toolbar" accessibilityLabel={t('Pages au-dessus')}>
+    <View style={styles.crumbs} accessibilityRole="toolbar" accessibilityLabel={t('Pages above')}>
       {shown.map((crumb, index) => (
         <React.Fragment key={crumb ?? 'fold'}>
           {index > 0 ? <Icon name="chevronRight" size={14} color={theme.color.inkMuted} /> : null}
@@ -80,7 +80,7 @@ function Breadcrumb({ id, onOpen, onFold }: { id: string; onOpen: (id: string) =
               </AppText>
             </Tappable>
           ) : (
-            <Tappable onPress={onFold} hitSlop={{ top: 6, bottom: 6 }} style={[styles.crumb, styles.fold]} accessibilityRole="button" accessibilityLabel={t('{pages} au-dessus', { pages: plural(folded, 'page') })}>
+            <Tappable onPress={onFold} hitSlop={{ top: 6, bottom: 6 }} style={[styles.crumb, styles.fold]} accessibilityRole="button" accessibilityLabel={t('{pages} above', { pages: plural(folded, 'page') })}>
               <AppText variant="metaStrong">…</AppText>
             </Tappable>
           )}
@@ -209,7 +209,7 @@ function TitleField({ id, readOnly, onFocusChange }: { id: string; readOnly: boo
       cursorColor={theme.color.focus}
       maxLength={PAGES_TEXT_LIMITS.block.text}
       style={[styles.title, { fontFamily: fontFamily(theme, 'Bold') }]}
-      accessibilityLabel={t('Titre de la page')}
+      accessibilityLabel={t('Page title')}
     />
   );
 }
@@ -224,21 +224,21 @@ function BinBanner({ id, onDelete }: { id: string; onDelete: () => void }) {
   return (
     <Organic outline="panel" style={styles.binBanner}>
       <AppText variant="meta" style={styles.binText}>
-        {own ? t('Cette page est dans la corbeille : elle ne peut pas être modifiée.') : t('Une page au-dessus de celle-ci est dans la corbeille.')}
+        {own ? t('This page is in the bin: it can’t be edited.') : t('A page above this one is in the bin.')}
       </AppText>
       {own ? (
         <View style={styles.binActions}>
           <Button
             kind="tonal"
             small
-            label={t('Restaurer')}
+            label={t('Restore')}
             icon="restore"
             onPress={() => {
               const undo = restorePage(id);
-              showSnack(t('Page restaurée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+              showSnack(t('Page restored'), { label: t('Undo'), run: undo }, { tone: 'success' });
             }}
           />
-          <Button kind="text" small label={t('Supprimer définitivement')} onPress={onDelete} />
+          <Button kind="text" small label={t('Delete forever')} onPress={onDelete} />
         </View>
       ) : null}
     </Organic>
@@ -429,10 +429,10 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
         {/* Back where every page's bar holds it. */}
         <View style={{ paddingTop: insets.top }}>
           <View style={styles.bar}>
-            <IconButton icon="back" label={t('Retour')} onPress={() => navigation.goBack()} />
+            <IconButton icon="back" label={t('Back')} onPress={() => navigation.goBack()} />
           </View>
         </View>
-        <EmptyState scene="trash" title={t('Introuvable')} text={t('Cette page n’existe plus.')} />
+        <EmptyState scene="trash" title={t('Not found')} text={t('This page no longer exists.')} />
       </View>
     );
   }
@@ -442,9 +442,9 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
   const above = ancestorPages(useLibraryStore.getState().blocks, id);
   const foldedItems = above.slice(1, -1).map(page => ({ label: page.icon ? `${page.icon} ${page.text.trim() || t(UNTITLED_PAGE)}` : page.text.trim() || t(UNTITLED_PAGE), icon: 'page' as const, onPress: () => openPage(page.id) }));
   const menuItems = [
-    ...(ask && !kept ? [{ label: t('Demander à Claude'), icon: 'sparkle' as const, onPress: () => openPagesAsk(id) }] : []),
+    ...(ask && !kept ? [{ label: t('Ask Claude'), icon: 'sparkle' as const, onPress: () => openPagesAsk(id) }] : []),
     {
-      label: t('Ajouter une sous-page'),
+      label: t('Add a sub-page'),
       icon: 'pagePlus' as const,
       onPress: () => {
         flushAll();
@@ -453,9 +453,9 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
         openPage(child);
       },
     },
-    { label: t('Déplacer vers…'), icon: 'transfer' as const, onPress: () => openPageSheet({ kind: 'movePage', page: id }) },
+    { label: t('Move to…'), icon: 'transfer' as const, onPress: () => openPageSheet({ kind: 'movePage', page: id }) },
     {
-      label: t('Dupliquer'),
+      label: t('Duplicate'),
       icon: 'copy' as const,
       onPress: () => {
         flushAll();
@@ -464,36 +464,44 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
       },
     },
     {
-      label: t('Partager en Markdown'),
+      label: t('Share as Markdown'),
       icon: 'share' as const,
       onPress: () => {
         flushAll();
         Share.share({ message: pageMarkdown(id), title }).catch(() => {});
       },
     },
+    {
+      label: t('Version history'),
+      icon: 'clock' as const,
+      onPress: () => {
+        flushAll();
+        navigation.navigate('Versions', { page: id });
+      },
+    },
     ...(ask && (ownKept || !kept)
       ? [
           ownKept
-            ? { label: t('Montrer à Claude'), icon: 'eye' as const, onPress: () => setPagePrivate(id, false) }
+            ? { label: t('Show to Claude'), icon: 'eye' as const, onPress: () => setPagePrivate(id, false) }
             : {
-                label: t('Garder hors de Claude'),
+                label: t('Keep away from Claude'),
                 icon: 'eyeOff' as const,
                 onPress: () => {
                   setPagePrivate(id, true);
-                  showSnack(t('Cette page et ses sous-pages ne seront plus envoyées à Claude'), undefined, { tone: 'success' });
+                  showSnack(t('This page and its sub-pages will no longer be sent to Claude'), undefined, { tone: 'success' });
                 },
               },
         ]
       : []),
     {
-      label: t('Mettre à la corbeille'),
+      label: t('Move to bin'),
       icon: 'trash' as const,
       danger: true,
       onPress: () => {
         flushAll();
         const undo = trashPage(id);
         navigation.goBack();
-        showSnack(t('Page placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+        showSnack(t('Page moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
       },
     },
   ];
@@ -504,18 +512,18 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
       <PageContext.Provider value={context}>
         <View style={{ paddingTop: insets.top }}>
           <View style={styles.bar}>
-            <IconButton icon="back" label={t('Retour')} onPress={() => navigation.goBack()} />
+            <IconButton icon="back" label={t('Back')} onPress={() => navigation.goBack()} />
             <AppText variant="title" numberOfLines={1} style={[styles.barTitle, { opacity: titleUnder ? 1 : 0 }]} accessibilityElementsHidden={!titleUnder}>
               {icon ? `${icon} ${title}` : title}
             </AppText>
             {binned ? null : (
               <>
-                <IconButton icon="undo" label={tc('undo', 'Annuler')} shape={1} disabled={!canUndo(id)} onPress={() => step('undo')} />
-                <IconButton icon="undo" label={t('Rétablir')} shape={2} disabled={!canRedo(id)} onPress={() => step('redo')} style={styles.mirrored} />
+                <IconButton icon="undo" label={t('Undo')} shape={1} disabled={!canUndo(id)} onPress={() => step('undo')} />
+                <IconButton icon="undo" label={t('Redo')} shape={2} disabled={!canRedo(id)} onPress={() => step('redo')} style={styles.mirrored} />
                 {ask && !kept ? (
                   <IconButton
                     icon="sparkle"
-                    label={t('Demander à Claude')}
+                    label={t('Ask Claude')}
                     shape={3}
                     onPress={() => {
                       flushAll();
@@ -523,7 +531,7 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
                     }}
                   />
                 ) : null}
-                <IconButton icon="more" label={t('Plus d’actions')} shape={0} onPress={() => setMenu(true)} />
+                <IconButton icon="more" label={t('More actions')} shape={0} onPress={() => setMenu(true)} />
               </>
             )}
           </View>
@@ -540,14 +548,14 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
               <Edited id={id} />
             </View>
             {icon ? (
-              <Tappable accessibilityLabel={t('Changer l’icône')} disabled={binned} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} pebble={1} style={styles.icon}>
+              <Tappable accessibilityLabel={t('Change the icon')} disabled={binned} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} pebble={1} style={styles.icon}>
                 <AppText style={styles.iconGlyph}>{icon}</AppText>
               </Tappable>
             ) : binned ? null : (
               <Tappable onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} hitSlop={{ top: 4, bottom: 4 }} style={styles.addIcon} accessibilityRole="button">
                 <Icon name="smiley" size={18} color={theme.color.inkMuted} />
                 <AppText variant="label" color={theme.color.inkMuted}>
-                  {t('Ajouter une icône')}
+                  {t('Add an icon')}
                 </AppText>
               </Tappable>
             )}
@@ -564,9 +572,9 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
               </LayoutAnimationConfig>
             </View>
             {empty && !binned ? (
-              <Tappable noTint onPress={writeAtEnd} style={styles.hint} accessibilityLabel={t('Écrire à la fin de la page')}>
+              <Tappable noTint onPress={writeAtEnd} style={styles.hint} accessibilityLabel={t('Write at the end of the page')}>
                 <AppText variant="body" color={theme.color.inkFaint}>
-                  {titleFocused ? t('Entrée pour écrire la page') : t('Touchez ici pour écrire. Le + de la barre ajoute un titre, une liste, un tableau, une image…')}
+                  {titleFocused ? t('Enter to write the page') : t('Tap here to write. The + in the bar adds a heading, a list, a table, a picture…')}
                 </AppText>
               </Tappable>
             ) : null}
@@ -579,7 +587,7 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
               ownDisabled
               onPress={writeAtEnd}
               style={styles.end}
-              accessibilityLabel={t('Écrire à la fin de la page')}
+              accessibilityLabel={t('Write at the end of the page')}
               accessibilityElementsHidden={empty && !binned}
               importantForAccessibility={empty && !binned ? 'no-hide-descendants' : 'auto'}
             />

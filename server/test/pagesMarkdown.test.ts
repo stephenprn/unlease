@@ -56,4 +56,18 @@ describe('Pages in a backup’s Markdown', () => {
     expect(page!.text).toMatch(/- 2026-11-04 \d{2}:\d{2}–\d{2}:\d{2} Dîner chez Paul \(Lyon\)/);
     expect(page!.text).not.toContain('Vieux');
   });
+
+  it('writes an Immich block as a link into Immich, with its caption', () => {
+    const album = '0a1b2c3d-1111-4222-8333-444455556666';
+    const all = [
+      block('p1', { parentId: null, position: 'a0', kind: 'page', text: 'Vacances', createdAt: 0 }),
+      block('i1', { parentId: 'p1', position: 'a0', kind: 'immich', fileName: 'Lisbonne', immichAlbumId: album, caption: 'Juillet', createdAt: 0 }),
+    ];
+    const blocks = all.map(blockFromRecord);
+    const [page] = pagesMarkdown(blocks, all, layoutPages(blocks, { kept: true }), 0, 'http://192.168.1.20:2283');
+    expect(page!.text).toContain(`[Immich album "Lisbonne"](http://192.168.1.20:2283/albums/${album})`);
+    expect(page!.text).toContain('Juillet');
+    const [plain] = pagesMarkdown(blocks, all, layoutPages(blocks, { kept: true }), 0);
+    expect(plain!.text).toContain('Immich album "Lisbonne"');
+  });
 });

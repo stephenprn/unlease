@@ -27,11 +27,11 @@ export function CaretLink({ href }: { readonly href: string }) {
   const theme = useTheme();
   const shown = prettyUrl(href, 120);
   const open = (): void => {
-    Linking.openURL(href).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+    Linking.openURL(href).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
   };
   return (
     <Animated.View entering={ROW_IN} exiting={ROW_OUT} style={styles.foot}>
-      <Tappable onPress={open} accessibilityRole="link" accessibilityLabel={t('Ouvrir {address}', { address: shown })} style={styles.row}>
+      <Tappable onPress={open} accessibilityRole="link" accessibilityLabel={t('Open {address}', { address: shown })} style={styles.row}>
         <Icon name="external" size={20} color={theme.color.link} />
         <View style={styles.fill}>
           <AppText variant="label" color={theme.color.link} numberOfLines={1}>

@@ -192,10 +192,10 @@ export function KeepWizard({ onFlow, onImported, onBoard }: KeepWizardProps) {
       <ImportFrame step="source" title={KEEP_WIZARD_WORDS.sourceTitle} lead={KEEP_WIZARD_WORDS.sourceLead}>
         <ImportSheet>
           <ImportBlock>
-            <ImportInstructions steps={[t('Ouvrez takeout.google.com sur un ordinateur ou ce téléphone.'), KEEP_WIZARD_WORDS.takeoutDeselect, KEEP_WIZARD_WORDS.takeoutPick]} />
+            <ImportInstructions steps={[t('Open takeout.google.com on a computer or this phone.'), KEEP_WIZARD_WORDS.takeoutDeselect, KEEP_WIZARD_WORDS.takeoutPick]} />
             {/* The form's own line, its glyph saying it as well as its colour. */}
             <FormMessage message={refused} />
-            <Button label={t('Choisir l’archive')} icon="download" busy={picking} onPress={() => void pick()} style={styles.stretch} />
+            <Button label={t('Choose the archive')} icon="download" busy={picking} onPress={() => void pick()} style={styles.stretch} />
             <AppText variant="meta">{`${KEEP_WIZARD_WORDS.keeps} ${IMPORT_WORDS.private}`}</AppText>
           </ImportBlock>
         </ImportSheet>
@@ -211,8 +211,8 @@ export function KeepWizard({ onFlow, onImported, onBoard }: KeepWizardProps) {
         title={IMPORT_WORDS.previewTitle}
         lead={IMPORT_WORDS.previewLead}
         onBack={toSource}
-        back={<Button kind="text" label={t('Retour')} onPress={toSource} />}
-        forward={<Button label={t('Continuer')} onPress={() => setStep('choices')} />}
+        back={<Button kind="text" label={t('Back')} onPress={toSource} />}
+        forward={<Button label={t('Continue')} onPress={() => setStep('choices')} />}
       >
         <ImportSheet>
           <ImportCounts lines={counts} />
@@ -244,7 +244,7 @@ export function KeepWizard({ onFlow, onImported, onBoard }: KeepWizardProps) {
         title={IMPORT_WORDS.choicesTitle}
         lead={IMPORT_WORDS.choicesLead}
         onBack={toPreview}
-        back={<Button kind="text" label={t('Retour')} onPress={toPreview} />}
+        back={<Button kind="text" label={t('Back')} onPress={toPreview} />}
         forward={<Button label={keepImportAction(count)} icon="download" busy={form.busy} onPress={() => void form.submit(run)} />}
       >
         <KeepChoicesBody

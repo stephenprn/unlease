@@ -99,7 +99,7 @@ export function useAdmin(server: ServerConfig | null): Admin {
 
   const wasLeaving = useRef(leaving);
   useEffect(() => {
-    if (wasLeaving.current && !leaving && settings?.drive.provider === null) showSnack(t('Seafile désactivé : vos fichiers sont sur le serveur.'));
+    if (wasLeaving.current && !leaving && settings?.drive.provider === null) showSnack(t('Seafile turned off: your files are on the server.'));
     wasLeaving.current = leaving;
   }, [leaving, settings]);
 
@@ -121,7 +121,7 @@ export function useBackups(server: ServerConfig | null, configured: boolean, ver
     let live = true;
     fetchBackups(server).then(
       list => live && setRead({ key, snapshots: list.snapshots, error: null }),
-      (failure: unknown) => live && setRead({ key, snapshots: null, error: failure instanceof Error ? failure.message : tx('Sauvegardes indisponibles') }),
+      (failure: unknown) => live && setRead({ key, snapshots: null, error: failure instanceof Error ? failure.message : tx('Backups unavailable') }),
     );
     return () => {
       live = false;

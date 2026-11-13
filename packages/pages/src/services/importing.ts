@@ -11,7 +11,11 @@
  *   sub-pages are in the folder of its name beside it (Notion's `Voyage 1a2b….md` and `Voyage
  *   1a2b…/`, the 32-hex id cut from titles); a folder with no file of its name is a page of its name
  *   holding what is in it (an Obsidian vault's folders; its folder note `X/X.md` is its content).
- *   An emoji leading a title is the page's icon.
+ *   Its icon: Notion's « Markdown & CSV » export leaves the pages' icons out, its HTML export shows
+ *   each over its title (`notionPageIcon`), so the HTML export dropped beside the Markdown one gives
+ *   each page its icon (matched by Notion's id: nothing else is read of it). An emoji is kept; a
+ *   picture (a custom icon, Notion's own drawn ones) is not, as a page's icon is an emoji, and the
+ *   preview says so. Else an emoji leading a title is the page's icon.
  * - A sub-page sits where its parent links to it on a line of its own (Notion's way), else after
  *   its content, by title.
  * - A database's CSV (Notion's `_all` one when both are there) is a table, its columns typed from
@@ -27,9 +31,10 @@
  *
  * Imported again, a page whose title is already at the same place is kept as it is (« Déjà là »),
  * and only its new sub-pages are added under it: the same export twice adds nothing, an export made
- * later adds what was written since.
+ * later adds what was written since. One thing more: a page here with no icon takes the export's
+ * (pages imported before the icons were read get theirs), taken off again with the import.
  */
-import { getLocale, t, tx } from '@unlease/core/i18n';
+import { getLocale, t, tc, tx } from '@unlease/core/i18n';
 import { monthNames, plural } from '@unlease/core/services/format';
 import { placeAt, positionsBetween, type Placed } from '@unlease/core/services/fractionalIndex';
 import { createId } from '@unlease/core/services/ids';
@@ -61,9 +66,15 @@ export interface ExportFile {
 /** Notion's export (its pages carry their 32-hex ids), or Markdown from anywhere else. */
 export type ExportKind = 'notion' | 'markdown';
 
-/** The files a client reads as words: the rest it keeps as bytes, for the pages to show. */
+/** The files a client reads as words: the rest it keeps as bytes, for the pages to show (an HTML file both: Notion's HTML export gives the icons, a page may show one as a file). */
 export function isExportText(path: string): boolean {
-  return PAGE_EXTENSIONS.has(extensionOf(path)) || extensionOf(path) === 'csv';
+  return PAGE_EXTENSIONS.has(extensionOf(path)) || extensionOf(path) === 'csv' || isExportHtml(path);
+}
+
+/** A page of Notion's HTML export (or an HTML file a page shows): read for its icon, kept as bytes too. */
+export function isExportHtml(path: string): boolean {
+  const extension = extensionOf(path);
+  return extension === 'html' || extension === 'htm';
 }
 
 /** What a client takes from a folder or an archive: hidden files (`.obsidian/`, `.DS_Store`) and the system's leftovers are no one's pages. */
@@ -81,6 +92,8 @@ export function isExportArchive(path: string): boolean {
 /** A file of the export a page shows, attached once the pages are written. */
 export interface ExportAsset {
   readonly path: string;
+  /** Its path as the client gave it (the key of its bytes): `path` loses the folders everything sat in. */
+  readonly source: string;
   readonly name: string;
   readonly mime: string;
   readonly bytes: number;
@@ -107,6 +120,8 @@ export interface ReadPage {
   readonly id: string;
   readonly title: string;
   readonly icon: string | null;
+  /** Notion's icon was a picture: a page's icon is an emoji, so it comes without. */
+  readonly iconPicture: boolean;
   readonly parent: string | null;
   /** Its sub-pages, in the order they sit in it. */
   readonly children: readonly string[];
@@ -144,6 +159,8 @@ export interface ExportRead {
 
 const PAGE_EXTENSIONS = new Set(['md', 'markdown', 'mdown', 'mkd', 'txt']);
 const NOTION_ID = /\s+([0-9a-f]{32})$/i;
+/** The folder Notion puts its export in, in each archive. */
+const NOTION_WRAPPER = /^Export-[\w-]+$/i;
 const NOTION_URL_ID = /^https?:\/\/(?:[\w-]+\.)?notion\.(?:so|site)\/.*?([0-9a-f]{32})(?:[?#]|$)/i;
 
 function extensionOf(path: string): string {
@@ -192,6 +209,41 @@ function iconAndTitle(shown: string): { readonly icon: string | null; readonly t
     if (rest) return { icon: emoji, title: rest };
   }
   return { icon: null, title: shown };
+}
+
+/** A page's icon in Notion's HTML export: an emoji, or a picture (its address in the export or on the web). */
+export type NotionIcon = { readonly emoji: string } | { readonly picture: string };
+
+const ENTITIES: Readonly<Record<string, string>> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0' };
+
+/** HTML's words: its tags dropped, its entities read. */
+function htmlWords(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
+    if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? whole;
+    const code = name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+  });
+}
+
+/**
+ * The icon Notion's HTML export shows over a page's title, in its header:
+ * `<div class="page-header-icon undefined"><span class="icon">🚀</span></div><h1 class="page-title">…`,
+ * or `<img class="icon" src="…"/>` for a custom icon or one of Notion's own drawn ones; null when the
+ * page has none (an icon in its body, a link to a sub-page's, is not its own).
+ */
+export function notionPageIcon(html: string): NotionIcon | null {
+  const start = html.search(/class="page-header-icon\b/);
+  if (start < 0) return null;
+  const titleAt = html.indexOf('page-title', start);
+  const head = html.slice(start, titleAt < 0 ? start + 2000 : titleAt);
+  const span = /<span\b[^>]*\bclass="[^"]*\bicon\b[^"]*"[^>]*>([\s\S]*?)<\/span>/.exec(head);
+  if (span) {
+    const emoji = typedEmoji(htmlWords(span[1]!));
+    return emoji ? { emoji } : null;
+  }
+  const picture = /<img\b[^>]*>/.exec(head);
+  if (!picture) return null;
+  return { picture: htmlWords(/\bsrc="([^"]*)"/.exec(picture[0])?.[1] ?? '') };
 }
 
 /** A page's file cut in its parts: its title (its first heading, when it is one), a database row's properties, its body. */
@@ -353,6 +405,7 @@ interface Node {
   readonly notionId: string | null;
   title: string;
   icon: string | null;
+  iconPicture: boolean;
   parent: Node | null;
   children: Node[];
   split: Split | null;
@@ -379,7 +432,7 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   const leftOut: LeftOut[] = [];
   const where = (path: string): string => {
     const dir = dirOf(path);
-    return dir ? t('Dans {path}', { path: dir.split('/').map(part => titleOfName(part, true).title).join(' › ') }) : '';
+    return dir ? t('In {path}', { path: dir.split('/').map(part => titleOfName(part, true).title).join(' › ') }) : '';
   };
   const leave = (path: string, why: string, glyph: GlyphName = 'file'): void => {
     leftOut.push({ key: `skip:${path}`, title: baseOf(path), detail: where(path), why, glyph });
@@ -387,9 +440,14 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
 
   // Paths as written, without a folder everything sits in (the archive's own, an Obsidian vault's).
   let files = given
-    .map(file => ({ ...file, path: file.path.replace(/\\/g, '/').replace(/^(\.\/|\/)+/, '') }))
+    .map(file => ({ ...file, source: file.path, path: file.path.replace(/\\/g, '/').replace(/^(\.\/|\/)+/, '') }))
     .filter(file => file.path && !file.path.endsWith('/') && !isExportJunk(file.path));
   let root: string | null = null;
+  // Notion's folder around its export (`Export-2f3c…/`), one per archive: the Markdown one and the HTML one dropped together each have theirs.
+  if (files.length > 0 && files.every(file => NOTION_WRAPPER.test(file.path.split('/')[0]!) && file.path.includes('/'))) {
+    root = files[0]!.path.split('/')[0]!;
+    files = files.map(file => ({ ...file, path: file.path.slice(file.path.indexOf('/') + 1) }));
+  }
   for (;;) {
     const first = files[0]?.path.split('/')[0];
     if (!first || !files.every(file => file.path.startsWith(`${first}/`))) break;
@@ -405,8 +463,22 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   const assets: Record<string, ExportAsset> = {};
   for (const file of others) {
     const mime = mimeFromName(file.path);
-    assets[file.path] = { path: file.path, name: baseOf(file.path), mime, bytes: file.bytes, kind: mediaKindFor(mime) };
+    assets[file.path] = { path: file.path, source: file.source, name: baseOf(file.path), mime, bytes: file.bytes, kind: mediaKindFor(mime) };
   }
+
+  // Notion's HTML export beside the Markdown one: each page's icon, by its id (its path's when it has none).
+  type IconSource = { readonly path: string; readonly icon: NotionIcon | null };
+  const iconsById = new Map<string, IconSource>();
+  const iconsByPath = new Map<string, IconSource>();
+  for (const file of others) {
+    if (!isExportHtml(file.path) || file.text === undefined) continue;
+    const source = { path: file.path, icon: notionPageIcon(file.text) };
+    const { notionId } = titleOfName(baseOf(file.path));
+    if (notionId) iconsById.set(notionId, source);
+    iconsByPath.set(stemOf(file.path), source);
+  }
+  /** The HTML pages that gave the Markdown ones their icons: read, nothing left out. */
+  const iconSources = new Set<string>();
 
   // Each database once, from its `_all` CSV (every property) when Notion wrote both.
   const databases = new Map<string, ExportFile>();
@@ -421,7 +493,7 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   const byFile = new Map<string, Node>();
   const make = (key: string, nodeKind: Node['kind'], file: string | null, folder: string, name: string): Node => {
     const { title, notionId } = titleOfName(name, nodeKind === 'folder');
-    const node: Node = { key, id: mint(), kind: nodeKind, file, folder, nameTitle: title, notionId, title, icon: null, parent: null, children: [], split: null, tableOnly: false, rows: null, drafts: [], placed: new Set(), missing: 0, broken: 0, cut: 0 };
+    const node: Node = { key, id: mint(), kind: nodeKind, file, folder, nameTitle: title, notionId, title, icon: null, iconPicture: false, parent: null, children: [], split: null, tableOnly: false, rows: null, drafts: [], placed: new Set(), missing: 0, broken: 0, cut: 0 };
     nodes.set(key, node);
     if (file) byFile.set(file, node);
     return node;
@@ -481,9 +553,22 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   }
   for (const node of nodes.values()) {
     const shown = node.split?.heading?.trim() || node.nameTitle;
+    const html = (node.notionId ? iconsById.get(node.notionId) : undefined) ?? iconsByPath.get(node.kind === 'folder' ? node.folder : stemOf(node.kind === 'database' ? node.key : node.file!));
+    if (html) iconSources.add(html.path);
+    if (html?.icon && 'emoji' in html.icon) {
+      node.icon = html.icon.emoji;
+      node.title = shown;
+      continue;
+    }
     const { icon, title } = iconAndTitle(shown);
     node.icon = icon;
     node.title = title;
+    if (html?.icon && 'picture' in html.icon && !icon) {
+      node.iconPicture = true;
+      // The picture, when the export holds it, is no page's file: said on its page, not left out alone.
+      const picture = resolvePath(dirOf(html.path), decoded(html.icon.picture.split('#')[0]!.split('?')[0]!));
+      if (picture && assets[picture]) iconSources.add(picture);
+    }
   }
 
   // What is read of a file: an unreadable or empty note, an empty table, is left out with why; one holding
@@ -494,12 +579,12 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
     const file = texts.get(node.file);
     if (file?.text === undefined) {
       unreadable.add(node);
-      leave(node.file, node.kind === 'database' ? t('Tableau illisible : son texte n’a pas pu être lu.') : t('Illisible : son texte n’a pas pu être lu.'), node.kind === 'database' ? 'table' : 'page');
+      leave(node.file, node.kind === 'database' ? t('Unreadable table: its text couldn’t be read.') : t('Unreadable: its text couldn’t be read.'), node.kind === 'database' ? 'table' : 'page');
     } else if (node.kind === 'page' && !file.text.trim()) {
-      if (node.children.length === 0) leave(node.file, t('Note vide : rien à importer.'), 'page');
+      if (node.children.length === 0) leave(node.file, t('Empty note: nothing to import.'), 'page');
       unreadable.add(node);
     } else if (node.kind === 'database' && (node.rows?.length ?? 0) === 0) {
-      if (node.children.length === 0) leave(node.file, t('Tableau vide : rien à importer.'), 'table');
+      if (node.children.length === 0) leave(node.file, t('Empty table: nothing to import.'), 'table');
       unreadable.add(node);
     }
   }
@@ -587,12 +672,12 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
     const fields = { fileName: asset.name.slice(0, 255), mime: asset.mime.slice(0, 127), bytes: asset.bytes, ...(caption ? { caption } : {}) };
     if (asset.bytes > limit) {
       from.missing += 1;
-      leave(asset.path, isUploadableImage(asset.mime) ? t('Image de plus de 25 Mo : sa place reste vide dans « {page} ».', { page: from.title }) : t('Fichier de plus de 100 Mo : sa place reste vide dans « {page} ».', { page: from.title }), asset.kind === 'image' ? 'image' : 'file');
+      leave(asset.path, isUploadableImage(asset.mime) ? t('Picture over 25 MB: its place stays empty in “{page}”.', { page: from.title }) : t('File over 100 MB: its place stays empty in “{page}”.', { page: from.title }), asset.kind === 'image' ? 'image' : 'file');
       return { kind: asset.kind, text: '', extra: fields };
     }
     if (asset.bytes === 0) {
       from.missing += 1;
-      leave(asset.path, t('Fichier vide : sa place reste vide dans « {page} ».', { page: from.title }), asset.kind === 'image' ? 'image' : 'file');
+      leave(asset.path, t('Empty file: its place stays empty in “{page}”.', { page: from.title }), asset.kind === 'image' ? 'image' : 'file');
       return { kind: asset.kind, text: '', extra: fields };
     }
     return { kind: asset.kind, text: '', extra: { ...fields, importFile: asset.path } };
@@ -631,7 +716,7 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
       // A picture the export lacks: its place stays, an empty picture under its name.
       const name = baseOf(decoded(href.split('#')[0]!.split('?')[0]!)) || words;
       node.missing += 1;
-      leftOut.push({ key: `missing:${node.key}:${href}`, title: name, detail: t('Dans « {page} »', { page: node.title }), why: t('Absente de l’export : sa place reste vide dans la page.'), glyph: 'image' });
+      leftOut.push({ key: `missing:${node.key}:${href}`, title: name, detail: t('In “{page}”', { page: node.title }), why: t('Missing from the export: its place stays empty in the page.'), glyph: 'image' });
       return { kind: 'image', text: '', extra: { caption: (words || name).slice(0, PAGES_TEXT_LIMITS.block.caption) } };
     },
   });
@@ -669,14 +754,16 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   }
 
   for (const path of Object.keys(assets)) {
-    if (used.has(path)) continue;
+    if (used.has(path) || iconSources.has(path)) continue;
     const extension = extensionOf(path);
     const why =
       extension === 'html' || extension === 'htm'
-        ? t('Page HTML : choisissez « Markdown & CSV » dans l’export de Notion.')
+        ? iconSources.size > 0
+          ? t('HTML page with no Markdown page of the same name: the HTML export only gives the pages’ icons.')
+          : t('HTML page: choose “Markdown & CSV” in Notion’s export.')
         : extension === 'zip'
-          ? t('Archive dans l’archive : décompressez-la, puis importez son contenu.')
-          : t('Aucune page ne s’en sert.');
+          ? t('An archive inside the archive: unzip it, then import what it holds.')
+          : t('No page uses it.');
     leave(path, why, assets[path]!.kind === 'image' ? 'image' : 'file');
   }
 
@@ -689,6 +776,7 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
       id: node.id,
       title: node.title,
       icon: node.icon,
+      iconPicture: node.iconPicture,
       parent: node.parent ? node.parent.key : null,
       children,
       drafts: node.drafts,
@@ -701,7 +789,7 @@ export function readExport(given: readonly ExportFile[], { mint = () => createId
   for (const node of top) tree(node);
   // A column cut for room is said once, on its database.
   for (const node of nodes.values()) {
-    if (node.cut > 0) leftOut.push({ key: `columns:${node.key}`, title: node.title, detail: t('Tableau'), why: t('Plus de {count} colonnes : les {cut} dernières sont laissées de côté.', { count: TABLE_LIMITS.columns, cut: node.cut }), glyph: 'table' });
+    if (node.cut > 0) leftOut.push({ key: `columns:${node.key}`, title: node.title, detail: t('Table'), why: t('More than {count} columns: the last {cut} are left out.', { count: TABLE_LIMITS.columns, cut: node.cut }), glyph: 'table' });
   }
 
   return { kind, root, pages, top: top.map(node => node.key), assets, leftOut };
@@ -769,6 +857,10 @@ export interface PlannedPage {
   readonly id: string;
   readonly title: string;
   readonly icon: string | null;
+  /** Notion's icon was a picture, not kept (`ReadPage.iconPicture`). */
+  readonly iconPicture: boolean;
+  /** Here already with no icon: it takes the export's. */
+  readonly iconAdded: boolean;
   /** The export's pages above it, the top first. */
   readonly trail: readonly string[];
   readonly depth: number;
@@ -792,6 +884,8 @@ export interface ImportTotals {
   readonly same: number;
   /** Pages the person left out, those under them included. */
   readonly off: number;
+  /** Pages here already given the export's icon. */
+  readonly icons: number;
 }
 
 export interface ImportPlan {
@@ -807,8 +901,8 @@ export interface ImportPlan {
 }
 
 const WORDS_TITLES = {
-  notion: tx('Import Notion du {date}'),
-  markdown: tx('Import Markdown du {date}'),
+  notion: tx('Notion import, {date}'),
+  markdown: tx('Markdown import, {date}'),
 } as const;
 
 /** The new page's title: « Import Notion du 12 novembre », or the vault's own name for Markdown from one folder. Written once, in the device's language. */
@@ -847,7 +941,7 @@ export function planImport(read: ExportRead, choices: ImportChoices, library: Im
   // Where the matching starts: the container found again, the page chosen, the top; a new container holds nothing yet.
   const start: string | null | undefined = container ? (container.fate === 'same' ? container.id : undefined) : destination;
   const pages: PlannedPage[] = [];
-  const totals = { pages: 0, pictures: 0, files: 0, tables: 0, blocks: 0, same: 0, off: 0 };
+  const totals = { pages: 0, pictures: 0, files: 0, tables: 0, blocks: 0, same: 0, off: 0, icons: 0 };
   const walk = (keys: readonly string[], existingParent: string | null | undefined, trail: readonly string[], offAbove: boolean): void => {
     // An existing page matches one page of the export at most.
     const free = existingParent === undefined ? [] : pagesUnder(library, existingParent);
@@ -858,10 +952,13 @@ export function planImport(read: ExportRead, choices: ImportChoices, library: Im
       if (match) free.splice(free.indexOf(match), 1);
       const off = choices.off.has(key);
       const fate = match ? 'same' : 'new';
-      pages.push({ key, id: match ?? page.id, title: page.title, icon: page.icon, trail, depth: trail.length, fate, off, offAbove, counts: page.counts, rows: page.rows });
+      const iconAdded = !!match && !!page.icon && !library.blocks[match]!.icon && !off && !offAbove;
+      pages.push({ key, id: match ?? page.id, title: page.title, icon: page.icon, iconPicture: page.iconPicture, iconAdded, trail, depth: trail.length, fate, off, offAbove, counts: page.counts, rows: page.rows });
       if (off || offAbove) totals.off += 1;
-      else if (fate === 'same') totals.same += 1;
-      else {
+      else if (fate === 'same') {
+        totals.same += 1;
+        if (iconAdded) totals.icons += 1;
+      } else {
         totals.pages += 1;
         totals.pictures += page.counts.pictures;
         totals.files += page.counts.files;
@@ -880,19 +977,20 @@ export function planImport(read: ExportRead, choices: ImportChoices, library: Im
 /** What a page holds, in a line: « 24 blocs · 3 images · 1 tableau », « Vide ». */
 export function pageCountsWords(counts: PageCounts, rows: number | null = null): string {
   const parts: string[] = [];
-  if (rows !== null) parts.push(t('Tableau de {rows}', { rows: plural(rows, 'ligne') }));
-  else if (counts.blocks > 0) parts.push(plural(counts.blocks, 'bloc'));
-  if (counts.pictures > 0) parts.push(plural(counts.pictures, 'image'));
-  if (counts.files > 0) parts.push(plural(counts.files, 'fichier'));
-  if (counts.tables > 0 && rows === null) parts.push(plural(counts.tables, 'tableau', 'tableaux'));
-  return parts.length > 0 ? parts.join(' · ') : t('Vide');
+  if (rows !== null) parts.push(t('Table of {rows}', { rows: plural(rows, 'row') }));
+  else if (counts.blocks > 0) parts.push(plural(counts.blocks, 'block'));
+  if (counts.pictures > 0) parts.push(plural(counts.pictures, 'picture'));
+  if (counts.files > 0) parts.push(plural(counts.files, 'file'));
+  if (counts.tables > 0 && rows === null) parts.push(plural(counts.tables, 'table', 'tables'));
+  return parts.length > 0 ? parts.join(' · ') : tc('state', 'Empty');
 }
 
-/** What a page lacks, said under it: pictures absent, links to pages absent. */
-function pageWants(counts: PageCounts): string | undefined {
+/** What a page lacks, said under it: pictures absent, links to pages absent, its icon a picture. */
+function pageWants(counts: PageCounts, iconPicture = false): string | undefined {
   const parts: string[] = [];
-  if (counts.missing > 0) parts.push(plural(counts.missing, 'fichier absent de l’export, sa place reste vide', 'fichiers absents de l’export, leur place reste vide'));
-  if (counts.broken > 0) parts.push(plural(counts.broken, 'lien vers une page absente, gardé comme texte', 'liens vers des pages absentes, gardés comme texte'));
+  if (iconPicture) parts.push(t('its icon is a picture, left out: a page’s icon is an emoji'));
+  if (counts.missing > 0) parts.push(plural(counts.missing, 'file missing from the export, its place left empty', 'files missing from the export, their places left empty'));
+  if (counts.broken > 0) parts.push(plural(counts.broken, 'link to a missing page, kept as text', 'links to missing pages, kept as text'));
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
@@ -904,9 +1002,15 @@ export function previewEntries(plan: ImportPlan): PreviewEntry[] {
       title: page.icon ? `${page.icon} ${page.title}` : page.title,
       detail: pageCountsWords(page.counts, page.rows),
       fate: page.fate,
-      why: page.offAbove ? t('Sa page parente est laissée de côté.') : page.fate === 'same' ? t('Déjà là : gardée telle quelle, ses sous-pages nouvelles ajoutées.') : pageWants(page.counts),
+      why: page.offAbove
+        ? t('Its parent page is left out.')
+        : page.fate === 'same'
+          ? page.iconAdded
+            ? t('Already here: kept as it is, its icon and its new sub-pages added.')
+            : t('Already here: kept as it is, its new sub-pages added.')
+          : pageWants(page.counts, page.iconPicture),
       glyph: page.rows !== null ? 'table' : 'page',
-      ...(page.trail.length > 0 ? { note: t('Dans {path}', { path: page.trail.join(' › ') }) } : {}),
+      ...(page.trail.length > 0 ? { note: t('In {path}', { path: page.trail.join(' › ') }) } : {}),
     }),
   );
   const skipped = plan.read.leftOut.map((item): PreviewEntry => ({ key: item.key, title: item.title, detail: item.detail, fate: 'skip', why: item.why, glyph: item.glyph }));
@@ -917,12 +1021,13 @@ export function previewEntries(plan: ImportPlan): PreviewEntry[] {
 export function importCountLines(plan: ImportPlan): { readonly icon: GlyphName; readonly text: string; readonly meta: string | null }[] {
   const { totals } = plan;
   const lines: { icon: GlyphName; text: string; meta: string | null }[] = [
-    { icon: 'page', text: plural(totals.pages, 'page'), meta: totals.same > 0 ? plural(totals.same, 'page déjà là, gardée telle quelle', 'pages déjà là, gardées telles quelles') : null },
+    { icon: 'page', text: plural(totals.pages, 'page'), meta: totals.same > 0 ? plural(totals.same, 'page already here, kept as it is', 'pages already here, kept as they are') : null },
   ];
-  if (totals.pictures + totals.files > 0) lines.push({ icon: 'image', text: plural(totals.pictures + totals.files, 'image ou fichier', 'images ou fichiers'), meta: t('Joints à leurs pages un à un, une fois les pages écrites') });
-  if (totals.tables > 0) lines.push({ icon: 'table', text: plural(totals.tables, 'tableau', 'tableaux'), meta: plan.read.kind === 'notion' ? t('Les bases de données de Notion, leurs colonnes typées d’après leurs cellules') : null });
+  if (totals.icons > 0) lines.push({ icon: 'smiley', text: plural(totals.icons, 'icon added to a page already here', 'icons added to pages already here'), meta: null });
+  if (totals.pictures + totals.files > 0) lines.push({ icon: 'image', text: plural(totals.pictures + totals.files, 'picture or file', 'pictures or files'), meta: t('Attached to their pages one by one, once the pages are written') });
+  if (totals.tables > 0) lines.push({ icon: 'table', text: plural(totals.tables, 'table', 'tables'), meta: plan.read.kind === 'notion' ? t('Notion’s databases, their columns typed from their cells') : null });
   const left = plan.read.leftOut.length;
-  if (left > 0 || totals.off > 0) lines.push({ icon: 'eyeOff', text: plural(left + totals.off, 'élément laissé de côté', 'éléments laissés de côté'), meta: t('Chacun dit pourquoi dans la liste') });
+  if (left > 0 || totals.off > 0) lines.push({ icon: 'eyeOff', text: plural(left + totals.off, 'item left out', 'items left out'), meta: t('Each says why in the list') });
   return lines;
 }
 
@@ -948,6 +1053,8 @@ export interface ImportWritten {
   readonly files: readonly ImportFileJob[];
   /** Every block made (pages included): what taking the import back erases. */
   readonly created: readonly string[];
+  /** Pages here already given the export's icon: taking the import back takes it off. */
+  readonly iconed: readonly string[];
   /** The pages made. */
   readonly pages: number;
   /** Where to open them: the new page holding them, the first page made, or the page they went in. */
@@ -980,6 +1087,7 @@ export function importChanges(plan: ImportPlan, library: ImportLibrary, now: num
   const changes: ImportChange[] = [];
   const files: ImportFileJob[] = [];
   const created: string[] = [];
+  const iconed: string[] = [];
   const planned = new Map(plan.pages.map(page => [page.key, page]));
   const ids = new Map<string, string>();
   const named = new Map<string, string>();
@@ -1088,37 +1196,43 @@ export function importChanges(plan: ImportPlan, library: ImportLibrary, now: num
     }
   }
   if (!plan.container || plan.container.fate === 'same') appendTo(top, read.top.filter(written));
-  // A page here already: its new sub-pages after what it holds.
+  // A page here already: its icon when it had none, its new sub-pages after what it holds.
   for (const page of plan.pages) {
     if (page.fate !== 'same' || page.off || page.offAbove) continue;
+    if (page.iconAdded && page.icon) {
+      changes.push({ type: 'block', id: page.id, patch: { icon: page.icon } });
+      iconed.push(page.id);
+    }
     appendTo(page.id, read.pages[page.key]!.children.filter(written));
   }
 
   const made = plan.pages.filter(page => written(page.key));
   const opened = plan.container && created.includes(plan.container.id) ? plan.container.id : plan.container?.fate === 'same' ? plan.container.id : (made.find(page => page.depth === 0)?.id ?? made[0]?.id ?? plan.destination);
-  return { changes, files, created, pages: made.length, opened };
+  return { changes, files, created, iconed, pages: made.length, opened };
 }
 
-/** Taking an import back: every block it made, gone for good (its files are not sent once their blocks are). */
-export function importUndoChanges(created: readonly string[], now: number): ImportChange[] {
-  return created.map(id => ({ type: 'block', id, patch: { deletedAt: now } }));
+/** Taking an import back: every block it made, gone for good (its files are not sent once their blocks are), and the icons it gave pages already here taken off. */
+export function importUndoChanges(created: readonly string[], now: number, iconed: readonly string[] = []): ImportChange[] {
+  return [...created.map((id): ImportChange => ({ type: 'block', id, patch: { deletedAt: now } })), ...iconed.map((id): ImportChange => ({ type: 'block', id, patch: { icon: null } }))];
 }
 
 // ── the report ──────────────────────────────────────────────────────────────
 
 /** What came in, a line each. */
-export function importReportLines(written: Pick<ImportWritten, 'pages'>, attached: number, tables: number): string[] {
-  const lines = [plural(written.pages, 'page importée', 'pages importées')];
-  if (attached > 0) lines.push(plural(attached, 'image ou fichier joint', 'images ou fichiers joints'));
-  if (tables > 0) lines.push(plural(tables, 'tableau', 'tableaux'));
+export function importReportLines(written: Pick<ImportWritten, 'pages'> & Partial<Pick<ImportWritten, 'iconed'>>, attached: number, tables: number): string[] {
+  const lines = [plural(written.pages, 'page imported', 'pages imported')];
+  const icons = written.iconed?.length ?? 0;
+  if (icons > 0) lines.push(plural(icons, 'icon added to a page already here', 'icons added to pages already here'));
+  if (attached > 0) lines.push(plural(attached, 'picture or file attached', 'pictures or files attached'));
+  if (tables > 0) lines.push(plural(tables, 'table', 'tables'));
   return lines;
 }
 
 /** What was left out, a line each: the files with why, the pages the person left out, the files that could not be kept. */
 export function importSkippedLines(plan: ImportPlan, failed: readonly { readonly name: string; readonly why: string }[]): string[] {
-  const lines = plan.read.leftOut.map(item => t('{file} : {why}', { file: item.title, why: item.why }));
-  if (plan.totals.off > 0) lines.push(plural(plan.totals.off, 'page laissée de côté par vous', 'pages laissées de côté par vous'));
-  if (plan.totals.same > 0) lines.push(plural(plan.totals.same, 'page déjà là, gardée telle quelle', 'pages déjà là, gardées telles quelles'));
-  for (const file of failed) lines.push(t('{file} : {why}', { file: file.name, why: file.why }));
+  const lines = plan.read.leftOut.map(item => t('{file}: {why}', { file: item.title, why: item.why }));
+  if (plan.totals.off > 0) lines.push(plural(plan.totals.off, 'page you left out', 'pages you left out'));
+  if (plan.totals.same > 0) lines.push(plural(plan.totals.same, 'page already here, kept as it is', 'pages already here, kept as they are'));
+  for (const file of failed) lines.push(t('{file}: {why}', { file: file.name, why: file.why }));
   return lines;
 }

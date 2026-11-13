@@ -4,7 +4,7 @@
  * them too). Its English, the shell's and the
  * design system's, before anything is shown.
  */
-import { addNotesEnglish } from '@unlease/notes/i18n';
+import { addNotesFrench } from '@unlease/notes/i18n';
 import { contactsData } from '@contacts/data';
 import { startApp } from '@shared/start';
 
@@ -12,7 +12,7 @@ import { eventsData } from './app/events/store';
 
 import { notesModule } from './module';
 
-addNotesEnglish();
+addNotesFrench();
 void startApp(notesModule, {
   reads: [contactsData, eventsData],
   // Dead code outside the dev server and the demo build: the demo is never in the server's build.

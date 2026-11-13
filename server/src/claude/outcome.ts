@@ -5,8 +5,8 @@ import type { CallUsage } from './usage';
 export type ModuleOutcome<T> = { readonly ok: true; readonly answer: T } | { readonly ok: false; readonly status: 409 | 502; readonly error: string };
 
 /** No key set: words for every app. */
-export const NO_KEY = 'Claude n’a pas de clé : ajoutez-en une dans l’administration.';
-export const BUDGET_SPENT = 'Budget mensuel atteint';
+export const NO_KEY = 'Claude has no key: add one in the Administration.';
+export const BUDGET_SPENT = 'Monthly budget reached';
 
 /**
  * A call cut off by its deadline has run searches nobody reported: counted at a whole search's

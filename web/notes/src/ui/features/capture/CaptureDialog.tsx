@@ -12,7 +12,7 @@ import { fieldInput } from '@unlease/design/fields';
 
 import { APP_NAME } from '@unlease/notes/brand';
 import { collectionEmblem } from '@unlease/notes/models/collections';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { addedMessage, addedTone, capSharedUrls, MAX_SHARED_URLS } from '@unlease/notes/services/savedLinks';
 import { cleanUrl, extractUrls } from '@unlease/core/services/url';
@@ -54,7 +54,7 @@ const AUTO = 'auto';
 /** "utm_source, fbclid et 2 autres". */
 function removedList(names: readonly string[]): string {
   if (names.length <= 3) return names.join(', ');
-  return t('{names} et {count} autres', { names: names.slice(0, 2).join(', '), count: names.length - 2 });
+  return t('{names} and {count} more', { names: names.slice(0, 2).join(', '), count: names.length - 2 });
 }
 
 const URL_INPUT = fieldInput('url').web;
@@ -80,7 +80,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
   const choices = [...(claude ? [AUTO] : []), ...targets.map(line => line.id)];
   // A choice can vanish while the dialog is open (reading turned off, a collection deleted).
   const chosen = choices.includes(target) ? target : choices[0]!;
-  const form = useForm({ link: !isBlank(text) && urls.length === 0 ? t('Aucun lien ici : collez une adresse, comme https://example.org/page.') : null });
+  const form = useForm({ link: !isBlank(text) && urls.length === 0 ? t('No link here: paste an address, like https://example.org/page.') : null });
   useReportDirty(!isBlank(text) && text.trim() !== initial.trim(), onDirty);
 
   const submit = (): void => {
@@ -101,7 +101,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
       setText((await navigator.clipboard.readText()).trim());
       form.field('link').edited();
     } catch {
-      showError(t('Le navigateur refuse la lecture du presse-papiers : collez avec Ctrl+V.'));
+      showError(t('The browser won’t read the clipboard: paste with Ctrl+V.'));
     }
   };
 
@@ -121,16 +121,16 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
   };
 
   const help = !server
-    ? t('Sans serveur, le lien est gardé tel quel. Claude lit les liens depuis votre serveur {app} : connectez-le dans l’administration.', { app: APP_NAME })
+    ? t('Without a server, the link is kept as it is. Claude reads links from your {app} server: connect it in the Administration.', { app: APP_NAME })
     : !reading
-      ? t('Le lien est gardé tel quel : ajoutez une clé API Claude dans l’administration pour qu’il soit lu et rangé.')
+      ? t('The link is kept as it is: add a Claude API key in the Administration to have it read and filed.')
       : chosen === AUTO
-        ? t('Claude lit la page et range le lien dans la bonne collection, ou dans Non classé.')
-        : t('Claude lit la page ; le lien reste dans cette collection.');
+        ? t('Claude reads the page and files the link in the right collection, or in Unsorted.')
+        : t('Claude reads the page; the link stays in this collection.');
 
   return (
     <DialogFrame
-      title={t('Classer un lien')}
+      title={t('File a link')}
       titleId={titleId}
       onClose={onClose}
       onSubmit={form.onSubmit(submit)}
@@ -142,7 +142,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
             </Button>
           ) : null}
           <Button type="submit" icon="check" disabled={isBlank(text)}>
-            {claude ? t('Classer') : t('Ajouter')}
+            {claude ? tc('verb', 'File') : t('Add')}
           </Button>
         </>
       }
@@ -157,7 +157,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
             value={text}
             onChange={setText}
             placeholder="https://…"
-            aria-label={t('Adresse du lien')}
+            aria-label={t('Link address')}
             inputMode={URL_INPUT.inputMode}
             autoComplete={URL_INPUT.autoComplete}
             autoCapitalize={URL_INPUT.autoCapitalize}
@@ -165,21 +165,21 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
             spellCheck={URL_INPUT.spellCheck}
             data-autofocus
           />
-          {typeof navigator.clipboard?.readText === 'function' ? <IconButton icon="copy" label={t('Coller le lien copié')} onClick={() => void paste()} /> : null}
+          {typeof navigator.clipboard?.readText === 'function' ? <IconButton icon="copy" label={t('Paste the copied link')} onClick={() => void paste()} /> : null}
         </div>
         <FieldProblem field={form.field('link')} id={`${titleId}-problem`} className={styles.problem} />
         <p className={`${styles.cleaned} t-meta`} aria-live="polite">
           {removed.length > 0 ? (
             <>
               <Icon name="broom" size={18} />
-              {removed.length > 1 ? t('Nettoyé : {names} seront retirés de l’adresse.', { names: removedList(removed) }) : t('Nettoyé : {names} sera retiré de l’adresse.', { names: removedList(removed) })}
+              {removed.length > 1 ? tc('many', 'Cleaned: {names} will be removed from the address.', { names: removedList(removed) }) : t('Cleaned: {names} will be removed from the address.', { names: removedList(removed) })}
             </>
           ) : null}
         </p>
         {more > 0 ? (
           <p className={`${styles.cleaned} t-meta`} role="status">
             <Icon name="alert" size={18} />
-            {t('Seuls les {kept} premiers des {offered} liens seront gardés.', { kept: MAX_SHARED_URLS, offered: urls.length })}
+            {t('Only the first {kept} of the {offered} links will be kept.', { kept: MAX_SHARED_URLS, offered: urls.length })}
           </p>
         ) : null}
       </div>
@@ -200,7 +200,7 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
               onClick={() => setTarget(AUTO)}
             >
               <Icon name="sparkle" size={22} />
-              {t('Automatique')}
+              {t('Automatic')}
             </button>
           ) : null}
           {targets.map(line => (
@@ -237,9 +237,9 @@ function SharedNoteQuestion() {
   return (
     <Confirm
       open={shared !== null}
-      title={t('Garder ce partage en note ?')}
+      title={t('Keep this share as a note?')}
       message={preview.length > 280 ? `${preview.slice(0, 279)}…` : preview}
-      confirmLabel={t('Créer la note')}
+      confirmLabel={t('Create the note')}
       onConfirm={create}
       onCancel={closeSharedNote}
     />
@@ -256,7 +256,7 @@ export function CaptureDialog() {
   const close = unsaved.guard(closeCapture);
   return (
     <>
-      <Layer open={open} onDismiss={close} label={t('Classer un lien')}>
+      <Layer open={open} onDismiss={close} label={t('File a link')}>
         <CaptureForm initial={initial} initialTitle={initialTitle} onClose={close} onDirty={setDirty} />
       </Layer>
       {unsaved.dialog}

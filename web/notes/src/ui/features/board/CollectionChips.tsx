@@ -30,7 +30,7 @@ const CollectionChip = memo(function CollectionChip({ id }: { id: string }) {
     <Link
       to={paths.line(id)}
       className={`${styles.tab} paper`}
-      ariaLabel={`${shownTitle(note)}, ${plural(count, 'lien')}`}
+      ariaLabel={`${shownTitle(note)}, ${plural(count, 'link')}`}
     >
       <EmblemStone id={id} emblem={collectionEmblem(id, note.emblem)} color={asLineColor(note.color)} size={21} width={36} height={32} />
       <span className={styles.tabName}>{shownTitle(note)}</span>
@@ -49,7 +49,7 @@ export function CollectionChips({ resting }: { resting: boolean }) {
       <button
         type="button"
         className={styles.newCollection}
-        aria-label={t('Nouvelle collection')}
+        aria-label={t('New collection')}
         onClick={() => setNewLineOpen(true)}
       >
         <Icon name="plus" size={18} />

@@ -4,7 +4,7 @@
  */
 import { useMemo, useRef, useState, type RefObject } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
 
 import { createLabel } from '../../../app/store/actions';
@@ -44,7 +44,7 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
   return (
     <div ref={holder} className={styles.picker} tabIndex={-1}>
       {/* A sheet on a phone says what it holds; by its button, the field (« Chercher ou créer un label ») does. */}
-      {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{t('Labels')}</h2> : null}
+      {narrow ? <h2 className={`${styles.pickerTitle} t-title`}>{tc('notes', 'Labels')}</h2> : null}
       <input
         ref={field}
         data-autofocus={narrow ? undefined : true}
@@ -58,15 +58,15 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
             else if (shown[0]) toggle(shown[0]);
           }
         }}
-        placeholder={t('Chercher ou créer un label')}
-        aria-label={t('Chercher ou créer un label')}
+        placeholder={t('Search or create a label')}
+        aria-label={t('Search or create a label')}
         maxLength={60}
       />
       <div data-scroller="" className={styles.labelList}>
         {filter.trim() && !exact ? (
           <button type="button" className={`${styles.pickerRow} ${styles.pickerAdd}`} onClick={create}>
             <Icon name="plus" size={20} />
-            {t('Créer « {name} »', { name: filter.trim() })}
+            {t('Create “{name}”', { name: filter.trim() })}
           </button>
         ) : null}
         {shown.map(id => {
@@ -80,7 +80,7 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
             </label>
           );
         })}
-        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('Aucun label pour l’instant. Tapez un nom pour en créer un.')} className={styles.emptyLabels} /> : null}
+        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('No labels yet. Type a name to create one.')} className={styles.emptyLabels} /> : null}
       </div>
     </div>
   );
@@ -91,7 +91,7 @@ export function LabelPicker({ open, anchor, selected, onDismiss, onChange }: Lab
   // On a phone the sheet opens on its labels with the keyboard down, as the phone's does; the field is one tap away.
   const holder = useRef<HTMLDivElement>(null);
   return (
-    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={t('Labels')} width={300} initialFocus={narrow ? holder : undefined} rows>
+    <Popover open={open} anchor={anchor} onDismiss={onDismiss} label={tc('notes', 'Labels')} width={300} initialFocus={narrow ? holder : undefined} rows>
       <LabelList selected={selected} onChange={onChange} narrow={narrow} holder={holder} />
     </Popover>
   );

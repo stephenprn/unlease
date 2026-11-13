@@ -3,7 +3,7 @@
  * how the board lays out, where the reminders ring), then cleaning the links already saved (a row of
  * « Données »). The Keep import is the shell's « Importer » row (`importer`, `KeepWizard`).
  */
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { APP_NAME } from '@unlease/notes/brand';
 import { NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
@@ -23,14 +23,14 @@ function BoardLayout() {
   const layout = useLayout();
   return (
     <div className={styles.block}>
-      <p className="t-meta-strong">{tc('layout', 'Tableau')}</p>
+      <p className="t-meta-strong">{t('Board')}</p>
       <Segmented
-        label={t('Disposition du tableau')}
+        label={t('Board layout')}
         value={layout}
         onChange={setLayout}
         options={[
-          { value: 'wall', label: t('Mur'), icon: 'grid' },
-          { value: 'list', label: t('Liste'), icon: 'rows' },
+          { value: 'wall', label: t('Wall'), icon: 'grid' },
+          { value: 'list', label: t('List'), icon: 'rows' },
         ]}
       />
     </div>
@@ -45,8 +45,8 @@ function NotesSection() {
       <div className={styles.row}>
         <Icon name="bell" size={24} />
         <span className={styles.rowText}>
-          <span className="t-body">{t('Les rappels sonnent sur votre téléphone')}</span>
-          <span className="t-meta">{t('Ici, ils sont enregistrés et affichés ; l’application Android les fait sonner à l’heure dite.')}</span>
+          <span className="t-body">{t('Reminders ring on your phone')}</span>
+          <span className="t-meta">{t('Here they are saved and shown; the Android app rings them at the set time.')}</span>
         </span>
       </div>
     </Section>
@@ -62,21 +62,21 @@ function CleanLinksRow() {
       className={styles.row}
       onClick={() => {
         const { count, undo } = cleanSavedLinks();
-        showUndo(plural(count, 'lien nettoyé', 'liens nettoyés'), undo);
+        showUndo(plural(count, 'link cleaned', 'links cleaned'), undo);
       }}
     >
       <Icon name="broom" size={24} />
       <span className={styles.rowText}>
-        <span className="t-body">{t('Nettoyer les liens enregistrés')}</span>
-        <span className="t-meta">{t('{links} des paramètres de suivi (utm, fbclid…) : ils seront retirés, le reste de l’adresse est gardé.', { links: plural(tracked, 'lien garde', 'liens gardent') })}</span>
+        <span className="t-body">{t('Clean saved links')}</span>
+        <span className="t-meta">{t('{links} tracking parameters (utm, fbclid…): they will be removed, the rest of the address is kept.', { links: plural(tracked, 'link keeps', 'links keep') })}</span>
       </span>
     </button>
   ) : (
     <div className={styles.row}>
       <Icon name="broom" size={24} />
       <span className={styles.rowText}>
-        <span className="t-body">{t('Nettoyer les liens enregistrés')}</span>
-        <span className="t-meta">{t('Aucun paramètre de suivi dans vos liens : les nouveaux sont nettoyés en arrivant.')}</span>
+        <span className="t-body">{t('Clean saved links')}</span>
+        <span className="t-meta">{t('No tracking parameters in your links: new ones are cleaned as they arrive.')}</span>
       </span>
     </div>
   );

@@ -170,7 +170,7 @@ export const CLOCK_NOTE_MS = 2 * MINUTE;
 export function clockNote(skew: number): string | null {
   const amount = Math.abs(skew);
   if (amount < CLOCK_NOTE_MS) return null;
-  const span = amount < 90 * MINUTE ? `${Math.round(amount / MINUTE)}${NBSP}min` : amount < 48 * HOUR ? `${Math.round(amount / HOUR)}${NBSP}h` : plural(Math.round(amount / DAY), 'jour');
+  const span = amount < 90 * MINUTE ? `${Math.round(amount / MINUTE)}${NBSP}min` : amount < 48 * HOUR ? `${Math.round(amount / HOUR)}${NBSP}h` : plural(Math.round(amount / DAY), 'day');
   if (english()) return `This device’s clock is ${span} ${skew > 0 ? 'ahead of' : 'behind'} the server’s.`;
   return `L’horloge de cet appareil ${skew > 0 ? 'avance' : 'retarde'} de ${span} sur celle du serveur.`;
 }
@@ -193,7 +193,7 @@ export function plural(count: number, singular: string, pluralForm = `${singular
 
 /** « 512 o », « 2,4 Mo », « 1,1 Go » (English « 512 B », « 2.4 MB »). */
 export function formatBytes(bytes: number): string {
-  const units = [tx('o'), tx('Ko'), tx('Mo'), tx('Go')];
+  const units = [tx('B'), tx('KB'), tx('MB'), tx('GB')];
   let value = bytes;
   let unit = 0;
   while (value >= 1024 && unit < units.length - 1) {

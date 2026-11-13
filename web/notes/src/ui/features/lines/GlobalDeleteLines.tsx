@@ -5,7 +5,7 @@
 import { useState } from 'react';
 
 import { t, tx } from '@unlease/core/i18n';
-import { INBOX_ID, INBOX_TITLE, shownTitle } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownTitle } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
 
 import { trashLines } from '../../../app/store/actions';
@@ -24,15 +24,15 @@ export function GlobalDeleteLines() {
   const remove = (fate: LinksFate): void => {
     const { notes, linksByNote } = useLibraryStore.getState();
     const links = ids.flatMap(id => (notes[id]?.kind === 'links' ? (linksByNote[id] ?? []) : []));
-    const deleted = ids.length > 1 ? tx('Notes supprimées') : tx('Collection supprimée');
+    const deleted = ids.length > 1 ? tx('Notes deleted') : tx('Collection deleted');
     clearSelection();
     if (fate.kind === 'bin') {
-      showUndo(ids.length > 1 ? t('Notes placées dans la corbeille') : t('Note placée dans la corbeille'), trashLines(ids, null));
+      showUndo(ids.length > 1 ? t('Notes moved to the bin') : t('Note moved to the bin'), trashLines(ids, null));
     } else if (fate.kind === 'move') {
       const undo = trashLines(ids, fate.to);
       const target = notes[fate.to];
-      const name = fate.to === INBOX_ID ? t(INBOX_TITLE) : target ? shownTitle(target) : '';
-      showUndo(t('{deleted} : {links} dans {collection}', { deleted: t(deleted), links: plural(links.length, 'lien déplacé', 'liens déplacés'), collection: name }), undo);
+      const name = fate.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : target ? shownTitle(target) : '';
+      showUndo(t('{deleted}: {links} to {collection}', { deleted: t(deleted), links: plural(links.length, 'link moved', 'links moved'), collection: name }), undo);
     } else {
       sortDeletedLinksOnSlip(links, trashLines(ids, INBOX_ID), deleted);
     }
@@ -40,7 +40,7 @@ export function GlobalDeleteLines() {
   return (
     <>
       <DeleteLineDialog ids={ids} open={open} onDismiss={closeDeleteLines} onChoose={remove} onPickLine={() => setPicking(true)} />
-      <MoveDialog open={picking} currentLineId={null} exclude={ids} title={t('Déplacer les liens vers')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
+      <MoveDialog open={picking} currentLineId={null} exclude={ids} title={t('Move the links to')} onDismiss={() => setPicking(false)} onPick={target => remove({ kind: 'move', to: target })} />
     </>
   );
 }

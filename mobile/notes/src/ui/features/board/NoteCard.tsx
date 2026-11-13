@@ -112,7 +112,7 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
     ? noteBackdrop(theme.mode, null, null)
     : noteBackdrop(theme.mode, note.color, note.pattern, cardRule(metrics, photo + drawn + metrics.padding, note.kind === 'checklist', !!title));
   // Untitled, a checklist reads as a list (its items are not in the label), a text by its first words.
-  const named = title || (note.kind === 'checklist' ? t('Liste sans titre') : note.kind === 'drawing' ? t('Dessin') : firstWords(bodyText(note))) || t('Note sans titre');
+  const named = title || (note.kind === 'checklist' ? t('Untitled list') : note.kind === 'drawing' ? t('Drawing') : firstWords(bodyText(note))) || t('Untitled note');
   return (
     <Organic outline={outline} style={[styles.card, { width, height }]}>
       <Organic outline={outline} style={[styles.clip, backdrop]}>
@@ -123,7 +123,7 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
           unstable_pressDelay={listPressDelay}
           onPress={() => onPress(id)}
           onLongPress={() => onLongPress(id)}
-          accessibilityLabel={[named, labelNames.length > 0 ? `${labelNames.length > 1 ? 'labels' : 'label'} ${labelNames.join(', ')}` : '', people.length > 0 ? t('Personnes : {names}', { names: people.join(', ') }) : ''].filter(Boolean).join(', ')}
+          accessibilityLabel={[named, labelNames.length > 0 ? `${labelNames.length > 1 ? 'labels' : 'label'} ${labelNames.join(', ')}` : '', people.length > 0 ? t('People: {names}', { names: people.join(', ') }) : ''].filter(Boolean).join(', ')}
           accessibilityState={{ selected }}
         >
           {!collection ? <CardPhoto noteId={id} width={width} height={photo} /> : null}
@@ -217,7 +217,7 @@ const CardChecklist = memo(function CardChecklistView({ noteId, row, query }: { 
       {checked > 0 ? (
         <View style={[checklistStyles.row, { height: row }]}>
           <Icon name="check" size={16} color={theme.color.inkMuted} />
-          <AppText variant="meta">{plural(checked, 'élément coché', 'éléments cochés')}</AppText>
+          <AppText variant="meta">{plural(checked, 'ticked item', 'ticked items')}</AppText>
         </View>
       ) : null}
     </View>
@@ -262,7 +262,7 @@ const LineSummary = memo(function LineSummaryView({ noteId, metrics }: { noteId:
       ) : null}
       {/* What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading). */}
       <AppText variant="meta" numberOfLines={1} color={theme.color.inkMuted}>
-        {count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : total ? `${plural(count, 'lien')} · ${total}` : plural(count, 'lien')}
+        {count === 0 && done > 0 ? t('Done · {count}', { count: done }) : total ? `${plural(count, 'link')} · ${total}` : plural(count, 'link')}
       </AppText>
     </View>
   );

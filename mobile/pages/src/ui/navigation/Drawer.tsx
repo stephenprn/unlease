@@ -81,7 +81,7 @@ const PageBranch = memo(function PageBranch({ id, depth, current, onPage, onActi
         style={[depth > 0 ? { paddingLeft: 16 + depth * TREE_STEP } : null, children.length > 0 ? styles.withFold : null]}
         trailing={
           children.length > 0 ? (
-            <Tappable accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={expanded ? t('Replier {title}', { title }) : t('Déplier {title}', { title })} hitSlop={TWISTY_SLOP} onPress={() => setExpanded(id, !expanded)} style={styles.twisty}>
+            <Tappable accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={expanded ? t('Collapse {title}', { title }) : t('Expand {title}', { title })} hitSlop={TWISTY_SLOP} onPress={() => setExpanded(id, !expanded)} style={styles.twisty}>
               <Fold open={expanded} color={selected ? theme.color.onActionContainer : theme.color.inkMuted} />
             </Tappable>
           ) : null
@@ -97,16 +97,16 @@ function DrawerComponent({ open, current, onClose, onPages, onPage, onPageAction
   const roots = useChildPages(null);
   return (
     <NavDrawer open={open} app="pages" onClose={onClose}>
-      <DrawerItem label={t('Toutes les pages')} icon="book" selected={current === 'pages'} onPress={onPages} />
+      <DrawerItem label={t('All pages')} icon="book" selected={current === 'pages'} onPress={onPages} />
       <DrawerDivider />
       <DrawerHeading title={t('Pages')} />
       {roots.map(id => (
         <PageBranch key={id} id={id} depth={0} current={current} onPage={onPage} onActions={onPageActions} />
       ))}
-      <DrawerItem label={t('Nouvelle page')} icon="plus" onPress={onNewPage} />
+      <DrawerItem label={t('New page')} icon="plus" onPress={onNewPage} />
       <DrawerDivider />
-      <DrawerItem label={t('Corbeille')} icon="trash" selected={current === 'trash'} onPress={onTrash} />
-      <DrawerItem label={t('Réglages')} icon="settings" selected={current === 'settings'} onPress={onSettings} />
+      <DrawerItem label={t('Bin')} icon="trash" selected={current === 'trash'} onPress={onTrash} />
+      <DrawerItem label={t('Settings')} icon="settings" selected={current === 'settings'} onPress={onSettings} />
       <DrawerItem label={t('Administration')} icon="server" selected={current === 'admin'} onPress={onAdmin} />
     </NavDrawer>
   );

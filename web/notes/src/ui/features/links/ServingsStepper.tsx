@@ -22,8 +22,8 @@ export function ServingsStepper({ link, inBar }: { link: LinkItem; inBar?: boole
       label={MODULE_NAMES.servings}
       value={servingsWords(base, factor, unit)}
       icon="people"
-      lessLabel={people ? t('Une personne de moins') : t('Moins')}
-      moreLabel={people ? t('Une personne de plus') : t('Plus')}
+      lessLabel={people ? t('One person fewer') : t('Fewer')}
+      moreLabel={people ? t('One more person') : t('More')}
       onLess={less !== factor ? () => setFactor(link.id, less) : undefined}
       onMore={more !== factor ? () => setFactor(link.id, more) : undefined}
     />
@@ -32,7 +32,7 @@ export function ServingsStepper({ link, inBar }: { link: LinkItem; inBar?: boole
 
 /** What the list and the cook mode say of the quantities: the recipe's own count, or how they were scaled. */
 export function servingsLine(link: LinkItem, factor: number, written: string): string {
-  if (factor === 1) return written ? t('Recette pour {servings}', { servings: written }) : '';
+  if (factor === 1) return written ? t('Recipe for {servings}', { servings: written }) : '';
   const base = servingsOf(link.attributes);
-  return base === null ? t('Quantités multipliées par {factor}', { factor: formatNumber(factor, 2) }) : t('Quantités pour {servings}', { servings: servingsWords(base, factor, servingsUnit(link.attributes)) });
+  return base === null ? t('Quantities multiplied by {factor}', { factor: formatNumber(factor, 2) }) : t('Quantities for {servings}', { servings: servingsWords(base, factor, servingsUnit(link.attributes)) });
 }

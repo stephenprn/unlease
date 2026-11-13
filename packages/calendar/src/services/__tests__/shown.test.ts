@@ -7,6 +7,7 @@ const feed = (id: string, hidden = false, deletedAt: number | null = null): Cale
   kind: 'ics',
   name: id,
   url: `https://example.org/${id}.ics`,
+  account: '',
   color: 'violet',
   hidden,
   position: 'a0',

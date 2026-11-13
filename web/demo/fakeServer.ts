@@ -9,7 +9,7 @@
  * ingredients and method (`/api/recipe`), an article kept as a page (`/api/pages/copies`, which
  * makes the page here and points the link's `copy` at it, as the server does), ratings
  * (`/api/ratings`), a recap (`/api/recap`), other outlets (`/api/coverage`), answers
- * (`/api/ask`), a Seerr that has some films (`/api/seerr`), « Vérifier le prix »
+ * (`/api/ask`), a Seerr that has some films (`/api/seerr`), an Immich of drawn photos (`/api/immich`, `fakeImmich.ts`), « Vérifier le prix »
  * (`/api/notes/price-check`, a jumper that gets cheaper) and « Essayer » on a template
  * (`/api/notes/template-try`), all made up. A link's facts follow the template it is read with (its
  * collection's, else its kind's, `notes/services/templates`), with the version written in `readWith`.
@@ -51,11 +51,13 @@ import { isRestoreMode, type AdminStatus, type BackupRun, type BackupSnapshot, t
 import { APPS, isReadyApp, type AppId } from '@unlease/core/apps';
 import { createId } from '@unlease/core/services/ids';
 import { keysBetween } from '@unlease/core/services/fractionalIndex';
-import { parseEnabledApps, PAGES_ASK_DEFAULTS, PAGES_REACH_CHARS, BACKUP_KEEP_MAX, DRIVE_FOLDER_DEFAULT, isBackupRecurrence, isClaudeModel, isColdStorage, isPagesReach, isStorageClass, type BackupSettings, type DriveSettings, type PagesAskSettings, type SeerrSettings, type ServerSettings, type CalendarSettings, parseCalendarPatch } from '@unlease/core/sync/settings';
+import { parseEnabledApps, PAGES_ASK_DEFAULTS, PAGES_REACH_CHARS, BACKUP_KEEP_MAX, DRIVE_FOLDER_DEFAULT, isBackupRecurrence, isClaudeModel, isColdStorage, isPagesReach, isStorageClass, type BackupSettings, type DriveSettings, type PagesAskSettings, type SeerrSettings, type ImmichSettings, type ServerSettings, type CalendarSettings, parseCalendarPatch } from '@unlease/core/sync/settings';
+import { immichRoute } from './fakeImmich';
 
 import { CONTACT_PHOTO_PATH, isContactPhotoRequest } from '@unlease/contacts/sync/photos';
 import { demoImage } from './demoImages';
 import { calendarRoute, writeHolidays } from './fakeCalendar';
+import { pageVersionsRoute } from './fakePageVersions';
 import { PLACES_PATH } from '@unlease/core/sync/places';
 import { fakePlaces } from './fakePlaces';
 
@@ -287,6 +289,7 @@ export class FakeServer {
   };
   private drive: DriveSettings = { provider: null, url: '', folder: DRIVE_FOLDER_DEFAULT, library: null, tokenHint: null, leaving: false };
   private seerr: SeerrSettings = { url: 'https://seerr.maison.example', keyHint: '…7d1e' };
+  private immich: ImmichSettings = { url: 'https://photos.maison.example', keyHint: '…a3f9' };
   private snapshots: BackupSnapshot[] = [3, 27, 51].map(hours => {
     const at = Date.now() - hours * HOUR;
     return { name: snapshotName(at), at, bytes: 180_000 + hours * 1_200, cold: false };
@@ -355,7 +358,7 @@ export class FakeServer {
       const current = linkFromRecord(this.records.get(`link:${linkId}`)!.record);
       if (current.status !== 'pending' || current.deletedAt !== null) return;
       if (/closed-shop|echec|fermee/.test(current.url)) {
-        this.write('link', linkId, { status: 'failed', error: 'Page protégée contre les robots', analyzedAt: Date.now() });
+        this.write('link', linkId, { status: 'failed', error: 'Page protected against robots', analyzedAt: Date.now() });
         return;
       }
       const found = READINGS.find(entry => entry.match.test(current.url));
@@ -468,15 +471,15 @@ export class FakeServer {
     }
     if ('pages' in body) {
       const patch = body.pages as Record<string, unknown> | null;
-      if (typeof patch !== 'object' || patch === null) return jsonResponse({ error: 'Requête invalide' }, 400);
+      if (typeof patch !== 'object' || patch === null) return jsonResponse({ error: 'Invalid request' }, 400);
       const pages = { ...this.pages };
       for (const name of ['enabled', 'everywhere', 'web'] as const) {
         if (patch[name] === undefined) continue;
-        if (typeof patch[name] !== 'boolean') return jsonResponse({ error: 'Requête invalide' }, 400);
+        if (typeof patch[name] !== 'boolean') return jsonResponse({ error: 'Invalid request' }, 400);
         pages[name] = patch[name];
       }
       if (patch.reach !== undefined) {
-        if (!isPagesReach(patch.reach)) return jsonResponse({ error: 'Requête invalide' }, 400);
+        if (!isPagesReach(patch.reach)) return jsonResponse({ error: 'Invalid request' }, 400);
         pages.reach = patch.reach;
       }
       this.pages = pages;
@@ -491,7 +494,7 @@ export class FakeServer {
     }
     if ('calendar' in body) {
       const patch = parseCalendarPatch(body.calendar);
-      if (!patch) return jsonResponse({ error: 'Réglage refusé' }, 400);
+      if (!patch) return jsonResponse({ error: 'Setting refused' }, 400);
       if (patch.holidays) {
         this.calendar = { ...this.calendar, holidays: { country: patch.holidays.country, region: patch.holidays.region ?? null } };
         this.seedHolidays();
@@ -503,11 +506,15 @@ export class FakeServer {
       const refused = this.updateSeerr(body.seerr);
       if (refused) return jsonResponse({ error: refused }, 400);
     }
+    if ('immich' in body) {
+      const refused = this.updateImmich(body.immich);
+      if (refused) return jsonResponse({ error: refused }, 400);
+    }
     return jsonResponse(this.settingsView());
   }
 
   private settingsView(): ServerSettings {
-    return { apps: { enabled: [...this.apps] }, setup: { done: this.setupDone }, analysis: this.settings, pages: this.pages, calendar: this.calendar, backup: this.backup, drive: this.drive, seerr: this.seerr };
+    return { apps: { enabled: [...this.apps] }, setup: { done: this.setupDone }, analysis: this.settings, pages: this.pages, calendar: this.calendar, backup: this.backup, drive: this.drive, seerr: this.seerr, immich: this.immich };
   }
 
   /** The Seerr part of `PUT /api/settings`: any http(s) address answers, any long enough key opens it. */
@@ -516,21 +523,46 @@ export class FakeServer {
       this.seerr = { url: '', keyHint: null };
       return null;
     }
-    if (typeof patch !== 'object') return 'Requête invalide';
+    if (typeof patch !== 'object') return 'Invalid request';
     const raw = patch as { url?: unknown; apiKey?: unknown };
     let url = this.seerr.url;
     if (raw.url !== undefined) {
-      if (typeof raw.url !== 'string' || !/^https?:\/\/[^\s/?#]+[^\s?#]*$/i.test(raw.url.trim())) return 'Adresse Seerr invalide';
+      if (typeof raw.url !== 'string' || !/^https?:\/\/[^\s/?#]+[^\s?#]*$/i.test(raw.url.trim())) return 'Invalid Seerr address';
       url = raw.url.trim().replace(/\/+$/, '');
     }
-    if (!url) return 'Renseignez l’adresse de Seerr';
+    if (!url) return 'Enter Seerr’s address';
     let keyHint = this.seerr.keyHint;
     if (raw.apiKey !== undefined) {
       const key = typeof raw.apiKey === 'string' ? raw.apiKey.trim() : null;
-      if (key === null || (key !== '' && !/^[!-~]{8,300}$/.test(key))) return 'Clé API invalide';
+      if (key === null || (key !== '' && !/^[!-~]{8,300}$/.test(key))) return 'Invalid API key';
       keyHint = key ? `…${key.slice(-4)}` : null;
     }
     this.seerr = { url, keyHint };
+    return null;
+  }
+
+  /** The Immich part of `PUT /api/settings`: any http(s) address answers, any long enough key opens it. */
+  private updateImmich(patch: unknown): string | null {
+    if (patch === null) {
+      this.immich = { url: '', keyHint: null };
+      return null;
+    }
+    if (typeof patch !== 'object') return 'Invalid request';
+    const raw = patch as { url?: unknown; apiKey?: unknown };
+    let url = this.immich.url;
+    if (raw.url !== undefined) {
+      if (typeof raw.url !== 'string' || !/^https?:\/\/[^\s/?#]+[^\s?#]*$/i.test(raw.url.trim())) return 'Invalid Immich address';
+      url = raw.url.trim().replace(/\/+$/, '');
+    }
+    if (!url) return 'Enter Immich’s address';
+    let keyHint = this.immich.keyHint;
+    if (raw.apiKey !== undefined) {
+      const key = typeof raw.apiKey === 'string' ? raw.apiKey.trim() : '';
+      if (!/^[!-~]{8,300}$/.test(key)) return 'Invalid API key';
+      keyHint = `…${key.slice(-4)}`;
+    }
+    if (!keyHint) return 'Paste an Immich API key';
+    this.immich = { url, keyHint };
     return null;
   }
 
@@ -540,21 +572,21 @@ export class FakeServer {
       this.backup = { ...this.backup, configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null };
       return null;
     }
-    if (typeof patch !== 'object') return 'Requête invalide';
+    if (typeof patch !== 'object') return 'Invalid request';
     const raw = patch as Record<string, unknown>;
     const next = { ...this.backup };
     for (const field of ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId'] as const) if (typeof raw[field] === 'string') next[field] = raw[field].trim();
     const secret = typeof raw.secretAccessKey === 'string' ? raw.secretAccessKey.trim() : '';
-    if (!next.secretHint && !secret) return 'Clé secrète manquante';
+    if (!next.secretHint && !secret) return 'Secret key missing';
     if (next.endpoint && !/^https?:\/\/[^/]+$/.test(next.endpoint)) return 'Adresse du service invalide';
     if (secret) next.secretHint = hint(secret);
     if (isBackupRecurrence(raw.recurrence)) next.recurrence = raw.recurrence;
     if (raw.keep !== undefined) {
-      if (typeof raw.keep !== 'number' || !Number.isInteger(raw.keep) || raw.keep < 1 || raw.keep > BACKUP_KEEP_MAX) return 'Durée de conservation invalide';
+      if (typeof raw.keep !== 'number' || !Number.isInteger(raw.keep) || raw.keep < 1 || raw.keep > BACKUP_KEEP_MAX) return 'Invalid number of days to keep';
       next.keep = raw.keep;
     }
     if (raw.storageClass !== undefined) {
-      if (!isStorageClass(raw.storageClass)) return 'Classe de stockage inconnue';
+      if (!isStorageClass(raw.storageClass)) return 'Unknown storage class';
       next.storageClass = raw.storageClass;
     }
     next.configured = Boolean(next.endpoint && next.region && next.bucket && next.accessKeyId && next.secretHint);
@@ -573,13 +605,13 @@ export class FakeServer {
       }, 2_500);
       return null;
     }
-    if (typeof patch !== 'object') return 'Requête invalide';
+    if (typeof patch !== 'object') return 'Invalid request';
     const raw = patch as Record<string, unknown>;
     const token = typeof raw.token === 'string' ? raw.token.trim() : '';
-    if (token && token.length < 10) return 'Jeton refusé par Seafile';
-    if (!this.drive.tokenHint && !token) return 'Jeton refusé par Seafile';
+    if (token && token.length < 10) return 'Token refused by Seafile';
+    if (!this.drive.tokenHint && !token) return 'Token refused by Seafile';
     const url = typeof raw.url === 'string' ? raw.url.trim() : this.drive.url;
-    if (!/^https?:\/\/./.test(url)) return 'Adresse Seafile invalide';
+    if (!/^https?:\/\/./.test(url)) return 'Invalid Seafile address';
     this.drive = {
       provider: 'seafile',
       url,
@@ -656,7 +688,7 @@ export class FakeServer {
     await delay(120);
     if (url.pathname === '/api/admin' && method === 'GET') return jsonResponse(this.adminStatus());
     if (url.pathname === '/api/admin/backups') {
-      if (!this.backup.configured) return jsonResponse({ error: 'Sauvegarde S3 non configurée' }, 409);
+      if (!this.backup.configured) return jsonResponse({ error: 'S3 backup not set up' }, 409);
       if (method === 'GET') return jsonResponse({ snapshots: [...this.snapshots].sort((a, b) => b.at - a.at) });
       if (method === 'POST') {
         if (!this.backupRunning) {
@@ -676,14 +708,14 @@ export class FakeServer {
       }
     }
     if (url.pathname === '/api/admin/drive/sync' && method === 'POST') {
-      if (!this.drive.provider) return jsonResponse({ error: 'Seafile n’est pas relié' }, 409);
+      if (!this.drive.provider) return jsonResponse({ error: 'Seafile is not connected' }, 409);
       this.drivePass();
       return jsonResponse(this.adminStatus(), 202);
     }
     if (url.pathname === '/api/admin/restore' && method === 'POST') {
       const mode = url.searchParams.get('mode') ?? 'merge';
-      if (!isRestoreMode(mode)) return jsonResponse({ error: 'Mode de restauration inconnu' }, 400);
-      if (this.restore.running) return jsonResponse({ error: 'Une restauration est déjà en cours' }, 409);
+      if (!isRestoreMode(mode)) return jsonResponse({ error: 'Unknown restore mode' }, 400);
+      if (this.restore.running) return jsonResponse({ error: 'A restore is already under way' }, 409);
       const named = typeof init?.body === 'string' ? (JSON.parse(init.body) as { snapshot?: unknown }).snapshot : undefined;
       const source = typeof named === 'string' ? named : init?.body instanceof File ? init.body.name : 'archive.tar.gz';
       const startedAt = Date.now();
@@ -701,8 +733,8 @@ export class FakeServer {
   private async sort(body: unknown): Promise<Response> {
     const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
     const request = parseSortRequest(body);
-    if (!request) return json({ error: 'Requête de tri invalide' }, 400);
-    if (!this.settings.enabled) return json({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return json({ error: 'Invalid sorting request' }, 400);
+    if (!this.settings.enabled) return json({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(1_400);
     const current = request.targets.find(target => target.id === request.from);
     const moves: SortMove[] = [];
@@ -718,8 +750,8 @@ export class FakeServer {
   private async coupons(body: unknown): Promise<Response> {
     const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
     const request = parseCouponRequest(body);
-    if (!request) return json({ error: 'Demande de codes promo invalide' }, 400);
-    if (!this.settings.enabled) return json({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return json({ error: 'Invalid promo code request' }, 400);
+    if (!this.settings.enabled) return json({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(2_400);
     const english = request.lang === 'en';
     const shop = request.link.site || (english ? 'the shop' : 'la boutique');
@@ -739,8 +771,8 @@ export class FakeServer {
   private async offers(body: unknown): Promise<Response> {
     const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
     const request = parseOfferRequest(body);
-    if (!request) return json({ error: 'Demande d’offres invalide' }, 400);
-    if (!this.settings.enabled) return json({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return json({ error: 'Invalid offers request' }, 400);
+    if (!this.settings.enabled) return json({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(2_200);
     const english = request.lang === 'en';
     const base = request.link.price ?? 120;
@@ -773,9 +805,9 @@ export class FakeServer {
   private async recipe(body: unknown): Promise<Response> {
     const json = (value: unknown, status = 200): Response => new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
     const request = parseRecipeRequest(body);
-    if (!request) return json({ error: 'Demande d’ingrédients invalide' }, 400);
+    if (!request) return json({ error: 'Invalid ingredients request' }, 400);
     await delay(900);
-    if (!/recette|recipe|tarte/.test(request.link.url)) return json({ error: 'Aucun ingrédient sur cette page' }, 502);
+    if (!/recette|recipe|tarte/.test(request.link.url)) return json({ error: 'No ingredients on this page' }, 502);
     return json({
       ingredients: ['1 sheet of puff pastry', '4 apples', '40 g butter', '3 tablespoons sugar', '1 sachet of vanilla sugar'],
       servings: '6 people',
@@ -793,8 +825,8 @@ export class FakeServer {
   /** `POST /api/ratings`, after a search's pause: the sites that rate the link's kind, a few made-up scores. */
   private async ratings(body: unknown): Promise<Response> {
     const request = parseRatingsRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande de notes invalide' }, 400);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid ratings request' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(2_000);
     const english = request.lang === 'en';
     const votes = (count: string): string => (english ? `${count} votes` : `${count.replace(',', ' ')} votes`);
@@ -833,8 +865,8 @@ export class FakeServer {
   /** `POST /api/recap`, after a search's pause: the demo's polar up to the episode asked. */
   private async recap(body: unknown): Promise<Response> {
     const request = parseRecapRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande de résumé invalide' }, 400);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid recap request' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(2_600);
     const english = request.lang === 'en';
     const { season, episode } = request;
@@ -859,8 +891,8 @@ export class FakeServer {
   /** `POST /api/coverage`, after a search's pause: three outlets on the story, each with its angle. */
   private async coverage(body: unknown): Promise<Response> {
     const request = parseCoverageRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande d’autres regards invalide' }, 400);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid request for other takes' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(2_400);
     const english = request.lang === 'en';
     const day = (ago: number): string => new Date(Date.now() - ago * 86_400_000).toISOString().slice(0, 10);
@@ -879,8 +911,8 @@ export class FakeServer {
   /** `POST /api/ask`, after a pause: an answer that says what it was asked, and a source when it may search. */
   private async ask(body: unknown): Promise<Response> {
     const request = parseAskRequest(body);
-    if (!request) return jsonResponse({ error: 'Question invalide' }, 400);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid question' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(request.web ? 2_400 : 1_400);
     const english = request.lang === 'en';
     const about = request.link.title || request.link.url;
@@ -895,11 +927,11 @@ export class FakeServer {
   /** `POST /api/pages/ask`, after a pause: a made-up answer citing the first words of the pages, so citations can be tried. */
   private async askPages(body: unknown): Promise<Response> {
     const request = parsePagesAskRequest(body);
-    if (!request) return jsonResponse({ error: 'Question invalide' }, 400);
-    if (!this.pages.enabled) return jsonResponse({ error: 'Les questions sur les pages sont désactivées dans l’administration' }, 409);
-    if (request.scope === 'all' && !this.pages.everywhere) return jsonResponse({ error: 'Les questions sur toutes les pages sont désactivées dans l’administration' }, 409);
-    if (requestChars(request.pages) > PAGES_REACH_CHARS[this.pages.reach]) return jsonResponse({ error: 'Ces pages sont trop longues pour une question : choisissez moins de pages' }, 409);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude n’a pas de clé : ajoutez-en une dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid question' }, 400);
+    if (!this.pages.enabled) return jsonResponse({ error: 'Questions about pages are turned off in the Administration' }, 409);
+    if (request.scope === 'all' && !this.pages.everywhere) return jsonResponse({ error: 'Questions about all pages are turned off in the Administration' }, 409);
+    if (requestChars(request.pages) > PAGES_REACH_CHARS[this.pages.reach]) return jsonResponse({ error: 'These pages are too long for one question: choose fewer pages' }, 409);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude has no key: add one in the Administration.' }, 409);
     const web = request.web && this.pages.web;
     await delay(web ? 2_400 : 1_400);
     const english = request.lang === 'en';
@@ -928,10 +960,10 @@ export class FakeServer {
    */
   private async templateTry(body: unknown): Promise<Response> {
     const request = parseTemplateTryRequest(body);
-    if (!request) return jsonResponse({ error: 'Essai de modèle invalide' }, 400);
-    if (!this.settings.enabled) return jsonResponse({ error: 'Claude ne lit pas les liens : ajoutez une clé dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid template try' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude is not reading links: add a key in Administration.' }, 409);
     await delay(1_500);
-    if (/closed-shop|echec|fermee/.test(request.url)) return jsonResponse({ error: 'Page protégée contre les robots' }, 502);
+    if (/closed-shop|echec|fermee/.test(request.url)) return jsonResponse({ error: 'Page protected against robots' }, 502);
     const found = READINGS.find(entry => entry.match.test(request.url));
     const said = found?.words[request.lang];
     const saved = [...this.records.values()]
@@ -954,16 +986,16 @@ export class FakeServer {
    */
   private async priceCheck(body: unknown): Promise<Response> {
     const request = parsePriceCheckRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande de vérification du prix invalide' }, 400);
+    if (!request) return jsonResponse({ error: 'Invalid price check request' }, 400);
     const record = this.records.get(`link:${request.linkId}`)?.record;
-    if (!record || typeof record.fields.deletedAt === 'number') return jsonResponse({ error: 'Lien introuvable' }, 404);
+    if (!record || typeof record.fields.deletedAt === 'number') return jsonResponse({ error: 'Link not found' }, 404);
     const now = Date.now();
     const last = this.priceChecks.get(request.linkId);
-    if (last !== undefined && now - last < 60_000) return jsonResponse({ error: 'Prix vérifié à l’instant : réessayez dans une minute.' }, 409);
+    if (last !== undefined && now - last < 60_000) return jsonResponse({ error: 'Price checked a moment ago: try again in a minute.' }, 409);
     this.priceChecks.set(request.linkId, now);
     await delay(1_100);
     const link = linkFromRecord(record);
-    if (link.price === null) return jsonResponse({ outcome: 'hidden', price: null, currency: null, before: null, by: null, note: 'Claude n’a pas trouvé de prix sur cette page.' });
+    if (link.price === null) return jsonResponse({ outcome: 'hidden', price: null, currency: null, before: null, by: null, note: 'Claude found no price on this page.' });
     const amount = /merino/.test(link.url) && link.priceBefore === null ? link.price - 10 : link.price;
     const update = priceUpdate({ ...link, priceCheckedAt: link.priceCheckedAt ?? link.createdAt, analyzedAt: null }, { amount, currency: link.currency }, now);
     this.write('link', link.id, { ...update.fields });
@@ -974,8 +1006,8 @@ export class FakeServer {
   /** `POST /api/seerr`: the demo's Seerr has the September film, nothing else yet. */
   private async seerrLookup(body: unknown): Promise<Response> {
     const request = parseSeerrRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande Seerr invalide' }, 400);
-    if (!this.seerr.url) return jsonResponse({ error: 'Seerr n’est pas relié : ajoutez-le dans l’administration.' }, 409);
+    if (!request) return jsonResponse({ error: 'Invalid Seerr request' }, 400);
+    if (!this.seerr.url) return jsonResponse({ error: 'Seerr is not linked: add it in Administration.' }, 409);
     await delay(500);
     const { link } = request;
     if (!this.seerr.keyHint) return jsonResponse({ url: seerrSearchUrl(this.seerr.url, link) ?? this.seerr.url, status: null, title: '' });
@@ -991,7 +1023,7 @@ export class FakeServer {
    */
   private async copy(body: unknown): Promise<Response> {
     const request = parseCopyRequest(body);
-    if (!request) return jsonResponse({ error: 'Demande de copie invalide' }, 400);
+    if (!request) return jsonResponse({ error: 'Invalid copy request' }, 400);
     await delay(1_200);
     const link = this.records.get(`link:${request.link.id}`)?.record;
     if (!link) return jsonResponse({ error: 'Ce lien n’existe pas sur le serveur' }, 404);
@@ -1108,7 +1140,7 @@ export class FakeServer {
   /** `GET /api/<app>/mentions`: the pages or the notes whose text mentions one of the ids; for a person, Carnet's notes and links that name them among their people too. */
   private mentions(app: 'pages' | 'notes', url: URL): Response {
     const query = parseMentionsQuery(url.searchParams.get('type') ?? undefined, url.searchParams.get('ids') ?? undefined);
-    if (!query) return jsonResponse({ error: 'Requête invalide' }, 400);
+    if (!query) return jsonResponse({ error: 'Invalid request' }, 400);
     const markups = mentionMarkups(query.type, query.ids);
     const holds = (text: unknown): boolean => typeof text === 'string' && markups.some(markup => text.includes(markup));
     const record = (type: string, id: string): SyncRecord | undefined => this.records.get(`${type}:${id}`)?.record;
@@ -1182,8 +1214,14 @@ export class FakeServer {
     if (url.pathname === '/api/pages/ask' && method === 'POST') return this.appRoute('pages', () => this.askPages(JSON.parse(String(init?.body ?? '{}'))));
     if (url.pathname === GIFTS_PATH && method === 'POST') return this.appRoute('notes', () => this.gift(JSON.parse(String(init?.body ?? '{}'))));
     if (url.pathname === '/api/pages/mentions' && method === 'GET') return this.appRoute('pages', async () => this.mentions('pages', url));
+    if (/^\/api\/pages\/[^/]+\/versions/.test(url.pathname)) return this.appRoute('pages', async () => pageVersionsRoute(() => this.allRecords(), url, method) ?? new Response('not found', { status: 404 }));
     if (url.pathname === '/api/notes/mentions' && method === 'GET') return this.appRoute('notes', async () => this.mentions('notes', url));
     if (url.pathname === CONTACT_PHOTO_PATH && method === 'POST') return this.appRoute('contacts', () => this.contactPhoto(JSON.parse(String(init?.body ?? '{}'))));
+    const immich = immichRoute(url, method, this.immich.url !== '', (id, blob) => this.uploads.set(id, blob));
+    if (immich) {
+      await delay(120);
+      return immich;
+    }
     const agenda = calendarRoute({ records: () => this.allRecords(), write: (type, id, patch) => this.write(type, id, patch) }, url, method, method === 'GET' ? null : JSON.parse(String(init?.body ?? '{}')), this.apps);
     if (agenda) return agenda;
     if (url.pathname === '/api/seerr' && method === 'POST') return this.appRoute('notes', () => this.seerrLookup(JSON.parse(String(init?.body ?? '{}'))));

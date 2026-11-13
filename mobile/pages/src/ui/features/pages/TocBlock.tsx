@@ -36,7 +36,7 @@ interface Line {
 function headingsKey(s: LibraryState, page: string): string {
   return pageHeadings(s.blocks, s.blocksByParent, page)
     .flatMap(entry => {
-      const words = markupToPlain(entry.text, target => targetTitle(s, target) ?? t('(supprimé)'), dateWords).replace(/\s+/g, ' ').trim();
+      const words = markupToPlain(entry.text, target => targetTitle(s, target) ?? t('(deleted)'), dateWords).replace(/\s+/g, ' ').trim();
       return words ? [[entry.id, entry.depth, words].join(FIELD)] : [];
     })
     .join(ENTRY);
@@ -57,7 +57,7 @@ function TocBlockComponent() {
     [key],
   );
   if (lines.length === 0) {
-    return <EmptyLine glyph="contents" text={t('Ajoutez des titres à la page : ils apparaîtront ici.')} style={styles.empty} />;
+    return <EmptyLine glyph="contents" text={t('Add headings to the page: they will show here.')} style={styles.empty} />;
   }
   return (
     <View>

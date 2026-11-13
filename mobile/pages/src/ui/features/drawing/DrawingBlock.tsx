@@ -35,7 +35,7 @@ export function DrawingBlock({ block }: { block: Block }) {
   };
 
   if (strokes.length === 0) {
-    const words = readOnly ? t('Dessin vide') : t('Touchez pour dessiner');
+    const words = readOnly ? t('Empty drawing') : t('Tap to draw');
     return (
       <Tappable onPress={open} disabled={readOnly} ownDisabled outline="panel" style={styles.empty} accessibilityLabel={words}>
         <Icon name="draw" size={24} color={theme.color.inkMuted} />
@@ -60,7 +60,7 @@ export function DrawingBlock({ block }: { block: Block }) {
         disabled={readOnly}
         ownDisabled
         accessibilityRole={readOnly ? 'image' : 'button'}
-        accessibilityLabel={readOnly ? t('Dessin') : t('Modifier le dessin')}
+        accessibilityLabel={readOnly ? t('Drawing') : t('Edit the drawing')}
         style={StyleSheet.absoluteFill}
       >
         <Svg width="100%" height="100%" viewBox={`0 0 ${DRAWING_WIDTH} ${DRAWING_WIDTH * ratio}`} pointerEvents="none">

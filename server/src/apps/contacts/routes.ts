@@ -16,7 +16,7 @@ export function contactsRoutes(app: Hono<Env>, { photos }: { readonly photos: Ph
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     if (!isContactPhotoRequest(body)) return c.json({ error: 'Adresse de photo invalide' }, 400);
     const outcome = await photos.take(body);

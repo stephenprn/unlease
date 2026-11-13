@@ -48,7 +48,7 @@ export function useLookShareHint(): void {
     const timer = setTimeout(() => {
       settled.current = key;
       if (!reachable.current) return;
-      showSnack(t('Apparence changée dans {app}', { app: APPS[theApp().id].name }), { label: t('Appliquer aux autres'), run: () => setLookShareOpen(true) });
+      showSnack(t('Appearance changed in {app}', { app: APPS[theApp().id].name }), { label: t('Apply to other apps'), run: () => setLookShareOpen(true) });
     }, HINT_DELAY_MS);
     return () => clearTimeout(timer);
   }, [key]);
@@ -61,7 +61,7 @@ export function LookShareButton() {
   if (!onboarded || others.length === 0) return null;
   return (
     <Button kind="text" small icon="apps" onClick={() => setLookShareOpen(true)}>
-      {t('Appliquer aux autres applications…')}
+      {t('Apply to other apps…')}
     </Button>
   );
 }
@@ -96,21 +96,21 @@ function LookShareBody({ titleId, onClose }: { titleId: string; onClose: () => v
   return (
     <DialogFrame
       kind="list"
-      title={t('Appliquer cette apparence')}
+      title={t('Apply this appearance')}
       titleId={titleId}
       onClose={onClose}
       foot={
         <>
           <Button kind="text" onClick={onClose}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button disabled={chosen.length === 0} onClick={apply}>
-            {t('Appliquer')}
+            {t('Apply')}
           </Button>
         </>
       }
     >
-      <p className={`${styles.lookLead} t-body`}>{t('Le thème, les couleurs et le fond de {app}, pour les applications cochées. Chacune les prend à sa prochaine ouverture.', { app: APPS[theApp().id].name })}</p>
+      <p className={`${styles.lookLead} t-body`}>{t('{app}’s theme, colours and background, for the apps ticked. Each takes them the next time it opens.', { app: APPS[theApp().id].name })}</p>
       {others.map(app => {
         const on = !left.has(app);
         return (
@@ -128,6 +128,6 @@ function LookShareBody({ titleId, onClose }: { titleId: string; onClose: () => v
 /** « Agenda prendra cette apparence… », « Pages et Agenda prendront… »: the names are brands, the same in every language. */
 function sentWords(apps: readonly AppId[]): string {
   const names = apps.map(app => APPS[app].name);
-  if (names.length === 1) return t('{app} prendra cette apparence à sa prochaine ouverture.', { app: names[0]! });
-  return t('{apps} et {last} prendront cette apparence à leur prochaine ouverture.', { apps: names.slice(0, -1).join(', '), last: names[names.length - 1]! });
+  if (names.length === 1) return t('{app} will take this appearance the next time it opens.', { app: names[0]! });
+  return t('{apps} and {last} will take this appearance the next time they open.', { apps: names.slice(0, -1).join(', '), last: names[names.length - 1]! });
 }

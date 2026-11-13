@@ -47,7 +47,7 @@ export function useMentionRows(query: string | null, onPick: (target: Ref) => vo
   }, [asking, people]);
   return useMemo(() => {
     if (query === null) return [];
-    const events: Candidate[] = findEvents(agenda.events, agenda.feeds, query, mentionName, 6).map(hit => ({ target: { type: 'event', id: hit.id }, title: hit.title || t('Sans titre'), detail: hit.when, icon: 'calendar' }));
+    const events: Candidate[] = findEvents(agenda.events, agenda.feeds, query, mentionName, 6).map(hit => ({ target: { type: 'event', id: hit.id }, title: hit.title || t('Untitled'), detail: hit.when, icon: 'calendar' }));
     const sections: MentionSection<string, Candidate>[] = [
       { section: 'contact', entries: everyone },
       // Agenda's own search reads an event's place and notes too: its order is kept.

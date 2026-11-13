@@ -106,9 +106,9 @@ function DateSheetHostComponent({ page }: { page: string }) {
   };
 
   const quick = [
-    { label: t('Aujourd’hui'), day: today },
-    { label: t('Demain'), day: shiftDay(now, 1) },
-    { label: t('Lundi prochain'), day: nextMonday(now) },
+    { label: t('Today'), day: today },
+    { label: t('Tomorrow'), day: shiftDay(now, 1) },
+    { label: t('Next Monday'), day: nextMonday(now) },
   ];
   const [hour = 0, minute = 0] = run?.time ? run.time.split(':').map(Number) : [];
 
@@ -135,7 +135,7 @@ function DateSheetHostComponent({ page }: { page: string }) {
           <View style={styles.rows}>
             <ListRow
               icon="clock"
-              title={t('Heure')}
+              title={t('Time')}
               accessibilityRole="switch"
               accessibilityState={{ checked: run.time !== null }}
               trailing={<SwitchMark checked={run.time !== null} />}
@@ -151,7 +151,7 @@ function DateSheetHostComponent({ page }: { page: string }) {
                 {rowsOf(withHeld(HOURS, hour), HOURS_A_ROW).map(row => (
                   <View key={row[0]} style={styles.hourRow}>
                     {row.map(value => (
-                      <Chip key={value} label={t('{hour} h', { hour: value })} selected={value === hour} onPress={() => write(withTime(run, `${pad(value)}:${pad(minute)}`))} style={styles.hour} />
+                      <Chip key={value} label={t('{hour}:00', { hour: value })} selected={value === hour} onPress={() => write(withTime(run, `${pad(value)}:${pad(minute)}`))} style={styles.hour} />
                     ))}
                     {/* The last row keeps the grid's columns. */}
                     {Array.from({ length: HOURS_A_ROW - row.length }, (_, index) => (
@@ -168,7 +168,7 @@ function DateSheetHostComponent({ page }: { page: string }) {
             </View>
           ) : null}
           <View style={styles.rows}>
-            <ListRow icon="trash" title={t('Retirer la date')} danger onPress={remove} />
+            <ListRow icon="trash" title={t('Remove the date')} danger onPress={remove} />
           </View>
         </SheetScroll>
       ) : null}

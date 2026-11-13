@@ -57,19 +57,19 @@ function BlockDrawingEditor({ page, blockId, titleId, chosen, onDone }: { page: 
   return (
     <div className={styles.dialogKeys} onKeyDown={session.onKeyDown}>
       <DialogFrame
-        title={t('Dessin')}
+        title={t('Drawing')}
         titleId={titleId}
         onClose={onDone}
         className={styles.dialogFrame}
         foot={
           <>
             <DrawingTools className={styles.dialogTools} chosenRef={chosen} background={{ value: background, onChange: setBackground }} canUndo={session.canUndo} canRedo={session.canRedo} canClear={session.strokes.length > 0} onUndo={session.undo} onRedo={session.redo} onClear={session.clear} />
-            <Button onClick={onDone}>{t('Terminé')}</Button>
+            <Button onClick={onDone}>{t('Done')}</Button>
           </>
         }
       >
         <div className={background === DRAWING_NONE ? styles.dialogCanvas : `${styles.dialogCanvas} paper`} data-outline="frame" data-edge="" {...backgroundPaint(background)}>
-          <DrawingCanvas strokes={session.strokes} editable label={t('Zone de dessin')} onGesture={session.onGesture} onStroke={session.onStroke} onErase={session.onErase} />
+          <DrawingCanvas strokes={session.strokes} editable label={t('Drawing area')} onGesture={session.onGesture} onStroke={session.onStroke} onErase={session.onErase} />
         </div>
       </DialogFrame>
     </div>
@@ -98,7 +98,7 @@ function DrawingBlockComponent({ block }: { block: Block }) {
   const content = empty ? (
     <span className={styles.invite}>
       <Icon name="draw" size={24} />
-      <span className="t-body">{readOnly ? t('Dessin vide') : t('Cliquez pour dessiner')}</span>
+      <span className="t-body">{readOnly ? t('Empty drawing') : t('Click to draw')}</span>
     </span>
   ) : (
     <DrawingArt strokes={strokes} />
@@ -110,7 +110,7 @@ function DrawingBlockComponent({ block }: { block: Block }) {
         {content}
       </div>
     ) : (
-      <div className={framed} data-outline="frame" data-edge="" {...backgroundPaint(background)} role="img" aria-label={t('Dessin')}>
+      <div className={framed} data-outline="frame" data-edge="" {...backgroundPaint(background)} role="img" aria-label={t('Drawing')}>
         {content}
       </div>
     );
@@ -126,7 +126,7 @@ function DrawingBlockComponent({ block }: { block: Block }) {
           data-outline={empty ? 'panel' : 'frame'}
           data-edge={empty ? undefined : ''}
           {...(empty ? {} : backgroundPaint(background))}
-          aria-label={empty ? undefined : t('Modifier le dessin')}
+          aria-label={empty ? undefined : t('Edit the drawing')}
           aria-haspopup="dialog"
           onClick={() => openDrawingEditor(page, block.id)}
         >

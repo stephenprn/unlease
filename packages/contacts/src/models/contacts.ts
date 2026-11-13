@@ -131,16 +131,16 @@ export const CONTACTS_TEXT_LIMITS = {
 /** The kinds' names, in the interface's language as they are read. */
 export const PHONE_KIND_NAMES: Readonly<Record<PhoneKind, string>> = localized({
   mobile: tx('Mobile'),
-  home: tx('Domicile'),
-  work: tx('Travail'),
-  main: tx('Principal'),
-  other: tx('Autre'),
+  home: tx('Home [address]'),
+  work: tx('Work'),
+  main: tx('Main'),
+  other: tx('Other'),
 });
 
 export const PLACE_KIND_NAMES: Readonly<Record<EmailKind, string>> = localized({
-  home: tx('Personnel'),
-  work: tx('Travail'),
-  other: tx('Autre'),
+  home: tx('Personal'),
+  work: tx('Work'),
+  other: tx('Other'),
 });
 
 /** A contact with nothing in it (a new one, before its first field). */

@@ -8,9 +8,9 @@ import { StyleSheet, View } from 'react-native';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
-import { INBOX_ID, INBOX_TITLE, shownTitle } from '@unlease/notes/models/entities';
+import { INBOX_ID, INBOX_SHOWN_TITLE, shownTitle } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
 import { displayHost } from '@unlease/core/services/url';
 import type { SortMove } from '@unlease/notes/sync/sorting';
@@ -27,7 +27,7 @@ type Phase = { readonly kind: 'asking' } | { readonly kind: 'failed'; readonly r
 
 export function ReviewSheet({ id, visible, onDismiss }: { id: string; visible: boolean; onDismiss: () => void }) {
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={t('Vérifier les liens')} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={t('Check links')} tall>
       <ReviewBody id={id} onDismiss={onDismiss} />
     </Sheet>
   );
@@ -51,7 +51,7 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
         setPhase({ kind: 'ready', moves, incomplete });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -73,7 +73,7 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     if (phase.kind !== 'ready') return;
     const { moved, undo } = applyReview(id, phase.moves.filter(move => kept.has(move.link)));
     onDismiss();
-    if (moved.length > 0) showSnack(plural(moved.length, 'lien déplacé', 'liens déplacés'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    if (moved.length > 0) showSnack(plural(moved.length, 'link moved', 'links moved'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   if (phase.kind === 'asking') {
@@ -81,7 +81,7 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       <View style={styles.waiting}>
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {t('Claude relit {links} de {collection}…', { links: plural(count, 'lien'), collection: shownTitle(line) })}
+          {t('Claude is rereading {links} from {collection}…', { links: plural(count, 'link'), collection: shownTitle(line) })}
         </AppText>
       </View>
     );
@@ -94,11 +94,11 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu relire la collection : {reason}', { reason: t(failure) })}
+            {t('Claude couldn’t reread the collection: {reason}', { reason: t(failure) })}
           </AppText>
         </SheetScroll>
         <FormFoot>
-          <Button kind="text" label={t('Réessayer')} onPress={retry} />
+          <Button kind="text" label={t('Try again')} onPress={retry} />
         </FormFoot>
       </>
     );
@@ -108,10 +108,10 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     return (
       <>
         <SheetScroll contentContainerStyle={styles.body}>
-          <EmptyLine glyph="check" size="body" text={t('Tous les liens ont leur place dans {collection}.', { collection: shownTitle(line) })} />
+          <EmptyLine glyph="check" size="body" text={t('Every link belongs in {collection}.', { collection: shownTitle(line) })} />
         </SheetScroll>
         <FormFoot>
-          <Button kind="text" label={t('Fermer')} onPress={onDismiss} />
+          <Button kind="text" label={t('Close')} onPress={onDismiss} />
         </FormFoot>
       </>
     );
@@ -120,11 +120,11 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
     <>
     <SheetScroll contentContainerStyle={styles.body}>
       <AppText variant="body" color={theme.color.inkMuted}>
-        {t('Claude propose d’en sortir {links} de {collection}. Décochez ceux qui y restent.', { links: plural(phase.moves.length, 'lien'), collection: shownTitle(line) })}
+        {t('Claude suggests moving {links} out of {collection}. Untick those that stay.', { links: plural(phase.moves.length, 'link'), collection: shownTitle(line) })}
       </AppText>
       {phase.incomplete ? (
         <AppText variant="meta" color={theme.color.danger}>
-          {t('Une partie n’a pas pu être relue : {reason}', { reason: t(phase.incomplete) })}
+          {t('Part of it couldn’t be reread: {reason}', { reason: t(phase.incomplete) })}
         </AppText>
       ) : null}
       <View>
@@ -134,8 +134,8 @@ function ReviewBody({ id, onDismiss }: { id: string; onDismiss: () => void }) {
       </View>
     </SheetScroll>
     <FormFoot>
-      <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
-      <Button label={kept.size > 0 ? t('Déplacer {links}', { links: plural(kept.size, 'lien') }) : t('Déplacer')} disabled={kept.size === 0} onPress={apply} />
+      <Button kind="text" label={t('Cancel')} onPress={onDismiss} />
+      <Button label={kept.size > 0 ? t('Move {links}', { links: plural(kept.size, 'link') }) : t('Move')} disabled={kept.size === 0} onPress={apply} />
     </FormFoot>
     </>
   );
@@ -147,16 +147,16 @@ function MoveRow({ move, kept, onToggle }: { move: SortMove; kept: boolean; onTo
   const target = useLibraryStore(s => s.notes[move.to]);
   if (!link) return null;
   const title = link.title || displayHost(link.url);
-  const destination = move.to === INBOX_ID ? t(INBOX_TITLE) : (target?.title ?? '');
+  const destination = move.to === INBOX_ID ? t(INBOX_SHOWN_TITLE) : (target?.title ?? '');
   return (
-    <Tappable onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked: kept }} accessibilityLabel={t('{link}, vers {collection}', { link: title, collection: destination })} style={styles.row}>
+    <Tappable onPress={onToggle} accessibilityRole="checkbox" accessibilityState={{ checked: kept }} accessibilityLabel={t('{link}, to {collection}', { link: title, collection: destination })} style={styles.row}>
       <CheckMark checked={kept} />
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" numberOfLines={2}>
           {title}
         </AppText>
         <AppText variant="meta" numberOfLines={1}>
-          {t('Vers {collection}', { collection: destination })}
+          {t('To {collection}', { collection: destination })}
         </AppText>
       </View>
       <Emblem emblem={collectionEmblem(move.to, target?.emblem ?? null)} color={asLineColor(target?.color ?? null)} size={28} />

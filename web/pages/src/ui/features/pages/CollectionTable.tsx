@@ -68,16 +68,16 @@ function ColumnHead({ block, columns, column, index, count }: { block: Block; co
   const [open, setOpen] = useState(false);
   const head = useRef<HTMLButtonElement>(null);
   const items: MenuItem[] = [];
-  if (index > 0) items.push({ label: t('Déplacer à gauche'), icon: 'back', onSelect: () => setViewColumns(page, block.id, placeColumn(columns, block.viewColumns, column.key, index - 1)) });
-  if (index < count - 1) items.push({ label: t('Déplacer à droite'), icon: 'arrowRight', onSelect: () => setViewColumns(page, block.id, placeColumn(columns, block.viewColumns, column.key, index + 1)) });
-  items.push({ label: t('Masquer la colonne'), icon: 'eyeOff', onSelect: () => setViewColumns(page, block.id, showColumn(columns, block.viewColumns, column.key, false)) });
+  if (index > 0) items.push({ label: t('Move left'), icon: 'back', onSelect: () => setViewColumns(page, block.id, placeColumn(columns, block.viewColumns, column.key, index - 1)) });
+  if (index < count - 1) items.push({ label: t('Move right'), icon: 'arrowRight', onSelect: () => setViewColumns(page, block.id, placeColumn(columns, block.viewColumns, column.key, index + 1)) });
+  items.push({ label: t('Hide column'), icon: 'eyeOff', onSelect: () => setViewColumns(page, block.id, showColumn(columns, block.viewColumns, column.key, false)) });
   return (
     <th className={styles.headCell} style={{ width: widthOf(column.key) }} scope="col">
       <button ref={head} type="button" className={styles.headButton} aria-haspopup="menu" aria-expanded={open} disabled={readOnly} onClick={() => setOpen(true)}>
         <Icon name={iconOf(column.key)} size={16} />
         <span className={styles.headName}>{column.name}</span>
       </button>
-      <Menu open={open} anchor={head} onDismiss={() => setOpen(false)} items={items} label={t('Colonne {name}', { name: column.name })} align="start" />
+      <Menu open={open} anchor={head} onDismiss={() => setOpen(false)} items={items} label={t('Column {name}', { name: column.name })} align="start" />
     </th>
   );
 }
@@ -110,10 +110,10 @@ const LinkTableRow = memo(function LinkTableRow({ id, index, columns, now }: { i
             <span className={styles.linkTitleName} data-address={link.title ? undefined : true}>
               {title}
             </span>
-            {link.status === 'pending' && reading ? <span className="t-meta">{t('Lecture de la page…')}</span> : null}
+            {link.status === 'pending' && reading ? <span className="t-meta">{t('Reading the page…')}</span> : null}
           </span>
         </a>
-        <a className={styles.cellOpen} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Ouvrir {title}', { title })} data-tip={t('Ouvrir le lien')}>
+        <a className={styles.cellOpen} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Open {title}', { title })} data-tip={t('Open the link')}>
           <Icon name="external" size={14} />
         </a>
       </td>
@@ -127,8 +127,8 @@ const LinkTableRow = memo(function LinkTableRow({ id, index, columns, now }: { i
           <button
             type="button"
             className={styles.rowAction}
-            aria-label={link.done ? t('Remettre « {title} » à faire', { title }) : t('Marquer « {title} » : {stamp}', { title, stamp: stampWord(link.kind).toLowerCase() })}
-            data-tip={link.done ? t('Remettre à faire') : stampWord(link.kind)}
+            aria-label={link.done ? t('Put “{title}” back to do', { title }) : t('Mark “{title}”: {stamp}', { title, stamp: stampWord(link.kind).toLowerCase() })}
+            data-tip={link.done ? t('Put back to do') : stampWord(link.kind)}
             onClick={() => toggleDone(id)}
           >
             <Icon name={link.done ? 'undo' : 'stamp'} size={16} />
@@ -154,7 +154,7 @@ function AddLink({ lineId, name }: { lineId: string; name: string }) {
     return (
       <button type="button" className={styles.addRow} onClick={() => setOpen(true)}>
         <Icon name="plus" size={16} />
-        {t('Ajouter un lien')}
+        {t('Add a link')}
       </button>
     );
   }
@@ -182,8 +182,8 @@ function AddLink({ lineId, name }: { lineId: string; name: string }) {
         className={styles.addLinkInput}
         value={url}
         autoFocus
-        placeholder={t('Coller une adresse, puis Entrée')}
-        aria-label={t('Ajouter un lien à {name}', { name })}
+        placeholder={t('Paste an address, then Enter')}
+        aria-label={t('Add a link to {name}', { name })}
         aria-invalid={refused || undefined}
         aria-describedby={refused ? `${lineId}-add-problem` : undefined}
         inputMode="url"
@@ -210,7 +210,7 @@ function AddLink({ lineId, name }: { lineId: string; name: string }) {
     {refused ? (
       <p id={`${lineId}-add-problem`} className={`${controls.error} ${styles.addLinkProblem} t-meta`}>
         <Icon name="error" size={16} className={controls.errorGlyph} />
-        <span>{t('Aucun lien ici : collez une adresse, comme https://example.org/page.')}</span>
+        <span>{t('No link here: paste an address, like https://example.org/page.')}</span>
       </p>
     ) : null}
     </>
@@ -231,13 +231,13 @@ export function CollectionTable({ block, lineId, name, ids, done }: { block: Blo
     <>
       {all.length > 0 ? (
         <div ref={wrap} className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.linkTable}`} style={{ width }} aria-label={t('Liens de {name}', { name })}>
+          <table className={`${styles.table} ${styles.linkTable}`} style={{ width }} aria-label={t('Links in {name}', { name })}>
             <thead>
               <tr>
                 <th className={styles.headCell} style={{ width: titleWidth }} scope="col">
                   <span className={styles.headLabel}>
                     <Icon name="text" size={16} />
-                    <span className={styles.headName}>{t('Titre')}</span>
+                    <span className={styles.headName}>{t('Title')}</span>
                   </span>
                 </th>
                 {shown.map((column, index) => (
@@ -255,7 +255,7 @@ export function CollectionTable({ block, lineId, name, ids, done }: { block: Blo
               <tbody>
                 <tr>
                   <th className={styles.doneHead} colSpan={shown.length + 2} scope="rowgroup">
-                    <span className={`${styles.doneHeadLabel} t-section`}>{t('Déjà faits · {count}', { count: done.length })}</span>
+                    <span className={`${styles.doneHeadLabel} t-section`}>{t('Done · {count}', { count: done.length })}</span>
                   </th>
                 </tr>
                 {done.map((id, index) => (
@@ -266,7 +266,7 @@ export function CollectionTable({ block, lineId, name, ids, done }: { block: Blo
           </table>
         </div>
       ) : (
-        <EmptyLine className={styles.embedEmpty} text={t('Aucun lien à faire dans cette collection.')} />
+        <EmptyLine className={styles.embedEmpty} text={t('No links to do in this collection.')} />
       )}
       {readOnly ? null : <AddLink lineId={lineId} name={name} />}
     </>
@@ -326,12 +326,12 @@ function ShownColumns({ columns, onPlace, onShow }: { columns: readonly Collecti
   };
 
   return (
-    <ul ref={list} className={styles.viewList} aria-label={t('Colonnes affichées')}>
+    <ul ref={list} className={styles.viewList} aria-label={t('Shown columns')}>
       <li className={styles.viewRow}>
         <span className={styles.viewGripSpace} />
         <Icon name="text" size={16} />
-        <span className={styles.viewName}>{t('Titre')}</span>
-        <span className="t-meta">{t('Toujours')}</span>
+        <span className={styles.viewName}>{t('Title')}</span>
+        <span className="t-meta">{t('Always')}</span>
       </li>
       {order.map((column, index) => (
         <li key={column.key} className={styles.viewRow} data-dragging={drag?.key === column.key || undefined}>
@@ -339,7 +339,7 @@ function ShownColumns({ columns, onPlace, onShow }: { columns: readonly Collecti
             type="button"
             className={styles.viewGrip}
             data-grip={column.key}
-            aria-label={t('Déplacer {name}', { name: column.name })}
+            aria-label={t('Move {name}', { name: column.name })}
             aria-keyshortcuts="ArrowUp ArrowDown"
             onPointerDown={event => grab(event, column.key, index)}
             onKeyDown={event => step(event, column.key, index)}
@@ -348,7 +348,7 @@ function ShownColumns({ columns, onPlace, onShow }: { columns: readonly Collecti
           </button>
           <Icon name={iconOf(column.key)} size={16} />
           <span className={styles.viewName}>{column.name}</span>
-          <Switch checked label={t('Afficher {name}', { name: column.name })} onChange={() => onShow(column.key, false)} />
+          <Switch checked label={t('Show {name}', { name: column.name })} onChange={() => onShow(column.key, false)} />
         </li>
       ))}
     </ul>
@@ -366,24 +366,24 @@ export function ColumnsButton({ block, ids }: { block: Block; ids: readonly stri
   const show = (key: string, on: boolean): void => setViewColumns(page, block.id, showColumn(columns, block.viewColumns, key, on));
   return (
     <>
-      <button ref={button} type="button" className={`${controls.button} ${controls.text} ${controls.small} ${styles.columnsButton}`} aria-label={t('Colonnes')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+      <button ref={button} type="button" className={`${controls.button} ${controls.text} ${controls.small} ${styles.columnsButton}`} aria-label={t('Columns')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
         <Icon name="columns" size={18} />
-        <span className={styles.columnsWord}>{t('Colonnes')}</span>
+        <span className={styles.columnsWord}>{t('Columns')}</span>
       </button>
-      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={t('Colonnes du tableau')} width={320} align="end">
+      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={t('Table columns')} width={320} align="end">
         <div className={styles.viewPanel}>
-          <h2 className={`${styles.viewHeading} t-meta-strong`}>{t('Dans le tableau')}</h2>
+          <h2 className={`${styles.viewHeading} t-meta-strong`}>{t('In the table')}</h2>
           <ShownColumns columns={shown} onPlace={(key, index) => setViewColumns(page, block.id, placeColumn(columns, block.viewColumns, key, index))} onShow={show} />
           {hidden.length > 0 ? (
             <>
-              <h2 className={`${styles.viewHeading} t-meta-strong`}>{t('Masquées')}</h2>
-              <ul className={styles.viewList} aria-label={t('Colonnes masquées')}>
+              <h2 className={`${styles.viewHeading} t-meta-strong`}>{t('Hidden')}</h2>
+              <ul className={styles.viewList} aria-label={t('Hidden columns')}>
                 {hidden.map(column => (
                   <li key={column.key} className={styles.viewRow}>
                     <span className={styles.viewGripSpace} />
                     <Icon name={iconOf(column.key)} size={16} />
                     <span className={styles.viewName}>{column.name}</span>
-                    <Switch checked={false} label={t('Afficher {name}', { name: column.name })} onChange={() => show(column.key, true)} />
+                    <Switch checked={false} label={t('Show {name}', { name: column.name })} onChange={() => show(column.key, true)} />
                   </li>
                 ))}
               </ul>

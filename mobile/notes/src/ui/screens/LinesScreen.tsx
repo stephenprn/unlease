@@ -48,19 +48,19 @@ export function LinesScreen({ navigation }: ScreenProps<'Lines'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Collections')} onBack={() => navigation.goBack()} actions={<IconButton icon="plus" label={t('Nouvelle collection')} onPress={() => setCreating(true)} />} />
+      <TopBar title={t('Collections')} onBack={() => navigation.goBack()} actions={<IconButton icon="plus" label={t('New collection')} onPress={() => setCreating(true)} />} />
       <EdgeScrollView contentContainerStyle={styles.list}>
         <AppText variant="body" style={styles.intro}>
-          {t('Claude lit chaque lien que vous enregistrez et le range dans la collection qui lui correspond. La phrase de chaque collection l’aide à choisir.')}
+          {t('Claude reads each link you save and files it in the collection that fits. Each collection’s sentence helps it choose.')}
         </AppText>
         <View style={styles.grid}>
           {data.map(item => (
             <Animated.View key={item} layout={listMove} entering={arrived.has(item) ? listIn : undefined} exiting={listOut} style={{ width: tile }}>
               {item === NEW ? (
-                <Tappable unstable_pressDelay={listPressDelay} onPress={() => setCreating(true)} accessibilityLabel={t('Nouvelle collection')} outline={NEW_TILE} style={styles.add}>
+                <Tappable unstable_pressDelay={listPressDelay} onPress={() => setCreating(true)} accessibilityLabel={t('New collection')} outline={NEW_TILE} style={styles.add}>
                   <Icon name="plus" size={28} color={styles.addText.color} />
                   <AppText variant="bodyStrong" color={styles.addText.color}>
-                    {t('Nouvelle collection')}
+                    {t('New collection')}
                   </AppText>
                 </Tappable>
               ) : (
@@ -91,7 +91,7 @@ function CollectionTile({ id, onPress }: { id: string; onPress: () => void }) {
   if (!line) return null;
   const inbox = id === INBOX_ID;
   // What is left to do; all of it done, it says so rather than « 0 lien » (its page's heading).
-  const holds = count === 0 && done > 0 ? t('Déjà faits · {count}', { count: done }) : [plural(count, 'lien'), total].filter(Boolean).join(' · ');
+  const holds = count === 0 && done > 0 ? t('Done · {count}', { count: done }) : [plural(count, 'link'), total].filter(Boolean).join(' · ');
   return (
     <Organic outline="card" style={styles.tile}>
       <Tappable unstable_pressDelay={listPressDelay} onPress={onPress} accessibilityLabel={`${shownTitle(line)}, ${holds}`} style={styles.press}>
@@ -103,7 +103,7 @@ function CollectionTile({ id, onPress }: { id: string; onPress: () => void }) {
           {shownTitle(line)}
         </AppText>
         <AppText variant="meta" numberOfLines={3} style={styles.hint}>
-          {shownHint(line) || (inbox ? t('Ce que Claude ne sait pas où ranger.') : t('Ajoutez une phrase pour aider Claude à y ranger les bons liens.'))}
+          {shownHint(line) || (inbox ? t('What Claude doesn’t know where to file.') : t('Add a sentence to help Claude file the right links here.'))}
         </AppText>
         {images ? (
           <View style={styles.glimpses}>

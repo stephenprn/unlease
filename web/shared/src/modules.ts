@@ -151,9 +151,9 @@ export interface AppCommand {
 export const MOD_KEY = 'Mod';
 
 /**
- * A row of the shortcuts dialog: the keys pressed together, then what they do (French, `tx`, read
- * where shown). A key is shown as written (`J`, `↑`, `#`), but for `MOD_KEY`, `Retour` (Backspace)
- * and a key's French name (`tx('Maj')`, `tx('Entrée')`), read where shown.
+ * A row of the shortcuts dialog: the keys pressed together, then what they do (English, `tx`, read
+ * where shown). A key is shown as written (`J`, `↑`, `#`), but for `MOD_KEY`
+ * and a key's name (`tx('Shift')`, `tx('Backspace')`), read where shown.
  */
 export type ShortcutRow = readonly [keys: readonly string[], what: string];
 

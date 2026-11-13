@@ -33,7 +33,7 @@ async function save(server: ServerConfig, patch: CalendarPatch, done: string): P
     showSnack(done, undefined, { tone: 'success' });
     return true;
   } catch (failure) {
-    showError(t(failure instanceof Error ? failure.message : tx('Réglage refusé')));
+    showError(t(failure instanceof Error ? failure.message : tx('Setting refused')));
     return false;
   }
 }
@@ -89,7 +89,7 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
   ];
   const apply = async (next: string | null, nextRegion: string | null): Promise<void> => {
     setBusy(true);
-    await save(server, { holidays: { country: next, region: nextRegion } }, next ? t('Jours fériés : {country}', { country: countryName(next) }) : t('Jours fériés retirés'));
+    await save(server, { holidays: { country: next, region: nextRegion } }, next ? t('Public holidays: {country}', { country: countryName(next) }) : t('Public holidays removed'));
     setBusy(false);
   };
   // What the server holds now, as the other sections say it: the field below may propose this browser's country.
@@ -98,28 +98,28 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
     <div className={settingsStyles.block}>
       <StatusRow tone={line.tone} title={line.title} meta={line.meta} />
       <SelectField
-        label={t('Pays')}
+        label={t('Country')}
         value={chosen || NONE}
         disabled={busy}
         onChange={code => {
           setChosen(code === NONE ? '' : code);
           setChosenRegion(null);
         }}
-        options={[{ value: NONE, label: t('Aucun') }, ...options.map(each => ({ value: each.code, label: each.name }))]}
+        options={[{ value: NONE, label: t('None') }, ...options.map(each => ({ value: each.code, label: each.name }))]}
       />
       {chosen && regions.length > 0 ? (
         <SelectField
-          label={t('Région')}
+          label={t('Region')}
           value={pickedRegion ?? NONE}
           disabled={busy}
           onChange={each => setChosenRegion(each === NONE ? null : each)}
-          options={[{ value: NONE, label: t('Les jours de tout le pays') }, ...regions.map(each => ({ value: each, label: each }))]}
-          help={t('Certaines régions ont des jours fériés de plus : choisissez la vôtre pour les voir aussi.')}
+          options={[{ value: NONE, label: t('The whole country’s days') }, ...regions.map(each => ({ value: each, label: each }))]}
+          help={t('Some regions have extra public holidays: choose yours to see them too.')}
         />
       ) : null}
       <div className={styles.formFoot} style={{ justifyContent: 'flex-start' }}>
         <Button icon="check" busy={busy} disabled={(chosen || null) === country && pickedRegion === region} onClick={() => void apply(chosen || null, chosen ? pickedRegion : null)}>
-          {t('Enregistrer')}
+          {t('Save')}
         </Button>
       </div>
     </div>
@@ -140,11 +140,11 @@ function PublishSection({ server, settings }: { server: ServerConfig; settings: 
   };
   return (
     <>
-      <button type="button" role="switch" aria-checked={!!path} className={settingsStyles.row} disabled={busy} onClick={() => void run({ publish: !path }, path ? t('Agenda dépublié') : t('Agenda publié'))}>
+      <button type="button" role="switch" aria-checked={!!path} className={settingsStyles.row} disabled={busy} onClick={() => void run({ publish: !path }, path ? t('Calendar unpublished') : t('Calendar published'))}>
         <Icon name="share" size={24} />
         <span className={settingsStyles.rowText}>
-          <span className="t-body">{t('Publier mon agenda')}</span>
-          <span className="t-meta">{path ? t('Vos événements, à l’adresse ci-dessous.') : t('Désactivé : rien n’est servi hors de l’application.')}</span>
+          <span className="t-body">{t('Publish my calendar')}</span>
+          <span className="t-meta">{path ? t('Your events, at the address below.') : t('Off: nothing is served outside the app.')}</span>
         </span>
         <SwitchMark checked={!!path} />
       </button>
@@ -159,29 +159,29 @@ function PublishSection({ server, settings }: { server: ServerConfig; settings: 
               icon="copy"
               onClick={() =>
                 void navigator.clipboard?.writeText(address).then(
-                  () => showSnack(t('Adresse copiée'), undefined, { tone: 'success' }),
-                  () => showError(t('Copie impossible : sélectionnez l’adresse.')),
+                  () => showSnack(t('Address copied'), undefined, { tone: 'success' }),
+                  () => showError(t('Could not copy: select the address.')),
                 )
               }
             >
-              {t('Copier l’adresse')}
+              {t('Copy the address')}
             </Button>
             <Button kind="text" icon="refresh" disabled={busy} onClick={() => setRenewing(true)}>
-              {t('Nouvelle adresse')}
+              {t('New address')}
             </Button>
           </div>
-          <p className="t-meta">{t('Dans Google Agenda : Autres agendas, +, « À partir de l’URL », puis collez l’adresse. Google la relit de lui-même, toutes les quelques heures.')}</p>
+          <p className="t-meta">{t('In Google Calendar: Other calendars, +, “From URL”, then paste the address. Google reads it again on its own every few hours.')}</p>
         </div>
       ) : null}
       <Confirm
         open={renewing}
-        title={t('Nouvelle adresse ?')}
-        message={t('L’adresse actuelle cesse de marcher : les agendas abonnés devront prendre la nouvelle.')}
-        confirmLabel={t('Nouvelle adresse')}
+        title={t('New address?')}
+        message={t('The current address stops working: subscribed calendars will need the new one.')}
+        confirmLabel={t('New address')}
         onCancel={() => setRenewing(false)}
         onConfirm={() => {
           setRenewing(false);
-          void run({ publish: 'renew' }, t('Nouvelle adresse créée'));
+          void run({ publish: 'renew' }, t('New address made'));
         }}
       />
     </>
@@ -203,13 +203,13 @@ function AskSection({ server, settings }: { server: ServerConfig; settings: Serv
       disabled={busy || !keyed}
       onClick={() => {
         setBusy(true);
-        void save(server, { ask: !settings.calendar.ask }, settings.calendar.ask ? t('Questions sur l’agenda désactivées') : t('Questions sur l’agenda activées')).finally(() => setBusy(false));
+        void save(server, { ask: !settings.calendar.ask }, settings.calendar.ask ? t('Questions about the calendar turned off') : t('Questions about the calendar turned on')).finally(() => setBusy(false));
       }}
     >
       <Icon name="sparkle" size={24} />
       <span className={settingsStyles.rowText}>
-        <span className="t-body">{t('« Demander à Claude » sur l’agenda')}</span>
-        <span className="t-meta">{!keyed ? t('Ajoutez d’abord une clé Claude, plus haut.') : on ? t('Claude répond d’après vos événements.') : t('Désactivé : rien de votre agenda n’est envoyé à Claude.')}</span>
+        <span className="t-body">{t('“Ask Claude” about the calendar')}</span>
+        <span className="t-meta">{!keyed ? t('Add a Claude key first, above.') : on ? t('Claude answers from your events.') : t('Off: nothing from your calendar is sent to Claude.')}</span>
       </span>
       <SwitchMark checked={on} />
     </button>
@@ -217,8 +217,8 @@ function AskSection({ server, settings }: { server: ServerConfig; settings: Serv
 }
 
 export const CALENDAR_ADMIN_SECTIONS: readonly AdminSection[] = [
-  { id: 'calendar-holidays', app: 'calendar', title: () => t('Jours fériés'), glyph: 'sun', line: holidaysLine, info: HOLIDAYS_INFO, task: 'holidays', Body: HolidaysSection },
-  { id: 'calendar-publish', app: 'calendar', title: () => t('Publication'), glyph: 'share', line: publishLine, info: PUBLISH_INFO, Body: PublishSection },
-  { id: 'calendar-ask', app: 'calendar', title: () => t('Questions sur l’agenda'), glyph: 'bubble', line: askLine, info: ASK_INFO, claude: true, Body: AskSection },
+  { id: 'calendar-holidays', app: 'calendar', title: () => t('Public holidays'), glyph: 'sun', line: holidaysLine, info: HOLIDAYS_INFO, task: 'holidays', Body: HolidaysSection },
+  { id: 'calendar-publish', app: 'calendar', title: () => t('Publishing'), glyph: 'share', line: publishLine, info: PUBLISH_INFO, Body: PublishSection },
+  { id: 'calendar-ask', app: 'calendar', title: () => t('Questions about the calendar'), glyph: 'bubble', line: askLine, info: ASK_INFO, claude: true, Body: AskSection },
 ];
 

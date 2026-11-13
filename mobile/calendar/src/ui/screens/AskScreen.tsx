@@ -73,7 +73,7 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
       setTurns([...turns, { question: asked, answer: answer.answer }]);
       setQuestion('');
     } catch (failure) {
-      setError(failure instanceof Error && failure.message ? t(failure.message) : t('Serveur injoignable'));
+      setError(failure instanceof Error && failure.message ? t(failure.message) : t('Server unreachable'));
     } finally {
       setBusy(false);
     }
@@ -82,20 +82,20 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Demander à Claude')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Ask Claude')} onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
         <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {!server ? <AppText variant="body">{t('Reliez un serveur pour poser des questions sur votre agenda.')}</AppText> : null}
+          {!server ? <AppText variant="body">{t('Connect a server to ask questions about your calendar.')}</AppText> : null}
           {server ? (
             <View style={styles.head}>
               <AppText variant="meta" style={styles.fill}>
-                {t('Claude lit vos événements de trois mois en arrière à un an devant, et les anniversaires de vos contacts.')}
+                {t('Claude reads your events from three months back to a year ahead, and your contacts’ birthdays.')}
               </AppText>
-              {turns.length > 0 ? <Button kind="text" icon="broom" label={t('Nouvelle conversation')} onPress={() => setTurns([])} /> : null}
+              {turns.length > 0 ? <Button kind="text" icon="broom" label={t('New conversation')} onPress={() => setTurns([])} /> : null}
             </View>
           ) : null}
           {turns.length === 0 && !busy && server ? (
-            <View role="group" accessibilityLabel={t('Exemples de questions')} style={styles.starters}>
+            <View role="group" accessibilityLabel={t('Example questions')} style={styles.starters}>
               {ASK_STARTERS.map(starter => (
                 <Tappable key={starter} onPress={() => later(ask(t(starter)))} accessibilityLabel={t(starter)} style={styles.starter}>
                   <AppText variant="label">{t(starter)}</AppText>
@@ -125,7 +125,7 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
               <View style={styles.waiting} accessibilityLiveRegion="polite">
                 <ReadingTrack width={72} />
                 <AppText variant="meta" style={styles.fill}>
-                  {t('Claude lit votre agenda…')}
+                  {t('Claude is reading your calendar…')}
                 </AppText>
               </View>
             </View>
@@ -135,9 +135,9 @@ export function AskScreen({ navigation }: ScreenProps<'Ask'>) {
         {server ? (
           <View style={styles.ask}>
             <View style={styles.field}>
-              <TextField kind="prose" value={question} onChangeText={setQuestion} placeholder={t('Votre question sur votre agenda')} accessibilityLabel={t('Votre question')} onSubmitEditing={() => later(ask())} returnKeyType="send" submitBehavior="blurAndSubmit" maxLength={2000} />
+              <TextField kind="prose" value={question} onChangeText={setQuestion} placeholder={t('Your question about your calendar')} accessibilityLabel={t('Your question')} onSubmitEditing={() => later(ask())} returnKeyType="send" submitBehavior="blurAndSubmit" maxLength={2000} />
             </View>
-            <IconButton icon="arrowUp" label={t('Demander')} shape={1} disabled={!question.trim() || busy} onPress={() => later(ask())} />
+            <IconButton icon="arrowUp" label={t('Ask')} shape={1} disabled={!question.trim() || busy} onPress={() => later(ask())} />
           </View>
         ) : null}
       </KeyboardAvoidingView>

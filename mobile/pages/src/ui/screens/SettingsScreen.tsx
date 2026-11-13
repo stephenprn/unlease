@@ -34,7 +34,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Réglages')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Settings')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <BackgroundSyncSection />
@@ -43,12 +43,12 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <LanguageSection />
 
         {/* Imports first, as in every app's Données; erasing last. */}
-        <Section title={t('Données')} anchor={SETTINGS_SECTIONS.data}>
-          <ListRow icon="download" title={t('Importer')} supporting={t('Des fichiers Markdown (Obsidian…) ; l’export de Notion depuis le web')} onPress={() => navigation.navigate('Import')} />
+        <Section title={t('Data')} anchor={SETTINGS_SECTIONS.data}>
+          <ListRow icon="download" title={t('Import')} supporting={t('Markdown files (Obsidian…); Notion’s export from the web')} onPress={() => navigation.navigate('Import')} />
           <ListRow
             icon="trash"
-            title={t('Vider la corbeille')}
-            supporting={binned > 0 ? t('{pages} dans la corbeille', { pages: plural(binned, 'page') }) : t('La corbeille est vide.')}
+            title={t('Empty the bin')}
+            supporting={binned > 0 ? t('{pages} in the bin', { pages: plural(binned, 'page') }) : t('The bin is empty.')}
             onPress={binned > 0 ? () => setConfirmEmpty(true) : undefined}
           />
           <EraseEntryRow app="pages" onOpen={() => navigation.navigate('Erase')} />
@@ -58,21 +58,21 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AdminEntrySection onOpen={() => navigation.navigate('Admin')} />
 
         <AppText variant="meta" style={styles.about}>
-          {t('{app} · vos documents, chez vous', { app: APP_NAME })}
+          {t('{app} · your documents, at home', { app: APP_NAME })}
         </AppText>
       </SettingsScroll>
 
       <Dialog
         visible={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Toutes les pages de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every page in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const pages = emptyPagesBin();
-          showSnack(t('{deleted} définitivement', { deleted: plural(pages, 'page supprimée', 'pages supprimées') }), undefined, { tone: 'success' });
+          showSnack(t('{deleted} forever', { deleted: plural(pages, 'page deleted', 'pages deleted') }), undefined, { tone: 'success' });
         }}
       />
     </View>

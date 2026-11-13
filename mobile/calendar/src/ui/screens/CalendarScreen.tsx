@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Keyframe } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { getLocale, t, tc } from '@unlease/core/i18n';
+import { getLocale, t } from '@unlease/core/i18n';
 import { PERIOD_VIEWS, stepDay, viewDays, viewTitle, VIEW_NAMES, type CalendarView } from '@unlease/calendar/services/eventText';
 import type { DayItem } from '@unlease/calendar/services/today';
 import { addMinutes, isDay, today as todayOf } from '@unlease/calendar/services/time';
@@ -173,7 +173,7 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
       const pageId = await dailyPage(server, { day: on, lang: getLocale() });
       later(openInApp('pages', pagePlace(pageId)));
     } catch (error) {
-      showSnack(error instanceof SyncError && error.status === 404 ? t('Pages n’est pas activé sur ce serveur.') : error instanceof Error && error.message ? t(error.message) : t('Serveur injoignable'), undefined, { tone: 'error' });
+      showSnack(error instanceof SyncError && error.status === 404 ? t('Pages is not turned on on this server.') : error instanceof Error && error.message ? t(error.message) : t('Server unreachable'), undefined, { tone: 'error' });
     }
   };
 
@@ -231,7 +231,7 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.row}>
           <IconButton icon="menu" label={t('Menu')} onPress={() => setDrawerOpen(true)} />
-          <Tappable onPress={() => setPicking(true)} style={styles.title} accessibilityRole="button" accessibilityLabel={t('Choisir un jour : {period}', { period: title })}>
+          <Tappable onPress={() => setPicking(true)} style={styles.title} accessibilityRole="button" accessibilityLabel={t('Pick a day: {period}', { period: title })}>
             {labelInfo ? <LabelTag color={labelInfo.color} size={18} /> : null}
             <Animated.View key={title} entering={TITLE_IN} style={styles.titleText}>
               <AppText variant="title" numberOfLines={1}>
@@ -239,9 +239,9 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
               </AppText>
             </Animated.View>
           </Tappable>
-          {isToday ? null : <IconButton icon="calendar" label={t('Aujourd’hui')} onPress={() => showDay(today)} />}
-          <IconButton icon="grid" label={t('Changer de vue')} onPress={() => setViews(true)} />
-          <IconButton icon="search" label={t('Rechercher')} onPress={() => navigation.navigate('Search')} />
+          {isToday ? null : <IconButton icon="calendar" label={t('Today')} onPress={() => showDay(today)} />}
+          <IconButton icon="grid" label={t('Change view')} onPress={() => setViews(true)} />
+          <IconButton icon="search" label={t('Search')} onPress={() => navigation.navigate('Search')} />
         </View>
         <SyncLine />
       </View>
@@ -262,11 +262,11 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
         <PeriodPager view={shownView} period={period} anchors={anchors} swipes={swipes} onStep={step} onTurning={turning} renderPeriod={renderPeriod} />
       )}
       <FabMenu
-        label={t('Créer')}
+        label={t('Create')}
         actions={[
-          { icon: 'calendar', label: t('Événement'), onPress: () => (isToday ? createToday() : create()) },
-          { icon: 'sparkle', label: t('Ajouter en quelques mots'), onPress: () => setQuick(true) },
-          ...(server ? [{ icon: 'pagePlus' as const, label: t('Note du jour'), onPress: () => later(openDaily(isToday ? today : day)) }] : []),
+          { icon: 'calendar', label: t('Event'), onPress: () => (isToday ? createToday() : create()) },
+          { icon: 'sparkle', label: t('Add in a few words'), onPress: () => setQuick(true) },
+          ...(server ? [{ icon: 'pagePlus' as const, label: t('Today’s note'), onPress: () => later(openDaily(isToday ? today : day)) }] : []),
         ]}
       />
       <Menu
@@ -276,7 +276,7 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
         // The calendar's six: « Aujourd'hui » is the drawer's place over them, so none is ticked there.
         items={PERIOD_VIEWS.map(each => ({ label: VIEW_NAMES[each], icon: each === shownView ? 'check' : VIEW_GLYPHS[each], onPress: () => (navigation.setParams({ label: undefined }), showView(each)) }))}
       />
-      <DayPickerSheet visible={picking} title={t('Aller au jour')} day={day} today={today} weekStart={prefs.weekStart} onDismiss={() => setPicking(false)} onDay={isToday ? goDay : showDay} />
+      <DayPickerSheet visible={picking} title={t('Go to day')} day={day} today={today} weekStart={prefs.weekStart} onDismiss={() => setPicking(false)} onDay={isToday ? goDay : showDay} />
       <QuickAddSheet
         visible={quick}
         words={quickWords}
@@ -285,7 +285,7 @@ export function CalendarScreen({ navigation, route }: ScreenProps<'Calendar'>) {
           setQuick(false);
           setQuickWords('');
         }}
-        onCreated={id => showSnack(t('Événement enregistré'), { label: tc('event', 'Ouvrir'), run: () => navigation.navigate('Event', { id }) }, { tone: 'success' })}
+        onCreated={id => showSnack(t('Event saved'), { label: t('Open'), run: () => navigation.navigate('Event', { id }) }, { tone: 'success' })}
         onDetails={draft => navigation.navigate('Edit', { title: draft.title, start: draft.start, end: draft.end, place: draft.place, ...('timeZone' in draft && draft.timeZone ? { tz: draft.timeZone } : {}), ...('url' in draft && draft.url ? { url: draft.url } : {}), ...('description' in draft && draft.description ? { description: draft.description } : {}) })}
       />
       <Drawer open={drawerOpen} view={shownView} label={label} onClose={() => setDrawerOpen(false)} onPlace={goPlace} />

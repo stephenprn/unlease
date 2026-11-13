@@ -6,7 +6,7 @@
  */
 import { memo, useId, useRef, useState } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { isBlank } from '@unlease/core/services/formChecks';
 import { fieldInput } from '@unlease/design/fields';
 import { labelNameTaken } from '@unlease/notes/models/entities';
@@ -47,7 +47,7 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
   if (!label) return null;
   const typed = draft?.trim().slice(0, 60) ?? '';
   const taken = typed !== '' && typed !== label.name && labelNameTaken(labels, typed, id);
-  const problem = refused && taken ? t('Ce label existe déjà : choisissez un autre nom.') : null;
+  const problem = refused && taken ? tc('notes', 'This label already exists: choose another name.') : null;
   /** Renames to what is typed; a name another label wears is kept, said, and not saved. */
   const commit = (): boolean => {
     if (taken) {
@@ -61,14 +61,14 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
   };
   return (
     <li className={page.labelRow} data-motion={id}>
-      <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Couleur de {name}', { name: label.name })} data-tip={t('Couleur')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
+      <button ref={tag} type="button" className={page.tagButton} data-pebble-under={1} aria-label={t('Colour of {name}', { name: label.name })} data-tip={t('Colour')} aria-haspopup="dialog" aria-expanded={coloring} onClick={() => setColoring(true)}>
         <LabelTag color={label.color} size={26} />
       </button>
       <input
         className={`${page.labelName} t-body`}
         value={draft ?? label.name}
         maxLength={60}
-        aria-label={t('Renommer {name}', { name: label.name })}
+        aria-label={t('Rename {name}', { name: label.name })}
         aria-invalid={problem ? true : undefined}
         aria-describedby={problem ? problemId : undefined}
         enterKeyHint="done"
@@ -87,18 +87,18 @@ const LabelRow = memo(function LabelRow({ id }: { id: string }) {
           }
         }}
       />
-      <Link to={pathForView(`label:${id}`)} className={`${page.labelCount} t-meta-strong tabular`} ariaLabel={t('{notes} avec {name}', { notes: plural(uses, 'note'), name: label.name })} tip={t('Voir les notes')}>
+      <Link to={pathForView(`label:${id}`)} className={`${page.labelCount} t-meta-strong tabular`} ariaLabel={t('{notes} with {name}', { notes: plural(uses, 'note'), name: label.name })} tip={t('See the notes')}>
         {uses}
       </Link>
-      <IconButton icon="trash" label={t('Supprimer {name}', { name: label.name })} shape={2} onClick={() => showUndo(t('Label « {name} » supprimé', { name: label.name }), deleteLabel(id))} />
-      <Popover open={coloring} anchor={tag} onDismiss={() => setColoring(false)} label={t('Couleur de {name}', { name: label.name })} width={300}>
+      <IconButton icon="trash" label={t('Delete {name}', { name: label.name })} shape={2} onClick={() => showUndo(tc('notes', 'Label “{name}” deleted', { name: label.name }), deleteLabel(id))} />
+      <Popover open={coloring} anchor={tag} onDismiss={() => setColoring(false)} label={t('Colour of {name}', { name: label.name })} width={300}>
         <div className={editor.picker}>
           {/* A sheet on a phone, away from the tag it came from: it says whose colour it is, as the phone's does. */}
           {narrow ? <h2 className={`${editor.pickerTitle} t-title`}>{label.name}</h2> : null}
           <div className={page.labelColors}>
             <LineColorPicker
               value={label.color}
-              label={t('Couleur de {name}', { name: label.name })}
+              label={t('Colour of {name}', { name: label.name })}
               onChange={color => {
                 if (color) updateLabel(id, { color });
                 setColoring(false);
@@ -127,7 +127,7 @@ export function LabelsScreen() {
   // A label deleted fades where it was, the others close ranks; a new one, or one put back, settles in.
   useListMotion(list, { late: true });
   // A name already worn is said under the strip, what was typed kept.
-  const form = useForm({ name: !isBlank(name) && labelNameTaken(labels, name) ? t('Ce label existe déjà : choisissez un autre nom.') : null });
+  const form = useForm({ name: !isBlank(name) && labelNameTaken(labels, name) ? tc('notes', 'This label already exists: choose another name.') : null });
   const add = (): void => {
     if (isBlank(name)) return;
     void form.submit(() => {
@@ -138,7 +138,7 @@ export function LabelsScreen() {
   };
   return (
     <div className={page.page}>
-      <PageHead title={t('Labels')} />
+      <PageHead title={tc('notes', 'Labels')} />
       <section className={page.labels}>
         <form
           className={page.labelNew}
@@ -159,23 +159,23 @@ export function LabelsScreen() {
             className={`${page.labelNewInput} t-body`}
             value={name}
             onChange={setName}
-            placeholder={t('Créer un label')}
-            aria-label={t('Nom du nouveau label')}
+            placeholder={t('Create a label')}
+            aria-label={tc('notes', 'New label’s name')}
             maxLength={60}
             enterKeyHint="done"
             autoCapitalize={NAME_INPUT.autoCapitalize}
           />
-          {name.trim() ? <IconButton icon="check" label={t('Créer')} onClick={add} /> : null}
+          {name.trim() ? <IconButton icon="check" label={t('Create')} onClick={add} /> : null}
         </form>
         <FieldProblem field={form.field('name')} id="label-new-problem" className={page.labelNewProblem} />
         {order.length > 0 ? (
-          <ul ref={list} className={page.labelList} aria-label={t('Labels')}>
+          <ul ref={list} className={page.labelList} aria-label={tc('notes', 'Labels')}>
             {order.map(id => (
               <LabelRow key={id} id={id} />
             ))}
           </ul>
         ) : (
-          <EmptyState scene="label" title={t('Aucun label')} text={t('Les labels regroupent des notes sur le tableau. Une note peut en porter plusieurs.')} />
+          <EmptyState scene="label" title={tc('notes', 'No labels')} text={t('Labels group notes on the board. A note can wear several.')} />
         )}
       </section>
     </div>

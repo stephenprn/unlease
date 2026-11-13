@@ -317,8 +317,8 @@ function DrawingCanvasComponent({ editor, style }: { editor: DrawingEditor; styl
         style={[styles.view, style]}
         accessible
         accessibilityRole="image"
-        accessibilityLabel={t('Zone de dessin')}
-        accessibilityHint={editable ? t('Un doigt dessine, deux doigts font défiler.') : undefined}
+        accessibilityLabel={t('Drawing area')}
+        accessibilityHint={editable ? t('One finger draws, two fingers scroll.') : undefined}
       >
         {scale > 0 ? (
           <>

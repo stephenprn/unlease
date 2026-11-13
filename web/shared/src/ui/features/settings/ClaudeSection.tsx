@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties } from 'react';
 
 import { READY_APPS, SUITE_NAME } from '@unlease/core/apps';
-import { around, getLocale, t, tx } from '@unlease/core/i18n';
+import { around, getLocale, t, tc, tx } from '@unlease/core/i18n';
 import { claudeKeyProblem, claudeUse } from '@unlease/core/services/setup';
 import { ANTHROPIC_CONSOLE, CLAUDE_MODEL_NAMES, CLAUDE_MODELS, type ClaudeModel, type SettingsPatch } from '@unlease/core/sync/settings';
 
@@ -43,7 +43,7 @@ function UsagePanel({ usage, budgetUsd }: { usage: Usage | null; budgetUsd: numb
   if (!usage) {
     return (
       <div className={styles.block}>
-        <p className="t-meta">{t('Consommation indisponible')}</p>
+        <p className="t-meta">{t('Usage unavailable')}</p>
       </div>
     );
   }
@@ -51,11 +51,11 @@ function UsagePanel({ usage, budgetUsd }: { usage: Usage | null; budgetUsd: numb
   return (
     <div className={styles.block}>
       {/* The apps' own counts are theirs (Carnet's links read, `ClaudeExtras`): every app shares the spend. */}
-      <p className="t-body-strong tabular">{t('Ce mois-ci : {cost}', { cost: usd(usage.month.costUsd) })}</p>
-      <div className={styles.meter} role="meter" aria-label={t('Budget du mois utilisé')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)}>
+      <p className="t-body-strong tabular">{t('This month: {cost}', { cost: usd(usage.month.costUsd) })}</p>
+      <div className={styles.meter} role="meter" aria-label={t('Monthly budget used')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)}>
         <span className={styles.meterFill} data-high={share > 0.8 || undefined} style={{ width: `${share * 100}%` }} />
       </div>
-      <p className="t-meta tabular">{t('Sur un budget de {budget} · depuis le début {total}', { budget: usd(budgetUsd), total: usd(usage.total.costUsd) })}</p>
+      <p className="t-meta tabular">{t('Out of a budget of {budget} · since the start {total}', { budget: usd(budgetUsd), total: usd(usage.total.costUsd) })}</p>
     </div>
   );
 }
@@ -88,18 +88,18 @@ function NoServer({ onConnect }: { onConnect: () => void }) {
       <div className={`${styles.status} ${styles.statusTop}`}>
         <span className={styles.dot} style={{ '--dot': 'var(--ink-faint)' } as CSSProperties} aria-hidden="true" />
         <div className={styles.rowText}>
-          <p className="t-body-strong">{t('Claude désactivé')}</p>
-          <p className="t-meta">{t('Sans clé, rien n’est demandé à Claude : les applications marchent sans lui.')}</p>
+          <p className="t-body-strong">{t('Claude off')}</p>
+          <p className="t-meta">{t('Without a key, nothing is asked of Claude: the apps work without it.')}</p>
         </div>
       </div>
       <ClaudeUses />
       <div className={styles.block}>
         <p className={`${styles.prose} t-body`}>
-          {t('Les appels partent de votre serveur {suite}, qui garde la clé API : connectez-le pour ajouter la clé, choisir le modèle et fixer un budget mensuel, pour toutes les applications.', { suite: SUITE_NAME })}
+          {t('Calls go out from your {suite} server, which keeps the API key: connect it to add the key, choose the model and set a monthly budget, for every app.', { suite: SUITE_NAME })}
         </p>
         <div className={styles.buttons}>
           <Button kind="tonal" icon="server" onClick={onConnect}>
-            {t('Connecter un serveur')}
+            {tc('claude', 'Connect a server')}
           </Button>
         </div>
       </div>
@@ -122,7 +122,7 @@ function ServerClaude({ server }: { server: ServerConfig }) {
   const budgetNumber = parseAmount(budgetValue);
   // An emptied field is no budget (Number('') would read as 0 and stop all reading).
   const budgetValid = budgetValue.trim() !== '' && Number.isFinite(budgetNumber) && budgetNumber >= 0;
-  const budgetForm = useForm({ budget: budgetValid ? null : t('Un montant en dollars, 0 ou plus.') });
+  const budgetForm = useForm({ budget: budgetValid ? null : t('An amount in dollars, 0 or more.') });
 
   const load = useCallback(() => {
     void fetchServerSettings(server).then(next => {
@@ -147,7 +147,7 @@ function ServerClaude({ server }: { server: ServerConfig }) {
       void fetchUsage(server).then(setUsage);
       return true;
     } catch (failure) {
-      const message = t(failure instanceof Error ? failure.message : tx('Réglage refusé'));
+      const message = t(failure instanceof Error ? failure.message : tx('Setting refused'));
       if (what === 'key') keyForm.fail('key', message);
       else if (what === 'budget') budgetForm.fail('budget', message);
       else showError(message);
@@ -162,12 +162,12 @@ function ServerClaude({ server }: { server: ServerConfig }) {
       <div className={`${styles.status} ${styles.statusTop}`}>
         <span className={styles.dot} style={{ '--dot': 'var(--ink-faint)' } as CSSProperties} aria-hidden="true" />
         <div className={styles.rowText}>
-          <p className="t-body">{unavailable ? t('Réglages du serveur indisponibles') : t('Lecture des réglages du serveur…')}</p>
-          {unavailable ? <p className="t-meta">{t('Le serveur ne répond pas pour l’instant.')}</p> : null}
+          <p className="t-body">{unavailable ? t('Server settings unavailable') : t('Reading the server’s settings…')}</p>
+          {unavailable ? <p className="t-meta">{t('The server isn’t answering for now.')}</p> : null}
         </div>
         {unavailable ? (
           <Button kind="text" small onClick={load}>
-            {t('Réessayer')}
+            {t('Try again')}
           </Button>
         ) : null}
       </div>
@@ -181,52 +181,52 @@ function ServerClaude({ server }: { server: ServerConfig }) {
       <div className={`${styles.status} ${styles.statusTop}`}>
         <span className={styles.dot} style={{ '--dot': analysis.enabled ? 'var(--ok)' : 'var(--ink-faint)' } as CSSProperties} aria-hidden="true" />
         <div className={styles.rowText}>
-          <p className="t-body-strong">{analysis.enabled ? t('Claude activé') : t('Claude désactivé')}</p>
+          <p className="t-body-strong">{analysis.enabled ? t('Claude on') : t('Claude off')}</p>
           <p className="t-meta">
             {analysis.enabled
               ? analysis.keySource === 'env'
-                ? t('Clé {hint} (définie sur le serveur)', { hint: analysis.keyHint ?? '' })
-                : t('Clé {hint}', { hint: analysis.keyHint ?? '' })
-              : t('Sans clé, rien n’est demandé à Claude : les applications marchent sans lui.')}
+                ? t('Key {hint} (set on the server)', { hint: analysis.keyHint ?? '' })
+                : t('Key {hint}', { hint: analysis.keyHint ?? '' })
+              : t('Without a key, nothing is asked of Claude: the apps work without it.')}
           </p>
         </div>
         {analysis.keySource === 'app' ? (
           <Button kind="dangerText" small busy={busy === 'remove'} onClick={() => setConfirmRemove(true)}>
-            {t('Supprimer la clé')}
+            {t('Delete the key')}
           </Button>
         ) : null}
       </div>
 
       <ClaudeUses />
 
-      <form className={styles.block} onSubmit={keyForm.onSubmit(() => save({ anthropicApiKey: key.trim() }, 'key', t('Clé enregistrée')))} noValidate>
+      <form className={styles.block} onSubmit={keyForm.onSubmit(() => save({ anthropicApiKey: key.trim() }, 'key', t('Key saved')))} noValidate>
         <TextField
-          label={analysis.enabled ? t('Remplacer la clé API Claude') : t('Clé API Claude')}
+          label={analysis.enabled ? t('Replace the Claude API key') : t('Claude API key')}
           kind="secret"
           value={key}
           onChange={setKey}
           field={keyForm.field('key')}
           placeholder="sk-ant-…"
           help={<ConsoleHelp />}
-          revealLabels={{ show: t('Afficher la clé'), hide: t('Masquer la clé') }}
+          revealLabels={{ show: t('Show the key'), hide: t('Hide the key') }}
         />
         <div className={styles.buttons}>
           <Button type="submit" icon="key" busy={keyForm.busy}>
-            {t('Enregistrer la clé')}
+            {t('Save the key')}
           </Button>
         </div>
       </form>
 
       <div className={styles.block}>
         {/* In line with the fields' labels around it. */}
-        <p className={`${controls.fieldLabel} t-meta-strong`}>{t('Modèle')}</p>
-        <Segmented<ClaudeModel> label={t('Modèle')} options={MODEL_OPTIONS} value={analysis.model} disabled={busy !== null} onChange={model => void save({ model }, 'model', t('Modèle : {model}', { model: CLAUDE_MODEL_NAMES[model] }))} />
+        <p className={`${controls.fieldLabel} t-meta-strong`}>{t('Model')}</p>
+        <Segmented<ClaudeModel> label={t('Model')} options={MODEL_OPTIONS} value={analysis.model} disabled={busy !== null} onChange={model => void save({ model }, 'model', t('Model: {model}', { model: CLAUDE_MODEL_NAMES[model] }))} />
       </div>
 
-      <form className={styles.block} onSubmit={budgetForm.onSubmit(() => (budgetNumber === analysis.budgetUsd ? true : save({ budgetUsd: budgetNumber }, 'budget', t('Budget enregistré'))))} noValidate>
+      <form className={styles.block} onSubmit={budgetForm.onSubmit(() => (budgetNumber === analysis.budgetUsd ? true : save({ budgetUsd: budgetNumber }, 'budget', t('Budget saved'))))} noValidate>
         <div className={styles.budgetRow}>
           <TextField
-            label={t('Budget mensuel ($)')}
+            label={t('Monthly budget ($)')}
             kind="decimal"
             name={budgetId}
             value={budgetValue}
@@ -235,10 +235,10 @@ function ServerClaude({ server }: { server: ServerConfig }) {
             className={styles.budgetField}
           />
           <Button type="submit" kind="tonal" busy={budgetForm.busy} disabled={budgetValid && budgetNumber === analysis.budgetUsd} className={styles.apply}>
-            {t('Appliquer')}
+            {t('Apply')}
           </Button>
         </div>
-        <p className={`${controls.fieldNoteAlone} t-meta`}>{t('Claude s’arrête pour le mois, dans toutes les applications, une fois le budget atteint.')}</p>
+        <p className={`${controls.fieldNoteAlone} t-meta`}>{t('Claude stops for the month, in every app, once the budget is reached.')}</p>
       </form>
 
       <UsagePanel usage={usage} budgetUsd={analysis.budgetUsd} />
@@ -247,14 +247,14 @@ function ServerClaude({ server }: { server: ServerConfig }) {
 
       <Confirm
         open={confirmRemove}
-        title={t('Supprimer la clé ?')}
-        message={t('Plus rien ne sera demandé à Claude, dans aucune application. Ce qu’il a déjà fait reste tel quel.')}
-        confirmLabel={t('Supprimer')}
+        title={t('Delete the key?')}
+        message={t('Nothing will be asked of Claude any more, in any app. What it has already done stays as it is.')}
+        confirmLabel={t('Delete')}
         danger
         onCancel={() => setConfirmRemove(false)}
         onConfirm={() => {
           setConfirmRemove(false);
-          void save({ anthropicApiKey: null }, 'remove', t('Clé supprimée'));
+          void save({ anthropicApiKey: null }, 'remove', t('Key deleted'));
         }}
       />
     </>
@@ -263,7 +263,7 @@ function ServerClaude({ server }: { server: ServerConfig }) {
 
 /** Where the key comes from, the console a link that opens beside the app. */
 function ConsoleHelp() {
-  const [before, after] = around(t('Créée sur {site}. Elle est vérifiée puis gardée sur votre serveur, jamais dans ce navigateur.'), 'site');
+  const [before, after] = around(t('Created on {site}. It is checked, then kept on your server, never in this browser.'), 'site');
   return (
     <>
       {before}

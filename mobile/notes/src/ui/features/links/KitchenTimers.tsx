@@ -44,7 +44,7 @@ export function KitchenAlarms(): null {
       if (timer.endsAt > now || rung.current.has(timer.id)) continue;
       rung.current.add(timer.id);
       ringTimer(timer);
-      showSnack(t('Minuteur terminé : {label}', { label: timer.label }), undefined, { tone: 'warning' });
+      showSnack(t('Timer done: {label}', { label: timer.label }), undefined, { tone: 'warning' });
     }
   }, [timers, now]);
   return null;
@@ -57,7 +57,7 @@ export function KitchenTimers({ linkId }: { linkId: string }) {
   const now = useSecond(timers.length > 0);
   if (timers.length === 0) return null;
   return (
-    <View style={styles.tray} accessibilityLabel={t('Minuteurs')}>
+    <View style={styles.tray} accessibilityLabel={t('Timers')}>
       {timers.map(timer => (
         <TimerRow key={timer.id} timer={timer} now={now} other={timer.linkId !== linkId} />
       ))}
@@ -98,9 +98,9 @@ const TimerRow = memo(function TimerRowView({ timer, now, other }: { timer: Kitc
         ) : null}
       </View>
       <AppText variant="label" color={ink} style={styles.left} accessibilityLiveRegion={rung ? 'polite' : undefined}>
-        {rung ? t('Terminé') : formatCountdown((timer.endsAt - now) / 1000)}
+        {rung ? t('Done') : formatCountdown((timer.endsAt - now) / 1000)}
       </AppText>
-      <IconButton icon="close" onDark={!rung} label={rung ? t('Fermer le minuteur') : t('Arrêter le minuteur')} onPress={() => stopTimer(timer.id)} />
+      <IconButton icon="close" onDark={!rung} label={rung ? t('Dismiss the timer') : t('Stop the timer')} onPress={() => stopTimer(timer.id)} />
     </AnimatedOrganic>
   );
 });

@@ -5,7 +5,7 @@
  */
 import { useId, useState } from 'react';
 
-import { t, tx } from '@unlease/core/i18n';
+import { t, tc, tx } from '@unlease/core/i18n';
 import type { RestoreMode } from '@unlease/core/sync/admin';
 
 import { Button } from '../../components/Button';
@@ -16,8 +16,8 @@ import layers from '../../components/layers.module.css';
 import styles from './settings.module.css';
 
 const MODES: readonly { readonly mode: RestoreMode; readonly title: string; readonly hint: string }[] = [
-  { mode: 'merge', title: tx('Compléter'), hint: tx('Seul ce qui manque revient ; les modifications faites depuis sont gardées.') },
-  { mode: 'rollback', title: tx('Revenir à la sauvegarde'), hint: tx('Tout reprend l’état de la sauvegarde, sur tous vos appareils ; ce qui a été créé depuis est gardé.') },
+  { mode: 'merge', title: tx('Complete'), hint: tx('Only what is missing comes back; changes made since are kept.') },
+  { mode: 'rollback', title: tx('Go back to the backup'), hint: tx('Everything returns to the backup’s state, on all your devices; what was created since is kept.') },
 ];
 
 /** `source`: which backup, in words ("Sauvegarde du 26 oct. à 03:00", a file's name). `empty`: the server holds nothing. */
@@ -33,23 +33,23 @@ export function RestoreDialog({ open, source, empty, onCancel, onConfirm }: { op
   return (
     <Layer open={open} onDismiss={onCancel} role="alertdialog" labelledBy={`${id}-title`}>
       <DialogFrame
-        title={t('Restaurer cette sauvegarde ?')}
+        title={t('Restore this backup?')}
         titleId={`${id}-title`}
         className={layers.dialog}
         foot={
           <>
             <Button kind="text" onClick={onCancel}>
-              {t('Annuler')}
+              {t('Cancel')}
             </Button>
-            <Button onClick={() => onConfirm(empty ? 'merge' : mode)}>{t('Restaurer')}</Button>
+            <Button onClick={() => onConfirm(empty ? 'merge' : mode)}>{t('Restore')}</Button>
           </>
         }
       >
         {source ? <p className={`${layers.dialogMessage} t-meta`}>{source}</p> : null}
         {empty ? (
-          <p className={`${layers.dialogMessage} t-body`}>{t('Les données de toutes les applications reviennent sur le serveur, puis sur vos appareils.')}</p>
+          <p className={`${layers.dialogMessage} t-body`}>{t('The data of every app comes back to the server, then to your devices.')}</p>
         ) : (
-          <div role="radiogroup" aria-label={t('Restauration')} className={styles.choices}>
+          <div role="radiogroup" aria-label={tc('title', 'Restore')} className={styles.choices}>
             {MODES.map(option => (
               <button key={option.mode} type="button" role="radio" aria-checked={mode === option.mode} className={styles.choice} onClick={() => setMode(option.mode)}>
                 <span className={styles.choiceMark} aria-hidden="true">

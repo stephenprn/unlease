@@ -26,7 +26,7 @@ import type { AdminOverlays, RestoreTarget } from './overlays';
 import { StatusRow } from './StatusRow';
 
 export const BACKUP_INFO = tx(
-  'Le serveur envoie une copie de vos données vers un stockage S3 (Scaleway, OVH, AWS…) : à chaque sauvegarde une archive lisible (vos notes et vos pages en Markdown, et le fichier unlease.json qui sert à la restaurer), et chaque photo ou fichier une seule fois, sauf ceux que garde Seafile (l’archive dit où ils sont).',
+  'The server sends a copy of your data to S3 storage (Scaleway, OVH, AWS…): at each backup a readable archive (your notes and pages in Markdown, and the unlease.json file that restores it), and each photo or file only once, except those Seafile keeps (the archive says where they are).',
 );
 
 /** The connection's fields, as typed over what is stored. */
@@ -93,19 +93,19 @@ export function BackupSection({
   const unchanged = backup.configured && changed.length === 0 && secret.trim() === '' && !classChanged;
   const connection = useForm(
     {
-      endpoint: serviceAddressProblem(value('endpoint'), t('Saisissez l’adresse du service S3.'), 'https://s3.fr-par.scw.cloud'),
-      region: value('region').trim() ? null : t('Saisissez la région du service, comme fr-par.'),
-      bucket: value('bucket').trim() ? null : t('Saisissez le nom du bucket.'),
-      accessKeyId: value('accessKeyId').trim() ? null : t('Saisissez la clé d’accès.'),
-      secret: backup.configured || secret.trim() ? null : t('Saisissez la clé secrète donnée avec la clé d’accès.'),
+      endpoint: serviceAddressProblem(value('endpoint'), t('Enter the S3 service’s address.'), 'https://s3.fr-par.scw.cloud'),
+      region: value('region').trim() ? null : t('Enter the service’s region, like fr-par.'),
+      bucket: value('bucket').trim() ? null : t('Enter the bucket’s name.'),
+      accessKeyId: value('accessKeyId').trim() ? null : t('Enter the access key.'),
+      secret: backup.configured || secret.trim() ? null : t('Enter the secret key given with the access key.'),
     },
     { order: ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId', 'secret'] },
   );
   const keepValue = keep ?? String(backup.keep);
   const keepNumber = Number(keepValue.trim());
   const keepValid = Number.isInteger(keepNumber) && keepNumber >= 1 && keepNumber <= BACKUP_KEEP_MAX;
-  const applyKeep = () => (keepNumber === backup.keep ? true : save({ keep: keepNumber }, 'keep', t('Sauvegardes gardées {days}', { days: plural(keepNumber, 'jour') })));
-  const keeping = useForm({ keep: keepValid ? null : t('Un nombre de jours de 1 à {max}.', { max: BACKUP_KEEP_MAX }) }, { order: ['keep'], sendOnDone: applyKeep });
+  const applyKeep = () => (keepNumber === backup.keep ? true : save({ keep: keepNumber }, 'keep', t('Backups kept {days}', { days: plural(keepNumber, 'day') })));
+  const keeping = useForm({ keep: keepValid ? null : t('A number of days from 1 to {max}.', { max: BACKUP_KEEP_MAX }) }, { order: ['keep'], sendOnDone: applyKeep });
 
   /** Saves; the server's refusal of the connection or of the days comes back on its form, anything else on a slip. */
   async function save(patch: BackupPatch | null, what: Exclude<Busy, null>, done: string): Promise<boolean> {
@@ -125,7 +125,7 @@ export function BackupSection({
       admin.reload();
       return true;
     } catch (failure) {
-      const message = failure instanceof Error ? t(failure.message) : t('Réglage refusé');
+      const message = failure instanceof Error ? t(failure.message) : t('Setting refused');
       // Under the field it concerns (the address, the bucket, the region), else on the whole form (both keys, rights).
       const field = failure instanceof Error ? serviceRefusalField(failure.message) : null;
       if (what === 'connection') connection.fail(field === 'address' ? 'endpoint' : field === 'bucket' || field === 'region' ? field : null, message);
@@ -143,7 +143,7 @@ export function BackupSection({
     for (const field of changed) patch[field] = value(field).trim();
     if (secret.trim()) patch.secretAccessKey = secret.trim();
     if (classChanged) patch.storageClass = chosenClass;
-    return save(patch as BackupPatch, 'connection', t('Stockage S3 enregistré'));
+    return save(patch as BackupPatch, 'connection', t('S3 storage saved'));
   };
 
   const runNow = async () => {
@@ -151,7 +151,7 @@ export function BackupSection({
     try {
       admin.setStatus(await startBackup(server));
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Sauvegarde refusée'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Backup refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(null);
     }
@@ -162,23 +162,23 @@ export function BackupSection({
       const ticket = await requestDownload(server, { full: true });
       await Linking.openURL(ticket.url);
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Téléchargement refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Download refused'), undefined, { tone: 'error' });
     }
   };
 
   const pickFile = async () => {
     const picked = await pickBackupArchive();
     if (picked.status === 'ok') overlays.restore({ kind: 'file', path: picked.path, name: picked.name });
-    else if (picked.status === 'error') showSnack(picked.message ? t(picked.message) : t('Fichier illisible'), undefined, { tone: 'error' });
+    else if (picked.status === 'error') showSnack(picked.message ? t(picked.message) : t('Unreadable file'), undefined, { tone: 'error' });
   };
 
   // Sent, then running: no second restore meanwhile.
   const restoring = sending !== null || status?.restore.running === true;
   const line =
     sending === 'file'
-      ? { tone: 'waiting' as const, title: t('Envoi de l’archive…'), meta: '' }
+      ? { tone: 'waiting' as const, title: t('Sending the archive…'), meta: '' }
       : restoring
-        ? { tone: 'waiting' as const, title: t('Restauration en cours…'), meta: '' }
+        ? { tone: 'waiting' as const, title: t('Restoring…'), meta: '' }
         : backupLine(backup, status?.backup ?? null, now);
   const running = status?.backup.running === true;
   const snapshots = backups.list?.snapshots ?? [];
@@ -192,15 +192,15 @@ export function BackupSection({
           <Button
             kind="dangerText"
             small
-            label={t('Retirer le stockage S3')}
+            label={t('Remove S3 storage')}
             busy={busy === 'remove'}
             onPress={() =>
               overlays.ask({
-                title: t('Retirer le stockage S3 ?'),
-                message: t('Les réglages S3 sont effacés de votre serveur. Les sauvegardes déjà envoyées restent sur S3.'),
-                confirmLabel: t('Retirer'),
+                title: t('Remove S3 storage?'),
+                message: t('The S3 settings are deleted from your server. Backups already sent stay on S3.'),
+                confirmLabel: t('Remove'),
                 danger: true,
-                run: () => void save(null, 'remove', t('Stockage S3 retiré')),
+                run: () => void save(null, 'remove', t('S3 storage removed')),
               })
             }
           />
@@ -208,30 +208,30 @@ export function BackupSection({
       </StatusRow>
 
       <View style={styles.fields}>
-        <TextField label={t('Adresse du service')} kind="url" value={value('endpoint')} onChangeText={editEndpoint} field={connection.field('endpoint')} help={t('L’adresse S3 de votre fournisseur, comme {example} pour Scaleway à Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
-        <TextField label={t('Région')} kind="code" value={value('region')} onChangeText={editRegion} field={connection.field('region')} help={t('Celle de l’adresse du service, comme {example}.', { example: 'fr-par' })} />
+        <TextField label={t('Service address')} kind="url" value={value('endpoint')} onChangeText={editEndpoint} field={connection.field('endpoint')} help={t('Your provider’s S3 address, like {example} for Scaleway in Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
+        <TextField label={t('Region')} kind="code" value={value('region')} onChangeText={editRegion} field={connection.field('region')} help={t('The one in the service’s address, like {example}.', { example: 'fr-par' })} />
         <TextField label={t('Bucket')} kind="code" value={value('bucket')} onChangeText={edit('bucket')} field={connection.field('bucket')} />
-        <TextField label={t('Dossier dans le bucket')} kind="code" optional value={value('prefix')} onChangeText={edit('prefix')} field={connection.field('prefix')} help={t('Pour ranger les sauvegardes à part dans le bucket, comme {example}.', { example: 'unlease/' })} />
+        <TextField label={t('Folder in the bucket')} kind="code" optional value={value('prefix')} onChangeText={edit('prefix')} field={connection.field('prefix')} help={t('To keep the backups apart in the bucket, like {example}.', { example: 'unlease/' })} />
         <TextField
-          label={t('Clé d’accès')}
+          label={t('Access key')}
           kind="code"
           value={value('accessKeyId')}
           onChangeText={edit('accessKeyId')}
           field={connection.field('accessKeyId')}
-          help={t('Dans la console de votre fournisseur : clés d’accès (ou IAM), avec le droit de lire et d’écrire dans ce bucket.')}
+          help={t('In your provider’s console: access keys (or IAM), allowed to read and write in this bucket.')}
         />
         <TextField
-          label={backup.secretHint ? t('Remplacer la clé secrète') : t('Clé secrète')}
+          label={backup.secretHint ? t('Replace the secret key') : t('Secret key')}
           kind="secret"
           value={secret}
           onChangeText={setSecret}
           field={connection.field('secret')}
-          help={`${t('Vérifiée puis gardée sur votre serveur, jamais sur ce téléphone.')}${backup.secretHint ? ` ${t('Actuelle : {hint}', { hint: backup.secretHint })}` : ''}`}
-          revealLabels={{ show: t('Afficher la clé secrète'), hide: t('Masquer la clé secrète') }}
+          help={`${t('Checked, then kept on your server, never on this phone.')}${backup.secretHint ? ` ${t('Current: {hint}', { hint: backup.secretHint })}` : ''}`}
+          revealLabels={{ show: t('Show the secret key'), hide: t('Hide the secret key') }}
         />
         <View>
-          <AppText variant="metaStrong">{t('Classe de stockage')}</AppText>
-          <View style={styles.classes} accessibilityRole="radiogroup" accessibilityLabel={t('Classe de stockage')}>
+          <AppText variant="metaStrong">{t('Storage class')}</AppText>
+          <View style={styles.classes} accessibilityRole="radiogroup" accessibilityLabel={t('Storage class')}>
             {storageClassesFor(value('endpoint'), chosenClass).map(each => (
               <ListRow
                 key={each}
@@ -252,36 +252,36 @@ export function BackupSection({
         </View>
         <FormMessage message={connection.message} />
         <View style={styles.row}>
-          <Button label={t('Tester et enregistrer')} icon="server" busy={connection.busy} disabled={unchanged} onPress={() => void connection.submit(saveConnection)} />
+          <Button label={t('Test and save')} icon="server" busy={connection.busy} disabled={unchanged} onPress={() => void connection.submit(saveConnection)} />
         </View>
 
         {/* In the setup, how often and how many once the bucket is set (the server then backs up every day). */}
         {setup && !backup.configured ? null : (
           <>
-            <AppText variant="metaStrong">{t('Fréquence')}</AppText>
+            <AppText variant="metaStrong">{t('Frequency')}</AppText>
             <Segmented<BackupRecurrence>
-              label={t('Fréquence des sauvegardes')}
+              label={t('Backup frequency')}
               value={backup.recurrence}
               disabled={!backup.configured || busy !== null}
-              onChange={recurrence => void save({ recurrence }, 'recurrence', t('Sauvegarde automatique : {recurrence}', { recurrence: BACKUP_RECURRENCE_NAMES[recurrence].toLowerCase() }))}
+              onChange={recurrence => void save({ recurrence }, 'recurrence', t('Automatic backup: {recurrence}', { recurrence: BACKUP_RECURRENCE_NAMES[recurrence].toLowerCase() }))}
               options={BACKUP_RECURRENCES.map(id => ({ value: id, label: BACKUP_RECURRENCE_SHORT[id] }))}
             />
 
             <View style={styles.keepRow}>
               <View style={styles.flex}>
                 <TextField
-                  label={t('Garder les sauvegardes, en jours')}
+                  label={t('Keep backups, in days')}
                   kind="number"
                   value={keepValue}
                   onChangeText={setKeep}
                   field={keeping.field('keep')}
                   editable={backup.configured}
-                  help={t('Celles faites par ce serveur sont effacées de S3 passé ce délai ; la plus récente reste toujours.')}
+                  help={t('Those made by this server are deleted from S3 after this; the newest always stays.')}
                 />
               </View>
               <Button
                 kind="tonal"
-                label={t('Appliquer')}
+                label={t('Apply')}
                 busy={keeping.busy}
                 disabled={!backup.configured || (keepValid && keepNumber === backup.keep)}
                 onPress={() => void keeping.submit(applyKeep)}
@@ -293,13 +293,13 @@ export function BackupSection({
       </View>
 
       {backup.configured && !setup ? (
-        <ListRow icon="upload" title={t('Sauvegarder maintenant')} supporting={running ? t('Sauvegarde en cours…') : undefined} onPress={running || busy === 'run' ? undefined : () => runNow()} />
+        <ListRow icon="upload" title={t('Back up now')} supporting={running ? t('Backing up…') : undefined} onPress={running || busy === 'run' ? undefined : () => runNow()} />
       ) : null}
 
       {backup.configured && !setup ? (
         <>
           <View style={styles.heading}>
-            <AppText variant="metaStrong">{t('Sauvegardes sur S3')}</AppText>
+            <AppText variant="metaStrong">{t('Backups on S3')}</AppText>
           </View>
           {backups.error ? (
             <AppText variant="meta" style={styles.note}>
@@ -307,16 +307,16 @@ export function BackupSection({
             </AppText>
           ) : !backups.list ? (
             <AppText variant="meta" style={styles.note}>
-              {t('Lecture des sauvegardes…')}
+              {t('Reading the backups…')}
             </AppText>
           ) : snapshots.length === 0 ? (
-            <EmptyLine text={t('Aucune sauvegarde sur S3 pour l’instant.')} glyph="archive" style={styles.note} />
+            <EmptyLine text={t('No backups on S3 yet.')} glyph="archive" style={styles.note} />
           ) : (
             shown.map(snapshot => <ListRow key={snapshot.name} icon="archive" title={formatMoment(snapshot.at, now)} supporting={snapshotMeta(snapshot)} onPress={() => overlays.openSnapshot(snapshot)} />)
           )}
           {!all && snapshots.length > FIRST_SNAPSHOTS ? (
             <View style={styles.more}>
-              <Button kind="text" label={t('Tout afficher ({count})', { count: snapshots.length })} onPress={() => setAll(true)} style={styles.moreButton} />
+              <Button kind="text" label={t('Show all ({count})', { count: snapshots.length })} onPress={() => setAll(true)} style={styles.moreButton} />
             </View>
           ) : null}
         </>
@@ -324,12 +324,12 @@ export function BackupSection({
 
       {setup ? null : (
         <>
-          <ListRow icon="download" title={t('Télécharger une sauvegarde complète')} supporting={t('Une archive avec vos photos et fichiers, à garder où vous voulez : elle se restaure ici.')} onPress={() => downloadFull()} />
+          <ListRow icon="download" title={t('Download a full backup')} supporting={t('An archive with your photos and files, to keep wherever you like: it restores here.')} onPress={() => downloadFull()} />
           {/* Said here too: the section's head may be scrolled away from this row. */}
           <ListRow
             icon="restore"
-            title={t('Restaurer depuis un fichier')}
-            supporting={sending === 'file' ? t('Envoi de l’archive…') : restoring ? t('Restauration en cours…') : t('Une archive .tar.gz téléchargée depuis S3 ou depuis cette page.')}
+            title={t('Restore from a file')}
+            supporting={sending === 'file' ? t('Sending the archive…') : restoring ? t('Restoring…') : t('A .tar.gz archive downloaded from S3 or from this page.')}
             onPress={restoring ? undefined : () => pickFile()}
           />
         </>

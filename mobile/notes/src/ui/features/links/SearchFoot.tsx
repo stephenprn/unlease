@@ -13,14 +13,14 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { Button, FormFoot } from '../../components';
 
 /** Opens a page in the browser, or says it could not. */
-export const openPage = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir ce lien'), undefined, { tone: 'error' }));
+export const openPage = (url: string) => Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
 
 /** `failed`: the last search failed, nothing was kept, so asking again searches again either way. */
 export function SearchFoot({ failed, url, onSearch }: { failed: boolean; url: string; onSearch: (fresh: boolean) => void }) {
   return (
     <FormFoot>
-      {failed ? <Button kind="text" label={t('Réessayer')} onPress={() => onSearch(false)} /> : <Button kind="text" label={t('Chercher à nouveau')} icon="refresh" onPress={() => onSearch(true)} />}
-      <Button label={t('Ouvrir la page')} icon="external" onPress={() => openPage(url)} />
+      {failed ? <Button kind="text" label={t('Try again')} onPress={() => onSearch(false)} /> : <Button kind="text" label={t('Search again')} icon="refresh" onPress={() => onSearch(true)} />}
+      <Button label={t('Open the page')} icon="external" onPress={() => openPage(url)} />
     </FormFoot>
   );
 }

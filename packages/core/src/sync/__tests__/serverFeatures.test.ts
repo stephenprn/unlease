@@ -3,16 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { parseServerFeatures, parseServerSettings, serverFeatures } from '../settings';
 
 describe('the server features the Administration sets up', () => {
-  it('reads each from the settings: a key, S3, a drive, Seerr', () => {
+  it('reads each from the settings: a key, S3, a drive, Seerr, Immich', () => {
     const bare = parseServerSettings({ analysis: { enabled: false } })!;
-    expect(serverFeatures(bare)).toEqual({ claude: false, backup: false, drive: false, seerr: false });
+    expect(serverFeatures(bare)).toEqual({ claude: false, backup: false, drive: false, seerr: false, immich: false });
     const full = parseServerSettings({
       analysis: { enabled: true, keySource: 'app', keyHint: '…k3Xq', model: 'claude-opus-5-5', budgetUsd: 15 },
       backup: { configured: true },
       drive: { provider: 'seafile', url: 'https://drive.example.org' },
       seerr: { url: 'https://seerr.example.org' },
+      immich: { url: 'http://192.168.1.20:2283', keyHint: '…abcd' },
     })!;
-    expect(serverFeatures(full)).toEqual({ claude: true, backup: true, drive: true, seerr: true });
+    expect(serverFeatures(full)).toEqual({ claude: true, backup: true, drive: true, seerr: true, immich: true });
   });
 
   it('keeps only what is known, as a device stored it', () => {

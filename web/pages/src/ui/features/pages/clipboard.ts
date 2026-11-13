@@ -52,7 +52,7 @@ function ownMark(): string {
 }
 
 /** What a copy keeps of a block besides its kind and text: never its place, its dates or its bin. */
-const KEPT = ['caption', 'drawing', 'checked', 'language', 'icon', 'color', 'columns', 'cells', 'fileId', 'fileName', 'mime', 'bytes', 'width', 'height', 'uploaded', 'url', 'targetType', 'targetId', 'view', 'viewColumns', 'showDone', 'calendarLabelId', 'calendarDays', 'ratio'];
+const KEPT = ['caption', 'drawing', 'checked', 'language', 'icon', 'color', 'columns', 'cells', 'fileId', 'fileName', 'mime', 'bytes', 'width', 'height', 'uploaded', 'url', 'targetType', 'targetId', 'view', 'viewColumns', 'showDone', 'calendarLabelId', 'calendarDays', 'immichAlbumId', 'immichAssetIds', 'ratio'];
 
 /** A block and what it holds; `pagesByTitle` keeps a sub-page to its title (its content is its own), and leaves out one in the bin. */
 function draftOf(id: string, depth = 0, pagesByTitle = false): BlockDraft | null {
@@ -121,6 +121,11 @@ function draftsToHtml(drafts: readonly BlockDraft[]): string {
     }
     // A table of contents is the page's headings, already there; a calendar block is Agenda's, a view.
     if (draft.kind === 'toc' || draft.kind === 'calendar') continue;
+    // An Immich block's photos are Immich's: its words stand for them.
+    if (draft.kind === 'immich') {
+      html += `<p>${escapeHtml(blocksToMarkdown([{ ...draft, extra: { ...draft.extra, caption: '' } }], () => ''))}</p>${captionHtml(draft)}`;
+      continue;
+    }
     const inner = draft.kind === 'code' || draft.kind === 'page' ? escapeHtml(draft.text) : runsToHtml(parseRich(draft.text));
     const nested = draft.children ? draftsToHtml(draft.children) : '';
     if (wanted) html += `<li>${draft.kind === 'todo' ? (draft.extra?.checked ? '☑ ' : '☐ ') : ''}${inner}${nested}</li>`;

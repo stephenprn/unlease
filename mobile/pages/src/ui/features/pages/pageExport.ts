@@ -6,7 +6,7 @@ import { mentionLabel } from '@app/hooks/usePages';
 import { getRecord, useLibraryStore } from '@app/store/libraryStore';
 
 /** What a copy keeps of a block besides its kind and text: never its place, its dates or its bin. */
-const KEPT = ['caption', 'checked', 'language', 'icon', 'color', 'columns', 'cells', 'fileId', 'fileName', 'mime', 'bytes', 'width', 'height', 'uploaded', 'url', 'targetType', 'targetId', 'view', 'viewColumns', 'showDone', 'calendarLabelId', 'calendarDays', 'ratio'];
+const KEPT = ['caption', 'checked', 'language', 'icon', 'color', 'columns', 'cells', 'fileId', 'fileName', 'mime', 'bytes', 'width', 'height', 'uploaded', 'url', 'targetType', 'targetId', 'view', 'viewColumns', 'showDone', 'calendarLabelId', 'calendarDays', 'immichAlbumId', 'immichAssetIds', 'ratio'];
 const LIST_KINDS: ReadonlySet<BlockKind> = new Set(['bullet', 'numbered', 'todo', 'toggle']);
 
 /** A block and what it holds; a sub-page is its title (its content is its own), and one in the bin is left out. */

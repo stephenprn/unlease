@@ -30,8 +30,8 @@ import { browserPath } from '@shared/ui/router';
 export function useGiftsUnavailable(): string | null {
   const server = useSettingsStore(selectServer);
   const apps = useSettingsStore(selectServerApps);
-  if (!server) return t('Les idées cadeaux vont dans {app}, sur votre serveur : connectez-en un dans les Réglages.', { app: APPS.notes.name });
-  if (apps && !apps.includes('notes')) return t('Les idées cadeaux vont dans {app}, qui n’est pas activé sur ce serveur.', { app: APPS.notes.name });
+  if (!server) return t('Gift ideas go to {app}, on your server: connect one in Settings.', { app: APPS.notes.name });
+  if (apps && !apps.includes('notes')) return t('Gift ideas go to {app}, which is not turned on on this server.', { app: APPS.notes.name });
   return null;
 }
 
@@ -41,7 +41,7 @@ function GiftForm({ contact, url, onUrl, onCancel, onDone }: { contact: Contact;
   const titleId = useId();
   const server = useSettingsStore(selectServer);
   const name = contactName(contact);
-  const form = useForm({ url: url.trim() && !isWebAddress(url) ? t('Collez l’adresse d’une page web, qui commence par https://') : null });
+  const form = useForm({ url: url.trim() && !isWebAddress(url) ? t('Paste the address of a web page, starting with https://') : null });
   const save = async (): Promise<boolean> => {
     if (!server) return false;
     try {
@@ -50,19 +50,19 @@ function GiftForm({ contact, url, onUrl, onCancel, onDone }: { contact: Contact;
       // The collection's place in Carnet's web app (references name no collection: its address is written here).
       const place = `/notes/line/${encodeURIComponent(answer.collectionId)}`;
       showSnack(
-        answer.existing ? t('Déjà dans Cadeaux, dans {app} : {name} s’y ajoute.', { app: APPS.notes.name, name }) : t('Ajouté à Cadeaux dans {app}', { app: APPS.notes.name }),
-        { label: t('Ouvrir'), run: () => window.open(browserPath(place), '_blank', 'noopener') },
+        answer.existing ? t('Already in Gifts, in {app}: {name} is added to it.', { app: APPS.notes.name, name }) : t('Added to Gifts in {app}', { app: APPS.notes.name }),
+        { label: t('Open'), run: () => window.open(browserPath(place), '_blank', 'noopener') },
         { tone: 'success' },
       );
       return true;
     } catch (error) {
-      form.fail(null, error instanceof Error && error.message ? error.message : t('Le serveur ne répond pas'));
+      form.fail(null, error instanceof Error && error.message ? error.message : t('The server isn’t responding'));
       return false;
     }
   };
   return (
     <DialogFrame
-      title={t('Idée cadeau pour {name}', { name })}
+      title={t('Gift idea for {name}', { name })}
       titleId={titleId}
       onClose={onCancel}
       className={layers.dialog}
@@ -70,11 +70,11 @@ function GiftForm({ contact, url, onUrl, onCancel, onDone }: { contact: Contact;
       foot={
         <>
           <Button kind="text" onClick={onCancel}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           {/* Nothing to keep until a link is there; a link that is not a page's says so when pressed. */}
           <Button type="submit" icon="plus" busy={form.busy} disabled={!url.trim()}>
-            {t('Ajouter')}
+            {t('Add')}
           </Button>
         </>
       }
@@ -82,13 +82,13 @@ function GiftForm({ contact, url, onUrl, onCancel, onDone }: { contact: Contact;
       <TextField
         kind="url"
         field={form.field('url')}
-        label={t('Lien du produit')}
+        label={t('Product link')}
         value={url}
         onChange={onUrl}
         autoFocus
         enterKeyHint="done"
         placeholder="https://"
-        help={t('Il rejoint la collection Cadeaux de {app}, au nom de {name}.', { app: APPS.notes.name, name })}
+        help={t('It goes to the Gifts collection in {app}, for {name}.', { app: APPS.notes.name, name })}
       />
       <FormMessage form={{ message: form.message, problems: 0 }} />
     </DialogFrame>
@@ -106,7 +106,7 @@ export function GiftDialog({ contact, open, onClose }: { contact: Contact; open:
   const ask = unsaved.guard(close);
   return (
     <>
-      <Layer open={open} onDismiss={ask} label={t('Idée cadeau')}>
+      <Layer open={open} onDismiss={ask} label={t('Gift idea')}>
         {open ? (
           <GiftForm
             contact={contact}

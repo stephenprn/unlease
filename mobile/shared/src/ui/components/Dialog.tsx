@@ -54,7 +54,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
     <View style={styles.host} pointerEvents="box-none" collapsable={false}>
       {visible ? (
         <Animated.View entering={SCRIM_IN} exiting={SCRIM_OUT} style={StyleSheet.absoluteFill}>
-          <Tappable accessibilityLabel={t('Annuler')} onPress={onCancel} style={styles.scrim} noTint />
+          <Tappable accessibilityLabel={t('Cancel')} onPress={onCancel} style={styles.scrim} noTint />
         </Animated.View>
       ) : null}
       {visible ? (
@@ -72,7 +72,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
           ) : null}
           <OverlayFocus.Provider value={overlay.focus}>{children}</OverlayFocus.Provider>
           <View style={styles.actions}>
-            {cancelLabel === null ? null : <Button kind="text" label={cancelLabel ?? t('Annuler')} onPress={onCancel} />}
+            {cancelLabel === null ? null : <Button kind="text" label={cancelLabel ?? t('Cancel')} onPress={onCancel} />}
             <Button kind={danger ? 'danger' : 'filled'} label={confirmLabel} onPress={onConfirm} />
           </View>
         </AnimatedOrganic>

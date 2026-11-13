@@ -121,7 +121,7 @@ describe('Contacts, a birthday’s wish', () => {
     const tree = await boot({ onboarded: true, prepare: () => (lea = createContact(person('Léa', 'Martin', { birthday: inDays(0), phones: [mobile], emails: [email] }))) });
     await go('Contact', { id: lea });
     expect(textOf(tree)).toContain('Son anniversaire');
-    expect(textOf(tree)).toContain(`Aujourd’hui · ${plural(36, 'an')}`);
+    expect(textOf(tree)).toContain(`Aujourd’hui · ${plural(36, 'year')}`);
     await press(pressables(tree, 'Souhaiter son anniversaire à Léa Martin')[0]!);
     // WhatsApp is installed here: three ways, the message quoted.
     expect(textOf(tree)).toContain('« Joyeux anniversaire, Léa ! »');
@@ -135,7 +135,7 @@ describe('Contacts, a birthday’s wish', () => {
     const tree = await boot({ onboarded: true, prepare: () => (paul = createContact(person('Paul', 'Durand', { birthday: inDays(-1), emails: [email] }))) });
     await go('Contact', { id: paul });
     // The day after still offers it.
-    expect(textOf(tree)).toContain(`Hier · ${plural(36, 'an')}`);
+    expect(textOf(tree)).toContain(`Hier · ${plural(36, 'year')}`);
     await press(pressables(tree, 'Souhaiter son anniversaire à Paul Durand')[0]!);
     expect(opened).toEqual(['mailto:lea@example.org?subject=Joyeux%20anniversaire&body=Joyeux%20anniversaire%2C%20Paul%20!']);
   });

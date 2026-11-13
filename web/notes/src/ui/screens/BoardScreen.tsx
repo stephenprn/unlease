@@ -7,7 +7,7 @@
  */
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { searchSummary } from '@unlease/core/services/searchWords';
 import { APP_WORDS } from '@unlease/core/appWords';
 import { plural } from '@unlease/core/services/format';
@@ -37,10 +37,10 @@ import { DOCKED, NARROW, useMedia } from '@shared/ui/useMedia';
 import screens from '@shared/ui/screens/screens.module.css';
 
 function viewTitle(view: BoardView, labelName: string | undefined): string {
-  if (view === 'reminders') return t('Rappels');
-  if (view === 'archive') return t('Archives');
-  if (view === 'trash') return t('Corbeille');
-  if (view.startsWith('label:')) return labelName ?? t('Label');
+  if (view === 'reminders') return t('Reminders');
+  if (view === 'archive') return tc('place', 'Archive');
+  if (view === 'trash') return t('Bin');
+  if (view.startsWith('label:')) return labelName ?? tc('notes', 'Label');
   return t('Notes');
 }
 
@@ -98,7 +98,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
           </h1>
           {view === 'trash' && inBin > 0 ? (
             <Button kind="text" icon="broom" onClick={() => setConfirmEmpty(true)}>
-              {t('Vider la corbeille')}
+              {t('Empty the bin')}
             </Button>
           ) : null}
         </div>
@@ -106,7 +106,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
       {/* The docked navigation lists the collections; without it, they head the board, scrolling with it. */}
       {view === 'notes' && !searching && !docked ? <CollectionChips resting={selection.size > 0} /> : null}
       {/* How long things stay, while it holds something (empty, its empty state says it). */}
-      {view === 'trash' && !searching && inBin > 0 ? <p className={`${styles.notice} t-meta`}>{t('Les notes de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
+      {view === 'trash' && !searching && inBin > 0 ? <p className={`${styles.notice} t-meta`}>{t('Notes in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       {showComposer ? <Composer onNote={newNote} onChecklist={newChecklist} onDrawing={newDrawing} onPhotos={files => void newPhotoNote(files)} /> : null}
       {/* As on the phone: the settings the words name, above the notes, in the search of every note (a view's searches its own). */}
       {searching && view === 'notes' ? <SettingsMatches query={query} /> : null}
@@ -125,16 +125,16 @@ export function BoardScreen({ view }: { view: BoardView }) {
       ) : null}
       <Confirm
         open={confirmEmpty}
-        title={t('Vider la corbeille ?')}
-        message={t('Toutes les notes de la corbeille seront supprimées définitivement, sur tous vos appareils.')}
-        confirmLabel={t('Vider')}
+        title={t('Empty the bin?')}
+        message={t('Every note in the bin will be deleted for good, on all your devices.')}
+        confirmLabel={t('Empty')}
         danger
         onCancel={() => setConfirmEmpty(false)}
         onConfirm={() => {
           setConfirmEmpty(false);
           const notes = emptyTrash();
-          if (notes > 0) showSnack(t('{deleted} définitivement', { deleted: plural(notes, 'note supprimée', 'notes supprimées') }), undefined, { tone: 'success' });
-          else showSnack(t('La corbeille était déjà vide'));
+          if (notes > 0) showSnack(t('{deleted} forever', { deleted: plural(notes, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
+          else showSnack(t('The bin was already empty'));
         }}
       />
     </div>

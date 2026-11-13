@@ -70,7 +70,7 @@ export function useTemplateTry(fields: readonly TemplateField[], links: readonly
   const run = (): void => {
     const url = current === ADDRESS ? extractUrls(address)[0] : links.find(link => link.id === current)?.url;
     if (!url) {
-      setProblem(t('Aucun lien ici : collez une adresse, comme https://example.org/page.'));
+      setProblem(t('No link here: paste an address, like https://example.org/page.'));
       return;
     }
     const tried = namedFields(fields);
@@ -86,7 +86,7 @@ export function useTemplateTry(fields: readonly TemplateField[], links: readonly
       },
       (error: unknown) => {
         if (controller.signal.aborted) return;
-        setPhase({ kind: 'failed', message: error instanceof Error ? error.message : t('erreur inconnue') });
+        setPhase({ kind: 'failed', message: error instanceof Error ? error.message : t('unknown error') });
       },
     );
   };
@@ -128,17 +128,17 @@ export function TrySection({ state, fields }: { state: TemplateTry; fields: read
   if (!claude) return null;
 
   return (
-    <Section title={t('Aperçu sur un lien')}>
+    <Section title={t('Preview on a link')}>
       <View style={styles.section}>
         <AppText variant="meta">
-          {t('Voyez ce que Claude relèverait, sans rien enregistrer.')}
+          {t('See what Claude would note, without saving anything.')}
         </AppText>
         {state.links.length > 0 ? (
-          <PickerField label={t('Lien')} value={picked ? linkRowText(picked).title : t('Une autre adresse')} icon={picked ? KIND_ICONS[picked.kind] : 'link'} onPress={() => state.setPicking(true)} />
+          <PickerField label={t('Link')} value={picked ? linkRowText(picked).title : t('Another address')} icon={picked ? KIND_ICONS[picked.kind] : 'link'} onPress={() => state.setPicking(true)} />
         ) : null}
         {state.chosen === ADDRESS ? (
           <TextField
-            label={t('Adresse')}
+            label={t('Address')}
             kind="url"
             value={state.address}
             onChangeText={state.setAddress}
@@ -151,15 +151,15 @@ export function TrySection({ state, fields }: { state: TemplateTry; fields: read
           />
         ) : null}
         <View style={styles.actions}>
-          <Button kind="tonal" icon="sparkle" label={t('Essayer')} busy={phase.kind === 'trying'} disabled={nothing || offline} onPress={state.run} />
+          <Button kind="tonal" icon="sparkle" label={t('Try')} busy={phase.kind === 'trying'} disabled={nothing || offline} onPress={state.run} />
         </View>
         {offline ? (
           <AppText variant="meta">
-            {t('Hors ligne.')}
+            {t('Offline.')}
           </AppText>
         ) : phase.kind === 'trying' ? (
           <AppText variant="meta" accessibilityLiveRegion="polite">
-            {t('Claude lit la page…')}
+            {t('Claude is reading the page…')}
           </AppText>
         ) : phase.kind === 'failed' ? (
           <View style={styles.problem} accessibilityLiveRegion="polite">
@@ -197,7 +197,7 @@ function TriedFacts({ phase }: { phase: Extract<Phase, { kind: 'done' }> }) {
               <AppText variant="meta" style={styles.factLabel}>
                 {field.name}
               </AppText>
-              <AppText variant="body" color={value ? undefined : theme.color.inkFaint} style={styles.fill} selectable={!!value} accessibilityLabel={value ? undefined : t('Rien trouvé')}>
+              <AppText variant="body" color={value ? undefined : theme.color.inkFaint} style={styles.fill} selectable={!!value} accessibilityLabel={value ? undefined : t('Nothing found')}>
                 {value ?? '—'}
               </AppText>
             </View>
@@ -205,7 +205,7 @@ function TriedFacts({ phase }: { phase: Extract<Phase, { kind: 'done' }> }) {
         })}
       </Organic>
       <AppText variant="meta">
-        {t('Lu en {seconds} s · {cost}', { seconds: formatNumber(Math.max(0.1, phase.seconds), 1), cost: formatUsd(phase.costUsd) })}
+        {t('Read in {seconds} s · {cost}', { seconds: formatNumber(Math.max(0.1, phase.seconds), 1), cost: formatUsd(phase.costUsd) })}
       </AppText>
     </View>
   );
@@ -216,7 +216,7 @@ export function TryLinkSheet({ state }: { state: TemplateTry }) {
   const theme = useTheme();
   const close = (): void => state.setPicking(false);
   return (
-    <Sheet visible={state.picking} onDismiss={close} title={t('Essayer sur')} tall>
+    <Sheet visible={state.picking} onDismiss={close} title={t('Try on')} tall>
       <SheetScroll>
         {state.links.map(link => {
           const { title, source } = linkRowText(link);
@@ -239,7 +239,7 @@ export function TryLinkSheet({ state }: { state: TemplateTry }) {
         })}
         <ListRow
           icon="copy"
-          title={t('Coller une adresse')}
+          title={t('Paste an address')}
           trailing={state.chosen === ADDRESS ? <Icon name="check" size={22} color={theme.color.focus} /> : undefined}
           accessibilityRole="radio"
           accessibilityState={{ checked: state.chosen === ADDRESS }}

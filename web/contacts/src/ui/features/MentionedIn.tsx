@@ -22,9 +22,9 @@ const placeGlyph = (type: string): 'page' | 'link' | 'note' => (type === 'page' 
 function Place({ place }: { place: MentionPlace }) {
   const path = pathOfRef(place.type, place.id);
   if (!path) return null;
-  const title = place.title.trim() || (place.type === 'page' ? t('Sans titre') : place.type === 'link' ? t('Lien sans titre') : t('Note sans titre'));
+  const title = place.title.trim() || (place.type === 'page' ? t('Untitled') : place.type === 'link' ? t('Untitled link') : t('Untitled note'));
   // A note or a link naming the person among its people (a gift idea) says so before where it sits.
-  const where = [place.linked ? t('Associé') : '', place.within, APPS[place.app].name].filter(Boolean).join(' · ');
+  const where = [place.linked ? t('Linked') : '', place.within, APPS[place.app].name].filter(Boolean).join(' · ');
   return (
     <li>
       <Link to={path} className={`${styles.simpleRow} ${styles.placeRow}`} ariaLabel={`${title} · ${where}`}>
@@ -45,7 +45,7 @@ function Place({ place }: { place: MentionPlace }) {
 function EventPlace({ place, today }: { place: MentionPlace; today: string }) {
   const path = pathOfRef('event', place.id);
   if (!path) return null;
-  const title = place.title.trim() || t('Sans titre');
+  const title = place.title.trim() || t('Untitled');
   const day = (place.when ?? '').slice(0, 10);
   const when = day ? `${weekdayDay(day, Number(today.slice(0, 4)))}${place.when!.length > 10 ? ` · ${place.when!.slice(11, 16)}` : ''}` : APPS.calendar.name;
   return (
@@ -70,9 +70,9 @@ function SeenTogether({ places }: { places: readonly MentionPlace[] }) {
   const coming = places.filter(place => (place.when ?? '').slice(0, 10) >= today).sort((a, b) => ((a.when ?? '') < (b.when ?? '') ? -1 : 1));
   const past = places.filter(place => (place.when ?? '').slice(0, 10) < today).sort((a, b) => ((a.when ?? '') < (b.when ?? '') ? 1 : -1));
   return (
-    <section className={styles.block} aria-label={t('Vus ensemble')}>
+    <section className={styles.block} aria-label={t('Seen together')}>
       <h2 className={`${styles.sectionHead} t-section`}>
-        {t('Vus ensemble')}
+        {t('Seen together')}
         <span className={`${styles.sectionCount} t-meta tabular`}>{places.length}</span>
       </h2>
       <OutlinedBox kind="panel" lift="card" className={`${styles.table} paper`}>
@@ -101,9 +101,9 @@ export function MentionedIn({ id }: { id: string }) {
 
 function Mentions({ places }: { places: readonly MentionPlace[] }) {
   return (
-    <section className={styles.block} aria-label={t('Mentionné dans')}>
+    <section className={styles.block} aria-label={t('Mentioned in')}>
       <h2 className={`${styles.sectionHead} t-section`}>
-        {t('Mentionné dans')}
+        {t('Mentioned in')}
         <span className={`${styles.sectionCount} t-meta tabular`}>{places.length}</span>
       </h2>
       <OutlinedBox kind="panel" lift="card" className={`${styles.table} paper`}>

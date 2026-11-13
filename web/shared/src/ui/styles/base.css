@@ -180,6 +180,12 @@ html {
   /* The scrollbar's room stays reserved, so the page never shifts as it grows long enough to scroll. */
   scrollbar-gutter: stable;
   scrollbar-color: var(--edge) transparent;
+  /*
+   * No rubber band past the page's top or bottom: the browser would fill what it uncovers with the
+   * ground's flat colour, a line across the two tones. Vertical only, so a sideways swipe still goes
+   * back and forward in the history.
+   */
+  overscroll-behavior-y: none;
   /* The ground: two tones of the wall under their grain, fixed to the window while the page scrolls over it. */
   background: var(--ground-paint);
   color: var(--ink);

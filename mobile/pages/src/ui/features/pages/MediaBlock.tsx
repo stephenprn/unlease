@@ -33,10 +33,10 @@ const MAX_HEIGHT = 360;
 const DEFAULT_RATIO = 4 / 3;
 
 const WORDS: Record<MediaKind, { readonly add: string; readonly pick: string; readonly icon: GlyphName }> = {
-  image: { add: tx('Ajouter une image'), pick: tx('Choisir une photo'), icon: 'image' },
-  video: { add: tx('Ajouter une vidéo'), pick: tx('Choisir une vidéo'), icon: 'video' },
-  pdf: { add: tx('Ajouter un PDF'), pick: tx('Choisir un PDF'), icon: 'pdf' },
-  file: { add: tx('Ajouter un fichier'), pick: tx('Choisir un fichier'), icon: 'file' },
+  image: { add: tx('Add an image'), pick: tx('Choose a photo'), icon: 'image' },
+  video: { add: tx('Add a video'), pick: tx('Choose a video'), icon: 'video' },
+  pdf: { add: tx('Add a PDF'), pick: tx('Choose a PDF'), icon: 'pdf' },
+  file: { add: tx('Add a file'), pick: tx('Choose a file'), icon: 'file' },
 };
 
 // ── the address sheet, mounted once at the page's root ────────────────────
@@ -54,10 +54,10 @@ function askAddress(request: AddressRequest): void {
 }
 
 const ADDRESS_HINTS: Record<MediaKind, string> = {
-  image: tx('L’adresse d’une image (https://…).'),
-  video: tx('Une vidéo YouTube, Vimeo, Dailymotion, ou l’adresse d’un fichier vidéo.'),
-  pdf: tx('L’adresse d’un PDF (https://…).'),
-  file: tx('L’adresse d’un fichier (https://…).'),
+  image: tx('An image’s address (https://…).'),
+  video: tx('A YouTube, Vimeo or Dailymotion video, or a video file’s address.'),
+  pdf: tx('A PDF’s address (https://…).'),
+  file: tx('A file’s address (https://…).'),
 };
 
 /** The sheet that takes an address for a media block: mount it once at the page screen's root. */
@@ -75,14 +75,14 @@ export function MediaHost() {
     close();
   };
   // An address that cannot be read is said under the field, what was typed kept; the keyboard's « OK » embeds.
-  const form = useForm({ address: extractUrls(address).length === 0 ? t('Ce n’est pas une adresse : tapez par exemple example.org ou https://example.org/page.') : null }, { order: ['address'], sendOnDone: embed });
+  const form = useForm({ address: extractUrls(address).length === 0 ? t('That isn’t an address: type for example example.org or https://example.org/page.') : null }, { order: ['address'], sendOnDone: embed });
   const close = () => {
     useAddressStore.setState({ request: null });
     setAddress('');
     form.reset();
   };
   return (
-    <Sheet visible={request !== null} onDismiss={close} title={t('Intégrer un lien')}>
+    <Sheet visible={request !== null} onDismiss={close} title={t('Embed a link')}>
       <View style={styles.addressBody}>
         <TextField
           kind="url"
@@ -91,12 +91,12 @@ export function MediaHost() {
           onChangeText={setAddress}
           autoFocus
           placeholder="https://…"
-          accessibilityLabel={t('Adresse à intégrer')}
+          accessibilityLabel={t('Address to embed')}
           help={shown ? t(ADDRESS_HINTS[shown.kind]) : undefined}
         />
       </View>
       <FormFoot message={form.message}>
-        <Button kind="filled" label={t('Intégrer')} icon="link" onPress={() => void form.submit(embed)} disabled={!address.trim()} />
+        <Button kind="filled" label={t('Embed')} icon="link" onPress={() => void form.submit(embed)} disabled={!address.trim()} />
       </FormFoot>
     </Sheet>
   );
@@ -109,7 +109,7 @@ export function pickAndAttach(page: string, blockId: string, kind: MediaKind): v
     .then(outcome => {
       if (outcome.status === 'error') showSnack(t(outcome.message), undefined, { tone: 'error' });
     })
-    .catch(() => showSnack(t('Impossible d’ajouter ce fichier'), undefined, { tone: 'error' }));
+    .catch(() => showSnack(t('Couldn’t add this file'), undefined, { tone: 'error' }));
 }
 
 // ── the block ─────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
       {readOnly ? null : (
         <View style={styles.emptyActions}>
           <Button kind="tonal" small label={t(words.pick)} icon="upload" onPress={() => pickAndAttach(page, block.id, kind)} />
-          <Button kind="text" small label={t('Intégrer un lien')} icon="link" onPress={() => askAddress({ page, blockId: block.id, kind })} />
+          <Button kind="text" small label={t('Embed a link')} icon="link" onPress={() => askAddress({ page, blockId: block.id, kind })} />
         </View>
       )}
     </Organic>
@@ -164,14 +164,14 @@ function ImageMedia({ block }: { block: Block }) {
   const onLayout = (event: LayoutChangeEvent) => setRoom(Math.round(event.nativeEvent.layout.width));
 
   if (!source || failed) {
-    const text = failed ? t('Image indisponible') : block.fileId && !block.uploaded ? t('En cours d’envoi depuis un autre appareil…') : t('Image indisponible sans serveur');
+    const text = failed ? t('Image unavailable') : block.fileId && !block.uploaded ? t('Uploading from another device…') : t('Image unavailable without a server');
     return <Waiting text={text} />;
   }
   return (
     <View onLayout={onLayout}>
       {width > 0 ? (
         <Organic outline="frame" style={[styles.picture, { width, height: Math.round(width / ratio) }]}>
-          <Tappable onPress={() => setOpen(block.fileId ? (local || block.uploaded ? whole : source) : source)} accessibilityRole="imagebutton" accessibilityLabel={t('Ouvrir l’image {name}', { name })} style={StyleSheet.absoluteFill}>
+          <Tappable onPress={() => setOpen(block.fileId ? (local || block.uploaded ? whole : source) : source)} accessibilityRole="imagebutton" accessibilityLabel={t('Open image {name}', { name })} style={StyleSheet.absoluteFill}>
             <Image
               source={source}
               style={StyleSheet.absoluteFill}
@@ -193,10 +193,10 @@ function ImageMedia({ block }: { block: Block }) {
 
 const openAddress = (url: string) => {
   if (!isHttpUrl(url)) {
-    showSnack(t('Impossible d’ouvrir cette adresse'), undefined, { tone: 'error' });
+    showSnack(t('Couldn’t open this address'), undefined, { tone: 'error' });
     return;
   }
-  Linking.openURL(url).catch(() => showSnack(t('Impossible d’ouvrir cette adresse'), undefined, { tone: 'error' }));
+  Linking.openURL(url).catch(() => showSnack(t('Couldn’t open this address'), undefined, { tone: 'error' }));
 };
 
 /** A video site's player cannot live in the page: its frame, to open the video where it plays. */
@@ -206,7 +206,7 @@ function VideoCard({ url }: { url: string }) {
   const site = displayHost(url);
   return (
     <Organic outline="frame" style={[styles.video, { backgroundColor: theme.color.viewer }]}>
-      <Tappable onDark onPress={() => openAddress(url)} accessibilityRole="link" accessibilityLabel={t('Lire la vidéo sur {site}', { site })} style={styles.videoPress}>
+      <Tappable onDark onPress={() => openAddress(url)} accessibilityRole="link" accessibilityLabel={t('Play the video on {site}', { site })} style={styles.videoPress}>
         <Organic pebble={1} style={styles.play}>
           <Icon name="play" size={28} color={theme.color.onSlip} />
         </Organic>
@@ -250,21 +250,21 @@ function MediaBlockComponent({ block }: { block: Block }) {
   const kind = block.kind as MediaKind;
   if (!block.fileId && !block.url) return <EmptyMedia block={block} kind={kind} />;
   if (kind === 'image') return <ImageMedia block={block} />;
-  const name = block.fileName || (block.url ? fileNameFromUrl(block.url) : t('fichier'));
+  const name = block.fileName || (block.url ? fileNameFromUrl(block.url) : t('file'));
   if (block.url) {
     const url = block.url;
     if (kind === 'video' && videoEmbedUrl(url)) return <VideoCard url={url} />;
-    return <FileCard icon={KIND_GLYPHS[kind]} name={name} detail={displayHost(url)} trailing="external" onPress={() => openAddress(url)} label={t('Ouvrir {name}', { name })} />;
+    return <FileCard icon={KIND_GLYPHS[kind]} name={name} detail={displayHost(url)} trailing="external" onPress={() => openAddress(url)} label={t('Open {name}', { name })} />;
   }
   // The server keeps a page's files behind the device's token: the phone shows them, the web opens them.
-  const detail = [formatBytes(block.bytes), block.uploaded ? null : t('pas encore envoyé')].filter(Boolean).join(' · ');
+  const detail = [formatBytes(block.bytes), block.uploaded ? null : t('not uploaded yet')].filter(Boolean).join(' · ');
   return (
     <FileCard
       icon={KIND_GLYPHS[kind]}
       name={name}
       detail={detail}
       trailing={null}
-      onPress={() => showSnack(t('Ce fichier s’ouvre depuis la version web, pour l’instant.'))}
+      onPress={() => showSnack(t('For now, this file opens from the web version.'))}
       label={`${name}, ${detail}`}
     />
   );

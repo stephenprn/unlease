@@ -43,7 +43,7 @@ export function toggleDone(id: string): void {
   const link = useLibraryStore.getState().links[id];
   if (!link) return;
   const undo = setLinkDone(id, !link.done);
-  showUndo(link.done ? t('Remis à faire') : t('Tamponné « {stamp} »', { stamp: stampWord(link.kind) }), undo);
+  showUndo(link.done ? t('Back to do') : t('Stamped “{stamp}”', { stamp: stampWord(link.kind) }), undo);
 }
 
 function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen: (id: string) => void }) {
@@ -81,7 +81,7 @@ function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen
       <a
         className={styles.hit}
         href={browserPath(paths.link(id))}
-        aria-label={[title, source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, now)?.text, note ? t('Votre note : {note}', { note }) : null].filter(Boolean).join(', ')}
+        aria-label={[title, source, pending ? null : price, pending || !priceChange ? null : priceChangeText(link, now)?.text, note ? t('Your note: {note}', { note }) : null].filter(Boolean).join(', ')}
         onClick={(event: MouseEvent) => {
           if (!isPlainClick(event)) return;
           event.preventDefault();
@@ -125,22 +125,22 @@ function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen
         {pending ? (
           <p className={`${styles.reading} t-meta`}>
             <ReadingTrack width={72} />
-            <span className={styles.readingText}>{t('Lecture de la page…')}</span>
+            <span className={styles.readingText}>{t('Reading the page…')}</span>
           </p>
         ) : failed ? (
           <p className={`${styles.failed} t-meta`}>
             <Icon name="alert" size={14} />
-            <span className={styles.failedText}>{link.error ? t(link.error) : t('Lecture impossible')}</span>
+            <span className={styles.failedText}>{link.error ? t(link.error) : t('Couldn’t read it')}</span>
             {claude ? (
               <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)}>
-                {t('Réessayer')}
+                {t('Try again')}
               </button>
             ) : null}
           </p>
         ) : unread && claude ? (
           <p className={`${styles.skipped} t-meta`}>
-            <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)} aria-label={t('Lire {title}', { title })}>
-              {t('Lire la page')}
+            <button type="button" className={styles.retry} onClick={() => reanalyzeLink(id)} aria-label={t('Read {title}', { title })}>
+              {t('Read the page')}
             </button>
           </p>
         ) : people.length > 0 || facts.length > 0 || note ? (
@@ -153,10 +153,10 @@ function LinkRowComponent({ id, now, onOpen }: { id: string; now: number; onOpen
       </div>
       <div className={styles.trailing}>
         {!pending ? (
-          <IconButton className={styles.stampAction} icon={link.done ? 'undo' : 'stamp'} label={link.done ? t('Remettre à faire') : t('Marquer : {stamp}', { stamp: stampWord(link.kind).toLowerCase() })} pressed={link.done} onClick={() => toggleDone(id)} />
+          <IconButton className={styles.stampAction} icon={link.done ? 'undo' : 'stamp'} label={link.done ? t('Put back to do') : t('Mark as {stamp}', { stamp: stampWord(link.kind).toLowerCase() })} pressed={link.done} onClick={() => toggleDone(id)} />
         ) : null}
         {/* The page itself, one click away, in a new tab; its pebble differs from the stamp's beside it. */}
-        <a className={controls.iconButton} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Ouvrir le lien')} data-tip={t('Ouvrir le lien')}>
+        <a className={controls.iconButton} {...pebbleUnder(1)} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={t('Open the link')} data-tip={t('Open the link')}>
           <Icon name="external" size={24} />
         </a>
       </div>

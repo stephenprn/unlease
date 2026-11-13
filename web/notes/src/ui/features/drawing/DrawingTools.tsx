@@ -10,7 +10,7 @@ import { useRef, type CSSProperties, type Ref } from 'react';
 
 import type { GlyphName } from '@unlease/design/glyphs';
 import { pebbleTurn } from '@unlease/design/pebbles';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { DRAWING_INKS, DRAWING_SIZES, DRAWING_SIZE_NAMES, DRAWING_TOOL_NAMES, type DrawingInk } from '@unlease/notes/models/drawing';
 
 import controls from '@shared/ui/components/controls.module.css';
@@ -46,7 +46,7 @@ export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onCle
   useHiddenSides(palette);
   const apple = isApple();
   return (
-    <div className={className ? `${styles.tools} ${className}` : styles.tools} role="toolbar" aria-label={t('Outils de dessin')}>
+    <div className={className ? `${styles.tools} ${className}` : styles.tools} role="toolbar" aria-label={t('Drawing tools')}>
       <div className={styles.modes}>
         {DRAWING_MODES.map((each, index) => (
           <IconButton key={each} ref={each === mode ? chosenRef : undefined} icon={MODE_ICONS[each]} label={DRAWING_TOOL_NAMES[each]} pressed={each === mode} shape={index} className={styles.tool} onClick={() => chooseMode(each)} />
@@ -60,7 +60,7 @@ export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onCle
             <span className={styles.divider} aria-hidden="true" />
           </>
         ) : null}
-        <div className={styles.sizes} role="group" aria-label={t('Épaisseur')}>
+        <div className={styles.sizes} role="group" aria-label={t('Thickness')}>
           {DRAWING_SIZES.map(size => {
             const name = t(DRAWING_SIZE_NAMES[size]);
             return (
@@ -80,7 +80,7 @@ export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onCle
           })}
         </div>
         <span className={styles.divider} aria-hidden="true" />
-        <div className={styles.inks} role="radiogroup" aria-label={t('Couleur du trait')} onKeyDown={arrowKeys<DrawingInk>(DRAWING_INKS, ink, chooseInk, key => key)}>
+        <div className={styles.inks} role="radiogroup" aria-label={t('Stroke colour')} onKeyDown={arrowKeys<DrawingInk>(DRAWING_INKS, ink, chooseInk, key => key)}>
           {DRAWING_INKS.map((key, index) => {
             const name = inkName(key);
             return (
@@ -98,10 +98,10 @@ export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onCle
       </div>
       <span className={styles.divider} aria-hidden="true" />
       <div className={styles.actions}>
-        <IconButton icon="undo" label={tc('undo', 'Annuler')} shortcut={apple ? '⌘Z' : 'Ctrl+Z'} disabled={!canUndo} className={styles.tool} onClick={onUndo} />
+        <IconButton icon="undo" label={t('Undo')} shortcut={apple ? '⌘Z' : 'Ctrl+Z'} disabled={!canUndo} className={styles.tool} onClick={onUndo} />
         {/* Redo is undo's glyph, mirrored, as the pages' bar draws it. */}
-        <IconButton icon="undo" label={t('Rétablir')} shortcut={apple ? '⇧⌘Z' : `Ctrl+${t('Maj')}+Z`} disabled={!canRedo} shape={1} className={`${styles.tool} ${styles.redo}`} onClick={onRedo} />
-        <IconButton icon="trash" label={t('Tout effacer')} disabled={!canClear} shape={2} className={styles.tool} onClick={onClear} />
+        <IconButton icon="undo" label={t('Redo')} shortcut={apple ? '⇧⌘Z' : `Ctrl+${t('Shift')}+Z`} disabled={!canRedo} shape={1} className={`${styles.tool} ${styles.redo}`} onClick={onRedo} />
+        <IconButton icon="trash" label={t('Clear all')} disabled={!canClear} shape={2} className={styles.tool} onClick={onClear} />
       </div>
     </div>
   );

@@ -40,13 +40,13 @@ export interface TargetSheetProps {
   readonly onDismiss: () => void;
 }
 
-const TITLES: Record<TargetSheetProps['purpose'], string> = { mention: tx('Mentionner'), bookmark: tx('Ajouter un signet'), embed: tx('Intégrer') };
+const TITLES: Record<TargetSheetProps['purpose'], string> = { mention: tx('Mention'), bookmark: tx('Add a bookmark'), embed: tx('Embed') };
 const PLACEHOLDERS: Record<TargetSheetProps['purpose'], string> = {
-  mention: tx('Une page, un contact, un événement, une note, une collection ou un lien'),
-  bookmark: tx('Une page, une note, une collection ou un lien'),
-  embed: tx('Une note, une collection ou un lien'),
+  mention: tx('A page, a contact, an event, a note, a collection or a link'),
+  bookmark: tx('A page, a note, a collection or a link'),
+  embed: tx('A note, a collection or a link'),
 };
-const EMBED_SECTIONS: readonly TargetSection[] = [tx('Notes'), tx('Collections'), tx('Liens')];
+const EMBED_SECTIONS: readonly TargetSection[] = [tx('Notes'), tx('Collections'), tx('Links')];
 const PAGE_SECTIONS: readonly TargetSection[] = [tx('Pages')];
 
 /** A row's mark: a page's emoji, a collection's emblem on its stone, a link's kind, a note's glyph. */
@@ -132,7 +132,7 @@ function TargetSheetComponent({ visible, purpose, pagesOnly = false, onPick, onP
   };
 
   return (
-    <Sheet visible={visible} onDismiss={onDismiss} title={pagesOnly ? t('Citer une page') : t(TITLES[purpose])} tall>
+    <Sheet visible={visible} onDismiss={onDismiss} title={pagesOnly ? t('Cite a page') : t(TITLES[purpose])} tall>
       <View style={styles.field}>
         <TextField
           value={query}
@@ -140,15 +140,15 @@ function TargetSheetComponent({ visible, purpose, pagesOnly = false, onPick, onP
           autoFocus
           autoCorrect={false}
           returnKeyType="search"
-          placeholder={pagesOnly ? t('Une page') : t(PLACEHOLDERS[purpose])}
-          accessibilityLabel={t('Rechercher')}
+          placeholder={pagesOnly ? t('A page') : t(PLACEHOLDERS[purpose])}
+          accessibilityLabel={t('Search')}
           onSubmitEditing={pickFirst}
         />
       </View>
       <SheetScroll top={false} contentContainerStyle={styles.list}>
         {datesFirst ? dateRows : null}
         {hits.length === 0 && dates.length === 0 ? (
-          <EmptyLine glyph="info" text={t('Rien ne correspond.')} style={styles.empty} />
+          <EmptyLine glyph="info" text={t('Nothing matches.')} style={styles.empty} />
         ) : (
           hits.map((hit, index) => (
             <React.Fragment key={`${hit.target.type}:${hit.target.id}`}>

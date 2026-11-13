@@ -30,5 +30,5 @@ export async function readCalendarFiles(paths: readonly string[], names: readonl
   }
   const held = files.filter(file => file.calendar.events.length > 0 || (file.calendar.unreadable ?? []).length > 0);
   if (held.length > 0) return { status: 'ok', files: held };
-  return files.length > 0 && !unreadable ? { status: 'empty' } : { status: 'error', message: t('Ce fichier ne se lit pas comme un agenda.') };
+  return files.length > 0 && !unreadable ? { status: 'empty' } : { status: 'error', message: t('This file does not read as a calendar.') };
 }

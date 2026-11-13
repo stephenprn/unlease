@@ -44,13 +44,13 @@ export function TemplatesScreen({ navigation }: ScreenProps<'Templates'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <TopBar title={t('Ce que Claude relève')} onBack={() => navigation.goBack()} />
+      <TopBar title={t('Facts Claude notes')} onBack={() => navigation.goBack()} />
       <EdgeScrollView contentContainerStyle={styles.content}>
         <AppText variant="meta" style={styles.intro}>
-          {t('Une collection peut avoir les siennes : « Ce que Claude relève » dans son menu.')}
+          {t('A collection can have its own: “Facts Claude notes” in its menu.')}
         </AppText>
         {own.length > 0 ? (
-          <Section title={t('Collections qui ont les leurs')}>
+          <Section title={t('Collections with their own')}>
             {own.map(id => (
               <TemplateRow
                 key={id}
@@ -64,7 +64,7 @@ export function TemplatesScreen({ navigation }: ScreenProps<'Templates'>) {
             ))}
           </Section>
         ) : null}
-        <Section title={t('Informations habituelles, par type de lien')}>
+        <Section title={t('Usual facts, by kind of link')}>
           {KINDS.map(kind => (
             <TemplateRow key={kind} icon={KIND_ICONS[kind]} title={LINK_KIND_NAMES[kind]} meta={kindFactsMeta(templates, kind)} metaLine chevron onPress={() => navigation.navigate('Template', { kind })} />
           ))}

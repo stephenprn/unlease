@@ -25,15 +25,15 @@ export interface PictureFile {
 
 /** What the dialog says of Seafile's pictures, below its stylesheet: where they go, in Seafile's own words, and when one cannot be saved. */
 export const SERVICE_PICTURES_WORDS = localized({
-  where: tx('Et ses images, à vos couleurs : dans Administration système, Paramètres, « Changer » sous « Logo », « Favicon » et « Image de fond de connexion ».'),
-  failed: tx('Impossible d’enregistrer l’image'),
+  where: tx('And its pictures, in your colours: in System Admin, Settings, “Change” under “Logo”, “Favicon” and “Login background image”.'),
+  failed: tx('Could not save the picture'),
 });
 
 /** Each picture's button, what it does in full, and the slip once it is saved. */
 export const SERVICE_PICTURE_WORDS: Readonly<Record<ServicePicture, { readonly name: string; readonly save: string; readonly saved: string }>> = {
-  logo: localized({ name: tx('Logo'), save: tx('Enregistrer le logo pour Seafile'), saved: tx('Logo pour Seafile enregistré') }),
-  favicon: localized({ name: tx('Favicon'), save: tx('Enregistrer le favicon pour Seafile'), saved: tx('Favicon pour Seafile enregistré') }),
-  login: localized({ name: tx('Fond de connexion'), save: tx('Enregistrer le fond de connexion pour Seafile'), saved: tx('Fond de connexion pour Seafile enregistré') }),
+  logo: localized({ name: tx('Logo'), save: tx('Save the logo for Seafile'), saved: tx('Logo for Seafile saved') }),
+  favicon: localized({ name: tx('Favicon'), save: tx('Save the favicon for Seafile'), saved: tx('Favicon for Seafile saved') }),
+  login: localized({ name: tx('Login background'), save: tx('Save the login background for Seafile'), saved: tx('Login background for Seafile saved') }),
 };
 
 /** Square: Seafile draws its logo 32 high in its header and 40 on its login page, as wide as it comes. */

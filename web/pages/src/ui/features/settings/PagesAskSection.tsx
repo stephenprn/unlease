@@ -32,7 +32,7 @@ export function PagesAskSection({ server, settings }: { server: ServerConfig; se
       setServerSettings(await saveServerSettings(server, { pages: patch }));
       showSnack(done, undefined, { tone: 'success' });
     } catch (failure) {
-      showError(t(failure instanceof Error ? failure.message : tx('Réglage refusé')));
+      showError(t(failure instanceof Error ? failure.message : tx('Setting refused')));
     } finally {
       setBusy(false);
     }
@@ -50,17 +50,17 @@ export function PagesAskSection({ server, settings }: { server: ServerConfig; se
         aria-checked={on}
         className={styles.row}
         disabled={busy || !keyed}
-        onClick={() => void save({ enabled: !pages.enabled }, pages.enabled ? t('Questions sur les pages désactivées') : t('Questions sur les pages activées'))}
+        onClick={() => void save({ enabled: !pages.enabled }, pages.enabled ? t('Questions about pages turned off') : t('Questions about pages turned on'))}
       >
         <Icon name="sparkle" size={24} />
         <span className={styles.rowText}>
-          <span className="t-body">{t('« Demander à Claude » sur les pages')}</span>
+          <span className="t-body">{t('“Ask Claude” on pages')}</span>
           <span className="t-meta">
             {!keyed
-              ? t('Ajoutez d’abord une clé Claude, plus haut.')
+              ? t('Add a Claude key first, above.')
               : on
-                ? t('Un bouton discret sur chaque page : Claude répond d’après vos pages et cite les passages.')
-                : t('Désactivé : rien de vos pages n’est envoyé à Claude.')}
+                ? t('A quiet button on each page: Claude answers from your pages and cites the passages.')
+                : t('Off: nothing from your pages is sent to Claude.')}
           </span>
         </span>
         <SwitchMark checked={on} />
@@ -68,27 +68,27 @@ export function PagesAskSection({ server, settings }: { server: ServerConfig; se
 
       {on ? (
         <>
-          <button type="button" role="switch" aria-checked={pages.everywhere} className={styles.row} disabled={busy} onClick={() => void save({ everywhere: !pages.everywhere }, t('Réglage enregistré'))}>
+          <button type="button" role="switch" aria-checked={pages.everywhere} className={styles.row} disabled={busy} onClick={() => void save({ everywhere: !pages.everywhere }, t('Setting saved'))}>
             <Icon name="collections" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Questions sur toutes les pages')}</span>
-              <span className="t-meta">{t('Claude lit alors les pages les plus proches de la question, pas seulement celle ouverte et ses sous-pages.')}</span>
+              <span className="t-body">{t('Questions about all pages')}</span>
+              <span className="t-meta">{t('Claude then reads the pages closest to the question, not only the open one and its sub-pages.')}</span>
             </span>
             <SwitchMark checked={pages.everywhere} />
           </button>
-          <button type="button" role="switch" aria-checked={pages.web} className={styles.row} disabled={busy} onClick={() => void save({ web: !pages.web }, t('Réglage enregistré'))}>
+          <button type="button" role="switch" aria-checked={pages.web} className={styles.row} disabled={busy} onClick={() => void save({ web: !pages.web }, t('Setting saved'))}>
             <Icon name="globe" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Compléter par le web')}</span>
-              <span className="t-meta">{t('Chaque question peut aussi chercher sur le web, si vous le cochez (plus cher).')}</span>
+              <span className="t-body">{t('Add the web')}</span>
+              <span className="t-meta">{t('Each question may also search the web, when you tick it (dearer).')}</span>
             </span>
             <SwitchMark checked={pages.web} />
           </button>
           <div className={styles.block}>
-            <p className="t-meta-strong">{t('Lecture par question')}</p>
-            <Segmented<PagesReach> label={t('Lecture par question')} options={reachOptions} value={pages.reach} disabled={busy} onChange={reach => void save({ reach }, t('Lecture par question : {reach}', { reach: PAGES_REACH_NAMES[reach] }))} />
+            <p className="t-meta-strong">{t('Reading per question')}</p>
+            <Segmented<PagesReach> label={t('Reading per question')} options={reachOptions} value={pages.reach} disabled={busy} onChange={reach => void save({ reach }, t('Reading per question: {reach}', { reach: PAGES_REACH_NAMES[reach] }))} />
             <p className="t-meta">
-              {t('Jusqu’à environ {words} mots de vos pages par question, {cost} au plus avec {model}. Une suite de conversation coûte moins : les pages déjà lues sont en cache.', {
+              {t('Up to about {words} words of your pages per question, {cost} at most with {model}. A follow-up costs less: the pages already read are cached.', {
                 words: askWords(chars),
                 cost: formatUsd(askCost(chars, model, false)),
                 model: CLAUDE_MODEL_NAMES[model],
@@ -96,7 +96,7 @@ export function PagesAskSection({ server, settings }: { server: ServerConfig; se
             </p>
           </div>
           <div className={styles.block}>
-            <p className="t-meta">{t('« Garder hors de Claude », dans le menu d’une page, la retire de toute question, avec ses sous-pages.')}</p>
+            <p className="t-meta">{t('“Keep away from Claude”, in a page’s menu, leaves it out of every question, with its sub-pages.')}</p>
           </div>
         </>
       ) : null}

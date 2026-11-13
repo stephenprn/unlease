@@ -7,6 +7,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.stephenprn.contacts.intake.IntakePackage
+import com.stephenprn.contacts.mirror.PhoneMirrorPackage
 import com.stephenprn.contacts.phone.PhoneContactsPackage
 import com.stephenprn.contacts.widget.WidgetsPackage
 import com.stephenprn.unlease.clipboard.ClipboardPackage
@@ -46,6 +47,8 @@ class MainApplication : Application(), ReactApplication {
           // Contacts' own (this app's Kotlin): a shared card, the phone's address book and calls, the widgets.
           add(IntakePackage())
           add(PhoneContactsPackage())
+          // The records copied into the phone's own, one way (Réglages › On this phone).
+          add(PhoneMirrorPackage())
           add(WidgetsPackage())
         },
     )

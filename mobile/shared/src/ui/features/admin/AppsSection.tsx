@@ -23,7 +23,7 @@ import { SwitchRow } from '../appearance/SwitchRow';
 import type { AdminOverlays } from './overlays';
 
 /** « How it works » (the web's `APPS_INFO`). */
-export const APPS_INFO = tx('Les applications que votre serveur fait tourner, pour tous vos appareils. Une application désactivée garde ses données : elles sont synchronisées et sauvegardées, et reviennent telles quelles quand vous la réactivez.');
+export const APPS_INFO = tx('The apps your server runs, for all your devices. An app turned off keeps its data: it is synced and backed up, and comes back as it was when you turn it on again.');
 
 export function AppsSection({ server, admin, own, overlays }: { server: ServerConfig; admin: AdminState; own: AppId; overlays: AdminOverlays }) {
   const theme = useTheme();
@@ -35,9 +35,9 @@ export function AppsSection({ server, admin, own, overlays }: { server: ServerCo
     try {
       admin.setSettings(await saveServerSettings(server, { apps: [...next] }));
       const name = APPS[id].name;
-      showSnack(next.includes(id) ? t('{app} activé sur le serveur', { app: name }) : t('{app} désactivé : ses données sont gardées', { app: name }), undefined, { tone: 'success' });
+      showSnack(next.includes(id) ? t('{app} turned on on the server', { app: name }) : t('{app} turned off: its data is kept', { app: name }), undefined, { tone: 'success' });
     } catch (failure) {
-      showSnack(failure instanceof Error ? t(failure.message) : t('Réglage refusé'), undefined, { tone: 'error' });
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
     } finally {
       setBusy(null);
     }
@@ -48,9 +48,9 @@ export function AppsSection({ server, admin, own, overlays }: { server: ServerCo
     if (next === enabled) return;
     if (id === own && !next.includes(id)) {
       overlays.ask({
-        title: t('Désactiver {app} ?', { app: APPS[id].name }),
-        message: t('Il ne s’ouvrira plus, ici ni sur vos autres appareils, tant qu’il est désactivé sur le serveur. Ses données sont gardées.'),
-        confirmLabel: t('Désactiver'),
+        title: t('Turn {app} off?', { app: APPS[id].name }),
+        message: t('It will not open, here or on your other devices, while it is off on the server. Its data is kept.'),
+        confirmLabel: t('Turn off'),
         danger: true,
         run: () => void save(id, next),
       });
@@ -63,7 +63,7 @@ export function AppsSection({ server, admin, own, overlays }: { server: ServerCo
     <View>
       {APP_IDS.map(id => {
         const words = APP_WORDS[id];
-        if (APPS[id].status !== 'ready') return <ListRow key={id} leading={<BrandMark app={id} size={32} />} title={APPS[id].name} supporting={words.replaces} trailing={<AppText variant="labelSmall" color={theme.color.inkMuted}>{t('Bientôt disponible')}</AppText>} />;
+        if (APPS[id].status !== 'ready') return <ListRow key={id} leading={<BrandMark app={id} size={32} />} title={APPS[id].name} supporting={words.replaces} trailing={<AppText variant="labelSmall" color={theme.color.inkMuted}>{t('Coming soon')}</AppText>} />;
         const on = enabled.includes(id);
         // The last one on stays on.
         const locked = on && enabled.length === 1;
@@ -72,7 +72,7 @@ export function AppsSection({ server, admin, own, overlays }: { server: ServerCo
             key={id}
             leading={<BrandMark app={id} size={32} />}
             title={APPS[id].name}
-            supporting={locked ? t('{description} Au moins une application reste activée.', { description: words.description }) : words.description}
+            supporting={locked ? t('{description} At least one app stays on.', { description: words.description }) : words.description}
             value={on}
             disabled={locked || busy !== null}
             onChange={() => toggle(id)}

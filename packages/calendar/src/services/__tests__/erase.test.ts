@@ -31,7 +31,7 @@ const event = (id: string, extra: Partial<CalendarEvent> = {}): CalendarEvent =>
   ...extra,
 });
 
-const feed = (id: string, extra: Partial<CalendarFeed> = {}): CalendarFeed => ({ id, kind: 'ics', name: id, url: 'https://example.org/cal.ics', color: 'green', hidden: false, position: 'a0', refreshedAt: null, error: '', createdAt: 0, deletedAt: null, ...extra });
+const feed = (id: string, extra: Partial<CalendarFeed> = {}): CalendarFeed => ({ id, kind: 'ics', name: id, url: 'https://example.org/cal.ics', account: '', color: 'green', hidden: false, position: 'a0', refreshedAt: null, error: '', createdAt: 0, deletedAt: null, ...extra });
 const label = (id: string, extra: Partial<CalendarLabel> = {}): CalendarLabel => ({ id, name: id, color: 'green', position: 'a0', createdAt: 0, deletedAt: null, ...extra });
 
 const byId = <T extends { id: string }>(items: T[]): Record<string, T> => Object.fromEntries(items.map(item => [item.id, item]));

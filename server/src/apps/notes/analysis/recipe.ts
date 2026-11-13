@@ -44,7 +44,7 @@ interface Known {
 const enough = ({ answer, stepsRead }: Known, request: RecipeRequest): boolean =>
   answer.ingredients.length > 0 ? !request.steps || answer.steps.length > 0 || stepsRead : stepsRead && answer.steps.length > 0;
 
-const NO_INGREDIENTS = 'Aucun ingrédient sur cette page';
+const NO_INGREDIENTS = 'No ingredients on this page';
 
 export class RecipeReader {
   private readonly now: () => number;
@@ -89,7 +89,7 @@ export class RecipeReader {
     // What the page gave before still serves when it cannot give more now: the list, without its method.
     const orKept = (refusal: ModuleOutcome<RecipeResponse>): ModuleOutcome<RecipeResponse> => (kept && kept.ingredients.length > 0 ? { ok: true, answer: kept } : refusal);
     // A page gone or refused for good: Claude would be paid to find nothing.
-    if (!read.page && read.fatal) return orKept({ ok: false, status: 502, error: read.error ?? 'La page n’a pas pu être lue' });
+    if (!read.page && read.fatal) return orKept({ ok: false, status: 502, error: read.error ?? 'The page could not be read' });
 
     const listed = read.page?.recipe;
     const structured: RecipeResponse | null = listed && listed.ingredients.length > 0 ? { ingredients: parseIngredients(listed.ingredients), servings: listed.servings, steps: parseSteps(listed.steps) } : null;
@@ -102,7 +102,7 @@ export class RecipeReader {
     const hold = model ? usage.hold(budgetUsd) : null;
     // Without Claude, the ingredients alone still make a shopping list and half a cook mode.
     if (structured && (!model || !hold)) return { ok: true, answer: structured };
-    if (!model) return orKept({ ok: false, status: 409, error: read.page ? 'Cette page ne donne pas ses ingrédients toute seule : ajoutez une clé Claude pour qu’il les lise.' : (read.error ?? 'La page n’a pas pu être lue') });
+    if (!model) return orKept({ ok: false, status: 409, error: read.page ? 'This page does not list its ingredients by itself: add a Claude key so Claude reads them.' : (read.error ?? 'The page could not be read') });
     if (!hold) return orKept({ ok: false, status: 409, error: BUDGET_SPENT });
     try {
       const found = await model.holding(hold).listIngredients(
@@ -131,7 +131,7 @@ export class RecipeReader {
       return { ok: true, answer };
     } catch (error) {
       if (!deadline.aborted && !(error instanceof ModelError)) log.error('recipe reading crashed', { error });
-      const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la lecture';
+      const message = deadline.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Reading error';
       const cost = error instanceof ModelError ? error.usage : null;
       // Cut off, it was reading the page (with web_fetch at most), not searching the web.
       record(null, false, message, deadline.aborted ? withCutOffCall(cost, model.model, true) : cost);

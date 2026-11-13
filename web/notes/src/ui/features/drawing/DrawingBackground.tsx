@@ -54,10 +54,10 @@ const BackgroundGrid = memo(function BackgroundGrid({ value, onChange }: Drawing
     <div className={finish.finishes}>
       <section className={finish.group}>
         <div className={finish.heading}>
-          <h2 className="t-meta-strong">{t('Fond')}</h2>
+          <h2 className="t-meta-strong">{t('Background')}</h2>
           <span className={`${finish.chosenName} t-meta`}>{shown}</span>
         </div>
-        <div className={`${finish.grid} ${finish.colors} ${styles.backgroundFours}`} role="radiogroup" aria-label={t('Fond du dessin')} onKeyDown={onKeys}>
+        <div className={`${finish.grid} ${finish.colors} ${styles.backgroundFours}`} role="radiogroup" aria-label={t('Drawing background')} onKeyDown={onKeys}>
           {options.map((option, index) => {
             const chosen = option === value;
             const name = drawingBackgroundName(option);
@@ -94,7 +94,7 @@ const BackgroundGrid = memo(function BackgroundGrid({ value, onChange }: Drawing
 export function DrawingBackgroundButton({ value, onChange }: DrawingBackgroundChoice) {
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const label = t('Fond : {name}', { name: drawingBackgroundName(value) });
+  const label = t('Background: {name}', { name: drawingBackgroundName(value) });
   return (
     <>
       <button
@@ -113,7 +113,7 @@ export function DrawingBackgroundButton({ value, onChange }: DrawingBackgroundCh
         <PebbleEdge turn={pebbleTurn(3)} />
         <Icon name="palette" size={22} />
       </button>
-      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Fond du dessin')} width={300}>
+      <Popover open={open} anchor={anchor} onDismiss={() => setOpen(false)} label={t('Drawing background')} width={300}>
         <div className={styles.backgroundPicker}>
           <BackgroundGrid value={value} onChange={onChange} />
         </div>

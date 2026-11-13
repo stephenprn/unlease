@@ -143,7 +143,7 @@ const TextFieldComponent = forwardRef<HTMLInputElement | HTMLTextAreaElement, Te
       {label ? (
         <label htmlFor={id} className={`${styles.fieldLabel} t-meta-strong`}>
           {label}
-          {optional ? <span className={`${styles.optional} t-meta`}> {t('(facultatif)')}</span> : null}
+          {optional ? <span className={`${styles.optional} t-meta`}> {t('(optional)')}</span> : null}
         </label>
       ) : null}
       {hidden ? (
@@ -151,7 +151,7 @@ const TextFieldComponent = forwardRef<HTMLInputElement | HTMLTextAreaElement, Te
           {control}
           <IconButton
             icon={shown ? 'eyeOff' : 'eye'}
-            label={shown ? (revealLabels?.hide ?? t('Masquer')) : (revealLabels?.show ?? t('Afficher'))}
+            label={shown ? (revealLabels?.hide ?? t('Hide')) : (revealLabels?.show ?? t('Show'))}
             className={styles.reveal}
             onClick={() => setShown(value => !value)}
           />

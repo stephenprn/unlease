@@ -9,7 +9,7 @@
 import React, { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { getLocale, t, tc } from '@unlease/core/i18n';
+import { getLocale, t } from '@unlease/core/i18n';
 import { safeLink } from '@unlease/core/services/url';
 import type { LineColor } from '@unlease/design/colors';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -125,7 +125,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
       <View style={styles.screen}>
         <Ground />
         <TopBar onBack={() => navigation.goBack()} />
-        <EmptyState scene="trash" title={t('Cet événement n’existe plus')} text={t('Il a été supprimé, sur cet appareil ou sur un autre.')} />
+        <EmptyState scene="trash" title={t('This event no longer exists')} text={t('It was deleted, on this device or another.')} />
       </View>
     );
   }
@@ -138,7 +138,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
   const feed = event.feedId ? feeds[event.feedId] : undefined;
   const trashed = event.trashedAt !== null || series.trashedAt !== null;
   const zone = zoneNote(event);
-  const title = event.title.trim() || t('Sans titre');
+  const title = event.title.trim() || t('Untitled');
   const details = !!(event.place.trim() || event.contactIds.length || event.reminders.length || event.labelIds.length || feed || event.description.trim() || event.files.length || event.url.trim());
   const wornLabels = event.labelIds.map(id => labels[id]).filter((label): label is NonNullable<typeof label> => !!label && label.deletedAt === null);
 
@@ -146,7 +146,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
     const words = deletedWords(occurrence, series.start, scope);
     const undo = deleteEvent(occurrence, scope);
     navigation.goBack();
-    showSnack(words, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    showSnack(words, { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const copy = (): void => {
@@ -161,7 +161,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
       const pageId = await createMeetingPage(server, { eventId: occurrence.seriesId, title: event.title, start: occurrence.start, contactIds: event.contactIds, lang: getLocale() });
       later(openInApp('pages', pagePlace(pageId)));
     } catch (error) {
-      showSnack(error instanceof SyncError && error.status === 404 ? t('Pages n’est pas activé sur ce serveur.') : error instanceof Error && error.message ? t(error.message) : t('Serveur injoignable'), undefined, { tone: 'error' });
+      showSnack(error instanceof SyncError && error.status === 404 ? t('Pages is not turned on on this server.') : error instanceof Error && error.message ? t(error.message) : t('Server unreachable'), undefined, { tone: 'error' });
     } finally {
       setMaking(false);
     }
@@ -169,13 +169,13 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
 
   const menuItems: MenuItem[] = [
     // A subscription's is read-only: it is copied into one's own (the web's words).
-    { label: own ? t('Dupliquer') : t('Copier dans mon agenda'), icon: 'copy', onPress: copy },
-    ...(own && !trashed ? [{ label: t('Supprimer'), icon: 'trash' as const, danger: true, onPress: () => (asksScope(occurrence) ? setScoping(true) : remove('all')) }] : []),
+    { label: own ? t('Duplicate') : t('Copy to my calendar'), icon: 'copy', onPress: copy },
+    ...(own && !trashed ? [{ label: t('Delete'), icon: 'trash' as const, danger: true, onPress: () => (asksScope(occurrence) ? setScoping(true) : remove('all')) }] : []),
   ];
 
   const openFile = (uploaded: boolean): void => {
     if (!uploaded || !server) {
-      showSnack(t('Ce fichier s’ouvre une fois envoyé au serveur.'), undefined, { tone: 'info' });
+      showSnack(t('This file opens once it is sent to the server.'), undefined, { tone: 'info' });
       return;
     }
     // The server sends a file with the token in a header only: the web app opens it.
@@ -189,8 +189,8 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
         onBack={() => navigation.goBack()}
         actions={
           <>
-            {own && !trashed ? <IconButton icon="edit" label={t('Modifier')} onPress={() => navigation.navigate('Edit', { id: occurrence.seriesId, at: occurrence.occurrence })} /> : null}
-            <IconButton icon="more" label={t('Plus d’actions')} onPress={() => setMenu(true)} />
+            {own && !trashed ? <IconButton icon="edit" label={t('Edit')} onPress={() => navigation.navigate('Edit', { id: occurrence.seriesId, at: occurrence.occurrence })} /> : null}
+            <IconButton icon="more" label={t('More actions')} onPress={() => setMenu(true)} />
           </>
         }
       />
@@ -203,14 +203,14 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
               <Icon name="trash" size={22} color={theme.color.inkMuted} />
             </View>
             <AppText variant="body" style={styles.fill}>
-              {t('Cet événement est dans la corbeille.')}
+              {t('This event is in the bin.')}
             </AppText>
             {series.trashedAt !== null ? (
               <Button
                 kind="text"
                 icon="restore"
-                label={t('Restaurer')}
-                onPress={() => showSnack(t('Événement restauré'), { label: tc('undo', 'Annuler'), run: restoreFromBin(series.id) }, { tone: 'success' })}
+                label={t('Restore')}
+                onPress={() => showSnack(t('Event restored'), { label: t('Undo'), run: restoreFromBin(series.id) }, { tone: 'success' })}
               />
             ) : null}
           </Organic>
@@ -241,10 +241,10 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
             {event.place.trim() ? (
               <Line
                 icon="mapPin"
-                label={maps ? t('{place}, ouvrir dans {maps}', { place: event.place.trim(), maps: mapsChoiceName(maps) }) : t('{place}, ouvrir dans les cartes', { place: event.place.trim() })}
-                hint={t('Un appui long copie l’adresse.')}
+                label={maps ? t('{place}, open in {maps}', { place: event.place.trim(), maps: mapsChoiceName(maps) }) : t('{place}, open in maps', { place: event.place.trim() })}
+                hint={t('A long press copies the address.')}
                 onPress={() => later(openPlace(event.place))}
-                onLongPress={() => later(copyText(event.place.trim()).then(done => done && showSnack(t('Adresse copiée'), undefined, { tone: 'success' })))}
+                onLongPress={() => later(copyText(event.place.trim()).then(done => done && showSnack(t('Address copied'), undefined, { tone: 'success' })))}
               >
                 <View style={styles.placeLine}>
                   <AppText variant="body" color={theme.color.link} style={styles.shrink}>
@@ -256,7 +256,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
                 {weather ? (
                   <AppText variant="meta">
                     {WEATHER_WORDS[weatherKind(weather.code)]} · {temperatures(weather.max, weather.min)}
-                    {weather.rain >= 30 ? ` · ${t('{rain} % de pluie', { rain: Math.round(weather.rain) })}` : ''}
+                    {weather.rain >= 30 ? ` · ${t('{rain}% chance of rain', { rain: Math.round(weather.rain) })}` : ''}
                   </AppText>
                 ) : null}
               </Line>
@@ -283,7 +283,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
             ) : null}
             {/* Its labels need no glyph before them: each wears its own tag, the row starting where the glyphs do. */}
             {wornLabels.length > 0 ? (
-              <View style={styles.labels} accessible accessibilityLabel={t('Libellés : {names}', { names: wornLabels.map(label => label.name).join(', ') })}>
+              <View style={styles.labels} accessible accessibilityLabel={t('Labels: {names}', { names: wornLabels.map(label => label.name).join(', ') })}>
                 {wornLabels.map(label => (
                   <WornLabel key={label.id} name={label.name} color={label.color} />
                 ))}
@@ -291,10 +291,10 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
             ) : null}
             {feed ? (
               <Line icon="calendar">
-                <AppText variant="body">{feedName(feed) || t('Agenda sans nom')}</AppText>
-                <AppText variant="meta">{t('Agenda abonné : en lecture seule')}</AppText>
+                <AppText variant="body">{feedName(feed) || t('Unnamed calendar')}</AppText>
+                <AppText variant="meta">{t('Subscribed calendar: read-only')}</AppText>
                 {/* Read-only: its copy in sight, where it says so (the menu keeps it too). */}
-                <Button kind="tonal" small icon="copy" label={t('Copier dans mon agenda')} onPress={copy} style={styles.copy} />
+                <Button kind="tonal" small icon="copy" label={t('Copy to my calendar')} onPress={copy} style={styles.copy} />
               </Line>
             ) : null}
             {/* Its description in the same order as the web's: after the calendar, before the files and the link. */}
@@ -308,7 +308,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
                 <AppText variant="body" numberOfLines={1}>
                   {file.name}
                 </AppText>
-                {!file.uploaded ? <AppText variant="meta">{t('En attente d’envoi')}</AppText> : null}
+                {!file.uploaded ? <AppText variant="meta">{t('Waiting to be sent')}</AppText> : null}
               </Line>
             ))}
             {event.url.trim() ? (
@@ -330,7 +330,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
 
         {pages && !trashed ? (
           <View style={styles.actions}>
-            <Button label={t('Créer une page de notes')} icon="pagePlus" kind="tonal" busy={making} onPress={() => later(meetingPage())} />
+            <Button label={t('Create a notes page')} icon="pagePlus" kind="tonal" busy={making} onPress={() => later(meetingPage())} />
           </View>
         ) : null}
       </EdgeScrollView>

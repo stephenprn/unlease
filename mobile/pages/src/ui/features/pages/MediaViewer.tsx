@@ -22,7 +22,7 @@ function MediaViewerComponent({ source, onClose }: { source: ImageSource | null;
         <View style={[styles.bar, { paddingTop: insets.top, backgroundImage: `linear-gradient(to bottom, ${shade(theme.color.viewer, 0.55)}, ${shade(theme.color.viewer, 0)})` }]}>
           {/* Where the page's own back button stood, in a top bar's 64. */}
           <View style={styles.row}>
-            <IconButton icon="back" label={t('Fermer')} onDark onPress={onClose} />
+            <IconButton icon="back" label={t('Close')} onDark onPress={onClose} />
           </View>
         </View>
       </PictureStage>

@@ -9,7 +9,7 @@
  */
 import { useCallback, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { LinkKind } from '@unlease/notes/models/entities';
 import { TEMPLATE_LIMITS, type TemplateField } from '@unlease/notes/models/templates';
 import { shownFieldAnswer, suggestedFields } from '@unlease/notes/services/templates';
@@ -99,8 +99,8 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
       if (from < 0 || from === to) return;
       refocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       onChange(moveField(fields, id, to));
-      const name = fields[from]!.name.trim() || t('Information sans nom');
-      setSaid(t('{name} : position {index} sur {count}', { name, index: to + 1, count: fields.length }));
+      const name = fields[from]!.name.trim() || t('Unnamed fact');
+      setSaid(t('{name}: position {index} of {count}', { name, index: to + 1, count: fields.length }));
     },
     [fields, onChange],
   );
@@ -115,7 +115,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
     if (index < 0) return;
     onChange(fields.filter(each => each.id !== field.id));
     if (openId === field.id) setOpenId(null);
-    showUndo(t('« {name} » supprimée', { name: field.name.trim() || t('Information sans nom') }), () => {
+    showUndo(tc('field', '“{name}” removed', { name: field.name.trim() || t('Unnamed fact') }), () => {
       const now = latest.current;
       if (!now.some(each => each.id === field.id)) onChange([...now.slice(0, index), field, ...now.slice(index)]);
     });
@@ -126,7 +126,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
     if (next.id === null) return;
     onChange(next.fields);
     if (suggestion) {
-      setSaid(t('« {name} » ajoutée', { name: suggestion.name }));
+      setSaid(tc('field', '“{name}” added', { name: suggestion.name }));
       return;
     }
     // A fact written from nothing opens, its name taking the caret.
@@ -198,11 +198,11 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
   return (
     <div className={styles.facts}>
       {fields.length === 0 ? (
-        <EmptyLine text={t('Aucune information : Claude ne relèvera que le titre, le résumé et le prix.')} className={styles.empty} />
+        <EmptyLine text={t('No facts: Claude will only note the title, the summary and the price.')} className={styles.empty} />
       ) : (
-        <ul ref={list} className={styles.factList} aria-label={t('Informations')}>
+        <ul ref={list} className={styles.factList} aria-label={t('Facts')}>
           {fields.map(field => {
-            const label = field.name.trim() || t('Information sans nom');
+            const label = field.name.trim() || t('Unnamed fact');
             const open = openId === field.id || problems[field.id] !== undefined;
             const bodyId = `${baseId}-${field.id}`;
             const answer = field.type === 'text' ? null : shownFieldAnswer(field.type);
@@ -224,8 +224,8 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                 <button
                   type="button"
                   className={styles.grip}
-                  aria-label={t('Déplacer « {name} »', { name: label })}
-                  data-tip={t('Glisser pour déplacer, ou Alt+↑ et Alt+↓')}
+                  aria-label={t('Move “{name}”', { name: label })}
+                  data-tip={t('Drag to move, or Alt+↑ and Alt+↓')}
                   onPointerDown={event => onGripDown(field.id, event)}
                   onPointerMove={onGripMove}
                   onPointerUp={onGripUp}
@@ -250,7 +250,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                       </span>
                       <Icon name="chevronDown" size={20} className={styles.factChevron} />
                     </button>
-                    <IconButton icon="trash" size={20} label={t('Supprimer « {name} »', { name: label })} className={styles.factTrash} onClick={() => remove(field)} />
+                    <IconButton icon="trash" size={20} label={t('Remove “{name}”', { name: label })} className={styles.factTrash} onClick={() => remove(field)} />
                   </div>
                   {open ? (
                     <div id={bodyId} className={styles.factBody}>
@@ -260,8 +260,8 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                           else names.current.delete(field.id);
                         }}
                         field={binding(field.id)}
-                        label={t('Nom de l’information')}
-                        placeholder={t('Prix, auteur, adresse…')}
+                        label={t('Name of the fact')}
+                        placeholder={t('Price, author, address…')}
                         value={field.name}
                         maxLength={TEMPLATE_LIMITS.fieldName}
                         onChange={name => set(field.id, { name })}
@@ -269,9 +269,9 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                       {/* One sentence that wraps as it grows: Enter saves, as in a one-line field. */}
                       <TextField
                         multiline
-                        label={t('Ce que Claude y note')}
+                        label={t('What Claude writes in it')}
                         inputClassName={styles.hintInput}
-                        placeholder={t('Par exemple : l’année de sortie')}
+                        placeholder={t('For example: the year it came out')}
                         value={field.hint}
                         maxLength={TEMPLATE_LIMITS.hint}
                         onChange={hint => set(field.id, { hint: hint.replace(/\s*\n\s*/g, ' ') })}
@@ -283,7 +283,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
                       />
                       <SelectField
                         className={styles.factAnswer}
-                        label={t('Réponse')}
+                        label={t('Answer')}
                         value={field.type}
                         options={options}
                         icon={FIELD_TYPE_GLYPHS[field.type]}
@@ -299,12 +299,12 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
         </ul>
       )}
       {full ? (
-        <p className={`${styles.full} t-meta`}>{t('{count} informations au plus.', { count: TEMPLATE_LIMITS.fields })}</p>
+        <p className={`${styles.full} t-meta`}>{t('{count} facts at most.', { count: TEMPLATE_LIMITS.fields })}</p>
       ) : (
         <>
           <button type="button" className={`${styles.add} t-label`} onClick={() => add()}>
             <Icon name="plus" size={20} />
-            {t('Ajouter une information')}
+            {t('Add a fact')}
           </button>
           {suggestions.length > 0 ? (
             <section className={styles.common} aria-labelledby={suggestionsId}>
@@ -314,7 +314,7 @@ export function FactRows({ fields, onChange, binding, problems, kinds }: FactRow
               <ul className={styles.chips}>
                 {suggestions.map(suggestion => (
                   <li key={suggestion.name}>
-                    <button type="button" className={styles.chip} aria-label={t('Ajouter « {name} »', { name: suggestion.name })} data-tip={suggestion.hint || undefined} onClick={() => add(suggestion)}>
+                    <button type="button" className={styles.chip} aria-label={t('Add “{name}”', { name: suggestion.name })} data-tip={suggestion.hint || undefined} onClick={() => add(suggestion)}>
                       <Icon name="plus" size={16} />
                       <span>{suggestion.name}</span>
                     </button>

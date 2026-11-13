@@ -28,11 +28,11 @@ export interface TemplateChoice {
 
 /** The templates as an empty page offers them, in this order. */
 export const TEMPLATE_CHOICES: readonly TemplateChoice[] = [
-  { key: 'journal', label: tx('Journal du jour'), glyph: 'pen' },
-  { key: 'meeting', label: tx('Réunion'), glyph: 'people' },
-  { key: 'trip', label: tx('Voyage'), glyph: 'mapPin' },
-  { key: 'reading', label: tx('Liste de lecture'), glyph: 'book' },
-  { key: 'project', label: tx('Projet'), glyph: 'checklist' },
+  { key: 'journal', label: tx('Today’s journal'), glyph: 'pen' },
+  { key: 'meeting', label: tx('Meeting'), glyph: 'people' },
+  { key: 'trip', label: tx('Trip'), glyph: 'mapPin' },
+  { key: 'reading', label: tx('Reading list'), glyph: 'book' },
+  { key: 'project', label: tx('Project'), glyph: 'checklist' },
 ];
 
 export interface PageTemplate {

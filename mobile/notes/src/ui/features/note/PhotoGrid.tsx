@@ -10,7 +10,7 @@ import { Image, Modal, StyleSheet, View, useWindowDimensions } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { parseHex } from '@unlease/design/palette';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { removeAttachment } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -23,7 +23,7 @@ import { useTheme } from '@shared/ui/theme/ThemeProvider';
 const SINGLE_MAX = 420;
 const GAP = 4;
 
-const removed = (undo: () => void) => showSnack(t('Photo supprimée'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+const removed = (undo: () => void) => showSnack(t('Photo deleted'), { label: t('Undo'), run: undo }, { tone: 'success' });
 
 function PhotoGridComponent({ noteId, editable }: { noteId: string; editable: boolean }) {
   const ids = useLibraryStore(s => s.attachmentsByNote[noteId]);
@@ -54,13 +54,13 @@ const Photo = memo(function PhotoView({ id, width, single, editable, onPress }: 
   const height = single ? Math.min(SINGLE_MAX, Math.round(ratio ? width / ratio : width * 0.75)) : width;
   return (
     <View style={{ width, height }}>
-      <Tappable onPress={onPress} accessibilityLabel={t('Ouvrir la photo')} style={[StyleSheet.absoluteFill, { backgroundColor: theme.color.paperHigh }]}>
+      <Tappable onPress={onPress} accessibilityLabel={t('Open the photo')} style={[StyleSheet.absoluteFill, { backgroundColor: theme.color.paperHigh }]}>
         {source ? <Image source={source} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
       </Tappable>
       {editable ? (
         <IconButton
           icon="close"
-          label={t('Supprimer la photo')}
+          label={t('Delete the photo')}
           onDark
           size={18}
           shape={1}
@@ -89,11 +89,11 @@ function Viewer({ ids, index, editable, onIndex }: { ids: readonly string[]; ind
       >
         {/* The viewer's own black, fading down from the top, so the controls read over a light photo. */}
         <View style={[styles.viewerBar, { paddingTop: insets.top, backgroundImage: `linear-gradient(to bottom, ${shade(theme.color.viewer, 0.55)}, ${shade(theme.color.viewer, 0)})` }]}>
-          <IconButton icon="back" label={t('Fermer')} onDark onPress={onClose} />
+          <IconButton icon="back" label={t('Close')} onDark onPress={onClose} />
           {editable && id ? (
             <IconButton
               icon="trash"
-              label={t('Supprimer la photo')}
+              label={t('Delete the photo')}
               onDark
               onPress={() => {
                 const undo = removeAttachment(id);
@@ -105,11 +105,11 @@ function Viewer({ ids, index, editable, onIndex }: { ids: readonly string[]; ind
         </View>
         {/* The other photos of the note, on either side, on the slip so they read over any picture (a swipe does the same). */}
         {index !== null && index > 0 ? (
-          <IconButton icon="back" label={t('Photo précédente')} onDark shape={2} style={[styles.nav, styles.prev, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index - 1)} />
+          <IconButton icon="back" label={t('Previous photo')} onDark shape={2} style={[styles.nav, styles.prev, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index - 1)} />
         ) : null}
         {index !== null && index < ids.length - 1 ? (
           // The mirror of the previous one's arrow.
-          <IconButton icon="arrowRight" label={t('Photo suivante')} onDark shape={3} style={[styles.nav, styles.next, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index + 1)} />
+          <IconButton icon="arrowRight" label={t('Next photo')} onDark shape={3} style={[styles.nav, styles.next, { backgroundColor: theme.color.slip }]} onPress={() => onIndex(index + 1)} />
         ) : null}
       </PictureStage>
     </Modal>

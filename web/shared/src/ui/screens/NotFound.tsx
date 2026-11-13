@@ -5,11 +5,11 @@ import { EmptyState } from '../components/EmptyState';
 import { navigate } from '../router';
 
 /** A place that does not exist (any more): say so, and offer the way home. */
-export function NotFound({ what = t('Cette page n’existe pas.') }: { what?: string }) {
+export function NotFound({ what = t('This page doesn’t exist.') }: { what?: string }) {
   return (
-    <EmptyState scene="trash" title={t('Introuvable')} text={what} as="h1">
+    <EmptyState scene="trash" title={t('Not found')} text={what} as="h1">
       <Button kind="tonal" icon="back" onClick={() => navigate('/', { replace: true })}>
-        {t('Retour à l’accueil')}
+        {t('Back home')}
       </Button>
     </EmptyState>
   );

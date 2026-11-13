@@ -92,6 +92,7 @@ export const CALENDAR_RECORD_TYPES = defineRecordTypes({
       kind: oneOf(FEED_KINDS),
       name: str(EVENT_LIMITS.feedName),
       url: str(EVENT_LIMITS.url),
+      account: str(EVENT_LIMITS.feedAccount),
       color: lineColor,
       hidden: bool,
       position,
@@ -100,7 +101,7 @@ export const CALENDAR_RECORD_TYPES = defineRecordTypes({
       createdAt: time,
       deletedAt: nullableTime,
     },
-    defaults: { hidden: false, refreshedAt: null, error: '' },
+    defaults: { hidden: false, refreshedAt: null, error: '', account: '' },
   },
 });
 

@@ -36,7 +36,7 @@ import { useBackups, type Admin } from './useAdmin';
 
 /** In French, translated where it is shown (`Section` reads its `info` through `t`). */
 export const BACKUP_INFO =
-  tx('Le serveur envoie une copie de vos données vers un stockage S3 (Scaleway, OVH, AWS…) : à chaque sauvegarde une archive lisible (vos notes et vos pages en Markdown, et le fichier unlease.json qui sert à la restaurer), et chaque photo ou fichier une seule fois, sauf ceux que garde Seafile (l’archive dit où ils sont).');
+  tx('The server sends a copy of your data to S3 storage (Scaleway, OVH, AWS…): at each backup a readable archive (your notes and pages in Markdown, and the unlease.json file that restores it), and each photo or file only once, except those Seafile keeps (the archive says where they are).');
 
 /** The connection's fields, as the form edits them. */
 const CONNECTION = ['endpoint', 'region', 'bucket', 'prefix', 'accessKeyId'] as const;
@@ -96,16 +96,16 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
   // Nothing to try: the bucket is set and nothing in the form changed.
   const unchanged = backup.configured && changed.length === 0 && secret.trim() === '' && !classChanged;
   const connection = useForm({
-    endpoint: serviceAddressProblem(value('endpoint'), t('Saisissez l’adresse du service S3.'), 'https://s3.fr-par.scw.cloud'),
-    region: value('region').trim() ? null : t('Saisissez la région du service, comme fr-par.'),
-    bucket: value('bucket').trim() ? null : t('Saisissez le nom du bucket.'),
-    accessKeyId: value('accessKeyId').trim() ? null : t('Saisissez la clé d’accès.'),
-    secret: backup.configured || secret.trim() ? null : t('Saisissez la clé secrète donnée avec la clé d’accès.'),
+    endpoint: serviceAddressProblem(value('endpoint'), t('Enter the S3 service’s address.'), 'https://s3.fr-par.scw.cloud'),
+    region: value('region').trim() ? null : t('Enter the service’s region, like fr-par.'),
+    bucket: value('bucket').trim() ? null : t('Enter the bucket’s name.'),
+    accessKeyId: value('accessKeyId').trim() ? null : t('Enter the access key.'),
+    secret: backup.configured || secret.trim() ? null : t('Enter the secret key given with the access key.'),
   });
   const keepValue = keep ?? String(backup.keep);
   const keepNumber = Number(keepValue.trim());
   const keepValid = Number.isInteger(keepNumber) && keepNumber >= 1 && keepNumber <= BACKUP_KEEP_MAX;
-  const keeping = useForm({ keep: keepValid ? null : t('Un nombre de jours de 1 à {max}.', { max: BACKUP_KEEP_MAX }) });
+  const keeping = useForm({ keep: keepValid ? null : t('A number of days from 1 to {max}.', { max: BACKUP_KEEP_MAX }) });
 
   /** Saves; the server's refusal of the connection or of the days comes back on its form, anything else on a slip. */
   const save = async (patch: SettingsPatch, what: Exclude<Busy, null>, done: string): Promise<boolean> => {
@@ -115,7 +115,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
       showSnack(done, undefined, { tone: 'success' });
       return true;
     } catch (failure) {
-      const said = failure instanceof Error ? failure.message : tx('Réglage refusé');
+      const said = failure instanceof Error ? failure.message : tx('Setting refused');
       const message = t(said);
       // Under the field it concerns (the address, the bucket, the region), else on the whole form (both keys, rights).
       const field = serviceRefusalField(said);
@@ -134,7 +134,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
     for (const field of changed) patch[field] = draft[field]!.trim();
     if (secret.trim()) patch.secretAccessKey = secret.trim();
     if (classChanged) patch.storageClass = chosenClass;
-    if (!(await save({ backup: patch }, 'connection', t('Stockage S3 enregistré')))) return false;
+    if (!(await save({ backup: patch }, 'connection', t('S3 storage saved')))) return false;
     setDraft({});
     setSecret('');
     setStorageClass(null);
@@ -149,7 +149,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
     try {
       admin.setStatus(await startBackup(server));
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Sauvegarde refusée'));
+      showError(failure instanceof Error ? t(failure.message) : t('Backup refused'));
     } finally {
       setBusy(null);
     }
@@ -161,7 +161,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
       const ticket = await requestDownload(server, what);
       download(ticket.url, ticket.name);
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Téléchargement refusé'));
+      showError(failure instanceof Error ? t(failure.message) : t('Download refused'));
     } finally {
       setBusy(null);
     }
@@ -172,7 +172,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
     try {
       admin.setStatus(chosen.kind === 'snapshot' ? await restoreSnapshot(server, chosen.name, mode) : await restoreFile(server, chosen.file, mode));
     } catch (failure) {
-      showError(failure instanceof Error ? t(failure.message) : t('Restauration refusée'));
+      showError(failure instanceof Error ? t(failure.message) : t('Restore refused'));
     } finally {
       setBusy(null);
     }
@@ -185,9 +185,9 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
 
   const line =
     busy === 'restore'
-      ? { tone: 'waiting' as const, title: t('Envoi de l’archive…'), meta: '' }
+      ? { tone: 'waiting' as const, title: t('Sending the archive…'), meta: '' }
       : status?.restore.running
-        ? { tone: 'waiting' as const, title: t('Restauration en cours…'), meta: '' }
+        ? { tone: 'waiting' as const, title: t('Restoring…'), meta: '' }
         : backupLine(backup, status?.backup ?? null, now);
   const classes = storageClassesFor(value('endpoint'), chosenClass);
   const snapshots = backups.snapshots ?? [];
@@ -195,38 +195,38 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
   const empty = status !== null && status.server.notes === 0 && status.server.pages === 0;
   // The dialog keeps its words while it leaves.
   const shownTarget = target ?? lastTarget;
-  const source = !shownTarget ? '' : shownTarget.kind === 'snapshot' ? t('Sauvegarde du {moment}', { moment: formatMoment(shownTarget.at, now) }) : shownTarget.file.name;
+  const source = !shownTarget ? '' : shownTarget.kind === 'snapshot' ? t('Backup of {moment}', { moment: formatMoment(shownTarget.at, now) }) : shownTarget.file.name;
 
   return (
     <>
       <StatusRow tone={line.tone} title={line.title} meta={line.meta}>
         {backup.configured ? (
           <Button kind="dangerText" small busy={busy === 'remove'} onClick={() => setConfirmRemove(true)}>
-            {t('Retirer le stockage S3')}
+            {t('Remove S3 storage')}
           </Button>
         ) : null}
       </StatusRow>
 
       <form className={styles.block} onSubmit={connection.onSubmit(saveConnection)} noValidate>
         <div className={styles.fields}>
-          <TextField label={t('Adresse du service')} kind="url" value={value('endpoint')} onChange={setEndpoint} field={connection.field('endpoint')} help={t('L’adresse S3 de votre fournisseur, comme {example} pour Scaleway à Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
-          <TextField label={t('Région')} kind="code" value={value('region')} onChange={next => setDraft(d => ({ ...d, region: next }))} field={connection.field('region')} help={t('Celle de l’adresse du service, comme {example}.', { example: 'fr-par' })} />
+          <TextField label={t('Service address')} kind="url" value={value('endpoint')} onChange={setEndpoint} field={connection.field('endpoint')} help={t('Your provider’s S3 address, like {example} for Scaleway in Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
+          <TextField label={t('Region')} kind="code" value={value('region')} onChange={next => setDraft(d => ({ ...d, region: next }))} field={connection.field('region')} help={t('The one in the service’s address, like {example}.', { example: 'fr-par' })} />
           <TextField label="Bucket" kind="code" value={value('bucket')} onChange={next => setDraft(d => ({ ...d, bucket: next }))} field={connection.field('bucket')} />
-          <TextField label={t('Dossier dans le bucket')} kind="code" optional value={value('prefix')} onChange={next => setDraft(d => ({ ...d, prefix: next }))} help={t('Pour ranger les sauvegardes à part dans le bucket, comme {example}.', { example: 'unlease/' })} />
-          <TextField label={t('Clé d’accès')} kind="code" value={value('accessKeyId')} onChange={next => setDraft(d => ({ ...d, accessKeyId: next }))} field={connection.field('accessKeyId')} help={t('Dans la console de votre fournisseur : clés d’accès (ou IAM), avec le droit de lire et d’écrire dans ce bucket.')} />
+          <TextField label={t('Folder in the bucket')} kind="code" optional value={value('prefix')} onChange={next => setDraft(d => ({ ...d, prefix: next }))} help={t('To keep the backups apart in the bucket, like {example}.', { example: 'unlease/' })} />
+          <TextField label={t('Access key')} kind="code" value={value('accessKeyId')} onChange={next => setDraft(d => ({ ...d, accessKeyId: next }))} field={connection.field('accessKeyId')} help={t('In your provider’s console: access keys (or IAM), allowed to read and write in this bucket.')} />
           <TextField
-            label={backup.secretHint ? t('Remplacer la clé secrète') : t('Clé secrète')}
+            label={backup.secretHint ? t('Replace the secret key') : t('Secret key')}
             kind="secret"
             value={secret}
             onChange={setSecret}
             field={connection.field('secret')}
-            help={backup.secretHint ? t('Vérifiée puis gardée sur votre serveur, jamais dans ce navigateur. Actuelle : {hint}', { hint: backup.secretHint }) : t('Donnée avec la clé d’accès, une seule fois, par la console du fournisseur. Vérifiée puis gardée sur votre serveur, jamais dans ce navigateur.')}
-            revealLabels={{ show: t('Afficher la clé secrète'), hide: t('Masquer la clé secrète') }}
+            help={backup.secretHint ? t('Checked, then kept on your server, never in this browser. Current: {hint}', { hint: backup.secretHint }) : t('Given with the access key, once only, by the provider’s console. Checked, then kept on your server, never in this browser.')}
+            revealLabels={{ show: t('Show the secret key'), hide: t('Hide the secret key') }}
           />
         </div>
         <div className={styles.classes}>
           <p className={`${controls.fieldLabel} t-meta-strong`} id={classId}>
-            {t('Classe de stockage')}
+            {t('Storage class')}
           </p>
           <div role="radiogroup" aria-labelledby={classId} className={styles.choices}>
             {classes.map(each => (
@@ -250,7 +250,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
         <FormMessage form={connection} />
         <div className={styles.buttons}>
           <Button type="submit" icon="server" busy={connection.busy} disabled={unchanged}>
-            {t('Tester et enregistrer')}
+            {t('Test and save')}
           </Button>
         </div>
       </form>
@@ -259,13 +259,13 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
       {setup && !backup.configured ? null : (
         <>
           <div className={styles.block}>
-            <p className={`${controls.fieldLabel} t-meta-strong`}>{t('Fréquence')}</p>
+            <p className={`${controls.fieldLabel} t-meta-strong`}>{t('Frequency')}</p>
             <Segmented<BackupRecurrence>
-              label={t('Fréquence des sauvegardes')}
+              label={t('Backup frequency')}
               options={recurrenceOptions()}
               value={backup.recurrence}
               disabled={!backup.configured || busy !== null}
-              onChange={recurrence => void save({ backup: { recurrence } }, 'recurrence', t('Fréquence : {recurrence}', { recurrence: BACKUP_RECURRENCE_SHORT[recurrence] })).then(ok => ok && void admin.refresh())}
+              onChange={recurrence => void save({ backup: { recurrence } }, 'recurrence', t('Frequency: {recurrence}', { recurrence: BACKUP_RECURRENCE_SHORT[recurrence] })).then(ok => ok && void admin.refresh())}
             />
           </div>
 
@@ -273,19 +273,19 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
             className={styles.block}
             onSubmit={keeping.onSubmit(async () => {
               if (keepNumber === backup.keep) return true;
-              const ok = await save({ backup: { keep: keepNumber } }, 'keep', t('Sauvegardes gardées {days}', { days: plural(keepNumber, 'jour') }));
+              const ok = await save({ backup: { keep: keepNumber } }, 'keep', t('Backups kept {days}', { days: plural(keepNumber, 'day') }));
               if (ok) setKeep(null);
               return ok;
             })}
             noValidate
           >
             <div className={styles.budgetRow}>
-              <TextField label={t('Garder les sauvegardes, en jours')} kind="number" name={keepId} value={keepValue} onChange={setKeep} field={keeping.field('keep')} className={styles.budgetField} />
+              <TextField label={t('Keep backups, in days')} kind="number" name={keepId} value={keepValue} onChange={setKeep} field={keeping.field('keep')} className={styles.budgetField} />
               <Button type="submit" kind="tonal" busy={keeping.busy} disabled={!backup.configured || (keepValid && keepNumber === backup.keep)} className={styles.apply}>
-                {t('Appliquer')}
+                {t('Apply')}
               </Button>
             </div>
-            <p className={`${controls.fieldNoteAlone} t-meta`}>{t('Celles faites par ce serveur sont effacées de S3 passé ce délai ; la plus récente reste toujours.')}</p>
+            <p className={`${controls.fieldNoteAlone} t-meta`}>{t('Those made by this server are deleted from S3 after this; the newest always stays.')}</p>
           </form>
         </>
       )}
@@ -296,23 +296,23 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
             <button type="button" className={styles.row} disabled={busy !== null || status?.backup.running === true} onClick={() => void runNow()}>
               <Icon name="upload" size={24} />
               <span className={styles.rowText}>
-                <span className="t-body">{t('Sauvegarder maintenant')}</span>
-                <span className="t-meta">{t('Vers {place}', { place: `${backup.bucket}${backup.prefix ? `/${backup.prefix}` : ''}` })}</span>
+                <span className="t-body">{t('Back up now')}</span>
+                <span className="t-meta">{t('To {place}', { place: `${backup.bucket}${backup.prefix ? `/${backup.prefix}` : ''}` })}</span>
               </span>
             </button>
           ) : null}
 
           {backup.configured ? (
             <div className={styles.block}>
-              <p className="t-meta-strong">{t('Sauvegardes sur S3')}</p>
+              <p className="t-meta-strong">{t('Backups on S3')}</p>
               {backups.error ? (
                 <p className={`${styles.error} t-body`}>{t(backups.error)}</p>
               ) : backups.snapshots === null ? (
-                <p className="t-meta">{backups.loading ? t('Lecture des sauvegardes…') : ''}</p>
+                <p className="t-meta">{backups.loading ? t('Reading the backups…') : ''}</p>
               ) : snapshots.length === 0 ? (
-                <EmptyLine text={t('Aucune sauvegarde sur S3 pour l’instant.')} glyph="archive" />
+                <EmptyLine text={t('No backups on S3 yet.')} glyph="archive" />
               ) : (
-                <ul className={styles.snapshots} aria-label={t('Sauvegardes sur S3')}>
+                <ul className={styles.snapshots} aria-label={t('Backups on S3')}>
                   {listed.map(snapshot => (
                     <li key={snapshot.name} className={styles.snapshot}>
                       <span className={styles.rowText}>
@@ -321,10 +321,10 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
                       </span>
                       <span className={styles.snapshotActions}>
                         <Button kind="text" small disabled={busy !== null} onClick={() => void fetchDownload({ snapshot: snapshot.name })}>
-                          {t('Télécharger')}
+                          {t('Download')}
                         </Button>
                         <Button kind="text" small disabled={busy !== null || status?.restore.running === true} onClick={() => openRestore({ kind: 'snapshot', name: snapshot.name, at: snapshot.at })}>
-                          {t('Restaurer')}
+                          {t('Restore')}
                         </Button>
                       </span>
                     </li>
@@ -334,7 +334,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
               {snapshots.length > SHOWN ? (
                 <div className={styles.buttons}>
                   <Button kind="text" small onClick={() => setShowAll(all => !all)}>
-                    {showAll ? t('Afficher moins') : t('Tout afficher ({count})', { count: snapshots.length })}
+                    {showAll ? t('Show less') : t('Show all ({count})', { count: snapshots.length })}
                   </Button>
                 </div>
               ) : null}
@@ -344,15 +344,15 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
           <button type="button" className={styles.row} disabled={busy !== null} onClick={() => void fetchDownload({ full: true })}>
             <Icon name="download" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Télécharger une sauvegarde complète')}</span>
-              <span className="t-meta">{t('Une archive avec vos photos et fichiers, à garder où vous voulez : elle se restaure ici.')}</span>
+              <span className="t-body">{t('Download a full backup')}</span>
+              <span className="t-meta">{t('An archive with your photos and files, to keep wherever you like: it restores here.')}</span>
             </span>
           </button>
           <button type="button" className={styles.row} disabled={busy !== null || status?.restore.running === true} onClick={() => picker.current?.click()}>
             <Icon name="restore" size={24} />
             <span className={styles.rowText}>
-              <span className="t-body">{t('Restaurer depuis un fichier')}</span>
-              <span className="t-meta">{t('Une archive .tar.gz téléchargée depuis S3 ou depuis cette page.')}</span>
+              <span className="t-body">{t('Restore from a file')}</span>
+              <span className="t-meta">{t('A .tar.gz archive downloaded from S3 or from this page.')}</span>
             </span>
           </button>
           <input
@@ -360,7 +360,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
             type="file"
             accept=".gz,.tgz,application/gzip"
             hidden
-            aria-label={t('Archive à restaurer')}
+            aria-label={t('Archive to restore')}
             onChange={event => {
               const file = event.target.files?.[0];
               event.target.value = '';
@@ -384,14 +384,14 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
       />
       <Confirm
         open={confirmRemove}
-        title={t('Retirer le stockage S3 ?')}
-        message={t('Les réglages S3 sont effacés de votre serveur. Les sauvegardes déjà envoyées restent sur S3.')}
-        confirmLabel={t('Retirer')}
+        title={t('Remove S3 storage?')}
+        message={t('The S3 settings are deleted from your server. Backups already sent stay on S3.')}
+        confirmLabel={t('Remove')}
         danger
         onCancel={() => setConfirmRemove(false)}
         onConfirm={() => {
           setConfirmRemove(false);
-          void save({ backup: null }, 'remove', t('Stockage S3 retiré')).then(ok => {
+          void save({ backup: null }, 'remove', t('S3 storage removed')).then(ok => {
             if (!ok) return;
             setDraft({});
             void admin.refresh();

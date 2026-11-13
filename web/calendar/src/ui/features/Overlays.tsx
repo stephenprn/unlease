@@ -71,7 +71,7 @@ function usePeeked(key: string): { readonly kind: 'event'; readonly item: Occurr
 function peekTitle(peeked: NonNullable<ReturnType<typeof usePeeked>>): string {
   switch (peeked.kind) {
     case 'event':
-      return peeked.item.event.title.trim() || t('Sans titre');
+      return peeked.item.event.title.trim() || t('Untitled');
     case 'birthday':
       return mentionWords({ type: 'contact', id: peeked.contactId });
     case 'reminder':
@@ -114,7 +114,7 @@ function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
               {fullPage ? (
                 <IconButton
                   icon="external"
-                  label={t('Ouvrir')}
+                  label={t('Open')}
                   compact
                   onClick={() => {
                     closePeek();
@@ -122,7 +122,7 @@ function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
                   }}
                 />
               ) : null}
-              <IconButton icon="close" label={t('Fermer')} compact onClick={closePeek} />
+              <IconButton icon="close" label={t('Close')} compact onClick={closePeek} />
             </div>
           )}
           <h2 id={titleId} className={`${styles.peekTitle} t-title`} data-line={color ?? undefined}>
@@ -222,7 +222,7 @@ function Quick({ quick }: { quick: QuickDraft }) {
   const save = (): void => {
     addEvent(draft);
     closeQuick();
-    showSnack(t('Événement enregistré'), undefined, { tone: 'success' });
+    showSnack(t('Event saved'), undefined, { tone: 'success' });
   };
   const more = (): void => {
     handDraft(draft);
@@ -242,7 +242,7 @@ function Quick({ quick }: { quick: QuickDraft }) {
   return (
     <>
       <AnchorBox anchor={placed.anchor} anchorRef={anchorRef} />
-      <Popover open onDismiss={unsaved.guard(closeQuick)} anchor={anchorRef} align={placed.align} label={t('Nouvel événement')} width={QUICK_WIDTH} className={styles.quickPanel} initialFocus={inputRef}>
+      <Popover open onDismiss={unsaved.guard(closeQuick)} anchor={anchorRef} align={placed.align} label={t('New event')} width={QUICK_WIDTH} className={styles.quickPanel} initialFocus={inputRef}>
         <form
           className={styles.quick}
           onSubmit={event => {
@@ -257,12 +257,12 @@ function Quick({ quick }: { quick: QuickDraft }) {
             }
           }}
         >
-          <input ref={inputRef} className={styles.titleInput} value={title} onChange={event => setTitle(event.target.value)} placeholder={t('Ajouter un titre')} aria-label={t('Titre')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" />
-          <FormRow icon="clock" label={t('Quand')} wide>
+          <input ref={inputRef} className={styles.titleInput} value={title} onChange={event => setTitle(event.target.value)} placeholder={t('Add a title')} aria-label={t('Title')} maxLength={EVENT_LIMITS.title} autoComplete="off" enterKeyHint="done" />
+          <FormRow icon="clock" label={t('When')} wide>
             <div className={styles.whenLine}>
               <div className={styles.whenGroup}>
-                <DateField value={start.slice(0, 10)} label={allDay ? t('Premier jour') : t('Jour de début')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${start.slice(10)}`)} />
-                {!allDay ? <TimeField value={start.slice(11, 16)} label={t('Heure de début')} twelveHours={prefs.twelveHours} onChange={clock => setStart(`${start.slice(0, 10)}T${clock}`)} /> : null}
+                <DateField value={start.slice(0, 10)} label={allDay ? t('First day') : t('Start day')} weekStart={prefs.weekStart} today={today} onChange={day => setStart(allDay ? day : `${day}${start.slice(10)}`)} />
+                {!allDay ? <TimeField value={start.slice(11, 16)} label={t('Start time')} twelveHours={prefs.twelveHours} onChange={clock => setStart(`${start.slice(0, 10)}T${clock}`)} /> : null}
               </div>
               {/* One day all day is its day alone; else the end, its day only when it is another. */}
               {!allDay || lastDay !== start ? (
@@ -274,7 +274,7 @@ function Quick({ quick }: { quick: QuickDraft }) {
                     {!allDay ? (
                       <TimeField
                         value={end.slice(11, 16)}
-                        label={t('Heure de fin')}
+                        label={t('End time')}
                         from={sameDay ? start.slice(11, 16) : undefined}
                         twelveHours={prefs.twelveHours}
                         // A time before the start's ends the next day, as on the whole form.
@@ -284,7 +284,7 @@ function Quick({ quick }: { quick: QuickDraft }) {
                     {allDay || !sameDay ? (
                       <DateField
                         value={lastDay}
-                        label={allDay ? t('Dernier jour') : t('Jour de fin')}
+                        label={allDay ? t('Last day') : t('End day')}
                         weekStart={prefs.weekStart}
                         today={today}
                         // Never before the start: an earlier day keeps the end where it was.
@@ -299,38 +299,38 @@ function Quick({ quick }: { quick: QuickDraft }) {
               <div className={styles.whenOptions}>
                 <button type="button" role="switch" aria-checked={allDay} className={styles.switchRow} onClick={toggleAllDay}>
                   <SwitchMark checked={allDay} />
-                  <span className="t-body">{t('Toute la journée')}</span>
+                  <span className="t-body">{t('All day')}</span>
                 </button>
               </div>
             ) : null}
           </FormRow>
           {opened.includes('place') ? (
-            <FormRow icon="mapPin" label={t('Lieu')} wide>
-              <PlaceField ariaLabel={t('Lieu')} value={place} onChange={next => setPlace(next.slice(0, EVENT_LIMITS.place))} known={known} placeholder={t('Ajouter un lieu')} autoFocus />
+            <FormRow icon="mapPin" label={t('Place')} wide>
+              <PlaceField ariaLabel={t('Place')} value={place} onChange={next => setPlace(next.slice(0, EVENT_LIMITS.place))} known={known} placeholder={t('Add a place')} autoFocus />
             </FormRow>
           ) : (
-            <QuickRow icon="mapPin" label={t('Ajouter un lieu')} onOpen={() => open('place')} />
+            <QuickRow icon="mapPin" label={t('Add a place')} onOpen={() => open('place')} />
           )}
           {opened.includes('people') ? (
-            <FormRow icon="people" label={t('Avec')} wide>
+            <FormRow icon="people" label={t('With')} wide>
               <PeoplePicker value={contactIds} max={EVENT_LIMITS.contacts} onChange={setContactIds} autoFocus />
             </FormRow>
           ) : (
-            <QuickRow icon="people" label={t('Ajouter des personnes')} onOpen={() => open('people')} />
+            <QuickRow icon="people" label={t('Add people')} onOpen={() => open('people')} />
           )}
           {opened.includes('description') ? (
             <FormRow icon="text" label={t('Description')} wide>
               <DescriptionField markup={description} onChange={setDescription} autoFocus />
             </FormRow>
           ) : (
-            <QuickRow icon="text" label={t('Ajouter une description')} onOpen={() => open('description')} />
+            <QuickRow icon="text" label={t('Add a description')} onOpen={() => open('description')} />
           )}
           <div className={styles.formFoot}>
             <Button kind="text" onClick={more}>
-              {t('Plus d’options')}
+              {t('More options')}
             </Button>
             <Button type="submit" icon="check">
-              {t('Enregistrer')}
+              {t('Save')}
             </Button>
           </div>
         </form>
@@ -357,7 +357,7 @@ function ScopeForm({ title, resolve }: { title: string; resolve: (scope: EditSco
       foot={
         <>
           <Button kind="text" onClick={() => resolve(null)}>
-            {t('Annuler')}
+            {t('Cancel')}
           </Button>
           <Button type="submit">{t('OK')}</Button>
         </>
@@ -368,9 +368,9 @@ function ScopeForm({ title, resolve }: { title: string; resolve: (scope: EditSco
         value={scope}
         onChange={setScope}
         choices={[
-          { value: 'this', label: t('Cet événement') },
-          { value: 'following', label: t('Cet événement et les suivants') },
-          { value: 'all', label: t('Tous les événements') },
+          { value: 'this', label: t('This event') },
+          { value: 'following', label: t('This and following events') },
+          { value: 'all', label: t('All events') },
         ]}
       />
     </DialogFrame>
@@ -423,7 +423,7 @@ function AskPanel() {
       setTurns(current => [...current, { question: asked, answer: answer.answer }]);
       setQuestion('');
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : t('Le serveur ne répond pas'));
+      setError(failure instanceof Error ? failure.message : t('The server isn’t responding'));
     } finally {
       setBusy(false);
       field.current?.focus();
@@ -434,7 +434,7 @@ function AskPanel() {
     <Layer open={open} onDismiss={close} kind="side" labelledBy={titleId} initialFocus={field}>
       {open ? (
         <DialogFrame
-          title={t('Demander à Claude')}
+          title={t('Ask Claude')}
           titleId={titleId}
           onClose={close}
           page
@@ -457,24 +457,24 @@ function AskPanel() {
                     void ask();
                   }
                 }}
-                placeholder={t('Votre question sur votre agenda')}
-                aria-label={t('Votre question')}
+                placeholder={t('Your question about your calendar')}
+                aria-label={t('Your question')}
                 maxLength={2000}
               />
-              <IconButton icon="arrowUp" label={t('Demander')} shape={1} disabled={!question.trim() || busy} onClick={() => void ask()} />
+              <IconButton icon="arrowUp" label={t('Ask')} shape={1} disabled={!question.trim() || busy} onClick={() => void ask()} />
             </div>
           }
         >
           <div className={styles.askHead}>
-            <p className="t-meta">{t('Claude lit vos événements de trois mois en arrière à un an devant, et les anniversaires de vos contacts.')}</p>
+            <p className="t-meta">{t('Claude reads your events from three months back to a year ahead, and your contacts’ birthdays.')}</p>
             {turns.length > 0 ? (
               <Button kind="text" icon="broom" small onClick={() => setTurns([])}>
-                {t('Nouvelle conversation')}
+                {t('New conversation')}
               </Button>
             ) : null}
           </div>
           {turns.length === 0 && !busy ? (
-            <div className={styles.starters} aria-label={t('Exemples de questions')}>
+            <div className={styles.starters} aria-label={t('Example questions')}>
               {ASK_STARTERS.map(starter => (
                 <Button key={starter} kind="outlined" small onClick={() => void ask(t(starter))}>
                   {t(starter)}
@@ -493,7 +493,7 @@ function AskPanel() {
               <p className={`${styles.question} t-body`}>{question}</p>
               <p className={`${styles.askWaiting} t-meta`}>
                 <Spinner />
-                {t('Claude lit votre agenda…')}
+                {t('Claude is reading your calendar…')}
               </p>
             </div>
           ) : null}

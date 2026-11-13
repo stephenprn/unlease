@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { APP_WORDS } from '@unlease/core/appWords';
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { RICH_KINDS, UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages } from '@unlease/pages/services/blocks';
 import { formatEdited, plural } from '@unlease/core/services/format';
@@ -79,7 +79,7 @@ const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snip
   const edited = useLibraryStore(s => pageEdited(s, id));
   if (!page) return null;
   const title = page.text.trim() || t(UNTITLED_PAGE);
-  const facts = [recent ? glance.path || null : subPages > 0 ? plural(subPages, 'sous-page') : null, formatEdited(edited, now)].filter(Boolean).join(' · ');
+  const facts = [recent ? glance.path || null : subPages > 0 ? plural(subPages, 'sub-page') : null, formatEdited(edited, now)].filter(Boolean).join(' · ');
   const line = snippet ?? (recent ? glance.preview : '');
   return (
     <Tappable
@@ -89,7 +89,7 @@ const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snip
       style={styles.row}
       accessibilityRole="link"
       accessibilityLabel={title}
-      accessibilityActions={onActions ? [{ name: 'actions', label: t('Plus d’actions') }] : undefined}
+      accessibilityActions={onActions ? [{ name: 'actions', label: t('More actions') }] : undefined}
       onAccessibilityAction={onActions ? () => onActions(id) : undefined}
     >
       <PageMark icon={page.icon} />
@@ -125,10 +125,10 @@ function PageActionsSheet({ id, onDismiss, onOpen, onNewPage }: { id: string | n
   };
   return (
     <Sheet visible={id !== null} onDismiss={onDismiss} title={title}>
-      <ListRow icon="pagePlus" title={t('Ajouter une sous-page')} onPress={act(onNewPage)} />
+      <ListRow icon="pagePlus" title={t('Add a sub-page')} onPress={act(onNewPage)} />
       <ListRow
         icon="copy"
-        title={t('Dupliquer')}
+        title={t('Duplicate')}
         onPress={act(page => {
           const [copy] = duplicateBlocks(null, [page]);
           if (copy) onOpen(copy);
@@ -136,11 +136,11 @@ function PageActionsSheet({ id, onDismiss, onOpen, onNewPage }: { id: string | n
       />
       <ListRow
         icon="trash"
-        title={t('Mettre à la corbeille')}
+        title={t('Move to bin')}
         danger
         onPress={act(page => {
           const undo = trashPage(page);
-          showSnack(t('Page placée dans la corbeille'), { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+          showSnack(t('Page moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
         })}
       />
     </Sheet>
@@ -229,7 +229,7 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
         placeholder={APP_WORDS.pages.search}
         focusKey={searchFocus}
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
-        localText={t('Pas de serveur : les pages restent sur ce téléphone.')}
+        localText={t('No server: pages stay on this phone.')}
       />
       <EdgeScrollView
         keyboardShouldPersistTaps="handled"
@@ -258,12 +258,12 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
             ))}
           </View>
         ) : roots.length === 0 ? (
-          <EmptyState scene="notes" title={t('Aucune page pour l’instant')} text={t('Une page tient des titres, des listes, des tableaux, du code, des images, et vos notes, collections et liens. Le bouton +, en bas, en crée une.')} />
+          <EmptyState scene="notes" title={t('No pages yet')} text={t('A page holds headings, lists, tables, code, pictures, and your notes, collections and links. The + button, at the bottom, makes one.')} />
         ) : (
           <>
             {count < FEW_PAGES ? (
               <AppText variant="body" color={theme.color.inkMuted} style={styles.intro}>
-                {t('Vos documents, rangés comme vous voulez : une page peut en contenir d’autres. Tapez « / » dans une page pour y ajouter un bloc, « @ » pour citer un contact, une note, une collection ou un lien.')}
+                {t('Your documents, arranged as you like: a page can hold others. Type “/” in a page to add a block, “@” to cite a contact, a note, a collection or a link.')}
               </AppText>
             ) : null}
             {/* A page leaving fades where it was and the others close ranks; one arriving settles in after them. A section shown whole (opened, back from a search) just is there, and goes whole. */}
@@ -271,7 +271,7 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
               <LayoutAnimationConfig skipEntering skipExiting>
                 <View style={styles.section}>
                   <AppText variant="section" style={styles.head} accessibilityRole="header">
-                    {t('Récentes')}
+                    {t('Recent')}
                   </AppText>
                   {recent.map(id => (
                     <Animated.View key={id} layout={listMove} entering={arrivedRecent.has(id) ? listIn : undefined} exiting={listOut}>
@@ -284,7 +284,7 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
             <LayoutAnimationConfig skipEntering skipExiting>
               <View style={styles.section}>
                 <AppText variant="section" style={styles.head} accessibilityRole="header">
-                  {t('Toutes les pages')}
+                  {t('All pages')}
                 </AppText>
                 {roots.map(id => (
                   <Animated.View key={id} layout={listMove} entering={arrivedRoots.has(id) ? listIn : undefined} exiting={listOut}>
@@ -298,11 +298,11 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
         {binned > 0 && !searching ? (
           <Tappable onPress={() => navigation.navigate('Trash')} style={styles.binLink} accessibilityRole="link">
             <Icon name="trash" size={18} color={theme.color.inkMuted} />
-            <AppText variant="meta">{t('{pages} dans la corbeille', { pages: plural(binned, 'page') })}</AppText>
+            <AppText variant="meta">{t('{pages} in the bin', { pages: plural(binned, 'page') })}</AppText>
           </Tappable>
         ) : null}
       </EdgeScrollView>
-      <FabMenu actions={[{ icon: 'plus', label: t('Nouvelle page'), onPress: () => newPage(null) }]} />
+      <FabMenu actions={[{ icon: 'plus', label: t('New page'), onPress: () => newPage(null) }]} />
       <Drawer
         open={drawerOpen}
         current="pages"

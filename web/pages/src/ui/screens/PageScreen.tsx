@@ -51,7 +51,7 @@ export function PageScreen({ id }: { id: string }) {
   const ask = usePagesAskSettings() !== null;
   const kept = useBlocksStore(s => isPrivatePage(s.blocks, id));
   const asking = usePagesAskStore(s => s.open === id);
-  if (!exists) return <NotFound what={t('Cette page n’existe plus.')} />;
+  if (!exists) return <NotFound what={t('This page no longer exists.')} />;
   // A page in the bin keeps its banner's actions only.
   const withMenu = slot !== null && !binned;
   return (
@@ -60,8 +60,8 @@ export function PageScreen({ id }: { id: string }) {
         <PageHead
           title={title}
           titleShown={titleUnder}
-          extra={withMenu && ask && !kept ? { icon: 'sparkle', label: t('Demander à Claude'), pressed: asking, onClick: () => (asking ? closePagesAsk() : openPagesAsk(id)) } : undefined}
-          action={withMenu ? { icon: 'more', label: t('Plus d’actions'), onClick: () => setMenu(true), menu: { anchor: more, open: menu } } : undefined}
+          extra={withMenu && ask && !kept ? { icon: 'sparkle', label: t('Ask Claude'), pressed: asking, onClick: () => (asking ? closePagesAsk() : openPagesAsk(id)) } : undefined}
+          action={withMenu ? { icon: 'more', label: t('More actions'), onClick: () => setMenu(true), menu: { anchor: more, open: menu } } : undefined}
         />
       ) : null}
       <WithPageAsk>

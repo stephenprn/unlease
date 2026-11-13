@@ -43,12 +43,12 @@ const BAR_IN = new Keyframe({ 0: { opacity: 0, transform: [{ translateY: 8 }] },
 const BAR_OUT = new Keyframe({ 0: { opacity: 1 }, 100: { opacity: 0, easing: accelerate } }).duration(duration.short);
 
 const FLAGS: readonly { readonly flag: FlagMark; readonly icon: GlyphName; readonly label: string }[] = [
-  { flag: 'b', icon: 'bold', label: tx('Gras') },
-  { flag: 'i', icon: 'italic', label: tx('Italique') },
-  { flag: 'u', icon: 'underline', label: tx('Souligné') },
-  { flag: 's', icon: 'strike', label: tx('Barré') },
+  { flag: 'b', icon: 'bold', label: tx('Bold') },
+  { flag: 'i', icon: 'italic', label: tx('Italic') },
+  { flag: 'u', icon: 'underline', label: tx('Underline') },
+  { flag: 's', icon: 'strike', label: tx('Strikethrough') },
   { flag: 'c', icon: 'code', label: tx('Code') },
-  { flag: 'k', icon: 'keyboard', label: tx('Touches') },
+  { flag: 'k', icon: 'keyboard', label: tx('Keys') },
 ];
 
 /** As many emoji as the bar offers for « :word » (the web's menu offers as many). */
@@ -125,8 +125,8 @@ function BlockBarComponent() {
       {asking ? (
         <MentionSuggestions
           rows={mentionRows}
-          label={ask.typed === '[[' ? t('Citer une page') : t('Mentionner')}
-          empty={ask.word.trim() ? t('Rien ne correspond.') : ask.typed === '[[' ? t('Aucune autre page pour l’instant.') : t('Rien à mentionner pour l’instant.')}
+          label={ask.typed === '[[' ? t('Cite a page') : t('Mention')}
+          empty={ask.word.trim() ? t('Nothing matches.') : ask.typed === '[[' ? t('No other page yet.') : t('Nothing to mention yet.')}
         />
       ) : null}
       <View
@@ -134,19 +134,19 @@ function BlockBarComponent() {
         onLayout={measureBar}
         style={[styles.bar, { height: BLOCK_BAR_HEIGHT + (keyboard ? 0 : insets.bottom), paddingBottom: keyboard ? 0 : insets.bottom }]}
         accessibilityRole="toolbar"
-        accessibilityLabel={formatting ? t('Mise en forme') : emoji ? t('Emojis') : t('Actions du bloc')}
+        accessibilityLabel={formatting ? t('Formatting') : emoji ? t('Emojis') : t('Block actions')}
       >
         {/* The ground itself, as a bar pinned over it paints it, so no seam shows where the page meets it. */}
         <GroundSlice top={barTop} />
         <ScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
           {formatting && handle ? (
             <>
-              {dateChosen !== null ? <IconButton icon="calendar" label={t('Modifier la date')} shape={3} onPress={() => openDateSheet(id, dateChosen)} /> : null}
+              {dateChosen !== null ? <IconButton icon="calendar" label={t('Change the date')} shape={3} onPress={() => openDateSheet(id, dateChosen)} /> : null}
               {FLAGS.map(({ flag, icon, label }, index) => (
                 <IconButton key={flag} icon={icon} label={t(label)} shape={index % 3} selected={rangeHas(runs, range.start, range.end, flag)} onPress={() => toggleFlag(handle, flag)} />
               ))}
-              <IconButton icon="textColor" label={t('Couleur')} shape={0} selected={rangeValue(runs, range.start, range.end, 'fg') !== null || rangeValue(runs, range.start, range.end, 'bg') !== null} onPress={() => openPageSheet({ kind: 'textColor', block: id, start: range.start, end: range.end })} />
-              <IconButton icon="link" label={t('Lien')} shape={1} selected={rangeValue(runs, range.start, range.end, 'a') !== null} onPress={() => openPageSheet({ kind: 'link', block: id, start: range.start, end: range.end })} />
+              <IconButton icon="textColor" label={t('Colour')} shape={0} selected={rangeValue(runs, range.start, range.end, 'fg') !== null || rangeValue(runs, range.start, range.end, 'bg') !== null} onPress={() => openPageSheet({ kind: 'textColor', block: id, start: range.start, end: range.end })} />
+              <IconButton icon="link" label={t('Link')} shape={1} selected={rangeValue(runs, range.start, range.end, 'a') !== null} onPress={() => openPageSheet({ kind: 'link', block: id, start: range.start, end: range.end })} />
             </>
           ) : emoji ? (
             offered.map((found, index) => (
@@ -158,10 +158,10 @@ function BlockBarComponent() {
             ))
           ) : (
             <>
-              {dateNear !== null ? <IconButton icon="calendar" label={t('Modifier la date')} shape={3} onPress={() => openDateSheet(id, dateNear, caret ?? dateNear + 1)} /> : null}
+              {dateNear !== null ? <IconButton icon="calendar" label={t('Change the date')} shape={3} onPress={() => openDateSheet(id, dateNear, caret ?? dateNear + 1)} /> : null}
               <IconButton
                 icon="plus"
-                label={t('Ajouter un bloc')}
+                label={t('Add a block')}
                 shape={0}
                 onPress={() => {
                   flushAll();
@@ -171,7 +171,7 @@ function BlockBarComponent() {
               {block.kind !== 'code' ? (
                 <IconButton
                   icon="text"
-                  label={t('Transformer en…')}
+                  label={t('Turn into…')}
                   shape={1}
                   onPress={() => {
                     flushAll();
@@ -179,13 +179,13 @@ function BlockBarComponent() {
                   }}
                 />
               ) : null}
-              <IconButton icon="outdent" label={t('Désimbriquer le bloc')} shape={2} onPress={() => move(at => outdentBlocks(page, [id], [id], { block: id, offset: at }))} />
-              <IconButton icon="indent" label={t('Imbriquer le bloc')} shape={0} onPress={() => move(at => indentBlocks(page, [id], [id], { block: id, offset: at }))} />
-              <IconButton icon="arrowUp" label={t('Monter le bloc')} shape={1} onPress={() => move(() => nudgeBlocks(page, [id], -1, visibleOutline(page)))} onLongPress={reorder} />
-              <IconButton icon="arrowDown" label={t('Descendre le bloc')} shape={2} onPress={() => move(() => nudgeBlocks(page, [id], 1, visibleOutline(page)))} onLongPress={reorder} />
+              <IconButton icon="outdent" label={t('Outdent block')} shape={2} onPress={() => move(at => outdentBlocks(page, [id], [id], { block: id, offset: at }))} />
+              <IconButton icon="indent" label={t('Indent block')} shape={0} onPress={() => move(at => indentBlocks(page, [id], [id], { block: id, offset: at }))} />
+              <IconButton icon="arrowUp" label={t('Move block up')} shape={1} onPress={() => move(() => nudgeBlocks(page, [id], -1, visibleOutline(page)))} onLongPress={reorder} />
+              <IconButton icon="arrowDown" label={t('Move block down')} shape={2} onPress={() => move(() => nudgeBlocks(page, [id], 1, visibleOutline(page)))} onLongPress={reorder} />
               <IconButton
                 icon="more"
-                label={t('Plus d’actions sur le bloc')}
+                label={t('More block actions')}
                 shape={0}
                 onPress={() => {
                   flushAll();

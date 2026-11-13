@@ -53,6 +53,6 @@ async function receive(share: Share, arrivals: Arrivals): Promise<void> {
 export function listenForShares(arrivals: Arrivals): () => void {
   takePendingShare()
     .then(share => (share ? receive(share, arrivals) : undefined))
-    .catch(() => showSnack(t('Fichier illisible'), undefined, { tone: 'error' }));
+    .catch(() => showSnack(t('Unreadable file'), undefined, { tone: 'error' }));
   return onShare(share => later(receive(share, arrivals)));
 }

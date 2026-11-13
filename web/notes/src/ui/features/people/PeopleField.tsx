@@ -21,15 +21,15 @@ export function PeopleField({ type, id, ids }: { type: 'note' | 'link'; id: stri
   const any = useHasPeople();
   if (!any && ids.length === 0) return null;
   return (
-    <div className={styles.field} role="group" aria-label={t('Personnes')}>
-      <p className={`${styles.fieldLabel} t-meta-strong`}>{t('Personnes')}</p>
+    <div className={styles.field} role="group" aria-label={t('People')}>
+      <p className={`${styles.fieldLabel} t-meta-strong`}>{t('People')}</p>
       <div className={styles.fieldChips}>
         {people.map(person => (
           <PersonChip key={person.contact.id} person={person} />
         ))}
         <span ref={anchor} className={styles.fieldAction}>
-          <Button kind="text" small icon={people.length > 0 ? 'edit' : 'personPlus'} title={people.length > 0 ? t('Modifier les personnes') : undefined} onClick={() => setPicking(true)}>
-            {people.length > 0 ? t('Modifier') : t('Ajouter une personne')}
+          <Button kind="text" small icon={people.length > 0 ? 'edit' : 'personPlus'} title={people.length > 0 ? t('Change the people') : undefined} onClick={() => setPicking(true)}>
+            {people.length > 0 ? t('Edit') : t('Add someone')}
           </Button>
         </span>
       </div>

@@ -64,16 +64,16 @@ async function backupFirst(server: ServerConfig): Promise<string | null> {
   try {
     status = await startBackup(server);
     while (status?.backup.running) {
-      if (Date.now() - asked > BACKUP_WAIT_MS) return t('La sauvegarde prend trop de temps : rien n’a été effacé. Réessayez une fois finie.');
+      if (Date.now() - asked > BACKUP_WAIT_MS) return t('The backup is taking too long: nothing was erased. Try again once it is done.');
       await wait(2_000);
       status = (await fetchAdminStatus(server)) ?? status;
     }
   } catch (failure) {
-    return t('La sauvegarde n’a pas pu démarrer : {problem}. Rien n’a été effacé.', { problem: failure instanceof Error ? t(failure.message) : t('Serveur injoignable') });
+    return t('The backup could not start: {problem}. Nothing was erased.', { problem: failure instanceof Error ? t(failure.message) : t('Server unreachable') });
   }
   const last = status?.backup.last ?? null;
   if (last && last.ok && (last.finishedAt ?? 0) >= asked) return null;
-  return t('La sauvegarde a échoué : {problem}. Rien n’a été effacé.', { problem: last?.error ? t(last.error) : t('raison inconnue') });
+  return t('The backup failed: {problem}. Nothing was erased.', { problem: last?.error ? t(last.error) : t('unknown reason') });
 }
 
 export function EraseScreen() {
@@ -101,10 +101,10 @@ export function EraseScreen() {
   if (!erase) {
     return (
       <div className={styles.page}>
-        <PageHead title={t('Effacer des données')} />
-        <Section label={t('Effacer des données')}>
+        <PageHead title={t('Erase data')} />
+        <Section label={t('Erase data')}>
           <div className={styles.block}>
-            <EmptyLine size="body" text={t('Cette application n’a rien à effacer.')} />
+            <EmptyLine size="body" text={t('This app has nothing to erase.')} />
           </div>
         </Section>
       </div>
@@ -130,9 +130,9 @@ export function EraseScreen() {
         try {
           await checkServer({ url: server.url, token: token.trim() });
         } catch (failure) {
-          const message = failure instanceof Error ? t(failure.message) : t('Serveur injoignable');
+          const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
           if (failure instanceof SyncError && connectFailureField(failure.kind, failure.status) === 'token') form.fail('token', message);
-          else form.fail(null, t('{problem} : rien n’a été effacé.', { problem: message }));
+          else form.fail(null, t('{problem}: nothing was erased.', { problem: message }));
           return false;
         }
         // What waits on this device goes first, so the server holds everything the tombstones cover.
@@ -162,10 +162,10 @@ export function EraseScreen() {
 
   return (
     <div className={styles.page}>
-      <PageHead title={t('Effacer des données')} />
+      <PageHead title={t('Erase data')} />
       <p className={`${screens.eraseLead} t-body`}>{eraseLead(name, connected)}</p>
 
-      <Section title={t('Ce qui sera effacé')}>
+      <Section title={t('What will be erased')}>
         {parts.map(part => {
           const empty = part.count === 0;
           const on = !empty && chosen.has(part.id);
@@ -174,7 +174,7 @@ export function EraseScreen() {
               <CheckMark checked={on} />
               <span className={styles.rowText}>
                 <span className="t-body">{part.title}</span>
-                <span className="t-meta">{empty ? t('Rien à effacer') : part.detail}</span>
+                <span className="t-meta">{empty ? t('Nothing to erase') : part.detail}</span>
               </span>
               <Icon name={part.glyph as GlyphName} size={22} />
             </button>
@@ -183,7 +183,7 @@ export function EraseScreen() {
       </Section>
 
       {connected ? (
-        <Section title={t('Avant d’effacer')}>
+        <Section title={t('Before erasing')}>
           {configured ? (
             <button type="button" role="switch" aria-checked={backup} className={styles.row} onClick={() => setBackup(!backup)}>
               <span className={styles.rowText}>
@@ -198,27 +198,27 @@ export function EraseScreen() {
         </Section>
       ) : null}
 
-      <Section title={t('Confirmer')}>
+      <Section title={t('Confirm')}>
         <form className={styles.block} onSubmit={form.onSubmit(run)} noValidate>
           {connected ? (
             <TextField
-              label={t('Jeton du serveur')}
+              label={t('Server token')}
               kind="serverToken"
               value={token}
               onChange={setToken}
               field={form.field('token')}
-              help={t('Le même que pour vous connecter. {where}', { where: setupFieldHelp('token') })}
-              revealLabels={{ show: t('Afficher le jeton'), hide: t('Masquer le jeton') }}
+              help={t('The same one you connect with. {where}', { where: setupFieldHelp('token') })}
+              revealLabels={{ show: t('Show the token'), hide: t('Hide the token') }}
             />
           ) : null}
-          <TextField label={t('Pour confirmer, tapez {word}', { word: eraseWord() })} kind="confirmWord" value={word} onChange={setWord} field={form.field('word')} />
+          <TextField label={t('To confirm, type {word}', { word: eraseWord() })} kind="confirmWord" value={word} onChange={setWord} field={form.field('word')} />
           <FormMessage form={form} />
           <div className={styles.buttons}>
             <Button type="submit" kind="danger" icon="eraser" busy={form.busy}>
               {eraseAction(total)}
             </Button>
             <Button kind="text" disabled={form.busy} onClick={() => navigate(paths.settings)}>
-              {t('Annuler')}
+              {t('Cancel')}
             </Button>
           </div>
           {stage ? (

@@ -23,7 +23,8 @@ export function __reset(): void {
   state.initial = null;
 }
 
-export enum AndroidImportance { DEFAULT = 3, HIGH = 4 }
+export enum AndroidImportance { LOW = 2, DEFAULT = 3, HIGH = 4 }
+export enum AndroidStyle { BIGPICTURE = 0, BIGTEXT = 1 }
 export enum AlarmType { SET = 0, SET_AND_ALLOW_WHILE_IDLE = 1, SET_EXACT = 2, SET_EXACT_AND_ALLOW_WHILE_IDLE = 3, SET_ALARM_CLOCK = 4 }
 export enum AndroidCategory { ALARM = 'alarm', EVENT = 'event', REMINDER = 'reminder' }
 export enum TriggerType { TIMESTAMP = 0 }

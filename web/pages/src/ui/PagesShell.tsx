@@ -35,10 +35,10 @@ function PagesTrashScreen() {
     <div className={settings.page}>
       {/* The title and, while it holds pages, how long they stay, as Carnet's bin says it right under its own (empty, the empty place says it). */}
       <div>
-        <PageHead title={t('Corbeille')} action={binned > 0 ? { icon: 'broom', label: t('Vider la corbeille'), onClick: () => setEmptying(true) } : undefined} />
-        {binned > 0 ? <p className={`${styles.binNote} t-meta`}>{t('Les pages de la corbeille sont supprimées au bout de {days} jours.', { days: TRASH_RETENTION_DAYS })}</p> : null}
+        <PageHead title={t('Bin')} action={binned > 0 ? { icon: 'broom', label: t('Empty the bin'), onClick: () => setEmptying(true) } : undefined} />
+        {binned > 0 ? <p className={`${styles.binNote} t-meta`}>{t('Pages in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       </div>
-      {binned === 0 ? <EmptyState scene="trash" title={t('La corbeille est vide')} text={t('Les pages supprimées y restent {days} jours, le temps de changer d’avis.', { days: TRASH_RETENTION_DAYS })} /> : <PagesBinSection />}
+      {binned === 0 ? <EmptyState scene="trash" title={t('The bin is empty')} text={t('Deleted pages stay there for {days} days, in case you change your mind.', { days: TRASH_RETENTION_DAYS })} /> : <PagesBinSection />}
       <EmptyPagesBinDialog open={emptying} onClose={() => setEmptying(false)} />
     </div>
   );
@@ -62,7 +62,7 @@ function titleFor(state: BlocksState, route: Route): string | null {
     case 'page':
       return state.blocks[route.id]?.text.trim() || t(UNTITLED_PAGE);
     case 'pagesTrash':
-      return t('Corbeille');
+      return t('Bin');
     default:
       return null;
   }
@@ -93,7 +93,7 @@ export const pagesOpened = (route: Route): string | null => (route.name === 'pag
 export function PagesNav({ route, onNavigate }: { route: Route; onNavigate: () => void }) {
   return (
     <>
-      <NavRow to={paths.pages} label={t('Toutes les pages')} leading={<NavGlyph name="book" />} current={route.name === 'pages'} onNavigate={onNavigate} />
+      <NavRow to={paths.pages} label={t('All pages')} leading={<NavGlyph name="book" />} current={route.name === 'pages'} onNavigate={onNavigate} />
       <NavStill title={t('Pages')}>
         <PagesSection route={route} onNavigate={onNavigate} />
       </NavStill>
@@ -102,16 +102,16 @@ export function PagesNav({ route, onNavigate }: { route: Route; onNavigate: () =
 }
 
 export function PagesNavFoot({ route, onNavigate }: { route: Route; onNavigate: () => void }) {
-  return <NavRow to={paths.trash} label={t('Corbeille')} leading={<NavGlyph name="trash" />} current={route.name === 'pagesTrash'} onNavigate={onNavigate} />;
+  return <NavRow to={paths.trash} label={t('Bin')} leading={<NavGlyph name="trash" />} current={route.name === 'pagesTrash'} onNavigate={onNavigate} />;
 }
 
 /** « Nouvelle page » beside the search, wide; the pages' home has its own in its head. */
 export function PagesHeaderActions({ route }: { route: Route }) {
   if (route.name === 'pages') return null;
   return (
-    <button type="button" className={`${shell.classify} paper`} onClick={() => openNewPage(null)} aria-label={t('Nouvelle page')} data-tip={t('Nouvelle page (P)')}>
+    <button type="button" className={`${shell.classify} paper`} onClick={() => openNewPage(null)} aria-label={t('New page')} data-tip={t('New page (P)')}>
       <Icon name="pagePlus" size={20} />
-      <span className={shell.classifyLabel}>{t('Nouvelle page')}</span>
+      <span className={shell.classifyLabel}>{t('New page')}</span>
     </button>
   );
 }
@@ -131,7 +131,7 @@ export function PagesBottomBar({ route, enter }: { route: Route; enter: Arrival 
   return (
     <div className={`${shell.bottomBar} paper`} data-enter={(!closing && arrival) || undefined} data-closing={closing || undefined} inert={closing} onAnimationEnd={gone}>
       <div className={shell.bottomActions} />
-      <button ref={fab} type="button" className={shell.fab} data-pebble-under={0} aria-label={t('Nouvelle page')} onClick={() => openNewPage(null)}>
+      <button ref={fab} type="button" className={shell.fab} data-pebble-under={0} aria-label={t('New page')} onClick={() => openNewPage(null)}>
         <Icon name="plus" size={26} />
       </button>
     </div>

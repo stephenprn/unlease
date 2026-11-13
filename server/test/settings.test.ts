@@ -120,7 +120,7 @@ describe('PUT /api/settings', () => {
     for (const listModels of [anthropic([]).listModels, forbidden]) {
       const target = server({ envApiKey: null, listModels });
       const response = await putSettings(target, { anthropicApiKey: APP_KEY, budgetUsd: 3 });
-      expect(response).toEqual({ status: 400, body: { error: 'Clé refusée par Anthropic' } });
+      expect(response).toEqual({ status: 400, body: { error: 'Key refused by Anthropic' } });
       expect((await getSettings(target)).analysis).toMatchObject({ enabled: false, budgetUsd: 15 });
     }
   });
@@ -131,7 +131,7 @@ describe('PUT /api/settings', () => {
     };
     const target = server({ envApiKey: null, listModels: offline });
     const response = await putSettings(target, { anthropicApiKey: APP_KEY });
-    expect(response).toEqual({ status: 502, body: { error: 'Impossible de vérifier la clé auprès d’Anthropic' } });
+    expect(response).toEqual({ status: 502, body: { error: 'Could not check the key with Anthropic' } });
     expect(target.settings.effective().apiKey).toBeNull();
   });
 
@@ -139,18 +139,18 @@ describe('PUT /api/settings', () => {
     const { asked, listModels } = anthropic();
     const target = server({ listModels });
     const cases: [unknown, string][] = [
-      [{ model: 'claude-opus-4-8' }, 'Modèle inconnu'],
-      [{ model: null }, 'Modèle inconnu'],
-      [{ budgetUsd: -1 }, 'Budget invalide'],
-      [{ budgetUsd: '10' }, 'Budget invalide'],
-      [{ budgetUsd: 1e9 }, 'Budget invalide'],
-      [{ anthropicApiKey: '' }, 'Clé invalide'],
-      [{ anthropicApiKey: 'sk ant with spaces' }, 'Clé invalide'],
-      [{ anthropicApiKey: 42 }, 'Clé invalide'],
-      [[], 'Requête invalide'],
-      ['not json', 'Requête invalide'],
+      [{ model: 'claude-opus-4-8' }, 'Unknown model'],
+      [{ model: null }, 'Unknown model'],
+      [{ budgetUsd: -1 }, 'Invalid budget'],
+      [{ budgetUsd: '10' }, 'Invalid budget'],
+      [{ budgetUsd: 1e9 }, 'Invalid budget'],
+      [{ anthropicApiKey: '' }, 'Invalid key'],
+      [{ anthropicApiKey: 'sk ant with spaces' }, 'Invalid key'],
+      [{ anthropicApiKey: 42 }, 'Invalid key'],
+      [[], 'Invalid request'],
+      ['not json', 'Invalid request'],
       // A valid key with a bad model: nothing is checked and nothing is stored.
-      [{ anthropicApiKey: APP_KEY, model: 'gpt' }, 'Modèle inconnu'],
+      [{ anthropicApiKey: APP_KEY, model: 'gpt' }, 'Unknown model'],
     ];
     for (const [body, error] of cases) {
       expect(await putSettings(target, body), JSON.stringify(body)).toEqual({ status: 400, body: { error } });

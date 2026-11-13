@@ -141,8 +141,8 @@ function CaptionComponent({ block }: { block: Block }) {
       value={text}
       rows={1}
       readOnly={readOnly}
-      placeholder={t('Écrivez une légende…')}
-      aria-label={t('Légende')}
+      placeholder={t('Write a caption…')}
+      aria-label={t('Caption')}
       maxLength={PAGES_TEXT_LIMITS.block.caption}
       spellCheck
       data-caret-block={caret}

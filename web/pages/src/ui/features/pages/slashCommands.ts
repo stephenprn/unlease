@@ -22,6 +22,7 @@ import { focusBlock, setMenu, type RichHandle } from './editorStore';
 import { openInlineEmoji } from './InlineEmoji';
 import { placeAtom } from './inlineRuns';
 import { openDrawingEditor } from './DrawingBlock';
+import { pickImmichFor } from './ImmichBlock';
 import { pickAndAttach } from './filePick';
 
 export interface SlashCommand {
@@ -34,40 +35,41 @@ export interface SlashCommand {
   readonly words: string;
 }
 
-const BASIC = tx('Blocs de base');
-const INLINE = tx('Dans le texte');
-const MEDIA = tx('Médias');
-const CARNET = tx('Notes, collections et liens');
-const LAYOUT = tx('Mise en page');
+const BASIC = tx('Basic blocks');
+const INLINE = tx('In the text');
+const MEDIA = tx('Media');
+const CARNET = tx('Notes, collections and links');
+const LAYOUT = tx('Layout');
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = [
-  { key: 'text', label: tx('Texte'), hint: tx('Un paragraphe'), icon: 'text', section: BASIC, words: 'paragraphe text p' },
-  { key: 'h1', label: tx('Titre 1'), hint: tx('Le titre d’une grande partie'), icon: 'heading1', section: BASIC, words: 'heading h1 #' },
-  { key: 'h2', label: tx('Titre 2'), hint: tx('Le titre d’une partie'), icon: 'heading2', section: BASIC, words: 'heading h2 ##' },
-  { key: 'h3', label: tx('Titre 3'), hint: tx('Le titre d’une sous-partie'), icon: 'heading3', section: BASIC, words: 'heading h3 ###' },
-  { key: 'h4', label: tx('Titre 4'), hint: tx('Un petit titre'), icon: 'heading4', section: BASIC, words: 'heading h4 ####' },
-  { key: 'bullet', label: tx('Liste à puces'), hint: tx('Une liste simple'), icon: 'list', section: BASIC, words: 'puces bullet ul -' },
-  { key: 'numbered', label: tx('Liste numérotée'), hint: tx('Une liste dans l’ordre'), icon: 'numbered', section: BASIC, words: 'numerotee ordered ol 1.' },
-  { key: 'todo', label: tx('Liste de tâches'), hint: tx('Des cases à cocher'), icon: 'boxChecked', section: BASIC, words: 'taches todo checkbox cases cocher []' },
-  { key: 'toggle', label: tx('Liste dépliante'), hint: tx('Un contenu à déplier'), icon: 'toggle', section: BASIC, words: 'toggle depliante replier >' },
-  { key: 'callout', label: tx('Encadré'), hint: tx('Un texte mis en avant'), icon: 'callout', section: BASIC, words: 'callout encadre note info astuce' },
-  { key: 'code', label: tx('Code'), hint: tx('Du code coloré selon son langage'), icon: 'codeBlock', section: BASIC, words: 'code snippet ```' },
-  { key: 'table', label: tx('Tableau'), hint: tx('Des colonnes typées : nombres, dates, choix…'), icon: 'table', section: BASIC, words: 'tableau table base donnees database' },
-  { key: 'page', label: tx('Page'), hint: tx('Une sous-page dans cette page'), icon: 'page', section: BASIC, words: 'page sous-page subpage document' },
-  { key: 'date', label: tx('Date'), hint: tx('Aujourd’hui, à changer ensuite'), icon: 'calendar', section: INLINE, words: 'date jour calendrier heure day today time aujourdhui @' },
-  { key: 'emoji', label: tx('Emoji'), hint: tx('Un emoji dans la phrase'), icon: 'smiley', section: INLINE, words: 'emoji emoticone smiley icone :' },
-  { key: 'image', label: tx('Image'), hint: tx('Téléverser ou intégrer une image'), icon: 'image', section: MEDIA, words: 'image photo picture img' },
-  { key: 'video', label: tx('Vidéo'), hint: tx('Un fichier, ou une vidéo YouTube, Vimeo…'), icon: 'video', section: MEDIA, words: 'video youtube vimeo film' },
-  { key: 'pdf', label: tx('PDF'), hint: tx('Un document à lire dans la page'), icon: 'pdf', section: MEDIA, words: 'pdf document' },
-  { key: 'file', label: tx('Fichier'), hint: tx('N’importe quel fichier'), icon: 'file', section: MEDIA, words: 'fichier file piece jointe attachment' },
-  { key: 'drawing', label: tx('Dessin'), hint: tx('Une zone où dessiner'), icon: 'draw', section: MEDIA, words: 'dessin drawing croquis sketch dessiner draw' },
-  { key: 'mention', label: tx('Mention'), hint: tx('Citer une note, une collection, un lien ou une page'), icon: 'mention', section: CARNET, words: 'mention citer lien @' },
-  { key: 'bookmark', label: tx('Signet'), hint: tx('Une note, une collection, un lien ou une page en carte'), icon: 'bookmark', section: CARNET, words: 'signet bookmark carte apercu' },
-  { key: 'embed', label: tx('Intégration'), hint: tx('Une note, une collection ou un lien en entier'), icon: 'embed', section: CARNET, words: 'integrer embed integration' },
-  { key: 'columns2', label: tx('2 colonnes'), hint: tx('Des blocs côte à côte'), icon: 'columns', section: LAYOUT, words: 'colonnes columns cote' },
-  { key: 'columns3', label: tx('3 colonnes'), hint: tx('Des blocs côte à côte'), icon: 'columns', section: LAYOUT, words: 'colonnes columns cote' },
-  { key: 'calendar', label: tx('Agenda'), hint: tx('Vos prochains événements, ceux d’un libellé ou tous'), icon: 'calendar', section: LAYOUT, words: 'agenda calendrier calendar evenements events planning rendez-vous' },
-  { key: 'toc', label: tx('Table des matières'), hint: tx('Les titres de la page, pour y aller'), icon: 'contents', section: LAYOUT, words: 'table matieres sommaire contents toc plan' },
+  { key: 'text', label: tx('Text'), hint: tx('A paragraph'), icon: 'text', section: BASIC, words: 'paragraphe text p' },
+  { key: 'h1', label: tx('Heading 1'), hint: tx('A main section’s heading'), icon: 'heading1', section: BASIC, words: 'heading h1 #' },
+  { key: 'h2', label: tx('Heading 2'), hint: tx('A section’s heading'), icon: 'heading2', section: BASIC, words: 'heading h2 ##' },
+  { key: 'h3', label: tx('Heading 3'), hint: tx('A subsection’s heading'), icon: 'heading3', section: BASIC, words: 'heading h3 ###' },
+  { key: 'h4', label: tx('Heading 4'), hint: tx('A small heading'), icon: 'heading4', section: BASIC, words: 'heading h4 ####' },
+  { key: 'bullet', label: tx('Bulleted list'), hint: tx('A simple list'), icon: 'list', section: BASIC, words: 'puces bullet ul -' },
+  { key: 'numbered', label: tx('Numbered list'), hint: tx('A list in order'), icon: 'numbered', section: BASIC, words: 'numerotee ordered ol 1.' },
+  { key: 'todo', label: tx('To-do list'), hint: tx('Boxes to tick'), icon: 'boxChecked', section: BASIC, words: 'taches todo checkbox cases cocher []' },
+  { key: 'toggle', label: tx('Toggle list'), hint: tx('Content to expand'), icon: 'toggle', section: BASIC, words: 'toggle depliante replier >' },
+  { key: 'callout', label: tx('Callout'), hint: tx('Text that stands out'), icon: 'callout', section: BASIC, words: 'callout encadre note info astuce' },
+  { key: 'code', label: tx('Code'), hint: tx('Code coloured by its language'), icon: 'codeBlock', section: BASIC, words: 'code snippet ```' },
+  { key: 'table', label: tx('Table'), hint: tx('Typed columns: numbers, dates, choices…'), icon: 'table', section: BASIC, words: 'tableau table base donnees database' },
+  { key: 'page', label: tx('Page'), hint: tx('A sub-page in this page'), icon: 'page', section: BASIC, words: 'page sous-page subpage document' },
+  { key: 'date', label: tx('Date'), hint: tx('Today, to change after'), icon: 'calendar', section: INLINE, words: 'date jour calendrier heure day today time aujourdhui @' },
+  { key: 'emoji', label: tx('Emoji'), hint: tx('An emoji in the sentence'), icon: 'smiley', section: INLINE, words: 'emoji emoticone smiley icone :' },
+  { key: 'image', label: tx('Image'), hint: tx('Upload or embed an image'), icon: 'image', section: MEDIA, words: 'image photo picture img' },
+  { key: 'video', label: tx('Video'), hint: tx('A file, or a YouTube or Vimeo video…'), icon: 'video', section: MEDIA, words: 'video youtube vimeo film' },
+  { key: 'pdf', label: tx('PDF'), hint: tx('A document to read in the page'), icon: 'pdf', section: MEDIA, words: 'pdf document' },
+  { key: 'file', label: tx('File'), hint: tx('Any file'), icon: 'file', section: MEDIA, words: 'fichier file piece jointe attachment' },
+  { key: 'immich', label: tx('Photos from Immich'), hint: tx('An album or photos of your Immich'), icon: 'image', section: MEDIA, words: 'immich photos album galerie gallery souvenirs images' },
+  { key: 'drawing', label: tx('Drawing'), hint: tx('A space to draw in'), icon: 'draw', section: MEDIA, words: 'dessin drawing croquis sketch dessiner draw' },
+  { key: 'mention', label: tx('Mention [noun]'), hint: tx('Mention a note, a collection, a link or a page'), icon: 'mention', section: CARNET, words: 'mention citer lien @' },
+  { key: 'bookmark', label: tx('Bookmark'), hint: tx('A note, a collection, a link or a page as a card'), icon: 'bookmark', section: CARNET, words: 'signet bookmark carte apercu' },
+  { key: 'embed', label: tx('Embed [block]'), hint: tx('A whole note, collection or link'), icon: 'embed', section: CARNET, words: 'integrer embed integration' },
+  { key: 'columns2', label: tx('2 columns'), hint: tx('Blocks side by side'), icon: 'columns', section: LAYOUT, words: 'colonnes columns cote' },
+  { key: 'columns3', label: tx('3 columns'), hint: tx('Blocks side by side'), icon: 'columns', section: LAYOUT, words: 'colonnes columns cote' },
+  { key: 'calendar', label: tx('Calendar'), hint: tx('Your next events, a label’s or all of them'), icon: 'calendar', section: LAYOUT, words: 'agenda calendrier calendar evenements events planning rendez-vous' },
+  { key: 'toc', label: tx('Table of contents'), hint: tx('The page’s headings, to go to them'), icon: 'contents', section: LAYOUT, words: 'table matieres sommaire contents toc plan' },
 ];
 
 export function findCommands(query: string): SlashCommand[] {
@@ -148,6 +150,11 @@ export function runCommand(command: SlashCommand, page: string, blockId: string,
     case 'calendar':
       placeBlock(page, blockId, { kind: 'calendar', calendarDays: 14 }, empty);
       return;
+    case 'immich': {
+      const id = placeBlock(page, blockId, { kind: 'immich' }, empty);
+      if (id) pickImmichFor(id);
+      return;
+    }
     case 'drawing': {
       const id = placeBlock(page, blockId, { kind: 'drawing' }, empty);
       if (id) openDrawingEditor(page, id);

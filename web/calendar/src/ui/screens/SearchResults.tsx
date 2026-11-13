@@ -55,7 +55,7 @@ export function SearchResults({ query }: { query: string; today: string }) {
                   <Link to={paths.event(item.seriesId, item.repeats ? item.occurrence : null)} className={styles.simpleRow}>
                     <span className={styles.swatch} data-line={colorOf(item) ?? undefined} aria-hidden="true" />
                     <span className={styles.rowText}>
-                      <span className="t-body-strong">{item.event.title.trim() || t('Sans titre')}</span>
+                      <span className="t-body-strong">{item.event.title.trim() || t('Untitled')}</span>
                       <span className="t-meta">{[whenLine(item, now, twelveHours), item.event.place.trim()].filter(Boolean).join(' · ')}</span>
                     </span>
                   </Link>

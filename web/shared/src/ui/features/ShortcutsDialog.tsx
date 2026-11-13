@@ -2,7 +2,7 @@
 import { useId } from 'react';
 
 import { APP_WORDS } from '@unlease/core/appWords';
-import { t, tc, tx } from '@unlease/core/i18n';
+import { t, tx } from '@unlease/core/i18n';
 
 import { selectShortcutsOpen, setShortcutsOpen, useUiStore } from '../../app/store/ui';
 import { MOD_KEY, theApp, type ShortcutRow } from '../../modules';
@@ -22,19 +22,19 @@ function shownGroups(): readonly { title: string; rows: readonly ShortcutRow[] }
   const groups = app.shortcuts ?? [];
   const read = (rows: readonly ShortcutRow[]): ShortcutRow[] => rows.map(([keys, what]) => [keys, t(what)]);
   const everywhere: ShortcutRow[] = [
-    [[MOD_KEY, 'P'], t('Chercher et ouvrir (aussi Ctrl+K)')],
+    [[MOD_KEY, 'P'], t('Search and open (also Ctrl+K)')],
     [['/'], APP_WORDS[app.id].search],
     ...(app.commands ?? []).flatMap((command): ShortcutRow[] => (command.key ? [[[command.key.toUpperCase()], t(command.title)]] : [])),
     ...read(groups.filter(group => !group.title).flatMap(group => group.rows)),
-    [['?'], t('Afficher cette aide')],
-    [[tx('Échap')], t('Fermer, ou annuler la sélection')],
+    [['?'], t('Show this help')],
+    [[tx('Esc')], t('Close, or clear the selection')],
   ];
   const own = groups.flatMap(group => (group.title ? [{ title: t(group.title), rows: read(group.rows) }] : []));
-  return [{ title: t('Partout'), rows: everywhere }, ...own];
+  return [{ title: t('Everywhere'), rows: everywhere }, ...own];
 }
 
-/** A key's name as the keyboard shows it: « Retour » here is Backspace, not "Back"; the spotlight's key is ⌘ on a Mac. */
-const keyName = (key: string): string => (key === 'Retour' ? tc('key', 'Retour') : key === MOD_KEY ? modKey() : t(key));
+/** A key's name as the keyboard shows it (« Retour » in French for Backspace); the spotlight's key is ⌘ on a Mac. */
+const keyName = (key: string): string => (key === MOD_KEY ? modKey() : t(key));
 
 export function ShortcutsDialog() {
   const open = useUiStore(selectShortcutsOpen);
@@ -42,7 +42,7 @@ export function ShortcutsDialog() {
   const close = (): void => setShortcutsOpen(false);
   return (
     <Layer open={open} onDismiss={close} labelledBy={titleId}>
-      <DialogFrame title={t('Raccourcis clavier')} titleId={titleId} onClose={close} className={styles.shortcutsDialog}>
+      <DialogFrame title={t('Keyboard shortcuts')} titleId={titleId} onClose={close} className={styles.shortcutsDialog}>
         {shownGroups().map(group => (
           <section key={group.title} className={styles.shortcutsGroup}>
             <h3 className="t-section">{group.title}</h3>

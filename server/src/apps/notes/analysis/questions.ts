@@ -79,7 +79,7 @@ export class QuestionAsker {
     const record = (ok: boolean, error: string | null, spent: CallUsage | null) =>
       usage.record('ask' satisfies ModuleTask, { linkId: request.link.id, url, usage: spent, ok, error, durationMs: this.now() - started, result: null });
     const page = pageWords(read);
-    const gone = !page && read.fatal ? (read.error ?? 'La page n’a pas pu être lue') : null;
+    const gone = !page && read.fatal ? (read.error ?? 'The page could not be read') : null;
     // A page gone for good, and no web to turn to: Claude would be paid to say so.
     if (gone && !request.web) return { ok: false, status: 502, error: gone };
     try {
@@ -89,7 +89,7 @@ export class QuestionAsker {
       return { ok: true, answer: { answer: found.answer, sources: found.sources } };
     } catch (error) {
       if (!deadline.aborted && !(error instanceof ModelError)) log.error('question crashed', { error });
-      const message = deadline.aborted ? 'Claude a mis trop de temps' : error instanceof ModelError ? error.message : 'Erreur de la question';
+      const message = deadline.aborted ? 'Claude took too long' : error instanceof ModelError ? error.message : 'Question error';
       const spent = error instanceof ModelError ? error.usage : null;
       record(false, message, deadline.aborted && request.web ? withCutOffCall(spent, model.model) : spent);
       return { ok: false, status: error instanceof BudgetSpentError ? 409 : 502, error: message };

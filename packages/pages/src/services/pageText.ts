@@ -8,6 +8,7 @@ import { cellText } from './table';
 import { dateWords } from '@unlease/core/services/dates';
 import { concatRich, parseRich, richFromPlain, richLength, richToPlain, serializeRich, setFlag, setValue, type DateLabel, type Run } from '@unlease/core/services/richText';
 import { typedEmoji } from '@unlease/design/emojiSearch';
+import { immichBlockWords } from './immichBlock';
 
 /** A block to make, with what goes under it. */
 export interface BlockDraft {
@@ -395,6 +396,13 @@ export function blocksToMarkdown(blocks: readonly BlockDraft[], label: (target: 
       const url = typeof block.extra?.url === 'string' ? block.extra.url : '';
       if (url) lines.push(`${indent}![${caption}](${url})`);
       else if (caption) lines.push(`${indent}*${caption}*`);
+      continue;
+    }
+    if (block.kind === 'immich') {
+      const extra = block.extra ?? {};
+      const assets = Array.isArray(extra.immichAssetIds) ? extra.immichAssetIds.filter((id): id is string => typeof id === 'string') : [];
+      lines.push(`${indent}${immichBlockWords({ fileName: typeof extra.fileName === 'string' ? extra.fileName : '', immichAlbumId: typeof extra.immichAlbumId === 'string' ? extra.immichAlbumId : null, immichAssetIds: assets })}`);
+      if (caption) lines.push(`${indent}*${caption}*`);
       continue;
     }
     if (block.kind === 'table') {

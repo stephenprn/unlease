@@ -48,7 +48,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
         if (!controller.signal.aborted) setPhase({ kind: 'ready', answer });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('erreur inconnue') });
+        if (!controller.signal.aborted) setPhase({ kind: 'failed', reason: error instanceof Error ? t(error.message) : t('unknown error') });
       },
     );
     return () => controller.abort();
@@ -67,9 +67,9 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
       <View style={styles.waiting} accessibilityLiveRegion="polite">
         <ReadingTrack width={120} />
         <AppText variant="body" color={theme.color.inkMuted}>
-          {market === 'new' ? t('Claude cherche {item} dans d’autres boutiques…', { item }) : t('Claude cherche {item} d’occasion…', { item })}
+          {market === 'new' ? t('Claude is looking for {item} in other shops…', { item }) : t('Claude is looking for {item} second-hand…', { item })}
         </AppText>
-        <AppText variant="meta">{t('Une recherche sur le web prend souvent une demi-minute.')}</AppText>
+        <AppText variant="meta">{t('A web search often takes half a minute.')}</AppText>
       </View>
     );
   }
@@ -79,7 +79,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
     sites.length > 0 ? (
       <View style={styles.sites}>
         <AppText variant="section" accessibilityRole="header">
-          {t('Chercher vous-même')}
+          {t('Look for yourself')}
         </AppText>
         <View style={styles.siteRow}>
           {sites.map(site => (
@@ -93,7 +93,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
       <>
         <SheetScroll contentContainerStyle={styles.body}>
           <AppText variant="body" color={theme.color.danger} accessibilityLiveRegion="polite">
-            {t('Claude n’a pas pu chercher : {reason}', { reason: phase.reason })}
+            {t('Claude couldn’t search: {reason}', { reason: phase.reason })}
           </AppText>
           {siteSearches}
         </SheetScroll>
@@ -110,7 +110,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
     <SheetScroll contentContainerStyle={styles.body}>
       {market === 'used' && range ? <AppText variant="bodyStrong">{rangeText(range)}</AppText> : null}
       {offers.length === 0 ? (
-        <EmptyLine size="body" text={market === 'new' ? t('Rien trouvé de moins cher ailleurs pour l’instant.') : t('Aucune offre d’occasion trouvée pour l’instant.')} />
+        <EmptyLine size="body" text={market === 'new' ? t('Nothing cheaper found elsewhere for now.') : t('No second-hand offer found for now.')} />
       ) : (
         <Organic outline="panel" style={styles.well} accessibilityLabel={MODULE_NAMES[market === 'new' ? 'cheaper' : 'secondhand']}>
           {offers.map((offer, index) => (
@@ -121,7 +121,7 @@ function OffersBody({ id, market }: { id: string; market: OfferMarket }) {
       {note ? <AppText variant="body">{note}</AppText> : null}
       {siteSearches}
       <AppText variant="meta">
-        {t('Trouvé sur le web par Claude le {day} à {time}. Les prix changent vite, vérifiez-les sur le site.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
+        {t('Found on the web by Claude on {day} at {time}. Prices change fast, check them on the site.', { day: formatDay(searchedAt, now), time: formatClock(searchedAt) })}
       </AppText>
     </SheetScroll>
     <SearchFoot failed={false} url={link.url} onSearch={search} />
@@ -153,7 +153,7 @@ function OfferRow({ offer, market, link, first, slot }: { offer: Offer; market: 
         ) : null}
         {details ? <AppText variant="meta">{details}</AppText> : null}
       </View>
-      {url ? <IconButton icon="external" label={t('Voir l’offre de {shop}', { shop: offer.shop })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
+      {url ? <IconButton icon="external" label={t('See the offer from {shop}', { shop: offer.shop })} onPress={() => open(url)} style={styles.page} /> : slot ? <View style={styles.noPage} /> : null}
     </View>
   );
 }

@@ -70,7 +70,7 @@ export function GradientDialog({ open, initial, appearance, onCancel, onUse }: {
     <>
       <Layer open={open} onDismiss={unsaved.guard(onCancel)} labelledBy={`${id}-title`}>
         <DialogFrame
-          title={t('Créer un dégradé')}
+          title={t('Make a gradient')}
           titleId={`${id}-title`}
           className={styles.editor}
           onClose={unsaved.guard(onCancel)}
@@ -82,23 +82,23 @@ export function GradientDialog({ open, initial, appearance, onCancel, onUse }: {
           foot={
             <>
               <Button kind="text" onClick={onCancel}>
-                {t('Annuler')}
+                {t('Cancel')}
               </Button>
-              <Button type="submit">{t('Utiliser ce fond')}</Button>
+              <Button type="submit">{t('Use this background')}</Button>
             </>
           }
         >
           <AppearancePreview look={look} className={styles.editorPreview} />
 
           {/* The pebbles say what they are: no head over them; the dice at their row's end. */}
-          <div className={styles.stops} role="group" aria-label={t('Couleurs')}>
+          <div className={styles.stops} role="group" aria-label={t('Colours')}>
             {spec.colors.map((color, index) => (
               <button
                 key={index}
                 type="button"
                 className={styles.stop}
                 aria-pressed={index === at}
-                aria-label={t('Couleur {n} : {color}', { n: index + 1, color })}
+                aria-label={t('Colour {n}: {color}', { n: index + 1, color })}
                 data-pebble-under={pebbleTurn(index)}
                 data-still
                 style={{ '--pebble-fill': color } as CSSProperties}
@@ -108,18 +108,18 @@ export function GradientDialog({ open, initial, appearance, onCancel, onUse }: {
               </button>
             ))}
             {spec.colors.length < GRADIENT_COLORS.max ? (
-              <button type="button" className={`${styles.stop} ${styles.make}`} aria-label={t('Ajouter une couleur')} data-pebble-under={pebbleTurn(spec.colors.length)} data-still onClick={add}>
+              <button type="button" className={`${styles.stop} ${styles.make}`} aria-label={t('Add a colour')} data-pebble-under={pebbleTurn(spec.colors.length)} data-still onClick={add}>
                 <PebbleEdge turn={pebbleTurn(spec.colors.length)} />
                 <Icon name="plus" size={20} />
               </button>
             ) : null}
-            <IconButton icon="dice" label={t('Couleurs au hasard')} onClick={dice} tip className={styles.stopsDice} />
+            <IconButton icon="dice" label={t('Random colours')} onClick={dice} tip className={styles.stopsDice} />
           </div>
-          <ColorPicker value={spec.colors[at]!} onChange={setColor} label={t('Couleur {n} : {color}', { n: at + 1, color: spec.colors[at]! })} />
+          <ColorPicker value={spec.colors[at]!} onChange={setColor} label={t('Colour {n}: {color}', { n: at + 1, color: spec.colors[at]! })} />
           {spec.colors.length > GRADIENT_COLORS.min ? (
             <div className={styles.editorActions}>
               <Button kind="text" icon="minus" small onClick={remove}>
-                {t('Retirer cette couleur')}
+                {t('Remove this colour')}
               </Button>
             </div>
           ) : null}
@@ -130,7 +130,7 @@ export function GradientDialog({ open, initial, appearance, onCancel, onUse }: {
           <Segmented<GradientForm> label={t('Style')} value={spec.form} onChange={form => setSpec({ ...spec, form })} options={GRADIENT_FORMS.map(form => ({ value: form, label: GRADIENT_FORM_NAMES[form] }))} />
 
           <button type="button" role="switch" aria-checked={grain} className={styles.switchRow} onClick={() => setGrain(!grain)}>
-            <span className={`${styles.switchText} t-body`}>{t('Grain sur le fond')}</span>
+            <span className={`${styles.switchText} t-body`}>{t('Grain on the background')}</span>
             <SwitchMark checked={grain} />
           </button>
         </DialogFrame>

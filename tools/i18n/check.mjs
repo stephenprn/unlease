@@ -1,22 +1,22 @@
 /**
- * The English dictionaries' check: every French sentence the code translates (`t('…')`, `tx('…')`,
- * `tc('context', '…')` as `… [context]`, and the nouns of `plural(n, '…', '…')`) has its English in
- * a dictionary its code can count on: the core's for the core, the core's or the design system's for
- * the design system, and those or the app's own for an app (its package, its phone, its web). An app
- * installed alone then never shows French for want of another app's dictionary. From the repository
- * root:
+ * The French dictionaries' check: every English sentence the code translates (`t('…')`, `tx('…')`,
+ * `tc('context', '…')` as `… [context]`, and the nouns of `plural(n, '…', '…')`) is English, and has
+ * its French in a dictionary its code can count on: the core's for the core, the core's or the design
+ * system's for the design system, and those or the app's own for an app (its package, its phone, its
+ * web). An app installed alone then never shows English in a French interface for want of another
+ * app's dictionary. From the repository root:
  *
- *   node tools/i18n/check.mjs                    missing English, then entries no code uses
- *   node tools/i18n/check.mjs --unwrapped <path>  French-looking text left outside t() under <path>
+ *   node tools/i18n/check.mjs                    French keys, missing French, then entries no code uses
+ *   node tools/i18n/check.mjs --unwrapped <path>  French-looking text left in the code under <path>
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 /** Each package's dictionary (a file, or a folder of parts). */
-const DICTIONARIES = { core: 'packages/core/src/i18n/en', design: 'packages/design/src/i18n/en.ts', notes: 'packages/notes/src/i18n/en', contacts: 'packages/contacts/src/i18n/en', calendar: 'packages/calendar/src/i18n/en', pages: 'packages/pages/src/i18n/en' };
+const DICTIONARIES = { core: 'packages/core/src/i18n/fr', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr', contacts: 'packages/contacts/src/i18n/fr', calendar: 'packages/calendar/src/i18n/fr', pages: 'packages/pages/src/i18n/fr' };
 /** Where `--move` puts a sentence it moves into a package's dictionary. */
-const HOMES = { core: 'packages/core/src/i18n/en/shell.ts', design: 'packages/design/src/i18n/en.ts', notes: 'packages/notes/src/i18n/en/shared.ts', contacts: 'packages/contacts/src/i18n/en/shared.ts', calendar: 'packages/calendar/src/i18n/en/shared.ts', pages: 'packages/pages/src/i18n/en/shared.ts' };
+const HOMES = { core: 'packages/core/src/i18n/fr/shell.ts', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr/shared.ts', contacts: 'packages/contacts/src/i18n/fr/shared.ts', calendar: 'packages/calendar/src/i18n/fr/shared.ts', pages: 'packages/pages/src/i18n/fr/shared.ts' };
 /**
  * What each tree translates, and the dictionaries it may count on. The shell (the web apps'
  * shared shell, the phones' shared code) serves every app, so it counts on no app's dictionary; Agenda
@@ -33,7 +33,7 @@ const GROUPS = [
   { sources: ['packages/pages/src', 'mobile/pages/src', 'web/pages/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'] },
 ];
 const SOURCES = GROUPS.flatMap(group => group.sources);
-const SKIP = /(__tests__|node_modules|\/i18n\/en\/|\/i18n\/en\.ts$|\.d\.ts$|emojiCatalogue)/;
+const SKIP = /(__tests__|node_modules|\/i18n\/fr\/|\/i18n\/fr\.ts$|\.d\.ts$|emojiCatalogue)/;
 
 function walk(path, out = []) {
   for (const name of readdirSync(path)) {
@@ -66,7 +66,7 @@ function readLiteral(source, at) {
 
 const lineOf = (source, at) => source.slice(0, at).split('\n').length;
 
-/** The French sentences a file translates, with their lines. */
+/** The English sentences a file translates, with their lines. */
 function usedIn(file) {
   const source = readFileSync(file, 'utf8');
   const found = [];
@@ -187,13 +187,20 @@ if (args[0] === '--unwrapped') {
       }
     }
   }
-  console.log(`\n${count} French-looking text${count === 1 ? '' : 's'} outside t(): wrap what the interface shows, leave content, keys and comments.`);
+  console.log(`\n${count} French-looking text${count === 1 ? '' : 's'} in the code: write what the interface shows in English inside t() (its French in the dictionary), leave content and comments.`);
   process.exit(0);
 }
 
 const dictionaries = Object.fromEntries(Object.entries(DICTIONARIES).map(([owner, path]) => [owner, existsSync(path) ? dictionary(path) : new Map()]));
 const allKeys = new Map(Object.values(dictionaries).flatMap(keys => [...keys]));
 const used = new Map();
+/** A key's context (`Labels [notes]`): read as the sentence alone when the dictionary has no entry of its own for it. */
+const CONTEXT = / \[[a-z]\w*\]$/;
+/** A key that reads as French: the source is English. */
+const FRENCH_KEY = /[éèàêçùôîûâëïœÉÈÀÇ«»]|\b(le|la|les|des|une|du|pour|dans|avec|vos|votre|aucun|aucune|cette|ces|est|sont|pas|nouvelle|nouveau|ajouter|supprimer|annuler|fermer|ouvrir|enregistrer|rechercher|modifier|choisir|réglages|corbeille|liens?)\b/i;
+/** Names that read French in English too (a paper, a word English borrowed, French words given as a search's example). */
+const NAMES = /\b(Seyès|cafés?)\b|soleil, cœur/g;
+const french = [];
 /** The groups each sentence is translated in. */
 const usedBy = new Map();
 const missing = [];
@@ -206,7 +213,9 @@ for (const group of GROUPS) {
         if (!used.has(text)) used.set(text, where);
         if (!usedBy.has(text)) usedBy.set(text, new Set());
         usedBy.get(text).add(group);
-        if (group.uses.some(owner => dictionaries[owner].has(text))) continue;
+        if (FRENCH_KEY.test(text.replace(NAMES, ''))) french.push({ text, where });
+        const bare = text.replace(CONTEXT, '');
+        if (group.uses.some(owner => dictionaries[owner].has(text) || dictionaries[owner].has(bare))) continue;
         const elsewhere = allKeys.get(text);
         missing.push({ text, where, note: elsewhere ? ` (only in ${elsewhere}: move it to ${group.uses.map(owner => DICTIONARIES[owner]).join(' or ')})` : '' });
       }
@@ -268,8 +277,10 @@ if (args.includes('--move')) {
   console.log(`\n${moved} moved: run the check again.`);
   process.exit(0);
 }
-const unused = [...allKeys.keys()].filter(text => !used.has(text));
+const unused = [...allKeys.keys()].filter(text => !used.has(text) && ![...used.keys()].some(key => key.replace(CONTEXT, '') === text));
+const frenchSeen = new Set();
+for (const { text, where } of french) if (!frenchSeen.has(text) && frenchSeen.add(text)) console.log(`french   ${where}  ${JSON.stringify(text)}: keys are English`);
 for (const { text, where, note } of reported) console.log(`missing  ${where}  ${JSON.stringify(text)}${note}`);
 if (args.includes('--unused')) for (const text of unused) console.log(`unused   ${allKeys.get(text)}  ${JSON.stringify(text)}`);
-console.log(`\n${used.size} sentences translated in code, ${allKeys.size} in the dictionaries: ${reported.length} missing, ${unused.length} unused${args.includes('--unused') ? '' : ' (--unused lists them)'}.`);
-process.exit(reported.length > 0 ? 1 : 0);
+console.log(`\n${used.size} sentences translated in code, ${allKeys.size} in the dictionaries: ${frenchSeen.size} French keys, ${reported.length} missing, ${unused.length} unused${args.includes('--unused') ? '' : ' (--unused lists them)'}.`);
+process.exit(reported.length > 0 || frenchSeen.size > 0 ? 1 : 0);

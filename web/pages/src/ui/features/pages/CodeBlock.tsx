@@ -6,7 +6,7 @@
  */
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { CODE_LANGUAGES, codeLanguage } from '@unlease/pages/services/code';
 import { foldText } from '@unlease/core/services/search';
 import type { Block } from '@unlease/pages/models/blocks';
@@ -41,13 +41,13 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
         {codeLanguage(value).name}
         {disabled ? null : <Icon name="chevronDown" size={14} />}
       </button>
-      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={t('Langage')} width={240} align="start" rows>
+      <Popover open={open} anchor={button} onDismiss={() => setOpen(false)} label={tc('code', 'Language')} width={240} align="start" rows>
         <div className={styles.languagePanel}>
           <input
             className={styles.pickerField}
             value={query}
-            placeholder={t('Chercher un langage')}
-            aria-label={t('Chercher un langage')}
+            placeholder={t('Search languages')}
+            aria-label={t('Search languages')}
             data-autofocus=""
             onChange={event => setQuery(event.target.value)}
             onKeyDown={event => {
@@ -58,7 +58,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
               onPick(found[0].key);
             }}
           />
-          <div data-scroller="" className={styles.languageList} role="listbox" aria-label={t('Langages')}>
+          <div data-scroller="" className={styles.languageList} role="listbox" aria-label={tc('code', 'Languages')}>
             {found.map(language => (
               <button
                 key={language.key}
@@ -77,7 +77,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
               </button>
             ))}
           </div>
-          {found.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('Aucun langage ne correspond.')} /> : null}
+          {found.length === 0 ? <EmptyLine className={styles.pickerEmpty} role="status" text={t('No language matches.')} /> : null}
         </div>
       </Popover>
     </>
@@ -213,13 +213,13 @@ function CodeBlockComponent({ block }: { block: Block }) {
           className={styles.codeCopy}
           onClick={() =>
             void navigator.clipboard?.writeText(text).then(
-              () => showSnack(t('Code copié'), undefined, { tone: 'success' }),
-              () => showError(t('Impossible de copier le code')),
+              () => showSnack(t('Code copied'), undefined, { tone: 'success' }),
+              () => showError(t('Couldn’t copy the code')),
             )
           }
         >
           <Icon name="copy" size={16} />
-          {t('Copier')}
+          {t('Copy')}
         </button>
       </div>
       <div className={styles.codeArea} data-caret-block={block.id}>
@@ -235,7 +235,7 @@ function CodeBlockComponent({ block }: { block: Block }) {
           spellCheck={false}
           autoCapitalize="off"
           autoComplete="off"
-          aria-label={t('Code {language}', { language: codeLanguage(language).name })}
+          aria-label={t('{language} code', { language: codeLanguage(language).name })}
           onChange={event => edit(event.target.value)}
           onBlur={flush}
           onKeyDown={onKeyDown}

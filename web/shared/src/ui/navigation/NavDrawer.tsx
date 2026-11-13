@@ -47,7 +47,7 @@ export function NavList({ route, onNavigate }: NavListProps) {
       </div>
       <div className={styles.navFoot}>
         {Foot ? <Foot route={route} onNavigate={go} /> : null}
-        <NavRow to={paths.settings} label={t('Réglages')} leading={<NavGlyph name="settings" />} current={settings && route.page === null} within={settings && route.page !== null} onNavigate={go} />
+        <NavRow to={paths.settings} label={t('Settings')} leading={<NavGlyph name="settings" />} current={settings && route.page === null} within={settings && route.page !== null} onNavigate={go} />
         <NavRow to={paths.admin} label={t('Administration')} leading={<NavGlyph name={ADMIN_GLYPH} />} current={admin && route.section === null} within={admin && route.section !== null} onNavigate={go} />
       </div>
     </nav>

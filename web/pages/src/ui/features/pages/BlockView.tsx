@@ -25,6 +25,7 @@ import { browserPath, isPlainClick, navigate } from '@shared/ui/router';
 import { paths } from '../../routes';
 import { BlockMenu } from './BlockMenu';
 import { Caption } from './Caption';
+import { ImmichBlock } from './ImmichBlock';
 import { CodeBlock } from './CodeBlock';
 import { ColumnsBlock } from './ColumnsBlock';
 import { consumeDragClick, pressToDrag } from './dragDrop';
@@ -46,31 +47,32 @@ import { CalendarBlock } from './CalendarBlock';
 const NO_IDS: readonly string[] = [];
 
 const PLACEHOLDERS: Partial<Record<BlockKind, string>> = {
-  text: tx('Écrivez, ou tapez « / » pour les commandes'),
-  h1: tx('Titre 1'),
-  h2: tx('Titre 2'),
-  h3: tx('Titre 3'),
-  h4: tx('Titre 4'),
-  bullet: tx('Liste'),
-  numbered: tx('Liste'),
-  todo: tx('À faire'),
-  toggle: tx('Liste dépliante'),
-  callout: tx('Écrivez quelque chose…'),
+  text: tx('Write, or type “/” for commands'),
+  h1: tx('Heading 1'),
+  h2: tx('Heading 2'),
+  h3: tx('Heading 3'),
+  h4: tx('Heading 4'),
+  bullet: tx('List'),
+  numbered: tx('List'),
+  todo: tx('To-do'),
+  toggle: tx('Toggle list'),
+  callout: tx('Write something…'),
 };
 
 const LABELS: Partial<Record<BlockKind, string>> = {
-  text: tx('Texte'),
-  h1: tx('Titre 1'),
-  h2: tx('Titre 2'),
-  h3: tx('Titre 3'),
-  h4: tx('Titre 4'),
-  bullet: tx('Élément de liste'),
-  numbered: tx('Élément de liste numérotée'),
-  todo: tx('Tâche'),
-  toggle: tx('Liste dépliante'),
-  callout: tx('Encadré'),
-  toc: tx('Table des matières'),
-  calendar: tx('Agenda'),
+  text: tx('Text'),
+  h1: tx('Heading 1'),
+  h2: tx('Heading 2'),
+  h3: tx('Heading 3'),
+  h4: tx('Heading 4'),
+  bullet: tx('List item'),
+  numbered: tx('Numbered list item'),
+  todo: tx('Task'),
+  toggle: tx('Toggle list'),
+  callout: tx('Callout'),
+  toc: tx('Table of contents'),
+  calendar: tx('Calendar'),
+  immich: tx('Photos from Immich'),
 };
 
 /** A container's blocks, in order. */
@@ -98,7 +100,7 @@ function BlockText({ block }: { block: Block }) {
       placeholder={placeholder ? t(placeholder) : ''}
       hintOnFocus={block.kind === 'text'}
       className={`${styles.rich} ${styles[`kind_${block.kind}`] ?? ''}`}
-      label={t(LABELS[block.kind] ?? 'Texte')}
+      label={t(LABELS[block.kind] ?? 'Text')}
       readOnly={readOnly}
       onKeyDown={(event, handle) => richKey(event, page, fresh(), handle)}
       onTyped={handle => afterTyping(page, fresh(), handle)}
@@ -135,7 +137,7 @@ function Toggle({ block, depth }: { block: Block; depth: number }) {
   return (
     <>
       <div className={styles.line}>
-        <button type="button" className={styles.toggleButton} data-open={open || undefined} aria-expanded={open} aria-label={open ? t('Replier') : t('Déplier')} onClick={() => setToggleOpen(block.id, !open)}>
+        <button type="button" className={styles.toggleButton} data-open={open || undefined} aria-expanded={open} aria-label={open ? t('Collapse') : t('Expand')} onClick={() => setToggleOpen(block.id, !open)}>
           <Icon name="chevronRight" size={16} />
         </button>
         <div className={styles.main}>
@@ -153,7 +155,7 @@ function Toggle({ block, depth }: { block: Block; depth: number }) {
               focusBlock(id, 'start');
             }}
           >
-            {t('Liste vide. Cliquez pour y écrire, ou glissez-y des blocs.')}
+            {t('Empty list. Click to write in it, or drag blocks into it.')}
           </button>
         ) : (
           <Children id={block.id} depth={depth} />
@@ -167,7 +169,7 @@ function Callout({ block, depth }: { block: Block; depth: number }) {
   const { page, readOnly } = usePageContext();
   return (
     <div className={styles.callout} data-outline="panel" data-line={isLineColor(block.color) ? block.color : undefined}>
-      <EmojiButton value={block.icon ?? '💡'} label={t('Changer l’icône de l’encadré')} disabled={readOnly} onChange={icon => updateBlock(page, block.id, { icon })} allowNone={false} />
+      <EmojiButton value={block.icon ?? '💡'} label={t('Change the callout’s icon')} disabled={readOnly} onChange={icon => updateBlock(page, block.id, { icon })} allowNone={false} />
       <div className={styles.main}>
         <BlockText block={block} />
         <Children id={block.id} depth={depth} flush />
@@ -229,7 +231,7 @@ function Content({ block, depth, siblings, index }: { block: Block; depth: numbe
         <>
           <div className={styles.line} data-checked={block.checked || undefined}>
             <span className={styles.todoBox}>
-              <Checkbox checked={block.checked} label={block.checked ? t('Marquer comme à faire') : t('Marquer comme fait')} disabled={readOnly} recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
+              <Checkbox checked={block.checked} label={block.checked ? t('Mark as not done') : t('Mark as done')} disabled={readOnly} recede onToggle={() => updateBlock(page, block.id, { checked: !block.checked })} />
             </span>
             <div className={styles.main}>
               <BlockText block={block} />
@@ -262,6 +264,8 @@ function Content({ block, depth, siblings, index }: { block: Block; depth: numbe
       return <DrawingBlock block={block} />;
     case 'calendar':
       return <CalendarBlock block={block} />;
+    case 'immich':
+      return <ImmichBlock block={block} />;
     default:
       return null;
   }
@@ -269,12 +273,12 @@ function Content({ block, depth, siblings, index }: { block: Block; depth: numbe
 
 /** The dragged blocks' label: the first one's words, or how many there are. */
 function dragLabel(ids: readonly string[]): string {
-  if (ids.length > 1) return plural(ids.length, 'bloc');
+  if (ids.length > 1) return plural(ids.length, 'block');
   const block = useBlocksStore.getState().blocks[ids[0] ?? ''];
   if (!block) return '';
   const text = block.kind === 'page' || block.kind === 'code' ? block.text : markupToPlain(block.text, mentionLabel, dateWords);
   const label = LABELS[block.kind];
-  return text.trim().slice(0, 60) || (label ? t(label) : t('Bloc'));
+  return text.trim().slice(0, 60) || (label ? t(label) : t('Block'));
 }
 
 function Gutter({ block }: { block: Block }) {
@@ -306,17 +310,17 @@ function Gutter({ block }: { block: Block }) {
 
   return (
     <div className={styles.gutter} contentEditable={false} data-gutter="">
-      <button type="button" className={styles.gutterButton} aria-label={t('Ajouter un bloc en dessous')} data-tip={t('Ajouter un bloc')} onClick={addBelow}>
+      <button type="button" className={styles.gutterButton} aria-label={t('Add a block below')} data-tip={t('Add a block')} onClick={addBelow}>
         <Icon name="plus" size={18} />
       </button>
       <button
         ref={grip}
         type="button"
         className={`${styles.gutterButton} ${styles.grip}`}
-        aria-label={t('Déplacer le bloc, ou ouvrir son menu')}
+        aria-label={t('Move the block, or open its menu')}
         aria-haspopup="menu"
         aria-expanded={menu}
-        data-tip={t('Glisser pour déplacer · cliquer pour le menu')}
+        data-tip={t('Drag to move · click for the menu')}
         onPointerDown={onPointerDown}
         onClick={() => {
           if (consumeDragClick()) return;

@@ -18,12 +18,12 @@ export function weatherKind(code: number): WeatherKind {
 }
 
 export const WEATHER_WORDS: Readonly<Record<WeatherKind, string>> = localized({
-  clear: tx('Ensoleillé'),
-  cloudy: tx('Nuageux'),
-  fog: tx('Brouillard'),
-  rain: tx('Pluie'),
-  snow: tx('Neige'),
-  storm: tx('Orage'),
+  clear: tx('Sunny'),
+  cloudy: tx('Cloudy'),
+  fog: tx('Fog'),
+  rain: tx('Rain'),
+  snow: tx('Snow'),
+  storm: tx('Thunderstorm'),
 });
 
 /** « 18° / 9° ». */

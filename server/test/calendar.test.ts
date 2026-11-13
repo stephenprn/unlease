@@ -2,6 +2,8 @@ import { createDecipheriv, createECDH, createHmac, createPublicKey, verify } fro
 import { afterEach, describe, expect, it } from 'vitest';
 import { parseIcs } from '@unlease/calendar/services/ics';
 import { Housekeeping } from '../src/jobs/housekeeping';
+import { FeedLogins } from '../src/apps/calendar/logins';
+import type { Fetcher, FetchOptions, FetchResult } from '../src/reading/fetcher';
 import { encryptPayload, makeVapidKeys, vapidAuthorization, vapidPublicKey } from '../src/apps/calendar/webpush';
 import { LEAD_MS, nextTickIn } from '../src/apps/calendar/reminders';
 import { AUTH, claudeMessage, createTestServer, FakeFetcher, rec, T0, type FakeRoute, type TestServer } from './helpers';
@@ -40,6 +42,53 @@ class SwitchingFetcher extends FakeFetcher {
   }
 }
 
+const DAV_CALENDAR = 'https://dav.example.org/dav/caldav/Y2FsOi8vMC8x';
+const BASIC = `Basic ${Buffer.from('lea@example.org:secret').toString('base64')}`;
+
+const multistatus = (...responses: string[]): string => `<?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav">${responses.join('')}</D:multistatus>`;
+const davResponse = (href: string, props: string): string => `<D:response><D:href>${href}</D:href><D:propstat><D:prop>${props}</D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>`;
+const calendarProps = (name: string, comps = '<CAL:comp name="VEVENT"/>'): string =>
+  `<D:resourcetype><D:collection/><CAL:calendar/></D:resourcetype><D:displayname>${name}</D:displayname><CAL:supported-calendar-component-set>${comps}</CAL:supported-calendar-component-set>`;
+
+/** An Open-Xchange-like CalDAV server: a login opens a principal, its home, two calendars of events and a list of tasks. */
+class FakeCalDav implements Fetcher {
+  readonly calls: { method: string; url: string; authorization: string | undefined; body: string }[] = [];
+  password = 'secret';
+
+  async fetch(url: string, options: FetchOptions): Promise<FetchResult> {
+    const method = options.method ?? 'GET';
+    const authorization = options.login ? `Basic ${Buffer.from(`${options.login.username}:${options.login.password}`).toString('base64')}` : undefined;
+    this.calls.push({ method, url, authorization, body: options.body ?? '' });
+    const answer = (status: number, body = '', headers: Record<string, string> = {}): FetchResult => ({ url, status, headers, body: Buffer.from(body), truncated: false });
+    if (url === FEED_URL) return answer(200, ics(vevent('a@x', 'Match', '20261103T190000')), { 'content-type': 'text/calendar' });
+    if (!url.startsWith('https://dav.example.org/')) return answer(404);
+    if (authorization !== `Basic ${Buffer.from(`lea@example.org:${this.password}`).toString('base64')}`) return answer(401, 'Authorization Required', { 'www-authenticate': 'Basic realm="OX WebDAV"' });
+    const depth = options.headers?.depth;
+    if (method === 'PROPFIND' && url === DAV_CALENDAR && depth === '0') return answer(207, multistatus(davResponse('/dav/caldav/Y2FsOi8vMC8x', calendarProps('Travail'))));
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/dav/caldav/home/' && depth === '0') return answer(207, multistatus(davResponse('/dav/caldav/home/', calendarProps('Maison'))));
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/' && depth === '0') return answer(207, multistatus(davResponse('/', '<D:resourcetype><D:collection/></D:resourcetype>')));
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/' && depth === '1') return answer(207, multistatus(davResponse('/', '<D:resourcetype><D:collection/></D:resourcetype>')));
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/.well-known/caldav') return { ...answer(207, multistatus(davResponse('/dav/', '<D:current-user-principal><D:href>/dav/principals/lea/</D:href></D:current-user-principal>'))), url: 'https://dav.example.org/dav/' };
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/dav/principals/lea/') return answer(207, multistatus(davResponse('/dav/principals/lea/', '<CAL:calendar-home-set><D:href>/dav/caldav/</D:href></CAL:calendar-home-set>')));
+    if (method === 'PROPFIND' && url === 'https://dav.example.org/dav/caldav/' && depth === '1') {
+      return answer(
+        207,
+        multistatus(
+          davResponse('/dav/caldav/', '<D:resourcetype><D:collection/></D:resourcetype>'),
+          davResponse('/dav/caldav/Y2FsOi8vMC8x', calendarProps('Travail')),
+          davResponse('/dav/caldav/home/', calendarProps('Maison', '<CAL:comp name="VEVENT"/><CAL:comp name="VTODO"/>')),
+          davResponse('/dav/caldav/tasks/', calendarProps('Tâches', '<CAL:comp name="VTODO"/>')),
+        ),
+      );
+    }
+    if (method === 'REPORT' && depth === '1' && options.body?.includes('calendar-query')) {
+      const data = (uid: string, summary: string, start: string): string => davResponse(`/dav/caldav/Y2FsOi8vMC8x/${uid}.ics`, `<D:getetag>"1"</D:getetag><CAL:calendar-data>${ics(vevent(uid, summary, start)).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</CAL:calendar-data>`);
+      return answer(207, multistatus(data('p@x', 'Point d’équipe', '20261104T100000'), `<D:response><D:href>/dav/caldav/Y2FsOi8vMC8x/r.ics</D:href><D:propstat><D:prop><CAL:calendar-data><![CDATA[${ics(vevent('r@x', 'Revue', '20261105T140000'))}]]></CAL:calendar-data></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>`));
+    }
+    return answer(404);
+  }
+}
+
 const json = (value: unknown): FakeRoute => ({ status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify(value) });
 
 describe('Agenda on the server', () => {
@@ -61,12 +110,72 @@ describe('Agenda on the server', () => {
     expect(liveEvents(server, 'club').map(record => record.fields.title)).toEqual(['Entraînement (gymnase)']);
     table[FEED_URL] = { status: 404, body: 'gone' };
     expect(await server.calendar.feeds.refresh('club')).toMatchObject({ ok: false, status: 502 });
-    expect(server.records.get('calendarFeed', 'club')!.fields.error).toBe('Ce calendrier n’existe plus à cette adresse');
+    expect(server.records.get('calendarFeed', 'club')!.fields.error).toBe('This calendar no longer exists at this address');
     expect(liveEvents(server, 'club')).toHaveLength(1);
     // Deleted, its events go with it.
     server.sync.apply([{ type: 'calendarFeed', id: 'club', patch: () => ({ deletedAt: T0 }) }]);
     await server.calendar.feeds.refresh('club');
     expect(liveEvents(server, 'club')).toHaveLength(0);
+  });
+
+  it('tries an address before it is followed, asks for a login, and finds the calendar over CalDAV', async () => {
+    const dav = new FakeCalDav();
+    server = createTestServer({ fetcher: dav });
+    const connect = (body: unknown) => server.app.request('/api/calendar/feeds/connect', { method: 'POST', headers: { ...AUTH, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    // A public address: ready as iCalendar, its own name.
+    expect(await (await connect({ id: 'club', url: FEED_URL.replace('https', 'webcal') })).json()).toEqual({ status: 'ready', kind: 'ics', url: FEED_URL, name: 'Club' });
+    // The mailbox's CalDAV address asks for a login.
+    expect(await (await connect({ id: 'work', url: DAV_CALENDAR })).json()).toEqual({ status: 'login' });
+    const refused = await connect({ id: 'work', url: DAV_CALENDAR, login: { username: 'lea@example.org', password: 'wrong' } });
+    expect(refused.status).toBe(422);
+    expect(await refused.json()).toEqual({ error: 'Login or password refused' });
+    // The right login: the calendar itself, its name, and nothing written yet but the login.
+    const ready = await connect({ id: 'work', url: DAV_CALENDAR, login: { username: 'lea@example.org', password: 'secret' } });
+    expect(await ready.json()).toEqual({ status: 'ready', kind: 'caldav', url: DAV_CALENDAR, name: 'Travail' });
+    expect(server.records.get('calendarFeed', 'work')).toBeUndefined();
+    // The device follows it: the server reads its events with the login, never sent elsewhere.
+    server.sync.push([feed('work', DAV_CALENDAR, { kind: 'caldav', account: 'lea@example.org' })]);
+    expect(await server.calendar.feeds.refresh('work')).toEqual({ ok: true });
+    expect(liveEvents(server, 'work').map(record => record.fields.title).sort()).toEqual(['Point d’équipe', 'Revue']);
+    expect(server.records.get('calendarFeed', 'work')!.fields).toMatchObject({ name: 'dav.example.org', refreshedAt: T0, error: '' });
+    expect(dav.calls.filter(call => call.method !== 'GET').every(call => call.authorization !== undefined)).toBe(true);
+    expect(dav.calls.filter(call => call.method === 'REPORT').every(call => call.authorization === BASIC)).toBe(true);
+    // No password in what syncs.
+    expect(JSON.stringify(server.records.all())).not.toContain('secret');
+    // The password changed elsewhere: the calendar says so, and keeps its events.
+    dav.password = 'renewed';
+    expect(await server.calendar.feeds.refresh('work')).toMatchObject({ ok: false });
+    expect(server.records.get('calendarFeed', 'work')!.fields.error).toBe('Login or password refused');
+    expect(liveEvents(server, 'work')).toHaveLength(2);
+    // Unsubscribed: its events and its login go.
+    server.sync.apply([{ type: 'calendarFeed', id: 'work', patch: () => ({ deletedAt: T0 }) }]);
+    await server.calendar.feeds.refresh('work');
+    expect(liveEvents(server, 'work')).toHaveLength(0);
+    expect(new FeedLogins(server.db).get('work')).toBeNull();
+  });
+
+  it('finds the calendars from the server’s root, asks which one, and never sends a password over http', async () => {
+    const dav = new FakeCalDav();
+    server = createTestServer({ fetcher: dav });
+    const connect = (body: unknown) => server.app.request('/api/calendar/feeds/connect', { method: 'POST', headers: { ...AUTH, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const login = { username: 'lea@example.org', password: 'secret' };
+    expect(await (await connect({ id: 'work', url: 'https://dav.example.org/', login })).json()).toEqual({
+      status: 'choose',
+      calendars: [
+        { url: DAV_CALENDAR, name: 'Travail' },
+        { url: 'https://dav.example.org/dav/caldav/home/', name: 'Maison' },
+      ],
+    });
+    // The list of tasks is no calendar of events. One chosen: ready.
+    expect(await (await connect({ id: 'work', url: 'https://dav.example.org/dav/caldav/home/', login })).json()).toMatchObject({ status: 'ready', kind: 'caldav', name: 'Maison' });
+    const plain = await connect({ id: 'other', url: 'http://dav.example.org/dav/caldav/Y2FsOi8vMC8x', login });
+    expect(plain.status).toBe(422);
+    expect(await plain.json()).toEqual({ error: 'A password only travels over https://' });
+    // A login never claimed by a calendar is let go after a day.
+    const logins = new FeedLogins(server.db);
+    expect(logins.get('work')).not.toBeNull();
+    logins.prune(() => null, T0 + 2 * DAY);
+    expect(logins.get('work')).toBeNull();
   });
 
   it('refreshes from its route, and answers 404 while Agenda is off', async () => {

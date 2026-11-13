@@ -139,13 +139,13 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
   const status = !typedEnough
     ? null
     : !found.asks
-      ? t('Sans serveur, seuls les lieux déjà utilisés sont proposés.')
+      ? t('Without a server, only places already used are offered.')
       : found.waiting
-        ? t('Recherche des lieux…')
+        ? t('Looking for places…')
         : found.failed
-          ? t('La recherche de lieux ne répond pas : le lieu est gardé tel qu’il est écrit.')
+          ? t('The place search is not answering: the place is kept as written.')
           : theirs.length === 0 && mine.length === 0
-            ? t('Aucun lieu trouvé : il est gardé tel qu’il est écrit.')
+            ? t('No place found: it is kept as written.')
             : null;
   // The rows keep clear of the keyboard: what lies under it scrolls up.
   const under = keyboardTop !== null && height > 0 ? Math.max(0, height - keyboardTop) : 0;
@@ -155,13 +155,13 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
       <Ground />
       <View style={{ paddingTop: insets.top + SEARCH_TOP }}>
         <Organic frost style={styles.strip}>
-          <IconButton icon="back" label={t('Retour')} onPress={closePlaceSearch} />
+          <IconButton icon="back" label={t('Back')} onPress={closePlaceSearch} />
           <TextInput
             ref={input}
             value={text}
             onChangeText={setText}
             autoFocus
-            placeholder={t('Rechercher un lieu ou une adresse')}
+            placeholder={t('Search for a place or an address')}
             placeholderTextColor={theme.color.inkFaint}
             selectionColor={theme.color.highlight}
             selectionHandleColor={theme.color.focus}
@@ -175,14 +175,14 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
             accessibilityLabel={request.label}
             style={[variantStyle(theme, 'body'), styles.input]}
           />
-          {text ? <IconButton icon="close" label={t('Effacer')} onPress={() => (setText(''), input.current?.focus())} /> : null}
+          {text ? <IconButton icon="close" label={t('Clear')} onPress={() => (setText(''), input.current?.focus())} /> : null}
         </Organic>
       </View>
       <EdgeScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={[styles.list, { paddingBottom: under + insets.bottom + 16 }]}>
         {typed ? (
-          <ListRow icon="edit" title={t('Utiliser « {place} »', { place: typed })} onPress={() => done(typed, null)} />
+          <ListRow icon="edit" title={t('Use “{place}”', { place: typed })} onPress={() => done(typed, null)} />
         ) : request.value.trim() ? (
-          <ListRow icon="close" title={t('Effacer le lieu')} onPress={() => done('', null)} />
+          <ListRow icon="close" title={t('Clear the place')} onPress={() => done('', null)} />
         ) : null}
         {mine.map(place => (
           <ListRow key={`k:${place.name}|${place.detail}`} icon="clock" title={place.name} supporting={place.detail || undefined} onPress={() => done(place.label, place)} />
@@ -193,7 +193,7 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
         {status ? <EmptyLine text={status} glyph="info" slot={24} gap={16} style={styles.status} /> : null}
         {theirs.length > 0 ? (
           <AppText variant="labelSmall" color={theme.color.inkMuted} style={styles.credit}>
-            {t('Lieux : © les contributeurs d’OpenStreetMap')}
+            {t('Places: © OpenStreetMap contributors')}
           </AppText>
         ) : null}
       </EdgeScrollView>

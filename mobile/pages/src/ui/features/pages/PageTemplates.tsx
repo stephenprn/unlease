@@ -38,9 +38,9 @@ export function PageTemplates({ page }: { page: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <View role="group" accessibilityLabel={t('Partir d’un modèle')} style={styles.group}>
+    <View role="group" accessibilityLabel={t('Start from a template')} style={styles.group}>
       <AppText variant="meta" color={theme.color.inkMuted}>
-        {t('Partir d’un modèle')}
+        {t('Start from a template')}
       </AppText>
       <View style={styles.row}>
         {TEMPLATE_CHOICES.map(choice => (

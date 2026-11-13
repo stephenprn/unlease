@@ -24,13 +24,13 @@ import styles from './pages.module.css';
 import { selectionOffsets, setSelectionOffsets } from './richDom';
 
 const FLAGS: readonly { readonly flag: FlagMark; readonly icon: GlyphName; readonly label: string; readonly keys: string | null }[] = [
-  { flag: 'b', icon: 'bold', label: tx('Gras'), keys: 'Ctrl+B' },
-  { flag: 'i', icon: 'italic', label: tx('Italique'), keys: 'Ctrl+I' },
-  { flag: 'u', icon: 'underline', label: tx('Souligné'), keys: 'Ctrl+U' },
-  { flag: 's', icon: 'strike', label: tx('Barré'), keys: tx('Ctrl+Maj+S') },
+  { flag: 'b', icon: 'bold', label: tx('Bold'), keys: 'Ctrl+B' },
+  { flag: 'i', icon: 'italic', label: tx('Italic'), keys: 'Ctrl+I' },
+  { flag: 'u', icon: 'underline', label: tx('Underline'), keys: 'Ctrl+U' },
+  { flag: 's', icon: 'strike', label: tx('Strikethrough'), keys: tx('Ctrl+Shift+S') },
   { flag: 'c', icon: 'code', label: tx('Code'), keys: 'Ctrl+E' },
   // No shortcut: the free ones are the browsers' (Ctrl+Maj+K opens Firefox's console).
-  { flag: 'k', icon: 'keyboard', label: tx('Touches'), keys: null },
+  { flag: 'k', icon: 'keyboard', label: tx('Keys'), keys: null },
 ];
 
 const elementOf = (node: Node | null): Element | null => (node instanceof Element ? node : (node?.parentElement ?? null));
@@ -82,15 +82,15 @@ function linkAddress(typed: string): string | null {
 
 function Swatches({ kind, current, onPick }: { kind: 'fg' | 'bg'; current: string | null; onPick: (color: string | null) => void }) {
   return (
-    <div className={styles.swatchRow} role="radiogroup" aria-label={kind === 'fg' ? t('Couleur du texte') : t('Surlignage')}>
+    <div className={styles.swatchRow} role="radiogroup" aria-label={kind === 'fg' ? t('Text colour') : t('Highlight')}>
       {[null, ...LINE_COLORS].map((color, index) => (
         <button
           key={color ?? 'none'}
           type="button"
           role="radio"
           aria-checked={color === current}
-          aria-label={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Couleur par défaut') : t('Sans surlignage')}
-          data-tip={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Par défaut') : t('Aucun')}
+          aria-label={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Default colour') : t('No highlight')}
+          data-tip={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Default') : t('None')}
           className={styles.textSwatch}
           data-kind={kind}
           data-line={color ?? undefined}
@@ -138,7 +138,7 @@ function FormatPanel({ target }: { target: FormatTarget }) {
       closeFormat();
     };
     return (
-      <Floating anchor={anchor} above label={t('Lien')} className={styles.formatBar} role="toolbar">
+      <Floating anchor={anchor} above label={t('Link')} className={styles.formatBar} role="toolbar">
         <form
           className={styles.linkForm}
           noValidate
@@ -154,8 +154,8 @@ function FormatPanel({ target }: { target: FormatTarget }) {
             className={styles.linkField}
             value={address}
             autoFocus
-            placeholder={t('Collez ou tapez une adresse')}
-            aria-label={t('Adresse du lien')}
+            placeholder={t('Paste or type an address')}
+            aria-label={t('Link address')}
             aria-invalid={refused || undefined}
             aria-describedby={refused ? 'format-link-problem' : undefined}
             inputMode="url"
@@ -176,7 +176,7 @@ function FormatPanel({ target }: { target: FormatTarget }) {
             }}
           />
           {current ? (
-            <button type="button" className={styles.formatButton} aria-label={t('Retirer le lien')} data-tip={t('Retirer le lien')} onClick={() => done(null)}>
+            <button type="button" className={styles.formatButton} aria-label={t('Remove link')} data-tip={t('Remove link')} onClick={() => done(null)}>
               <Icon name="unlink" size={18} />
             </button>
           ) : null}
@@ -184,7 +184,7 @@ function FormatPanel({ target }: { target: FormatTarget }) {
         {refused ? (
           <p id="format-link-problem" className={`${controls.error} ${styles.linkProblem} t-meta`}>
             <Icon name="error" size={16} className={controls.errorGlyph} />
-            <span>{t('Ce n’est pas une adresse : tapez par exemple example.org ou https://example.org/page.')}</span>
+            <span>{t('That isn’t an address: type for example example.org or https://example.org/page.')}</span>
           </p>
         ) : null}
       </Floating>
@@ -192,7 +192,7 @@ function FormatPanel({ target }: { target: FormatTarget }) {
   }
 
   return (
-    <Floating anchor={anchor} above label={t('Mise en forme')} className={styles.formatBar} role="toolbar">
+    <Floating anchor={anchor} above label={t('Formatting')} className={styles.formatBar} role="toolbar">
       <div className={styles.formatRow}>
         {FLAGS.map(({ flag: mark, icon, label, keys }) => (
           <button key={mark} type="button" className={styles.formatButton} aria-label={t(label)} aria-pressed={rangeHas(runs, target.start, target.end, mark)} data-tip={keys ? `${t(label)} (${t(keys)})` : t(label)} onClick={() => flag(mark)}>
@@ -201,18 +201,18 @@ function FormatPanel({ target }: { target: FormatTarget }) {
         ))}
         <span className={styles.formatDivider} aria-hidden="true" />
         {/* DESIGN's order, the phone's too: the marks, then the colour, then the link. */}
-        <button type="button" className={styles.formatButton} aria-label={t('Couleur')} aria-expanded={colors} data-tip={t('Couleur et surlignage')} onClick={() => setColors(open => !open)}>
+        <button type="button" className={styles.formatButton} aria-label={t('Colour')} aria-expanded={colors} data-tip={t('Colour and highlight')} onClick={() => setColors(open => !open)}>
           <Icon name="textColor" size={18} />
         </button>
-        <button type="button" className={styles.formatButton} aria-label={t('Lien')} aria-pressed={current !== null} data-tip={t('Lien (Ctrl+K)')} onClick={() => openFormat({ ...target, link: true })}>
+        <button type="button" className={styles.formatButton} aria-label={t('Link')} aria-pressed={current !== null} data-tip={t('Link (Ctrl+K)')} onClick={() => openFormat({ ...target, link: true })}>
           <Icon name="link" size={18} />
         </button>
       </div>
       {colors ? (
         <div className={styles.colorPanel}>
-          <span className="t-meta-strong">{t('Couleur du texte')}</span>
+          <span className="t-meta-strong">{t('Text colour')}</span>
           <Swatches kind="fg" current={rangeValue(runs, target.start, target.end, 'fg')} onPick={color => value('fg', color)} />
-          <span className="t-meta-strong">{t('Surlignage')}</span>
+          <span className="t-meta-strong">{t('Highlight')}</span>
           <Swatches kind="bg" current={rangeValue(runs, target.start, target.end, 'bg')} onPick={color => value('bg', color)} />
         </div>
       ) : null}

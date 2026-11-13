@@ -2,7 +2,8 @@
  * Pages' routes, beside the platform's under `/api` and behind the same token, answered while
  * Pages is on: questions about pages (`ask.ts`), copies of articles kept as pages (`copies.ts`), the
  * pages that mention something (`mentions.ts`: a contact's or an event's « Mentionné dans »), and the
- * pages Agenda asks for (`journal.ts`: an event's notes, the day's page).
+ * pages Agenda asks for (`journal.ts`: an event's notes, the day's page), and a page's past versions
+ * (`versions.ts`).
  */
 import type { Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -17,6 +18,8 @@ import type { Env } from '../types';
 import type { ModuleOutcome } from '../../claude/outcome';
 import type { PagesAsker } from './ask';
 import type { CopyMaker } from './copies';
+import type { PageVersions } from './versions';
+import { isValidId } from '@unlease/core/sync/schema';
 
 const MB = 1024 * 1024;
 const JSON_LIMIT = 1 * MB;
@@ -30,6 +33,7 @@ export interface PagesServices {
   readonly copies: CopyMaker;
   readonly records: RecordStore;
   readonly journal: JournalMaker;
+  readonly versions: PageVersions;
 }
 
 /** A JSON request parsed, then answered; a run goes on if the app hangs up (it is paid for). */
@@ -40,7 +44,7 @@ const answer =
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: 'Requête invalide' }, 400);
+      return c.json({ error: 'Invalid request' }, 400);
     }
     const request = parse(body);
     if (!request) return c.json({ error: invalid }, 400);
@@ -49,15 +53,28 @@ const answer =
     return c.json(outcome.answer as object, 200, { 'Cache-Control': 'no-store' });
   };
 
-export function pagesRoutes(app: Hono<Env>, { asker, copies, records, journal }: PagesServices): void {
+export function pagesRoutes(app: Hono<Env>, { asker, copies, records, journal, versions }: PagesServices): void {
   app.get('/api/pages/mentions', c => {
     const query = parseMentionsQuery(c.req.query('type'), c.req.query('ids'));
-    if (!query) return c.json({ error: 'Requête invalide' }, 400);
+    if (!query) return c.json({ error: 'Invalid request' }, 400);
     const answer: MentionsResponse = { places: pagesMentioning(records, query.type, query.ids) };
     return c.json(answer, 200, { 'Cache-Control': 'no-store' });
   });
-  app.post('/api/pages/ask', bodyLimit({ maxSize: PAGES_LIMIT, onError: tooLarge }), answer(parsePagesAskRequest, 'Question invalide', request => asker.ask(request)));
+  app.post('/api/pages/ask', bodyLimit({ maxSize: PAGES_LIMIT, onError: tooLarge }), answer(parsePagesAskRequest, 'Invalid question', request => asker.ask(request)));
   app.post(FROM_EVENT_PATH, bodyLimit({ maxSize: 64 * 1024, onError: tooLarge }), answer(parseFromEventRequest, 'Demande de page invalide', async request => ({ ok: true, answer: journal.fromEvent(request) })));
   app.post(DAILY_PATH, bodyLimit({ maxSize: 4 * 1024, onError: tooLarge }), answer(parseDailyRequest, 'Jour invalide', async request => ({ ok: true, answer: journal.daily(request) })));
-  app.post('/api/pages/copies', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), answer(parseCopyRequest, 'Demande de copie invalide', request => copies.make(request)));
+  app.get('/api/pages/:page/versions', c => {
+    const page = c.req.param('page');
+    if (!isValidId(page)) return c.json({ error: 'Invalid request' }, 400);
+    return c.json(versions.list(page), 200, { 'Cache-Control': 'no-store' });
+  });
+  app.get('/api/pages/:page/versions/:version', c => {
+    const page = c.req.param('page');
+    const id = Number(c.req.param('version'));
+    if (!isValidId(page) || !Number.isSafeInteger(id) || id < 0) return c.json({ error: 'Invalid request' }, 400);
+    const version = versions.get(page, id);
+    if (!version) return c.json({ error: 'This version is no longer kept' }, 404);
+    return c.json(version, 200, { 'Cache-Control': 'no-store' });
+  });
+  app.post('/api/pages/copies', bodyLimit({ maxSize: JSON_LIMIT, onError: tooLarge }), answer(parseCopyRequest, 'Invalid copy request', request => copies.make(request)));
 }

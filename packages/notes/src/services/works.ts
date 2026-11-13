@@ -18,16 +18,16 @@ export const ratingSource = (rating: Pick<Rating, 'source' | 'label'>): string =
 
 /** A title's state in Seerr, in a word or two. */
 export const SEERR_STATUS_WORDS: Readonly<Record<SeerrStatus, string>> = localized({
-  available: tx('Disponible'),
-  partial: tx('En partie disponible'),
-  processing: tx('En cours d’ajout'),
-  requested: tx('Demandé'),
-  missing: tx('À demander'),
+  available: tx('Available'),
+  partial: tx('Partly available'),
+  processing: tx('Being added'),
+  requested: tx('Requested'),
+  missing: tx('Not requested'),
 });
 
 /** Where the recap stops, for the question and its wait: « l’épisode 5 de la saison 2 », « la saison 2 ». */
 export function recapStopWords(season: number, episode: number | null): string {
-  return episode === null ? t('la saison {season}', { season }) : t('l’épisode {episode} de la saison {season}', { episode, season });
+  return episode === null ? t('season {season}', { season }) : t('episode {episode} of season {season}', { episode, season });
 }
 
 /** As many seasons and episodes as the pickers offer. */

@@ -10,7 +10,7 @@ import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { APP_NAME } from '@unlease/notes/brand';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { SHAPES } from '@unlease/design/shapes';
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { isBlank } from '@unlease/core/services/formChecks';
 import { addedMessage, addedTone } from '@unlease/notes/services/savedLinks';
 import { cleanUrl, extractUrls } from '@unlease/core/services/url';
@@ -33,7 +33,7 @@ import { useTheme } from '@shared/ui/theme/ThemeProvider';
 /** "utm_source, fbclid et 2 autres". */
 function removedList(names: readonly string[]): string {
   if (names.length <= 3) return names.join(', ');
-  return t('{names} et {count} autres', { names: names.slice(0, 2).join(', '), count: names.length - 2 });
+  return t('{names} and {count} more', { names: names.slice(0, 2).join(', '), count: names.length - 2 });
 }
 
 /** Where the links went: Claude files them (`auto`), or the collection picked. */
@@ -54,7 +54,7 @@ export interface LinkCaptureSheetProps {
   readonly onAdmin: () => void;
 }
 
-export function LinkCaptureSheet({ visible, initial, preset = null, title = t('Classer un lien'), offerClipboard = true, onDismiss, onAdded, onAdmin }: LinkCaptureSheetProps) {
+export function LinkCaptureSheet({ visible, initial, preset = null, title = t('File a link'), offerClipboard = true, onDismiss, onAdded, onAdmin }: LinkCaptureSheetProps) {
   const theme = useTheme();
   const lines = useLines();
   // Claude files it (« Automatique ») once the server said it has a key; said it has none, the way to the Administration. Not said yet: neither (a link added still waits for its reading).
@@ -87,21 +87,21 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
     onAdded(addLinks(urls, target === 'auto' ? { autoFile: true } : { noteId: target }), target);
   };
   // Words with no link in them are said under the field, what was typed kept; the keyboard's « OK » files it.
-  const form = useForm({ link: !isBlank(text) && urls.length === 0 ? t('Aucun lien ici : collez une adresse, comme https://example.org/page.') : null }, { order: ['link'], sendOnDone: save });
+  const form = useForm({ link: !isBlank(text) && urls.length === 0 ? t('No link here: paste an address, like https://example.org/page.') : null }, { order: ['link'], sendOnDone: save });
   // A link typed and not filed is asked about before the sheet closes on it.
   const unsaved = useUnsaved(visible && !isBlank(text) && text.trim() !== initial.trim());
   const dismiss = unsaved.guard(onDismiss);
 
   // What becomes of the link, under the chips.
   const fate = !server
-    ? t('Sans serveur, le lien est gardé tel quel. Claude lit les liens depuis votre serveur {app} : connectez-le dans l’administration.', { app: APP_NAME })
+    ? t('Without a server, the link is kept as it is. Claude reads links from your {app} server: connect it in the Administration.', { app: APP_NAME })
     : claude === 'off'
-      ? t('Le lien est gardé tel quel : ajoutez une clé API Claude dans l’administration pour qu’il soit lu et rangé.')
+      ? t('The link is kept as it is: add a Claude API key in the Administration to have it read and filed.')
       : !reading
         ? null
         : target === 'auto'
-          ? t('Claude lit la page et range le lien dans la bonne collection, ou dans Non classé.')
-          : t('Claude lit la page ; le lien reste dans cette collection.');
+          ? t('Claude reads the page and files the link in the right collection, or in Unsorted.')
+          : t('Claude reads the page; the link stays in this collection.');
 
   // Chosen: the paper chip ringed in matcha, as a picker marks its choice, so an emblem always sits on paper.
   const chip = (selected: boolean) => [
@@ -122,21 +122,21 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
           onChangeText={setText}
           placeholder="https://…"
           autoFocus={!initial}
-          accessibilityLabel={t('Adresse du lien')}
+          accessibilityLabel={t('Link address')}
         />
         {removed.length > 0 ? (
           <View style={styles.cleaned} accessibilityLiveRegion="polite">
             <Icon name="broom" size={18} color={theme.color.link} />
             <AppText variant="meta" style={styles.flex}>
-              {removed.length > 1 ? t('Nettoyé : {names} seront retirés de l’adresse.', { names: removedList(removed) }) : t('Nettoyé : {names} sera retiré de l’adresse.', { names: removedList(removed) })}
+              {removed.length > 1 ? tc('many', 'Cleaned: {names} will be removed from the address.', { names: removedList(removed) }) : t('Cleaned: {names} will be removed from the address.', { names: removedList(removed) })}
             </AppText>
           </View>
         ) : null}
         {clip && !text ? (
-          <Tappable onPress={() => setText(clip)} accessibilityLabel={t('Coller le lien copié')} style={[styles.clip, { borderColor: theme.color.dashed }]}>
+          <Tappable onPress={() => setText(clip)} accessibilityLabel={t('Paste the copied link')} style={[styles.clip, { borderColor: theme.color.dashed }]}>
             <Icon name="copy" size={18} color={theme.color.inkMuted} />
             <AppText variant="meta" numberOfLines={1} style={styles.flex}>
-              {t('Coller : {link}', { link: clip })}
+              {t('Paste: {link}', { link: clip })}
             </AppText>
           </Tappable>
         ) : null}
@@ -147,11 +147,11 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
               onPress={() => setTarget('auto')}
               accessibilityRole="radio"
               accessibilityState={{ checked: target === 'auto' }}
-              accessibilityLabel={t('Classement automatique par Claude')}
+              accessibilityLabel={t('Automatic filing by Claude')}
               style={chip(target === 'auto')}
             >
               <Icon name="sparkle" size={20} color={theme.color.ink} solid={target === 'auto'} />
-              <AppText variant="label">{t('Automatique')}</AppText>
+              <AppText variant="label">{t('Automatic')}</AppText>
             </Tappable>
           ) : null}
           {targets.map(line => {
@@ -170,7 +170,7 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('C
       </SheetScroll>
       <FormFoot message={form.message}>
         {claude === 'off' ? <Button kind="text" label={t('Administration')} icon="server" onPress={onAdmin} /> : null}
-        <Button label={reading ? t('Classer') : t('Ajouter')} icon="check" disabled={isBlank(text)} onPress={() => void form.submit(save)} />
+        <Button label={reading ? tc('verb', 'File') : t('Add')} icon="check" disabled={isBlank(text)} onPress={() => void form.submit(save)} />
       </FormFoot>
     </Sheet>
     {unsaved.dialog}

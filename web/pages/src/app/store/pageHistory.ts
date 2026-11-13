@@ -57,12 +57,13 @@ function push(page: string, step: Step): void {
   redoStacks.delete(page);
 }
 
-/** Writes one gesture on a page and keeps the way back. */
-export function commit(page: string | null, changes: readonly LocalChange[], carets: { readonly before?: Caret | null; readonly after?: Caret | null } = {}, now: number = Date.now()): void {
-  if (changes.length === 0) return;
-  const before = page ? previousValues(changes, now) : [];
+/** Writes one gesture on a page and keeps the way back; returns that way back (the values it overwrote), for a slip's Undo. */
+export function commit(page: string | null, changes: readonly LocalChange[], carets: { readonly before?: Caret | null; readonly after?: Caret | null } = {}, now: number = Date.now()): readonly LocalChange[] {
+  if (changes.length === 0) return [];
+  const before = previousValues(changes, now);
   writeLocal(changes, now);
   if (page) push(page, { before, after: changes, caretBefore: carets.before ?? null, caretAfter: carets.after ?? null, typing: null, at: now });
+  return before;
 }
 
 /** Typing saved in a block's text or caption (already written): joins the step of the burst it continues. */

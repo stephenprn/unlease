@@ -16,7 +16,7 @@ import type { ScreenProps } from '../navigation/types';
 export const SECTIONS: readonly AppAdminSection[] = [
   {
     id: 'pages-ask',
-    title: () => t('Questions sur les pages'),
+    title: () => t('Questions about pages'),
     icon: 'bubble',
     info: PAGES_ASK_INFO,
     line: settings => pagesAskLine(settings.pages),

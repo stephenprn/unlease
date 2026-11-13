@@ -15,7 +15,7 @@ import type { Occurrence } from './occurrences';
 import { clockPart, instantToWall, isDay } from './time';
 
 /** What one may ask first, while the conversation is empty: tapped, each is asked (both clients; `t()` where shown). */
-export const ASK_STARTERS = [tx('Qu’est-ce que j’ai cette semaine ?'), tx('Quand suis-je libre jeudi soir ?'), tx('Quels sont les prochains anniversaires ?'), tx('Quand ai-je vu Paul pour la dernière fois ?')] as const;
+export const ASK_STARTERS = [tx('What do I have this week?'), tx('When am I free on Thursday evening?'), tx('Which birthdays are coming up?'), tx('When did I last see Paul?')] as const;
 
 export interface AskSources {
   readonly occurrences: readonly Occurrence[];

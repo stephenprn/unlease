@@ -67,7 +67,7 @@ export function targetTitle(s: LibraryState, target: BlockTarget): string | null
     case 'note': {
       const note = s.notes[target.id];
       if (!note || note.deletedAt !== null) return null;
-      return shownTitle(note).trim() || bodyText(note).trim().split('\n')[0]?.slice(0, 80) || (note.kind === 'drawing' ? t('Dessin') : t('Note sans titre'));
+      return shownTitle(note).trim() || bodyText(note).trim().split('\n')[0]?.slice(0, 80) || (note.kind === 'drawing' ? t('Drawing') : t('Untitled note'));
     }
     case 'link': {
       const link = s.links[target.id];
@@ -87,7 +87,7 @@ export function targetTitle(s: LibraryState, target: BlockTarget): string | null
     case 'event': {
       // Named while it is in Agenda's bin too: only an event deleted for good is gone.
       const event = s.agenda.events[target.id];
-      return event && event.deletedAt === null ? event.title.trim() || t('Sans titre') : null;
+      return event && event.deletedAt === null ? event.title.trim() || t('Untitled') : null;
     }
     default:
       // A type a newer client added (another app's): nothing here to name it with.
@@ -101,5 +101,5 @@ export function useTargetTitle(target: BlockTarget): string | null {
 
 /** For text made from blocks (a copy, a code block): a mention as its name, « (supprimé) » once gone. */
 export function mentionLabel(target: BlockTarget): string {
-  return targetTitle(useLibraryStore.getState(), target) ?? t('(supprimé)');
+  return targetTitle(useLibraryStore.getState(), target) ?? t('(deleted)');
 }

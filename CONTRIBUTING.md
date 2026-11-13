@@ -43,7 +43,7 @@ node tools/i18n/check.mjs
 ## A few rules that bite
 
 - `packages/` is compiled into the phone, the web and the server: no dependency, no React, React Native, Node or DOM API there, and `core` and `design` know no app, Carnet's package never imports Pages' (lint enforces all three).
-- Every sentence the interface shows goes through `t()` from `@unlease/core/i18n`, French as the key, with its English in its package's dictionary (Carnet's: `packages/notes/src/i18n/en/`, Pages': `packages/pages/src/i18n/en/`, the shell's: `packages/core/src/i18n/en/`; `node tools/i18n/check.mjs` lists what is missing, `--move` files a sentence where every code using it can count on it).
+- Every sentence the interface shows goes through `t()` from `@unlease/core/i18n`, written in English (the key), with its French in its package's dictionary (Carnet's: `packages/notes/src/i18n/fr/`, Pages': `packages/pages/src/i18n/fr/`, the shell's: `packages/core/src/i18n/fr/`; `node tools/i18n/check.mjs` refuses a French key and lists what is missing, `--move` files a sentence where every code using it can count on it). A new language is a dictionary beside the French one.
 - A synced field is added to its record type's declaration (`packages/<app>/src/sync/types.ts`) and to that package's `sync/entities.ts`; ship the server before the apps.
 - New records get `createId()` (a UUIDv7); a mention or an embed points at a type and an id (`packages/core/src/refs.ts`).
 - Generated files (icons, widget resources, textures, the emoji catalogue, fonts) are rebuilt with their scripts in `tools/`, never edited by hand.

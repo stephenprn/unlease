@@ -6,6 +6,7 @@
  */
 import { isLocale, type Locale } from '@unlease/core/i18n';
 import { DAY_PATTERN, WALL_PATTERN } from '../models/events';
+import { isDigestTime } from '../services/digest';
 
 export const WEATHER_PATH = '/api/calendar/weather';
 export const PARSE_PATH = '/api/calendar/parse';
@@ -21,6 +22,60 @@ export const feedRefreshPath = (id: string): string => `/api/calendar/feeds/${en
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const isWhen = (value: unknown): value is string => typeof value === 'string' && (DAY_PATTERN.test(value) || WALL_PATTERN.test(value));
+
+/**
+ * `POST /api/calendar/feeds/connect`: an address tried before it is followed. The server reads it as
+ * an iCalendar address; when it asks for a login and one is given, it finds the calendar over
+ * CalDAV (from the calendar's address, the account's, or the server's) and keeps that login under
+ * the calendar's id, for itself only. The device then writes the calendar (`ready`), asks for a login
+ * (`login`), or asks which calendar (`choose`); a failure is an `error` in French, as `feed.error`.
+ * Given the id of a calendar already followed, it changes that calendar's login and reads it again.
+ */
+export const FEED_CONNECT_PATH = '/api/calendar/feeds/connect';
+
+/** A login's bounds: an address or a name, and a password (an app's password, often). */
+export const FEED_LOGIN_LIMITS = { username: 320, password: 1000 } as const;
+
+export interface FeedConnectRequest {
+  /** The calendar's id: minted by the device for a new one, or one already followed. */
+  readonly id: string;
+  readonly url: string;
+  /** Both or neither. */
+  readonly login?: { readonly username: string; readonly password: string };
+}
+
+export type FeedConnectResponse =
+  /** It can be followed: as an iCalendar address, or over CalDAV at `url` (the calendar found), with its own `name` ('' when it gives none). */
+  | { readonly status: 'ready'; readonly kind: 'ics' | 'caldav'; readonly url: string; readonly name: string }
+  /** The address asks for a login. */
+  | { readonly status: 'login' }
+  /** The login opens several calendars: one is chosen, and asked again by its address. */
+  | { readonly status: 'choose'; readonly calendars: readonly { readonly url: string; readonly name: string }[] };
+
+const isId = (value: unknown): value is string => typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value);
+
+export function parseFeedConnectRequest(value: unknown): FeedConnectRequest | null {
+  if (!isObject(value) || !isId(value.id) || typeof value.url !== 'string' || !value.url.trim() || value.url.length > 4000) return null;
+  if (value.login === undefined || value.login === null) return { id: value.id, url: value.url.trim() };
+  const login = value.login;
+  if (!isObject(login) || typeof login.username !== 'string' || typeof login.password !== 'string') return null;
+  const username = login.username.trim();
+  if (!username || username.length > FEED_LOGIN_LIMITS.username || !login.password || login.password.length > FEED_LOGIN_LIMITS.password) return null;
+  return { id: value.id, url: value.url.trim(), login: { username, password: login.password } };
+}
+
+export function parseFeedConnectResponse(value: unknown): FeedConnectResponse | null {
+  if (!isObject(value)) return null;
+  if (value.status === 'login') return { status: 'login' };
+  if (value.status === 'ready' && (value.kind === 'ics' || value.kind === 'caldav') && typeof value.url === 'string') {
+    return { status: 'ready', kind: value.kind, url: value.url, name: typeof value.name === 'string' ? value.name : '' };
+  }
+  if (value.status === 'choose' && Array.isArray(value.calendars)) {
+    const calendars = value.calendars.flatMap(entry => (isObject(entry) && typeof entry.url === 'string' ? [{ url: entry.url, name: typeof entry.name === 'string' ? entry.name : '' }] : []));
+    return calendars.length > 0 ? { status: 'choose', calendars } : null;
+  }
+  return null;
+}
 
 // ── weather ────────────────────────────────────────────────────────────────
 
@@ -180,6 +235,18 @@ export function parseRegions(value: unknown): string[] {
 
 // ── push notifications (the web's reminders) ──────────────────────────────
 
+/** The morning digest a browser asked for (`services/digest`): when, and what of the day it reads, as its Réglages say. */
+export interface PushDigest {
+  /** `07:30`, one of `DIGEST_TIMES`, in the browser's zone. */
+  readonly at: string;
+  /** Pushed on a day with nothing too. */
+  readonly empty: boolean;
+  readonly birthdays: boolean;
+  readonly noteReminders: boolean;
+  readonly pageDates: boolean;
+  readonly twelveHours: boolean;
+}
+
 /** A browser's push subscription (the Push API's), with what the server needs to word and time its reminders. */
 export interface PushSubscriptionRequest {
   readonly endpoint: string;
@@ -187,6 +254,16 @@ export interface PushSubscriptionRequest {
   readonly lang: Locale;
   /** The browser's zone: an all-day event's reminder rings at its midnight there. */
   readonly timeZone: string;
+  /** The events' reminders pushed (false: the digest alone); a browser that never said wants them. */
+  readonly reminders?: boolean;
+  /** The morning digest, when asked for. */
+  readonly digest?: PushDigest | null;
+}
+
+function parsePushDigest(value: unknown): PushDigest | null {
+  if (!isObject(value) || !isDigestTime(value.at)) return null;
+  const flag = (key: string, fallback: boolean): boolean => (typeof value[key] === 'boolean' ? (value[key] as boolean) : fallback);
+  return { at: value.at, empty: flag('empty', false), birthdays: flag('birthdays', true), noteReminders: flag('noteReminders', true), pageDates: flag('pageDates', false), twelveHours: flag('twelveHours', false) };
 }
 
 export function parsePushSubscription(value: unknown): PushSubscriptionRequest | null {
@@ -194,7 +271,14 @@ export function parsePushSubscription(value: unknown): PushSubscriptionRequest |
   const keys = value.keys;
   if (!isObject(keys) || typeof keys.p256dh !== 'string' || typeof keys.auth !== 'string') return null;
   if (!/^[A-Za-z0-9_-]{40,200}={0,2}$/.test(keys.p256dh) || !/^[A-Za-z0-9_-]{10,60}={0,2}$/.test(keys.auth)) return null;
-  return { endpoint: value.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth }, lang: isLocale(value.lang) ? value.lang : 'fr', timeZone: typeof value.timeZone === 'string' ? value.timeZone.slice(0, 64) : '' };
+  return {
+    endpoint: value.endpoint,
+    keys: { p256dh: keys.p256dh, auth: keys.auth },
+    lang: isLocale(value.lang) ? value.lang : 'fr',
+    timeZone: typeof value.timeZone === 'string' ? value.timeZone.slice(0, 64) : '',
+    reminders: value.reminders !== false,
+    digest: parsePushDigest(value.digest),
+  };
 }
 
 /** What a reminder's push carries (the service worker shows it). */

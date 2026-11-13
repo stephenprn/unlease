@@ -9,7 +9,7 @@
 import React, { useRef } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { t, tc } from '@unlease/core/i18n';
+import { t } from '@unlease/core/i18n';
 import { isLineColor } from '@unlease/design/colors';
 import { pickedFinish, type Finish } from '@unlease/notes/services/finishes';
 import { setFinish } from '@app/store/actions';
@@ -37,15 +37,15 @@ export function BulkColorSheet({ visible, ids, onDismiss }: { visible: boolean; 
   const apply = (finish: Finish): void => {
     const { undo, changed, kept } = setFinish(ids, finish);
     if (changed === 0) return;
-    const message = 'color' in finish ? (kept > 0 ? t('Couleur changée sur les notes') : t('Couleur changée')) : kept > 0 ? t('Papier changé sur les notes') : t('Papier changé');
-    showSnack(message, { label: tc('undo', 'Annuler'), run: undo }, { tone: 'success' });
+    const message = 'color' in finish ? (kept > 0 ? t('Colour changed on the notes') : t('Colour changed')) : kept > 0 ? t('Paper changed on the notes') : t('Paper changed');
+    showSnack(message, { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   if (collections.current) {
     return (
-      <Sheet visible={visible} onDismiss={onDismiss} title={t('Couleur')}>
+      <Sheet visible={visible} onDismiss={onDismiss} title={t('Colour')}>
         <SheetScroll contentContainerStyle={styles.pigments}>
-          <LineColorPicker value={isLineColor(shared.color) ? shared.color : null} onChange={next => next && apply({ color: next })} accessibilityLabel={t('Couleur')} />
+          <LineColorPicker value={isLineColor(shared.color) ? shared.color : null} onChange={next => next && apply({ color: next })} accessibilityLabel={t('Colour')} />
         </SheetScroll>
       </Sheet>
     );
@@ -55,7 +55,7 @@ export function BulkColorSheet({ visible, ids, onDismiss }: { visible: boolean; 
       visible={visible}
       color={shared.color}
       pattern={shared.pattern}
-      note={shared.collections > 0 ? t('Les collections ne prennent qu’une couleur, ni dégradé ni papier.') : undefined}
+      note={shared.collections > 0 ? t('Collections take a colour only: no gradient, no paper.') : undefined}
       onDismiss={onDismiss}
       onColor={color => apply({ color })}
       onPattern={pattern => apply({ pattern })}

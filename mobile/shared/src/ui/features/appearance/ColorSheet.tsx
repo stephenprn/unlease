@@ -88,7 +88,7 @@ function ColorSheetComponent({ visible, target, initial, onDismiss, onChoose }: 
   const draft = withPick(appearance, target, hex);
   const grounds = { light: resolveAppearance(draft, 'light').ground.colors, dark: resolveAppearance(draft, 'dark').ground.colors };
   const note = pickNote(pickAdjusted(target, hex, 'light', grounds.light), pickAdjusted(target, hex, 'dark', grounds.dark));
-  const title = target === 'ground' ? t('Couleur du fond') : COLOR_ROLE_WORDS[target].title;
+  const title = target === 'ground' ? t('Background colour') : COLOR_ROLE_WORDS[target].title;
   // A colour moved is not dropped by a slip: a drag, the scrim or Back ask first; « Annuler » is the word for it.
   const unsaved = useUnsaved(visible && hex.toUpperCase() !== initial.toUpperCase());
   return (
@@ -103,9 +103,9 @@ function ColorSheetComponent({ visible, target, initial, onDismiss, onChoose }: 
           <ColorPicker value={hex} onChange={setHex} />
         </SheetScroll>
         <FormFoot>
-          <Button kind="text" label={t('Annuler')} onPress={onDismiss} />
+          <Button kind="text" label={t('Cancel')} onPress={onDismiss} />
           <Button
-            label={t('Choisir')}
+            label={t('Choose')}
             onPress={() => {
               unsaved.saved();
               onChoose(hex);

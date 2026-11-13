@@ -53,8 +53,8 @@ export function fixBackgroundProblem(problem: BackgroundProblem): void {
 /** The slip's words: what holds the sync back, and what to choose on the page its button opens. */
 export function backgroundProblemSlip(problem: BackgroundProblem): string {
   return problem.kind === 'restricted'
-    ? t('Batterie « Restreinte » : Android empêche la synchronisation tant que l’application est fermée. Dans « Batterie », choisissez « Optimisée » ou « Sans restriction ».')
-    : t('Économiseur de données : sur les données mobiles, Android empêche la synchronisation tant que l’application est fermée. Autorisez l’utilisation des données sans restriction.');
+    ? t('Battery set to “Restricted”: Android stops sync while the app is closed. Under “Battery”, choose “Optimized” or “Unrestricted”.')
+    : t('Data Saver: on mobile data, Android stops sync while the app is closed. Allow unrestricted data usage.');
 }
 
 const WARNED_AT = 'backgroundSyncWarnedAt';
@@ -74,6 +74,6 @@ export function useBackgroundSyncWarning(enabled = true): void {
     const now = Date.now();
     if (Number.isFinite(warnedAt) && now - warnedAt < WARN_EVERY_MS) return;
     writePreference(WARNED_AT, now);
-    showSnack(backgroundProblemSlip(problem), { label: t('Corriger'), run: () => fixBackgroundProblem(problem) }, { tone: 'warning' });
+    showSnack(backgroundProblemSlip(problem), { label: t('Fix'), run: () => fixBackgroundProblem(problem) }, { tone: 'warning' });
   }, [health, enabled]);
 }

@@ -5,7 +5,7 @@
  * block lists the next ones: `@notes/app/events/store`).
  * Its English, Carnet's, the shell's and the design system's, before anything is shown.
  */
-import { addPagesEnglish } from '@unlease/pages/i18n';
+import { addPagesFrench } from '@unlease/pages/i18n';
 import { contactsData } from '@contacts/data';
 import { eventsData } from '@notes/app/events/store';
 import { notesData } from '@notes/data';
@@ -13,7 +13,7 @@ import { startApp } from '@shared/start';
 
 import { pagesModule } from './module';
 
-addPagesEnglish();
+addPagesFrench();
 void startApp(pagesModule, {
   reads: [notesData, contactsData, eventsData],
   // Dead code outside the dev server and the demo build: the demo is never in the server's build.

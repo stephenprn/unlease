@@ -19,7 +19,7 @@ import notifee, {
   type Notification,
 } from '@notifee/react-native';
 
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import { launchActivity } from '@shared/platform/launcherIcon';
 
 const CHANNEL = 'reminders';
@@ -31,8 +31,8 @@ let channelReady: Promise<string> | null = null;
 function ensureChannel(): Promise<string> {
   channelReady ??= notifee.createChannel({
     id: CHANNEL,
-    name: t('Rappels'),
-    description: t('Les rappels posés sur vos notes'),
+    name: t('Reminders'),
+    description: t('The reminders set on your notes'),
     importance: AndroidImportance.HIGH,
     vibration: true,
   });
@@ -80,8 +80,8 @@ function reminderNotification(reminder: ReminderNotification, channelId: string)
       smallIcon: 'ic_stat_carnet',
       pressAction: { id: 'default', launchActivity: launchActivity() },
       actions: [
-        { title: t('Fait'), pressAction: { id: ACTION_DONE } },
-        { title: t('Dans 1 h'), pressAction: { id: ACTION_SNOOZE } },
+        { title: tc('ticked', 'Done'), pressAction: { id: ACTION_DONE } },
+        { title: t('In 1 hour'), pressAction: { id: ACTION_SNOOZE } },
       ],
     },
   };
@@ -115,8 +115,8 @@ let timerChannelReady: Promise<string> | null = null;
 function ensureTimerChannel(): Promise<string> {
   timerChannelReady ??= notifee.createChannel({
     id: TIMER_CHANNEL,
-    name: t('Minuteurs'),
-    description: t('Les minuteurs lancés en cuisine'),
+    name: t('Timers'),
+    description: t('Timers started while cooking'),
     importance: AndroidImportance.HIGH,
     sound: 'default',
     vibration: true,
@@ -135,7 +135,7 @@ export interface TimerAlarm {
 function timerNotification(alarm: TimerAlarm, channelId: string): Notification {
   return {
     id: alarm.id,
-    title: t('Minuteur terminé'),
+    title: t('Timer done'),
     body: alarm.label,
     data: { timerId: alarm.id },
     android: {

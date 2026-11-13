@@ -55,7 +55,7 @@ export function cellAddress(column: TableColumn, value: CellValue | undefined): 
 }
 
 /** What opening a cell's address does, as its button says it. */
-export const OPEN_LABELS: Partial<Record<ColumnType, string>> = { url: tx('Ouvrir le lien'), email: tx('Écrire'), phone: tx('Appeler') };
+export const OPEN_LABELS: Partial<Record<ColumnType, string>> = { url: tx('Open the link'), email: tx('Email [verb]'), phone: tx('Call') };
 
 /** A choice as a chip on its pigment's wash, cut at the detail radius. */
 export const OptionChip = memo(function OptionChipView({ option }: { option: SelectOption }) {
