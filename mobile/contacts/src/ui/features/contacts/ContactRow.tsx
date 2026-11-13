@@ -37,26 +37,22 @@ export const ROW_HEIGHT = 60;
 
 /**
  * Where a row lies in its letter's panel (`placeOf`): the panel is drawn row by row, so a list of
- * fixed heights keeps its letters pinned and its jumps exact. Its first and last rows add the panel's
+ * fixed heights keeps its jumps exact. Its first and last rows add the panel's
  * inset (6 from its edge, less the rows' own half gap).
  */
 export type PanelPlace = 'first' | 'middle' | 'last' | 'only';
 const PANEL_PAD = 6 - GEOMETRY.rowGap / 2;
 /** The panel's edge from the screen's (as the event form's panels and the settings groups). */
 export const PANEL_EDGE = 12;
-/** The letters' column at the list's left (`LetterColumn`), as wide as the rail at its right: the panels lie between the two. */
-export const LETTERS_WIDTH = RAIL_WIDTH;
-/** A lettered list's panels start past the letters' column, by the rows' gap, as they stop short of the rail. */
-const PANEL_LETTERED = PANEL_EDGE + LETTERS_WIDTH + GEOMETRY.rowGap;
+/** A row's inset in its panel, and its own padding there (a list row's 10, `ListRow`). */
+const ROW_INSET = 6;
+const ROW_PAD = 10;
+/** The faces' column inside a panel, 16 in from its edge (as a settings section's title): a letter over the panel starts on it. */
+export const PANEL_FACES = PANEL_EDGE + ROW_INSET + ROW_PAD;
 
 /** A row's height in its panel. */
 export function rowHeight(place: PanelPlace | null): number {
   return ROW_HEIGHT + (place === 'first' || place === 'only' ? PANEL_PAD : 0) + (place === 'last' || place === 'only' ? PANEL_PAD : 0);
-}
-
-/** How far down its row the face's centre lies: the line a letter beside it is centred on. */
-export function faceCentre(place: PanelPlace | null): number {
-  return (place === 'first' || place === 'only' ? PANEL_PAD : 0) + ROW_HEIGHT / 2;
 }
 
 /** Where the row at `index` of a run of `count` lies in its panel. */
@@ -76,7 +72,7 @@ const RESIST = 0.35;
 
 type Way = 'call' | 'text';
 
-function ContactRowComponent({ id, order, detail = false, railed = false, place = null, onOpen }: { id: string; order: SortOrder; detail?: boolean; /** Between the letters' column and their rail: its panel stops short of both. */ railed?: boolean; /** Its place in its letter's panel; null on the ground. */ place?: PanelPlace | null; onOpen: (id: string) => void }) {
+function ContactRowComponent({ id, order, detail = false, railed = false, place = null, onOpen }: { id: string; order: SortOrder; detail?: boolean; /** Beside the letters' rail: its panel stops short of it. */ railed?: boolean; /** Its place in its letter's panel; null on the ground. */ place?: PanelPlace | null; onOpen: (id: string) => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const reduced = useReducedMotion();
@@ -235,15 +231,15 @@ const makeStyles = (theme: Theme) =>
     // A letter's people lie on one sheet of paper, as a settings group's rows: 6 in from its edge, its corners on its first and last.
     // A row slid aside stays inside its panel, clipped to its curve: it goes under the panel's edge, never over the letters' rail.
     panel: { marginLeft: PANEL_EDGE, marginRight: PANEL_EDGE, overflow: 'hidden', backgroundColor: theme.color.paper },
-    // Between the letters' column and the rail.
-    panelRailed: { marginLeft: PANEL_LETTERED, marginRight: RAIL_WIDTH + GEOMETRY.rowGap },
+    // Clear of the rail by the rows' gap, as a row on the ground.
+    panelRailed: { marginRight: RAIL_WIDTH + GEOMETRY.rowGap },
     panelTop: { paddingTop: PANEL_PAD },
     panelFoot: { paddingBottom: PANEL_PAD },
-    inPanel: { marginHorizontal: 6 },
+    inPanel: { marginHorizontal: ROW_INSET },
     liftedPaper: { backgroundColor: theme.color.paper },
     row: { flexDirection: 'row', alignItems: 'center', gap: 16, height: ROW_HEIGHT - GEOMETRY.rowGap, paddingHorizontal: 12, paddingVertical: 8 },
     // In a panel, a list row's 10 (`ListRow`).
-    rowInPanel: { paddingHorizontal: 10 },
+    rowInPanel: { paddingHorizontal: ROW_PAD },
     lifted: { overflow: 'hidden' },
     // What the slid row uncovers: a well in the primary's container, the glyph centred on the faces' column (20 + 8 of its 40).
     hole: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, backgroundColor: theme.color.actionContainer },

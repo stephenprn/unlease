@@ -23,6 +23,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - In Carnet's navigation (the web's sidebar and the Android drawer), collections and labels are listed by name, in alphabetical order for your language, with "Unsorted" last, instead of following the order of the board.
 - Pages' Notion import keeps the pages' emoji icons: export your workspace from Notion a second time as HTML and drop both archives together (only the icons are read from the HTML one). Importing again into the page that holds an earlier import gives the pages already there their icons, without touching a page that has one. Notion's picture icons are not kept: a page's icon is an emoji.
 - English is now the source language of the code (every sentence the interface shows is written in English, with its French in the dictionaries) and the server's messages are sent in English, which the apps show in your language. Nothing changes in what you see; an app older than its server shows those messages in English until it is updated.
+- On Android, Contacts' letters now sit above each letter's panel instead of in a column at the list's left, so the panels use the screen's full width. The letter scrolls with its people; the letters along the right edge still light the one you are on.
 
 ### Fixed
 
