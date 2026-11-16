@@ -48,9 +48,11 @@ export interface EventDraft {
   readonly files: readonly EventFile[];
   readonly color: CalendarEvent['color'];
   readonly url: string;
+  /** A day off (« Jour de congé »): only an all-day event is one. */
+  readonly dayOff: boolean;
 }
 
-const DRAFT_FIELDS = ['title', 'description', 'place', 'start', 'end', 'timeZone', 'rrule', 'reminders', 'labelIds', 'contactIds', 'files', 'color', 'url'] as const;
+const DRAFT_FIELDS = ['title', 'description', 'place', 'start', 'end', 'timeZone', 'rrule', 'reminders', 'labelIds', 'contactIds', 'files', 'color', 'url', 'dayOff'] as const;
 
 /** What « Tous les événements » carries to the exceptions; their times stay their own. */
 const CARRIED: readonly (typeof DRAFT_FIELDS)[number][] = DRAFT_FIELDS.filter(field => field !== 'start' && field !== 'end' && field !== 'timeZone' && field !== 'rrule');
@@ -89,12 +91,13 @@ export function draftOf(occurrence: Pick<Occurrence, 'event' | 'start' | 'end'>,
     files: event.files,
     color: event.color,
     url: event.url,
+    dayOff: event.dayOff,
   };
 }
 
 /** A new event's draft: `start` a day (all day) or a time of day in `zone`. */
 export function blankDraft(start: string, end: string, zone: string, reminders: readonly number[] = []): EventDraft {
-  return { title: '', description: '', place: '', start, end, timeZone: isDay(start) ? '' : zone, rrule: '', reminders, labelIds: [], contactIds: [], files: [], color: null, url: '' };
+  return { title: '', description: '', place: '', start, end, timeZone: isDay(start) ? '' : zone, rrule: '', reminders, labelIds: [], contactIds: [], files: [], color: null, url: '', dayOff: false };
 }
 
 /**
@@ -128,6 +131,8 @@ export function createEvent(draft: EventDraft, now: number, id: string = createI
     eventFields({
       ...draft,
       timeZone: isDay(draft.start) ? '' : draft.timeZone,
+      // A timed event is never a day off, whatever the form held while it was all day.
+      dayOff: draft.dayOff && isDay(draft.start),
       exdates: [],
       recurringId: null,
       originalStart: '',
@@ -154,7 +159,8 @@ function differences(event: CalendarEvent, draft: EventDraft, except: readonly s
   const patch: Fields = {};
   for (const field of DRAFT_FIELDS) {
     if (except.includes(field)) continue;
-    const value = field === 'timeZone' && isDay(draft.start) ? '' : draft[field];
+    // An all-day event keeps no zone; a timed one is never a day off.
+    const value = field === 'timeZone' && isDay(draft.start) ? '' : field === 'dayOff' ? draft.dayOff && isDay(draft.start) : draft[field];
     if (!same(event[field], value)) patch[field] = Array.isArray(value) ? [...(value as readonly unknown[])] : value;
   }
   return patch;

@@ -3,17 +3,20 @@
  * or by last name), the « Indicatif par défaut »: the country whose calling code a number written
  * without its `+` takes (a contact's page shows and dials it with it, WhatsApp needs it, a new number
  * in the form starts with it). (An address offers Google Maps and OpenStreetMap where it is shown: no
- * maps to choose here.) In « Données », as on the phone: the export of every contact as one `.vcf`,
- * under the import (the shell's row, opening the wizard).
+ * maps to choose here.) In « Données », as on the phone, under the import (the shell's row, opening
+ * the wizard): « Nettoyer les contacts » (its own place: the duplicates, the numbers, the names…),
+ * then the export of every contact as one `.vcf`.
  */
 import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import type { SortOrder } from '@unlease/contacts/services/names';
 import { CONTACTS_SETTINGS_SECTION } from '@unlease/contacts/services/settingsPlaces';
+import { CLEANUP_WORDS, cleanupSummaryLine } from '@unlease/contacts/services/cleanup';
 
-import { useLiveContacts } from '../../../app/hooks/useContacts';
+import { useCleanupCounts, useDuplicates, useLiveContacts } from '../../../app/hooks/useContacts';
 import { defaultRegion, setRegion, setSortOrder, usePrefsStore, useSortOrder } from '../../../app/store/prefs';
 import { showSnack } from '@shared/app/store/ui';
+import { navigate } from '@shared/ui/router';
 import { Icon } from '@shared/ui/components/Icon';
 import { Segmented } from '@shared/ui/components/Segmented';
 import { SelectField } from '@shared/ui/components/SelectField';
@@ -23,6 +26,7 @@ import type { SettingsSection } from '@shared/modules';
 import contacts from '../../contacts.module.css';
 import { callingCountries, callingCountry } from '../callingCodes';
 import { exportContacts } from '../exporting';
+import { paths } from '../../routes';
 
 /** The choice for « follow the browser ». */
 const BROWSER = 'browser';
@@ -69,7 +73,24 @@ function ContactsSection() {
   );
 }
 
-/** « Données »'s export, the phone's row: it goes out (`upload`). The import is the shell's row, above it (`AppModule.importer`). */
+/** « Nettoyer les contacts », right under the import: everything its tools find, in a line. */
+function CleanupRow() {
+  const counts = useCleanupCounts();
+  const duplicates = useDuplicates().length;
+  const found = duplicates + Object.values(counts).reduce((sum, count) => sum + count, 0);
+  return (
+    <button type="button" className={styles.row} onClick={() => navigate(paths.cleanup)}>
+      <Icon name="broom" size={24} />
+      <span className={styles.rowText}>
+        <span className="t-body">{CLEANUP_WORDS.title}</span>
+        <span className="t-meta">{cleanupSummaryLine(found)}</span>
+      </span>
+      <Icon name="chevronRight" size={20} />
+    </button>
+  );
+}
+
+/** « Données »'s rows, the phone's: tidying the contacts, then the export, which goes out (`upload`). The import is the shell's row, above them (`AppModule.importer`). */
 function ContactsData() {
   const live = useLiveContacts();
   const exportAll = (): void => {
@@ -78,6 +99,7 @@ function ContactsData() {
   };
   return (
     <>
+      {live.length > 0 ? <CleanupRow /> : null}
       {live.length > 0 ? (
         <button type="button" className={styles.row} onClick={exportAll}>
           <Icon name="upload" size={24} />

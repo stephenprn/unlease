@@ -29,7 +29,7 @@ export function ContactPickerSheet({ visible, title, only, onDismiss, onPick }: 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search contacts')} accessibilityLabel={t('Search contacts')} autoFocus />
       </View>
-      <SheetFlatList top={false}
+      <SheetFlatList
         data={found}
         keyExtractor={contact => contact.id}
         renderItem={({ item }) => (

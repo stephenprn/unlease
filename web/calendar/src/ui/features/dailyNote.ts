@@ -1,6 +1,6 @@
 /**
  * « Note du jour »: the day's page in Pages' « Journal », found or made by Pages' module (`POST
- * /api/pages/daily`), then opened in Pages' web app. The day view's bar and « Aujourd'hui » both open
+ * /api/pages/daily`), then opened in Pages' web app. The day view's bar and « Ma journée » both open
  * it this way.
  */
 import { getLocale, t } from '@unlease/core/i18n';

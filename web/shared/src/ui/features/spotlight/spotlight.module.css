@@ -25,10 +25,10 @@
 
 /* ── the field ──────────────────────────────────────────────────────────── */
 
+/* Its hairline is the results' and the preview's, each once it runs on under it (`useScrollEdges`). */
 .head {
   flex: none;
   padding: 14px 14px 10px;
-  border-bottom: 1px solid var(--hairline);
 }
 
 /* Filters lie in the field before the words; too many for one line, the words go to the next. */
@@ -272,7 +272,7 @@
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
 }
 
-/* The results and the preview each dissolve at their top as far as they run on under the field's head (`useScrollEdges`); their foot is the dialog's own end. */
+/* The results and the preview each meet the field's head with a hairline once they run on under it (`useScrollEdges`); their foot is the dialog's own end. */
 .results {
   min-height: 0;
   padding: 6px 8px 24px;
@@ -781,6 +781,7 @@
 
 /* ── the foot ───────────────────────────────────────────────────────────── */
 
+/* Its hairline is the results' and the preview's, each while it runs on past it (`useScrollEdges`). */
 .foot {
   flex: none;
   display: flex;
@@ -788,7 +789,6 @@
   justify-content: space-between;
   gap: 16px;
   padding: 9px 18px 10px;
-  border-top: 1px solid var(--hairline);
   color: var(--ink-muted);
 }
 
@@ -833,16 +833,13 @@
 
 /* A phone-sized window: the sheet holds it, the field at its top, the list taking what the keyboard leaves. */
 @media (max-width: 719px) {
-  /* The types and the menus scroll as one strip to the sheet's edges, what lies past them fading. */
+  /* The types and the menus scroll as one strip to the sheet's edges, what lies past them fading (`useScrollEdges`). */
   .filters {
     gap: 8px;
     margin-inline: -12px;
     padding-inline: 12px;
-    scroll-padding-inline: 12px;
     overflow-x: auto;
     scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
-    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
   }
   .filters::-webkit-scrollbar {
     display: none;

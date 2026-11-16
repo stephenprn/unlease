@@ -2,7 +2,7 @@
  * An occurrence as the views draw it: a box on the hours' grid (its title, its hours, its place), a
  * bar across days (the all-day strip, the month), or a dot and a line (a timed event in the month,
  * as Google draws it). Its colour's wash, its pigment's edge; a layer's item (a birthday, a
- * reminder of Carnet's, a day written in a page) wears a dotted edge.
+ * reminder of Carnet's, a day written in a page) wears a dotted edge; a day off, a sun before its title.
  */
 import { memo, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 
@@ -12,6 +12,7 @@ import { clockWords, timeRange } from '@unlease/calendar/services/eventText';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
 import { formatClock } from '@unlease/core/services/format';
 
+import { Icon } from '@shared/ui/components/Icon';
 import { kindOf } from '../../app/hooks/useItems';
 import styles from '../calendar.module.css';
 
@@ -24,6 +25,8 @@ export interface ChipProps {
   readonly twelveHours: boolean;
   /** A box's room, in lines of text: one puts its time after its title, more give the title what it needs and its time and place under it. */
   readonly lines?: number;
+  /** A dot's time before its title; off where the day is a few letters wide (a phone-sized month), so the title shows. */
+  readonly showTime?: boolean;
   readonly dragging?: boolean;
   readonly onOpen: (item: Occurrence, element: HTMLElement) => void;
   /** Starts a drag (one's own events only); the click after a drag is the drag's. */
@@ -31,13 +34,16 @@ export interface ChipProps {
   readonly children?: ReactNode;
 }
 
-/** What a screen reader reads of it: its title, then when. */
+/** A day off (« Jour de congé »): an all-day event's. */
+const isDayOff = (item: Occurrence): boolean => item.allDay && item.event.dayOff;
+
+/** What a screen reader reads of it: its title (a day off said), then when. */
 export function chipLabel(item: Occurrence, twelveHours: boolean): string {
   const title = item.event.title.trim() || t('Untitled');
-  return `${title}, ${timeRange(item, twelveHours)}`;
+  return [title, isDayOff(item) ? t('Day off') : '', timeRange(item, twelveHours)].filter(Boolean).join(', ');
 }
 
-function ChipComponent({ item, color, variant, twelveHours, lines = 1, dragging = false, onOpen, onPointerDown, children }: ChipProps) {
+function ChipComponent({ item, color, variant, twelveHours, lines = 1, showTime = true, dragging = false, onOpen, onPointerDown, children }: ChipProps) {
   const title = item.event.title.trim() || t('Untitled');
   const layer = kindOf(item.key) !== 'event';
   const start = item.allDay ? null : clockWords(formatClock(item.startAt), twelveHours);
@@ -68,7 +74,8 @@ function ChipComponent({ item, color, variant, twelveHours, lines = 1, dragging 
         </>
       ) : (
         <>
-          {start && variant === 'dot' ? <span className={`${styles.chipMeta} tabular`}>{start}</span> : null}
+          {start && showTime && variant === 'dot' ? <span className={`${styles.chipMeta} tabular`}>{start}</span> : null}
+          {isDayOff(item) ? <Icon name="sun" size={14} className={styles.chipMark} /> : null}
           <span className={styles.chipTitle}>{title}</span>
         </>
       )}

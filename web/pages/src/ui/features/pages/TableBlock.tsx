@@ -31,6 +31,7 @@ import { Popover } from '@shared/ui/components/Popover';
 import { LineColorPicker } from '@notes/ui/features/lines/LineColorPicker';
 import { usePageContext } from './PageContext';
 import { useHiddenSides } from '@shared/ui/components/hiddenSides';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import styles from './pages.module.css';
 
 const NO_ROWS: readonly string[] = [];
@@ -104,6 +105,8 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
     setQuery('');
     choose(option.id);
   };
+  // The field over its rows meets them with a hairline once they run on under it; rows past the popover's foot fade there.
+  const listEdges = useScrollEdges({ top: true, fade: 'bottom' });
   return (
     <div className={styles.optionsPanel}>
       <input
@@ -120,7 +123,7 @@ function OptionsPicker({ page, table, column, value, multi, onDone }: { page: st
           else create();
         }}
       />
-      <div data-scroller="" className={styles.optionsList} role="listbox" aria-multiselectable={multi} aria-label={column.name}>
+      <div ref={listEdges} data-scroller="" className={styles.optionsList} role="listbox" aria-multiselectable={multi} aria-label={column.name}>
         {shown.map(option => (
           <button key={option.id} type="button" role="option" aria-selected={chosen.has(option.id)} className={styles.optionRow} onClick={() => choose(option.id)}>
             <OptionChip option={option} />

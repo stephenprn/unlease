@@ -1,6 +1,6 @@
 /**
  * Agenda's part of the Réglages, this browser's own: the view it opens on, the week's first day,
- * weekends and week numbers, the hours' format, a new event's length and reminders, where the
+ * the working days only and week numbers, the hours' format, a new event's length and reminders, where the
  * weather is asked, the reminders and the morning summary as this browser's notifications. In « Données », as on the
  * phone: the export of one's events as one `.ics`, after the import the shell lists first (`importer`).
  */
@@ -10,11 +10,12 @@ import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { isOwn } from '@unlease/calendar/models/events';
 import { DIGEST_TIMES } from '@unlease/calendar/services/digest';
-import { clockWords, lengthWords, reminderWords, REMINDER_CHOICES, VIEW_NAMES, VIEWS, type CalendarView } from '@unlease/calendar/services/eventText';
+import { clockWords, lengthWords, reminderWords, REMINDER_CHOICES, VIEW_NAMES, VIEWS, workingDaysMeta, type CalendarView } from '@unlease/calendar/services/eventText';
 import { EVENT_LENGTHS } from '@unlease/calendar/models/prefs';
 import { CALENDAR_SETTINGS_SECTION } from '@unlease/calendar/services/settingsPlaces';
 
 import { selectServer, useSettingsStore } from '@shared/app/store/settings';
+import { useWorkDays } from '@shared/app/store/serverSettings';
 import { showError, showSnack } from '@shared/app/store/ui';
 import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { Icon } from '@shared/ui/components/Icon';
@@ -27,6 +28,7 @@ import type { SettingsSection } from '@shared/modules';
 import { disableDigest, disableNotifications, enableDigest, enableNotifications, pushSupported, savePushPrefs } from '../../../app/push';
 import { useCalendarStore } from '../../../app/store/library';
 import { savePrefs, usePrefsStore } from '../../../app/store/prefs';
+import { ColorPicker } from '../ColorPicker';
 import { exportCalendar } from '../exporting';
 
 function Toggle({ on, onChange, title, meta, icon }: { on: boolean; onChange: (on: boolean) => void; title: string; meta: string; icon: Parameters<typeof Icon>[0]['name'] }) {
@@ -81,6 +83,7 @@ function WeatherPlace() {
 
 function CalendarSection() {
   const prefs = usePrefsStore();
+  const workDays = useWorkDays();
   const server = useSettingsStore(selectServer);
   const [busy, setBusy] = useState(false);
   const toggleNotify = async (on: boolean): Promise<void> => {
@@ -119,6 +122,9 @@ function CalendarSection() {
           ]}
         />
         <SelectField label={t('A new event’s length')} value={String(prefs.eventLength)} onChange={minutes => savePrefs({ eventLength: Number(minutes) })} options={EVENT_LENGTHS.map(minutes => ({ value: String(minutes), label: lengthWords(minutes) }))} />
+        {/* Your own events without a colour, a label's or a calendar's: a pigment of their own, never the accent that acts. */}
+        <p className="t-meta-strong">{t('Your events’ colour')}</p>
+        <ColorPicker value={prefs.ownColor} onChange={ownColor => savePrefs({ ownColor })} label={t('Your events’ colour')} />
         <SelectField
           label={t('A new event’s reminder')}
           value={String(prefs.reminders[0] ?? NONE)}
@@ -133,7 +139,8 @@ function CalendarSection() {
         />
         <WeatherPlace />
       </div>
-      <Toggle on={prefs.hideWeekends} onChange={on => savePrefs({ hideWeekends: on })} icon="calendar" title={t('Hide weekends')} meta={t('The week and the month without Saturday and Sunday.')} />
+      {/* Its stored name is older than the working days: it hid Saturday and Sunday. */}
+      <Toggle on={prefs.hideWeekends} onChange={on => savePrefs({ hideWeekends: on })} icon="calendar" title={t('Working days only')} meta={workingDaysMeta(workDays)} />
       <Toggle on={prefs.weekNumbers} onChange={on => savePrefs({ weekNumbers: on })} icon="numbered" title={t('Week numbers')} meta={t('The week’s ISO number, left of its days.')} />
       <Toggle on={prefs.twelveHours} onChange={on => void savePushPrefs({ twelveHours: on })} icon="clock" title={t('12-hour clock')} meta={t('2 PM rather than 14:00.')} />
       {pushSupported() ? (

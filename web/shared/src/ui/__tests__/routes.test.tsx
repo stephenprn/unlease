@@ -125,7 +125,7 @@ describe('the launcher', () => {
     await user.click(screen.getByRole('button', { name: 'Applications Unlease' }));
     const dialog = await screen.findByRole('dialog', { name: 'Applications Unlease' });
     const apps = within(dialog).getByRole('list', { name: 'Applications' });
-    expect(within(apps).getAllByRole('link').map(link => link.textContent)).toEqual(['Carnet', 'Pages', 'Agenda', 'Contacts']);
+    expect(within(apps).getAllByRole('link').map(link => link.textContent)).toEqual(['Carnet', 'Pages', 'Agenda', 'Contacts', 'Clock']);
     expect(within(apps).getByRole('link', { name: 'Carnet' })).toHaveAttribute('aria-current', 'true');
     // The Administration is at the navigation's foot, not in the launcher.
     expect(within(dialog).queryByRole('link', { name: 'Administration' })).not.toBeInTheDocument();

@@ -16,7 +16,7 @@ export const SETTINGS: ServerSettings = {
   pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
   backup: { configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null, recurrence: 'off', keep: 30, storageClass: 'STANDARD' },
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
-  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
+  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] },
   seerr: { url: '', keyHint: null },
   immich: { url: '', keyHint: null },
 };

@@ -1,43 +1,55 @@
-/** One thing of a day in a list (the schedule, a day's sheet, the search): its colour, its title, its time and place. */
+/**
+ * One thing of a day on the Planning's panel, as « Ma journée » draws its rows (`ListRow`'s geometry):
+ * its calendar's stone or its layer's glyph in the 24 slot, its title over its time and place. What is
+ * over lies back (its mark at 0.55, its words in the second ink); what runs now reads a weight up.
+ */
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
-import type { GlyphName } from '@unlease/design/glyphs';
 import type { AgendaItem } from '@app/agenda';
 
-import { AppText, Icon, Tappable } from '@shared/ui/components';
+import { AppText, Tappable, usePanelRowCorners, type RowPlace } from '@shared/ui/components';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-import { itemColor, itemTime, itemTitle, paintOf } from './paint';
+import { ItemMark } from './ItemMark';
+import { itemTime, itemTitle } from './paint';
 
-const GLYPHS: Readonly<Record<AgendaItem['kind'], GlyphName | null>> = { event: null, birthday: 'cake', reminder: 'bell', page: 'page' };
+export interface AgendaRowProps {
+  readonly item: AgendaItem;
+  readonly day: string;
+  readonly twelveHours: boolean;
+  /** It has ended (`itemOver`): it lies back. */
+  readonly over?: boolean;
+  /** It runs now (`itemUnderWay`): its title a weight up. */
+  readonly now?: boolean;
+  /** Where it lies on its day's panel: the first's and the last's press follows the panel's corners. */
+  readonly place?: RowPlace | null;
+  readonly onOpen: (item: AgendaItem) => void;
+}
 
-export const ROW_HEIGHT = 64;
-
-function AgendaRowComponent({ item, day, twelveHours, onOpen }: { item: AgendaItem; day: string; twelveHours: boolean; onOpen: (item: AgendaItem) => void }) {
+function AgendaRowComponent({ item, day, twelveHours, over = false, now = false, place, onOpen }: AgendaRowProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const paint = paintOf(theme, itemColor(item));
+  const shape = usePanelRowCorners(place);
   const title = itemTitle(item);
   const time = itemTime(item, day, twelveHours);
-  const place = item.kind === 'event' ? item.occurrence.event.place.trim() : '';
-  const glyph = GLYPHS[item.kind];
+  const placeName = item.kind === 'event' ? item.occurrence.event.place.trim() : '';
   return (
     // In a scrolling list: its tint once the touch is clearly a tap.
-    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(item)} style={styles.row} accessibilityRole="button" accessibilityLabel={`${title}, ${time}${place ? `, ${place}` : ''}`}>
-      <View style={[styles.stripe, { backgroundColor: paint.fill }]} />
-      <View style={styles.text}>
-        <View style={styles.titleLine}>
-          {glyph ? <Icon name={glyph} size={16} color={paint.text} /> : null}
-          <AppText variant="bodyStrong" numberOfLines={1} style={styles.title}>
-            {title}
-          </AppText>
-        </View>
+    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(item)} style={[styles.row, shape]} accessibilityRole="button" accessibilityLabel={[title, time, placeName].filter(Boolean).join(', ')}>
+      <View style={[styles.slot, over ? styles.over : null]}>
+        <ItemMark item={item} />
+      </View>
+      <View style={styles.words}>
+        <AppText variant={now ? 'bodyStrong' : 'body'} color={over ? theme.color.inkMuted : undefined} numberOfLines={1}>
+          {title}
+        </AppText>
         <AppText variant="meta" numberOfLines={1}>
-          {place ? `${time} · ${place}` : time}
+          {placeName ? `${time} · ${placeName}` : time}
         </AppText>
       </View>
     </Tappable>
@@ -46,12 +58,12 @@ function AgendaRowComponent({ item, day, twelveHours, onOpen }: { item: AgendaIt
 
 export const AgendaRow = memo(AgendaRowComponent);
 
-const makeStyles = (theme: Theme) =>
+const makeStyles = (_theme: Theme) =>
   StyleSheet.create({
-    row: { minHeight: ROW_HEIGHT, flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 8, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: theme.color.paper, ...corners(SHAPES.tab) },
-    stripe: { width: 6, alignSelf: 'stretch', borderRadius: 3 },
-    text: { flex: 1, gap: 2 },
-    titleLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    title: { flexShrink: 1 },
+    // `ListRow`'s geometry, as « Ma journée »'s rows: 6 in, 10 to the mark (16 from the panel's edge), the words 16 after its 24 slot, half the rows' gap above and below.
+    row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6, marginVertical: GEOMETRY.rowGap / 2, paddingHorizontal: 10, paddingVertical: 8, ...corners(SHAPES.tab) },
+    slot: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+    // What is over lies back, as « Ma journée »'s rows.
+    over: { opacity: 0.55 },
+    words: { flex: 1, gap: 2 },
   });
-

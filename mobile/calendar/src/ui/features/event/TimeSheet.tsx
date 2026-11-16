@@ -47,7 +47,7 @@ export function TimeSheet({ visible, title, value, twelveHours, onDismiss, onTim
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>
-      <SheetFlatList top={false}
+      <SheetFlatList
         ref={list}
         data={TIMES}
         keyExtractor={item => item}

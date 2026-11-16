@@ -135,7 +135,7 @@ function event(title: string, wall: number): SyncRecord {
   return writeFields({ type: 'calendarEvent', id: DINNER, fields: {}, clocks: {} }, eventFields({ ...EMPTY_EVENT, title, start: `${day}T20:00`, end: `${day}T22:00`, timeZone: 'Europe/Paris' }), formatHlc(wall, 0, 'server'));
 }
 
-const EMPTY_EVENT = { title: '', description: '', place: '', start: '', end: '', timeZone: '', rrule: '', exdates: [], recurringId: null, originalStart: '', reminders: [], labelIds: [], contactIds: [], files: [], feedId: null, uid: '', url: '', color: null, trashedAt: null, createdAt: 1, deletedAt: null } as const;
+const EMPTY_EVENT = { title: '', description: '', place: '', start: '', end: '', timeZone: '', rrule: '', exdates: [], recurringId: null, originalStart: '', reminders: [], labelIds: [], contactIds: [], files: [], feedId: null, uid: '', url: '', color: null, dayOff: false, trashedAt: null, createdAt: 1, deletedAt: null } as const;
 
 it('mentions an event of Agenda’s picked after « @ », names it as it is now, and opens it in Agenda', async () => {
   closeDatabase();

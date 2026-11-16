@@ -1,9 +1,10 @@
 /**
- * The list's fast scroller, as Google's: the letters down the right edge, the one at the list's top
- * lit as it scrolls. A finger on it (or dragged along it) jumps to that letter's heading, a click at
- * each new letter, the letter shown large beside the finger while it moves; the strip takes a well
- * under the finger so it reads as held. Where the finger is counts along the strip itself, whatever
- * letter it is over.
+ * The list's fast scroller, as Google's: the letters down the right edge, the one whose people are at
+ * the list's top lit as it scrolls (the one whose band is held there). A
+ * finger on it (or dragged along it) lands that letter's people at the list's top, a click at each
+ * new letter, the letter shown large beside the finger while it moves; the strip takes a well under
+ * the finger so it reads as held. Where the finger is counts along the strip itself, whatever letter
+ * it is over.
  */
 import React, { memo, useCallback, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -19,9 +20,8 @@ import { accelerate, decelerate, duration } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { RAIL_WIDTH } from './sheetLayout';
 
-/** The letters' strip against the screen's right edge: the rows beside it stop short of it. */
-export const RAIL_WIDTH = 28;
 /** The large letter beside the finger. */
 const BUBBLE = 64;
 /** The strip's padding above its first letter and under its last. */

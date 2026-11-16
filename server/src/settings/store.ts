@@ -13,6 +13,8 @@ import { READY_APPS, type AppId } from '@unlease/core/apps';
 import {
   BACKUP_KEEP_DEFAULT,
   COUNTRY_PATTERN,
+  DEFAULT_WORK_DAYS,
+  parseWorkDays,
   REGION_PATTERN,
   DRIVE_FOLDER_DEFAULT,
   isBackupRecurrence,
@@ -106,6 +108,8 @@ const CALENDAR_COUNTRY = 'calendar.country';
 const CALENDAR_REGION = 'calendar.region';
 const CALENDAR_PUBLISH = 'calendar.publish';
 const CALENDAR_ASK = 'calendar.ask';
+/** The days worked, as `1,2,3,4,5` ('' none); absent: Monday to Friday. */
+const CALENDAR_WORK_DAYS = 'calendar.workDays';
 
 /** Agenda's public holidays: a country, and maybe one of its regions. */
 export interface HolidaysConfig {
@@ -118,6 +122,7 @@ export interface CalendarChanges {
   readonly holidays?: HolidaysConfig;
   readonly publish?: boolean | 'renew';
   readonly ask?: boolean;
+  readonly workDays?: readonly number[];
 }
 
 const hintOf = (secret: string): string => `…${secret.slice(-4)}`;
@@ -291,7 +296,14 @@ export class SettingsStore {
 
   calendar(): CalendarSettings {
     const secret = this.publishSecret();
-    return { holidays: this.holidays(), publishPath: secret ? `/ical/${secret}.ics` : null, ask: this.stored().get(CALENDAR_ASK) === 1 };
+    return { holidays: this.holidays(), publishPath: secret ? `/ical/${secret}.ics` : null, ask: this.stored().get(CALENDAR_ASK) === 1, workDays: this.workDays() };
+  }
+
+  /** The days worked: Monday to Friday until set. */
+  workDays(): readonly number[] {
+    const value = this.stored().get(CALENDAR_WORK_DAYS);
+    if (typeof value !== 'string') return DEFAULT_WORK_DAYS;
+    return value === '' ? [] : (parseWorkDays(value.split(',').map(Number)) ?? DEFAULT_WORK_DAYS);
   }
 
   /** Hears every change of the holidays' country or region (the server fetches them again). */
@@ -313,6 +325,7 @@ export class SettingsStore {
       // Published again, it keeps the address it had; renewed, the old one stops answering.
       else if (changes.publish === 'renew' || (changes.publish === true && !this.publishSecret())) this.put.run(CALENDAR_PUBLISH, randomBytes(24).toString('base64url'));
       if (changes.ask !== undefined) this.put.run(CALENDAR_ASK, changes.ask ? 1 : 0);
+      if (changes.workDays !== undefined) this.put.run(CALENDAR_WORK_DAYS, changes.workDays.join(','));
     });
     const after = this.holidays();
     if (before.country !== after.country || before.region !== after.region) for (const listener of this.holidaysListeners) listener(after);

@@ -33,7 +33,7 @@ const SETTINGS: ServerSettings = {
   pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
   backup: { configured: true, endpoint: 'https://s3.fr-par.scw.cloud', region: 'fr-par', bucket: 'ancien', prefix: 'carnet/', accessKeyId: 'SCWKEY', secretHint: '…k3Xq', recurrence: 'daily', keep: 30, storageClass: 'STANDARD' },
   drive: { provider: 'seafile', url: 'https://drive.exemple.fr', folder: '/Carnet', library: 'Documents', tokenHint: '…ab12', leaving: false },
-  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
+  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] },
   seerr: { url: '', keyHint: null },
   immich: { url: '', keyHint: null },
 };

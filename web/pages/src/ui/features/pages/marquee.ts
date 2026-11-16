@@ -177,6 +177,8 @@ export function selectWithBox(article: HTMLElement): () => void {
     // On the page or what holds it, not beside it (a phone-sized window's top bar).
     if (!(target instanceof Element) || !(target.contains(article) || article.contains(target))) return;
     if (target.closest(NOT_EMPTY) || onScrollbar(event, target)) return;
+    // A selected block pressed is dragged (or clicked into), a block Maj+clicked joins a range: the editor's own presses.
+    if (target.closest('[data-select-block][data-selected]') || (event.shiftKey && target.closest('[data-select-block]'))) return;
     const editor = article.querySelector<HTMLElement>('[data-page-editor]');
     if (!editor) return;
     clearBlockSelection();

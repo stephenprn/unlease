@@ -1,6 +1,6 @@
 /**
  * The suite's Administration (`@shared/ui/screens/AdminScreen`) as Agenda's: after what every app
- * shares, its own sections: « Jours fériés » (the country whose holidays the server fetches),
+ * shares, its own sections: « Votre semaine » (the days worked, the country whose holidays the server fetches),
  * « Publication » (one's events at a secret iCal address) and « Questions sur l'agenda ». The home and
  * each section are an `Admin` screen of their own.
  */
@@ -20,8 +20,8 @@ export const SECTIONS: readonly AppAdminSection[] = [
   {
     // The web's ids (its addresses: `/agenda/admin/calendar-holidays`), so a section is the same place on both.
     id: 'calendar-holidays',
-    title: () => t('Public holidays'),
-    icon: 'sun',
+    title: () => t('Your week'),
+    icon: 'calendar',
     info: HOLIDAYS_INFO,
     // The web's words (`calendar/services/admin`).
     line: holidaysLine,

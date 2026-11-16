@@ -10,10 +10,17 @@ import { isRefType, type RefType } from '@unlease/core/refs';
 const part = encodeURIComponent;
 
 /** Each app's home on the web: its id, but Agenda's `/agenda` (as the build's `WEB_PATHS`). */
-const WEB_HOMES: Readonly<Record<AppId, string>> = { notes: '/notes', pages: '/pages', contacts: '/contacts', calendar: '/agenda' };
+const WEB_HOMES: Readonly<Record<AppId, string>> = { notes: '/notes', pages: '/pages', contacts: '/contacts', calendar: '/agenda', clock: '/clock' };
 
 /** An app's home on the web (`/agenda` for Agenda, whose id is `calendar`). */
 export const appHome = (app: AppId): string => WEB_HOMES[app];
+
+/** A day in Agenda's day view (`/agenda/day/2026-11-17`): the phone's `dayPlace` twin. */
+export const dayPlace = (day: string): string => `${WEB_HOMES.calendar}/day/${part(day)}`;
+
+/** A new alarm in Clock for an Agenda event (« Réveil » on the event): its form, linked to it. The phone's `alarmForEventPlace` twin. */
+export const alarmForEventPlace = ({ eventId, occurrence, at, title }: { readonly eventId: string; readonly occurrence: string; readonly at: number; readonly title: string }): string =>
+  `${WEB_HOMES.clock}/new?event=${part(eventId)}&occurrence=${part(occurrence)}&at=${at}&title=${part(title)}`;
 
 /** Each type's address, in the app that shows it. */
 const WEB_PLACES: Readonly<Record<RefType, (id: string) => string>> = {

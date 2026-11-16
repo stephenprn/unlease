@@ -19,6 +19,10 @@ export type RootStackParamList = {
   Erase: undefined;
   /** « Doublons »: the contacts that are one person, to merge. */
   Duplicates: undefined;
+  /** « Nettoyer les contacts », from Réglages › Données: its tools. */
+  Cleanup: undefined;
+  /** One tool of « Nettoyer les contacts » (`countryCodes`, `numbers`, `names`, `emails`, `empty`). */
+  CleanupTool: { readonly tool: string };
   Trash: undefined;
   /** Réglages, or one of its sections, landed on from a search (`language`, `data`, the app's own…). */
   Settings: { readonly section?: string } | undefined;

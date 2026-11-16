@@ -5,7 +5,7 @@
  * the home-screen widgets open over the home screen.
  */
 import React, { useEffect, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { APP_NAME } from '@unlease/notes/brand';
 import { collectionEmblem } from '@unlease/notes/models/collections';
@@ -25,7 +25,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { closeCapture, selectCaptureOpen, selectCaptureText, startTransfer, useCaptureStore } from '@app/store/captureStore';
 import { readClipboard } from '@shared/platform/clipboard';
 
-import { AppText, Button, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
+import { AppText, Button, EdgeScrollView, Emblem, FormFoot, Icon, Sheet, SHEET_INSET, SheetScroll, Tappable, TextField, useForm, useUnsaved } from '../../components';
 import { navigate } from '../../navigation/navigationRef';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
@@ -141,7 +141,7 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('F
           </Tappable>
         ) : null}
         {/* The chips say what they are (emblems and names), and the line under them what happens: no word over them, but for TalkBack. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.targetScroll} contentContainerStyle={styles.targets} keyboardShouldPersistTaps="handled" accessibilityRole="radiogroup" accessibilityLabel={t('Collection')}>
+        <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.targetScroll} contentContainerStyle={styles.targets} keyboardShouldPersistTaps="handled" accessibilityRole="radiogroup" accessibilityLabel={t('Collection')}>
           {reading ? (
             <Tappable
               onPress={() => setTarget('auto')}
@@ -165,7 +165,7 @@ export function LinkCaptureSheet({ visible, initial, preset = null, title = t('F
               </Tappable>
             );
           })}
-        </ScrollView>
+        </EdgeScrollView>
         {fate ? <AppText variant="meta">{fate}</AppText> : null}
       </SheetScroll>
       <FormFoot message={form.message}>

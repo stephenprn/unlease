@@ -14,6 +14,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { LabelCheck } from '@shared/ui/components/LabelMark';
 import { Popover } from '@shared/ui/components/Popover';
 import inputs from '@shared/ui/components/controls.module.css';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from './editor.module.css';
 
@@ -41,6 +42,8 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
     setFilter('');
     field.current?.focus();
   };
+  // The field over its rows meets them with a hairline once they run on under it; rows past a popover's foot fade there.
+  const listEdges = useScrollEdges({ top: true, fade: 'bottom' });
   return (
     <div ref={holder} className={styles.picker} tabIndex={-1}>
       {/* A sheet on a phone says what it holds; by its button, the field (« Chercher ou créer un label ») does. */}
@@ -62,7 +65,7 @@ function LabelList({ selected, onChange, narrow, holder }: { selected: readonly 
         aria-label={t('Search or create a label')}
         maxLength={60}
       />
-      <div data-scroller="" className={styles.labelList}>
+      <div ref={listEdges} data-scroller="" className={styles.labelList}>
         {filter.trim() && !exact ? (
           <button type="button" className={`${styles.pickerRow} ${styles.pickerAdd}`} onClick={create}>
             <Icon name="plus" size={20} />

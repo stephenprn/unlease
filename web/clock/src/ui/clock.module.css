@@ -1,0 +1,323 @@
+/*
+ * Clock's web app: the alarms (a stand-in list until the home is designed), the alarm's form and its
+ * sound field. Every colour, radius and duration is the design system's (`var(--…)`).
+ */
+
+/* ── the alarms ─────────────────────────────────────────────────────────── */
+
+.screen {
+  max-width: 760px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--paper);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* An alarm's card (the phone's `AlarmCard`): its outline, the paper, the switch at its end. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 16px;
+  background: var(--paper);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  }
+}
+
+.rowOpen {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 80px;
+  padding: 12px 8px 12px 18px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowOpen:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.rowOpen:focus-visible {
+  outline-offset: -2px;
+}
+
+.rowTime {
+  font-variant-numeric: tabular-nums;
+}
+
+.rowWords {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowName,
+.rowDays {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Off: its time and words step back, as a switch off says. */
+.row[data-off] .rowTime,
+.row[data-off] .rowName,
+.row[data-off] .rowDays {
+  color: var(--ink-muted);
+}
+
+/* Where they ring: a quiet line under the list. */
+.where {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0 10px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.where > svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ── the alarm's form ───────────────────────────────────────────────────── */
+
+.editor {
+  --frame-width: min(520px, 100vw - 32px);
+}
+
+.footStart {
+  margin-right: auto;
+}
+
+/* An alarm opened focuses its time's block, not its field: the keyboard stays down. */
+.timeBlock {
+  outline: none;
+}
+
+/* Its width says how long the answer is: a time. */
+.timeField {
+  max-width: 240px;
+}
+
+.timeInput {
+  min-height: 64px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin: 0 0 0 4px;
+  padding: 0;
+  float: left;
+}
+
+.legend + * {
+  clear: left;
+}
+
+/* The week, its days 8 apart, as the chips under it; on a phone-sized window across the whole sheet. */
+
+/* A day: a picker's choice (the chip's corner, under half its height) on the field's veil, edged; on, the primary's wash within its focus edge. */
+/* The quick choices: chips that wrap, as a form's label chips. */
+.choices {
+  display: grid;
+  /* Two by two, as the phone's: one even block. */
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.choice {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
+  box-shadow: inset 0 0 0 1px var(--edge);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--field-veil));
+  }
+}
+
+.choice:active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--field-veil));
+}
+
+.choice[aria-pressed='true'] {
+  background: var(--action-container);
+  box-shadow: inset 0 0 0 2px var(--focus);
+  color: var(--on-action-container);
+}
+
+@media (hover: hover) {
+  .choice[aria-pressed='true']:hover {
+    background: color-mix(in srgb, var(--on-action-container) 8%, var(--action-container));
+  }
+}
+
+.choice[aria-pressed='true']:active {
+  background: color-mix(in srgb, var(--on-action-container) 12%, var(--action-container));
+}
+
+.choice:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The switches: each row is its switch, its press inside its own shape, the words on the fields' column. */
+.toggles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0 -12px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.toggle > svg {
+  flex: none;
+}
+
+@media (hover: hover) {
+  .toggle:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.toggle:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.toggle:focus-visible {
+  outline-offset: -2px;
+}
+
+/* An alarm for an event: the event it is for, as a row like the switches', « Délier » at its end. */
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 4px 8px 12px;
+}
+
+.toggleText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggleText > :global(.t-meta) {
+  text-wrap: pretty;
+}
+
+.goneFrame {
+  --frame-width: min(400px, 86vw);
+}
+
+/* ── the sound ──────────────────────────────────────────────────────────── */
+
+.soundLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.soundLine > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.soundGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+}
+
+.soundGroup + .soundGroup {
+  margin-top: 6px;
+}
+
+/* A mood heads its sounds, on the rows' words' column. */
+.soundMood {
+  margin: 6px 0 2px;
+  padding: 0 12px 0 46px;
+  color: var(--ink-muted);
+}
+
+/* Settings: its fields in a block, as every app's. */
+.settingsField {
+  max-width: 420px;
+}

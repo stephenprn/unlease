@@ -12,6 +12,7 @@ import { NARROW, useMedia } from '../useMedia';
 import { Layer } from './Layer';
 import styles from './layers.module.css';
 import { OutlineEdge, useOutline } from './Outline';
+import { useScrollEdges } from './scrollEdges';
 
 export interface PopoverProps {
   readonly open: boolean;
@@ -34,6 +35,8 @@ const MARGIN = 8;
 function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start', width, className, rows }: Omit<PopoverProps, 'open' | 'onDismiss' | 'initialFocus'>) {
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  // Taller than the window, what runs past its top or its foot fades there (a list of its own under a field scrolls itself).
+  const scrollEdges = useScrollEdges({ fade: 'y' });
   // A menu's own outline: its paint clipped to it, its edge inside it, its lift cast by the stage.
   const { ref: measure, d, vars } = useOutline<HTMLDivElement>('menu');
   const setPanel = useCallback(
@@ -102,7 +105,7 @@ function PopoverPanel({ anchor, children, label, role = 'dialog', align = 'start
         data-rows={rows ? '' : undefined}
       >
         {/* It scrolls inside its outline, so its edge stays put. */}
-        <div className={styles.popoverScroll}>
+        <div ref={scrollEdges} className={styles.popoverScroll}>
           <div ref={contentRef}>{children}</div>
         </div>
         <OutlineEdge d={d} className={styles.panelEdge} />

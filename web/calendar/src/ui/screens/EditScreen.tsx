@@ -1,6 +1,6 @@
 /**
  * An event's form, new or changed, as Google's « Plus d'options »: the title; all day or its hours,
- * the days, the zone; the repeat (the usual choices from its start, or « Personnaliser… »); the
+ * the days, the zone (or, all day, whether it is a day off: Clock's alarms that ask stay quiet); the repeat (the usual choices from its start, or « Personnaliser… »); the
  * place (the contacts' addresses offered as it is typed); the people it is with; its reminders; its
  * labels and colour; its description, which mentions what the suite holds; its files; an address.
  * A new one may come prefilled from its address (a quick add, Claude, Carnet's « Ajouter à l'agenda »:
@@ -99,7 +99,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
   const [reminderMenu, setReminderMenu] = useState(false);
   const reminderButton = useRef<HTMLSpanElement>(null);
   const reminderList = useRef<HTMLDivElement>(null);
-  // A reminder taken off fades where it was, the others and « Un autre rappel » close ranks; one added settles in once they have made room.
+  // A reminder taken off fades where it was, the others and « Ajouter un rappel » close ranks; one added settles in once they have made room.
   useListMotion(reminderList, { late: true });
   const fileInput = useRef<HTMLInputElement>(null);
   const since = useRef({ title: occurrence ? occurrence.event.title : null, description: occurrence ? occurrence.event.description : null });
@@ -107,6 +107,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
   const { today } = useNow();
   const known = useKnownPlaces();
   const labels = useCalendarStore(s => s.labels);
+  const labelled = draft.labelIds.some(id => labels[id]?.deletedAt === null);
   const liveLabels = useMemo(() => Object.values(labels).filter(label => label.deletedAt === null).sort((a, b) => (a.position < b.position ? -1 : 1)), [labels]);
   const allDay = isDay(draft.start);
   const set = (patch: Partial<EventDraft>): void => setDraft(current => ({ ...current, ...patch }));
@@ -248,6 +249,16 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
                 <SwitchMark checked={allDay} />
                 <span className="t-body">{t('All day')}</span>
               </button>
+              {/* An all-day event may be a day off, where a timed one has its zone (the phone's too). */}
+              {allDay ? (
+                <button type="button" role="switch" aria-checked={draft.dayOff} className={styles.switchRow} onClick={() => set({ dayOff: !draft.dayOff })}>
+                  <SwitchMark checked={draft.dayOff} />
+                  <span className={styles.switchWords}>
+                    <span className="t-body">{t('Day off')}</span>
+                    <span className="t-meta">{t('Clock’s alarms that ask for it stay quiet that day.')}</span>
+                  </span>
+                </button>
+              ) : null}
               {!allDay && !showZone ? (
                 <Button kind="text" small icon="globe" onClick={() => setShowZone(true)}>
                   {t('Time zone')}
@@ -290,7 +301,7 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
               <>
                 <span ref={reminderButton} className={styles.anchorSpan} data-motion="reminder-add">
                   <Button kind="text" small icon="plus" onClick={() => setReminderMenu(true)}>
-                    {draft.reminders.length > 0 ? t('Another reminder') : t('Add a reminder')}
+                    {t('Add a reminder')}
                   </Button>
                 </span>
                 <Menu
@@ -321,7 +332,8 @@ function EventForm({ occurrence, initial, typed = false }: { occurrence: Occurre
             />
           </FormRow>
           <FormRow icon="palette" label={t('Colour')} wide first="swatches">
-            <ColorPicker<true> value={draft.color} onChange={color => set({ color })} label={t('Colour')} none={t('Its labels’')} />
+            {/* None of its own: its labels' colour, else Réglages' colour for your events. */}
+            <ColorPicker<true> value={draft.color} onChange={color => set({ color })} label={t('Colour')} none={labelled ? t('Its labels’') : t('Default colour')} noneTag={labelled} />
           </FormRow>
           <FormRow icon="text" label={t('Description')} wide>
             <DescriptionField markup={draft.description} onChange={description => set({ description })} />

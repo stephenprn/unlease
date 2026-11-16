@@ -291,6 +291,9 @@ const CHECK = 'M5 12.6C6.6 13.9 8 15.4 9.4 17C12.2 13.2 15.4 9.8 19 7.2';
 const LINK_LOOPS = [turn(pillow(2.4, 8.7, 11.2, 6.6, 3.3, 0.45), -42), turn(pillow(10.4, 8.7, 11.2, 6.6, 3.3, 0.45), -42)];
 const CLOUD = 'M7.4 18.6C5 18.6 3.2 16.8 3.2 14.5C3.2 12.4 4.8 10.6 6.9 10.4C7.4 7.2 10 4.8 13.2 4.8C16.6 4.8 19.4 7.6 19.4 11V11.6C20.4 12.4 21 13.6 21 15C21 17 19.4 18.6 17.4 18.6';
 const CLOUD_FLOOR = wave(17.4, 18.6, 7.4, 18.6, 0.35);
+/** The cloud a step smaller and raised, so the weather it brings falls under it (rain, snow, a storm). */
+const HIGH_CLOUD = Path.of(CLOUD).map((x, y) => [12 + (x - 12) * 0.84, 2.9 + (y - 4.8) * 0.84]);
+const HIGH_CLOUD_FLOOR = wave(16.54, 14.49, 8.14, 14.49, 0.3);
 const PIN_UP = {
   cap: pillow(8.4, 3, 7.2, 3.4, 1.7, 0.2),
   body: 'M10.2 6.4C10.2 8.4 9.8 10.4 8.6 12.2H15.4C14.2 10.4 13.8 8.4 13.8 6.4',
@@ -414,6 +417,11 @@ export const ICONS = {
     ]),
   },
   moon: { line: form('M20.4 14.2C19.2 14.7 17.9 15 16.5 15C11.5 15 7.4 10.9 7.4 5.9C7.4 5 7.6 4.1 7.8 3.2C4.8 4.4 2.8 7.4 2.8 10.8C2.8 16.2 7.2 20.6 12.6 20.6C16.2 20.6 19.2 18.6 20.4 14.2Z') },
+  // The weather as an alarm rings (Clock) and on a day (Agenda): the cloud raised over what falls from it.
+  rain: { line: form([HIGH_CLOUD, HIGH_CLOUD_FLOOR, line(8.7, 17.3, 7.7, 20.1), line(12.5, 17.3, 11.5, 20.1), line(16.3, 17.3, 15.3, 20.1)]) },
+  snow: { line: form([HIGH_CLOUD, HIGH_CLOUD_FLOOR], dots([[8.3, 18.2, 1.25], [12, 20, 1.25], [15.7, 18.2, 1.25]])) },
+  storm: { line: form([HIGH_CLOUD, HIGH_CLOUD_FLOOR, 'M13 15.6L10.7 18.6H13.5L11.4 21.6']) },
+  fog: { line: form([wave(3.8, 7.6, 20.2, 7.6, 0.6), wave(3.8, 12.2, 20.2, 12.2, 0.6), wave(6.4, 16.8, 17.6, 16.8, 0.5)]) },
   phone: { line: form([pillow(6.4, 2.8, 11.2, 18.4, 2.8, 0.3), line(10.6, 5.8, 13.4, 5.8)]) },
   download: { line: form([wave(12, 3.6, 12, 14.6, 0.4), head(12, 15, 90), wave(4.4, 19.6, 19.6, 19.6, 0.5)]) },
   upload: { line: form([wave(12, 15.2, 12, 4.2, 0.4), head(12, 3.8, -90), wave(4.4, 19.6, 19.6, 19.6, 0.5)]) },
@@ -426,6 +434,8 @@ export const ICONS = {
   today: {
     line: form([pillow(3.6, 5, 16.8, 15.4, 3, 0.4), line(8, 3, 8, 6.6), line(16, 3, 16, 6.6), wave(3.8, 9.6, 20.2, 9.6, 0.4)], dots([[12, 15, 2.6]])),
   },
+  // « Aujourd'hui », the jump (Agenda's bar): a day's page without its rings, its band across the top, the body left for the date the app writes in it (centred at 12, 14.6).
+  datePage: { line: form([pillow(3.6, 3.4, 16.8, 17.2, 3.2, 0.4), wave(3.8, 8.4, 20.2, 8.4, 0.4)]) },
   mapPin: { line: form(['M12 21.2C12 21.2 4.8 15 4.8 9.6C4.8 5.6 8 2.6 12 2.6C16 2.6 19.2 5.6 19.2 9.6C19.2 15 12 21.2 12 21.2Z', circle(12, 9.6, 2.6)]) },
   bag: { line: form([pillow(3.8, 6.8, 16.4, 13.8, 3, 0.4), 'M8.6 9.8V7.2C8.6 5.2 10.1 3.6 12 3.6C13.9 3.6 15.4 5.2 15.4 7.2V9.8']) },
   film: {

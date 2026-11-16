@@ -14,49 +14,41 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--ground-paint);
   color: var(--ink);
 }
 
 /*
- * Cards slide under the ground rather than being cut by a line: the ground, grain and all, laid over
- * them below the header on an eased curve, as strongly as the page has scrolled (`usePageEdges`), so
- * nothing is washed at the page's top. Over the page's column only: the docked navigation stays.
+ * Its ground comes once the page slides under it: at the page's top nothing of the page lies there
+ * but what rises from its head on purpose (a collection's washed emblem), which runs on under the
+ * header to the screen's edge instead of being cut at its foot. The ground is the page's own, fixed
+ * to the window, so the header looks the same either way.
+ */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--ground-paint);
+  opacity: clamp(0, calc(var(--page-above-k, 1) * 1000), 1);
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+/*
+ * What slides under the header (or the top bar) meets it with a hairline across the page's column,
+ * once the page has scrolled at all (`usePageEdges`, eased in over the first few px): never at the
+ * page's top, never a fade, a shadow or a blur. The docked navigation keeps its own (its list's).
  */
 .header::after,
 .topBar::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 0;
   left: 0;
   right: 0;
-  height: var(--edge-fade);
+  height: 1px;
   pointer-events: none;
-  background: var(--ground-paint);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 1) 0%,
-    rgb(0 0 0 / 0.962) 12.5%,
-    rgb(0 0 0 / 0.854) 25%,
-    rgb(0 0 0 / 0.691) 37.5%,
-    rgb(0 0 0 / 0.5) 50%,
-    rgb(0 0 0 / 0.309) 62.5%,
-    rgb(0 0 0 / 0.146) 75%,
-    rgb(0 0 0 / 0.038) 87.5%,
-    rgb(0 0 0 / 0) 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 1) 0%,
-    rgb(0 0 0 / 0.962) 12.5%,
-    rgb(0 0 0 / 0.854) 25%,
-    rgb(0 0 0 / 0.691) 37.5%,
-    rgb(0 0 0 / 0.5) 50%,
-    rgb(0 0 0 / 0.309) 62.5%,
-    rgb(0 0 0 / 0.146) 75%,
-    rgb(0 0 0 / 0.038) 87.5%,
-    rgb(0 0 0 / 0) 100%
-  );
+  background: var(--hairline);
   opacity: var(--page-above-k, 0);
 }
 
@@ -621,7 +613,9 @@
     position: sticky;
     top: var(--header-height, 64px);
     height: calc(100vh - var(--header-height, 64px));
-    padding: 8px 12px 12px;
+    /* Its 8 of top room inside its list, so the list's hairline lies on the header's foot. */
+    --nav-top: 12px;
+    padding: 0 12px 12px;
   }
 }
 
@@ -643,8 +637,8 @@
 
 /*
  * A phone-sized window: the phone's bottom bar (habits-garden's tab bar), the ground's own paper under
- * a hairline, with the matcha pebble at its end; the bar lift cast upwards, as it sits on the bottom
- * edge. It rises in its own height and steps back down, never just vanishing.
+ * a hairline while the board runs on under it, with the matcha pebble at its end; no lift, no blur.
+ * It rises in its own height and steps back down, never just vanishing.
  */
 .bottomBar {
   /* The ground itself, fixed to the window like the page's: the gradient and its grain run on under the bar (no sheet grain over it). */
@@ -659,10 +653,11 @@
   align-items: center;
   height: calc(80px + env(safe-area-inset-bottom));
   padding: 0 16px env(safe-area-inset-bottom) 8px;
-  border-top: 1px solid var(--hairline);
-  box-shadow:
-    0 -1px 3px color-mix(in srgb, var(--shadow) 70%, transparent),
-    0 -6px 16px color-mix(in srgb, var(--shadow) 60%, transparent);
+  /*
+   * Its hairline while the page runs on under it (`usePageEdges`), none once the page has ended above
+   * it.
+   */
+  border-top: 1px solid color-mix(in srgb, var(--hairline) calc(var(--page-below-k, 1) * 100%), transparent);
   animation: bar-in var(--duration-medium) var(--ease-decelerate);
 }
 
@@ -670,7 +665,7 @@
   animation: bar-out var(--duration-short) var(--ease-accelerate) forwards;
 }
 
-/* Its own height and its lift's, so the whole motion is seen and nothing is left showing. */
+/* Its own height and a little more, so the whole motion is seen and nothing is left showing. */
 @keyframes bar-in {
   from {
     transform: translateY(calc(100% + 24px));

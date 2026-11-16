@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vitest/config';
 
-const alias = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`./packages/${name}/src`, import.meta.url)) }));
+const alias = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages', 'clock'].map(name => ({ find: `@unlease/${name}`, replacement: fileURLToPath(new URL(`./packages/${name}/src`, import.meta.url)) }));
 
 export default defineConfig({
   resolve: { alias },

@@ -20,6 +20,7 @@ import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Floating } from '@shared/ui/components/Floating';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Link } from '@shared/ui/router';
 import { mentionPath } from '../../app/names';
 import styles from '../calendar.module.css';
@@ -127,6 +128,8 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
   const shown = listed || (open && empty !== null);
   const anchor = useFieldAnchor(shown, field);
   const width = anchor ? Math.min(Math.max(anchor.width, 280), 440) : undefined;
+  // Rows past the panel's top or foot fade there, as far as they run on.
+  const listEdges = useScrollEdges({ fade: 'y' });
   return (
     <div className={styles.peoplePicker}>
       {value.length > 0 ? (
@@ -177,7 +180,7 @@ export function PeoplePicker({ value, onChange, max, autoFocus = false }: { valu
             </Floating>
           ) : shown && anchor ? (
             <Floating anchor={anchor} label={query.trim() ? t('Contacts') : t('Favourites')} role="listbox" id={listId}>
-              <div className={styles.floatList} style={{ width }}>
+              <div ref={listEdges} className={styles.floatList} style={{ width }}>
                 {found.map((contact, index) => {
                   const detail = workLine(contact) || contact.emails[0]?.address || contact.phones[0]?.number || '';
                   return (

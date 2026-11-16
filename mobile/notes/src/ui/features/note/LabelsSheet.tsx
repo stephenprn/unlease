@@ -47,7 +47,7 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
           }}
         />
       </View>
-      <SheetScroll top={false}>
+      <SheetScroll>
         {wanted ? (
           // A list row's anatomy (`ListRow`) in link ink: the plus in the tags' slot, the words on their column.
           <Tappable onPress={create} style={styles.row}>

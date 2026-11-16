@@ -6,7 +6,7 @@ import { planImport, readContactsFile } from '@unlease/contacts/services/importi
 import { freshLibrary } from '@test/library';
 import { getRecord, mergeRemote } from '@shared/app/store/records';
 import { emptyDraft, draftOf } from '../drafts';
-import { applyImport, createLabel, deleteLabel, emptyContactsBin, eraseContacts, markPhotoUploaded, restoreContacts, saveContact, setFavorite, setLabelOn, trashContacts } from '../store/actions';
+import { applyCleanup, applyImport, createLabel, deleteLabel, emptyContactsBin, eraseContacts, markPhotoUploaded, restoreContacts, saveContact, setFavorite, setLabelOn, trashContacts } from '../store/actions';
 import { contactsModule } from '../../module';
 import { useContactsStore } from '../store/library';
 import { contactsData } from '../../data';
@@ -146,5 +146,18 @@ describe('Contacts’ actions', () => {
     markPhotoUploaded('photo-1');
     expect(state().contacts[id]!.photoUploaded).toBe(true);
     expect(contactsData.fileOwner!('photo-1')!.done).toBe(true);
+  });
+  it('fixes the ticked findings of a cleaning tool in one batch, and takes them back', () => {
+    const shout = saveContact(null, { ...emptyDraft('JEAN DUPONT'), phones: [{ id: 'p1', number: '0612345678', kind: 'mobile', label: '' }] }, { since: null, typed: '' });
+    const quiet = saveContact(null, emptyDraft('léa martin'), { since: null, typed: '' });
+    const { count, undo } = applyCleanup('names', 'FR', new Set([`names:${shout}`]));
+    expect(count).toBe(1);
+    expect(state().contacts[shout]).toMatchObject({ firstName: 'Jean', lastName: 'Dupont' });
+    expect(state().contacts[quiet]).toMatchObject({ firstName: 'léa', lastName: 'martin' });
+    expect(clocksOf('contact', shout)).toHaveLength(2);
+    undo();
+    expect(state().contacts[shout]).toMatchObject({ firstName: 'JEAN', lastName: 'DUPONT' });
+    expect(applyCleanup('countryCodes', 'FR', new Set([`countryCodes:${shout}:p1`])).count).toBe(1);
+    expect(state().contacts[shout]!.phones[0]!.number).toBe('+33 6 12 34 56 78');
   });
 });

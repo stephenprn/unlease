@@ -26,7 +26,7 @@ const ROOM = 8;
 /** How long after a field asked the keyboard's arrival, and the scroller's new height, still move it. */
 const KEYBOARD_WAIT_MS = 1200;
 
-export const RevealScrollView = forwardRef<Scroller, ScrollViewProps & EdgeProps>(function RevealScrollView({ children, onLayout, style, top, ...rest }, ref) {
+export const RevealScrollView = forwardRef<Scroller, ScrollViewProps & EdgeProps>(function RevealScrollView({ children, onLayout, style, top, insetTop, capped, fade, ...rest }, ref) {
   const scroller = useRef<Scroller>(null);
   const asked = useRef<{ node: Box; at: number } | null>(null);
   useImperativeHandle(ref, () => scroller.current!, []);
@@ -65,8 +65,8 @@ export const RevealScrollView = forwardRef<Scroller, ScrollViewProps & EdgeProps
   const { outer, inner } = splitScrollStyle(style);
   return (
     <RevealContext.Provider value={reveal}>
-      {/* The form's ends soften under the top bar and the keyboard while it runs on past them. */}
-      <ScrollEdges style={outer} top={top}>
+      {/* The top bar's line comes in once the form goes under it; its foot is the form's actions' edge. */}
+      <ScrollEdges style={outer} top={top} insetTop={insetTop} capped={capped} fade={fade}>
         <ScrollView
           ref={scroller}
           style={inner}

@@ -20,8 +20,8 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 20));
 describe('the apps a server runs', () => {
   it('runs every ready app on a new server, and says which in its health and settings', async () => {
     server = createTestServer();
-    expect(await health()).toEqual({ ok: true, apiVersion: API_VERSION, apps: ['notes', 'pages', 'calendar', 'contacts'], setup: false, analysis: true });
-    expect((await get('/api/settings')).body.apps).toEqual({ enabled: ['notes', 'pages', 'calendar', 'contacts'] });
+    expect(await health()).toEqual({ ok: true, apiVersion: API_VERSION, apps: ['notes', 'pages', 'calendar', 'contacts', 'clock'], setup: false, analysis: true });
+    expect((await get('/api/settings')).body.apps).toEqual({ enabled: ['notes', 'pages', 'calendar', 'contacts', 'clock'] });
   });
 
   it('keeps the apps it is given, in the suite’s order, and refuses an unknown one or none', async () => {

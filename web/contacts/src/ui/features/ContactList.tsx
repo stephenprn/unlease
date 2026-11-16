@@ -5,7 +5,7 @@
  * each group when the list is long enough to look one up. A face is the box that picks its row,
  * under a pointer and while a pick is on; the selection bar acts on what is picked.
  */
-import { Fragment, memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import type { Contact } from '@unlease/contacts/models/contacts';
@@ -110,19 +110,20 @@ function SectionRows({ section, order, picking }: { section: ListSection; order:
     if (last && last.letter === letter) last.contacts.push(contact);
     else groups.push({ letter, contacts: [contact] });
   }
+  // Each letter a band across the sheet over its people, held in front of them while they scroll.
   return (
     <>
       {groups.map(group => (
-        <Fragment key={group.letter}>
-          <h3 className={`${styles.letter} t-title`} data-motion={`letter:${group.letter}`}>
-            <span className={styles.letterName}>{group.letter}</span>
+        <div key={group.letter} className={styles.letterGroup} data-motion={`letter:${group.letter}`}>
+          <h3 className={styles.letter}>
+            <span className={`${styles.letterName} t-section`}>{group.letter}</span>
           </h3>
           <ul className={styles.group} aria-label={group.letter}>
             {group.contacts.map(contact => (
               <ContactRow key={contact.id} id={contact.id} order={order} picking={picking} run={run} />
             ))}
           </ul>
-        </Fragment>
+        </div>
       ))}
     </>
   );

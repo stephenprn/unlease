@@ -7,9 +7,9 @@
 }
 
 /*
- * Everything but the foot scrolls; the archive, the bin and the settings stay in reach. Its top
- * fades as far as rows lie above it (`useScrollEdges`), and blurs under what stays there: the header
- * or the drawer's brand. Its foot is the column's own end: a plain cut there.
+ * Everything but the foot scrolls; the archive, the bin and the settings stay in reach, under the
+ * foot's own rule. What stays over it (the header, the drawer's brand) meets its rows with a hairline
+ * once some lie above it (`useScrollEdges`).
  */
 .navMain {
   flex: 1;
@@ -20,9 +20,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  /* 4px of room around its rows for a row's focus ring (2px, 2px out), given back by the margin. */
+  /* 4px of room around its rows for a row's focus ring (2px, 2px out), given back by the margin; docked, its top runs up to the header's foot (`--nav-top`), so its hairline and the header's are one line. */
   margin: -4px -4px 0;
-  padding: 4px;
+  padding: var(--nav-top, 4px) 4px 4px;
 }
 
 .navFoot {

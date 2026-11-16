@@ -1,7 +1,7 @@
 /**
  * The demo's calendar: labels, a weekly series with one occurrence moved and one taken out, a daily
- * stand-up on workdays, a dinner with a guest and a page mentioned, a long weekend, a calendar one
- * subscribes to (read-only) with its events. Every day is counted from today, so the week shown is
+ * stand-up on workdays, a dinner with a guest and a page mentioned, a long weekend, a day off (Clock's
+ * alarms that ask stay quiet), a calendar one subscribes to (read-only) with its events. Every day is counted from today, so the week shown is
  * always lived in.
  */
 import { keysBetween } from '@unlease/core/services/fractionalIndex';
@@ -42,6 +42,9 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
   // Today lived in too (« Aujourd'hui »): a lunch, and an evening class.
   const lunch = blankDraft(`${today}T12:30`, `${today}T13:45`, zone, [30]);
   const pottery = blankDraft(`${today}T18:30`, `${today}T20:00`, zone, [60]);
+  // A Friday off, next week or the one after (« Jour de congé »).
+  const friday = next(addDays(today, 5), 5);
+  const dayOff = blankDraft(friday, addDays(friday, 1), '', []);
   const events: LocalChange[] = [
     event('demo-cal-escalade', { ...climbing, title: 'Bouldering', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'], rrule: 'FREQ=WEEKLY;BYDAY=TU', contactIds: ['demo-contact-noah'] }, { exdates: [`${addDays(tuesday, 21)}T19:00`] }),
     event('demo-cal-escalade-x', { ...climbing, start: `${addDays(tuesday, 7)}T20:00`, end: `${addDays(tuesday, 7)}T22:00`, title: 'Bouldering (later)', place: 'Arkose Montreuil', labelIds: ['demo-cal-sport'] }, { recurringId: 'demo-cal-escalade', originalStart: `${addDays(tuesday, 7)}T19:00` }),
@@ -51,6 +54,7 @@ export function calendarChanges(now: number): { readonly time: number; readonly 
     event('demo-cal-dentiste', { ...dentist, title: 'Dentist', place: 'Dr Roux’s practice, Paris' }),
     event('demo-cal-dejeuner', { ...lunch, title: 'Lunch with Camille', place: 'Le Petit Cambodge, Paris', contactIds: ['demo-contact-camille'] }),
     event('demo-cal-ceramique', { ...pottery, title: 'Ceramics workshop', place: 'Canal Studio, Paris', labelIds: ['demo-cal-sport'] }),
+    event('demo-cal-conge', { ...dayOff, title: 'Day off', labelIds: ['demo-cal-travail'], dayOff: true }),
   ];
   const feed: LocalChange = {
     type: 'calendarFeed',

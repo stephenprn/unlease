@@ -44,6 +44,11 @@ export function showDay(day: string): void {
   useCalendarUiStore.setState({ day });
 }
 
+/** A link's view (another app's « Voir la journée », a widget's day): shown, not remembered. */
+export function visitView(view: CalendarView): void {
+  useCalendarUiStore.setState({ view });
+}
+
 /** The view chosen is remembered for the next start too. */
 export function showView(view: CalendarView, day?: string): void {
   setPrefs({ view });

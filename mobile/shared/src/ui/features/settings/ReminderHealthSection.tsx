@@ -13,7 +13,8 @@ import { t } from '@unlease/core/i18n';
 import { openReminderSetting, remindersHealth, type RemindersHealth } from '@shared/platform/reminders';
 import { selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
 
-import { ListRow } from '../../components';
+import { Icon, ListRow } from '../../components';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Section } from './Section';
 
 export interface ReminderHealthProps {
@@ -24,6 +25,7 @@ export interface ReminderHealthProps {
 }
 
 export function ReminderHealthSection({ wanted = true, makerSettings }: ReminderHealthProps) {
+  const theme = useTheme();
   const [health, setHealth] = useState<RemindersHealth | null>(null);
   const [maker, setMaker] = useState<(() => void) | null>(null);
   // With a server, « Synchronisation en arrière-plan » names the battery's « Restreinte », the notifications included.
@@ -46,7 +48,17 @@ export function ReminderHealthSection({ wanted = true, makerSettings }: Reminder
   if (!wanted || !health) return null;
   const rows: React.ReactNode[] = [];
   if (!health.notifications) {
-    rows.push(<ListRow key="notifications" icon="bellOff" title={t('Notifications turned off')} supporting={t('Allow them in Android’s settings: without them, nothing shows.')} onPress={() => void openReminderSetting('notifications')} />);
+    // The one that silences everything: the alert in the waiting ink, and the way to Android's page.
+    rows.push(
+      <ListRow
+        key="notifications"
+        leading={<Icon name="alert" size={24} color={theme.color.waiting} />}
+        title={t('Notifications turned off')}
+        supporting={t('Allow them in Android’s settings: without them, nothing shows.')}
+        onPress={() => void openReminderSetting('notifications')}
+        trailing={<Icon name="chevronRight" size={20} color={theme.color.inkMuted} />}
+      />,
+    );
   }
   if (!health.exactAlarms) {
     rows.push(<ListRow key="exact" icon="clock" title={t('Reminders at an approximate time')} supporting={t('Allow “Alarms & reminders” so they ring on the minute.')} onPress={() => void openReminderSetting('exactAlarms')} />);

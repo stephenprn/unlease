@@ -8,7 +8,11 @@
  * open their menu; a space right after them closes it. « [[ » cites a page, « : » and a word offer
  * emojis. Enter on a date chosen alone opens its editor. With blocks selected: the arrows move the
  * selection, Enter writes (in the block, or in a new paragraph after one with no text; into a table
- * of contents' entries), Suppr deletes, Ctrl+C, X and D copy, cut and duplicate.
+ * of contents' entries), Suppr deletes, Ctrl+C, X and D copy, cut and duplicate, Ctrl+Enter ticks
+ * the to-dos (opens the toggles), Début and Fin reach the first and last block. In both: ⌘⌥0 to 9
+ * (Ctrl+Maj+0 to 9 off a Mac) turn the block into text, headings, a to-do, a list, a toggle, code
+ * or a page, as Notion numbers them; Ctrl+/ opens the block's menu; Ctrl+Alt+T opens or closes
+ * every toggle of the page.
  */
 import type { KeyboardEvent } from 'react';
 
@@ -19,8 +23,9 @@ import { isInBin } from '@unlease/pages/services/blocks';
 import { mentionLabel } from '../../../app/hooks/usePages';
 import { useBlocksStore } from '../../../app/store/blocks';
 import { redoPage, undoPage } from '../../../app/store/pageHistory';
-import { deleteBlocks, duplicateBlocks, indentBlocks, insertAfter, mergeBlocks, nudgeBlocks, outdentBlocks, splitBlock, turnInto, updateBlock } from '../../../app/store/pages';
+import { deleteBlocks, duplicateBlocks, indentBlocks, insertAfter, mergeBlocks, nudgeBlocks, outdentBlocks, splitBlock, TURNABLE, turnInto, updateBlock } from '../../../app/store/pages';
 import { setToggleOpen, usePagesUiStore } from '../../../app/store/pagesUi';
+import { isApple } from '@shared/ui/dom';
 import { navigate } from '@shared/ui/router';
 import { paths } from '../../routes';
 import { openDateEditor } from './DateEditor';
@@ -34,6 +39,7 @@ import {
   focusBlock,
   menuKey,
   neighbour,
+  openBlockMenu,
   openTogglesAbove,
   richHandle,
   selectableOutline,
@@ -76,6 +82,62 @@ const LINE_SHORTCUTS: readonly { readonly pattern: RegExp; readonly kind: BlockK
 ];
 
 export const isMod = (event: { readonly metaKey: boolean; readonly ctrlKey: boolean }): boolean => event.metaKey || event.ctrlKey;
+
+/** What ⌘⌥ and a digit (Ctrl+Maj and a digit off a Mac, where Ctrl+Alt is AltGr, which types) turn a block into: Notion's numbering. */
+const TURN_DIGITS: readonly BlockKind[] = ['text', 'h1', 'h2', 'h3', 'todo', 'bullet', 'numbered', 'toggle', 'code', 'page'];
+
+type Keys = Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'altKey' | 'shiftKey'>;
+
+/** The kind a « turn into » key asks for, or null. The digit is read from the key's place, so ⌥ and Maj (an AZERTY's digits) change nothing. */
+export function turnKind(event: Keys): BlockKind | null {
+  const digit = /^(?:Digit|Numpad)(\d)$/.exec(event.code)?.[1];
+  if (digit === undefined) return null;
+  const chord = isApple() ? event.metaKey && event.altKey && !event.ctrlKey : event.ctrlKey && event.shiftKey && !event.altKey && !event.metaKey;
+  return chord ? (TURN_DIGITS[Number(digit)] ?? null) : null;
+}
+
+/** Ctrl+Alt+T (⌘⌥T): every toggle of the page opens, or, when all are open, closes. */
+function isTogglesKey(event: Keys): boolean {
+  return isMod(event) && event.altKey && !event.shiftKey && event.code === 'KeyT';
+}
+
+/** Ctrl+/ (⌘/): the block's menu. */
+function isMenuKey(event: Keys): boolean {
+  return isMod(event) && !event.altKey && (event.key === '/' || event.code === 'Slash');
+}
+
+export function toggleAllToggles(page: string): void {
+  const { blocks, blocksByParent } = state();
+  const toggles: string[] = [];
+  const walk = (parent: string, depth: number): void => {
+    for (const id of blocksByParent[parent] ?? []) {
+      const block = blocks[id];
+      if (!block || block.deletedAt !== null || block.kind === 'page' || depth > 200) continue;
+      if (block.kind === 'toggle') toggles.push(id);
+      walk(id, depth + 1);
+    }
+  };
+  walk(page, 0);
+  const { openToggles } = usePagesUiStore.getState();
+  const open = toggles.some(id => !openToggles.has(id));
+  for (const id of toggles) setToggleOpen(id, open);
+}
+
+/** Ctrl+Enter on selected blocks: their to-dos ticked (or all unticked, when all were), their toggles opened (or closed). */
+function checkOrOpen(page: string, ids: readonly string[]): void {
+  const { blocks } = state();
+  const todos = ids.filter(id => blocks[id]?.kind === 'todo');
+  if (todos.length > 0) {
+    const checked = !todos.every(id => blocks[id]?.checked);
+    for (const id of todos) updateBlock(page, id, { checked });
+  }
+  const toggles = ids.filter(id => blocks[id]?.kind === 'toggle');
+  if (toggles.length > 0) {
+    const { openToggles } = usePagesUiStore.getState();
+    const open = toggles.some(id => !openToggles.has(id));
+    for (const id of toggles) setToggleOpen(id, open);
+  }
+}
 
 /** The caret (or selection) of a block's editable as offsets; its end when it has none. */
 export function caretOf(handle: RichHandle): { readonly start: number; readonly end: number } {
@@ -253,6 +315,31 @@ export function richKey(event: KeyboardEvent<HTMLElement>, page: string, block: 
   if (historyKey(event, page)) return;
   const key = event.key;
   const lower = key.toLowerCase();
+  const turned = turnKind(event);
+  if (turned) {
+    event.preventDefault();
+    if (turned === block.kind || !TURNABLE.has(block.kind) || block.kind === 'page') return;
+    if (turned === 'page') {
+      // A page has no text to keep the caret in: it is chosen instead.
+      handle.flush();
+      turnInto(page, [block.id], 'page', { label: mentionLabel });
+      selectBlocks([block.id]);
+      editorRoot()?.focus({ preventScroll: true });
+    } else changeKind(page, block, turned, caretOf(handle).start);
+    return;
+  }
+  if (isTogglesKey(event)) {
+    event.preventDefault();
+    toggleAllToggles(page);
+    return;
+  }
+  if (isMenuKey(event)) {
+    event.preventDefault();
+    handle.flush();
+    selectBlocks([block.id]);
+    openBlockMenu(block.id);
+    return;
+  }
   if (isMod(event) && !event.altKey) {
     const flag = FLAG_KEYS[lower];
     if (flag && !event.shiftKey) {
@@ -383,7 +470,30 @@ export function selectionKey(event: KeyboardEvent<HTMLElement>, page: string): v
     event.preventDefault();
     event.stopPropagation();
   };
-  if (key === 'Escape') {
+  const turned = turnKind(event);
+  if (turned) {
+    stop();
+    turnInto(page, ids, turned, { label: mentionLabel, ...(turned === 'code' ? { language: 'plain' } : {}) });
+    selectBlocks(ids, anchor);
+  } else if (isTogglesKey(event)) {
+    stop();
+    toggleAllToggles(page);
+  } else if (isMenuKey(event)) {
+    stop();
+    openBlockMenu(first);
+  } else if (key === 'Enter' && mod) {
+    stop();
+    checkOrOpen(page, ids);
+  } else if (key === 'Home' || key === 'End') {
+    // To the first or last block (Maj: the selection runs there from where it started).
+    stop();
+    const edge = key === 'Home' ? 0 : outline.length - 1;
+    if (event.shiftKey && anchor && outline.includes(anchor)) {
+      const [from, to] = [outline.indexOf(anchor), edge].sort((a, b) => a - b) as [number, number];
+      selectBlocks(outline.slice(from, to + 1), anchor);
+    } else selectBlocks([outline[edge]!]);
+    editorRoot()?.querySelector(`[data-select-block="${CSS.escape(outline[edge]!)}"]`)?.scrollIntoView({ block: 'nearest' });
+  } else if (key === 'Escape') {
     stop();
     clearBlockSelection();
   } else if ((key === 'ArrowUp' || key === 'ArrowDown') && mod && event.shiftKey) {

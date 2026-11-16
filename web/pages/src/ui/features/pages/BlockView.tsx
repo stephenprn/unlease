@@ -31,7 +31,7 @@ import { ColumnsBlock } from './ColumnsBlock';
 import { consumeDragClick, pressToDrag } from './dragDrop';
 import { applyDrop } from './drops';
 import { afterTyping, richKey } from './editing';
-import { editorRoot, editorState, flushAll, focusBlock, selectableOutline, selectBlocks, setMenu, useEditorStore } from './editorStore';
+import { closeBlockMenu, editorRoot, editorState, flushAll, focusBlock, selectableOutline, selectBlocks, setMenu, useEditorStore } from './editorStore';
 import { EmojiButton } from './EmojiPicker';
 import { MediaBlock } from './MediaBlock';
 import { usePageContext } from './PageContext';
@@ -281,6 +281,22 @@ function dragLabel(ids: readonly string[]): string {
   return text.trim().slice(0, 60) || (label ? t(label) : t('Block'));
 }
 
+/**
+ * Blocks dragged together, from a grip or from the selection itself: they land where the matcha
+ * line shows, stay selected there, and the page keeps the keyboard.
+ */
+export function dragBlocks(event: PointerEvent, page: string, ids: readonly string[]): void {
+  const outline = selectableOutline();
+  const blocks = useBlocksStore.getState().blocks;
+  pressToDrag(event, { kind: 'blocks', ids, label: dragLabel(ids), excludes: other => ids.some(id => isWithin(blocks, other, id)) }, target => {
+    flushAll();
+    if (!applyDrop({ kind: 'blocks', ids, page, outline }, target)) return;
+    // What moved stays selected and the page keeps the keyboard, so ⌘Z (Ctrl+Z) puts it back at once; dropped in another page of the tree, the page's history still holds the move.
+    if (target.type !== 'tree') selectBlocks(ids);
+    editorRoot()?.focus({ preventScroll: true });
+  });
+}
+
 function Gutter({ block }: { block: Block }) {
   const { page } = usePageContext();
   const [menu, setMenuOpen] = useState(false);
@@ -296,17 +312,10 @@ function Gutter({ block }: { block: Block }) {
 
   const onPointerDown = (event: ReactPointerEvent<HTMLButtonElement>): void => {
     const { selected } = editorState();
-    const outline = selectableOutline();
-    const ids = selected.has(block.id) ? outline.filter(id => selected.has(id)) : [block.id];
-    const blocks = useBlocksStore.getState().blocks;
-    pressToDrag(event.nativeEvent, { kind: 'blocks', ids, label: dragLabel(ids), excludes: other => ids.some(id => isWithin(blocks, other, id)) }, target => {
-      flushAll();
-      if (!applyDrop({ kind: 'blocks', ids, page, outline }, target)) return;
-      // What moved stays selected and the page keeps the keyboard, so ⌘Z (Ctrl+Z) puts it back at once; dropped in another page of the tree, the page's history still holds the move.
-      if (target.type !== 'tree') selectBlocks(ids);
-      editorRoot()?.focus({ preventScroll: true });
-    });
+    const ids = selected.has(block.id) ? selectableOutline().filter(id => selected.has(id)) : [block.id];
+    dragBlocks(event.nativeEvent, page, ids);
   };
+  const asked = useEditorStore(s => s.blockMenu === block.id);
 
   return (
     <div className={styles.gutter} contentEditable={false} data-gutter="">
@@ -331,7 +340,18 @@ function Gutter({ block }: { block: Block }) {
       >
         <Icon name="grip" size={18} />
       </button>
-      <BlockMenu open={menu} anchor={grip} block={block} onDismiss={() => setMenuOpen(false)} />
+      <BlockMenu
+        open={menu || asked}
+        anchor={grip}
+        block={block}
+        onDismiss={() => {
+          setMenuOpen(false);
+          if (!asked) return;
+          closeBlockMenu();
+          // Opened from the keyboard or a right click: the selection keeps the keys once it closes.
+          if (editorState().selected.size > 0) requestAnimationFrame(() => editorRoot()?.focus({ preventScroll: true }));
+        }}
+      />
     </div>
   );
 }

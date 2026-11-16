@@ -10,6 +10,7 @@ import { FR_SHARED } from './shared';
 import { FR_WEB } from './web';
 import { FR_WISHES } from './wishes';
 import { FR_IMMICH } from './immich';
+import { FR_CLEANUP } from './cleanup';
 
 export const CONTACTS_FRENCH: Dictionary = {
   ...FR_SHARED,
@@ -18,4 +19,5 @@ export const CONTACTS_FRENCH: Dictionary = {
   ...FR_WEB,
   ...FR_WISHES,
   ...FR_IMMICH,
+  ...FR_CLEANUP,
 };

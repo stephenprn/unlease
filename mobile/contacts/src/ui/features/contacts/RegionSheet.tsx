@@ -81,13 +81,13 @@ export function RegionSheet({ visible, chosen, phone, onChoose, onDismiss }: { v
   return <ChoiceSheet visible={visible} title={t('Default country code')} rows={rows} chosen={chosen} onChoose={onChoose} onDismiss={onDismiss} />;
 }
 
-/** A number's calling code in the contact form: the default first, the countries by name, then none (the number kept as written). */
-export function CodeSheet({ visible, chosen, fallback, onChoose, onDismiss }: { visible: boolean; chosen: string | null; fallback: string | null; onChoose: (region: string | null) => void; onDismiss: () => void }) {
+/** A number's calling code in the contact form (or the country of the numbers « Nettoyer les contacts » completes, `title`): the default first, the countries by name, then none (the number kept as written). */
+export function CodeSheet({ visible, chosen, fallback, onChoose, onDismiss, title }: { visible: boolean; chosen: string | null; fallback: string | null; onChoose: (region: string | null) => void; onDismiss: () => void; title?: string }) {
   const countries = callingCountries();
   const rows = [
     ...countries.filter(country => country.region === fallback),
     ...countries.filter(country => country.region !== fallback),
   ].map(country => ({ value: country.region as Choice, title: country.name }));
   rows.push({ value: 'none', title: t('None: the number as it is written') });
-  return <ChoiceSheet visible={visible} title={t('Country code of the number')} rows={rows} chosen={chosen ?? 'none'} onChoose={value => onChoose(value === 'none' ? null : value)} onDismiss={onDismiss} />;
+  return <ChoiceSheet visible={visible} title={title ?? t('Country code of the number')} rows={rows} chosen={chosen ?? 'none'} onChoose={value => onChoose(value === 'none' ? null : value)} onDismiss={onDismiss} />;
 }

@@ -10,6 +10,7 @@ import type { Fields } from '@unlease/core/sync/record';
 import { mergeField } from '@unlease/core/sync/textMerge';
 import { nextLineColor, type LineColor } from '@unlease/design/colors';
 import { CONTACT_LIMITS, CONTACTS_TEXT_LIMITS, isLive, type Contact } from '@unlease/contacts/models/contacts';
+import { cleanupWrites, findCleanups, type FixingTool } from '@unlease/contacts/services/cleanup';
 import { mergeContacts } from '@unlease/contacts/services/duplicates';
 import { eraseChanges, erasedCount } from '@unlease/contacts/services/erase';
 import { forgetImport, type ImportPlan } from '@unlease/contacts/services/importing';
@@ -158,6 +159,18 @@ export function mergeGroups(groups: readonly (readonly string[])[], now: number 
   }
   if (changes.length === 0) return () => undefined;
   return writeWithUndo(changes, now);
+}
+
+/**
+ * « Corriger » on a tool of « Nettoyer les contacts »: the findings ticked (`keys`), found again on the
+ * contacts as they are now, written as one batch that can be undone; how many were fixed.
+ */
+export function applyCleanup(tool: FixingTool, region: string | null, keys: ReadonlySet<string>, now: number = Date.now()): { readonly count: number; readonly undo: Undo } {
+  const contacts = state().contacts;
+  const chosen = findCleanups(tool, Object.values(contacts), region).filter(finding => finding.edit && keys.has(finding.key));
+  const writes = cleanupWrites(contacts, chosen, { now, newId: () => createId(now) });
+  if (writes.length === 0) return { count: 0, undo: () => undefined };
+  return { count: chosen.length, undo: writeWithUndo(writes.map(write => ({ type: 'contact', id: write.id, patch: write.patch })), now) };
 }
 
 /** Gone for good: a tombstone, the note emptied (its photo goes with it on the server). */

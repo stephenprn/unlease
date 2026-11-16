@@ -61,7 +61,7 @@ export async function startDemo(mode: string): Promise<() => void> {
   // `&lang=en`: the interface in English; without it, in the language it had.
   const asked = params.get('lang');
   const locale = asked === 'en' || asked === 'fr' ? asked : earlierLocale();
-  const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar').split(',').filter(isReadyApp);
+  const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar,clock').split(',').filter(isReadyApp);
   const settings =
     mode === 'setup'
       ? { locale }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Clock's static shortcuts (a long press on its icon).
+  Each opens a link of the app through ShortcutActivity (mobile/shared/android, launch/), which hands it
+  to MainActivity as a widget's tap is: Android opens a static shortcut clearing the app's task, the
+  trampoline takes that instead. Named by every launcher entry (tools/icons/build_android_drawables.mjs);
+  their icons are generated there too (ic_shortcut_*), their words are values/ and values-fr/.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="alarm"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_alarm"
+        android:shortcutShortLabel="@string/shortcut_alarm_short"
+        android:shortcutLongLabel="@string/shortcut_alarm_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-clock://new"
+            android:targetPackage="com.stephenprn.clock"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="settings"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_settings"
+        android:shortcutShortLabel="@string/shortcut_settings_short"
+        android:shortcutLongLabel="@string/shortcut_settings_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-clock://settings"
+            android:targetPackage="com.stephenprn.clock"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+</shortcuts>

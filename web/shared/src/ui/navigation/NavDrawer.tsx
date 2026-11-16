@@ -36,7 +36,7 @@ export function NavList({ route, onNavigate }: NavListProps) {
   const off = useAppOff();
   const Nav = off ? undefined : module.Nav;
   const Foot = admin || off ? undefined : module.NavFoot;
-  // Its rows fade and blur under the header (or the drawer's brand) and the foot, as the page's content does.
+  // What stays over its rows (the header, the drawer's brand) meets them with a hairline once some lie above, as the page's content does.
   const edges = useScrollEdges({ top: true });
   // A page of Réglages the app's own row marks (Agenda's import): one row chosen, never two.
   const settings = route.name === 'settings' && !(Foot && route.page !== null && module.navMarks?.includes(route.page));

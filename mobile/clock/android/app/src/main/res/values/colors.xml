@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The matcha tile (core/design/palette.ts MARK_COLORS.tile): Clock's card sits on it, its dial cut out. -->
+    <color name="ic_launcher_background">#5B8A32</color>
+    <!-- The window before JavaScript paints: the wall, so a cold start shows no flash. -->
+    <color name="window_ground">#EDE8D0</color>
+    <!-- The ringing window's ground, by day and night alike (ROLES.dark.wall). -->
+    <color name="ring_ground">#1A1817</color>
+</resources>

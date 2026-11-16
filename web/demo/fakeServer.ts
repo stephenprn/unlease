@@ -250,7 +250,7 @@ export class FakeServer {
       ? { enabled: true, keySource: 'app', keyHint: '…k3Xq', model: 'claude-opus-5-5', budgetUsd: 15 }
       : { enabled: false, keySource: null, keyHint: null, model: 'claude-opus-5-5', budgetUsd: 15 };
     this.pages = { ...PAGES_ASK_DEFAULTS, enabled: reading };
-    this.calendar = { holidays: { country: 'FR', region: null }, publishPath: '/ical/demo-0123456789abcdef.ics', ask: reading };
+    this.calendar = { holidays: { country: 'FR', region: null }, publishPath: '/ical/demo-0123456789abcdef.ics', ask: reading, workDays: [1, 2, 3, 4, 5] };
   }
 
   /** Agenda's: the holidays (France), a published address, questions on when the demo reads links. */
@@ -501,6 +501,7 @@ export class FakeServer {
       }
       if (patch.publish !== undefined) this.calendar = { ...this.calendar, publishPath: patch.publish === false ? null : patch.publish === 'renew' || !this.calendar.publishPath ? `/ical/demo-${createId().replace(/-/g, '')}.ics` : this.calendar.publishPath };
       if (patch.ask !== undefined) this.calendar = { ...this.calendar, ask: patch.ask };
+      if (patch.workDays !== undefined) this.calendar = { ...this.calendar, workDays: patch.workDays };
     }
     if ('seerr' in body) {
       const refused = this.updateSeerr(body.seerr);
@@ -653,18 +654,20 @@ export class FakeServer {
     let pages = 0;
     let contacts = 0;
     let events = 0;
+    let alarms = 0;
     for (const { record } of this.records.values()) {
       if (record.fields.deletedAt !== null && record.fields.deletedAt !== undefined) continue;
       if (record.type === 'note' && record.fields.kind !== 'links') notes += 1;
       if (record.type === 'block' && record.fields.kind === 'page') pages += 1;
       if (record.type === 'contact' && (record.fields.trashedAt === null || record.fields.trashedAt === undefined)) contacts += 1;
       if (record.type === 'calendarEvent' && record.fields.deletedAt === null && record.fields.trashedAt === null && (record.fields.feedId === null || record.fields.feedId === undefined)) events += 1;
+      if (record.type === 'alarm') alarms += 1;
     }
     const { files, bytes } = this.fileCount();
     const interval = { off: 0, '6h': 6 * HOUR, daily: 24 * HOUR, weekly: 7 * 24 * HOUR }[this.backup.recurrence];
     const lastAt = this.lastRun?.finishedAt ?? null;
     return {
-      server: { version: 'demo', notes, pages, contacts, events, files, fileBytes: bytes },
+      server: { version: 'demo', notes, pages, contacts, events, alarms, files, fileBytes: bytes },
       backup: {
         running: this.backupRunning,
         last: this.lastRun,

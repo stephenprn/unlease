@@ -18,7 +18,7 @@ import { IconButton } from '@shared/ui/components/IconButton';
 import { PebbleEdge } from '@shared/ui/components/Outline';
 import { isApple } from '@shared/ui/dom';
 import { arrowKeys } from '@shared/ui/components/radioKeys';
-import { useHiddenSides } from '@shared/ui/components/hiddenSides';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { DrawingBackgroundButton, type DrawingBackgroundChoice } from './DrawingBackground';
 import styles from './drawing.module.css';
 import { chooseInk, chooseMode, chooseSize, DRAWING_MODES, usePen, type DrawingMode } from './pen';
@@ -43,7 +43,7 @@ export interface DrawingToolsProps {
 export function DrawingTools({ canUndo, canRedo, canClear, onUndo, onRedo, onClear, background, chosenRef, className }: DrawingToolsProps) {
   const { mode, tool, sizes, ink } = usePen();
   const palette = useRef<HTMLDivElement>(null);
-  useHiddenSides(palette);
+  useScrollEdgesOn(palette, [], { fade: 'x' });
   const apple = isApple();
   return (
     <div className={className ? `${styles.tools} ${className}` : styles.tools} role="toolbar" aria-label={t('Drawing tools')}>

@@ -1,7 +1,7 @@
 /**
  * A dialog's frame, and the confirmation built on it. The frame keeps a dialog's head and its
  * actions in place and scrolls only what lies between them, so the scrollbar never runs past the
- * title or into the actions; the body fades and blurs under each once it runs on under it.
+ * title or into the actions; each meets the body with a hairline once it runs on under it.
  * Confirmation is kept for what cannot be undone (empty the bin, delete for ever); everything
  * undoable is a snackbar instead.
  */
@@ -37,7 +37,7 @@ export interface DialogFrameProps {
 
 export function DialogFrame({ title, titleId, onClose, foot, children, kind = 'form', className, onSubmit, page }: DialogFrameProps) {
   const sheet = useMedia(NARROW);
-  // Under its head always; over its foot when it has actions (without, the body ends at the dialog's own edge).
+  // A hairline under its head always; over its foot when it has actions (without, the body ends at the dialog's own edge, or the screen's).
   const edges = useScrollEdges({ top: true, bottom: !!foot });
   const parts = (
     <>
@@ -47,7 +47,7 @@ export function DialogFrame({ title, titleId, onClose, foot, children, kind = 'f
         </h2>
         {onClose && (!sheet || page) ? <IconButton icon="close" label={t('Close')} onClick={onClose} /> : null}
       </div>
-      <div ref={edges} className={styles.frameBody} data-scroll-sheet="">
+      <div ref={edges} className={styles.frameBody}>
         {children}
       </div>
       {foot ? (

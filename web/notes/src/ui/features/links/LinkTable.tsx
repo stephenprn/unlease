@@ -30,6 +30,7 @@ import controls from '@shared/ui/components/controls.module.css';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton, pebbleUnder } from '@shared/ui/components/IconButton';
 import { OutlinedBox } from '@shared/ui/components/Outline';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { browserPath, isPlainClick } from '@shared/ui/router';
 import { stampWord } from '../../components/Stamp';
 import { paths } from '../../routes';
@@ -188,13 +189,14 @@ export function LinkTable({ open, done, now, sort, priced, label, onSort, onOpen
   );
   const columns: Columns = useMemo(() => ({ facts: JSON.parse(factKey.facts) as LineColumn[], notes: factKey.notes }), [factKey.facts, factKey.notes]);
   const span = 5 + columns.facts.length + (columns.notes ? 1 : 0);
-  // Scrolled sideways, the columns slide under the titles: a hairline there, only then.
+  // Scrolled sideways, the columns slide under the titles: a hairline there, only then; columns past the right side fade there.
   const [under, setUnder] = useState(false);
+  const sides = useScrollEdges({ fade: 'right' });
   const lines = (ids: readonly string[]): ReactNode[] => ids.map(id => <LinkLine key={id} id={id} now={now} columns={columns} onOpen={onOpen} />);
 
   return (
     <OutlinedBox kind="panel" className={styles.tableSheet}>
-      <div className={styles.tableScroll} tabIndex={-1} data-under={under || undefined} onScroll={(event: UIEvent<HTMLDivElement>) => setUnder(event.currentTarget.scrollLeft > 0)}>
+      <div ref={sides} className={styles.tableScroll} tabIndex={-1} data-under={under || undefined} onScroll={(event: UIEvent<HTMLDivElement>) => setUnder(event.currentTarget.scrollLeft > 0)}>
         <table ref={tableRef} className={styles.table} aria-label={label}>
           <thead>
             <tr>

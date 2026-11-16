@@ -1,8 +1,9 @@
 /**
- * Agenda's drawer, in the suite's frame (`NavDrawer`), as Google's but short: « Aujourd'hui » (the day
+ * Agenda's drawer, in the suite's frame (`NavDrawer`), as Google's but short: « Ma journée » (the day
  * at a glance) as a place of its own over the calendar's views, a grid of six tiles; the labels (each narrows the calendar to its events); the calendars one subscribes to
  * and the holidays, each shown or hidden on every device, with what the other apps bring (birthdays,
- * Carnet's reminders, Pages' days, the weather) as toggles, two a row, shown or not on this phone (a
+ * Carnet's reminders, Pages' days, the weather) as toggles, two a row, each named for what it lays and
+ * the app it comes from under it, shown or not on this phone (a
  * long press on either offers « Afficher uniquement celui-ci », and « Tout afficher »); « Importer un
  * agenda » (a file comes often to a calendar: an invitation, a ticket, a club's season), Claude (while
  * the server offers the questions and has a key), the bin, the settings and the Administration at the
@@ -48,7 +49,7 @@ export interface DrawerProps {
   readonly onPlace: (place: DrawerPlace) => void;
 }
 
-/** The views' glyphs: « Aujourd'hui »'s row, the tiles', and the « Changer de vue » menu's. */
+/** The views' glyphs: « Ma journée »'s row, the tiles', the « Changer de vue » menu's and the bar's switcher. */
 export const VIEW_GLYPHS: Readonly<Record<CalendarView, GlyphName>> = { today: 'today', schedule: 'list', day: 'rows', threeDays: 'columns', week: 'grid', month: 'calendar', year: 'apps' };
 
 /** What the other apps lay on the calendar, each a chip shown or not on this phone. */
@@ -106,8 +107,11 @@ function FeedRow({ id, name, color, shown, onPress, hold }: { id: string; name: 
   );
 }
 
-/** A layer as a toggle, two a row: its glyph and name, edged while hidden, filled with the primary's wash (its glyph solid) while shown. */
-function LayerToggle({ title, icon, on, onPress, hold }: { title: string; icon: GlyphName; on: boolean; onPress: () => void; hold: Hold }) {
+/**
+ * A layer as a toggle, two a row: its glyph, what it lays (« Anniversaires ») and, under it, the app it
+ * comes from in meta; edged while hidden, filled with the primary's wash (its glyph solid) while shown.
+ */
+function LayerToggle({ title, app, icon, on, onPress, hold }: { title: string; app: string | null; icon: GlyphName; on: boolean; onPress: () => void; hold: Hold }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const ink = on ? theme.color.onActionContainer : theme.color.inkMuted;
@@ -115,15 +119,22 @@ function LayerToggle({ title, icon, on, onPress, hold }: { title: string; icon: 
     <Tappable
       accessibilityRole="switch"
       accessibilityState={{ checked: on }}
-      accessibilityLabel={title}
+      accessibilityLabel={app ? `${title}, ${app}` : title}
       onPress={onPress}
       {...hold}
       style={[styles.layer, on ? { backgroundColor: theme.color.actionContainer, borderColor: theme.color.focus } : null]}
     >
       <Icon name={icon} size={20} color={ink} solid={on} />
-      <AppText variant="label" color={on ? theme.color.onActionContainer : theme.color.ink} numberOfLines={2} style={styles.layerName}>
-        {title}
-      </AppText>
+      <View style={styles.layerWords}>
+        <AppText variant="label" color={on ? theme.color.onActionContainer : theme.color.ink} numberOfLines={2}>
+          {title}
+        </AppText>
+        {app ? (
+          <AppText variant="meta" color={ink} numberOfLines={1}>
+            {app}
+          </AppText>
+        ) : null}
+      </View>
     </Tappable>
   );
 }
@@ -173,12 +184,12 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
   const feeds = useLibraryStore(s => s.feeds);
   // As on the web: only while the server offers the questions and Claude has a key.
   const ask = useSettingsStore(selectCalendarAsk);
-  const layers: { readonly key: Layer; readonly title: string }[] = [
-    // Each named with the app it comes from, as on the web.
-    { key: 'birthdays', title: t('Birthdays ({app})', { app: APPS.contacts.name }) },
-    { key: 'noteReminders', title: t('{app} reminders', { app: APPS.notes.name }) },
-    { key: 'pageDates', title: t('Dates in pages ({app})', { app: APPS.pages.name }) },
-    { key: 'weather', title: t('Weather') },
+  const layers: { readonly key: Layer; readonly title: string; readonly app: string | null }[] = [
+    // Each named for what it lays, the app it comes from under it.
+    { key: 'birthdays', title: t('Birthdays'), app: APPS.contacts.name },
+    { key: 'noteReminders', title: t('Reminders'), app: APPS.notes.name },
+    { key: 'pageDates', title: t('Dates in pages'), app: APPS.pages.name },
+    { key: 'weather', title: t('Weather'), app: null },
   ];
   const flip = (key: Layer): void => setPrefs({ [key]: !prefs[key] } as Partial<CalendarPrefs>);
   // A calendar or a layer held down: « Afficher uniquement celui-ci », « Tout afficher » (a sheet; TalkBack's actions too).
@@ -197,7 +208,7 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
   return (
     <>
       <NavDrawer open={open} app="calendar" onClose={onClose}>
-        {/* A seventh tile would stand alone on its row: « Aujourd'hui » is a place over the six, a row as the others are, its own the whole width. */}
+        {/* A seventh tile would stand alone on its row: « Ma journée » is a place over the six, a row as the others are, its own the whole width. */}
         <DrawerItem label={VIEW_NAMES.today} icon={VIEW_GLYPHS.today} selected={!label && view === 'today'} onPress={() => onPlace('view:today')} />
         <ViewTiles chosen={label ? null : view} onView={each => onPlace(`view:${each}`)} />
         <DrawerDivider />
@@ -219,7 +230,7 @@ function DrawerComponent({ open, view, label, onClose, onPlace }: DrawerProps) {
         {feedOrder.length === 0 ? <DrawerItem label={t('Subscribe to a calendar')} icon="plus" onPress={() => onPlace('feeds')} /> : null}
         <View style={styles.layers} accessibilityLabel={t('From the other apps')}>
           {layers.map(layer => (
-            <LayerToggle key={layer.key} title={layer.title} icon={LAYER_GLYPHS[layer.key]} on={prefs[layer.key]} onPress={() => flip(layer.key)} hold={holdOf(layerKey(layer.key), layer.title)} />
+            <LayerToggle key={layer.key} title={layer.title} app={layer.app} icon={LAYER_GLYPHS[layer.key]} on={prefs[layer.key]} onPress={() => flip(layer.key)} hold={holdOf(layerKey(layer.key), layer.title)} />
           ))}
         </View>
         <DrawerDivider />
@@ -246,7 +257,7 @@ const makeStyles = (theme: Theme) =>
     layers: { flexDirection: 'row', flexWrap: 'wrap', gap: GEOMETRY.rowGap * 2, paddingTop: 8, paddingBottom: 4 },
     // 10 in and 8 to the name: « Anniversaires » keeps its line in a chip of a 360 phone's drawer.
     layer: { width: '48.6%', flexGrow: 1, minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: theme.color.edge, ...corners(SHAPES.chip) },
-    layerName: { flexShrink: 1 },
+    layerWords: { flexShrink: 1 },
     // `DrawerItem`'s geometry, number for number.
     feed: { height: 52, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, ...corners(SHAPES.tab) },
     markSlot: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },

@@ -304,7 +304,7 @@ function PagePickSheet({ visible, current, onDismiss, onPick }: { visible: boole
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a page')} accessibilityLabel={t('Search for a page')} />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.list}>
+      <SheetScroll contentContainerStyle={styles.list}>
         {recent.length > 0 ? (
           <>
             <AppText variant="section" style={styles.section} accessibilityRole="header">

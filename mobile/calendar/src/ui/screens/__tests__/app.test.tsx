@@ -17,8 +17,10 @@ import { linkFields } from '@unlease/notes/sync/entities';
 import { syncedTypes } from '@shared/app/store/library';
 import { setServer, useSettingsStore } from '@shared/app/store/settingsStore';
 import { setDrawerOpen, useUiStore } from '@shared/app/store/uiStore';
+import { occurrencesIn } from '@unlease/calendar/services/occurrences';
+import { eventItem } from '@app/agenda';
 import { addEvent, createLabel } from '@app/store/actions';
-import { showView } from '@app/store/calendarUi';
+import { setPrefs, showView } from '@app/store/calendarUi';
 import { useLibraryStore, writeLocal } from '@app/store/libraryStore';
 import { navigationRef } from '@ui/navigation/navigationRef';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
@@ -76,7 +78,7 @@ describe('Agenda, its root', () => {
     suite.siblings = [{ packageName: 'com.stephenprn.contacts', server: 'https://suite.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.contacts']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
     await act(async () => {
       pressables(tree, 'Utiliser la connexion de Contacts')[0]!.props.onPress();
     });
@@ -113,6 +115,65 @@ describe('Agenda, its root', () => {
     expect(text).toContain('Dentiste');
     expect(text).toContain('Cabinet Dupont');
     expect(text).toContain('Anniversaire de Léa Martin');
+  });
+
+  it('says a day off in the schedule', async () => {
+    const tree = await boot({ onboarded: true });
+    await act(async () => {
+      showView('schedule', day);
+      addEvent({ ...blankDraft(addDays(day, 1), addDays(day, 2), 'Europe/Paris'), title: 'Pont', dayOff: true });
+    });
+    await settle();
+    expect(textOf(tree)).toContain('Pont');
+    // Its time in the list is the day off itself.
+    expect(textOf(tree)).toContain('Jour de congé');
+  });
+
+  it('paints one’s own events in Réglages’ colour, never the accent', async () => {
+    const tree = await boot({ onboarded: true });
+    let id = '';
+    await act(async () => {
+      id = addEvent({ ...blankDraft(`${day}T09:00`, `${day}T10:00`, 'Europe/Paris'), title: 'Footing' });
+    });
+    const occurrence = occurrencesIn([useLibraryStore.getState().events[id]!], day, addDays(day, 1))[0]!;
+    expect(eventItem(useLibraryStore.getState(), occurrence)).toMatchObject({ color: 'blue' });
+    await act(async () => setPrefs({ ownColor: 'green' }));
+    expect(eventItem(useLibraryStore.getState(), occurrence)).toMatchObject({ color: 'green' });
+    await act(async () => {
+      navigationRef.navigate('Settings');
+    });
+    await settle();
+    expect(textOf(tree)).toContain('Couleur de vos événements');
+  });
+
+  it('offers the contacts’ addresses in the place search, by name', async () => {
+    const tree = await boot({ onboarded: true });
+    await act(async () => {
+      writeLocal([
+        {
+          type: 'contact',
+          id: 'lea',
+          patch: { firstName: 'Léa', lastName: 'Martin', phones: [], emails: [], addresses: [{ id: 'home', kind: 'home', label: '', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', region: '', country: '' }], labelIds: [], favorite: false, createdAt: 1, deletedAt: null, trashedAt: null },
+        },
+      ]);
+      navigationRef.navigate('Edit', {});
+    });
+    await settle();
+    await act(async () => {
+      pressables(tree, 'Ajouter un lieu')[0]!.props.onPress();
+    });
+    await settle();
+    // A device with no place of its own yet: a few contacts' addresses at once, by name.
+    expect(textOf(tree)).toContain('Adresses de vos contacts');
+    await act(async () => {
+      inputs(tree, 'Lieu')[0]!.props.onChangeText('mar');
+    });
+    expect(textOf(tree)).toContain('Léa Martin');
+    await act(async () => {
+      pressableWithText(tree, 'Léa Martin').props.onPress();
+    });
+    await settle();
+    expect(tree.root.findAll(node => typeof node.props.onPress === 'function' && String(node.props.accessibilityLabel ?? '').includes('12 rue des Lilas'), { deep: false })).not.toHaveLength(0);
   });
 
   it('opens an event from a link, and the form filled from Carnet’s draft', async () => {
@@ -385,7 +446,8 @@ describe('Agenda, its root', () => {
     const textIn = (node: ReactTestInstance): string => node.children.map(child => (typeof child === 'string' ? child : textIn(child))).join(' ');
     const overview = textIn(tree.root.findByType(SettingsScroll));
     // The calendar's own first, then « Apparence », « Langue », « Données », and the way to the Administration last.
-    const order = ['La semaine commence le', 'Apparence', 'Langue', 'Données', 'Administration'].map(words => overview.indexOf(words));
+    // The way to the Administration is its last mention (« Jours travaillés seulement » says the days are chosen there).
+    const order = ['La semaine commence le', 'Apparence', 'Langue', 'Données', 'Administration'].map(words => (words === 'Administration' ? overview.lastIndexOf(words) : overview.indexOf(words)));
     expect(order.every(at => at >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(overview).not.toContain('Palettes');

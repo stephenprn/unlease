@@ -18,6 +18,7 @@ import { onBeforePause } from '@shared/app/sync/loop';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { historyKey, isMod } from './editing';
 import { applyPendingFocus, editableOutline, editorRoot, focusBlock, neighbour, registerFlusher, registerFocuser, selectBlocks, type FocusAt } from './editorStore';
 import { highlightHtml, useHighlighter } from './highlight';
@@ -35,6 +36,8 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
     const wanted = foldText(query.trim());
     return CODE_LANGUAGES.filter(language => !wanted || foldText(`${language.name} ${language.key} ${language.aliases.join(' ')}`).includes(wanted));
   }, [query]);
+  // The field over its rows meets them with a hairline once they run on under it; rows past the popover's foot fade there.
+  const listEdges = useScrollEdges({ top: true, fade: 'bottom' });
   return (
     <>
       <button ref={button} type="button" className={styles.codeLanguage} disabled={disabled} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(true)}>
@@ -58,7 +61,7 @@ function LanguagePicker({ value, disabled, onPick }: { value: string; disabled: 
               onPick(found[0].key);
             }}
           />
-          <div data-scroller="" className={styles.languageList} role="listbox" aria-label={tc('code', 'Languages')}>
+          <div ref={listEdges} data-scroller="" className={styles.languageList} role="listbox" aria-label={tc('code', 'Languages')}>
             {found.map(language => (
               <button
                 key={language.key}

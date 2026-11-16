@@ -13,6 +13,7 @@ import { EmptyLine } from './EmptyLine';
 import { Floating } from './Floating';
 import { Icon } from './Icon';
 import styles from './mentionMenu.module.css';
+import { useScrollEdgesOn } from './scrollEdges';
 
 export interface MenuRow {
   readonly key: string;
@@ -75,6 +76,8 @@ export interface MentionMenuProps {
 
 export function MentionMenu({ anchor, rows, active, onActive, label, listLabel, empty, id }: MentionMenuProps) {
   const list = useRef<HTMLDivElement>(null);
+  // Rows past the panel's top or foot fade there, as far as they run on.
+  useScrollEdgesOn(list, [rows.length === 0], { fade: 'y' });
   // The list alone scrolls to the active row: `scrollIntoView` would scroll the page too.
   useLayoutEffect(() => {
     const node = list.current;

@@ -12,21 +12,42 @@ import { t } from '@unlease/core/i18n';
 import { formatClock } from '@unlease/core/services/format';
 import { SHAPES } from '@unlease/design/shapes';
 import { monthGrid, addDays, weekdayOf } from '@unlease/calendar/services/time';
-import { clockWords, longDay, narrowWeekday, weekNumberShort, weekNumberWords } from '@unlease/calendar/services/eventText';
+import { clockWords, keepWeekdays, longDay, narrowWeekday, weekNumberShort, weekNumberWords } from '@unlease/calendar/services/eventText';
 import { layoutBars } from '@unlease/calendar/services/layout';
 import { eventItem, itemOn, type AgendaItem } from '@app/agenda';
 import { useAgenda } from '@app/hooks/useAgenda';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useCalendarUiStore } from '@app/store/calendarUi';
 
-import { AppText, Organic, PressSurface, Tappable, useArrivals } from '@shared/ui/components';
+import { AppText, Icon, Organic, PressSurface, Tappable, useArrivals } from '@shared/ui/components';
 import { listIn, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { EDGE_ROOM, EventEdge } from './EventEdge';
-import { itemColor, itemTitle, paintOf } from './paint';
+import { isDayOff, itemColor, itemTitle, paintOf } from './paint';
 
 const LANE = 18;
+/** Under this, a day's cell holds a few letters: a timed event shows its title alone, never « 09:30 … ». */
+export const NARROW_CELL = 72;
+
+/**
+ * What a bar of the month says: an event over days or all day is a bar on its wash with its colour's
+ * edge; a timed one a dot then its time and title where the day is wide, its title alone on its wash
+ * where it is narrow (`NARROW_CELL`). Read out with its time whenever it has one.
+ */
+export function monthChip(
+  title: string,
+  occurrence: { readonly allDay: boolean; readonly firstDay: string; readonly lastDay: string; readonly startAt: number },
+  width: number,
+  twelveHours: boolean,
+): { readonly form: 'bar' | 'dot' | 'wash'; readonly text: string; readonly label: string } {
+  const timed = !occurrence.allDay && occurrence.firstDay === occurrence.lastDay;
+  if (!timed) return { form: 'bar', text: title, label: title };
+  const clock = clockWords(formatClock(occurrence.startAt), twelveHours);
+  const label = `${title}, ${clock}`;
+  return width < NARROW_CELL ? { form: 'wash', text: title, label } : { form: 'dot', text: `${clock} ${title}`, label };
+}
 /** A bar's room on each side in its days: two days' bars, or a bar and the next day's line, keep clear of each other. */
 const BAR_INSET = 2;
 const HEAD = 26;
@@ -35,7 +56,8 @@ export interface MonthViewProps {
   readonly month: string;
   readonly today: string;
   readonly weekStart: number;
-  readonly hideWeekends: boolean;
+  /** The days of the week shown (« Jours travaillés seulement », `shownWeekdays`); null for all seven. */
+  readonly weekdays: readonly number[] | null;
   readonly weekNumbers: boolean;
   readonly labelId: string | null;
   /** Hours on 12 (« 2 PM »), as the Réglages say. */
@@ -44,11 +66,11 @@ export interface MonthViewProps {
   readonly onDay: (day: string) => void;
 }
 
-function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers, labelId, twelveHours, onOpen, onDay }: MonthViewProps) {
+function MonthViewComponent({ month, today, weekStart, weekdays, weekNumbers, labelId, twelveHours, onOpen, onDay }: MonthViewProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const weeks = useMemo(() => monthGrid(month, weekStart).map(week => (hideWeekends ? week.filter(day => weekdayOf(day) !== 0 && weekdayOf(day) !== 6) : week)), [month, weekStart, hideWeekends]);
+  const weeks = useMemo(() => monthGrid(month, weekStart).map(week => keepWeekdays(week, weekdays)), [month, weekStart, weekdays]);
   const first = weeks[0]![0]!;
   const lastWeek = weeks[weeks.length - 1]!;
   const agenda = useAgenda(first, addDays(lastWeek[lastWeek.length - 1]!, 1), labelId);
@@ -62,19 +84,21 @@ function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers
   const lanes = Math.max(1, Math.floor((rowHeight - HEAD - LANE) / LANE));
   const inMonth = month.slice(0, 7);
 
+  // « Couleur de vos événements »: a change in Réglages repaints the month at once.
+  const own = useCalendarUiStore(s => s.prefs.ownColor);
   const rows = useMemo(() => {
     const state = useLibraryStore.getState();
     return weeks.map(week => {
       const occurrences = layoutBars(agenda.occurrences, week, { timed: true, maxLanes: lanes });
       const used = Math.min(lanes, Math.max(0, ...occurrences.bars.map(bar => bar.lane + 1)));
       const extras = week.map(day => agenda.extras.filter(item => itemOn(item, day)));
-      return { week, bars: occurrences.bars.map(bar => ({ ...bar, item: eventItem(state, bar.occurrence) })), hidden: occurrences.hidden, used, extras };
+      return { week, bars: occurrences.bars.map(bar => ({ ...bar, item: eventItem(state, bar.occurrence, own) })), hidden: occurrences.hidden, used, extras };
     });
-  }, [agenda, weeks, lanes]);
+  }, [agenda, weeks, lanes, own]);
   // An event made, brought back or moved into the month on screen settles in; a month turned shows whole.
   const arrived = useArrivals(
     rows.flatMap(row => [...row.bars.map(bar => `${bar.occurrence.key}@${row.week[0]}`), ...row.extras.flatMap((list, index) => list.map(item => `${item.key}@${row.week[index]}`))]),
-    `${inMonth}:${weekStart}:${hideWeekends ? 1 : 0}:${labelId ?? ''}:${lanes}`,
+    `${inMonth}:${weekStart}:${weekdays?.join('') ?? 'all'}:${labelId ?? ''}:${lanes}`,
   );
 
   return (
@@ -133,7 +157,8 @@ function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers
               })}
               {row.bars.map(bar => {
                 const paint = paintOf(theme, bar.item.kind === 'event' ? bar.item.color : null);
-                const timed = !bar.occurrence.allDay && bar.occurrence.firstDay === bar.occurrence.lastDay;
+                const chip = monthChip(itemTitle(bar.item), bar.occurrence, bar.span * cell, twelveHours);
+                const off = isDayOff(bar.item);
                 return (
                   <Animated.View
                     key={bar.occurrence.key}
@@ -142,14 +167,16 @@ function MonthViewComponent({ month, today, weekStart, hideWeekends, weekNumbers
                   >
                     <Tappable
                       onPress={() => onOpen(bar.item, row.week[bar.column]!)}
-                      style={[styles.bar, timed ? null : { paddingLeft: EDGE_ROOM }, { backgroundColor: timed ? 'transparent' : paint.tint }]}
+                      style={[styles.bar, chip.form === 'bar' ? { paddingLeft: EDGE_ROOM } : null, { backgroundColor: chip.form === 'dot' ? 'transparent' : paint.tint }]}
                       accessibilityRole="button"
-                      accessibilityLabel={itemTitle(bar.item)}
+                      accessibilityLabel={off ? `${chip.label}, ${t('Day off')}` : chip.label}
                     >
-                      {timed ? null : <EventEdge color={paint.fill} />}
-                      {timed ? <View style={[styles.dot, { backgroundColor: paint.fill }]} /> : null}
-                      <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1} style={styles.barText}>
-                        {timed ? `${clockWords(formatClock(bar.occurrence.startAt), twelveHours)} ${itemTitle(bar.item)}` : itemTitle(bar.item)}
+                      {chip.form === 'bar' ? <EventEdge color={paint.fill} /> : null}
+                      {off ? <Icon name="sun" size={12} color={paint.text} /> : null}
+                      {chip.form === 'dot' ? <View style={[styles.dot, { backgroundColor: paint.fill }]} /> : null}
+                      {/* A day too narrow for its time and its title: the title alone on its wash, cut at the bar's end rather than dotted. */}
+                      <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1} ellipsizeMode={chip.form === 'wash' ? 'clip' : 'tail'} style={styles.barText}>
+                        {chip.text}
                       </AppText>
                     </Tappable>
                   </Animated.View>

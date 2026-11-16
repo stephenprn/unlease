@@ -122,7 +122,7 @@ describe('the colours and the ground in Réglages', () => {
 
 describe('each app’s look', () => {
   const shared = (): Record<string, unknown> => JSON.parse(localStorage.getItem(`${getDeviceName()}.settings`) ?? '{}') as Record<string, unknown>;
-  const own = (app: 'notes' | 'pages' | 'calendar' | 'contacts'): Record<string, unknown> | null => JSON.parse(localStorage.getItem(lookKey(app)) ?? 'null') as Record<string, unknown> | null;
+  const own = (app: 'notes' | 'pages' | 'calendar' | 'contacts' | 'clock'): Record<string, unknown> | null => JSON.parse(localStorage.getItem(lookKey(app)) ?? 'null') as Record<string, unknown> | null;
 
   beforeEach(() => {
     localStorage.clear();
@@ -175,12 +175,14 @@ describe('each app’s look', () => {
       ['Pages', 'true'],
       ['Agenda', 'true'],
       ['Contacts', 'true'],
+      ['Clock', 'true'],
     ]);
     await user.click(within(dialog).getByRole('checkbox', { name: 'Agenda' }));
     await user.click(within(dialog).getByRole('button', { name: 'Appliquer' }));
     expect(own('pages')).toMatchObject({ theme: 'dark' });
     expect(own('contacts')).toMatchObject({ theme: 'dark' });
+    expect(own('clock')).toMatchObject({ theme: 'dark' });
     expect(own('calendar')).toBeNull();
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Pages et Contacts prendront cette apparence à leur prochaine ouverture.', tone: 'success' });
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Pages, Contacts et Clock prendront cette apparence à leur prochaine ouverture.', tone: 'success' });
   });
 });

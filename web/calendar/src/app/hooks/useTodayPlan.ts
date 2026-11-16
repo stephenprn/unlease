@@ -1,5 +1,5 @@
 /**
- * « Aujourd'hui » in this browser: what today and tomorrow hold, gathered as the views gather it
+ * « Ma journée » in this browser: what today and tomorrow hold, gathered as the views gather it
  * (`useItems`: the events shown, the calendars and labels unticked left out, the layers kept on),
  * but as the layers' own items, put in the day's order by `planToday`; Carnet's reminders missed and
  * still set (with its layer on), and the day's page in Pages when this browser holds it. Read again
@@ -41,7 +41,7 @@ export function useTodayPlan(today: string, now: number): TodayState {
     const hiddenFeeds = hiddenFeedIds(Object.values(feeds));
     const items: DayItem[] = occurrencesIn(Object.values(events), from, to, { hiddenFeeds })
       .filter(occurrence => !ownHidden(occurrence.event, prefs, labels))
-      .map(occurrence => ({ kind: 'event', key: occurrence.key, occurrence, color: eventColor(occurrence.event, labels, feeds) }));
+      .map(occurrence => ({ kind: 'event', key: occurrence.key, occurrence, color: eventColor(occurrence.event, labels, feeds, prefs.ownColor) }));
     if (prefs.birthdays) for (const birthday of birthdaysIn(Object.values(contacts), from, to)) items.push({ kind: 'birthday', key: birthday.key, birthday });
     if (prefs.noteReminders) for (const reminder of remindersIn(Object.values(notes), dayToInstant(from), dayToInstant(to))) items.push({ kind: 'reminder', key: reminder.key, reminder });
     if (prefs.pageDates) for (const page of pageDatesIn(blocks, from, to)) items.push({ kind: 'page', key: page.key, page });

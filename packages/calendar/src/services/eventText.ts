@@ -4,6 +4,7 @@
  * Hand-written like `core/services/format`: the same on Hermes, the browsers and Node.
  */
 import { getLocale, localized, t, tc, tx } from '@unlease/core/i18n';
+import { workDaysWords } from '@unlease/core/services/admin';
 import { formatClock, monthNames, plural, weekdayNames } from '@unlease/core/services/format';
 import { birthdayOf, elides } from '@unlease/contacts/services/birthdays';
 import type { CalendarEvent, Day } from '../models/events';
@@ -162,7 +163,8 @@ export type PeriodView = (typeof PERIOD_VIEWS)[number];
 export const isPeriodView = (view: CalendarView): view is PeriodView => view !== 'today';
 
 export const VIEW_NAMES: Readonly<Record<CalendarView, string>> = localized({
-  today: tx('Today'),
+  // « Ma journée », the day at a glance: « Aujourd'hui » is the jump to today in any view.
+  today: tx('My day'),
   day: tx('Day'),
   threeDays: tx('3 days'),
   week: tx('Week'),
@@ -171,15 +173,34 @@ export const VIEW_NAMES: Readonly<Record<CalendarView, string>> = localized({
   schedule: tx('Schedule'),
 });
 
-/** The view's keys on the web (Google's: D, X, W, M, Y, A; O for « Aujourd'hui », T being « go to today » in any view). */
+/** The view's keys on the web (Google's: D, X, W, M, Y, A; O for « Ma journée », T being « go to today » in any view). */
 export const VIEW_KEYS: Readonly<Record<CalendarView, string>> = { today: 'o', day: 'd', threeDays: 'x', week: 'w', month: 'm', year: 'y', schedule: 'a' };
 
 export function isCalendarView(value: unknown): value is CalendarView {
   return typeof value === 'string' && (VIEWS as readonly string[]).includes(value);
 }
 
-/** The days a view shows around a day: [first, last] both included. */
-export function viewDays(view: CalendarView, day: Day, weekStart: number, hideWeekends = false): Day[] {
+/**
+ * The days of the week the week and the month show (0 Sunday … 6 Saturday, sorted), or null for all
+ * seven. « Jours travaillés seulement » (`CalendarPrefs.hideWeekends`, its stored name) keeps the days
+ * worked (`ServerSettings.calendar.workDays`); none worked, or all seven, shows every day.
+ */
+export function shownWeekdays(workingDaysOnly: boolean, workDays: readonly number[]): readonly number[] | null {
+  if (!workingDaysOnly) return null;
+  const days = [...new Set(workDays)].filter(day => Number.isInteger(day) && day >= 0 && day <= 6).sort((a, b) => a - b);
+  return days.length === 0 || days.length === 7 ? null : days;
+}
+
+/** « Jours travaillés seulement »'s line in the Réglages, on both clients: the days, as the Administration sets them. */
+export const workingDaysMeta = (workDays: readonly number[]): string => t('{days}, as chosen in the Administration (“Your week”).', { days: workDaysWords(workDays) });
+
+/** The days of a row a view keeps (`shownWeekdays`; null, or no day, keeps them all). */
+export function keepWeekdays(days: readonly Day[], weekdays: readonly number[] | null): Day[] {
+  return weekdays && weekdays.length > 0 ? days.filter(day => weekdays.includes(weekdayOf(day))) : [...days];
+}
+
+/** The days a view shows around a day, in order; the week only those of `weekdays` (`shownWeekdays`). */
+export function viewDays(view: CalendarView, day: Day, weekStart: number, weekdays: readonly number[] | null = null): Day[] {
   switch (view) {
     case 'day':
       return [day];
@@ -188,8 +209,7 @@ export function viewDays(view: CalendarView, day: Day, weekStart: number, hideWe
     case 'week': {
       const offset = (weekdayOf(day) - weekStart + 7) % 7;
       const first = addDays(day, -offset);
-      const days = Array.from({ length: 7 }, (_, index) => addDays(first, index));
-      return hideWeekends ? days.filter(each => weekdayOf(each) !== 0 && weekdayOf(each) !== 6) : days;
+      return keepWeekdays(Array.from({ length: 7 }, (_, index) => addDays(first, index)), weekdays);
     }
     default:
       return [day];
@@ -227,7 +247,7 @@ export function dayTitle(day: Day): string {
 }
 
 /** The view's title: « Lundi 9 novembre » (today), « Lundi 2 novembre 2026 », « 2 – 8 nov. 2026 », « Novembre 2026 », « 2026 ». */
-export function viewTitle(view: CalendarView, day: Day, weekStart: number, hideWeekends = false): string {
+export function viewTitle(view: CalendarView, day: Day, weekStart: number, weekdays: readonly number[] | null = null): string {
   switch (view) {
     case 'today':
       return dayTitle(day);
@@ -235,7 +255,7 @@ export function viewTitle(view: CalendarView, day: Day, weekStart: number, hideW
       return longDay(day);
     case 'threeDays':
     case 'week': {
-      const days = viewDays(view, day, weekStart, hideWeekends);
+      const days = viewDays(view, day, weekStart, weekdays);
       return rangeTitle(days[0]!, days[days.length - 1]!);
     }
     case 'month':

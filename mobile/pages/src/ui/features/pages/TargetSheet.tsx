@@ -145,7 +145,7 @@ function TargetSheetComponent({ visible, purpose, pagesOnly = false, onPick, onP
           onSubmitEditing={pickFirst}
         />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.list}>
+      <SheetScroll contentContainerStyle={styles.list}>
         {datesFirst ? dateRows : null}
         {hits.length === 0 && dates.length === 0 ? (
           <EmptyLine glyph="info" text={t('Nothing matches.')} style={styles.empty} />

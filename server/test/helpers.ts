@@ -9,6 +9,7 @@ import { type RecordType } from '@unlease/notes/sync/types';
 import { type PagesRecordType } from '@unlease/pages/sync/types';
 import { type ContactsRecordType } from '@unlease/contacts/sync/types';
 import { type CalendarRecordType } from '@unlease/calendar/sync/types';
+import { type ClockRecordType } from '@unlease/clock/sync/types';
 import { LinkAnalyzer } from '../src/apps/notes/analysis/analyzer';
 import type { Fetcher, FetchOptions, FetchResult } from '../src/reading/fetcher';
 import type { MessagesApi } from '../src/claude/client';
@@ -22,6 +23,7 @@ import { checkSeerrServer } from '../src/apps/notes/seerr';
 import type { PagesApp } from '../src/apps/pages';
 import type { ContactsApp } from '../src/apps/contacts';
 import type { CalendarApp } from '../src/apps/calendar';
+import type { ClockApp } from '../src/apps/clock';
 import { createApps, PUSH_REPAIRS, PUSH_RULES } from '../src/apps/registry';
 import { AppRunner } from '../src/apps/runner';
 import type { ServerApp } from '../src/apps/types';
@@ -66,6 +68,7 @@ export interface TestServer {
   readonly pages: PagesApp;
   readonly contacts: ContactsApp;
   readonly calendar: CalendarApp;
+  readonly clock: ClockApp;
   readonly apps: readonly ServerApp[];
   /** Which apps run: not started (tests drive the link reading through `analysisOf`) unless a test starts it. */
   readonly runner: AppRunner;
@@ -133,7 +136,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
   settings.settleSetup(!records.holdsNothing());
   // The apps, as main.ts makes them, with Claude, the pages they read and Seerr stood in for; Carnet's link reading is `analysisOf`'s.
   const suite = createApps({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, claude: provider, fetcher, seerrFetch, immichFetch, now, ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}), ...(options.placesFetch ? { placesFetch: options.placesFetch, placesUrl: 'https://photon.example.org' } : {}) });
-  const { apps, notes, pages, contacts, calendar, usage } = suite;
+  const { apps, notes, pages, contacts, calendar, clock, usage } = suite;
   const runner = new AppRunner(apps, settings, sync);
   const drive = new DriveSync({ db, records, blobs, settings, apps, fetcher: seafile.fetch, now });
   blobs.useRemote(drive);
@@ -165,6 +168,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     pages,
     contacts,
     calendar,
+    clock,
     apps,
     runner,
     claude,
@@ -190,7 +194,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
 }
 
 /** A record as a device would push it: every field written at one clock. */
-export function rec(type: RecordType | PagesRecordType | ContactsRecordType | CalendarRecordType, id: string, fields: Fields, wall: number, node = 'phone1', counter = 0): SyncRecord {
+export function rec(type: RecordType | PagesRecordType | ContactsRecordType | CalendarRecordType | ClockRecordType, id: string, fields: Fields, wall: number, node = 'phone1', counter = 0): SyncRecord {
   const clock = formatHlc(wall, counter, node);
   return { type, id, fields, clocks: Object.fromEntries(Object.keys(fields).map(field => [field, clock])) };
 }

@@ -47,18 +47,20 @@ const TYPES: Readonly<Record<string, string>> = {
   '.ttf': 'font/ttf',
   '.txt': 'text/plain; charset=utf-8',
   '.map': 'application/json; charset=utf-8',
+  // Clock's alarm sounds, played in its editor.
+  '.ogg': 'audio/ogg',
 };
 
 /** The apps with a web app of their own, in the suite's order (their ids, as `appsOn` names them). */
-export const WEB_APPS = ['notes', 'pages', 'contacts', 'calendar'] as const;
+export const WEB_APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock'] as const;
 
 type WebApp = (typeof WEB_APPS)[number];
 
 /** Each one's folder in the build and path on the server: its id, but Agenda's `agenda` (as the web build's `WEB_PATHS`). */
-const PATHS: Readonly<Record<WebApp, string>> = { notes: 'notes', pages: 'pages', contacts: 'contacts', calendar: 'agenda' };
+const PATHS: Readonly<Record<WebApp, string>> = { notes: 'notes', pages: 'pages', contacts: 'contacts', calendar: 'agenda', clock: 'clock' };
 
 /** Their names change with their content (Vite's hashes, the fonts' versions). */
-const IMMUTABLE = /^\/(?:notes|pages|contacts|agenda)\/(?:assets|fonts)\//;
+const IMMUTABLE = /^\/(?:notes|pages|contacts|agenda|clock)\/(?:assets|fonts)\//;
 
 /** The site's root holds one file: the worker that retires the single app's (`web/root/sw.js`). */
 const ROOT_FILES: ReadonlySet<string> = new Set(['/sw.js']);

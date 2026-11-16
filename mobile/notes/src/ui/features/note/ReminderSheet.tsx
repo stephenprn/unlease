@@ -1,12 +1,12 @@
 /** Reminder: three quick choices, else a day (next two weeks) and a quarter-hour time. */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
 import { getLocale, t, tc } from '@unlease/core/i18n';
 import { formatDay, formatReminder, weekdayNames } from '@unlease/core/services/format';
 
-import { AppText, Button, FormMessage, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
+import { AppText, Button, EdgeScrollView, FormMessage, ListRow, Sheet, SHEET_INSET, SheetScroll, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 
@@ -124,7 +124,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
       ) : (
         <SheetScroll contentContainerStyle={styles.custom}>
           {/* The chips say what they are (« lun. 10 », « 9 h », « :15 »): no word over them; TalkBack hears each group's name. */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Day')}>
+          <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Day')}>
             {days.map((date, index) => {
               const selected = index === day;
               return (
@@ -144,7 +144,7 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
                 </Tappable>
               );
             })}
-          </ScrollView>
+          </EdgeScrollView>
           <View style={styles.time} accessibilityLabel={t('Time')}>
             <View style={styles.grid}>
               {hours.map(hour => {

@@ -21,6 +21,7 @@ import { dimmedBelow, firstFocusable, holdScroll, overlayRoot, pushLayer } from 
 import styles from './layers.module.css';
 import { OutlineEdge, useOutline } from './Outline';
 import { usePresence } from './presence';
+import { useScrollEdges } from './scrollEdges';
 
 export type LayerKind = 'center' | 'bottom' | 'side' | 'start' | 'bare';
 
@@ -231,6 +232,8 @@ function LayerBody({
   useBackCloses(!closing && !routed, onDismiss);
   const narrow = useMedia(NARROW);
   const sheet = kind === 'bottom';
+  // A sheet's body meets its handle's strip with a hairline once it runs on under it; its foot is the screen's own.
+  const sheetEdges = useScrollEdges({ top: true });
   // A whole page on a phone (the note) stands on the keyboard too, its bar above it as the phone's is.
   const page = kind === 'center' && !!full && narrow;
   const keyboard = useKeyboardInset((sheet || page) && !closing);
@@ -309,7 +312,7 @@ function LayerBody({
             {sheet ? (
               <>
                 <div className={styles.sheetHandle} aria-hidden="true" onPointerDown={handle.onPointerDown} onPointerMove={handle.onPointerMove} onPointerUp={handle.onPointerUp} onPointerCancel={handle.onPointerCancel} />
-                <div className={styles.sheetBody} data-scroller="">
+                <div ref={sheetEdges} className={styles.sheetBody} data-scroller="">
                   {children}
                 </div>
               </>

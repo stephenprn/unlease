@@ -164,8 +164,8 @@ function AskBody({ pageId, settings, titleId, onClose, sheet }: { pageId: string
   const [draft, setDraft] = useState('');
   const field = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
   const conversation = useRef<HTMLDivElement>(null);
-  // The conversation fades and blurs under the scope and the question being written, as far as it runs on.
-  useScrollEdgesOn(conversation, [], { top: true, bottom: true });
+  // The scope over the conversation and the question being written under it each meet it with a hairline once it runs on past them.
+  useScrollEdgesOn(conversation, [], { top: true, bottom: !kept });
   const pending = thread.turns.some(turn => turn.answer === null && turn.error === null);
   const scope: PageScope = thread.scope === 'all' && !settings.everywhere ? 'page' : thread.scope === 'tree' && subCount === 0 ? 'page' : thread.scope;
   const web = thread.web && settings.web;

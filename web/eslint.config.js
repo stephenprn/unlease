@@ -9,7 +9,9 @@
  *    library: it names the people its notes mention), Contacts never imports Carnet; Agenda
  *    (`calendar`) reads Carnet's and Contacts' data (their reminders, birthdays and names) and
  *    nothing of their screens, and the others read Agenda's data alone (`@calendar/data`, its
- *    library: they name the events they mention); only the demo
+ *    library: they name the events they mention); Clock (`clock`) reads Agenda's package alone
+ *    (its events, as an alarm rings), folding its records itself, and no app imports Clock's
+ *    web app; only the demo
  *    (`demo`) and the tests' setup (`shared/test`) see them all;
  *  - an area's `ui` reaches storage only through its `app`, so a component never couples itself
  *    to IndexedDB.
@@ -32,8 +34,8 @@ const NO_DB = { group: ['**/app/db/*', '**/app/db'], message: 'ui goes through a
 
 /** The shell knows no app: an app brings itself through its module (`shared/src/modules`). */
 const NO_APPS = [
-  { group: ['@notes/*', '@pages/*', '@contacts/*', '@calendar/*', '@demo/*'], message: 'The shell imports no app: the app brings it through its module (shared/src/modules).' },
-  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/contacts/*', '@unlease/calendar/*'], message: 'The shell imports no app\'s package: only core and design.' },
+  { group: ['@notes/*', '@pages/*', '@contacts/*', '@calendar/*', '@clock/*', '@demo/*'], message: 'The shell imports no app: the app brings it through its module (shared/src/modules).' },
+  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/contacts/*', '@unlease/calendar/*', '@unlease/clock/*'], message: 'The shell imports no app\'s package: only core and design.' },
 ];
 
 /** Carnet knows nothing of Pages, but the one route it calls (« Garder une copie »). */
@@ -61,6 +63,15 @@ const NO_OTHER_APPS = [
   { group: ['@unlease/notes/*', '@unlease/pages/*'], message: 'Contacts imports no other app\'s package: only core, design and its own.' },
 ];
 
+/** Clock reads Agenda's package (its events, as an alarm rings), never another app's web app or another package. */
+const CLOCK_READS = [
+  { group: ['@notes/*', '@pages/*', '@contacts/*', '@calendar/*', '@demo/*'], message: 'Clock imports no other app\'s web app: it folds Agenda\'s records itself (app/store/agenda).' },
+  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/contacts/*'], message: 'Clock imports no other app\'s package but Agenda\'s (@unlease/calendar).' },
+];
+
+/** No app imports Clock's web app: nothing of it is another app's to show. */
+const NO_CLOCK = [{ group: ['@clock/*'], message: 'No app imports Clock\'s web app.' }];
+
 /** Tests draw the whole suite (the shell with its apps): the areas' rules are for the code itself. */
 const TESTS = ['**/__tests__/**'];
 
@@ -72,7 +83,7 @@ export default defineConfig(
   { files: ['public/sw.js', 'root/sw.js'], languageOptions: { globals: globals.serviceworker } },
   tseslint.configs.recommended,
   {
-    files: ['shared/**/*.{ts,tsx}', 'notes/src/**/*.{ts,tsx}', 'pages/src/**/*.{ts,tsx}', 'contacts/src/**/*.{ts,tsx}', 'calendar/src/**/*.{ts,tsx}', 'demo/**/*.{ts,tsx}'],
+    files: ['shared/**/*.{ts,tsx}', 'notes/src/**/*.{ts,tsx}', 'pages/src/**/*.{ts,tsx}', 'contacts/src/**/*.{ts,tsx}', 'calendar/src/**/*.{ts,tsx}', 'clock/src/**/*.{ts,tsx}', 'demo/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest']],
     languageOptions: { globals: globals.browser },
     rules: {
@@ -87,14 +98,16 @@ export default defineConfig(
   // Later entries win for the same file: each area's whole set, its ui's with the database's rule.
   restricted(NO_APPS, ['shared/src/**/*.{ts,tsx}']),
   restricted([...NO_APPS, NO_DB], ['shared/src/ui/**/*.{ts,tsx}']),
-  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR], ['notes/src/**/*.{ts,tsx}']),
-  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, NO_DB], ['notes/src/ui/**/*.{ts,tsx}']),
-  restricted([...NO_OTHER_APPS, ...NO_CALENDAR], ['contacts/src/**/*.{ts,tsx}']),
-  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, NO_DB], ['contacts/src/ui/**/*.{ts,tsx}']),
-  restricted(NO_CALENDAR, ['pages/src/**/*.{ts,tsx}']),
-  restricted([...NO_CALENDAR, NO_DB], ['pages/src/ui/**/*.{ts,tsx}']),
-  restricted(CALENDAR_READS, ['calendar/src/**/*.{ts,tsx}']),
-  restricted([...CALENDAR_READS, NO_DB], ['calendar/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK], ['notes/src/**/*.{ts,tsx}']),
+  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['notes/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK], ['contacts/src/**/*.{ts,tsx}']),
+  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['contacts/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_CALENDAR, ...NO_CLOCK], ['pages/src/**/*.{ts,tsx}']),
+  restricted([...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['pages/src/ui/**/*.{ts,tsx}']),
+  restricted([...CALENDAR_READS, ...NO_CLOCK], ['calendar/src/**/*.{ts,tsx}']),
+  restricted([...CALENDAR_READS, ...NO_CLOCK, NO_DB], ['calendar/src/ui/**/*.{ts,tsx}']),
+  restricted(CLOCK_READS, ['clock/src/**/*.{ts,tsx}']),
+  restricted([...CLOCK_READS, NO_DB], ['clock/src/ui/**/*.{ts,tsx}']),
   {
     files: ['**/__tests__/**', 'shared/test/**'],
     rules: { 'no-restricted-syntax': 'off' },

@@ -119,10 +119,10 @@ Set `UNLEASE_TRUSTED_PROXY_HEADER=cf-connecting-ip` in `.env`: Cloudflare writes
 
 ## The setup
 
-Open your address in a browser: it opens the first app the server runs (Carnet at `/notes`, Pages at `/pages`, Contacts at `/contacts`, Agenda at `/agenda`, each installable on its own). The setup is done once for the whole server; every device that comes after only connects, and the other app's web app in the same browser asks nothing.
+Open your address in a browser: it opens the first app the server runs (Carnet at `/notes`, Pages at `/pages`, Contacts at `/contacts`, Agenda at `/agenda`, Clock at `/clock`, each installable on its own). The setup is done once for the whole server; every device that comes after only connects, and the other app's web app in the same browser asks nothing.
 
 1. **Connexion** (Connection): the address is already filled in (the server serves this page), type the token. The language switch sits at the top right.
-2. **Vos applications** (Your apps): tick the apps your server runs, Carnet, Pages, Contacts and Agenda by default. Nothing is lost by leaving one out: turn it on later in Administration.
+2. **Vos applications** (Your apps): tick the apps your server runs, every ready app by default (Carnet, Pages, Contacts, Agenda and Clock). Nothing is lost by leaving one out: turn it on later in Administration.
 3. **Votre serveur** (Your server): what the server can do on top, for every app you ticked, each row optional and opened on its own; each field says where its value comes from ([the table above](#before-you-start)):
    1. **Retrouver vos données** (Restore), first, only when this server holds nothing yet: the newest backup from S3 (add S3 first, from its row), or an archive kept elsewhere.
    2. **Claude**: the API key, the model and a monthly budget, shared by every app; and, off until you turn them on, the questions about pages (whether a question may read all pages, whether it may search the web, and how much one question may read).
@@ -137,7 +137,7 @@ Open your address in a browser: it opens the first app the server runs (Carnet a
 
 ## The phones
 
-Each app has its own APK in every release (`carnet-vX.Y.Z.apk`, `pages-vX.Y.Z.apk`, `contacts-vX.Y.Z.apk`, `agenda-vX.Y.Z.apk`): install those of the apps your server runs. The first one asks for the address and the token (the server is already set up, so it goes on to its colours); the next one finds the first one's connection and colours on the phone and offers them in one tap. They share it only with the suite's own apps (an Android permission granted to apps signed with the same key), so take them all from the same release.
+Each app has its own APK in every release (`carnet-vX.Y.Z.apk`, `pages-vX.Y.Z.apk`, `contacts-vX.Y.Z.apk`, `agenda-vX.Y.Z.apk`, `clock-vX.Y.Z.apk`): install those of the apps your server runs. The first one asks for the address and the token (the server is already set up, so it goes on to its colours); the next one finds the first one's connection and colours on the phone and offers them in one tap. They share it only with the suite's own apps (an Android permission granted to apps signed with the same key), so take them all from the same release.
 
 An app whose server does not run it says so and offers to turn it on.
 
@@ -145,13 +145,14 @@ An app whose server does not run it says so and offers to turn it on.
 
 Administration, « Applications »: a switch per app, on the web or in any phone app. An app turned off says so in its web app and its phone app (with a button to turn it on again), and its work on the server stops (Carnet stops reading links); its records stay on the server, in every backup, and come back as they were when it is turned on again. At least one app stays on.
 
-## Agenda and the outside world
+## Agenda, Clock and the outside world
 
-Agenda's server does a few things on its own, all optional:
+Agenda's and Clock's parts of the server do a few things on their own, all optional:
 
 - **Subscribed calendars**: each address you subscribe to (Google's « Adresse secrète au format iCal », a Nextcloud or Proton calendar's link, a sports team's fixtures) is tried by the server before it is followed, read again every 6 hours, and kept as events every device has offline. The server reads public addresses only (its guard refuses your LAN, as it does for links), up to 10 MB a calendar; Google's address works as it is. A calendar behind a login (a mailbox's, such as an Open-Xchange messagerie, Nextcloud, Fastmail, iCloud) is read over CalDAV: the apps ask for the login when the address does, and the server finds the calendar from the calendar's address, the account's or the server's own (`/.well-known/caldav`). Its password is kept in the server's database alone (never synced, never in the archives: after a restore on a new server, each such calendar asks for it again), and is sent only over `https://`, as Basic authentication, to that calendar's own host (a redirect elsewhere goes on without it).
 - **Public holidays** come from Nager.Date ([above](#before-you-start)), once when the country is set and once a year after.
 - **The weather** of a day with a placed event comes from [Open-Meteo](https://open-meteo.com) (no account, no key), asked by the server, 16 days ahead at most.
+- **The weather as an alarm rings** (Clock, when an alarm shows it) comes from Open-Meteo too, asked by the server for the phone's place rounded to about a kilometre (or the town set in Clock's Réglages), and kept on the phone for the ring.
 - **Places as you type** (an event's place, a contact's address) come from [Photon](https://photon.komoot.io), komoot's geocoder on OpenStreetMap's data (no account, no key), asked by the server with what you typed and nothing else, each answer kept a day. `UNLEASE_PLACES_URL` points it at your own Photon, or `off` turns it off: the apps then offer only the places they already know (your contacts' addresses, the places of your events).
 - **Your calendar, published**: Administration, Agenda, « Publication » gives a secret address, `https://unlease.example.org/ical/<secret>.ics`, that Google Calendar (« Autres agendas », « À partir de l'URL »), Apple Calendar or Thunderbird can subscribe to. It is read-only and holds your own events (not your subscriptions, nor what is in the bin); in a description, a mention reads as the contact's name or, for one of these events, its title, and any other (a note, a link, a page) as « … », so the address tells nothing of your other apps. « Nouvelle adresse » makes a new one and the old one stops working. It is the one address the server answers without the token: if your proxy only lets `/api` and the apps through, let `/ical/` through too.
 - **Reminders in a browser** are Web Push notifications: the browser asks your permission, then your server sends each reminder through the browser's push service (Google's for Chrome, Mozilla's for Firefox, Apple's for Safari), encrypted so that service cannot read it, on the minute. It needs HTTPS, and the server's clock set right (NTP; Docker uses the host's). On Android, the APK rings its reminders itself, offline, on the minute; it checks the server for new ones every hour with the app closed. If they come late on a phone, its Réglages show « Notifications à l'heure » with what to change (a battery set to « Restreinte », a maker's battery saver).
@@ -223,7 +224,7 @@ Set `UNLEASE_VERSION` in `.env` to the new release, then `docker compose pull &&
 
 ## Hosting the web apps elsewhere
 
-The web apps are plain static files. To serve them from a static host (Cloudflare Pages, Netlify, an nginx of your own), build them from the repository's root (`npm ci && npm run build -w web`, output `web/dist`: `notes/`, `pages/`), make the host answer an unknown path under `/notes/` with `notes/index.html` (the same for `/pages/`) and send `/` to `/notes`, send the headers in `web/dist/_headers` (`web/dist/_redirects` does the rest on Cloudflare Pages), and allow that origin on the server: `UNLEASE_CORS_ORIGINS=https://apps.example.org`. The setup's first screen then asks for the server's address.
+The web apps are plain static files. To serve them from a static host (Cloudflare Pages, Netlify, an nginx of your own), build them from the repository's root (`npm ci && npm run build -w web`, output `web/dist`: one folder per app, `notes/`, `pages/`, `contacts/`, `agenda/`, `clock/`), make the host answer an unknown path under `/notes/` with `notes/index.html` (the same for `/pages/`) and send `/` to `/notes`, send the headers in `web/dist/_headers` (`web/dist/_redirects` does the rest on Cloudflare Pages), and allow that origin on the server: `UNLEASE_CORS_ORIGINS=https://apps.example.org`. The setup's first screen then asks for the server's address.
 
 ## Without a public address
 
@@ -255,4 +256,4 @@ docker compose up -d
 
 The APKs come from the same release page, copied to the phones (a USB cable, a shared folder) and opened there.
 
-Everything you write, sync, search, back up to an S3 or a Seafile on your network, and restore works without internet. What reads the outside does not work without it: Claude (reading links, answering questions), a link's page and pictures, Agenda's subscribed calendars, public holidays and weather, and the places offered as you type an address (point `UNLEASE_PLACES_URL` at your own Photon, or turn it off). The certificate for the Android apps is the one part to fetch from outside ([above](#without-a-public-address)); browsers on the LAN need none.
+Everything you write, sync, search, back up to an S3 or a Seafile on your network, and restore works without internet. What reads the outside does not work without it: Claude (reading links, answering questions), a link's page and pictures, Agenda's subscribed calendars, public holidays and weather, Clock's weather as an alarm rings, and the places offered as you type an address (point `UNLEASE_PLACES_URL` at your own Photon, or turn it off). The certificate for the Android apps is the one part to fetch from outside ([above](#without-a-public-address)); browsers on the LAN need none.

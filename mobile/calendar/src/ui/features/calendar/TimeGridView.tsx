@@ -19,21 +19,26 @@ import { eventItem, itemOn, type AgendaItem } from '@app/agenda';
 import { useAgenda } from '@app/hooks/useAgenda';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useCalendarUiStore } from '@app/store/calendarUi';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, FAB_CLEARANCE, Organic, ScrollEdges, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
+import { AppText, FAB_CLEARANCE, Icon, Organic, ScrollEdges, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
 import { listIn } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { EDGE_ROOM, EventEdge } from './EventEdge';
-import { itemColor, itemTitle, paintOf } from './paint';
+import { isDayOff, itemColor, itemTitle, paintOf } from './paint';
 import { usePeriodScroll } from './PeriodPager';
 
 export const HOUR_HEIGHT = 52;
 const GUTTER = 48;
 const LANE = 24;
 const MAX_LANES = 3;
+/** Under this width a box holds a few letters a line: its title alone, a size down (`NARROW_LINE`), with no edge. */
+export const NARROW_BOX = 72;
+/** A narrow box's line: 11 on 14, so a word keeps its line where 12 would break it. */
+const NARROW_LINE = 14;
 
 export interface TimeGridViewProps {
   readonly days: readonly string[];
@@ -63,6 +68,8 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
   const agenda = useAgenda(first, addDays(last, 1), labelId);
   const column = width > GUTTER ? (width - GUTTER) / days.length : 0;
 
+  // « Couleur de vos événements »: a change in Réglages repaints the grid at once.
+  const own = useCalendarUiStore(s => s.prefs.ownColor);
   const { bars, extras, more, stripHeight } = useMemo(() => {
     const state = useLibraryStore.getState();
     const row = layoutBars(agenda.occurrences, days, { timed: false, maxLanes: MAX_LANES });
@@ -71,8 +78,8 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
     // What a day holds past its lanes: its hidden bars and what the other apps bring past three, said « +N » in a lane of its own.
     const left = perDay.map((list, index) => (row.hidden[index] ?? 0) + Math.max(0, list.length - 3));
     const lanes = Math.min(MAX_LANES, row.lanes) + Math.min(3, most) + (left.some(count => count > 0) ? 1 : 0);
-    return { bars: row.bars.map(bar => ({ ...bar, item: eventItem(state, bar.occurrence) })), extras: perDay, more: left, stripHeight: Math.max(0, lanes) * LANE + (lanes > 0 ? 6 : 0) };
-  }, [agenda, days]);
+    return { bars: row.bars.map(bar => ({ ...bar, item: eventItem(state, bar.occurrence, own) })), extras: perDay, more: left, stripHeight: Math.max(0, lanes) * LANE + (lanes > 0 ? 6 : 0) };
+  }, [agenda, days, own]);
   const barLanes = Math.min(MAX_LANES, Math.max(0, ...bars.map(bar => bar.lane + 1)));
 
   const boxes = useMemo(() => days.map(day => layoutDay(agenda.occurrences, day)), [agenda, days]);
@@ -153,11 +160,18 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
         <View style={[styles.strip, { height: stripHeight }]}>
           {bars.map(bar => {
             const paint = paintOf(theme, bar.item.kind === 'event' ? bar.item.color : null);
+            const off = isDayOff(bar.item);
             return (
               <Animated.View key={bar.occurrence.key} entering={arrived.has(bar.occurrence.key) ? listIn : undefined} style={[styles.barSlot, { left: GUTTER + bar.column * column + 2, width: bar.span * column - 4, top: bar.lane * LANE + 2 }]}>
-                <Tappable onPress={() => onOpen(bar.item, days[bar.column]!)} style={[styles.bar, styles.edged, { backgroundColor: paint.tint }]} accessibilityRole="button" accessibilityLabel={itemTitle(bar.item)}>
+                <Tappable
+                  onPress={() => onOpen(bar.item, days[bar.column]!)}
+                  style={[styles.bar, styles.edged, off ? styles.marked : null, { backgroundColor: paint.tint }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={off ? `${itemTitle(bar.item)}, ${t('Day off')}` : itemTitle(bar.item)}
+                >
                   <EventEdge color={paint.fill} />
-                  <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1}>
+                  {off ? <Icon name="sun" size={12} color={paint.text} /> : null}
+                  <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1} style={off ? styles.markedText : null}>
                     {itemTitle(bar.item)}
                   </AppText>
                 </Tappable>
@@ -197,7 +211,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
           )}
         </View>
       ) : null}
-      {/* The hours soften as they slide under the day heads and the screen's foot. */}
+      {/* The day heads' line comes in once the hours slide under them; the foot is the screen's. */}
       <ScrollEdges>
       <Animated.ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} style={styles.fill} contentContainerStyle={{ height: HOUR_HEIGHT * 24 + 24 + FAB_CLEARANCE + insets.bottom }} refreshControl={pullToSync}>
         {Array.from({ length: 24 }, (_, hour) => (
@@ -219,15 +233,15 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
                 accessibilityLabel={t('Create an event on {day}', { day: longDay(day) })}
               >
                 {boxes[index]!.map(box => {
-                  const item = eventItem(state, box.occurrence);
+                  const item = eventItem(state, box.occurrence, own);
                   const paint = paintOf(theme, item.kind === 'event' ? item.color : null);
                   // 1 under its start's line and 1 short of its end, 2 inside its column's lines: back to back, side by side or by a line, events keep clear of each other.
                   const height = ((box.bottom - box.top) / 60) * HOUR_HEIGHT - 2;
                   const part = column / box.columns;
-                  // Its room in lines of 16: one puts its time after its title, more wrap the title over its time and place.
-                  const lines = Math.max(1, Math.floor((height - 4) / 16));
-                  // A week's column on a phone holds a few letters a line: the title alone, cut rather than dotted line after line.
-                  const narrow = part * box.span < 64;
+                  // A week's column on a phone holds a few letters a line: the title alone on its wash (no edge, which would take a letter's room), a size down, words kept whole or hyphenated, never cut mid-word.
+                  const narrow = part * box.span < NARROW_BOX;
+                  // Its room in lines (16, a narrow box's 14): one puts its time after its title, more wrap the title over its time and place.
+                  const lines = Math.max(1, Math.floor((height - 4) / (narrow ? NARROW_LINE : 16)));
                   const clock = clockWords(formatClock(box.occurrence.startAt), twelveHours);
                   const place = box.occurrence.event.place.trim();
                   return (
@@ -238,13 +252,13 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
                     >
                       <Tappable
                         onPress={() => onOpen(item, day)}
-                        style={[styles.box, styles.edged, lines < 2 ? styles.boxShort : null, { backgroundColor: paint.tint }]}
+                        style={[styles.box, narrow ? null : styles.edged, lines < 2 ? styles.boxShort : null, { backgroundColor: paint.tint }]}
                         accessibilityRole="button"
                         accessibilityLabel={`${itemTitle(item)}, ${clock}`}
                       >
-                        <EventEdge color={paint.fill} />
+                        {narrow ? null : <EventEdge color={paint.fill} />}
                         {narrow ? (
-                          <AppText variant="labelSmall" numberOfLines={lines} ellipsizeMode="clip">
+                          <AppText variant="labelSmall" numberOfLines={lines} ellipsizeMode="clip" textBreakStrategy="balanced" android_hyphenationFrequency="full" style={styles.narrowTitle}>
                             {itemTitle(item)}
                           </AppText>
                         ) : lines < 2 ? (
@@ -254,7 +268,7 @@ function TimeGridViewComponent({ days, today, labelId, twelveHours, weekNumbers,
                           </AppText>
                         ) : (
                           <>
-                            <AppText variant="labelSmall" numberOfLines={lines - 1}>
+                            <AppText variant="labelSmall" numberOfLines={lines - 1} textBreakStrategy="balanced" android_hyphenationFrequency="normal">
                               {itemTitle(item)}
                             </AppText>
                             <AppText variant="labelSmall" color={theme.color.inkMuted} numberOfLines={1}>
@@ -303,8 +317,13 @@ const makeStyles = (theme: Theme) =>
     boxSlot: { position: 'absolute' },
     box: { flex: 1, paddingLeft: 4, paddingRight: 3, paddingVertical: 2, overflow: 'hidden', ...corners(SHAPES.small) },
     boxShort: { justifyContent: 'center', paddingVertical: 0 },
+    // A narrow box's wash alone says its colour (`box`'s 4 in, no edge's room): the words take it.
+    narrowTitle: { fontSize: 11, lineHeight: NARROW_LINE },
     /** Its colour's wash, room for its pigment's edge on the left (`EventEdge`): the web's chip. */
     edged: { paddingLeft: EDGE_ROOM },
+    // A day off: the sun before its title, on one line.
+    marked: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 3 },
+    markedText: { flexShrink: 1 },
     now: { position: 'absolute', height: 10, flexDirection: 'row', alignItems: 'center', marginTop: -5 },
     nowDot: { width: 10, height: 10, borderRadius: 5 },
     nowLine: { flex: 1, height: 2 },

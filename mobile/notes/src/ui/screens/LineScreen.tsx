@@ -240,8 +240,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      {/* Its edges soften; the top one under the status bar's band, where the head goes as it scrolls away. */}
-      <ScrollEdges insetTop={insets.top}>
+      {/* Its head scrolls away with it: what goes under the status bar's band leaves the screen, no line there. */}
+      <ScrollEdges top={false}>
       <Animated.FlatList
         data={rows}
         onScroll={onScroll}

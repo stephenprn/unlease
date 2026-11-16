@@ -55,7 +55,7 @@ describe('a dev build', () => {
       { packageName: `${variant.SUITE_PACKAGES.pages}.dev`, server: 'http://localhost:8080', token: 'dev', appearance: '', grain: '', locale: '', look: '' },
     ];
     const found = await link.findSiblings('notes');
-    const others = ['pages', 'calendar', 'contacts'] as const;
+    const others = ['pages', 'calendar', 'contacts', 'clock'] as const;
     expect(native.asked).toEqual([others.map(app => `${variant.SUITE_PACKAGES[app]}.dev`)]);
     expect(found).toEqual([expect.objectContaining({ app: 'pages', server: { url: 'http://localhost:8080', token: 'dev' } })]);
   });

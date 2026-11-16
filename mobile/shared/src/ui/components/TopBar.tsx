@@ -1,7 +1,8 @@
 /**
  * Material's small top app bar. Transparent by default, so the screen's own grained paper runs
- * through it. A collection's emblem before the title makes the bar that collection's; pressable,
- * the title is a picker (a chevron follows it).
+ * through it; what scrolls under it is cut at its foot, where its line comes in once content has
+ * gone under (drawn by the scroller below it, `ScrollEdges`), never a fade. A collection's emblem
+ * before the title makes the bar that collection's; pressable, the title is a picker (a chevron follows it).
  */
 import React, { memo } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';

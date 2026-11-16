@@ -100,7 +100,7 @@ describe('iCalendar', () => {
   });
 
   it('writes what it reads back', () => {
-    const events: CalendarEvent[] = parseIcs(GOOGLE).events.slice(0, 1).map((event, index) => ({ ...event, id: `e${index}`, recurringId: null, originalStart: '', labelIds: [], contactIds: [], files: [], feedId: null, color: null, trashedAt: null, createdAt: 0, deletedAt: null, editedAt: 0 }));
+    const events: CalendarEvent[] = parseIcs(GOOGLE).events.slice(0, 1).map((event, index) => ({ ...event, id: `e${index}`, recurringId: null, originalStart: '', labelIds: [], contactIds: [], files: [], feedId: null, color: null, dayOff: false, trashedAt: null, createdAt: 0, deletedAt: null, editedAt: 0 }));
     const text = writeIcs(events, { name: 'Agenda', productId: '-//Test//FR', now: 0, plain: event => event.description });
     expect(text).toContain('DTSTART;TZID=Europe/Paris:20261102T143000');
     expect(text).toContain('SUMMARY:Cours de piano\\, salle 2');

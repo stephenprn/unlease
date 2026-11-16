@@ -1,0 +1,32 @@
+/** Clock's French for its home, on both clients: the week of mornings, the chosen morning, the alarms' cards, what the home says first. */
+import type { Dictionary } from '@unlease/core/i18n';
+
+export const FR_HOME: Dictionary = {
+  'The week’s mornings': 'Les matins de la semaine',
+  'No alarm': 'Pas d’alarme',
+  'An event too soon after the alarm': 'Un événement trop tôt après le réveil',
+  'rang at {time}': 'a sonné à {time}',
+  'Skip this time': 'Ignorer cette fois',
+  '{alarm} at {time} skipped this morning': '{alarm} de {time} ignorée ce matin',
+  '{alarm} at {time} won’t ring: {reason}': '{alarm} de {time} ne sonne pas : {reason}',
+  'a day off': 'jour de congé',
+  'Ring after all': 'Sonner quand même',
+  'As the alarm rings': 'À l’heure du réveil',
+  '{span} after the alarm': '{span} après le réveil',
+  '{span} before the alarm': '{span} avant le réveil',
+  'The day’s first event': 'Premier événement du jour',
+  'Next in your calendar today': 'Prochain événement de la journée',
+  'Nothing in your calendar that day.': 'Rien dans votre agenda ce jour-là.',
+  'Nothing in your calendar after this alarm.': 'Rien dans votre agenda après cette alarme.',
+  'It starts before your alarm.': 'Il commence avant votre réveil.',
+  'Less than {span} to get ready.': 'Moins de {span} pour se préparer.',
+  'Add an alarm for “{title}”': 'Ajouter une alarme pour « {title} »',
+  'Previous day': 'Jour précédent',
+  'Next day': 'Jour suivant',
+  'Skipped {day}': 'Ignorée {day}',
+  'Opens the alarm': 'Ouvre l’alarme',
+  'An alarm is ringing': 'Une alarme sonne',
+  'An alarm may not ring as it should.': 'Une alarme pourrait ne pas sonner comme prévu.',
+  'An alarm may not ring as it should. Check in Settings.': 'Une alarme pourrait ne pas sonner comme prévu. Vérifiez dans les Réglages.',
+  'Check': 'Vérifier',
+};

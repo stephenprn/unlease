@@ -35,7 +35,7 @@ describe('Agenda’s keys', () => {
       'M Mois',
       'Y Année',
       'A Planning',
-      'O Aujourd’hui : la journée d’un coup d’œil',
+      'O Ma journée',
     ]);
   });
 

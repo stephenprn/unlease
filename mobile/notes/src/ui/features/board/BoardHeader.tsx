@@ -5,7 +5,7 @@
  * bar lies over the strip and the chips rest: nothing moves.
  */
 import React, { memo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { parseHex } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
@@ -17,7 +17,7 @@ import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, EmblemStone, Icon, Organic, Tappable } from '../../components';
+import { AppText, EdgeScrollView, EmblemStone, Icon, Organic, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -38,7 +38,7 @@ function LineChipsComponent({ onOpenLine, onNewLine, selecting }: LineChipsProps
   const lines = useLines();
   return (
     <View pointerEvents={selecting ? 'none' : 'auto'} style={selecting ? styles.resting : null}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lines} keyboardShouldPersistTaps="handled">
+      <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lines} keyboardShouldPersistTaps="handled">
         {lines.map(line => (
           <LineChip key={line.id} id={line.id} onPress={onOpenLine} />
         ))}
@@ -48,7 +48,7 @@ function LineChipsComponent({ onOpenLine, onNewLine, selecting }: LineChipsProps
             {t('Collection')}
           </AppText>
         </Tappable>
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

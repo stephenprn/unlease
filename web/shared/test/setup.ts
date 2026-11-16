@@ -4,7 +4,7 @@
  *
  * Each web app's tests run with its own app installed, as its entry does (vite.config.ts names it,
  * `UNLEASE_TEST_APP`): Carnet's with Contacts' data (the shell's tests run with it too), Pages' with Carnet's and
- * Contacts' data, Agenda's with Contacts', Carnet's and Pages' blocks, or Contacts'.
+ * Contacts' data, Agenda's with Contacts', Carnet's and Pages' blocks, Contacts', or Clock's with Agenda's events.
  */
 import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
@@ -12,17 +12,22 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, vi } from 'vitest';
 
+import { addClockFrench } from '@unlease/clock/i18n';
 import { addPagesFrench } from '@unlease/pages/i18n';
 
 import { installApp } from '../src/modules';
 
 // Every app's English (Pages' brings Carnet's): a sentence is the same in either app's tests.
 addPagesFrench();
+addClockFrench();
 // The app loads once the test file has set its mocks (`vi.mock`), so it takes the mocked modules too.
 beforeAll(async () => {
   if (import.meta.env.UNLEASE_TEST_APP === 'calendar') {
     const [{ calendarModule }, { contactsData }, { notesData }, { pageBlocksData }] = await Promise.all([import('@calendar/module'), import('@contacts/data'), import('@notes/data'), import('@calendar/app/store/pageBlocks')]);
     installApp(calendarModule, [contactsData, notesData, pageBlocksData]);
+  } else if (import.meta.env.UNLEASE_TEST_APP === 'clock') {
+    const [{ clockModule }, { agendaData }] = await Promise.all([import('@clock/module'), import('@clock/app/store/agenda')]);
+    installApp(clockModule, [agendaData]);
   } else if (import.meta.env.UNLEASE_TEST_APP === 'contacts') {
     const { contactsModule } = await import('@contacts/module');
     installApp(contactsModule);

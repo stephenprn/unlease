@@ -23,7 +23,7 @@ describe('health', () => {
     const response = await server.app.request('/api/health');
     expect(response.status).toBe(200);
     // Not the release a caller without the token could look up flaws of: the Administration says it.
-    expect(await response.json()).toEqual({ ok: true, apiVersion: API_VERSION, apps: ['notes', 'pages', 'calendar', 'contacts'], setup: false, analysis: true });
+    expect(await response.json()).toEqual({ ok: true, apiVersion: API_VERSION, apps: ['notes', 'pages', 'calendar', 'contacts', 'clock'], setup: false, analysis: true });
   });
 
   it('says when analysis is off', async () => {

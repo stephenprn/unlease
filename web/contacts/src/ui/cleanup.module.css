@@ -1,0 +1,147 @@
+/* « Nettoyer les contacts »: the place's rows (settings' own) and a tool's findings. */
+
+/* A tool with something to fix says so in ink; « Rien à corriger » stays in the second ink. */
+.due {
+  color: var(--ink);
+}
+
+/* The country codes' country: its words, and the code picked beside them. */
+.region {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 4px;
+}
+
+.regionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.region > button {
+  flex: none;
+  min-width: 96px;
+}
+
+/* How many are ticked, and « Tout sélectionner » at its end. */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+  min-height: 36px;
+}
+
+.panel {
+  position: relative;
+  isolation: isolate;
+  padding: 6px;
+  background: var(--paper);
+}
+
+.findings {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finding {
+  display: grid;
+  grid-template-columns: 40px 40px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 64px;
+  padding: 8px 10px 8px 4px;
+}
+
+/* A hairline between findings, on the words' column: the box and the face stand clear of it. */
+.finding + .finding {
+  box-shadow: inset 0 1px 0 var(--hairline);
+}
+
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--waiting);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.name {
+  color: var(--ink);
+  text-decoration: none;
+  justify-self: start;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+/* The value as it is → what it becomes. */
+.change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.before {
+  color: var(--ink-muted);
+}
+
+.gone {
+  color: var(--ink);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-muted);
+}
+
+.after {
+  color: var(--ink);
+}
+
+.arrow {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+/* What stands there instead of a value (« Supprimé », « Dans la corbeille »), in the second ink. */
+.said {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* Unticked, its change reads quieter: it will not be made. */
+.finding[data-off] .after,
+.finding[data-off] .change mark {
+  color: var(--ink-muted);
+}
+
+.finding[data-off] .change mark {
+  background: transparent;
+}
+
+@media (max-width: 599px) {
+  .finding {
+    grid-template-columns: 40px 40px minmax(0, 1fr);
+  }
+  .finding > :last-child:not(.text) {
+    grid-column: 3;
+    justify-self: start;
+    margin-left: -12px;
+  }
+}

@@ -15,11 +15,15 @@ export interface PagesUiState {
   readonly lastPage: string | null;
   /** A page just made, whose title takes the caret when it opens (not kept). */
   readonly titleFocus: string | null;
+  /** Pages chosen together in the tree (Maj+click, ⌘+click, Maj+arrows), to drag, move or bin as one (not kept). */
+  readonly treeSelected: ReadonlySet<string>;
+  /** Where a range of the tree started: the row last clicked, or the page on screen. */
+  readonly treeAnchor: string | null;
 }
 
 const MAX_KEPT = 2000;
 
-export const usePagesUiStore = create<PagesUiState>(() => ({ expanded: new Set(), openToggles: new Set(), lastPage: null, titleFocus: null }));
+export const usePagesUiStore = create<PagesUiState>(() => ({ expanded: new Set(), openToggles: new Set(), lastPage: null, titleFocus: null, treeSelected: new Set(), treeAnchor: null }));
 
 const storageKey = (): string => `${getStorageName()}.pages`;
 
@@ -27,7 +31,7 @@ export function loadPagesUi(): void {
   try {
     const parsed = JSON.parse(localStorage.getItem(storageKey()) ?? '{}') as { expanded?: unknown; openToggles?: unknown; lastPage?: unknown };
     const ids = (value: unknown): Set<string> => new Set(Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []);
-    usePagesUiStore.setState({ expanded: ids(parsed.expanded), openToggles: ids(parsed.openToggles), lastPage: typeof parsed.lastPage === 'string' ? parsed.lastPage : null, titleFocus: null });
+    usePagesUiStore.setState({ expanded: ids(parsed.expanded), openToggles: ids(parsed.openToggles), lastPage: typeof parsed.lastPage === 'string' ? parsed.lastPage : null, titleFocus: null, treeSelected: new Set(), treeAnchor: null });
   } catch {
     // Unreadable or blocked: everything starts closed.
   }
@@ -84,4 +88,17 @@ export function takeTitleFocus(id: string): boolean {
   if (usePagesUiStore.getState().titleFocus !== id) return false;
   usePagesUiStore.setState({ titleFocus: null });
   return true;
+}
+
+const NONE: ReadonlySet<string> = new Set();
+
+/** Pages chosen together in the tree; `anchor` is where a Maj+click range runs from. */
+export function selectTreePages(ids: readonly string[], anchor: string | null): void {
+  usePagesUiStore.setState({ treeSelected: ids.length > 0 ? new Set(ids) : NONE, treeAnchor: anchor });
+}
+
+export function clearTreeSelection(anchor: string | null = null): void {
+  const { treeSelected, treeAnchor } = usePagesUiStore.getState();
+  if (treeSelected.size === 0 && treeAnchor === anchor) return;
+  usePagesUiStore.setState({ treeSelected: NONE, treeAnchor: anchor });
 }

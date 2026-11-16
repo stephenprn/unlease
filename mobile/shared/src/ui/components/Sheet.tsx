@@ -1,6 +1,8 @@
 /**
  * Material's modal bottom sheet. Rendered in place, not in a native Modal, so it stays under
  * the app's snackbar and inside the navigator: mount it at the root of a screen or of the app.
+ * Its head (the handle, the title) meets a body that scrolls with the head's line once content goes
+ * under it (`ScrollEdges`); its foot is the screen's, or a footer's edge (`FormFoot`).
  * It rises once its height is known, leaves faster than it came, and the hand moves it from
  * anywhere on it, as Google's sheets: dragged down it follows the finger; a body that scrolls
  * (`SheetScroll`, `SheetFlatList`) scrolls back to its top first, then hands the drag on to the
@@ -438,7 +440,7 @@ function withRoom(style: StyleProp<ViewStyle>, extend: number): StyleProp<ViewSt
  * A sheet's scrolling body: it shrinks with the panel, so every field stays reachable above the
  * keyboard, and pulled down from its top it moves the sheet (no stretch at its ends: the sheet is what gives).
  */
-export function SheetScroll({ style, ref: own, top, contentContainerStyle, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof Animated.ScrollView>> }) {
+export function SheetScroll({ style, ref: own, top, insetTop, capped, fade, contentContainerStyle, ...rest }: ScrollViewProps & EdgeProps & { readonly ref?: React.Ref<React.ComponentRef<typeof Animated.ScrollView>> }) {
   const body = useSheetBody();
   const { ref, onScroll } = useBodyScroll(body, own as React.Ref<never>);
   const room = useFootRoom();
@@ -455,16 +457,16 @@ export function SheetScroll({ style, ref: own, top, contentContainerStyle, ...re
       {...(rest as object)}
     />
   );
-  // Its ends soften under the handle and the foot while it runs on past them (`ScrollEdges`).
+  // The sheet's head (its handle, its title, a field over the list) shows its line once content goes under it (`ScrollEdges`).
   return (
-    <ScrollEdges style={outer} top={top} onLayout={room.onLayout}>
+    <ScrollEdges style={outer} top={top} insetTop={insetTop} capped={capped} fade={fade} onLayout={room.onLayout}>
       {body ? <GestureDetector gesture={body.gesture}>{scroll}</GestureDetector> : scroll}
     </ScrollEdges>
   );
 }
 
 /** A sheet's long list (a picker of notes, emojis, zones): `SheetScroll`'s hand-over, virtualized. */
-export function SheetFlatList<T>({ style, data, ref: own, top, contentContainerStyle, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
+export function SheetFlatList<T>({ style, data, ref: own, top, insetTop, capped, fade, contentContainerStyle, ...rest }: FlatListProps<T> & EdgeProps & { readonly ref?: React.Ref<FlatList<T>> }) {
   const body = useSheetBody();
   const { ref, onScroll } = useBodyScroll(body, own as React.Ref<never>);
   const room = useFootRoom();
@@ -483,7 +485,7 @@ export function SheetFlatList<T>({ style, data, ref: own, top, contentContainerS
     />
   );
   return (
-    <ScrollEdges style={outer} top={top} onLayout={room.onLayout}>
+    <ScrollEdges style={outer} top={top} insetTop={insetTop} capped={capped} fade={fade} onLayout={room.onLayout}>
       {body ? <GestureDetector gesture={body.gesture}>{list}</GestureDetector> : list}
     </ScrollEdges>
   );

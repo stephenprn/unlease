@@ -113,7 +113,8 @@
   --row-top: var(--row-outer);
 }
 
-.table > .group:nth-last-child(1 of :not(svg)) > li:last-child {
+.table > .group:nth-last-child(1 of :not(svg)) > li:last-child,
+.table > .letterGroup:nth-last-child(1 of :not(svg)) > .group > li:last-child {
   --row-foot: var(--row-outer);
 }
 
@@ -146,29 +147,53 @@
 }
 
 /*
- * A letter heading its people, as the phone's: the letter large (the title's size) in the primary, and
- * nothing else; the room above it parts one letter's people from the last's. Pinned under the header
- * while its people scroll, on the panel's paper, on the rows' faces' column.
+ * Each letter's people under a band across the sheet, as the phone's: the letter small (the sections'
+ * voice, in the second ink) on the faces' column, on the sheet's own paper. Held under the header
+ * while its people scroll, in front of them, and pushed away by the next letter's as it comes (sticky
+ * within its group); its line along its foot only while something lies under it (`stuck`, where the
+ * browser says so), none while it lies over its first person.
  */
+.letterGroup {
+  position: relative;
+}
+
 h3.letter {
   position: sticky;
   top: var(--header-height, 64px);
-  z-index: 1;
-  display: flex;
-  align-items: flex-end;
-  min-height: 44px;
-  margin: 0;
-  padding: 14px 10px 4px;
-  background: var(--paper);
-  color: var(--action);
+  z-index: 2;
+  container-type: scroll-state;
+  height: 32px;
+  margin: 0 calc(-1 * var(--row-inset));
+  background: var(--sheet, var(--paper));
 }
 
-.group + h3.letter {
-  margin-top: 8px;
+/* The sheet's grain on the band too: noise has no seam. */
+h3.letter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('/grain.png') repeat;
+  background-size: 200px 200px;
+  opacity: var(--grain);
 }
 
 .letterName {
-  min-width: 12px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  /* Nearer its people than the row above: 4 more over the letter than under it. */
+  padding: 4px calc(var(--row-inset) + 10px) 0;
+  border-bottom: 1px solid transparent;
+  color: var(--ink-muted);
+  transition: border-color var(--duration-short) var(--ease-standard);
+}
+
+@container scroll-state(stuck: top) {
+  .letterName {
+    border-bottom-color: var(--hairline);
+  }
 }
 
 .row {

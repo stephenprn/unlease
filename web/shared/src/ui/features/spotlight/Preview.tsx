@@ -63,9 +63,10 @@ function scrollToMatch(scroller: HTMLElement, part: SearchPart | null): void {
   scroller.scrollTop = top > scroller.clientHeight * 0.6 ? top - scroller.clientHeight / 3 : 0;
 }
 
-export const SpotPreview = memo(function SpotPreview({ doc, part, matcher, now }: { doc: SearchDoc<SpotMeta> | null; part: SearchPart | null; matcher: Matcher; now: number }) {
+export const SpotPreview = memo(function SpotPreview({ doc, part, matcher, now, foot = false }: { doc: SearchDoc<SpotMeta> | null; part: SearchPart | null; matcher: Matcher; now: number; foot?: boolean }) {
   const scroller = useRef<HTMLElement>(null);
-  useScrollEdgesOn(scroller, [], { top: true });
+  // The field's head over it, and the keys' foot under it when there is one, each meet it with a hairline once it runs on past them.
+  useScrollEdgesOn(scroller, [], { top: true, bottom: foot });
   // Every change of the records draws it again: its title and facts are read as they are now.
   useRecordsRevision();
   const kind = doc ? kindOf(doc.meta.type) : null;

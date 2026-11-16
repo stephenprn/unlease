@@ -1,13 +1,15 @@
 /**
  * Contacts' home, laid out as the suite's homes are (the search strip, the bottom bar whose pebble
  * makes a contact) with Google Contacts' list: the favourites in a row of faces, the week's
- * birthdays, then everyone on their letter's panel, the letter over it on the ground (it scrolls with
- * its people: the rail lights the one at the top), and the letters down the right edge to jump. The drawer narrows
- * it to the favourites or a label. Back ends a search, then a narrowed list, then leaves the app.
+ * birthdays, then everyone on one sheet of paper, each letter a band across it over its first person
+ * (the letter small, in the second ink), held at the top while its people go under it and pushed up
+ * by the next letter's, its line drawn once something lies under it; the letters down the right edge
+ * to jump. What a search finds lies on the same sheet, without the bands. The drawer narrows it to the favourites or a label. Back ends a search, then a
+ * narrowed list, then leaves the app.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, FlatList, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { FadeIn, runOnJS, useAnimatedReaction, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, runOnJS, useAnimatedReaction, useAnimatedScrollHandler, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -22,29 +24,23 @@ import { selectSortOrder, useContactsUiStore } from '@app/store/contactsUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectDrawerOpen, setDrawerOpen, useUiStore } from '@shared/app/store/uiStore';
 
-import { AppText, Button, EDGE_FADE, EmptyState, FAB_CLEARANCE, FabMenu, Ground, LabelTag, ScrollEdges, SearchHeader, SyncLine, useArrivals, usePullToSync } from '@shared/ui/components';
-import { decelerate, duration, listIn, listMove } from '@shared/ui/theme/motion';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { AppText, Button, EmptyState, FAB_CLEARANCE, FabMenu, Ground, LabelTag, ScrollEdges, SearchHeader, SyncLine, useArrivals, usePullToSync } from '@shared/ui/components';
+import { decelerate, duration, listIn, listMove, standard } from '@shared/ui/theme/motion';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { settingsFound, SettingsMatches, settingsScreenOf, type PhoneSettingsPlace } from '@shared/ui/features/settings/SettingsMatches';
-import { ContactRow, PANEL_FACES, placeOf, ROW_HEIGHT, rowHeight, type PanelPlace } from '../features/contacts/ContactRow';
+import { LetterBands, SheetPaper } from '../features/contacts/AddressBook';
+import { ContactRow } from '../features/contacts/ContactRow';
 import { BirthdayLine, FavoritesStrip } from '../features/contacts/HomeExtras';
 import { LetterRail } from '../features/contacts/LetterRail';
+import { landing, layOutSheet, letterAt, ROW_HEIGHT, type SheetEntry, type SheetRow } from '../features/contacts/sheetLayout';
 import { Drawer, type DrawerPlace } from '../navigation/Drawer';
 import type { ScreenProps } from '../navigation/types';
 
-/**
- * A letter's heading on the ground over its panel: more room above it (parting it from the panel
- * before) than under it (tying it to its own), its line the title's.
- */
-const LETTER_ABOVE = 16;
-const LETTER_LINE = 26;
-const LETTER_BELOW = 6;
-const LETTER_HEAD = LETTER_ABOVE + LETTER_LINE + LETTER_BELOW;
+/** The ground between what stands above the list (the favourites, the week's birthdays, a search's count) and its sheet. */
+const SHEET_GAP = 12;
 /** A narrowed list's title and what the search found settle in as they change. */
 const HEAD_IN = FadeIn.duration(duration.medium).easing(decelerate);
-
-type Item = { readonly kind: 'letter'; readonly letter: string } | { readonly kind: 'contact'; readonly id: string; readonly place: PanelPlace };
 
 export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
   // A setting a search found: its screen, with its section where that screen takes one (the import's and the erase's take none).
@@ -54,8 +50,8 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     else navigation.navigate(screen, place.section ? { section: place.section } : undefined);
   };
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const reduced = useReducedMotion();
   const [query, setQuery] = useState('');
   const searching = query.trim().length > 0;
   const label = route.params?.label ?? null;
@@ -68,11 +64,14 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
   const total = useLibraryStore(s => s.liveContacts.length);
   const drawerOpen = useUiStore(selectDrawerOpen);
   const pullToSync = usePullToSync();
-  const list = useRef<FlatList<Item>>(null);
+  const list = useRef<FlatList<SheetRow>>(null);
   const headerHeight = useRef(0);
-  // Where the list stands and how tall its header is, on the UI thread: the rail follows the letters frame by frame.
+  // Where the list stands, where its sheet starts (under its header) and how tall its frame is, on the UI
+  // thread: the paper, the letters' bands and the rail follow the scroll frame by frame.
   const scroll = useSharedValue(0);
   const headerSize = useSharedValue(-1);
+  const frame = useSharedValue(0);
+  const [frameHeight, setFrameHeight] = useState(0);
   // The letter that has reached the list's top, lit on the rail.
   const [topLetter, setTopLetter] = useState<string | null>(null);
   // The letter picked on the rail stays lit there until the list is moved by hand (at the list's end, its people cannot reach the top).
@@ -101,59 +100,35 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
     }, [searching, narrowed, navigation]),
   );
 
-  const { items, letters, offsets, lengths, heads } = useMemo(() => {
+  // Everyone on one sheet, each filed under their letter (what a search finds, unfiled); every row's place and each letter's span, in numbers.
+  const sheet = useMemo(() => {
     const contacts = useLibraryStore.getState().contacts;
-    const out: Item[] = [];
-    const found: string[] = [];
-    const at: number[] = [];
-    // Each letter's people make a panel (what a search finds, one); each row knows its place in it.
-    const groups: { letter: string | null; ids: string[] }[] = [];
+    const entries: SheetEntry[] = [];
     for (const id of labelGone ? [] : ids) {
       const contact = contacts[id];
-      if (!contact) continue;
-      const letter = searching ? null : groupLetter(contact, order);
-      const group = groups[groups.length - 1];
-      if (group && group.letter === letter) group.ids.push(id);
-      else groups.push({ letter, ids: [id] });
+      if (contact) entries.push({ id, letter: searching ? null : groupLetter(contact, order) });
     }
-    for (const group of groups) {
-      if (group.letter !== null) {
-        found.push(group.letter);
-        at.push(out.length);
-        out.push({ kind: 'letter', letter: group.letter });
-      }
-      group.ids.forEach((id, index) => out.push({ kind: 'contact', id, place: placeOf(index, group.ids.length) }));
-    }
-    const starts: number[] = [];
-    const lengths: number[] = [];
-    let offset = 0;
-    for (const item of out) {
-      const length = item.kind === 'letter' ? LETTER_HEAD : rowHeight(item.place);
-      starts.push(offset);
-      lengths.push(length);
-      offset += length;
-    }
-    // Where each letter's line lies in the list's content (under its header).
-    const letterTops = at.map(index => (starts[index] ?? 0) + LETTER_ABOVE);
-    return { items: out, letters: found, offsets: starts, lengths, heads: letterTops };
+    return layOutSheet(entries);
   }, [ids, order, searching, labelGone]);
+  const { rows, offsets, lengths } = sheet;
+  const letters = useMemo(() => sheet.letters.map(span => span.letter), [sheet]);
+  const tops = useMemo(() => sheet.letters.map(span => span.top), [sheet]);
+  const railed = !searching && letters.length >= 2;
+  // Which list is shown: when it changes, nothing glides (the paper, the letters), as no row arrives.
+  const shown = searching ? `search:${query}` : filter;
+  const laidFor = useRef(shown);
 
-  // The letter at the top, for the rail: the last whose line has reached the list's scroll edge. On the UI thread, with the scroll.
+  // The letter whose people are under the list's top, for the rail: the one whose band is held there. On the UI thread, with the scroll.
   useAnimatedReaction(
     () => {
       if (headerSize.value < 0) return null;
-      const shift = headerSize.value - scroll.value;
-      let at = -1;
-      for (let i = 0; i < heads.length; i += 1) {
-        if (heads[i]! + shift <= EDGE_FADE + 0.5) at = i;
-        else break;
-      }
+      const at = letterAt(tops, scroll.value - headerSize.value);
       return at >= 0 ? (letters[at] ?? null) : null;
     },
     (letter, before) => {
       if (letter !== before) runOnJS(setTopLetter)(letter);
     },
-    [heads, letters],
+    [tops, letters],
   );
   const onScroll = useAnimatedScrollHandler({
     onScroll: event => {
@@ -166,7 +141,7 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
   // Someone arriving while the list is shown (made, brought back by « Annuler », synced in) settles in once the others
   // have made room; another list (a label, the favourites, a search typed) is shown whole. One leaving goes, the rest
   // close ranks: a list of hundreds drops rows out of its window as it scrolls, so no row plays an exit.
-  const arrived = useArrivals(ids, searching ? `search:${query}` : filter);
+  const arrived = useArrivals(ids, shown);
 
   const openContact = useCallback((id: string) => navigation.navigate('Contact', { id }), [navigation]);
   const current: DrawerPlace = filter === 'all' ? 'contacts' : filter;
@@ -186,9 +161,14 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
   const title = filter === 'favorites' ? t('Favourites') : labelInfo && !labelGone ? labelInfo.name : null;
   const header = (
     <View
+      style={rows.length > 0 ? styles.header : null}
       onLayout={(event: LayoutChangeEvent) => {
-        headerHeight.current = event.nativeEvent.layout.height;
-        headerSize.value = event.nativeEvent.layout.height;
+        const height = event.nativeEvent.layout.height;
+        // The rows move with the header as it grows or shrinks in the same list (a favourite starred, the day's birthdays gone): the sheet goes with them.
+        const glide = laidFor.current === shown && headerSize.value >= 0 && !reduced;
+        laidFor.current = shown;
+        headerHeight.current = height;
+        headerSize.value = glide ? withTiming(height, { duration: duration.medium, easing: standard }) : height;
       }}
     >
       <SyncLine />
@@ -252,14 +232,22 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
         localText={t('No server: your contacts stay on this phone.')}
       />
-      <View style={styles.fill}>
+      <View
+        style={styles.fill}
+        onLayout={(event: LayoutChangeEvent) => {
+          frame.value = event.nativeEvent.layout.height;
+          setFrameHeight(event.nativeEvent.layout.height);
+        }}
+      >
+        {/* The paper under the rows, the list over it, the letters' bands over the list. */}
+        {rows.length > 0 ? <SheetPaper scroll={scroll} origin={headerSize} frame={frame} frameHeight={frameHeight} length={sheet.length} railed={railed} list={shown} /> : null}
         <ScrollEdges>
         <Animated.FlatList
           ref={list}
-          data={items}
+          data={rows}
           itemLayoutAnimation={searching ? undefined : listMove}
           skipEnteringExitingAnimations
-          keyExtractor={item => (item.kind === 'letter' ? `letter-${item.letter}` : item.id)}
+          keyExtractor={item => item.id}
           // Android's default clipping once made Fabric insert a view out of range as a search ended (« addViewAt » crash).
           removeClippedSubviews={false}
           getItemLayout={(_, index) => ({ length: lengths[index] ?? ROW_HEIGHT, offset: headerHeight.current + (offsets[index] ?? 0), index })}
@@ -271,29 +259,24 @@ export function ContactsScreen({ navigation, route }: ScreenProps<'Contacts'>) {
           contentContainerStyle={{ paddingBottom: FAB_CLEARANCE + insets.bottom }}
           scrollEventThrottle={16}
           onScroll={onScroll}
-          renderItem={({ item }) =>
-            item.kind === 'letter' ? (
-              <View style={styles.letter} accessible accessibilityRole="header" accessibilityLabel={item.letter}>
-                <AppText variant="title" color={theme.color.action}>
-                  {item.letter}
-                </AppText>
-              </View>
-            ) : (
-              <Animated.View entering={arrived.has(item.id) ? listIn : undefined}>
-                <ContactRow id={item.id} order={order} detail={searching} railed={!searching} place={item.place} onOpen={openContact} />
-              </Animated.View>
-            )
-          }
+          renderItem={({ item }) => (
+            <Animated.View entering={arrived.has(item.id) ? listIn : undefined}>
+              <ContactRow id={item.id} order={order} detail={searching} row={item} railed={railed} onOpen={openContact} />
+            </Animated.View>
+          )}
           refreshControl={pullToSync}
         />
         </ScrollEdges>
-        {!searching ? <LetterRail
+        {!searching && sheet.letters.length > 0 ? <LetterBands key={shown} letters={sheet.letters} scroll={scroll} origin={headerSize} frame={frame} length={sheet.length} railed={railed} list={shown} /> : null}
+        {railed ? <LetterRail
             letters={letters}
             current={picked ?? topLetter}
             onLetter={index => {
-              setPicked(letters[index] ?? null);
-              // The letter lands just past the scroll edge's fade, whole, its panel under it.
-              list.current?.scrollToOffset({ offset: Math.max(0, headerHeight.current + (heads[index] ?? 0) - EDGE_FADE), animated: false });
+              const span = sheet.letters[index];
+              if (!span) return;
+              setPicked(span.letter);
+              // The letter's people land at the list's top, their first row whole under the search strip's line, the letter pinned beside it.
+              list.current?.scrollToOffset({ offset: Math.max(0, headerHeight.current + landing(span)), animated: false });
             }}
           /> : null}
       </View>
@@ -314,9 +297,10 @@ const makeStyles = (theme: Theme) =>
     fill: { flex: 1 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
     title: { flexShrink: 1 },
-    notice: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+    // What a search found; the sheet's gap under it.
+    notice: { paddingHorizontal: 20, paddingTop: 12 },
+    // The ground between what stands above the list and its sheet.
+    header: { paddingBottom: SHEET_GAP },
     // The rows' glyphs and the group's name on the faces' column (20), the rows' 16 and 4 more.
     settings: { paddingHorizontal: 4 },
-    // On the ground over its panel, on the faces' column; nothing under it, so it needs no band.
-    letter: { height: LETTER_HEAD, paddingTop: LETTER_ABOVE, paddingBottom: LETTER_BELOW, paddingLeft: PANEL_FACES, justifyContent: 'center' },
   });

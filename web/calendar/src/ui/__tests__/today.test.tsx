@@ -1,4 +1,4 @@
-/** « Aujourd'hui » in the browser: its address, the day in reading order with now and next, Carnet's missed reminders, tomorrow, an empty day. */
+/** « Ma journée » in the browser: its address, the day in reading order with now and next, Carnet's missed reminders, tomorrow, an empty day. */
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +21,7 @@ function open(path: string): void {
   initHistory();
 }
 
-describe('« Aujourd’hui »', () => {
+describe('« Ma journée »', () => {
   // Today at 14:10 on this machine's clock: only the date is faked, timers run.
   let day = '';
   beforeEach(async () => {
@@ -77,8 +77,8 @@ describe('« Aujourd’hui »', () => {
     expect(within(missed).getByText('Hier · 18:00')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Demain' })).getByText('Standup')).toBeInTheDocument();
 
-    // The navigation's « Aujourd'hui » is the place on screen; the bar's track chooses none of the calendar's views.
-    expect(screen.getAllByRole('link', { name: 'Aujourd’hui' }).some(link => link.getAttribute('aria-current') === 'page')).toBe(true);
+    // The navigation's « Ma journée » is the place on screen; the bar's track chooses none of the calendar's views.
+    expect(screen.getAllByRole('link', { name: 'Ma journée' }).some(link => link.getAttribute('aria-current') === 'page')).toBe(true);
     expect(screen.queryByRole('button', { name: 'Période précédente' })).toBeNull();
     await waitFor(() => expect(usePrefsStore.getState().view).toBe('today'));
   });

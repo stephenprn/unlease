@@ -318,7 +318,6 @@
   gap: 2px;
   min-height: 56px;
   padding: 6px 12px 6px 10px;
-  box-shadow: inset 0 1px 0 var(--hairline);
 }
 
 /*
@@ -348,14 +347,13 @@
   flex: 1;
 }
 
-/* ...and at the foot, what to add and change, the date between, above the hairline and the gesture bar. */
+/* ...and at the foot, what to add and change, the date between, above the gesture bar. */
 .bottomBar {
   flex: none;
   display: flex;
   align-items: center;
   min-height: 56px;
   padding: 0 4px env(safe-area-inset-bottom);
-  box-shadow: inset 0 1px 0 var(--hairline);
 }
 
 /* "Ajouter", the phone's sheet of list rows: 56 high, inset 6, each pressed as its own tab. */

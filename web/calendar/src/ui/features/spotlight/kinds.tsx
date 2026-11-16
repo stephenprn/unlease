@@ -13,6 +13,7 @@ import { calendarSpotlightDocs } from '@unlease/calendar/services/search';
 
 import { mentionWords } from '../../../app/names';
 import { useCalendarStore, type CalendarState } from '../../../app/store/library';
+import { usePrefsStore } from '../../../app/store/prefs';
 import { Marked } from '@shared/ui/features/spotlight/Preview';
 import spot from '@shared/ui/features/spotlight/spotlight.module.css';
 import { navigate } from '@shared/ui/router';
@@ -42,7 +43,8 @@ function shownOccurrence(id: string) {
 const EventMark = memo(function EventMark({ doc, large = false }: { doc: SearchDoc<SpotMeta>; large?: boolean }) {
   const event = useCalendarStore(s => s.events[doc.meta.id]);
   const { labels, feeds } = useCalendarStore.getState();
-  const color = event ? eventColor(event, labels, feeds) : null;
+  const own = usePrefsStore(s => s.ownColor);
+  const color = event ? eventColor(event, labels, feeds, own) : null;
   const size = large ? 28 : 16;
   return <span className={styles.swatch} data-line={color ?? undefined} style={{ width: size, height: size }} aria-hidden="true" />;
 });

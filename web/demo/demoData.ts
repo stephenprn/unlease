@@ -15,6 +15,7 @@ import { kindTemplateId, presetNames, templateSignature } from '@unlease/notes/s
 import { blockFields } from '@unlease/pages/sync/entities';
 import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entities';
 import { calendarChanges } from './demoCalendar';
+import { clockChanges } from './demoClock';
 import type { BlockKind, BlockTarget, CellValue, TableColumn } from '@unlease/pages/models/blocks';
 import type { LineColor, NotePattern } from '@unlease/design/colors';
 import type { DrawingInk, DrawingSize, DrawingTool } from '@unlease/notes/models/drawing';
@@ -847,16 +848,22 @@ interface ContactSeed {
 const CONTACTS: readonly ContactSeed[] = [
   { id: 'demo-contact-lea', first: 'Léa', last: 'Martin', phones: [['06 12 34 56 78', 'mobile']], emails: [['lea.martin@example.org', 'home']], birthday: { inDays: 3, year: 1991 }, labels: ['demo-clabel-famille'], favorite: true, photo: 'demo-portrait-1', note: 'Allergic to nuts. Prefers calls in the evening.', ago: 40 * DAY },
   { id: 'demo-contact-paul', first: 'Paul', last: 'Martin', phones: [['06 98 76 54 32', 'mobile'], ['04 78 12 34 56', 'home']], address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France' }, birthday: '1962-11-28', labels: ['demo-clabel-famille'], favorite: true, ago: 40 * DAY },
-  { id: 'demo-contact-camille', first: 'Camille', last: 'Durand', company: 'Northside Atelier', job: 'Architect', phones: [['07 11 22 33 44', 'mobile'], ['01 23 45 67 89', 'work']], emails: [['camille@atelier-nord.example', 'work']], address: { kind: 'work', street: '8 quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, labels: ['demo-clabel-travail'], photo: 'demo-portrait2-1', ago: 30 * DAY },
+  { id: 'demo-contact-camille', first: 'Camille', last: 'Durand', company: 'Northside Atelier', job: 'Architect', phones: [['07 11 22 33 44', 'mobile'], ['01 23 45 67 89', 'work']], emails: [['camille@atelier-nord.example', 'work']], address: { kind: 'work', street: '8 quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, labels: ['demo-clabel-travail'], favorite: true, photo: 'demo-portrait2-1', ago: 30 * DAY },
   { id: 'demo-contact-noah', first: 'Noah', last: 'Bernard', phones: [['06 55 44 33 22', 'mobile']], emails: [['noah.b@example.org', 'home']], birthday: { inDays: 12, year: 1994 }, labels: ['demo-clabel-escalade'], favorite: true, ago: 25 * DAY },
   { id: 'demo-contact-ines', first: 'Inès', last: 'Lefèvre', company: '3rd district town hall', job: 'Project officer', phones: [['04 72 00 11 22', 'work']], emails: [['ines.lefevre@example.org', 'work']], labels: ['demo-clabel-travail'], ago: 20 * DAY },
   { id: 'demo-contact-hugo', first: 'Hugo', last: 'Moreau', phones: [['+44 7700 900123', 'mobile']], emails: [['hugo.moreau@example.co.uk', 'home']], address: { kind: 'home', street: '21 Baker Lane', postalCode: 'NW1 6XE', city: 'London', country: 'United Kingdom' }, birthday: '--04-17', labels: ['demo-clabel-escalade'], note: 'Met at the Fontainebleau boulders.', ago: 18 * DAY },
-  { id: 'demo-contact-chloe', first: 'Chloé', last: 'Petit', phones: [['06 01 02 03 04', 'mobile']], birthday: { inDays: 27, year: null }, labels: ['demo-clabel-voisins'], photo: 'demo-portrait3-1', ago: 12 * DAY },
+  { id: 'demo-contact-chloe', first: 'Chloé', last: 'Petit', phones: [['06 01 02 03 04', 'mobile']], birthday: { inDays: 27, year: null }, labels: ['demo-clabel-voisins'], favorite: true, photo: 'demo-portrait3-1', ago: 12 * DAY },
   { id: 'demo-contact-marc', first: 'Marc', last: 'Garnier', company: 'Garnier Plumbing', job: 'Plumber', phones: [['06 77 88 99 00', 'mobile']], note: 'Comes on Saturday mornings. Free quote.', ago: 9 * DAY },
   { id: 'demo-contact-sarah', first: 'Sarah', last: 'Cohen', phones: [['06 45 67 89 01', 'mobile']], emails: [['sarah.cohen@example.org', 'home'], ['s.cohen@example.com', 'work']], birthday: '1989-02-09', labels: ['demo-clabel-famille', 'demo-clabel-escalade'], ago: 6 * DAY },
   { id: 'demo-contact-julien', first: 'Julien', last: 'Roux', company: 'Northside Atelier', job: 'Draughtsman', emails: [['julien@atelier-nord.example', 'work']], labels: ['demo-clabel-travail'], ago: 4 * DAY },
   // Her birthday is today: « Souhaiter » on her page, today's birthdays and Agenda's.
   { id: 'demo-contact-amelie', first: 'Amélie', last: 'Fontaine', phones: [['06 31 41 59 26', 'mobile']], emails: [['amelie.fontaine@example.org', 'home']], birthday: { inDays: 0, year: 1996 }, address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France' }, labels: ['demo-clabel-voisins'], ago: 3 * DAY },
+  // What « Clean up contacts » finds: names in capitals or lower case, a whole name in the first name, an e-mail as the name, numbers written their own ways, a typo, a repeat, an empty card.
+  { id: 'demo-contact-gabriel', first: 'GABRIEL', last: 'DE LA ROCHE', phones: [['06.23.45.67.89', 'mobile']], ago: 15 * DAY },
+  { id: 'demo-contact-emma', first: 'Emma Laurent', last: '', phones: [['0033 6 34 56 78 90', 'mobile']], emails: [['Emma.Laurent@Example.org', 'home'], ['emma.laurent@example.org', 'work']], ago: 14 * DAY },
+  { id: 'demo-contact-lucas', first: 'lucas', last: 'girard', phones: [['+33612121212', 'mobile'], ['06 12 12 12 12', 'home']], emails: [['lucas.girard@gmial.com', 'home']], ago: 11 * DAY },
+  { id: 'demo-contact-plumbing', first: 'contact@quickfix.example', last: '', company: '', phones: [['01 45 67 89 10', 'work']], ago: 10 * DAY },
+  { id: 'demo-contact-blank', first: '', last: '', ago: 8 * DAY },
   { id: 'demo-contact-old', first: 'Bruno', last: 'Lambert', phones: [['06 00 00 00 01', 'mobile']], ago: 50 * DAY, trashedAgo: 2 * DAY },
 ];
 
@@ -1062,6 +1069,8 @@ export function buildDemoRecords(now: number = Date.now()): SyncRecord[] {
   for (const event of contactChanges(now)) add(event.time, event.changes);
   // Agenda: its labels, events and a calendar subscribed to.
   for (const event of calendarChanges(now)) add(event.time, event.changes);
+  // Clock: a few alarms, one of them rung and switched off.
+  for (const event of clockChanges(now)) add(event.time, event.changes);
 
   // Clocks at each record's own time (as a Keep import does), so "Modifiée hier" says yesterday.
   let counter = 0;

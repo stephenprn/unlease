@@ -35,7 +35,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { Menu } from '@shared/ui/components/Menu';
-import { useScrollEdges } from '@shared/ui/components/scrollEdges';
+import { useScrollEdges, useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { Stamp, stampWord } from '../../components/Stamp';
 import { TextField } from '@shared/ui/components/TextField';
 import { adminPath, navigate } from '@shared/ui/router';
@@ -91,6 +91,8 @@ function Gallery({ blobIds, fallback, onLost }: { blobIds: readonly string[]; fa
   const strip = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(0);
   const many = blobIds.length > 1;
+  // Pictures past a side fade there, as far as they run on.
+  useScrollEdgesOn(strip, [], { fade: 'x' });
   // The picture in view: the one whose start lies nearest the strip's (each is as wide as its own proportion).
   const follow = (): void => {
     const node = strip.current;
@@ -157,7 +159,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
   const server = useSettingsStore(selectServer);
   const now = useMinute();
   const titleId = useId();
-  // What it says fades and blurs under its head and its foot as far as it runs on beyond them.
+  // Its head and its foot meet what it says with a hairline once it runs on past them.
   const scrollEdges = useScrollEdges({ top: true, bottom: true });
   // The sheet opens on its title, not on the close button: focus starts where reading does.
   const heading = useRef<HTMLHeadingElement>(null);
@@ -266,7 +268,7 @@ export function LinkPanel({ id, closing = false, onClose }: { id: string; closin
         <span className={styles.panelHeadSpace} />
         <IconButton ref={more} icon="more" label={t('More actions')} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
       </div>
-      <div ref={scrollEdges} className={styles.panelScroll} data-scroll-sheet="">
+      <div ref={scrollEdges} className={styles.panelScroll}>
         {pictureLost ? null : kept.length > 0 ? (
           <Gallery blobIds={kept} fallback={link.imageUrl} onLost={() => setLostPicture(pictures)} />
         ) : link.imageUrl ? (

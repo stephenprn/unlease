@@ -5,10 +5,10 @@ import { APP_WORDS } from '@unlease/core/appWords';
 import { t, tx } from '@unlease/core/i18n';
 
 import { selectShortcutsOpen, setShortcutsOpen, useUiStore } from '../../app/store/ui';
-import { MOD_KEY, theApp, type ShortcutRow } from '../../modules';
+import { ALT_KEY, MOD_ALT_KEY, MOD_KEY, theApp, type ShortcutRow } from '../../modules';
 import { DialogFrame } from '../components/Dialog';
 import { Layer } from '../components/Layer';
-import { modKey } from '../dom';
+import { isApple, modKey } from '../dom';
 import board from '../components/keys.module.css';
 import styles from './settings/settings.module.css';
 
@@ -34,7 +34,12 @@ function shownGroups(): readonly { title: string; rows: readonly ShortcutRow[] }
 }
 
 /** A key's name as the keyboard shows it (« Retour » in French for Backspace); the spotlight's key is ⌘ on a Mac. */
-const keyName = (key: string): string => (key === MOD_KEY ? modKey() : t(key));
+function keyName(key: string): string {
+  if (key === MOD_KEY) return modKey();
+  if (key === ALT_KEY) return isApple() ? '⌥' : 'Alt';
+  if (key === MOD_ALT_KEY) return isApple() ? '⌥' : t('Shift');
+  return t(key);
+}
 
 export function ShortcutsDialog() {
   const open = useUiStore(selectShortcutsOpen);

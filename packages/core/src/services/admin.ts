@@ -11,7 +11,7 @@ import { APPS, type AppId } from '../apps';
 import { localized, t, tc, tx } from '../i18n';
 import type { AdminStatus, BackupSnapshot, BackupStatus, DriveStatus, RestoreReport } from '../sync/admin';
 import { CLAUDE_MODEL_NAMES, type BackupRecurrence, type BackupSettings, type DriveSettings, type ServerSettings } from '../sync/settings';
-import { formatClock, formatDay, formatRelative, formatUsd, plural, formatBytes } from './format';
+import { formatClock, formatDay, formatRelative, formatUsd, plural, formatBytes, weekdayNames } from './format';
 
 /** The sections every app shares, in the Administration's order. Their ids are addresses (`/admin/server`, the phone's `Admin` screen's `section`): never rename one. */
 export const SHARED_ADMIN_SECTIONS = ['apps', 'server', 'reading', 'backup', 'drive', 'immich'] as const;
@@ -48,7 +48,7 @@ export const BACKUP_RECURRENCE_SHORT: Record<BackupRecurrence, string> = localiz
 
 /** "Version 0.1.0 · 1 234 notes · 56 pages · 87 contacts · 342 fichiers (1,2 Mo)" (no contacts said while there are none). */
 export function serverFacts(server: AdminStatus['server']): string {
-  const parts = [server.version ? t('Version {version}', { version: server.version }) : null, plural(server.notes, 'note'), plural(server.pages, 'page'), server.contacts > 0 ? plural(server.contacts, 'contact') : null, server.events > 0 ? plural(server.events, 'event') : null, `${plural(server.files, 'file')} (${formatBytes(server.fileBytes)})`];
+  const parts = [server.version ? t('Version {version}', { version: server.version }) : null, plural(server.notes, 'note'), plural(server.pages, 'page'), server.contacts > 0 ? plural(server.contacts, 'contact') : null, server.events > 0 ? plural(server.events, 'event') : null, (server.alarms ?? 0) > 0 ? plural(server.alarms ?? 0, 'alarm') : null, `${plural(server.files, 'file')} (${formatBytes(server.fileBytes)})`];
   return parts.filter(Boolean).join(' · ');
 }
 
@@ -148,4 +148,22 @@ export function snapshotTime(name: string, fallback: number): number {
   if (!match) return fallback;
   const time = Date.parse(`${match[1]}T${match[2]}:${match[3]}:${match[4]}Z`);
   return Number.isFinite(time) ? time : fallback;
+}
+
+/** Monday first, Sunday last: how a working week is read, whatever day the calendar starts on. */
+const WORK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * The days worked, as said (Agenda's « Votre semaine »): « Du lundi au vendredi » for a run of three
+ * days or more, « Lundi, mercredi, vendredi » otherwise, « Tous les jours », « Aucun jour travaillé ».
+ */
+export function workDaysWords(days: readonly number[]): string {
+  const names = weekdayNames();
+  const worked = WORK_ORDER.filter(day => days.includes(day));
+  if (worked.length === 0) return t('No working days');
+  if (worked.length === 7) return t('Every day');
+  const first = WORK_ORDER.indexOf(worked[0]!);
+  const run = worked.every((day, index) => WORK_ORDER.indexOf(day) === first + index);
+  const words = run && worked.length >= 3 ? t('{first} to {last}', { first: names[worked[0]!]!, last: names[worked[worked.length - 1]!]! }) : worked.map(day => names[day]).join(', ');
+  return words.charAt(0).toLocaleUpperCase() + words.slice(1);
 }

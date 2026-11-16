@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.RenderNode
 import android.graphics.Shader
 import android.os.Build
@@ -16,10 +17,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableMap
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.events.Event
 import com.facebook.react.views.scroll.ReactScrollView
 import com.facebook.react.views.view.ReactViewGroup
 import kotlin.math.PI
@@ -29,33 +36,50 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * What a vertical scroller holds, softened where it slides under something on screen at its top: the
- * content dissolves over [length] on an eased curve (a cosine ease-in-out: a straight ramp shows where
- * it starts and ends, and a single blur stops on a line of its own, so there is none), so a row slides
- * under a still bar or a sheet's title instead of being cut by it. A top that is the screen's own
- * (within [SCREEN_SLACK] of the status bar) stays a plain cut: what goes there leaves the screen. The
- * edge shows only while something lies beyond it, in step with how much (Android's own fading edges,
- * which React Native's ScrollView draws at full strength all the time): at the top of a list it is
- * crisp. The foot never fades: what lies under a scroller is a footer, which meets it with a hard line.
+ * A scroller, and how it meets what stands around it (`ScrollEdges`).
+ *
+ * Under a head (a top bar, a sheet's head, a pinned day: [topEdge]) nothing fades: the head meets what
+ * scrolls under it with its line, drawn by `ScrollEdges` over this view's top (`insetTop` below it
+ * under a band inside the list), and this view tells it, once per change ([UnderEvent]), whether
+ * content has gone under that top. A top that is the screen's own (within [SCREEN_SLACK] of the status
+ * bar) has no head: what goes there leaves the screen, and it never says so.
+ *
+ * In a bounded box with nothing at an end ([fadeStart], [fadeEnd]: a list capped in a card, a strip
+ * that scrolls sideways, [horizontal]), that end dissolves over [length] on an eased curve (a cosine
+ * ease-in-out: a straight ramp shows where it starts and ends, and a single blur stops on a line of its
+ * own, so there is none) while content continues past it, in step with how much (Android's own fading
+ * edges, which React Native's ScrollView draws at full strength all the time): at the start of a strip
+ * its start is crisp, and a box with nothing to scroll shows none.
  *
  * It wraps the scroller (the first vertical `ScrollView` among its children: a FlatList's, a
- * SectionList's, one inside a pull-to-refresh) and draws its children itself: once into a
- * RenderNode, whose two strips are drawn again through their masks, and as they are when no edge
- * shows.
+ * SectionList's, one inside a pull-to-refresh; the first `HorizontalScrollView` when [horizontal]) and
+ * draws its children itself while an end fades: once into a RenderNode, whose strips are drawn again
+ * through their masks, and as they are otherwise. A vertical scroller keeps the caret in sight and
+ * still as fields take focus and the keyboard comes and goes, and no strip ever lies over it.
  */
 class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   private val density = context.resources.displayMetrics.density
 
   private var length = 24f * density
+  /** Its top meets a head, which shows its line once content has gone under it. */
   private var topEdge = true
-  /** How far below the scroller's top its top strip stands: under a band that hides what scrolls beneath it (px). */
+  /** How far below the scroller's top that head's line stands: under a band inside it that hides what scrolls beneath (px). */
   private var insetTop = 0f
+  /** The scroller it wraps runs sideways: its sides may fade, it meets no head. */
+  private var horizontal = false
+  /** The start (top, or left) and the end (bottom, or right) fade while content continues past them. */
+  private var fadeStart = false
+  private var fadeEnd = false
 
-  /** How far the top edge shows, 0 to 1: what lies above it, over [length]. */
-  private var topStrength = 0f
+  /** How far each end's fade shows, 0 to 1: what lies beyond it, over [length]. */
+  private var startStrength = 0f
+  private var endStrength = 0f
+  /** Whether content lies under the head, as last told. */
+  private var under = false
 
   private var scroller: ViewGroup? = null
   private val scrollerRect = Rect()
+  private val strip = RectF()
   /** The line the caret stands on in a field being typed in, here (NaN: none): no strip ever lies over it. */
   private var caretTop = Float.NaN
   private var caretBottom = Float.NaN
@@ -94,11 +118,30 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   fun setTopEdge(on: Boolean) {
     topEdge = on
     measure()
-    invalidate()
   }
 
   fun setInsetTop(dp: Float) {
     insetTop = max(0f, dp) * density
+    measure()
+  }
+
+  fun setHorizontal(on: Boolean) {
+    if (horizontal == on) return
+    horizontal = on
+    scroller = null
+    measure()
+    invalidate()
+  }
+
+  fun setFadeStart(on: Boolean) {
+    fadeStart = on
+    measure()
+    invalidate()
+  }
+
+  fun setFadeEnd(on: Boolean) {
+    fadeEnd = on
+    measure()
     invalidate()
   }
 
@@ -129,7 +172,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     scroller = null
   }
 
-  /** The vertical scroller it softens: found again when its children change. */
+  /** The scroller it watches: found again when its children change. */
   private fun findScroller(): ViewGroup? {
     scroller?.let { if (it.isAttachedToWindow && holds(it)) return it }
     return search(this, 6).also { scroller = it }
@@ -145,36 +188,59 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   }
 
   private fun search(view: View, depth: Int): ViewGroup? {
-    if (view !== this && (view is ScrollView || view is NestedScrollView)) return view as ViewGroup
+    if (view !== this && isScroller(view)) return view as ViewGroup
     if (depth == 0 || view !is ViewGroup) return null
     for (i in 0 until view.childCount) search(view.getChildAt(i), depth - 1)?.let { return it }
     return null
   }
 
-  /** Reads how much lies above the top edge, and where the caret is; redraws only when that changes how it shows. */
+  private fun isScroller(view: View): Boolean = if (horizontal) view is HorizontalScrollView else view is ScrollView || view is NestedScrollView
+
+  /** Reads what lies beyond each end, whether content lies under the head, and where the caret is; redraws only when that changes how it shows. */
   private fun measure() {
     val list = findScroller()
-    var top = 0f
-    if (list != null) {
+    if (list != null && !horizontal) {
       keepCaretClear(list)
       // Every frame: React Native resizes the scroller (the keyboard's room) outside Android's layout pass.
       followCaretOnResize(list)
       settledScrollY = list.scrollY
     }
-    if (list != null && length > 0f) {
+    var start = 0f
+    var end = 0f
+    var below = false
+    if (list != null) {
       val inner = list.getChildAt(0)
-      val range = if (inner == null) 0 else max(0, inner.height - (list.height - list.paddingTop - list.paddingBottom))
-      val y = list.scrollY.coerceIn(0, range)
-      if (topEdge && !atScreenTop(list)) top = (y / length).coerceIn(0f, 1f)
+      val range =
+        when {
+          inner == null -> 0
+          horizontal -> max(0, inner.width - (list.width - list.paddingLeft - list.paddingRight))
+          else -> max(0, inner.height - (list.height - list.paddingTop - list.paddingBottom))
+        }
+      val at = (if (horizontal) list.scrollX else list.scrollY).coerceIn(0, range)
+      if (length > 0f) {
+        if (fadeStart) start = (at / length).coerceIn(0f, 1f)
+        if (fadeEnd) end = ((range - at) / length).coerceIn(0f, 1f)
+      }
+      below = !horizontal && topEdge && !fadeStart && at >= 1 && !atScreenTop(list)
     }
-    val (lineTop, lineBottom) = caretLine(list)
+    if (below != under && tell(below)) under = below
+    val (lineTop, lineBottom) = if (horizontal) Float.NaN to Float.NaN else caretLine(list)
     val caretMoved = !sameLine(lineTop, caretTop) || !sameLine(lineBottom, caretBottom)
-    if (abs(top - topStrength) > 0.002f || caretMoved) {
-      topStrength = top
+    if (abs(start - startStrength) > 0.002f || abs(end - endStrength) > 0.002f || caretMoved) {
+      startStrength = start
+      endStrength = end
       caretTop = lineTop
       caretBottom = lineBottom
       invalidate()
     }
+  }
+
+  /** Tells the head whether content lies under it; false when it could not be told yet (it is told again on the next frame). */
+  private fun tell(value: Boolean): Boolean {
+    val react = context as? ReactContext ?: return false
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(react, id) ?: return false
+    dispatcher.dispatchEvent(UnderEvent(UIManagerHelper.getSurfaceId(this), id, value))
+    return true
   }
 
   private fun sameLine(a: Float, b: Float): Boolean = (a.isNaN() && b.isNaN()) || abs(a - b) < 0.5f
@@ -183,8 +249,8 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
    * The scroller keeps what it brings into view (the caret as one types, a field taking focus) clear
    * of its edges by the fade's length, as Android's own ScrollView does for its fading edges: its
    * `computeScrollDeltaToGetChildRectOnScreen` keeps that room (at the foot too, so the line typed
-   * never sits on a footer's line). Its own fade is never drawn: React Native's ScrollView draws one
-   * only from its `fadingEdgeLength` prop, unset here (strength 0/0).
+   * never sits on a footer's line, nor on a head's at the top). Its own fade is never drawn: React
+   * Native's ScrollView draws one only from its `fadingEdgeLength` prop, unset here (strength 0/0).
    */
   private fun keepCaretClear(list: ViewGroup) {
     val room = length.toInt()
@@ -210,7 +276,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   override fun requestChildFocus(child: View, focused: View?) {
     val list = scroller
     val before = settledScrollY
-    if (focused is EditText && list != null && before >= 0 && list.scrollY != before && isAncestor(list, focused)) {
+    if (!horizontal && focused is EditText && list != null && before >= 0 && list.scrollY != before && isAncestor(list, focused)) {
       val target = if (touching) before else caretInSight(list, focused, before)
       if (target != list.scrollY) list.scrollTo(list.scrollX, target)
     }
@@ -290,8 +356,8 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   }
 
   /**
-   * Whether the scroller's top is the screen's own: within [SCREEN_SLACK] of the status bar. What
-   * leaves there leaves the screen; nothing of the app lies over it.
+   * Whether the scroller's top (where the head's line would stand) is the screen's own: within
+   * [SCREEN_SLACK] of the status bar. What leaves there leaves the screen; nothing of the app lies over it.
    */
   private fun atScreenTop(list: View): Boolean {
     val bars = ViewCompat.getRootWindowInsets(this)?.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
@@ -302,7 +368,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
   override fun dispatchDraw(canvas: Canvas) {
     val node = content
     val list = findScroller()
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || node == null || list == null || !canvas.isHardwareAccelerated || topStrength <= 0f) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || node == null || list == null || !canvas.isHardwareAccelerated || (startStrength <= 0f && endStrength <= 0f)) {
       super.dispatchDraw(canvas)
       return
     }
@@ -317,7 +383,7 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
       node.endRecording()
     }
 
-    // Where the scroller lies here: the strip stands on its own top.
+    // Where the scroller lies here: its strips stand on its own ends.
     list.getDrawingRect(scrollerRect)
     try {
       offsetDescendantRectToMyCoords(list, scrollerRect)
@@ -327,45 +393,66 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
       canvas.drawRenderNode(node)
       return
     }
-    val listTop = (scrollerRect.top + insetTop).coerceIn(0f, h.toFloat())
-    val listBottom = scrollerRect.bottom.toFloat().coerceIn(listTop, h.toFloat())
-    // Never over the line being typed on: a strip it reaches stops at it (what is left of it, or none).
-    var topEnd = listTop + min(length, listBottom - listTop)
-    if (!caretTop.isNaN() && caretTop < topEnd && caretBottom > listTop) topEnd = max(listTop, min(topEnd, caretTop))
-    if (topEnd - listTop < MIN_STRIP * density) {
+    val along = if (horizontal) w.toFloat() else h.toFloat()
+    val across = if (horizontal) h.toFloat() else w.toFloat()
+    val a = (if (horizontal) scrollerRect.left else scrollerRect.top).toFloat().coerceIn(0f, along)
+    val b = (if (horizontal) scrollerRect.right else scrollerRect.bottom).toFloat().coerceIn(a, along)
+    val c0 = (if (horizontal) scrollerRect.top else scrollerRect.left).toFloat().coerceIn(0f, across)
+    val c1 = (if (horizontal) scrollerRect.bottom else scrollerRect.right).toFloat().coerceIn(c0, across)
+    // Each end's strip, never past the middle; never over the line being typed on (what is left of it, or none).
+    val span = min(length, (b - a) / 2f)
+    var startTo = a + span
+    var endFrom = b - span
+    if (!horizontal && !caretTop.isNaN()) {
+      if (caretTop < startTo && caretBottom > a) startTo = max(a, min(startTo, caretTop))
+      if (caretBottom > endFrom && caretTop < b) endFrom = min(b, max(endFrom, caretBottom))
+    }
+    val least = MIN_STRIP * density
+    val drawStart = startStrength > 0f && startTo - a >= least
+    val drawEnd = endStrength > 0f && b - endFrom >= least
+    if (!drawStart && !drawEnd) {
       canvas.drawRenderNode(node)
       return
     }
 
-    // What lies around the strip (above it, outside the scroller, and under it), as it is.
+    // What lies around the strips (outside the scroller, and between them), as it is.
     canvas.save()
-    canvas.clipRect(0f, 0f, w.toFloat(), topEnd)
-    canvas.clipOutRect(0f, listTop, w.toFloat(), topEnd)
-    canvas.drawRenderNode(node)
-    canvas.restore()
-    canvas.save()
-    canvas.clipRect(0f, topEnd, w.toFloat(), h.toFloat())
+    if (drawStart) canvas.clipOutRect(stripRect(a, startTo, c0, c1))
+    if (drawEnd) canvas.clipOutRect(stripRect(endFrom, b, c0, c1))
     canvas.drawRenderNode(node)
     canvas.restore()
 
-    drawStrip(canvas, node, listTop, topEnd, topStrength)
+    if (drawStart) drawStrip(canvas, node, stripRect(a, startTo, c0, c1), startStrength, atStart = true)
+    if (drawEnd) drawStrip(canvas, node, stripRect(endFrom, b, c0, c1), endStrength, atStart = false)
+  }
+
+  /** A strip from `from` to `to` along the scroller's axis, across it from `c0` to `c1`. */
+  private fun stripRect(from: Float, to: Float, c0: Float, c1: Float): RectF {
+    if (horizontal) strip.set(from, c0, to, c1) else strip.set(c0, from, c1, to)
+    return strip
   }
 
   /**
-   * The top edge: the content through a mask that keeps all of it at the strip's foot and less of it
-   * toward the edge on the eased curve, by [strength] (at full strength, none at the edge).
+   * An end's strip: the content through a mask that keeps all of it at the strip's inner end and less
+   * of it toward the edge on the eased curve, by [strength] (at full strength, none at the edge).
    */
-  private fun drawStrip(canvas: Canvas, node: RenderNode, y0: Float, y1: Float, strength: Float) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || y1 <= y0) return
-    val w = width.toFloat()
-    val layer = canvas.saveLayer(0f, y0, w, y1, null)
+  private fun drawStrip(canvas: Canvas, node: RenderNode, rect: RectF, strength: Float, atStart: Boolean) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || rect.isEmpty) return
+    val layer = canvas.saveLayer(rect, null)
     canvas.save()
-    canvas.clipRect(0f, y0, w, y1)
+    canvas.clipRect(rect)
     canvas.drawRenderNode(node)
     canvas.restore()
     for (i in 0 until EASE_STEPS) colors[i] = alpha(1f - strength * (1f - shown[i]))
-    mask.shader = LinearGradient(0f, y0, 0f, y1, colors, positions, Shader.TileMode.CLAMP)
-    canvas.drawRect(0f, y0, w, y1, mask)
+    // From the edge, where the content goes, to the strip's inner end, where all of it shows.
+    mask.shader =
+      when {
+        horizontal && atStart -> LinearGradient(rect.left, 0f, rect.right, 0f, colors, positions, Shader.TileMode.CLAMP)
+        horizontal -> LinearGradient(rect.right, 0f, rect.left, 0f, colors, positions, Shader.TileMode.CLAMP)
+        atStart -> LinearGradient(0f, rect.top, 0f, rect.bottom, colors, positions, Shader.TileMode.CLAMP)
+        else -> LinearGradient(0f, rect.bottom, 0f, rect.top, colors, positions, Shader.TileMode.CLAMP)
+      }
+    canvas.drawRect(rect, mask)
     mask.shader = null
     canvas.restoreToCount(layer)
   }
@@ -382,7 +469,18 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     /** How many samples of the eased curve a strip's mask holds: enough that no step shows. */
     private const val EASE_STEPS = 9
 
-    /** Shorter than this (dp), what is left of the strip above the caret's line is not drawn: it would be a cut. */
+    /** Shorter than this (dp), what is left of a strip beside the caret's line is not drawn: it would be a cut. */
     private const val MIN_STRIP = 6f
+  }
+}
+
+/** Whether content has gone under the scroller's top, where a head stands (`onUnder`): sent once per change. */
+class UnderEvent(surfaceId: Int, viewTag: Int, private val under: Boolean) : Event<UnderEvent>(surfaceId, viewTag) {
+  override fun getEventName(): String = EVENT_NAME
+
+  override fun getEventData(): WritableMap = Arguments.createMap().apply { putBoolean("under", under) }
+
+  companion object {
+    const val EVENT_NAME = "topUnder"
   }
 }

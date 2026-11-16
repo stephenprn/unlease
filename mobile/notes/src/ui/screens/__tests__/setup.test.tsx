@@ -39,7 +39,7 @@ const UNSET: ServerSettings = {
   pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
   backup: { configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null, recurrence: 'off', keep: 30, storageClass: 'STANDARD' },
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
-  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
+  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] },
   seerr: { url: '', keyHint: null },
   immich: { url: '', keyHint: null },
 };
@@ -311,7 +311,7 @@ describe('the first run', () => {
     server.settings = { ...UNSET, setup: { done: true } };
     suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '' }];
     const tree = await boot(false);
-    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
     expect(textOf(tree)).toContain('Pages est déjà relié à carnet.test sur ce téléphone.');
     await press(tree, 'Utiliser la connexion de Pages');
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });

@@ -8,6 +8,7 @@ import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { BirthdaysScreen } from '../screens/BirthdaysScreen';
+import { CleanupScreen, CleanupToolScreen } from '../screens/CleanupScreen';
 import { ContactScreen } from '../screens/ContactScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { DuplicatesScreen } from '../screens/DuplicatesScreen';
@@ -37,7 +38,7 @@ export function listPath(path: string): string {
 /**
  * What another app of the suite, a widget or a notification opens here (`openInApp` with
  * `contactPlace`): `unlease-contacts://contact/<id>`, `new` (« Créer un contact », `?phone=` to start
- * with a number), `edit/<id>`, `favorites`, `label/<id>`, `birthdays`, `labels`, `import`, `duplicates`, `trash`,
+ * with a number), `edit/<id>`, `favorites`, `label/<id>`, `birthdays`, `labels`, `import`, `duplicates`, `cleanup` (and `cleanup/<tool>`), `trash`,
  * `settings`, `admin`, `search` (the list's search, the launcher's shortcut); nothing after the scheme is the list.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
@@ -53,6 +54,8 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Labels: 'labels',
       Import: 'import',
       Duplicates: 'duplicates',
+      Cleanup: 'cleanup',
+      CleanupTool: 'cleanup/:tool',
       Trash: 'trash',
       Settings: 'settings',
       Admin: 'admin/:section?',
@@ -83,6 +86,8 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Labels" component={LabelsScreen} options={DEEPER} />
       <Stack.Screen name="Import" component={ImportScreen} options={DEEPER} />
       <Stack.Screen name="Duplicates" component={DuplicatesScreen} options={DEEPER} />
+      <Stack.Screen name="Cleanup" component={CleanupScreen} options={DEEPER} />
+      <Stack.Screen name="CleanupTool" component={CleanupToolScreen} options={DEEPER} />
       <Stack.Screen name="Trash" component={TrashScreen} options={DEEPER} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />

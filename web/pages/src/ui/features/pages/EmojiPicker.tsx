@@ -12,6 +12,7 @@ import { selectLanguages, useSettingsStore } from '@shared/app/store/settings';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Popover } from '@shared/ui/components/Popover';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { useMedia } from '@shared/ui/useMedia';
 import { EVERYDAY_EMOJI, emojiName, emojiNameLanguage, loadEmojiCatalogue, searchEmoji, typedEmoji, type EmojiCatalogue } from './emojiSearch';
 import styles from './pages.module.css';
@@ -44,6 +45,8 @@ export function EmojiPanel({ value, allowNone, field, scroll, onPick }: { value:
   const [query, setQuery] = useState('');
   const [catalogue, setCatalogue] = useState<EmojiCatalogue | null>(null);
   const [failed, setFailed] = useState(false);
+  // The search over the grid meets it with a hairline once it runs on under it; the grid past the popover's foot fades there.
+  useScrollEdgesOn(scroll, [], { top: true, fade: 'bottom' });
 
   useEffect(() => {
     let live = true;

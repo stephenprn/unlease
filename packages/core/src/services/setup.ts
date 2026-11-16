@@ -22,8 +22,8 @@ import { APP_IDS, APPS, SUITE_NAME, SUITE_SLUG, isReadyApp, type AppId } from '.
 import { APP_WORDS } from '../appWords';
 import { localized, t, tx } from '../i18n';
 import type { AdminStatus } from '../sync/admin';
-import { BACKUP_RECURRENCE_NAMES, CLAUDE_MODEL_NAMES, type BackupPatch, type ServerSettings } from '../sync/settings';
-import { restoreSummary } from './admin';
+import { BACKUP_RECURRENCE_NAMES, CLAUDE_MODEL_NAMES, DEFAULT_WORK_DAYS, type BackupPatch, type ServerSettings } from '../sync/settings';
+import { restoreSummary, workDaysWords } from './admin';
 
 export type SetupStep = 'server' | 'apps' | 'checklist' | 'import' | 'appearance';
 
@@ -100,8 +100,8 @@ export const SETUP_TASK_WORDS: Record<SetupTask, Omit<SetupStepWords, 'short'>> 
     lead: tx('Optional: every app’s photos, videos and documents filed in a Seafile folder, each app in its own; the server keeps only previews. Without Seafile, it keeps them, and the S3 backup has a copy.'),
   }),
   holidays: localized({
-    title: tx('Public holidays'),
-    lead: tx('Optional, for Agenda: a country’s public holidays (and its region’s, if it has any), which the server fetches from Nager.Date and shows in every device’s calendar.'),
+    title: tx('Your week'),
+    lead: tx('For Agenda and Clock: the days you work, and a country’s public holidays (and its region’s, if it has any), which the server fetches from Nager.Date and shows in every device’s calendar.'),
   }),
   seerr: localized({
     title: tx('Films and series with Seerr'),
@@ -160,7 +160,7 @@ export function claudeUse(app: AppId): string | null {
 
 /** The server holds nothing yet: a new one, or one to bring back from a backup. */
 export function serverEmpty(status: AdminStatus | null): boolean {
-  return status !== null && status.server.notes === 0 && status.server.pages === 0 && status.server.contacts === 0 && status.server.events === 0 && status.server.files === 0;
+  return status !== null && status.server.notes === 0 && status.server.pages === 0 && status.server.contacts === 0 && status.server.events === 0 && (status.server.alarms ?? 0) === 0 && status.server.files === 0;
 }
 
 /**
@@ -508,7 +508,8 @@ export function setupTaskLine(task: SetupTask, settings: ServerSettings | null, 
       return set ? line(settings!.immich.url.replace(/^https?:\/\//, '')) : line(t('Your albums in pages, faces for your contacts.'));
     case 'holidays': {
       const { country, region } = settings?.calendar.holidays ?? { country: null, region: null };
-      return country ? line(region ? `${countryName(country)} · ${region}` : countryName(country)) : line(t('Your country’s public holidays in the calendar.'));
+      const week = workDaysWords(settings?.calendar.workDays ?? DEFAULT_WORK_DAYS);
+      return line(`${week} · ${country ? (region ? `${countryName(country)} · ${region}` : countryName(country)) : t('No public holidays')}`);
     }
   }
 }

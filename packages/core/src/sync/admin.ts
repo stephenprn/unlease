@@ -101,6 +101,8 @@ export interface AdminStatus {
     readonly contacts: number;
     /** Agenda's own events, live ones (0 from a server older than Agenda; subscriptions' and holidays' left out). */
     readonly events: number;
+    /** Clock's alarms, live ones (absent from a server older than Clock). */
+    readonly alarms?: number;
     /** Photos and files the server knows, wherever their bytes are. */
     readonly files: number;
     readonly fileBytes: number;

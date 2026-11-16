@@ -1,0 +1,273 @@
+/*
+ * Clock's home on the web: the week of mornings, the chosen morning's panel and the alarms under
+ * it (the phone's, `mobile/clock/src/ui/features/home`). Every colour, radius and duration is the
+ * design system's (`var(--…)`).
+ */
+
+/* ── the week of mornings ───────────────────────────────────────────────── */
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 88px;
+  padding: 8px 2px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .day:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.day:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.day[data-chosen],
+.day[data-chosen]:hover {
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.weekday {
+  color: var(--ink-muted);
+}
+
+.day[data-chosen] .weekday,
+.day[data-chosen] .ring {
+  color: var(--on-action-container);
+}
+
+.date {
+  font-variant-numeric: tabular-nums;
+}
+
+.day[data-today]:not([data-chosen]) .date {
+  color: var(--action);
+}
+
+.ring {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.ring[data-none],
+.ring[data-gone] {
+  color: var(--ink-muted);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  margin-top: 3px;
+  border-radius: 50%;
+  corner-shape: round;
+}
+
+.dot[data-dot='events'] {
+  background: var(--link);
+}
+
+.day[data-chosen] .dot[data-dot='events'] {
+  background: var(--on-action-container);
+}
+
+/* A clash reads from across the room: its time in Safran, the alert glyph where the dot goes. */
+.day[data-clash] .ring {
+  color: var(--waiting);
+  font-weight: 600;
+}
+
+.mark {
+  width: 12px;
+  height: 12px;
+  margin: -1px 0 -3px;
+  color: var(--waiting);
+}
+
+.day[data-chosen] .mark,
+.day[data-chosen][data-clash] .ring {
+  color: var(--on-action-container);
+}
+
+/* ── the chosen morning ─────────────────────────────────────────────────── */
+
+.panel {
+  background: var(--paper);
+}
+
+.morning {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 22px 16px;
+  animation: morning-in var(--duration-medium) var(--ease-decelerate) both;
+}
+
+.morning[data-from='before'] {
+  --from: -16px;
+}
+
+.morning[data-from='after'] {
+  --from: 16px;
+}
+
+@keyframes morning-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 0));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morning {
+    animation-name: morning-fade;
+  }
+  @keyframes morning-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.head {
+  margin: 0;
+}
+
+/* The time: what the morning is about, large, in tabular figures; it opens its alarm. */
+.bigTime {
+  align-self: flex-start;
+  margin: 2px 0 0 -6px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--cut-small);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 56px;
+  line-height: 62px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .bigTime:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.bigTime[data-past] {
+  color: var(--ink-muted);
+}
+
+.none {
+  margin: 8px 0;
+  color: var(--ink-muted);
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.grow p {
+  margin: 0;
+}
+
+.skipped {
+  color: var(--waiting);
+}
+
+.rule {
+  height: 1px;
+  margin: 10px 0;
+  border: 0;
+  background: var(--hairline);
+}
+
+.event,
+.clash {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+}
+
+.event > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+/* A phone-sized window: the event's words keep the width, « Voir la journée » takes its own line under them. */
+@media (max-width: 480px) {
+  .event {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .event > div {
+    flex: 1 1 calc(100% - 38px);
+  }
+
+  .event > button {
+    margin-left: 26px;
+  }
+}
+
+.quiet {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+/* One line, however many all-day events the day holds. */
+.line {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.clash {
+  margin-top: 4px;
+  gap: 12px;
+}
+
+.clash > svg {
+  flex: none;
+  color: var(--waiting);
+}
+
+.clash p {
+  color: var(--ink);
+}
+
+/* ── the alarms under it ────────────────────────────────────────────────── */
+
+.section {
+  margin: 12px 10px 0;
+}

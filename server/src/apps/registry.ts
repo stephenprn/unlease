@@ -29,6 +29,7 @@ import { checkSeerrServer } from './notes/seerr';
 import { createCalendarApp, CALENDAR_PUSH_RULES, type CalendarApp } from './calendar';
 import { createContactsApp, CONTACTS_PUSH_RULES, type ContactsApp } from './contacts';
 import { createPagesApp, PAGES_PUSH_REPAIRS, PAGES_PUSH_RULES, type PagesApp } from './pages';
+import { createClockApp, type ClockApp } from './clock';
 import type { Env, ServerApp } from './types';
 
 /** Every app's rules for what a push brings, given to the sync before any app is made: they hold whatever is on. */
@@ -68,6 +69,7 @@ export interface Suite {
   readonly pages: PagesApp;
   readonly contacts: ContactsApp;
   readonly calendar: CalendarApp;
+  readonly clock: ClockApp;
   /** What Claude has cost, month by month, every app's calls together. */
   readonly usage: UsageStore;
   /** Routes the apps share, served whatever is on: Claude's spending, the places found as they are typed, Immich. */
@@ -89,14 +91,16 @@ export function createApps(deps: AppDeps): Suite {
   const pages = createPagesApp({ ...shared, claude: () => claude.current() });
   const contacts = createContactsApp({ db, sync, blobs, fetcher });
   const calendar = createCalendarApp({ db, sync, records, settings, usage, claude: () => claude.current(), fetcher, now, ...(deps.pushFetch ? { pushFetch: deps.pushFetch } : {}) });
+  const clock = createClockApp({ db, fetcher, now });
   const seerrFetch = deps.seerrFetch;
   const places = new PlaceFinder(deps.placesUrl ?? null, now, deps.placesFetch ?? fetch);
   return {
-    apps: [notes, pages, calendar, contacts],
+    apps: [notes, pages, calendar, contacts, clock],
     notes,
     pages,
     contacts,
     calendar,
+    clock,
     usage,
     routes: app => {
       usageRoute(app, { usage, settings, now });

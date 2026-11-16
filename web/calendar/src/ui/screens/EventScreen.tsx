@@ -82,7 +82,7 @@ function EventHead({ item, color }: { item: NonNullable<ReturnType<typeof findOc
 /** The details on their panel, when there is any. */
 function EventBody({ item }: { item: NonNullable<ReturnType<typeof findOccurrence>> }) {
   const event = item.event;
-  const any = event.place.trim() || event.contactIds.length || event.reminders.length || event.labelIds.length || event.feedId || event.description.trim() || event.files.length || event.url.trim();
+  const any = (event.dayOff && item.allDay) || event.place.trim() || event.contactIds.length || event.reminders.length || event.labelIds.length || event.feedId || event.description.trim() || event.files.length || event.url.trim();
   if (!any) return null;
   return (
     <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>

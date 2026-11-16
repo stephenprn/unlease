@@ -16,12 +16,15 @@ beforeAll(() => {
     ['pages', 'Pages'],
     ['contacts', 'Contacts'],
     ['agenda', 'Agenda'],
+    ['clock', 'Clock'],
   ] as const) {
     mkdirSync(join(dir, app, 'assets'), { recursive: true });
     writeFileSync(join(dir, app, 'index.html'), `<!doctype html><title>${title}</title>`);
     writeFileSync(join(dir, app, 'assets', 'app-1a2b.js'), 'console.log(1)');
     writeFileSync(join(dir, app, 'sw.js'), 'self.addEventListener("fetch", () => {})');
   }
+  // Clock's sounds, played in its alarm's form.
+  writeFileSync(join(dir, 'clock', 'assets', 'melody-1a2b.ogg'), 'OggS');
   writeFileSync(join(dir, 'sw.js'), 'self.registration.unregister()');
   writeFileSync(join(dir, '_headers'), '/*');
   writeFileSync(join(tmpdir(), 'carnet-secret.txt'), 'secret');
@@ -61,6 +64,7 @@ describe('the web apps served beside the API', () => {
     expect(await (await server.app.request('/agenda/event/0192-abc')).text()).toContain('<title>Agenda</title>');
     expect((await server.app.request('/agenda/sw.js')).headers.get('service-worker-allowed')).toBe('/agenda');
     expect(await (await server.app.request('/ical/abc.ics')).text()).not.toContain('<title>');
+    expect(await (await server.app.request('/clock/alarm/0192-abc')).text()).toContain('<title>Clock</title>');
   });
 
   it('sends / to the first app the server runs', async () => {
@@ -89,6 +93,9 @@ describe('the web apps served beside the API', () => {
     expect(asset.status).toBe(200);
     expect(asset.headers.get('content-type')).toContain('text/javascript');
     expect(asset.headers.get('cache-control')).toContain('immutable');
+    const sound = await server.app.request('/clock/assets/melody-1a2b.ogg');
+    expect(sound.headers.get('content-type')).toBe('audio/ogg');
+    expect(sound.headers.get('cache-control')).toContain('immutable');
     const worker = await server.app.request('/notes/sw.js');
     expect(worker.headers.get('cache-control')).toBe('no-cache');
     expect(worker.headers.get('service-worker-allowed')).toBe('/notes');

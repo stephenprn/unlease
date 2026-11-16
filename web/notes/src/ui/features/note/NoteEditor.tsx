@@ -164,8 +164,10 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
   const labels = useLibraryStore(s => s.labels);
   const now = useMinute();
   const narrow = useMedia(NARROW);
-  // The words dissolve under the bars as far as they run on beyond them; a drawing's tools sit on its sheet, nothing under them.
-  const scrollEdges = useScrollEdges({ top: true, bottom: !(note?.kind === 'drawing' && note.trashedAt === null) });
+  // The bars meet the words with a hairline once they run on under them (a drawing's tools, on its sheet,
+  // draw it themselves); from 720px nothing stays over the words but the sheet's own top, where they fade.
+  const drawing = note?.kind === 'drawing' && note.trashedAt === null;
+  const scrollEdges = useScrollEdges(narrow ? { top: true, bottom: drawing ? 'inside' : true } : { fade: 'top', bottom: drawing ? 'inside' : true });
   // People are offered once this browser holds some (Contacts' records, synced as Carnet reads them), or the note names some.
   const hasPeople = useHasPeople();
   const titleId = useId();

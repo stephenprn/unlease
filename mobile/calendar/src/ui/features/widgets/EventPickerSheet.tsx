@@ -38,7 +38,7 @@ export function EventPickerSheet({ visible, title, current, onDismiss, onPick }:
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search events')} accessibilityLabel={t('Search events')} returnKeyType="search" autoCorrect={false} />
       </View>
-      <SheetFlatList top={false}
+      <SheetFlatList
         data={choices}
         style={styles.list}
         contentContainerStyle={styles.body}

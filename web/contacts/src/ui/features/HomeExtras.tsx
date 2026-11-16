@@ -10,6 +10,7 @@ import { contactName } from '@unlease/contacts/services/names';
 
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { Icon } from '@shared/ui/components/Icon';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Link } from '@shared/ui/router';
 import styles from '../contacts.module.css';
 import { paths } from '../routes';
@@ -20,6 +21,8 @@ const FACE = 56;
 
 /** The favourites' row; nothing while there are none. */
 export function FavoritesStrip({ contacts }: { contacts: readonly Contact[] }) {
+  // Faces past a side fade there, as far as they run on.
+  const strip = useScrollEdges<HTMLUListElement>({ fade: 'x' });
   const favorites = contacts.filter(contact => contact.favorite);
   if (favorites.length === 0) return null;
   return (
@@ -27,7 +30,7 @@ export function FavoritesStrip({ contacts }: { contacts: readonly Contact[] }) {
       <h2 id="contacts-favorites" className={`${styles.sectionHead} t-section`}>
         {t('Favourites')}
       </h2>
-      <ul className={styles.faces}>
+      <ul ref={strip} className={styles.faces}>
         {favorites.map(contact => {
           const name = contactName(contact);
           return (

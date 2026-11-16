@@ -5,14 +5,14 @@
  * one wears the ink veil. A press keeps the selection, and the keyboard, in the text.
  */
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { GlyphName } from '@unlease/design/glyphs';
 import { t, tx } from '@unlease/core/i18n';
 import { clearFormat, headingIn, noteRangeHas, setHeading, setNoteFlag, type HeadingLevel, type NoteLine } from '@unlease/notes/services/noteBody';
 import type { FlagMark } from '@unlease/core/services/richText';
 
-import { IconButton } from '../../components';
+import { EdgeScrollView, IconButton } from '../../components';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import type { NoteBodyEditor, TextRange } from './useNoteBody';
@@ -39,7 +39,7 @@ export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
   const styles = useThemedStyles(makeStyles);
   const heading = headingIn(lines, range.start, range.end);
   return (
-    <ScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <EdgeScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {FLAGS.map(({ flag, icon, label }, index) => (
         <IconButton
           key={flag}
@@ -65,7 +65,7 @@ export function FormatBar({ lines, range, onFormat }: FormatBarProps) {
       ))}
       <View style={styles.divider} />
       <IconButton icon="eraser" label={t('Clear formatting')} shape={0} onPress={() => onFormat((current, at) => clearFormat(current, at.start, at.end))} />
-    </ScrollView>
+    </EdgeScrollView>
   );
 }
 

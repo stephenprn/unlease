@@ -57,6 +57,12 @@
   color: var(--on-action-container);
 }
 
+/* Pages chosen together (Maj+click, ⌘+click): the selection's wash, lighter than the page on screen's matcha. */
+.row[data-chosen]:not([data-current]) {
+  --row-ground: color-mix(in srgb, var(--action-container) 55%, var(--wall));
+  background: color-mix(in srgb, var(--action-container) 55%, transparent);
+}
+
 .row[data-current] .chevron,
 .row[data-current] .icon {
   color: inherit;
@@ -203,11 +209,14 @@
 }
 
 /*
- * Its "+" and its menu, shown under a hovering pointer or keyboard focus (always under a finger),
- * laid over the end of the title on the row's own ground so the title keeps its width.
+ * Its menu and its "+", shown under a hovering pointer or keyboard focus (always under a finger),
+ * laid over the end of the title. Nothing is painted behind them: the title itself dissolves where
+ * they stand (a mask), so the row's own tint and the ground's grain run on under them unbroken.
  */
 .row {
   --row-ground: var(--wall);
+  /* What the two buttons cover of the title's end, and the fade before it. */
+  --actions-room: 56px;
   font-weight: 500;
 }
 
@@ -218,32 +227,41 @@
   display: flex;
   align-items: center;
   gap: var(--row-gap);
-  padding-left: 14px;
-  background: linear-gradient(to right, transparent, var(--row-ground) 14px);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-50%);
   transition: opacity var(--duration-short) var(--ease-standard);
 }
 
-.row:hover .actions,
-.row:focus-within .actions {
+.title {
+  transition: mask-position var(--duration-short) var(--ease-standard);
+  mask-image: linear-gradient(to left, transparent var(--actions-room), #000 calc(var(--actions-room) + 20px));
+  mask-size: calc(100% + var(--actions-room) + 20px) 100%;
+  mask-position: right calc(-1 * (var(--actions-room) + 20px)) top 0;
+  mask-repeat: no-repeat;
+}
+
+.row:is(:hover, :has(:focus-visible), [data-menu]) .actions {
+  opacity: 1;
   pointer-events: auto;
 }
 
-.row:hover .actions,
-.row:focus-within .actions {
-  opacity: 1;
+/* The title's end steps back under the buttons: it fades out where they show. */
+.row:is(:hover, :has(:focus-visible), [data-menu]) .title {
+  mask-position: right 0 top 0;
 }
 
 @media (hover: none) {
   .actions {
     position: static;
-    padding-left: 0;
-    background: none;
     opacity: 1;
     pointer-events: auto;
     transform: none;
+  }
+
+  .title,
+  .row:is(:hover, :has(:focus-visible), [data-menu]) .title {
+    mask-image: none;
   }
 }
 
@@ -255,19 +273,30 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: var(--cut-small);
   background: transparent;
+  color: var(--ink-muted);
+  transition: color var(--duration-short) var(--ease-standard);
+}
+
+.row[data-current] .action {
   color: inherit;
 }
 
+/* Their tint lies on a pebble, as every icon button's. */
 @media (hover: hover) {
   .action:hover {
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    --pebble-fill: color-mix(in srgb, currentColor 10%, transparent);
+    color: var(--ink);
+  }
+
+  .row[data-current] .action:hover {
+    color: inherit;
   }
 }
 
-.action:active {
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+.action:active,
+.action[aria-expanded='true'] {
+  --pebble-fill: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 /* Under a finger the row keeps one target at a finger's size: its menu, which also adds a sub-page. */

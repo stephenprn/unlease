@@ -15,6 +15,7 @@ import { contactFields, contactLabelFields } from '@unlease/contacts/sync/entiti
 import type { ImportPlan } from '@unlease/contacts/services/importing';
 import { eraseChanges, erasedCount } from '@unlease/contacts/services/erase';
 import { mergeContacts } from '@unlease/contacts/services/duplicates';
+import { cleanupWrites, findCleanups, type FixingTool } from '@unlease/contacts/services/cleanup';
 
 import { deviceRegion } from '../reach';
 import { getRecord, saveTypedField, useLibraryStore, writeLocal, type LocalChange } from './libraryStore';
@@ -270,4 +271,18 @@ export function mergeAllDuplicates(groups: readonly { readonly keepId: string; r
   }
   if (changes.length === 0) return null;
   return writeWithUndo(changes, now);
+}
+
+// ── « Nettoyer les contacts » ───────────────────────────────────────────────
+
+/**
+ * « Corriger » on a tool: the findings ticked (`keys`), found again on the contacts as they are now,
+ * written as one batch whose undo writes them all back; how many were fixed.
+ */
+export function applyCleanup(tool: FixingTool, region: string | null, keys: ReadonlySet<string>, now: number = Date.now()): { readonly count: number; readonly undo: Undo | null } {
+  const { contacts } = useLibraryStore.getState();
+  const chosen = findCleanups(tool, Object.values(contacts), region).filter(finding => finding.edit && keys.has(finding.key));
+  const writes = cleanupWrites(contacts, chosen, { now, newId: () => createId(now) });
+  if (writes.length === 0) return { count: 0, undo: null };
+  return { count: chosen.length, undo: writeWithUndo(writes.map(write => ({ type: 'contact', id: write.id, patch: write.patch })), now) };
 }

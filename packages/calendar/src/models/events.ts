@@ -64,6 +64,11 @@ export interface CalendarEvent {
   readonly url: string;
   /** Its own colour, over its labels' and its calendar's; null for theirs. */
   readonly color: LineColor | null;
+  /**
+   * A day off (« Jour de congé »: holidays of one's own, a day not worked): an all-day event that
+   * says so. Clock's alarms that ask for it stay quiet on the days it covers, as on public holidays.
+   */
+  readonly dayOff: boolean;
   readonly trashedAt: number | null;
   readonly createdAt: number;
   readonly deletedAt: number | null;
@@ -158,6 +163,7 @@ export const EVENT_FIELD_DEFAULTS = {
   uid: '',
   url: '',
   color: null,
+  dayOff: false,
 } as const;
 
 /** A reminder can ring at most four weeks before, or a day after an all-day event's midnight. */

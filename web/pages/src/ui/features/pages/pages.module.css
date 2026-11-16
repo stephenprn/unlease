@@ -357,16 +357,19 @@
   margin-top: 0;
 }
 
-/* Selected whole: a matcha wash over the block, as every chosen thing wears matcha. */
+/*
+ * Selected whole: a matcha wash over the block, as every chosen thing wears matcha, and nothing
+ * else (no edge, no gutter): a run of selected blocks reads as one quiet field. The wash takes the
+ * press, so the selection is dragged from anywhere on it, as in Notion, and a click lands the caret.
+ */
 .block[data-selected]::after {
   content: '';
   position: absolute;
   inset: 0 calc(-1 * var(--wash-side, 6px));
   z-index: 1;
   border-radius: var(--wash-cut, var(--cut-tab));
-  background: color-mix(in srgb, var(--action-container) 55%, transparent);
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--focus) 60%, transparent);
-  pointer-events: none;
+  background: color-mix(in srgb, var(--action-container) 50%, transparent);
+  cursor: grab;
 }
 
 /* Inside a selected block, its own wash covers the blocks it holds. */
@@ -435,9 +438,14 @@
 }
 
 .block:hover:not(:has(.block:hover)) > .gutter,
-.gutter:focus-within,
-.block[data-selected] > .gutter {
+.gutter:focus-within {
   opacity: 1;
+}
+
+/* While blocks are selected, the gutters stay away: the wash is what is dragged. */
+.blocks:has(.block[data-selected]) .gutter:not(:focus-within) {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .gutterButton {

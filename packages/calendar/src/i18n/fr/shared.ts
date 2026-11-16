@@ -38,6 +38,9 @@ export const FR_SHARED: Dictionary = {
   // When
   'Week {week}': 'Semaine {week}',
   'All day': 'Toute la journée',
+  'My day': 'Ma journée',
+  'Dates in pages': 'Dates des pages',
+  'Your week, for every device and every app: the days you work, and your country’s public holidays. The holidays come from Nager.Date (open data, no account): the server keeps last year’s, this year’s and the next two years’, reads them again each year, and shows them under “Other calendars” on every device, where each can hide them.': 'Votre semaine, pour tous vos appareils et toutes vos applications : les jours où vous travaillez, et les jours fériés de votre pays. Les jours fériés viennent de Nager.Date (des données ouvertes, sans compte) : le serveur garde ceux de l’an dernier, de cette année et des deux suivantes, les relit chaque année, et les montre dans « Autres agendas » sur chaque appareil, où chacun peut les cacher.',
   '{from} to {to}': 'Du {from} au {to}',
   'Time zone: {zone} ({clock} there)': 'Fuseau : {zone} ({clock} sur place)',
   'On the day at {clock}': 'Le jour même à {clock}',
@@ -78,7 +81,6 @@ export const FR_SHARED: Dictionary = {
   'Tracking removed: {names}': 'Pistage retiré : {names}',
   'Add people': 'Ajouter des personnes',
   'Add someone [event]': 'Ajouter quelqu’un',
-  'Another reminder': 'Un autre rappel',
   'Remove the reminder {when}': 'Retirer le rappel {when}',
   'Add a link (tickets, video call…)': 'Ajouter un lien (billetterie, visio…)',
   'Notes page': 'Page de notes',
@@ -250,4 +252,14 @@ export const FR_SHARED: Dictionary = {
   'Calendar too large (over 10 MB)': 'Calendrier trop gros (plus de 10 Mo)',
   'This address serves no calendar (iCalendar)': 'Cette adresse ne sert pas un calendrier (iCalendar)',
   'Calendar not found': 'Calendrier introuvable',
+  // The working days (Réglages' « Jours travaillés seulement », the Administration's « Votre semaine »)
+  'Working days only': 'Jours travaillés seulement',
+  '{days}, as chosen in the Administration (“Your week”).': '{days}, comme choisi dans l’Administration (« Votre semaine »).',
+  'Your week is saved': 'Votre semaine est enregistrée',
+  // Days off, and an alarm for an event (Clock's)
+  'Day off': 'Jour de congé',
+  'Clock’s alarms that ask for it stay quiet that day.': 'Les alarmes de Clock qui le demandent ne sonnent pas ce jour-là.',
+  'Wake me up for this': 'Me réveiller pour cet événement',
+  'Default colour': 'Couleur par défaut',
+  'Your events’ colour': 'Couleur de vos événements',
 };

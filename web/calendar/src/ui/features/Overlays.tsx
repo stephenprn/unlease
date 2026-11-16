@@ -29,6 +29,7 @@ import { PlaceField } from '@shared/ui/components/PlaceField';
 import { Popover } from '@shared/ui/components/Popover';
 import { useUnsaved } from '@shared/ui/components/useUnsaved';
 import { navigate, type Route } from '@shared/ui/router';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { askCalendar } from '../../app/api';
 import { kindOf, LAYER_COLORS, useColorOf } from '../../app/hooks/useItems';
 import { useNow } from '../../app/hooks/useToday';
@@ -84,6 +85,8 @@ function peekTitle(peeked: NonNullable<ReturnType<typeof usePeeked>>): string {
 function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const peeked = usePeeked(peekKey);
+  // Under 720 it rises as a sheet, which has no ×.
+  const narrow = useMedia(NARROW);
   const colorOf = useColorOf();
   const titleId = useId();
   const open = peeked !== null;
@@ -109,7 +112,7 @@ function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
                 navigate(fullPage!);
               }}
             />
-          ) : (
+          ) : fullPage || !narrow ? (
             <div className={styles.peekTools}>
               {fullPage ? (
                 <IconButton
@@ -122,9 +125,9 @@ function Peek({ peekKey, anchor }: { peekKey: string; anchor: Anchor }) {
                   }}
                 />
               ) : null}
-              <IconButton icon="close" label={t('Close')} compact onClick={closePeek} />
+              {narrow ? null : <IconButton icon="close" label={t('Close')} compact onClick={closePeek} />}
             </div>
-          )}
+          ) : null}
           <h2 id={titleId} className={`${styles.peekTitle} t-title`} data-line={color ?? undefined}>
             <span className={styles.swatch} aria-hidden="true" />
             <span>{title}</span>

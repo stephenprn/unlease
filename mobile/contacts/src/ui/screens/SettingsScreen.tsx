@@ -5,7 +5,8 @@
  * them from ringing on time, only while something does), the copy into the phone's own address book
  * (« On this phone »); then « Apparence » (one row opening its own
  * page: the theme, the paper's grain, the colours and the ground), the language, the import (its
- * wizard), the export as a `.vcf`, the bin and « Effacer des données », and the way to the
+ * wizard), « Nettoyer les contacts » (its own place: the duplicates, the numbers, the names…), the
+ * export as a `.vcf`, the bin and « Effacer des données », and the way to the
  * Administration last. What this phone alone
  * keeps; the server's settings are the Administration's.
  */
@@ -18,7 +19,8 @@ import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { BIRTHDAYS_SETTINGS_SECTION, CONTACTS_SETTINGS_SECTION } from '@unlease/contacts/services/settingsPlaces';
 import { plural } from '@unlease/core/services/format';
 import { sortContacts } from '@unlease/contacts/services/names';
-import { liveContacts, useTrashedContacts } from '@app/hooks/useContacts';
+import { CLEANUP_WORDS, cleanupSummaryLine } from '@unlease/contacts/services/cleanup';
+import { liveContacts, useCleanupCounts, useDuplicates, useTrashedContacts } from '@app/hooks/useContacts';
 import { emptyContactsBin } from '@app/store/actions';
 import { selectBirthdays, selectRegion, selectSortOrder, setRegion, setSortOrder, useContactsUiStore } from '@app/store/contactsUi';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -52,6 +54,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const region = useContactsUiStore(selectRegion);
   const birthdays = useContactsUiStore(selectBirthdays);
   const [pickingRegion, setPickingRegion] = useState(false);
+  const cleanupCounts = useCleanupCounts();
+  const duplicates = useDuplicates().length;
+  const toClean = duplicates + Object.values(cleanupCounts).reduce((sum, each) => sum + each, 0);
 
   const exportAll = async (): Promise<void> => {
     const state = useLibraryStore.getState();
@@ -116,6 +121,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
 
         <Section title={t('Data')} anchor={SETTINGS_SECTIONS.data}>
           <ListRow icon="download" title={t('Import')} supporting={t('A file exported from Google Contacts, or this phone’s contacts')} onPress={() => navigation.navigate('Import')} />
+          {count > 0 ? <ListRow icon="broom" title={CLEANUP_WORDS.title} supporting={cleanupSummaryLine(toClean)} onPress={() => navigation.navigate('Cleanup')} /> : null}
           <ListRow icon="upload" title={t('Export')} supporting={count > 0 ? t('{contacts} in a .vcf file', { contacts: plural(count, 'contact') }) : t('No contacts to export.')} onPress={count > 0 ? () => later(exportAll()) : undefined} />
           <ListRow
             icon="trash"

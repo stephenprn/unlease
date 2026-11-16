@@ -1,6 +1,7 @@
 /**
  * « Nouvel événement » and « Modifier l'événement », as Google's form: the title; all day or not; when
- * it starts and ends (a later start keeps its length), its zone; how it repeats; where (typed, or a
+ * it starts and ends (a later start keeps its length), its zone, or for an all-day event whether it
+ * is a day off (« Jour de congé »: Clock's alarms that ask for it stay quiet); how it repeats; where (typed, or a
  * contact's address); who with; its reminders, labels and colour; its description, mentions included;
  * its files and address. A change to a repeating event asks which occurrences it takes.
  *
@@ -37,7 +38,7 @@ import { pickEventDocument, pickEventPhoto } from '@app/eventFiles';
 import { later } from '@app/later';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AnimatedOrganic, AppText, Button, FormMessage, Ground, Icon, IconButton, LABEL_CHIP, LABEL_FIELD, LabelChips, LineColorPicker, ListRow, Organic, placedRow, PlaceSearchHost, RevealScrollView, RowPanel, searchPlace, Sheet, SwitchMark, Tappable, TextField, TopBar, useForm, usePanelRowCorners, useUnsaved, type LabelChipItem, type RowPlace } from '@shared/ui/components';
+import { AnimatedOrganic, AppText, Button, FormMessage, Ground, Icon, IconButton, LABEL_CHIP, LABEL_FIELD, LabelChips, LineColorPicker, ListRow, Organic, placedRow, PlaceSearchHost, type PersonPlace, RevealScrollView, RowPanel, searchPlace, Sheet, SwitchMark, Tappable, TextField, TopBar, useForm, usePanelRowCorners, useUnsaved, type LabelChipItem, type RowPlace } from '@shared/ui/components';
 import { listIn, listMove, listOut } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -54,7 +55,7 @@ import { TimeSheet } from '../features/event/TimeSheet';
 import { ZoneSheet } from '../features/event/ZoneSheet';
 import type { ScreenProps } from '../navigation/types';
 
-type Sheet = 'startDay' | 'endDay' | 'startTime' | 'endTime' | 'zone' | 'repeat' | 'reminder' | 'guests' | 'address' | 'color' | null;
+type Sheet = 'startDay' | 'endDay' | 'startTime' | 'endTime' | 'zone' | 'repeat' | 'reminder' | 'guests' | 'color' | null;
 
 const WHEN = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
@@ -91,10 +92,11 @@ placedRow(Field);
  * The event's colour as one line, as Google Calendar's: the colour it will be painted in (its own, its
  * labels', or the default) on a pebble in the glyph's slot, then its name; a press opens the swatches.
  */
-function ColorLine({ own, shown, onPress }: { own: LineColor | null; shown: LineColor | null; onPress: () => void }) {
+function ColorLine({ own, shown, labelled, onPress }: { own: LineColor | null; shown: LineColor; labelled: boolean; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
-  const words = own ? LINE_COLOR_NAMES[own] : shown ? t('Its labels’ colour') : t('Default colour');
+  // None of its own: its labels' colour, else Réglages' colour for your events (« Couleur par défaut »).
+  const words = own ? LINE_COLOR_NAMES[own] : labelled ? t('Its labels’ colour') : t('Default colour');
   return (
     <View style={styles.choiceRow}>
       <Tappable onPress={onPress} style={styles.choice} accessibilityRole="button" accessibilityLabel={t('Colour: {name}', { name: words })}>
@@ -221,17 +223,26 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
       }),
     [labelOrder, labelRecords],
   );
-  // The places this phone knows: the events' own (the latest first), then the contacts' addresses.
-  const known = useMemo((): readonly Place[] => {
-    const used = Object.values(events)
-      .filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && event.place.trim())
-      .sort((a, b) => b.editedAt - a.editedAt)
-      .map(event => placeFromLine(event.place));
-    const kept = Object.values(people)
-      .filter(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto)
-      .flatMap(contact => contact.addresses.map(address => addressLine(address)).filter(Boolean).map(line => ({ ...placeFromLine(line), detail: [contactName(contact), placeFromLine(line).detail].filter(Boolean).join(' · ') })));
-    return [...used, ...kept];
-  }, [events, people]);
+  // A live label colours it when it has no colour of its own.
+  const labelled = draft.labelIds.some(id => labelRecords[id]?.deletedAt === null);
+  // The places this phone already used: the events' own, the latest first.
+  const known = useMemo(
+    (): readonly Place[] =>
+      Object.values(events)
+        .filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && event.place.trim())
+        .sort((a, b) => b.editedAt - a.editedAt)
+        .map(event => placeFromLine(event.place)),
+    [events],
+  );
+  // The contacts' addresses, the place search's « Adresses de vos contacts », by name.
+  const addresses = useMemo(
+    (): readonly PersonPlace[] =>
+      Object.values(people)
+        .filter(contact => contact.deletedAt === null && contact.trashedAt === null && !contact.mergedInto)
+        .flatMap(contact => contact.addresses.map(address => addressLine(address)).filter(Boolean).map(line => ({ who: contactName(contact), place: placeFromLine(line) })))
+        .sort((a, b) => a.who.localeCompare(b.who)),
+    [people],
+  );
   const editing = initial.occurrence !== null;
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial.draft);
   const allDay = isDay(draft.start);
@@ -352,6 +363,18 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
                 wrong={endProblem}
               />
               {endProblem ? <ProblemLine text={endProblem} /> : null}
+              {/* An all-day event may be a day off, where a timed one has its zone (the web's too). */}
+              {allDay ? (
+                <ListRow
+                  title={t('Day off')}
+                  supporting={t('Clock’s alarms that ask for it stay quiet that day.')}
+                  icon="sun"
+                  onPress={() => set({ dayOff: !draft.dayOff })}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: draft.dayOff }}
+                  trailing={<SwitchMark checked={draft.dayOff} />}
+                />
+              ) : null}
               {!allDay && showZone ? (
                 <Field icon="globe" onPress={() => setSheet('zone')} label={t('Time zone')}>
                   <AppText variant="body">{(draft.timeZone || zone).replace(/_/g, ' ')}</AppText>
@@ -367,20 +390,15 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
             {/* The place is a row as the guests are: a press looks for it over the whole screen, the form never moving. */}
             <Animated.View layout={ROW_MOVE}>
               <Organic outline="card" style={styles.panel}>
-                <View style={styles.placeRow}>
-                  <View style={styles.grow}>
-                    <Field
-                      icon="mapPin"
-                      onPress={() => searchPlace({ value: draft.place, known, label: t('Place'), onChangeText: place => set({ place }) })}
-                      label={draft.place.trim() ? t('Place: {place}', { place: draft.place.trim() }) : t('Add a place')}
-                    >
-                      <AppText variant="body" color={draft.place.trim() ? theme.color.ink : theme.color.link}>
-                        {draft.place.trim() || t('Add a place')}
-                      </AppText>
-                    </Field>
-                  </View>
-                  <IconButton icon="person" label={t('A contact’s address')} onPress={() => setSheet('address')} />
-                </View>
+                <Field
+                  icon="mapPin"
+                  onPress={() => searchPlace({ value: draft.place, known, people: addresses, label: t('Place'), onChangeText: place => set({ place }) })}
+                  label={draft.place.trim() ? t('Place: {place}', { place: draft.place.trim() }) : t('Add a place')}
+                >
+                  <AppText variant="body" color={draft.place.trim() ? theme.color.ink : theme.color.link}>
+                    {draft.place.trim() || t('Add a place')}
+                  </AppText>
+                </Field>
                 <Field icon="people" onPress={() => setSheet('guests')} label={t('Add people')}>
                   {draft.contactIds.length > 0 ? (
                     <View style={styles.people}>
@@ -446,7 +464,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
               </Animated.View>
               {/* One line, as Google Calendar's: the swatches open in a sheet, so fifteen of them never take the form's room. */}
               <Animated.View layout={ROW_MOVE}>
-                <ColorLine own={draft.color} shown={eventColor({ color: draft.color, labelIds: draft.labelIds, feedId: null }, labelRecords, {})} onPress={() => setSheet('color')} />
+                <ColorLine own={draft.color} shown={eventColor({ color: draft.color, labelIds: draft.labelIds, feedId: null }, labelRecords, {}, prefs.ownColor)} labelled={labelled} onPress={() => setSheet('color')} />
               </Animated.View>
             </AnimatedOrganic>
 
@@ -542,7 +560,7 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
               setSheet(null);
             }}
             allowNone
-            noneLabel={t('Its labels’ colour')}
+            noneLabel={labelled ? t('Its labels’ colour') : t('Default colour')}
             accessibilityLabel={t('Colour')}
           />
         </View>
@@ -551,13 +569,6 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
       <RepeatSheet visible={sheet === 'repeat'} start={draft.start} rrule={draft.rrule} today={today} weekStart={prefs.weekStart} onDismiss={() => setSheet(null)} onRule={rrule => set({ rrule })} />
       <ReminderSheet visible={sheet === 'reminder'} allDay={allDay} chosen={draft.reminders} replacing={replacing} onDismiss={() => setSheet(null)} onPick={pickReminder} />
       <ContactPickerSheet visible={sheet === 'guests'} title={t('Add people')} onDismiss={() => setSheet(null)} onPick={contact => set({ contactIds: [...new Set([...draft.contactIds, contact.id])] })} />
-      <ContactPickerSheet
-        visible={sheet === 'address'}
-        title={t('A contact’s address')}
-        only={contact => contact.addresses.some(address => addressLine(address))}
-        onDismiss={() => setSheet(null)}
-        onPick={contact => set({ place: addressLine(contact.addresses.find(address => addressLine(address))!) })}
-      />
       <ScopeSheet visible={scoping} deleting={false} onDismiss={() => setScoping(false)} onScope={commit} />
       {unsaved.dialog}
       <PlaceSearchHost />
@@ -601,8 +612,7 @@ const makeStyles = (theme: Theme) =>
     colorStone: { width: 22, height: 20 },
     colorSheet: { paddingHorizontal: 8, paddingBottom: 8 },
     people: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-    // The contact's address at the row's end, beside the place's own press.
-    placeRow: { flexDirection: 'row', alignItems: 'center', paddingRight: 8 },
+    // Under the place, its glyph on the words' column (a row's 56, less the button's 14), tucked under the row above.
     descriptionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, paddingLeft: 16, paddingRight: 14, paddingVertical: 8 },
     descriptionGlyph: { paddingTop: 14 },
     description: { gap: 4 },

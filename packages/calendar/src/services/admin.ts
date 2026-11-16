@@ -4,17 +4,18 @@
  * the public holidays, the calendar published at a secret address, the questions to Claude.
  */
 import { t, tc, tx } from '@unlease/core/i18n';
-import type { StatusLine } from '@unlease/core/services/admin';
+import { workDaysWords, type StatusLine } from '@unlease/core/services/admin';
 import { countryName } from '@unlease/core/services/setup';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 
-export const HOLIDAYS_INFO = tx('The server fetches the chosen country’s public holidays from Nager.Date (open data, no account) for last year, this year and the next two, and reads them again each year. They appear under “Other calendars” on every device, where each can hide them.');
+export const HOLIDAYS_INFO = tx('Your week, for every device and every app: the days you work, and your country’s public holidays. The holidays come from Nager.Date (open data, no account): the server keeps last year’s, this year’s and the next two years’, reads them again each year, and shows them under “Other calendars” on every device, where each can hide them.');
 
-/** « Jours fériés »: the country (and its region) whose days the server fetches, or none. */
+/** « Votre semaine »: the days worked, then the country (and its region) whose public holidays the server fetches, or none. */
 export function holidaysLine(settings: ServerSettings): StatusLine {
   const { country, region } = settings.calendar.holidays;
-  if (!country) return { tone: 'off', title: t('No public holidays'), meta: t('Choose a country to see its public holidays in the calendar.') };
-  return { tone: 'ok', title: region ? `${countryName(country)} · ${region}` : countryName(country), meta: t('Read from Nager.Date') };
+  const week = workDaysWords(settings.calendar.workDays);
+  if (!country) return { tone: 'ok', title: week, meta: t('No public holidays') };
+  return { tone: 'ok', title: week, meta: t('Public holidays: {country}', { country: region ? `${countryName(country)} · ${region}` : countryName(country) }) };
 }
 
 export const PUBLISH_INFO = tx('Your calendar (without the calendars you subscribe to) at a secret iCalendar address, read-only: paste it into Google Calendar (Other calendars, “From URL”), Apple Calendar or Thunderbird to see your events there. Anyone with the address sees your events: “New address” disables the old one.');

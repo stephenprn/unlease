@@ -1,0 +1,78 @@
+/** French for « Nettoyer les contacts » (`services/cleanup`): its tools, their findings and their slips, on both clients. */
+import type { Dictionary } from '@unlease/core/i18n';
+
+export const FR_CLEANUP: Dictionary = {
+  'Clean up contacts': 'Nettoyer les contacts',
+  'Tools that tidy your address book. Each one shows every change before it is made, and the slip takes it back.': 'Des outils pour remettre de l’ordre dans votre carnet d’adresses. Chacun montre chaque modification avant de la faire, et le message qui suit permet de l’annuler.',
+  'Nothing to fix': 'Rien à corriger',
+  'Nothing to fix: your contacts are tidy.': 'Rien à corriger : vos contacts sont en ordre.',
+  'thing to fix': 'chose à corriger',
+  'things to fix': 'choses à corriger',
+  'Select none': 'Tout désélectionner',
+  'All tidy': 'Tout est en ordre',
+  'Removed': 'Supprimé',
+  'To the bin': 'À la corbeille',
+  'Country of these numbers': 'Pays de ces numéros',
+  'Pick the country these numbers belong to: their code is written before them.': 'Choisissez le pays de ces numéros : son indicatif s’écrit devant.',
+  'Which country are these numbers from?': 'De quel pays sont ces numéros ?',
+  '{chosen} of {total} selected': '{chosen} sur {total} sélectionnés',
+  'Fix {count}': 'Corriger ({count})',
+  'Fix {name}': 'Corriger {name}',
+
+  // The tools
+  'Country codes': 'Indicatifs',
+  'A number written without its country code (06 12 34 56 78) only reaches the person from that country. Written with it (+33 6 12 34 56 78), it works from anywhere, in WhatsApp and on any phone.':
+    'Un numéro écrit sans son indicatif (06 12 34 56 78) ne joint la personne que depuis son pays. Écrit avec (+33 6 12 34 56 78), il marche de partout, dans WhatsApp et sur n’importe quel téléphone.',
+  'Every number is written with its country code.': 'Chaque numéro est écrit avec son indicatif.',
+  'Number formatting': 'Format des numéros',
+  'Numbers written each their own way (dots, 0033, no spaces) written the same way; the same number twice in a contact kept once.': 'Les numéros écrits chacun à sa façon (points, 0033, sans espaces) écrits de la même façon ; le même numéro deux fois dans un contact gardé une fois.',
+  'Every number is written the same way.': 'Tous les numéros sont écrits de la même façon.',
+  'Names': 'Noms',
+  'Names in capitals or in lower case, extra spaces, an e-mail or a number in place of a name, a whole name in the first name.': 'Les noms en majuscules ou en minuscules, les espaces en trop, un e-mail ou un numéro à la place d’un nom, un nom complet dans le prénom.',
+  'Every name is written properly.': 'Chaque nom est bien écrit.',
+  'E-mail addresses': 'Adresses e-mail',
+  'Addresses in capitals or with spaces, a typo in the domain, the same address twice in a contact, and those that are not addresses at all.': 'Les adresses en majuscules ou avec des espaces, une faute de frappe dans le domaine, la même adresse deux fois dans un contact, et celles qui n’en sont pas.',
+  'Every e-mail address reads as one.': 'Chaque adresse e-mail en est bien une.',
+  'Empty contacts': 'Contacts vides',
+  'Contacts with no name, no number and no e-mail address: they go to the bin, where they wait a week.': 'Les contacts sans nom, sans numéro et sans adresse e-mail : ils vont à la corbeille, où ils attendent une semaine.',
+  'Every contact holds a name, a number or an e-mail address.': 'Chaque contact a un nom, un numéro ou une adresse e-mail.',
+
+  // Each tool's state on the place's list
+  'group of duplicates': 'groupe de doublons',
+  'groups of duplicates': 'groupes de doublons',
+  'number without a country code': 'numéro sans indicatif',
+  'numbers without a country code': 'numéros sans indicatif',
+  'number to tidy': 'numéro à corriger',
+  'numbers to tidy': 'numéros à corriger',
+  'name to tidy': 'nom à corriger',
+  'names to tidy': 'noms à corriger',
+  'e-mail address to tidy': 'adresse e-mail à corriger',
+  'e-mail addresses to tidy': 'adresses e-mail à corriger',
+  'empty contact': 'contact vide',
+  'empty contacts': 'contacts vides',
+
+  // The slips once fixed
+  'number completed': 'numéro complété',
+  'numbers completed': 'numéros complétés',
+  'contact moved to the bin': 'contact mis à la corbeille',
+  'contacts moved to the bin': 'contacts mis à la corbeille',
+  'fix made': 'correction faite',
+  'fixes made': 'corrections faites',
+
+  // Why a finding is listed
+  'Already in this contact.': 'Déjà dans ce contact.',
+  'No digit: this is not a number.': 'Aucun chiffre : ce n’est pas un numéro.',
+  'Its length does not fit a number with +{code}: check it before adding the code.': 'Sa longueur ne correspond pas à un numéro en +{code} : vérifiez-le avant d’ajouter l’indicatif.',
+  'Too short or too long for a number with +{code}: open the contact to check it.': 'Trop court ou trop long pour un numéro en +{code} : ouvrez le contact pour le vérifier.',
+  'Numbers of this country are written in their own way: open the contact to add its code.': 'Les numéros de ce pays s’écrivent à leur façon : ouvrez le contact pour ajouter l’indicatif.',
+  'In capitals.': 'En majuscules.',
+  'In lower case.': 'En minuscules.',
+  'Extra spaces.': 'Des espaces en trop.',
+  'An e-mail address in place of a name: it goes with the e-mail addresses.': 'Une adresse e-mail à la place du nom : elle rejoint les adresses e-mail.',
+  'A number in place of a name: it goes with the numbers.': 'Un numéro à la place du nom : il rejoint les numéros.',
+  'First name “{first}”, last name “{last}”: check where the first name ends.': 'Prénom « {first} », nom « {last} » : vérifiez où s’arrête le prénom.',
+  'A typo in “{domain}”?': 'Une faute de frappe dans « {domain} » ?',
+  'Not a full e-mail address: open the contact to correct it.': 'Pas une adresse e-mail complète : ouvrez le contact pour la corriger.',
+  'It still holds a note, an address, a birthday or a photo: check it first.': 'Il garde encore une note, une adresse, un anniversaire ou une photo : vérifiez d’abord.',
+  'No name, no number, no e-mail': 'Ni nom, ni numéro, ni e-mail',
+};

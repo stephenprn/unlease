@@ -2,7 +2,7 @@
  * What this browser keeps of Contacts' own, in localStorage beside the shell's settings and never
  * synced: the list's order (by first name, as Google does, or by last name), and the country of the
  * numbers kept without their `+` (« Indicatif par défaut »: a national number takes its calling code
- * for WhatsApp, as the phone's dialer does), and the groups of duplicates set aside (« Ignorer »). Every access is guarded: blocked storage only means
+ * for WhatsApp, as the phone's dialer does), the groups of duplicates and the findings of « Nettoyer les contacts » set aside (« Ignorer »). Every access is guarded: blocked storage only means
  * nothing is remembered.
  */
 import { create } from 'zustand';
@@ -19,9 +19,11 @@ export interface ContactsPrefs {
   readonly region: string | null;
   /** Groups of duplicates set aside, each by its sorted ids (`dismissalKey`). */
   readonly dismissed: readonly string[];
+  /** Findings of « Nettoyer les contacts » set aside, each by its `asideKey`. */
+  readonly cleanupAside: readonly string[];
 }
 
-const DEFAULTS: ContactsPrefs = { sortOrder: 'firstName', region: null, dismissed: [] };
+const DEFAULTS: ContactsPrefs = { sortOrder: 'firstName', region: null, dismissed: [], cleanupAside: [] };
 
 /** A group set aside stays so while it holds the same people. */
 export const dismissalKey = (ids: readonly string[]): string => [...ids].sort().join(',');
@@ -52,6 +54,11 @@ export function callingRegion(prefs: ContactsPrefs = usePrefsStore.getState()): 
   return prefs.region ?? defaultRegion();
 }
 
+/** The country the cleanup reads national numbers in: the « Indicatif par défaut », or, when it is « Aucun », this browser's own, France for one in French (a tool needs one to propose anything; its page changes it). */
+export function cleanupRegion(prefs: ContactsPrefs = usePrefsStore.getState()): string | null {
+  return callingRegion(prefs) ?? defaultRegion();
+}
+
 export function loadPrefs(): void {
   let stored: Record<string, unknown> = {};
   try {
@@ -63,7 +70,8 @@ export function loadPrefs(): void {
   const order = (SORT_ORDERS as readonly unknown[]).includes(stored.sortOrder) ? (stored.sortOrder as SortOrder) : DEFAULTS.sortOrder;
   const region = stored.region === 'none' || isCallingRegion(stored.region) ? stored.region : null;
   const dismissed = Array.isArray(stored.dismissed) ? stored.dismissed.filter((key): key is string => typeof key === 'string').slice(-DISMISSED_MAX) : [];
-  usePrefsStore.setState({ sortOrder: order, region, dismissed }, true);
+  const cleanupAside = Array.isArray(stored.cleanupAside) ? stored.cleanupAside.filter((key): key is string => typeof key === 'string').slice(-DISMISSED_MAX) : [];
+  usePrefsStore.setState({ sortOrder: order, region, dismissed, cleanupAside }, true);
 }
 
 function save(patch: Partial<ContactsPrefs>): void {
@@ -85,6 +93,12 @@ export function dismissDuplicates(ids: readonly string[]): void {
   const key = dismissalKey(ids);
   const { dismissed } = usePrefsStore.getState();
   if (!dismissed.includes(key)) save({ dismissed: [...dismissed, key].slice(-DISMISSED_MAX) });
+}
+
+/** « Ignorer » on a finding of « Nettoyer les contacts » (its `asideKey`): no longer offered on this device while it reads the same. */
+export function setCleanupAside(key: string): void {
+  const { cleanupAside } = usePrefsStore.getState();
+  if (!cleanupAside.includes(key)) save({ cleanupAside: [...cleanupAside, key].slice(-DISMISSED_MAX) });
 }
 
 export const useSortOrder = (): SortOrder => usePrefsStore(s => s.sortOrder);

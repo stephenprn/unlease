@@ -1,6 +1,6 @@
 /**
  * Agenda's settings, in every app's order: the calendar's own on this phone first (the week's first
- * day, weekends and week numbers, the hours' format, a new event's length and reminders, the maps app
+ * day, the working days only and week numbers, the hours' format, a new event's length and reminders, the maps app
  * places open in, the morning summary, then what keeps the reminders from ringing on the minute, only while something
  * does); then « Apparence » (one row opening its own page: the theme, the paper's grain, the colours
  * and the ground), the language, the import and the export of one's events as an `.ics`, the other
@@ -15,7 +15,8 @@ import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 import { CALENDAR_SETTINGS_SECTION } from '@unlease/calendar/services/settingsPlaces';
 import { plural } from '@unlease/core/services/format';
 import { EVENT_LENGTHS } from '@unlease/calendar/models/prefs';
-import { deletedForGoodWords, lengthWords, reminderWords } from '@unlease/calendar/services/eventText';
+import { LINE_COLOR_NAMES } from '@unlease/design/colors';
+import { deletedForGoodWords, lengthWords, reminderWords, workingDaysMeta } from '@unlease/calendar/services/eventText';
 import { writeIcs } from '@unlease/calendar/services/ics';
 import { markupToPlain } from '@unlease/core/services/richText';
 import { SUITE_NAME } from '@unlease/core/apps';
@@ -26,10 +27,11 @@ import { nameOf } from '@app/mentionNames';
 import { later } from '@app/later';
 import { calendarMirror } from '@app/phoneMirror';
 import { showSnack } from '@shared/app/store/uiStore';
+import { selectWorkDays, useSettingsStore } from '@shared/app/store/settingsStore';
 import { saveFile } from '@shared/platform/media';
 import { makerBatterySettings } from '@platform/notifications';
 
-import { AppText, Dialog, Ground, Icon, ListRow, PickerField, Segmented, Sheet, SheetScroll, TopBar } from '@shared/ui/components';
+import { AppText, Dialog, Ground, Icon, LineColorPicker, ListRow, Organic, PickerField, Segmented, Sheet, SheetScroll, TopBar } from '@shared/ui/components';
 import { SwitchRow } from '@shared/ui/features/appearance/SwitchRow';
 import { MapsChoiceField } from '@shared/ui/features/maps/MapsSheets';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
@@ -63,10 +65,12 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const prefs = useCalendarUiStore(selectPrefs);
+  const workDays = useSettingsStore(selectWorkDays);
   const events = useLibraryStore(s => s.events);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [reminding, setReminding] = useState<'timed' | 'allDay' | null>(null);
   const [lengthOpen, setLengthOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(false);
   const binned = Object.values(events).filter(event => event.deletedAt === null && event.trashedAt !== null && !event.recurringId && event.feedId === null).length;
   const own = Object.values(events).filter(event => event.deletedAt === null && event.trashedAt === null && event.feedId === null && !event.recurringId).length;
 
@@ -104,18 +108,23 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
               ]}
             />
           </View>
-          {/* The web's words. */}
-          <SwitchRow title={t('Hide weekends')} supporting={t('The week and the month without Saturday and Sunday.')} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
+          {/* The web's words; its stored name is older than the working days (it hid Saturday and Sunday). */}
+          <SwitchRow title={t('Working days only')} supporting={workingDaysMeta(workDays)} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
           <SwitchRow title={t('Week numbers')} supporting={t('The week’s ISO number, left of its days.')} value={prefs.weekNumbers} onChange={weekNumbers => setPrefs({ weekNumbers })} />
           <SwitchRow title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
           <View style={styles.fields}>
             <PickerField label={t('A new event’s length')} icon="clock" value={lengthWords(prefs.eventLength)} onPress={() => setLengthOpen(true)} />
           </View>
-          <ListRow icon="bell" title={t('A new event’s reminders')} supporting={prefs.reminders.map(minutes => reminderWords(minutes, false)).join(', ') || t('None')} onPress={() => setReminding('timed')} />
-          {/* Its glyph keeps its words on the column of the row it empties. */}
-          {prefs.reminders.length > 0 ? <ListRow icon="bellOff" title={t('Remove the default reminders')} onPress={() => setPrefs({ reminders: [] })} /> : null}
-          <ListRow icon="bell" title={t('An all-day event’s reminders')} supporting={prefs.allDayReminders.map(minutes => reminderWords(minutes, true)).join(', ') || t('None')} onPress={() => setReminding('allDay')} />
-          {prefs.allDayReminders.length > 0 ? <ListRow icon="bellOff" title={t('Remove the all-day reminders')} onPress={() => setPrefs({ allDayReminders: [] })} /> : null}
+          {/* Your own events without a colour, a label's or a calendar's: a pigment of their own, never the accent that acts. */}
+          <ListRow
+            leading={<Organic pebble={2} style={[styles.swatch, { backgroundColor: theme.line[prefs.ownColor].fill }]} />}
+            title={t('Your events’ colour')}
+            supporting={LINE_COLOR_NAMES[prefs.ownColor]}
+            onPress={() => setColorOpen(true)}
+          />
+          {/* Each opens the reminders offered, « Aucun rappel » first (it clears them). */}
+          <ListRow icon="bell" title={t('A new event’s reminders')} supporting={prefs.reminders.map(minutes => reminderWords(minutes, false)).join(', ') || t('No reminders')} onPress={() => setReminding('timed')} />
+          <ListRow icon="bell" title={t('An all-day event’s reminders')} supporting={prefs.allDayReminders.map(minutes => reminderWords(minutes, true)).join(', ') || t('No reminders')} onPress={() => setReminding('allDay')} />
           <View style={styles.fields}>
             <MapsChoiceField />
           </View>
@@ -154,6 +163,19 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           {t('{app} · your calendar, at home', { app: APP_NAME })}
         </AppText>
       </SettingsScroll>
+      <Sheet visible={colorOpen} onDismiss={() => setColorOpen(false)} title={t('Your events’ colour')}>
+        {/* A pick is the answer: the sheet goes with it. */}
+        <View style={styles.colorSheet}>
+          <LineColorPicker
+            value={prefs.ownColor}
+            onChange={color => {
+              if (color) setPrefs({ ownColor: color });
+              setColorOpen(false);
+            }}
+            accessibilityLabel={t('Your events’ colour')}
+          />
+        </View>
+      </Sheet>
       <Sheet visible={lengthOpen} onDismiss={() => setLengthOpen(false)} title={t('A new event’s length')}>
         <SheetScroll>
           {EVENT_LENGTHS.map(minutes => {
@@ -178,8 +200,10 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         visible={reminding !== null}
         allDay={reminding === 'allDay'}
         chosen={reminding === 'allDay' ? prefs.allDayReminders : prefs.reminders}
+        title={reminding === 'allDay' ? t('An all-day event’s reminders') : t('A new event’s reminders')}
         onDismiss={() => setReminding(null)}
         onPick={minutes => (reminding === 'allDay' ? setPrefs({ allDayReminders: [...prefs.allDayReminders, minutes].slice(-5) }) : setPrefs({ reminders: [...prefs.reminders, minutes].slice(-5) }))}
+        onNone={() => (reminding === 'allDay' ? setPrefs({ allDayReminders: [] }) : setPrefs({ reminders: [] }))}
       />
       <Dialog
         visible={confirmEmpty}
@@ -209,4 +233,7 @@ const makeStyles = (theme: Theme) =>
     // As the shared sections' (Apparence's theme, Langue).
     fields: { gap: 14, paddingHorizontal: 16, paddingVertical: 12 },
     about: { textAlign: 'center' },
+    // The colour's stone in the glyph's slot, as the editor's « Couleur ».
+    swatch: { width: 22, height: 20, marginHorizontal: 1 },
+    colorSheet: { paddingHorizontal: 8, paddingBottom: 8 },
   });

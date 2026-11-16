@@ -62,7 +62,7 @@ export function NotePickerSheet({ visible, current, title, onDismiss, onPick }: 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a note')} returnKeyType="search" autoCorrect={false} accessibilityLabel={t('Search for a note')} />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.body}>
+      <SheetScroll contentContainerStyle={styles.body}>
         {ids.length === 0 ? <EmptyLine glyph={query.trim() ? 'search' : 'note'} text={query.trim() ? t('No notes match.') : t('No notes yet.')} slot={24} gap={16} style={styles.empty} /> : null}
         {ids.map(id => (
           <NoteRow

@@ -19,9 +19,11 @@ interface ColorPickerProps<Empty extends boolean> {
   readonly label: string;
   /** The words of « none of its own », when that is a choice. */
   readonly none?: Empty extends true ? string : undefined;
+  /** None takes a label's colour (its pebble wears the tag); else it is the default colour, a bare edge. */
+  readonly noneTag?: boolean;
 }
 
-function ColorPickerComponent<Empty extends boolean = false>({ value, onChange, label, none }: ColorPickerProps<Empty>) {
+function ColorPickerComponent<Empty extends boolean = false>({ value, onChange, label, none, noneTag = true }: ColorPickerProps<Empty>) {
   const group = useRef<HTMLDivElement>(null);
   const choices: (LineColor | null)[] = none ? [null, ...LINE_COLORS] : [...LINE_COLORS];
   const change = onChange as (color: LineColor | null) => void;
@@ -56,7 +58,7 @@ function ColorPickerComponent<Empty extends boolean = false>({ value, onChange, 
             onClick={() => change(color)}
           >
             <PebbleEdge turn={pebbleTurn(index + 1)} />
-            {selected ? <Icon name="check" size={18} /> : color ? null : <Icon name="tag" size={18} />}
+            {selected ? <Icon name="check" size={18} /> : color || !noneTag ? null : <Icon name="tag" size={18} />}
           </button>
         );
       })}

@@ -1,4 +1,4 @@
-# Cloudflare Pages response headers, for the whole site (every app, under /notes/, /pages/, /contacts/ and /agenda/).
+# Cloudflare Pages response headers, for the whole site (every app, under /notes/, /pages/, /contacts/, /agenda/ and /clock/).
 # The API host is chosen in the app's settings, so connect-src allows any
 # https origin, never a plain-http or local one (the dev server sends no
 # policy, and a server serving the apps is 'self'); images come from the
@@ -38,6 +38,12 @@
 /agenda/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
+/clock/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/clock/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Each app's worker holds its whole path, `/notes` as well as `/notes/…`.
 /notes/sw.js
   Service-Worker-Allowed: /notes
@@ -50,3 +56,6 @@
 
 /agenda/sw.js
   Service-Worker-Allowed: /agenda
+
+/clock/sw.js
+  Service-Worker-Allowed: /clock

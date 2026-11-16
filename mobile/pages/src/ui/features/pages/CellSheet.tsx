@@ -153,7 +153,7 @@ function OptionsEditor({ request, column, value, onDone }: { request: CellReques
           maxLength={100}
         />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.options}>
+      <SheetScroll contentContainerStyle={styles.options}>
         {shown.map(option => (
           <Tappable key={option.id} accessibilityRole={multi ? 'checkbox' : 'radio'} accessibilityState={{ checked: chosen.has(option.id) }} accessibilityLabel={option.name} onPress={() => choose(option.id)} style={styles.optionRow}>
             <View style={styles.optionChip}>

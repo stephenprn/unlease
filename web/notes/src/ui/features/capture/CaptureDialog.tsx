@@ -43,6 +43,7 @@ import { IconButton } from '@shared/ui/components/IconButton';
 import { Layer } from '@shared/ui/components/Layer';
 import { useForm } from '@shared/ui/components/useForm';
 import { useUnsaved } from '@shared/ui/components/useUnsaved';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { BoundInput, FieldProblem } from '../BoundInput';
 import { useReportDirty } from '../reportDirty';
 import { adminPath, navigate } from '@shared/ui/router';
@@ -70,6 +71,8 @@ function CaptureForm({ initial, initialTitle, onClose, onDirty }: { initial: str
   const [text, setText] = useState(initial);
   const [target, setTarget] = useState<string>(() => (claude ? AUTO : INBOX_ID));
   const tabs = useRef<HTMLDivElement>(null);
+  // In one row on a phone-sized window, the collections past a side fade there.
+  useScrollEdgesOn(tabs, [], { fade: 'x' });
   const urls = extractUrls(text);
   // A share (or a paste) offering more links than one share takes: the first ones, and the dialog says so.
   const { urls: kept, more } = capSharedUrls(urls);

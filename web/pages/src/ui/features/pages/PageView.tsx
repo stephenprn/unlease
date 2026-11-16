@@ -6,7 +6,7 @@
  * they land. Opened at `#block-<id>` (from a search), it shows that block. A page in the bin reads
  * as it is and can be restored.
  */
-import { memo, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { t } from '@unlease/core/i18n';
@@ -35,11 +35,12 @@ import { Link, navigate, useLocation } from '@shared/ui/router';
 import { paths } from '../../routes';
 import { useMedia } from '@shared/ui/useMedia';
 import { BlockBar, TOUCH_BAR } from './BlockBar';
-import { BlockList } from './BlockView';
+import { BlockList, dragBlocks } from './BlockView';
+import { consumeDragClick } from './dragDrop';
 import { readBlocks, htmlToDrafts, writeBlocks } from './clipboard';
 import { historyKey, selectionKey } from './editing';
 import { DateEditor, openDateEditor } from './DateEditor';
-import { applyPendingFocus, clearBlockSelection, closeEditor, editableOutline, editorState, flushAll, focusBlock, openEditor, registerFlusher, registerFocuser, selectableOutline, selectBlocks, type FocusAt } from './editorStore';
+import { applyPendingFocus, clearBlockSelection, closeEditor, editableOutline, editorRoot, editorState, flushAll, focusBlock, openBlockMenu, openEditor, registerFlusher, registerFocuser, selectableOutline, selectBlocks, type FocusAt } from './editorStore';
 import { EmojiButton } from './EmojiPicker';
 import { FormatBar } from './FormatBar';
 import { HoverBar } from './HoverBar';
@@ -442,6 +443,92 @@ function selectByDragging(event: PointerEvent, root: HTMLElement): void {
   window.addEventListener('dragstart', up);
 }
 
+/** A block selected whole, pressed on its wash (the wash takes the press, so no caret lands under it). */
+function selectedBlockAt(target: EventTarget | null): HTMLElement | null {
+  return target instanceof HTMLElement && target.dataset.selectBlock !== undefined && target.dataset.selected !== undefined ? target : null;
+}
+
+/** The block holding the caret, if any. */
+function caretBlock(): string | null {
+  const active = document.activeElement;
+  return active instanceof HTMLElement && editorRoot()?.contains(active) ? (active.closest<HTMLElement>('[data-select-block]')?.dataset.selectBlock ?? null) : null;
+}
+
+/**
+ * Presses that act on whole blocks, as in Notion: Maj+click selects every block from the selection's
+ * start (or the block holding the caret) to the one clicked; ⌘+click (Ctrl+click) adds a block to the
+ * selection or takes it out; a selected block pressed and dragged carries the whole selection. True
+ * when it took the press.
+ */
+function pressOnBlocks(event: ReactPointerEvent<HTMLDivElement>, page: string, readOnly: boolean): boolean {
+  if (event.button !== 0 || event.pointerType === 'touch') return false;
+  const target = event.target as Element;
+  if (target.closest('[data-gutter]')) return false;
+  const hit = target.closest<HTMLElement>('[data-select-block]');
+  if (!hit) return false;
+  const id = hit.dataset.selectBlock!;
+  const { selected, anchor } = editorState();
+  const outline = selectableOutline();
+  const take = (ids: readonly string[], from: string | null): true => {
+    event.preventDefault();
+    flushAll();
+    window.getSelection()?.removeAllRanges();
+    if (ids.length > 0) selectBlocks(ids, from);
+    else clearBlockSelection();
+    editorRoot()?.focus({ preventScroll: true });
+    return true;
+  };
+  if ((event.metaKey || event.ctrlKey) && (selected.size > 0 || event.shiftKey)) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return take(
+      outline.filter(other => next.has(other)),
+      id,
+    );
+  }
+  if (event.shiftKey && !event.metaKey && !event.ctrlKey) {
+    const from = anchor && outline.includes(anchor) ? anchor : caretBlock();
+    // In the block holding the caret, Maj+click extends the words selected, as in any text.
+    if (!from || from === id) return false;
+    const [a, b] = [outline.indexOf(from), outline.indexOf(id)].sort((x, y) => x - y) as [number, number];
+    return a < 0 ? false : take(outline.slice(a, b + 1), from);
+  }
+  if (selectedBlockAt(target) && !event.metaKey && !event.ctrlKey && !readOnly) {
+    event.preventDefault();
+    flushAll();
+    dragBlocks(
+      event.nativeEvent,
+      page,
+      outline.filter(other => selected.has(other)),
+    );
+    return true;
+  }
+  return false;
+}
+
+/** A selected block clicked (not dragged): the selection goes and the caret lands where the click was; a block with no text is selected alone. */
+function clickIntoBlock(block: HTMLElement, x: number, y: number): void {
+  const id = block.dataset.selectBlock!;
+  clearBlockSelection();
+  requestAnimationFrame(() => {
+    const position = document.caretPositionFromPoint?.(x, y);
+    const node = position?.offsetNode ?? null;
+    const editable = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>('[contenteditable="true"]');
+    if (!position || !editable || !block.contains(editable)) {
+      selectBlocks([id]);
+      editorRoot()?.focus({ preventScroll: true });
+      return;
+    }
+    editable.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.setStart(position.offsetNode, position.offset);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+}
+
 /** `menu`: « Plus d’actions » in the page's head (false when the phone's top bar holds it). */
 export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
   const page = useBlocksStore(s => s.blocks[id]);
@@ -510,6 +597,11 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
     if (end) focusBlock(end, 'end');
   };
   const onClick = (event: MouseEvent<HTMLDivElement>): void => {
+    const pressed = selectedBlockAt(event.target);
+    if (pressed) {
+      if (!consumeDragClick() && event.button === 0 && !event.shiftKey && !event.metaKey && !event.ctrlKey) clickIntoBlock(pressed, event.clientX, event.clientY);
+      return;
+    }
     // A mention opens what it names (a page here, the rest in a new tab: a note, a person in Contacts, an event in Agenda); one gone, nothing.
     const chip = (event.target as Element).closest<HTMLElement>('[data-mention]');
     const [type, target] = chip?.dataset.mention?.split(':') ?? [];
@@ -555,9 +647,17 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
           onCut={event => onCopy(event, true)}
           onPaste={onPaste}
           onClick={onClick}
+          onContextMenu={event => {
+            // A right click on the selection opens its blocks' menu (elsewhere, the browser's own: spelling, copy).
+            const pressed = readOnly ? null : selectedBlockAt(event.target);
+            if (!pressed) return;
+            event.preventDefault();
+            openBlockMenu(pressed.dataset.selectBlock!);
+          }}
           onPointerDown={event => {
             // A press in a block's menu (drawn elsewhere, in a portal) is not a press on the page.
             if (!event.currentTarget.contains(event.target as Node)) return;
+            if (pressOnBlocks(event, id, readOnly)) return;
             if (!(event.target as Element).closest('[data-gutter]')) clearBlockSelection();
             selectByDragging(event.nativeEvent, event.currentTarget);
           }}

@@ -6,7 +6,7 @@
  */
 import { Linking } from 'react-native';
 
-import { t } from '@unlease/core/i18n';
+import { getLocale, t } from '@unlease/core/i18n';
 import { APP_NAME } from '@unlease/contacts/brand';
 import type { Contact, ContactLabel } from '@unlease/contacts/models/contacts';
 import { contactName } from '@unlease/contacts/services/names';
@@ -43,6 +43,9 @@ export const phoneRegion = (): string | null => {
 
 /** The region a national number takes for `chosen` (Réglages' « Indicatif par défaut »): it, else the phone's. */
 export const regionFor = (chosen: string | null): string | null => (chosen === 'none' ? null : (chosen ?? regionOf(deviceLanguage())));
+
+/** The country the cleanup reads national numbers in: the « Indicatif par défaut », or, when it is « Aucun », the phone's own, or France for a phone in French with no country (a tool needs one to propose anything; its page changes it). */
+export const cleanupRegion = (chosen: string | null): string | null => regionFor(chosen) ?? phoneRegion() ?? (getLocale() === 'fr' ? 'FR' : null);
 
 /** The region a national number takes (to show and dial it, for WhatsApp, to compare numbers): the one chosen in Réglages, else the phone's. */
 export const deviceRegion = (): string | null => regionFor(useContactsUiStore.getState().region);

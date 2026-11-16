@@ -60,6 +60,7 @@
         <package android:name="com.stephenprn.pages${suiteSuffix}" />
         <package android:name="com.stephenprn.contacts${suiteSuffix}" />
         <package android:name="com.stephenprn.agenda${suiteSuffix}" />
+        <package android:name="com.stephenprn.clock${suiteSuffix}" />
         <!-- WhatsApp's actions show while it is installed (its business edition too). -->
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />

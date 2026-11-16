@@ -613,9 +613,9 @@ textarea.input {
 }
 
 /*
- * A page form's actions (`FormFoot`): sticking to the window's bottom on the ground's own paint, the
- * ground laid over what runs under it on an eased curve, as strongly as the form runs on below it
- * (`useStuckFootEdge`); the form's line above the buttons, the primary last.
+ * A page form's actions (`FormFoot`): sticking to the window's bottom on the ground's own paint, a
+ * hairline across its top while the form runs on under it (`useStuckFootEdge`), none once it rests at
+ * the form's end; no fade, no shadow, no blur. The form's line above the buttons, the primary last.
  */
 .formFoot {
   position: sticky;
@@ -627,41 +627,7 @@ textarea.input {
   margin: 0 calc(-1 * var(--screen-side));
   padding: 12px var(--screen-side) max(16px, env(safe-area-inset-bottom));
   background: var(--ground-paint);
-}
-.formFoot::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: var(--edge-fade);
-  pointer-events: none;
-  background: var(--ground-paint);
-  -webkit-mask-image: linear-gradient(
-    to top,
-    rgb(0 0 0 / 1) 0%,
-    rgb(0 0 0 / 0.962) 12.5%,
-    rgb(0 0 0 / 0.854) 25%,
-    rgb(0 0 0 / 0.691) 37.5%,
-    rgb(0 0 0 / 0.5) 50%,
-    rgb(0 0 0 / 0.309) 62.5%,
-    rgb(0 0 0 / 0.146) 75%,
-    rgb(0 0 0 / 0.038) 87.5%,
-    rgb(0 0 0 / 0) 100%
-  );
-  mask-image: linear-gradient(
-    to top,
-    rgb(0 0 0 / 1) 0%,
-    rgb(0 0 0 / 0.962) 12.5%,
-    rgb(0 0 0 / 0.854) 25%,
-    rgb(0 0 0 / 0.691) 37.5%,
-    rgb(0 0 0 / 0.5) 50%,
-    rgb(0 0 0 / 0.309) 62.5%,
-    rgb(0 0 0 / 0.146) 75%,
-    rgb(0 0 0 / 0.038) 87.5%,
-    rgb(0 0 0 / 0) 100%
-  );
-  opacity: var(--edge-below-k, 0);
+  border-top: 1px solid color-mix(in srgb, var(--hairline) calc(var(--edge-below-k, 0) * 100%), transparent);
 }
 /* A field reached by Tab or by its problem stops clear of the pinned foot (and of the header on a narrow window). */
 :global(form):has(.formFoot) :is(input, textarea, button):not(.formFootActions *) {

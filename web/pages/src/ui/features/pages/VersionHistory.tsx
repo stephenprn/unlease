@@ -28,6 +28,7 @@ import { DialogFrame } from '@shared/ui/components/Dialog';
 import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { Icon } from '@shared/ui/components/Icon';
 import { Layer } from '@shared/ui/components/Layer';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { flushAll } from './editorStore';
 import styles from './versions.module.css';
@@ -46,6 +47,16 @@ function cellText(value: unknown): string {
 }
 
 /** One block of the version, read-only, as its kind reads. */
+/** A table too wide for the dialog: it scrolls sideways, its columns fading at a side where more lie. */
+function SideScroll({ className, children }: { className?: string; children: ReactNode }) {
+  const edges = useScrollEdges({ fade: 'x' });
+  return (
+    <div ref={edges} className={className}>
+      {children}
+    </div>
+  );
+}
+
 function OutlineBlock({ row }: { row: OutlineRow }) {
   const { block } = row;
   const text = plain(block.text);
@@ -96,7 +107,7 @@ function OutlineBlock({ row }: { row: OutlineRow }) {
       );
     case 'table':
       return (
-        <div className={styles.tableBox}>
+        <SideScroll className={styles.tableBox}>
           <table className={`${styles.table} t-meta`}>
             <thead>
               <tr>
@@ -115,7 +126,7 @@ function OutlineBlock({ row }: { row: OutlineRow }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </SideScroll>
       );
     default: {
       const glyph = MEDIA_GLYPHS[block.kind];

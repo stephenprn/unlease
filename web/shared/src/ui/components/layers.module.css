@@ -204,6 +204,12 @@
 .sheetBody > .sheetPicker > :last-child > [data-scroller]:last-child {
   padding-bottom: calc(4px + var(--sheet-foot));
 }
+/* Its foot is the screen's own there: a plain cut, never the fade a popover's list takes at its foot. */
+.sheetBody > .sheetPicker > [data-scroller]:last-child[data-scroll-fade],
+.sheetBody > .sheetPicker > :last-child > [data-scroller]:last-child[data-scroll-fade] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 
 /* Side sheet: a link's details, beside its collection. */
 .side {
@@ -329,6 +335,11 @@
   overscroll-behavior: contain;
 }
 
+/* Faded (`useScrollEdges`), it is the root of every backdrop inside: it paints the popover's paper, so a field's frost finds it. */
+.popoverScroll[data-scroll-fade] {
+  background: var(--paper);
+}
+
 /* A menu: 6 in from its edge, so each row's press stays inside it. */
 .menu {
   min-width: 210px;
@@ -430,8 +441,8 @@
 /*
  * A dialog's frame (`DialogFrame`): the head and the actions stay, the body between them is the one
  * thing that scrolls, so its scrollbar runs from under the title to above the actions, clear of the
- * dialog's corners. The body fades and blurs under the head, and over the actions when there are
- * some, as far as it runs on beyond them (`useScrollEdges`), no hairline.
+ * dialog's corners. The head meets the body with a hairline once it runs on under it, and so do the
+ * actions when there are some (`useScrollEdges`): no fade, no shadow, no blur.
  */
 .frame {
   --frame-side: 24px;

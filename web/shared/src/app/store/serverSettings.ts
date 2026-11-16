@@ -8,7 +8,7 @@
 import { create } from 'zustand';
 
 import type { AppId } from '@unlease/core/apps';
-import { serverFeatures, type ServerFeature, type ServerSettings } from '@unlease/core/sync/settings';
+import { DEFAULT_WORK_DAYS, serverFeatures, type ServerFeature, type ServerSettings } from '@unlease/core/sync/settings';
 
 import { selectServerFeatureState, setServerApps, setServerFeatures, useSettingsStore, type FeatureState } from './settings';
 
@@ -32,6 +32,9 @@ interface ServerSettingsState {
 export const useServerSettingsStore = create<ServerSettingsState>(() => ({ settings: null, health: null }));
 
 export const selectServerSettings = (s: ServerSettingsState): ServerSettings | null => s.settings;
+
+/** The days the person works (Agenda's Administration), as the server last said this session: Monday to Friday until it has. */
+export const useWorkDays = (): readonly number[] => useServerSettingsStore(s => s.settings?.calendar.workDays ?? DEFAULT_WORK_DAYS);
 
 /** What the server answered: kept here, and the apps it runs remembered on this device. */
 export function setServerSettings(settings: ServerSettings | null): void {

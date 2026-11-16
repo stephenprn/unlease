@@ -27,6 +27,7 @@ import { KIND_ICONS } from '@notes/ui/features/links/kindIcon';
 import { declineEmoji, focusBlock, richHandle, setMenu, setMenuKeys, useEditorStore, type MenuState } from './editorStore';
 import { emojiCatalogueNow, emojiName, loadEmojiCatalogue, searchEmoji, type Emoji, type EmojiCatalogue } from './emojiSearch';
 import { Floating } from '@shared/ui/components/Floating';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import inline from './inline.module.css';
 import { placeAtom } from './inlineRuns';
 import { usePageContext } from './PageContext';
@@ -60,8 +61,10 @@ const EMOJI_COUNT = 8;
  * line; `details` says whether every row says what it holds after its name, or only the active one
  * (the blocks, whose names say enough).
  */
-function PickerList({ rows, active, onActive, empty, label, details = 'all' }: { rows: readonly Row[]; active: number; onActive: (index: number) => void; empty: string; label: string; details?: 'all' | 'active' }) {
+function PickerList({ rows, active, onActive, empty, label, details = 'all', underField = false }: { rows: readonly Row[]; active: number; onActive: (index: number) => void; empty: string; label: string; details?: 'all' | 'active'; underField?: boolean }) {
   const list = useRef<HTMLDivElement>(null);
+  // Rows past the panel's top or foot fade there, as far as they run on; a field over them meets them with a hairline instead.
+  useScrollEdgesOn(list, [rows.length === 0], underField ? { top: true, fade: 'bottom' } : { fade: 'y' });
   // The list alone scrolls to the active row: `scrollIntoView` would scroll the page too, the panel not being placed yet.
   useLayoutEffect(() => {
     const node = list.current;
@@ -381,7 +384,7 @@ function TargetPanel({ menu }: { menu: Extract<MenuState, { kind: 'target' }> })
           if (take(event.key)) event.preventDefault();
         }}
       />
-      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Nothing matches.')} label={t('Results')} />
+      <PickerList rows={rows} active={active} onActive={setActive} empty={t('Nothing matches.')} label={t('Results')} underField />
     </Floating>
   );
 }

@@ -5,7 +5,7 @@
  * and from the slip that follows a change of colours. The web's `ServicesCssDialog`.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CSS_SERVICES, cssServiceName, CUSTOM_CSS_WORDS, customCss, customCssKey, SERVICES_CSS_WORDS, type CssService } from '@unlease/design/customCss';
 import { SERVICE_PICTURE_WORDS, SERVICE_PICTURES, SERVICE_PICTURES_WORDS, servicePicture, type ServicePicture } from '@unlease/design/servicePictures';
@@ -14,7 +14,7 @@ import { selectServicesCssOpen, setServicesCssOpen, showSnack, useUiStore } from
 import { copyText } from '@shared/platform/clipboard';
 import { saveFile } from '@shared/platform/media';
 
-import { AppText, Button, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
+import { AppText, Button, EdgeScrollView, Organic, Sheet, SHEET_INSET, SheetScroll } from '../../components';
 import { useThemedStyles } from '../../theme/ThemeProvider';
 import type { Theme } from '../../theme/theme';
 
@@ -73,11 +73,12 @@ function ServiceSheet({ service, css }: { service: CssService; css: string }) {
       </View>
       <AppText variant="meta">{words.where}</AppText>
       <Organic outline="frame" style={styles.code}>
-        <ScrollView nestedScrollEnabled contentContainerStyle={styles.codePad}>
+        {/* Capped in its well: its ends fade while the sheet goes on past them. */}
+        <EdgeScrollView capped nestedScrollEnabled contentContainerStyle={styles.codePad}>
           <AppText selectable style={styles.codeText}>
             {css}
           </AppText>
-        </ScrollView>
+        </EdgeScrollView>
       </Organic>
       {service === 'seafile' ? <ServicePictures /> : null}
     </View>

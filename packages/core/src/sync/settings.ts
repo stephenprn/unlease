@@ -182,8 +182,9 @@ export const PAGES_ASK_DEFAULTS: PagesAskSettings = { enabled: false, everywhere
 
 /**
  * Agenda's settings on the server: the public holidays it fetches (from Nager.Date, a country and
- * maybe one of its regions, ISO 3166), the secret address its own events are published at
- * (iCalendar, for another calendar to subscribe to), and questions to Claude about the calendar.
+ * maybe one of its regions, ISO 3166), the days of the week the person works, the secret address its
+ * own events are published at (iCalendar, for another calendar to subscribe to), and questions to
+ * Claude about the calendar.
  */
 export interface CalendarSettings {
   readonly holidays: {
@@ -200,9 +201,23 @@ export interface CalendarSettings {
   readonly publishPath: string | null;
   /** Questions about the calendar may be asked of Claude (off until turned on). */
   readonly ask: boolean;
+  /**
+   * The days of the week the person works (0 Sunday … 6 Saturday, sorted), for every app and every
+   * device: Agenda leaves the others out of a working week, Clock's « Jours travaillés » rings on them.
+   */
+  readonly workDays: readonly number[];
 }
 
-export const CALENDAR_DEFAULTS: CalendarSettings = { holidays: { country: null, region: null }, publishPath: null, ask: false };
+/** Monday to Friday, until the person says otherwise. */
+export const DEFAULT_WORK_DAYS: readonly number[] = [1, 2, 3, 4, 5];
+
+export const CALENDAR_DEFAULTS: CalendarSettings = { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: DEFAULT_WORK_DAYS };
+
+/** Days of the week as stored: each once, 0 to 6, sorted; null when it is not a list of them. */
+export function parseWorkDays(value: unknown): number[] | null {
+  if (!Array.isArray(value) || value.length > 7 || !value.every(day => Number.isInteger(day) && day >= 0 && day <= 6)) return null;
+  return [...new Set(value as number[])].sort((a, b) => a - b);
+}
 
 /** A country or a region code as Nager.Date writes them. */
 export const COUNTRY_PATTERN = /^[A-Z]{2}$/;
@@ -214,23 +229,26 @@ export interface CalendarPatch {
   /** true publishes (keeping the address it had), false unpublishes, `renew` makes a new address (the old one stops working). */
   readonly publish?: boolean | 'renew';
   readonly ask?: boolean;
+  readonly workDays?: readonly number[];
 }
 
 export function parseCalendarSettings(value: unknown): CalendarSettings {
-  const raw = (typeof value === 'object' && value !== null ? value : {}) as { holidays?: { country?: unknown; region?: unknown }; publishPath?: unknown; ask?: unknown };
+  const raw = (typeof value === 'object' && value !== null ? value : {}) as { holidays?: { country?: unknown; region?: unknown }; publishPath?: unknown; ask?: unknown; workDays?: unknown };
   const country = typeof raw.holidays?.country === 'string' && COUNTRY_PATTERN.test(raw.holidays.country) ? raw.holidays.country : null;
   const region = country && typeof raw.holidays?.region === 'string' && REGION_PATTERN.test(raw.holidays.region) && raw.holidays.region.startsWith(`${country}-`) ? raw.holidays.region : null;
   return {
     holidays: { country, region },
     publishPath: typeof raw.publishPath === 'string' && /^\/ical\/[A-Za-z0-9_-]{16,128}\.ics$/.test(raw.publishPath) ? raw.publishPath : null,
     ask: raw.ask === true,
+    // A server older than working days says none: Monday to Friday.
+    workDays: parseWorkDays(raw.workDays) ?? DEFAULT_WORK_DAYS,
   };
 }
 
 export function parseCalendarPatch(value: unknown): CalendarPatch | null {
   if (typeof value !== 'object' || value === null) return null;
-  const raw = value as { holidays?: unknown; publish?: unknown; ask?: unknown };
-  const out: { holidays?: CalendarPatch['holidays']; publish?: CalendarPatch['publish']; ask?: boolean } = {};
+  const raw = value as { holidays?: unknown; publish?: unknown; ask?: unknown; workDays?: unknown };
+  const out: { holidays?: CalendarPatch['holidays']; publish?: CalendarPatch['publish']; ask?: boolean; workDays?: number[] } = {};
   if (raw.holidays !== undefined) {
     const h = raw.holidays as { country?: unknown; region?: unknown } | null;
     if (typeof h !== 'object' || h === null) return null;
@@ -247,6 +265,11 @@ export function parseCalendarPatch(value: unknown): CalendarPatch | null {
   if (raw.ask !== undefined) {
     if (typeof raw.ask !== 'boolean') return null;
     out.ask = raw.ask;
+  }
+  if (raw.workDays !== undefined) {
+    const days = parseWorkDays(raw.workDays);
+    if (days === null) return null;
+    out.workDays = days;
   }
   return out;
 }

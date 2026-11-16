@@ -1,6 +1,6 @@
 # The suite's Android apps, one APK each (Carnet, Pages, Contacts, Agenda), every ABI in one file, with its SHA-256:
 #   by hand (Actions > Android > Run workflow)  -> workflow artifacts, to try a branch
-#   a release (release.yml, after the checks)   -> attached to the release as carnet-vX.Y.Z.apk, pages-vX.Y.Z.apk, contacts-vX.Y.Z.apk, agenda-vX.Y.Z.apk
+#   a release (release.yml, after the checks)   -> attached to the release as carnet-vX.Y.Z.apk, pages-vX.Y.Z.apk, contacts-vX.Y.Z.apk, agenda-vX.Y.Z.apk, clock-vX.Y.Z.apk
 #
 # All are signed with the same key: they share a connection on the phone (a signature permission).
 #
@@ -43,6 +43,7 @@ jobs:
           - { app: pages, name: Pages, file: pages }
           - { app: contacts, name: Contacts, file: contacts }
           - { app: calendar, name: Agenda, file: agenda }
+          - { app: clock, name: Clock, file: clock }
     defaults:
       run:
         working-directory: mobile/${{ matrix.app }}

@@ -17,7 +17,8 @@ import { SHEET_INSET } from './Sheet';
 /**
  * A footer's top edge (a form's actions, a toolbar, a composer): one firm rule across its whole
  * width, where what scrolls above it stops. A scroller's foot never fades on the phone (`ScrollEdges`):
- * this line is where it ends, the same on every footer. Material's divider: 1, in the hairline's ink.
+ * this line is where it ends, the same on every footer, and the same as a head's at the scroller's
+ * top once content goes under it. Material's divider: 1, in the hairline's ink.
  */
 export function footEdge(theme: Theme): ViewStyle {
   return { borderTopWidth: 1, borderTopColor: theme.color.hairline };

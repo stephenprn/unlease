@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { DEFAULT_APPEARANCE, parseAppearance, type Appearance } from '@unlease/design/appearance';
 import { isLocale, setLocale, type Locale } from '@unlease/core/i18n';
 import { isAppId, type AppId } from '@unlease/core/apps';
-import { isClaudeModel, parseEnabledApps, parsePagesAsk, parseServerFeatures, serverFeatures, type ClaudeModel, type PagesAskSettings, type ServerFeature, type ServerFeatures, type ServerSettings } from '@unlease/core/sync/settings';
+import { DEFAULT_WORK_DAYS, isClaudeModel, parseEnabledApps, parsePagesAsk, parseServerFeatures, parseWorkDays, serverFeatures, type ClaudeModel, type PagesAskSettings, type ServerFeature, type ServerFeatures, type ServerSettings } from '@unlease/core/sync/settings';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { deviceLanguage } from '@shared/platform/locale';
 
@@ -42,6 +42,8 @@ export interface SettingsState {
   readonly pagesAsk: PagesAskSettings | null;
   /** The questions about the calendar, as the server last said: Agenda shows « Demander à Claude » while they are on. */
   readonly calendarAsk: boolean;
+  /** The days the person works, as the server last said (Agenda's Administration): Monday to Friday until then. */
+  readonly workDays: readonly number[];
   /** The apps the server runs, as it last said; null until it has (or from a server older than the suite). */
   readonly apps: readonly AppId[] | null;
   /** The paper's tooth on every sheet and note (widgets keep theirs); the ground's film grain is the appearance's. */
@@ -71,6 +73,7 @@ const DEFAULTS: SettingsState = {
   model: 'claude-opus-5-5',
   pagesAsk: null,
   calendarAsk: false,
+  workDays: DEFAULT_WORK_DAYS,
   apps: null,
   grain: true,
   grainAt: 0,
@@ -134,6 +137,10 @@ export const selectServerRuns =
     s.server === null || s.apps === null || s.apps.includes(app);
 /** What a page's « Demander à Claude » may do, once the server offers it and Claude has a key; null: the pages show nothing of it. */
 export const selectPagesAsk = (s: SettingsState): PagesAskSettings | null => (s.server !== null && s.reading === true && s.pagesAsk?.enabled ? s.pagesAsk : null);
+
+/** The days the person works (Agenda's Administration), Monday to Friday until the server says. */
+export const selectWorkDays = (s: SettingsState): readonly number[] => s.workDays;
+
 /** Agenda's « Demander à Claude » shows: the server offers the questions and Claude has a key. */
 export const selectCalendarAsk = (s: SettingsState): boolean => s.server !== null && s.reading === true && s.calendarAsk;
 
@@ -159,6 +166,7 @@ export function loadSettings(): void {
     model: isClaudeModel(stored.model) ? stored.model : DEFAULTS.model,
     pagesAsk: typeof stored.pagesAsk === 'object' && stored.pagesAsk !== null ? parsePagesAsk(stored.pagesAsk) : null,
     calendarAsk: stored.calendarAsk === true,
+    workDays: parseWorkDays(stored.workDays) ?? DEFAULT_WORK_DAYS,
     apps: parseEnabledApps(stored.apps),
     grain: stored.grain !== false,
     grainAt: typeof stored.grainAt === 'number' && Number.isFinite(stored.grainAt) ? stored.grainAt : 0,
@@ -197,6 +205,7 @@ export function rememberServerSettings(settings: ServerSettings): void {
   save('model', settings.analysis.model);
   save('pagesAsk', settings.pages);
   save('calendarAsk', settings.calendar.ask);
+  if (settings.calendar.workDays.join() !== useSettingsStore.getState().workDays.join()) save('workDays', settings.calendar.workDays);
   setServerApps(settings.apps.enabled);
 }
 
@@ -309,6 +318,7 @@ export function setServer(config: ServerConfig | null): void {
     save('serverFeatures', {});
     save('pagesAsk', null);
     save('calendarAsk', false);
+    save('workDays', DEFAULT_WORK_DAYS);
     save('apps', null);
     return;
   }

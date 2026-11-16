@@ -2,19 +2,23 @@
  * Contacts' root in the real app: a fresh install opens on the suite's first run with Contacts' brand
  * (a sibling's connection offered in one tap), an onboarded one on the list (its letters, its
  * favourites, its search), covered by « Activer Contacts » when the server does not run it;
- * `unlease-contacts://` links open a contact, the form, the favourites and a label.
+ * `unlease-contacts://` links open a contact, the form, the favourites and a label; « Nettoyer les
+ * contacts » counts what each tool finds and fixes what is ticked.
  */
-import { Linking } from 'react-native';
+import { FlatList, Linking } from 'react-native';
 import { act, type ReactTestInstance } from 'react-test-renderer';
 import type { NavigationState, PartialState } from '@react-navigation/native';
 
 import { syncedTypes } from '@shared/app/store/library';
 import { setServer, setServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
 import { createContact, createLabel, type ContactDraft } from '@app/store/actions';
+import { setRegion } from '@app/store/contactsUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { linking, listPath } from '@ui/navigation/RootNavigator';
 import { navigationRef } from '@ui/navigation/navigationRef';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
+import { groupLetter } from '@unlease/contacts/services/names';
+import { landing, layOutSheet } from '@ui/features/contacts/sheetLayout';
 
 import { state as suite, __reset as resetSuite } from '../../../../../shared/__mocks__/NativeSuiteLink';
 import { answer, boot, fakeFetch, inputs, pressableWithText, pressables, SETTINGS, settle, textOf, unmountAll } from './harness';
@@ -43,6 +47,9 @@ const person = (firstName: string, lastName: string, more: Partial<ContactDraft>
   ...more,
 });
 
+/** The letter a contact is filed under in the list (by first name, the default order). */
+const listLetter = (id: string): string => groupLetter(useLibraryStore.getState().contacts[id]!, 'firstName');
+
 /** The route a state leads to, nested or not. */
 function leaf(state: PartialState<NavigationState> | NavigationState | undefined): { name: string; params?: object } | undefined {
   const route = state?.routes[state.index ?? state.routes.length - 1];
@@ -68,7 +75,7 @@ describe('Contacts, its root', () => {
     suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://suite.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.agenda']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.clock']);
     expect(textOf(tree)).toContain('Contacts');
     await act(async () => {
       pressables(tree, 'Utiliser la connexion de Pages')[0]!.props.onPress();
@@ -110,6 +117,56 @@ describe('Contacts, its root', () => {
     expect(textOf(tree)).toMatch(/1\srésultat/);
     expect(textOf(tree)).toContain('Léa Martin');
     expect(textOf(tree)).not.toContain('Bruno Petit');
+  });
+
+  it('files everyone on one sheet, each letter a band over its people: a heading once per letter for TalkBack, the rail landing its band at the top', async () => {
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        createContact(person('Aline', 'Arnaud'));
+        createContact(person('Bastien', 'Bertrand'));
+        createContact(person('Benoît', 'Blanc'));
+        createContact(person('Camille', 'Chevalier'));
+      },
+    });
+    // TalkBack meets each letter once, as a heading, before its first person.
+    const headings = tree.root.findAll(node => node.props.accessibilityRole === 'header' && /^[A-Z#]$/.test(String(node.props.accessibilityLabel ?? '')), { deep: false });
+    expect(headings.map(node => node.props.accessibilityLabel)).toEqual(['A', 'B', 'C']);
+    const order = tree.root
+      .findAll(node => (node.props.accessibilityRole === 'header' || node.props.accessibilityRole === 'link') && typeof node.props.accessibilityLabel === 'string', { deep: false })
+      .map(node => node.props.accessibilityLabel as string)
+      .filter(label => /^[A-Z]$/.test(label) || label.includes(' '));
+    expect(order.slice(order.indexOf('A'))).toEqual(['A', 'Aline Arnaud', 'B', 'Bastien Bertrand', 'Benoît Blanc', 'C', 'Camille Chevalier']);
+    // The bands drawn over the list are out of its way: the headings say them.
+    const bands = tree.root.findAll(node => node.props.importantForAccessibility === 'no-hide-descendants' && node.findAll(child => child.children.includes('C')).length > 0, { deep: false });
+    expect(bands).toHaveLength(1);
+    expect(bands[0]!.props.accessibilityElementsHidden).toBe(true);
+    // No letter takes a row of its own: the list holds people only.
+    const flat = tree.root.find(node => node.type === FlatList && Array.isArray(node.props.data) && node.props.data.length === 4);
+    expect((flat.props.data as { id: string }[]).every(row => useLibraryStore.getState().contacts[row.id])).toBe(true);
+
+    // The rail lands a letter at the list's top (under the header, here unmeasured), its band pinned under the head's line.
+    const jump = jest.spyOn(flat.instance as FlatList, 'scrollToOffset').mockImplementation(() => {});
+    const rail = tree.root.find(node => node.props.accessibilityRole === 'adjustable' && typeof node.props.onAccessibilityAction === 'function');
+    await act(async () => {
+      rail.props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } });
+    });
+    const sheet = layOutSheet((flat.props.data as { id: string; heading: string | null }[]).map(row => ({ id: row.id, letter: listLetter(row.id) })));
+    expect(jump).toHaveBeenLastCalledWith({ offset: landing(sheet.letters[1]!), animated: false });
+    expect(landing(sheet.letters[1]!)).toBe(95);
+    expect(tree.root.find(node => node.props.accessibilityRole === 'adjustable' && typeof node.props.onAccessibilityAction === 'function').props.accessibilityValue).toEqual({ text: 'B' });
+    await act(async () => {
+      rail.props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } });
+    });
+    expect(jump).toHaveBeenLastCalledWith({ offset: landing(sheet.letters[2]!), animated: false });
+
+    // What a search finds lies on the sheet without the bands: no letters, no rail.
+    await act(async () => {
+      inputs(tree, 'Rechercher')[0]!.props.onChangeText('Be');
+    });
+    expect(tree.root.findAll(node => node.props.accessibilityRole === 'header' && /^[A-Z#]$/.test(String(node.props.accessibilityLabel ?? '')), { deep: false })).toHaveLength(0);
+    expect(tree.root.findAll(node => node.props.accessibilityRole === 'adjustable' && typeof node.props.onAccessibilityAction === 'function')).toHaveLength(0);
+    expect(textOf(tree)).toContain('Bastien Bertrand');
   });
 
   it('narrows the list to a label from the drawer’s place', async () => {
@@ -257,5 +314,40 @@ describe('Contacts, its root', () => {
     expect(contacts[lea]!.deletedAt).not.toBeNull();
     expect(contacts[paul]!.deletedAt).toBeNull();
     expect(navigationRef.getCurrentRoute()?.name).toBe('Contacts');
+  });
+  it('tidies from Réglages › Données › « Nettoyer les contacts »: each tool’s count, its changes shown, the ticked ones fixed in one batch', async () => {
+    let lea = '';
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        setRegion('FR');
+        lea = createContact(person('LÉA', 'MARTIN', { phones: [{ id: 'p1', number: '0612345678', kind: 'mobile', label: '' }] }));
+      },
+    });
+    await act(async () => {
+      (navigationRef.navigate as (...a: unknown[]) => void)('Settings');
+    });
+    await settle();
+    await act(async () => {
+      pressableWithText(tree, 'Nettoyer les contacts').props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Cleanup');
+    const place = textOf(tree);
+    expect(place).toContain('1\u00a0numéro sans indicatif');
+    expect(place).toContain('1\u00a0nom à corriger');
+    expect(place).toContain('Rien à corriger');
+    await act(async () => {
+      pressableWithText(tree, 'Indicatifs').props.onPress();
+    });
+    await settle();
+    expect(navigationRef.getCurrentRoute()?.name).toBe('CleanupTool');
+    expect(textOf(tree)).toContain('+33 6 12 34 56 78');
+    await act(async () => {
+      pressableWithText(tree, 'Corriger (1)').props.onPress();
+    });
+    await settle();
+    expect(useLibraryStore.getState().contacts[lea]!.phones[0]!.number).toBe('+33 6 12 34 56 78');
+    expect(textOf(tree)).toContain('Tout est en ordre');
   });
 });

@@ -4,7 +4,6 @@ import type { Dictionary } from '@unlease/core/i18n';
 export const FR_TODAY: Dictionary = {
   'In {span}': 'Dans {span}',
   '{span} left': 'Encore {span}',
-  'Today: your day at a glance': 'Aujourd’hui : la journée d’un coup d’œil',
   'Now, {clock}': 'Maintenant, {clock}',
   'Nothing planned today: the day is yours.': 'Rien de prévu aujourd’hui : la journée est à vous.',
   'Overdue': 'En retard',

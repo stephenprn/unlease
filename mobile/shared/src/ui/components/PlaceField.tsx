@@ -17,7 +17,7 @@ import { corners } from '../theme/shape';
 import { useTheme } from '../theme/ThemeProvider';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
-import { openPlaceSearch } from './PlaceSearch';
+import { openPlaceSearch, type PersonPlace } from './PlaceSearch';
 import { Tappable } from './Tappable';
 import type { FieldBinding } from './useForm';
 
@@ -39,10 +39,11 @@ export interface PlaceFieldProps {
 }
 
 /** Opens the place search for a value, and hands back what was chosen. */
-export function searchPlace(request: { value: string; known?: readonly Place[]; label: string; onChangeText: (value: string) => void; onPick?: (place: Place) => void }): void {
+export function searchPlace(request: { value: string; known?: readonly Place[]; people?: readonly PersonPlace[]; label: string; onChangeText: (value: string) => void; onPick?: (place: Place) => void }): void {
   openPlaceSearch({
     value: request.value,
     known: request.known ?? [],
+    people: request.people,
     label: request.label,
     onDone: (text, place) => {
       request.onChangeText(text);

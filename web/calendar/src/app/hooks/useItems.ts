@@ -58,6 +58,7 @@ function made(key: string, title: string, start: string, end: string): CalendarE
     uid: '',
     url: '',
     color: null,
+    dayOff: false,
     trashedAt: null,
     createdAt: 0,
     deletedAt: null,
@@ -110,14 +111,15 @@ export function useItems(from: string, to: string): readonly Occurrence[] {
   }, [events, labels, feeds, prefs, contacts, notes, blocks, from, to]);
 }
 
-/** The colour an occurrence is painted in; null: the device's primary. */
-export function useColorOf(): (item: Occurrence) => LineColor | null {
+/** The colour an occurrence is painted in: its own, a label's, a calendar's, a layer's, else Réglages' colour for your events. */
+export function useColorOf(): (item: Occurrence) => LineColor {
   const { labels, feeds } = useCalendarStore();
+  const own = usePrefsStore(s => s.ownColor);
   return useMemo(
     () => (item: Occurrence) => {
       const kind = kindOf(item.key);
-      return kind === 'event' ? eventColor(item.event, labels, feeds) : LAYER_COLORS[kind];
+      return kind === 'event' ? eventColor(item.event, labels, feeds, own) : LAYER_COLORS[kind];
     },
-    [labels, feeds],
+    [labels, feeds, own],
   );
 }

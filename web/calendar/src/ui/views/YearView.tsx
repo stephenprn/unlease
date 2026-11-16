@@ -14,7 +14,8 @@ import { MiniMonth } from './MiniMonth';
 
 export function YearView({ day, items, today }: { day: string; items: readonly Occurrence[]; today: string }) {
   const weekStart = usePrefsStore(s => s.weekStart);
-  const yearEdges = useScrollEdges({ top: true });
+  // Months past the panel's top or foot fade there, as far as they run on.
+  const yearEdges = useScrollEdges({ fade: 'y' });
   const year = Number(day.slice(0, 4));
   const busy = useMemo(() => {
     const out = new Set<string>();

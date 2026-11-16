@@ -51,7 +51,7 @@ export class Administration {
     const counts = countsOf(this.options.apps);
     const files = this.options.blobs.totals();
     return {
-      server: { version: this.options.version, notes: counts.notes, pages: counts.pages, contacts: counts.contacts, events: counts.events, files: files.count, fileBytes: files.bytes },
+      server: { version: this.options.version, notes: counts.notes, pages: counts.pages, contacts: counts.contacts, events: counts.events, alarms: counts.alarms, files: files.count, fileBytes: files.bytes },
       backup: this.backups.status(),
       drive: this.drive.status(),
       restore: this.restore.status(),

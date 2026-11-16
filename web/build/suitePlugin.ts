@@ -9,8 +9,8 @@
  *    app's `index.html`;
  *  - each app's manifest and icons, served in dev and emitted in its build.
  *
- * Each app is its own web app (`notes/index.html`, `pages/index.html`, `contacts/index.html`), built
- * on its own under its own path (`/notes/`, `/pages/`, `/contacts/`). The dev server serves them all at once, as the server does, so a link
+ * Each app is its own web app (`notes/index.html`, `pages/index.html`, `contacts/index.html`, `clock/index.html`…), built
+ * on its own under its own path (`/notes/`, `/pages/`, `/contacts/`, `/clock/`…). The dev server serves them all at once, as the server does, so a link
  * from one into the other works there too: an app's address that is no file gets its page, and `/`
  * goes to Carnet.
  *
@@ -32,7 +32,7 @@ const TOKENS_ID = 'virtual:unlease/tokens.css';
 const TOKENS_RESOLVED = '/__unlease-tokens.css';
 
 /** Every app with a web app of its own, in the suite's order. */
-export const WEB_APPS: readonly WebApp[] = ['notes', 'pages', 'contacts', 'calendar'];
+export const WEB_APPS: readonly WebApp[] = ['notes', 'pages', 'contacts', 'calendar', 'clock'];
 
 let generated: Promise<Generated> | null = null;
 

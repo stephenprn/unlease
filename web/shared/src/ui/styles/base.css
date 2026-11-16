@@ -29,6 +29,8 @@
   --field-frost: blur(14px) saturate(1.1);
   /* How far a scroller's edge fades, at most, while content lies beyond it (`useScrollEdges`: its EDGE_FADE). */
   --edge-fade: 24px;
+  /* How far the caret and what takes focus stay clear of a bar's hairline (`useScrollEdges`: its EDGE_ROOM). */
+  --edge-room: 8px;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
   --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
@@ -258,73 +260,130 @@ body {
 }
 
 /*
- * Scrolled content's edges (`useScrollEdges`, scrollEdges.ts): where content slides under something
- * that stays (a head, a foot, a bar), it dissolves over `--edge-fade` on an eased curve (a cosine
- * ease-in-out, sampled: a straight ramp shows where it starts and ends), as strongly as content lies
- * beyond that edge (`--edge-above-k`, `--edge-below-k`, 0 to 1). No blur: a single blur stops on a
- * line of its own. It follows the scroll, never a transition.
+ * Scrolled content's edges (`useScrollEdges`, scrollEdges.ts). Under a bar or a head (and over a
+ * foot), a hairline: the scroller's own 1px border in the hairline ink, as strong as content has gone
+ * under it (`--edge-above-k`, `--edge-below-k`, 0 to 1, eased in over the first few px), invisible at
+ * rest; no fade, no shadow, no blur there. Where content runs on inside a bounded box with nothing at
+ * that edge (a strip that scrolls sideways, a list capped in a card, a menu, a popover), a fade over
+ * `--edge-fade` on an eased curve (a cosine ease-in-out, sampled: a straight ramp shows where it
+ * starts and ends), as strongly as content lies beyond (`--fade-*-k`). No blur: a single blur stops
+ * on a line of its own. Both follow the scroll, never a transition.
  */
-/* The page brings what takes focus (or the caret) into view clear of the header and of its fade. */
+/* The page brings what takes focus (or the caret) into view clear of the header and its hairline. */
 html {
-  scroll-padding-top: calc(var(--header-height, 64px) + var(--edge-fade));
+  scroll-padding-top: calc(var(--header-height, 64px) + var(--edge-room));
 }
 
-[data-scroll-edges] {
+[data-scroll-edges][data-edge-top] {
+  border-top: 1px solid color-mix(in srgb, var(--hairline) calc(var(--edge-above-k, 0) * 100%), transparent);
+}
+
+[data-scroll-edges][data-edge-bottom] {
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) calc(var(--edge-below-k, 0) * 100%), transparent);
+}
+
+[data-scroll-fade='y'] {
   -webkit-mask-image: linear-gradient(
     to bottom,
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 1)) 0,
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
-    rgb(0 0 0 / 1) calc(var(--edge-fade) * 1),
-    rgb(0 0 0 / 1) calc(100% - var(--edge-fade) * 1),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 1)) 100%
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 1)) 0,
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
+    rgb(0 0 0 / 1) var(--edge-fade),
+    rgb(0 0 0 / 1) calc(100% - var(--edge-fade)),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 1)) 100%
   );
   mask-image: linear-gradient(
     to bottom,
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 1)) 0,
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
-    rgb(0 0 0 / calc(1 - var(--edge-above-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
-    rgb(0 0 0 / 1) calc(var(--edge-fade) * 1),
-    rgb(0 0 0 / 1) calc(100% - var(--edge-fade) * 1),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
-    rgb(0 0 0 / calc(1 - var(--edge-below-k, 0) * 1)) 100%
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 1)) 0,
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-above-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
+    rgb(0 0 0 / 1) var(--edge-fade),
+    rgb(0 0 0 / 1) calc(100% - var(--edge-fade)),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-below-k, 0) * 1)) 100%
   );
 }
 
-/* Its own keyboard focus (a scroller takes the tab in Chromium) as an inset ring: the mask cuts anything drawn outside it. */
+[data-scroll-fade='x'] {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 1)) 0,
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
+    rgb(0 0 0 / 1) var(--edge-fade),
+    rgb(0 0 0 / 1) calc(100% - var(--edge-fade)),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 1)) 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 1)) 0,
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.962)) calc(var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.854)) calc(var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.691)) calc(var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.5)) calc(var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.309)) calc(var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.146)) calc(var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-left-k, 0) * 0.038)) calc(var(--edge-fade) * 0.875),
+    rgb(0 0 0 / 1) var(--edge-fade),
+    rgb(0 0 0 / 1) calc(100% - var(--edge-fade)),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.038)) calc(100% - var(--edge-fade) * 0.875),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.146)) calc(100% - var(--edge-fade) * 0.75),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.309)) calc(100% - var(--edge-fade) * 0.625),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.5)) calc(100% - var(--edge-fade) * 0.5),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.691)) calc(100% - var(--edge-fade) * 0.375),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.854)) calc(100% - var(--edge-fade) * 0.25),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 0.962)) calc(100% - var(--edge-fade) * 0.125),
+    rgb(0 0 0 / calc(1 - var(--fade-right-k, 0) * 1)) 100%
+  );
+}
+
+/* Its own keyboard focus (a scroller takes the tab in Chromium) as an inset ring: a mask cuts anything drawn outside it. */
 [data-scroll-edges]:focus-visible {
   outline-offset: -2px;
 }
 
 /*
- * A scroller holding fields paints its sheet itself, grain and all (`--scroll-sheet`, the wall by
- * default; the grain's own strength, as `.paper::before` lays it): its mask makes it the root of
- * every backdrop inside, so a field's frost would otherwise find nothing behind it to blur.
+ * A faded scroller holding fields paints its sheet itself, grain and all (`--scroll-sheet`, the wall
+ * by default; the grain's own strength, as `.paper::before` lays it): its mask makes it the root of
+ * every backdrop inside, so a field's frost would otherwise find nothing behind it to blur. A
+ * scroller under a hairline has no mask, and needs none.
  */
-[data-scroll-edges][data-scroll-sheet] {
+[data-scroll-fade][data-scroll-sheet] {
   --scroll-veil: color-mix(in srgb, var(--scroll-sheet, var(--wall)) calc(100% - var(--grain) * 100%), transparent);
   background:
     linear-gradient(var(--scroll-veil), var(--scroll-veil)),

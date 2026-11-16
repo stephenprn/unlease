@@ -56,13 +56,16 @@ describe('Agenda’s calendars, one alone', () => {
     render(<App />);
     await screen.findByRole('checkbox', { name: 'Cinéma du quartier' });
     const before = ticks();
-    expect(before).toContain('Dates des pages (Pages)=false');
+    expect(before).toContain('Dates des pages=false');
+    // What another app lays is named for what it is, its app at its row's end and in its description.
+    expect(screen.getByRole('checkbox', { name: 'Anniversaires' })).toHaveAccessibleDescription('Contacts');
+    expect(screen.getByRole('checkbox', { name: 'Rappels' })).toHaveAccessibleDescription('Carnet');
 
     await user.click(screen.getByRole('button', { name: 'Plus d’actions pour Cinéma du quartier' }));
     const menu = await screen.findByRole('menu', { name: 'Actions pour Cinéma du quartier' });
     expect(within(menu).queryByRole('menuitem', { name: /Tout afficher/ })).toBeNull();
     await user.click(within(menu).getByRole('menuitem', { name: /Afficher uniquement celui-ci/ }));
-    expect(ticks()).toBe('Mes événements=false | Travail=false | Jours fériés=false | Cinéma du quartier=true | Anniversaires (Contacts)=false | Rappels de Carnet=false | Dates des pages (Pages)=false | Météo=false');
+    expect(ticks()).toBe('Mes événements=false | Travail=false | Jours fériés=false | Cinéma du quartier=true | Anniversaires=false | Rappels=false | Dates des pages=false | Météo=false');
     // A subscription's is its record's, synced; one's own, the labels and the layers this browser's.
     expect(useCalendarStore.getState().feeds.holidays!.hidden).toBe(true);
     expect(usePrefsStore.getState().hideOwn).toBe(true);

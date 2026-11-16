@@ -17,6 +17,7 @@ import inputs from '@shared/ui/components/controls.module.css';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from './editor.module.css';
 import { arrowKeys } from '@shared/ui/components/radioKeys';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 
 function at(day: Date, hour: number, minute = 0): number {
   const date = new Date(day);
@@ -146,10 +147,12 @@ function CustomChips({ current, now, onSet }: { current: number | null; now: num
   });
   const chosen = at(days[day]!, hour, minute);
   const indexes = days.map((_, index) => index);
+  // Days past a side fade there, as far as they run on.
+  const strip = useScrollEdges({ fade: 'x' });
   return (
     <div className={styles.when}>
       <h3 className="t-meta-strong">{t('Day')}</h3>
-      <div className={styles.days} role="radiogroup" aria-label={t('Day')} onKeyDown={arrowKeys(indexes, day, setDay, String)}>
+      <div ref={strip} className={styles.days} role="radiogroup" aria-label={t('Day')} onKeyDown={arrowKeys(indexes, day, setDay, String)}>
         {days.map((date, index) => (
           <button
             key={index}

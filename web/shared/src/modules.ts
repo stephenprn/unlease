@@ -150,6 +150,12 @@ export interface AppCommand {
 /** In a shortcut's keys, ⌘ on a Mac and Ctrl elsewhere, named where shown. */
 export const MOD_KEY = 'Mod';
 
+/** In a shortcut's keys, ⌥ on a Mac and Alt elsewhere. */
+export const ALT_KEY = 'Alt';
+
+/** In a shortcut's keys, the second key of a chord that is ⌘⌥ on a Mac and Ctrl+Shift elsewhere (where Ctrl+Alt is AltGr, which types): ⌥ there, Shift here. */
+export const MOD_ALT_KEY = 'ModAlt';
+
 /**
  * A row of the shortcuts dialog: the keys pressed together, then what they do (English, `tx`, read
  * where shown). A key is shown as written (`J`, `↑`, `#`), but for `MOD_KEY`

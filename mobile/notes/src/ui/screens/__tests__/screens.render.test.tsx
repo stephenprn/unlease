@@ -3,7 +3,7 @@
  * and the real navigator.
  */
 import React from 'react';
-import { Linking, TextInput } from 'react-native';
+import { Linking, StyleSheet, TextInput } from 'react-native';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
@@ -20,6 +20,7 @@ import { formatHlc } from '@unlease/core/sync/hlc';
 import { writeFields } from '@unlease/core/sync/record';
 import { AppProviders } from '@app/providers/AppProviders';
 import { navigationRef } from '@ui/navigation/navigationRef';
+import { EDGE_FADE, HEAD_LINE_ID } from '@shared/ui/components/ScrollEdges';
 import type { RootStackParamList } from '@ui/navigation/types';
 
 jest.useFakeTimers();
@@ -222,6 +223,29 @@ describe('the board head and the drawer', () => {
     });
     expect(textOf(tree)).not.toContain('Hors ligne');
     expect(textOf(tree)).not.toContain('Le serveur refuse le jeton.');
+  });
+
+  it('meets the wall with the strip’s line once notes go under it, never a fade, and fades the collections’ strip at its sides', async () => {
+    const tree = await boot(true, seedLibrary);
+    // The native views around the scrollers (plain Views under Jest), each with what it holds.
+    const edges = tree.root.findAll(node => typeof node.type === 'string' && node.props.length === EDGE_FADE && 'fadeStart' in node.props);
+    const holding = (text: string) => edges.filter(node => textIn(node).includes(text));
+    const wall = holding('Code du portail').find(node => node.props.horizontal === false)!;
+    expect(wall.props).toMatchObject({ top: true, fadeStart: false, fadeEnd: false });
+    const line = () => StyleSheet.flatten(wall.findAll(node => typeof node.type === 'string' && node.props.testID === HEAD_LINE_ID)[0]!.props.style) as { opacity: number };
+    expect(line().opacity).toBe(0);
+    await act(async () => {
+      wall.props.onUnder({ nativeEvent: { under: true } });
+    });
+    expect(line().opacity).toBe(1);
+    await act(async () => {
+      wall.props.onUnder({ nativeEvent: { under: false } });
+    });
+    expect(line().opacity).toBe(0);
+    // The collections' chips, sideways at the wall's head: both sides fade while chips continue past them, no line.
+    const chips = holding('Films').find(node => node.props.horizontal === true)!;
+    expect(chips.props).toMatchObject({ top: false, fadeStart: true, fadeEnd: true });
+    expect(chips.findAll(node => typeof node.type === 'string' && node.props.testID === HEAD_LINE_ID)).toHaveLength(0);
   });
 
   it('lists "Non classé" in the drawer only while a link waits in it', async () => {

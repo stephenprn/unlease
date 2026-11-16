@@ -1,5 +1,5 @@
 /**
- * « Aujourd'hui »: the day at a glance, a calm list on the ground. The weather when its layer is on;
+ * « Ma journée »: the day at a glance, a calm list on the ground. The weather when its layer is on;
  * what takes the whole day (birthdays, all-day events, a page's day); then what has a time, in time
  * order, what is over in the second ink, what runs a weight up and what comes next saying how long
  * (« Encore 25 min », « Dans 20 min »), the now line between them; an empty day says so and offers
@@ -21,20 +21,17 @@ import { birthdayTitle, clockWords, weekdayDay } from '@unlease/calendar/service
 import type { ReminderItem } from '@unlease/calendar/services/layers';
 import { overdueWords, rowStateWords, rowTimeWords, weatherPlaces, weatherWords, type DayItem, type DayRow } from '@unlease/calendar/services/today';
 import { weatherKind } from '@unlease/calendar/services/weather';
-import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
-import { pebbleTurnOf } from '@unlease/design/pebbles';
 import { SHAPES } from '@unlease/design/shapes';
 import { useTodayPlan } from '@app/hooks/useTodayPlan';
 import { useWeather } from '@app/hooks/useWeather';
 
-import { AppText, Button, EdgeScrollView, EmptyLine, EmptyState, FAB_CLEARANCE, Icon, Organic, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyLine, EmptyState, FAB_CLEARANCE, Icon, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
 import { listIn, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
-
-const LAYER_GLYPHS: Readonly<Record<Exclude<DayItem['kind'], 'event'>, GlyphName>> = { birthday: 'cake', reminder: 'bell', page: 'page' };
+import { ItemMark } from './ItemMark';
 
 export interface TodayViewProps {
   readonly today: string;
@@ -65,19 +62,6 @@ function titleOf(item: DayItem): string {
       return item.page.title || t('Untitled');
   }
 }
-
-/** A row's mark: an event's calendar stone in its colour, a layer's glyph in its pigment, a page's emoji. */
-function Lead({ item }: { item: DayItem }) {
-  const theme = useTheme();
-  if (item.kind === 'event') {
-    return <Organic pebble={pebbleTurnOf(item.occurrence.event.feedId ?? 'own')} style={[leadStyles.stone, { backgroundColor: item.color ? theme.line[item.color].fill : theme.color.action }]} />;
-  }
-  if (item.kind === 'page' && item.page.icon) return <AppText style={leadStyles.emoji}>{item.page.icon}</AppText>;
-  return <Icon name={LAYER_GLYPHS[item.kind]} size={20} color={theme.line[LAYER_COLORS[item.kind]].text} />;
-}
-
-// An event's calendar stone, the drawer's (`FeedStone`) a size down to sit in the 24 slot.
-const leadStyles = StyleSheet.create({ emoji: { fontSize: 20, lineHeight: 24 }, stone: { width: 18, height: 16 } });
 
 /** A list row: its mark in the 24 slot, its title over its line, what it says at its end. */
 const Row = memo(function ListLine({
@@ -134,7 +118,7 @@ function ItemRow({ row, day, now, today, twelveHours, onOpen }: { row: DayRow; d
   const title = titleOf(item);
   return (
     <Row
-      lead={<Lead item={item} />}
+      lead={<ItemMark item={item} />}
       title={title}
       line={
         <>

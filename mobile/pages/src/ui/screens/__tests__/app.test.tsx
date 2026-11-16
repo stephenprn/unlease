@@ -40,7 +40,7 @@ const SETTINGS: ServerSettings = {
   pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
   backup: { configured: false, endpoint: '', region: '', bucket: '', prefix: '', accessKeyId: '', secretHint: null, recurrence: 'off', keep: 30, storageClass: 'STANDARD' },
   drive: { provider: null, url: '', folder: '', library: null, tokenHint: null, leaving: false },
-  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
+  calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] },
   seerr: { url: '', keyHint: null },
   immich: { url: '', keyHint: null },
 };
@@ -146,7 +146,7 @@ describe('Pages, its root', () => {
     suite.siblings = [{ packageName: 'com.stephenprn.carnet', server: 'https://carnet.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.agenda', 'com.stephenprn.contacts']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
     expect(textOf(tree)).toContain('Pages');
     expect(textOf(tree)).toContain('Carnet est déjà relié à carnet.test sur ce téléphone.');
     await act(async () => {

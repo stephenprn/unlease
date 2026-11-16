@@ -24,7 +24,7 @@ export interface TodayGathered {
 export function gatherToday(state: LibraryState, prefs: CalendarPrefs, today: string, days = 2): TodayGathered {
   const agenda = agendaIn(state, prefs, today, addDays(today, days));
   return {
-    items: [...agenda.extras, ...agenda.occurrences.map(occurrence => eventItem(state, occurrence))],
+    items: [...agenda.extras, ...agenda.occurrences.map(occurrence => eventItem(state, occurrence, prefs.ownColor))],
     overdue: prefs.noteReminders ? overdueReminders(Object.values(state.carnet.notes), today) : [],
     dailyPageId: dailyPageOf(state.blocks, today),
   };

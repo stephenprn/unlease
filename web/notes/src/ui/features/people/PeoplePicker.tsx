@@ -16,6 +16,7 @@ import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { CheckMark } from '@shared/ui/components/Checkbox';
 import { Popover } from '@shared/ui/components/Popover';
 import inputs from '@shared/ui/components/controls.module.css';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { PersonFace } from './PersonFace';
 import styles from './people.module.css';
@@ -66,6 +67,8 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
     else if (!full) onChange([...selected, contact.id]);
   };
 
+  // The field over its rows meets them with a hairline once they run on under it; rows past a popover's foot fade there.
+  const listEdges = useScrollEdges({ top: true, fade: 'bottom' });
   return (
     <div ref={holder} className={styles.picker} tabIndex={-1}>
       {/* A sheet on a phone says what it holds; by its button, the field (« Chercher une personne ») does. */}
@@ -87,7 +90,7 @@ function PeopleList({ selected, onChange, narrow, holder }: { selected: readonly
         autoComplete="off"
         spellCheck={false}
       />
-      <div data-scroller="" className={styles.list} role="group" aria-label={t('People')}>
+      <div ref={listEdges} data-scroller="" className={styles.list} role="group" aria-label={t('People')}>
         {!typing && chosen.length > 0 ? (
           <>
             {chosen.map(person => (

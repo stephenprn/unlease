@@ -255,28 +255,49 @@ export function emptyPagesBin(now: number = Date.now()): number {
 export type PageDrop = { readonly into: string | null } | { readonly beside: string; readonly after: boolean };
 
 export function movePage(id: string, drop: PageDrop, now: number = Date.now()): boolean {
+  return movePages([id], drop, now) !== null;
+}
+
+/**
+ * Pages moved together (chosen in the tree), in the order given, as one step: a page inside
+ * another one moved goes with it. Nothing moves when the place is one of them or inside one.
+ */
+export function movePages(ids: readonly string[], drop: PageDrop, now: number = Date.now()): Undo | null {
   const { blocks } = state();
   const batch = new Batch(now);
-  const page = blocks[id];
-  if (!page) return false;
+  const moving = outermost(ids.filter(id => blocks[id]));
+  if (moving.length === 0) return null;
+  const going = new Set(moving);
+  const holds = (place: string | null): boolean => place !== null && moving.some(id => place === id || isWithin(blocks, place, id));
   let parentId: string | null;
   let index: number;
   if ('into' in drop) {
     parentId = drop.into;
-    if (parentId !== null && isWithin(blocks, parentId, id)) return false;
-    index = batch.children(parentKey(parentId)).filter(block => block.id !== id).length;
+    if (holds(parentId)) return null;
+    index = batch.children(parentKey(parentId)).filter(block => !going.has(block.id)).length;
   } else {
     const sibling = blocks[drop.beside];
-    if (!sibling || sibling.id === id || (sibling.parentId !== null && isWithin(blocks, sibling.parentId, id))) return false;
+    if (!sibling || going.has(sibling.id) || holds(sibling.parentId)) return null;
     parentId = sibling.parentId;
-    const siblings = batch.children(parentKey(parentId)).filter(block => block.id !== id);
+    const siblings = batch.children(parentKey(parentId)).filter(block => !going.has(block.id));
     index = siblings.findIndex(block => block.id === sibling.id) + (drop.after ? 1 : 0);
   }
-  const from = page.parentId;
-  batch.move([id], parentId, index);
-  tidyColumns(batch, [from]);
-  writeLocal(batch.changes(), now);
-  return true;
+  const from = new Set(moving.map(id => blocks[id]!.parentId));
+  batch.move(moving, parentId, index);
+  tidyColumns(batch, from);
+  return writeWithUndo(batch.changes());
+}
+
+/** Pages to the bin together, as one step (a page inside another one goes with it); its Undo brings them all back. */
+export function trashPages(ids: readonly string[], now: number = Date.now()): Undo {
+  const { blocks } = state();
+  const going = outermost(ids.filter(id => blocks[id]));
+  const before = going.map(id => ({ type: 'block' as const, id, patch: { trashedAt: blocks[id]?.trashedAt ?? null } }));
+  writeLocal(
+    going.map(id => ({ type: 'block' as const, id, patch: { trashedAt: now } })),
+    now,
+  );
+  return () => writeLocal(before);
 }
 
 /** A copy of blocks (pages included) and of all they hold, right after the last of them; returns the copies' ids. */

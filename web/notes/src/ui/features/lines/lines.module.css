@@ -21,11 +21,13 @@
 /* The washed emblem: present enough to own the page, quiet enough to read over. It fades out
    toward its foot, so whatever ends below it never cuts it. Laid down as the collection opens
    (design/collage: GHOST_ENTRANCE, the numbers set on `.head`): from just beyond its corner,
-   upright, it turns into its slant while fading up to its wash. */
+   upright, it turns into its slant while fading up to its wash. It leaves by the screen's top, as
+   on the phone: it rises on under the header (whose ground comes only once the page scrolls under
+   it, `.header::before` in the shell) instead of being cut at the header's foot. */
 .ghost {
   position: absolute;
   z-index: -1;
-  top: calc(var(--ghost) * -0.18);
+  top: calc(var(--ghost) * -0.18 - var(--header-height, 0px));
   right: calc(var(--ghost) * -0.2);
   width: var(--ghost);
   height: var(--ghost);

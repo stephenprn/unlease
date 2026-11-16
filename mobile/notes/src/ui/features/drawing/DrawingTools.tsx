@@ -10,7 +10,7 @@
  * inks run past the screen, the row ends halfway through one, which says more lie further.
  */
 import React, { memo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -30,7 +30,7 @@ import {
   type DrawingTool,
 } from '@unlease/notes/models/drawing';
 
-import { AnimatedOrganic, ICON_PEBBLE, ICON_SLOP, IconButton, PressSurface, Tappable } from '../../components';
+import { AnimatedOrganic, EdgeScrollView, ICON_PEBBLE, ICON_SLOP, IconButton, PressSurface, Tappable } from '../../components';
 import { useChosen } from '@shared/ui/components/useChosen';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -123,7 +123,7 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0,
         ) : null}
         <IconButton icon="trash" label={t('Clear all')} shape={3} disabled={editor.strokes.length === 0} onPress={editor.clear} />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.palette} contentContainerStyle={styles.row} onLayout={event => setPaletteWidth(event.nativeEvent.layout.width)}>
+      <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.palette} contentContainerStyle={styles.row} onLayout={event => setPaletteWidth(event.nativeEvent.layout.width)}>
         {background ? (
           <>
             <IconButton
@@ -147,7 +147,7 @@ function DrawingToolsComponent({ editor, tone, history, edge = false, inset = 0,
             <InkChoice key={key} ink={key} turn={pebbleTurn(index)} selected={key === ink} color={palette[key]} width={inkWidth} onPress={() => editor.chooseInk(key)} />
           ))}
         </View>
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   );
 }

@@ -7,8 +7,9 @@ import { blocksFromText } from '@unlease/pages/services/pageText';
 import { freshLibrary } from '@test/library';
 import { addLink, createLine, createNote, setLinkDone, updateLink } from '@notes/app/store/actions';
 import { pagesLibrary } from '../../app/store/blocks';
-import { createPage, insertBlock, insertDrafts, insertTable, setCell, setCollectionView, trashPage } from '../../app/store/pages';
-import { setToggleOpen, usePagesUiStore } from '../../app/store/pagesUi';
+import { useUiStore } from '@shared/app/store/ui';
+import { createPage, insertBlock, insertDrafts, insertTable, movePages, setCell, setCollectionView, trashPage } from '../../app/store/pages';
+import { setExpanded, setToggleOpen, usePagesUiStore } from '../../app/store/pagesUi';
 import { BLOCKS_TYPE, htmlToDrafts, pageMarkdown, readBlocks, writeBlocks } from '../features/pages/clipboard';
 import { selectBlocks } from '../features/pages/editorStore';
 import { PagesBinSection } from '../features/pages/PagesBin';
@@ -362,6 +363,62 @@ describe('blocks selected with a box', () => {
     await user.click(screen.getByRole('menuitem', { name: /^Supprimer/ }));
     expect(state().blocksByParent[page]).toEqual([four]);
   });
+
+  it('selects a range with Maj+click and one block more or less with Ctrl+click, as Notion does', () => {
+    const { page, one, toggle, inside, three, four } = boxPage();
+    render(<PageView id={page} />);
+    const block = (id: string): HTMLElement => document.querySelector<HTMLElement>(`[data-select-block="${id}"]`)!;
+    act(() => selectBlocks([one]));
+    fireEvent.pointerDown(within(block(three)).getByRole('textbox'), { button: 0, shiftKey: true, pointerType: 'mouse' });
+    expect(selected()).toEqual([one, toggle, inside, three]);
+    fireEvent.pointerDown(within(block(four)).getByRole('textbox'), { button: 0, ctrlKey: true, pointerType: 'mouse' });
+    expect(selected()).toEqual([one, toggle, inside, three, four]);
+    fireEvent.pointerDown(within(block(one)).getByRole('textbox'), { button: 0, ctrlKey: true, pointerType: 'mouse' });
+    expect(selected()).toEqual([toggle, inside, three, four]);
+    expect(document.activeElement).toBe(editor());
+  });
+
+  it('takes a press on the selection for a drag, never for a new box, and a click there for the block alone', () => {
+    const { page, one, three } = boxPage();
+    render(<PageView id={page} />);
+    act(() => selectBlocks([one, three]));
+    const wash = document.querySelector<HTMLElement>(`[data-select-block="${three}"]`)!;
+    press(wash, 200, 230);
+    release();
+    expect(selected()).toEqual([one, three]);
+    fireEvent.click(wash);
+    // jsdom has no caret from a point: the block clicked stays selected alone.
+    return waitFor(() => expect(selected()).toEqual([three]));
+  });
+
+  it('turns the selected blocks into another kind with Ctrl+Maj and a digit, and ticks their to-dos with Ctrl+Enter', () => {
+    const { page, one, three } = boxPage();
+    render(<PageView id={page} />);
+    act(() => selectBlocks([one, three]));
+    fireEvent.keyDown(editor(), { key: '!', code: 'Digit1', ctrlKey: true, shiftKey: true });
+    expect([state().blocks[one]?.kind, state().blocks[three]?.kind]).toEqual(['h1', 'h1']);
+    fireEvent.keyDown(editor(), { key: '$', code: 'Digit4', ctrlKey: true, shiftKey: true });
+    expect([state().blocks[one]?.kind, state().blocks[three]?.kind]).toEqual(['todo', 'todo']);
+    expect(selected()).toEqual([one, three]);
+    fireEvent.keyDown(editor(), { key: 'Enter', ctrlKey: true });
+    expect([state().blocks[one]?.checked, state().blocks[three]?.checked]).toEqual([true, true]);
+    fireEvent.keyDown(editor(), { key: 'Enter', ctrlKey: true });
+    expect([state().blocks[one]?.checked, state().blocks[three]?.checked]).toEqual([false, false]);
+  });
+
+  it('reaches the first and last block with Début and Fin, and opens every toggle with Ctrl+Alt+T', () => {
+    const { page, one, toggle, four } = boxPage();
+    render(<PageView id={page} />);
+    act(() => selectBlocks([toggle]));
+    fireEvent.keyDown(editor(), { key: 'End' });
+    expect(selected()).toEqual([four]);
+    fireEvent.keyDown(editor(), { key: 'Home', shiftKey: true });
+    expect(selected()[0]).toBe(one);
+    fireEvent.keyDown(editor(), { key: 't', code: 'KeyT', ctrlKey: true, altKey: true });
+    expect(usePagesUiStore.getState().openToggles.has(toggle)).toBe(false);
+    fireEvent.keyDown(editor(), { key: 't', code: 'KeyT', ctrlKey: true, altKey: true });
+    expect(usePagesUiStore.getState().openToggles.has(toggle)).toBe(true);
+  });
 });
 
 describe('Enter in a page', () => {
@@ -575,6 +632,57 @@ describe('the pages in the navigation and on their home', () => {
     expect(within(tree).queryByText('Jour 1')).toBeNull();
     await user.click(within(tree).getByRole('button', { name: 'Déplier Voyage' }));
     expect(within(tree).getByText('Jour 1')).toBeInTheDocument();
+  });
+
+  it('chooses pages together in the tree (Maj+click, Ctrl+click) and bins them as one, one Undo bringing them back', async () => {
+    const user = userEvent.setup();
+    const a = createPage({ title: 'Alpha' });
+    const b = createPage({ title: 'Bravo' });
+    const c = createPage({ title: 'Charlie' });
+    const d = createPage({ title: 'Delta' });
+    render(<NavList route={{ name: 'pages' }} />);
+    const tree = screen.getByRole('tree', { name: 'Pages' });
+    const row = (title: string): HTMLElement => within(tree).getByText(title).closest('a')!;
+    const chosen = (): string[] => [...tree.querySelectorAll<HTMLElement>('[data-chosen]')].map(element => element.dataset.treePage!);
+    await user.click(row('Bravo'));
+    await user.keyboard('{Shift>}');
+    await user.click(row('Delta'));
+    await user.keyboard('{/Shift}');
+    expect(chosen()).toEqual([b, c, d]);
+    await user.keyboard('{Control>}');
+    await user.click(row('Charlie'));
+    await user.click(row('Alpha'));
+    await user.keyboard('{/Control}');
+    expect(chosen()).toEqual([a, b, d]);
+    row('Delta').focus();
+    await user.keyboard('{Backspace}');
+    expect([a, b, c, d].map(id => state().blocks[id]?.trashedAt !== null)).toEqual([true, true, false, true]);
+    expect(useUiStore.getState().snack?.message).toBe('3\u00a0pages placées dans la corbeille');
+    act(() => useUiStore.getState().snack!.action!.run());
+    expect([a, b, c, d].map(id => state().blocks[id]?.trashedAt)).toEqual([null, null, null, null]);
+  });
+
+  it('extends the chosen pages with Maj+arrows, lets them go with Échap, and moves them together', async () => {
+    const user = userEvent.setup();
+    const a = createPage({ title: 'Alpha' });
+    const b = createPage({ title: 'Bravo' });
+    const c = createPage({ title: 'Charlie' });
+    const home = createPage({ title: 'Maison' });
+    setExpanded(home, true);
+    render(<NavList route={{ name: 'pages' }} />);
+    const tree = screen.getByRole('tree', { name: 'Pages' });
+    const chosen = (): string[] => [...tree.querySelectorAll<HTMLElement>('[data-chosen]')].map(element => element.dataset.treePage!);
+    within(tree).getByText('Alpha').closest('a')!.focus();
+    await user.keyboard('{Shift>}{ArrowDown}{ArrowDown}{/Shift}');
+    expect(chosen()).toEqual([a, b, c]);
+    await user.keyboard('{Escape}');
+    expect(chosen()).toEqual([]);
+    act(() => void movePages([b, c], { into: home }));
+    expect(state().blocks[b]?.parentId).toBe(home);
+    expect(state().blocks[c]?.parentId).toBe(home);
+    expect(state().blocksByParent[home]).toEqual([b, c]);
+    // A page never goes inside itself or one of its own.
+    expect(movePages([home], { into: b })).toBeNull();
   });
 
   it('lists the top-level pages, says what a page holds while they are few, and points to the bin', () => {

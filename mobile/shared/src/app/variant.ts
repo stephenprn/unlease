@@ -14,6 +14,7 @@ export const SUITE_PACKAGES: Readonly<Record<AppId, string>> = {
   pages: 'com.stephenprn.pages',
   calendar: 'com.stephenprn.agenda',
   contacts: 'com.stephenprn.contacts',
+  clock: 'com.stephenprn.clock',
 };
 
 /** A dev build's suffixes: its applicationIds', its schemes'. */

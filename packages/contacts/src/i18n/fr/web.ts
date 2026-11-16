@@ -22,6 +22,10 @@ export const FR_WEB: Dictionary = {
   'Edit {name}': 'Modifier {name}',
   'Remove {name} from favourites': 'Retirer {name} des favoris',
   'Add {name} to favourites': 'Ajouter {name} aux favoris',
+  // The favourites' cards: the ways to reach them, named for screen readers and in the tooltip
+  'Text {name}': 'Écrire un SMS à {name}',
+  'WhatsApp {name}': 'WhatsApp avec {name}',
+  'Email {name}': 'Écrire un e-mail à {name}',
   'Labels of the selected contacts': 'Libellés des contacts sélectionnés',
   'No labels. Create some from the navigation.': 'Aucun libellé. Créez-en depuis la navigation.',
   '“{name}” removed': '« {name} » retiré',

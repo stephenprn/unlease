@@ -17,8 +17,11 @@ import { useTheme } from '../theme/ThemeProvider';
 const PAPER: ImageSourcePropType = require('../../../assets/textures/grain.png');
 const GROUND: ImageSourcePropType = require('../../../assets/textures/ground-grain.png');
 
-/** A sheet's tile, near the source's own 256 px, so a speck stays a tooth instead of a blotch. */
-const PAPER_TILE = 200;
+/**
+ * A sheet's tile, near the source's own 256 px, so a speck stays a tooth instead of a blotch. A sheet
+ * drawn larger than what it shows (one sheet behind a long list) shifts its grain by it to keep it on the paper.
+ */
+export const PAPER_TILE = 200;
 /** The ground's tile: 512 px, its pixels already doubled, laid one to one on the screen's pixels. */
 const GROUND_TILE_PX = 512;
 

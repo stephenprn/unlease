@@ -10,6 +10,7 @@ import { t } from '@unlease/core/i18n';
 import { spotKey } from '@unlease/core/services/spotlight';
 import { isLive } from '@unlease/contacts/models/contacts';
 import { upcomingBirthdays } from '@unlease/contacts/services/birthdays';
+import { CLEANUP_TOOL_WORDS, CLEANUP_WORDS, isFixingTool } from '@unlease/contacts/services/cleanup';
 import { contactName } from '@unlease/contacts/services/names';
 
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -24,6 +25,7 @@ import { Link, navigate, paths as shellPaths, type Arrival, type Route } from '@
 import { openNewContact } from './features/newContact';
 import { paths } from './routes';
 import { BirthdaysScreen } from './screens/BirthdaysScreen';
+import { CleanupScreen, CleanupToolScreen } from './screens/CleanupScreen';
 import { ContactScreen } from './screens/ContactScreen';
 import { DuplicatesScreen } from './screens/DuplicatesScreen';
 import { EditContactScreen, NewContactScreen } from './screens/EditScreen';
@@ -51,6 +53,10 @@ export function ContactsScreen({ route }: { route: Route }) {
       return <ImportMoved />;
     case 'contactsDuplicates':
       return <DuplicatesScreen />;
+    case 'contactsCleanup':
+      return <CleanupScreen />;
+    case 'contactsCleanupTool':
+      return <CleanupToolScreen key={route.tool} tool={route.tool} />;
     case 'contactsTrash':
       return <TrashScreen />;
     case 'contact':
@@ -78,6 +84,10 @@ function titleFor(state: ContactsState, route: Route): string | null {
       return t('Import');
     case 'contactsDuplicates':
       return t('Duplicates');
+    case 'contactsCleanup':
+      return CLEANUP_WORDS.title;
+    case 'contactsCleanupTool':
+      return isFixingTool(route.tool) ? t(CLEANUP_TOOL_WORDS[route.tool].title) : CLEANUP_WORDS.title;
     case 'contactsTrash':
       return t('Bin');
     case 'contact':
@@ -108,6 +118,10 @@ export function contactsPathOf(route: Route): string {
       return shellPaths.importer;
     case 'contactsDuplicates':
       return paths.duplicates;
+    case 'contactsCleanup':
+      return paths.cleanup;
+    case 'contactsCleanupTool':
+      return paths.cleanupTool(route.tool);
     case 'contactsTrash':
       return paths.trash;
     case 'contact':
@@ -134,8 +148,20 @@ export function contactsStillThere(route: Route): boolean {
 
 export const contactsOpened = (route: Route): string | null => (route.name === 'contact' ? spotKey('contact', route.id) : null);
 
-/** Back from a place with no history: a contact's form to the contact, the import to Réglages, the rest to the list. */
-export const contactsBackTo = (route: Route): string => (route.name === 'contactEdit' ? paths.contact(route.id) : route.name === 'contactsImport' ? shellPaths.settings : paths.contacts);
+/** Back from a place with no history: a contact's form to the contact, the import and « Nettoyer les contacts » to Réglages, a cleaning tool to its place, the rest to the list. */
+export function contactsBackTo(route: Route): string {
+  switch (route.name) {
+    case 'contactEdit':
+      return paths.contact(route.id);
+    case 'contactsImport':
+    case 'contactsCleanup':
+      return shellPaths.settings;
+    case 'contactsCleanupTool':
+      return paths.cleanup;
+    default:
+      return paths.contacts;
+  }
+}
 
 /** The lists: their pick ends when the page changes. */
 export const LIST_ROUTES: readonly Route['name'][] = ['contacts', 'contactsFavorites', 'contactsLabel'];

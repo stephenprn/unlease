@@ -32,6 +32,7 @@ function event(id: string, start: string, end: string, extra: Partial<CalendarEv
     uid: '',
     url: '',
     color: null,
+    dayOff: false,
     trashedAt: null,
     createdAt: 1,
     deletedAt: null,

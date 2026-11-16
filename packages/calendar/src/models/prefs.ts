@@ -1,8 +1,10 @@
 /**
  * How the calendar looks on this device (Réglages, never synced): the view it opens on (« Aujourd'hui » too), the week's
- * first day, weekends and week numbers, the hours' format, a new event's length and reminders, and
+ * first day, the working days only and week numbers, the hours' format, a new event's length and reminders, and
  * the layers shown from the other apps, and the morning digest.
  */
+import { isLineColor, type LineColor } from '@unlease/design/colors';
+import { OWN_EVENTS_COLOR } from '../services/colors';
 import { DIGEST_AT, isDigestTime } from '../services/digest';
 import { isCalendarView, type CalendarView } from '../services/eventText';
 
@@ -10,6 +12,11 @@ export interface CalendarPrefs {
   readonly view: CalendarView;
   /** 0 Sunday, 1 Monday, 6 Saturday. */
   readonly weekStart: number;
+  /**
+   * « Jours travaillés seulement »: the week and the month show only the days worked (the server's
+   * `calendar.workDays`, `services/eventText` `shownWeekdays`). Its stored name is from when it hid
+   * Saturday and Sunday: never renamed.
+   */
   readonly hideWeekends: boolean;
   readonly weekNumbers: boolean;
   readonly twelveHours: boolean;
@@ -34,6 +41,8 @@ export interface CalendarPrefs {
   readonly digestAt: string;
   /** Rung on a day with nothing too (« Rien de prévu aujourd’hui »). */
   readonly digestEmpty: boolean;
+  /** « Couleur de vos événements »: the pigment of the events without one of their own, a label's or a calendar's (« Mes événements »). */
+  readonly ownColor: LineColor;
 }
 
 export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
@@ -53,6 +62,7 @@ export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
   digest: false,
   digestAt: DIGEST_AT,
   digestEmpty: false,
+  ownColor: OWN_EVENTS_COLOR,
 };
 
 export const EVENT_LENGTHS = [15, 30, 45, 60, 90, 120] as const;
@@ -80,5 +90,6 @@ export function readCalendarPrefs(value: unknown): CalendarPrefs {
     digest: flag('digest', d.digest),
     digestAt: isDigestTime(raw.digestAt) ? raw.digestAt : d.digestAt,
     digestEmpty: flag('digestEmpty', d.digestEmpty),
+    ownColor: isLineColor(raw.ownColor) ? raw.ownColor : d.ownColor,
   };
 }

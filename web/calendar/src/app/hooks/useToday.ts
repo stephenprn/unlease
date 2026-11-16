@@ -1,4 +1,4 @@
-/** Today on this device, and the minute it is, re-rendering every minute (the now line, « Aujourd'hui »). */
+/** Today on this device, and the minute it is, re-rendering every minute (the now line, « Ma journée »). */
 import { instantToDay } from '@unlease/calendar/services/time';
 
 import { useMinute } from '@shared/app/hooks/useMinute';

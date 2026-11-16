@@ -31,7 +31,7 @@ import { IconButton } from '../../components/IconButton';
 import { LabelTag } from '../../components/LabelMark';
 import { Layer } from '../../components/Layer';
 import { Menu, type MenuItem } from '../../components/Menu';
-import { useScrollEdges } from '../../components/scrollEdges';
+import { useScrollEdges, useScrollEdgesOn } from '../../components/scrollEdges';
 import { modKey } from '../../dom';
 import { browserPath, navigate, paths } from '../../router';
 import { useMedia } from '../../useMedia';
@@ -318,8 +318,11 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<{ readonly signature: string; readonly key: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const strip = useRef<HTMLDivElement>(null);
-  // The results fade and blur under the field's head as far as they run on (the preview beside them its own).
-  const resultEdges = useScrollEdges({ top: true });
+  // The types past a side fade there (a phone-sized window scrolls the menus with them, one strip).
+  useScrollEdgesOn(strip, [], { fade: 'x' });
+  const filterEdges = useScrollEdges({ fade: 'x' });
+  // The results meet the field's head with a hairline once they run on under it, and the keys' foot while they run on past it (the preview beside them its own).
+  const resultEdges = useScrollEdges({ top: true, bottom: fine });
   const listId = useId();
 
   const deferred = useDeferredValue(text);
@@ -573,7 +576,7 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             </kbd>
           ) : null}
         </div>
-        <div className={styles.filters}>
+        <div ref={filterEdges} className={styles.filters}>
           <div ref={strip} className={styles.scopes} role="radiogroup" aria-label={t('Type')}>
             {scopes.map(value => (
               <button
@@ -653,7 +656,7 @@ function SpotlightBody({ onClose }: { onClose: () => void }) {
             })}
           </div>
         </div>
-        {wide ? <SpotPreview doc={activeDoc?.doc ?? null} part={activePart} matcher={results.matcher} now={now} /> : null}
+        {wide ? <SpotPreview doc={activeDoc?.doc ?? null} part={activePart} matcher={results.matcher} now={now} foot={fine} /> : null}
       </div>
       {fine ? (
         <div className={`${styles.foot} t-meta`} aria-hidden="true">

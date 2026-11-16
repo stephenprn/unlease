@@ -2,7 +2,8 @@
  * One event, at one of its occurrences: its colour and title, when (how near, how it repeats, its zone
  * when not the phone's), where (a tap opens it in the maps app chosen, else offers the phone's maps
  * apps, `openPlace`; a long press copies it; the weather of that day beside it), who with (each face and name a tap into Contacts), its reminders, labels and calendar, its description (mentions open their app),
- * its files and address; « Mentionné dans » the pages and notes; « Créer une page de notes » in Pages.
+ * its files and address; « Mentionné dans » the pages and notes; « Créer une page de notes » in Pages,
+ * and for an event still to come at an hour « Me réveiller pour cet événement », Clock's new alarm linked to it.
  * The bar: edit, and a menu (duplicate, delete, with the scope a repeating event asks). A subscribed
  * calendar's event is read-only: « Copier dans mon agenda » stands on the line that says so.
  */
@@ -32,8 +33,9 @@ import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
 import { useWeather } from '@app/hooks/useWeather';
 import { createMeetingPage, SyncError } from '@app/sync/transport';
 import { later } from '@app/later';
+import { useAppReachable } from '@shared/app/hooks/useAppReachable';
 import { useMinute } from '@shared/app/hooks/useMinute';
-import { contactPlace, openInApp, pagePlace } from '@shared/app/openApp';
+import { alarmForEventPlace, contactPlace, openInApp, pagePlace } from '@shared/app/openApp';
 import { selectServer, selectServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { openPlace } from '@shared/app/openPlace';
@@ -58,23 +60,24 @@ function openEventLink(url: string): void {
   if (address && !address.startsWith('/')) later(Linking.openURL(address));
 }
 
-function Line({ icon, children, onPress, onLongPress, label, hint, place }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; onLongPress?: () => void; label?: string; hint?: string; place?: RowPlace | null }) {
+/** A line of the event's panel: its glyph in the 24 slot, what it holds on the words' column; one line of words (`single`) sits on the row's middle, more from its top. */
+function Line({ icon, children, onPress, onLongPress, label, hint, place, single = false }: { icon: GlyphName; children: React.ReactNode; onPress?: () => void; onLongPress?: () => void; label?: string; hint?: string; place?: RowPlace | null; single?: boolean }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   // Its panel tells its first and last lines where they lie: their press follows its corners.
   const shape = usePanelRowCorners(place);
   const body = (
     <>
-      <View style={styles.lineIcon}>
+      <View style={[styles.lineIcon, single ? styles.lineIconSingle : null]}>
         <Icon name={icon} size={22} color={theme.color.inkMuted} />
       </View>
       <View style={styles.fill}>{children}</View>
     </>
   );
   // What only reads (its reminders, its labels) is content, drawn in full ink: never a control put out of reach.
-  if (!onPress) return <View style={styles.line}>{body}</View>;
+  if (!onPress) return <View style={[styles.line, single ? styles.lineSingle : null]}>{body}</View>;
   return (
-    <Tappable onPress={onPress} onLongPress={onLongPress} style={[styles.line, shape]} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint}>
+    <Tappable onPress={onPress} onLongPress={onLongPress} style={[styles.line, single ? styles.lineSingle : null, shape]} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint}>
       {body}
     </Tappable>
   );
@@ -108,6 +111,8 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
   const apps = useSettingsStore(selectServerApps);
   // Pages makes the page: only while the server runs it (the web's too).
   const pages = !!server && (!apps || apps.includes('pages'));
+  // « Me réveiller pour cet événement »: while Clock opens from here (installed, or run by the server).
+  const clock = useAppReachable('clock');
   const [menu, setMenu] = useState(false);
   const maps = useMapsChoice();
   const [scoping, setScoping] = useState(false);
@@ -133,13 +138,15 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
   const event = occurrence.event;
   const series = events[occurrence.seriesId] ?? event;
   const own = isOwn(event);
-  const paint = paintOf(theme, eventColor(event, labels, feeds));
+  const paint = paintOf(theme, eventColor(event, labels, feeds, prefs.ownColor));
   const rule = series.rrule ? parseRule(series.rrule) : null;
   const feed = event.feedId ? feeds[event.feedId] : undefined;
   const trashed = event.trashedAt !== null || series.trashedAt !== null;
   const zone = zoneNote(event);
   const title = event.title.trim() || t('Untitled');
-  const details = !!(event.place.trim() || event.contactIds.length || event.reminders.length || event.labelIds.length || feed || event.description.trim() || event.files.length || event.url.trim());
+  // A day off is an all-day event's (the form drops it from a timed one).
+  const dayOff = event.dayOff && occurrence.allDay;
+  const details = !!(dayOff || event.place.trim() || event.contactIds.length || event.reminders.length || event.labelIds.length || feed || event.description.trim() || event.files.length || event.url.trim());
   const wornLabels = event.labelIds.map(id => labels[id]).filter((label): label is NonNullable<typeof label> => !!label && label.deletedAt === null);
 
   const remove = (scope: EditScope): void => {
@@ -166,6 +173,10 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
       setMaking(false);
     }
   };
+
+  // An alarm for an event still to come at an hour: Clock's new alarm, linked to this occurrence.
+  const wakeable = clock && !trashed && !occurrence.allDay && occurrence.startAt > now;
+  const wakeMe = (): void => later(openInApp('clock', alarmForEventPlace({ eventId: occurrence.seriesId, occurrence: occurrence.repeats ? occurrence.occurrence : '', at: occurrence.startAt, title: event.title.trim() })));
 
   const menuItems: MenuItem[] = [
     // A subscription's is read-only: it is copied into one's own (the web's words).
@@ -238,11 +249,19 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
         {/* The details on their panel, when there is any (the web's too). */}
         {details ? (
           <RowPanel outline="card" style={styles.panel}>
+            {/* First, as it says what the day is (the web's too). */}
+            {dayOff ? (
+              <Line icon="sun">
+                <AppText variant="body">{t('Day off')}</AppText>
+                <AppText variant="meta">{t('Clock’s alarms that ask for it stay quiet that day.')}</AppText>
+              </Line>
+            ) : null}
             {event.place.trim() ? (
               <Line
                 icon="mapPin"
                 label={maps ? t('{place}, open in {maps}', { place: event.place.trim(), maps: mapsChoiceName(maps) }) : t('{place}, open in maps', { place: event.place.trim() })}
                 hint={t('A long press copies the address.')}
+                single={!weather}
                 onPress={() => later(openPlace(event.place))}
                 onLongPress={() => later(copyText(event.place.trim()).then(done => done && showSnack(t('Address copied'), undefined, { tone: 'success' })))}
               >
@@ -272,7 +291,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
               </Line>
             ) : null}
             {event.reminders.length > 0 ? (
-              <Line icon="bell">
+              <Line icon="bell" single={event.reminders.length === 1}>
                 {/* One reminder a line, as the form lists them. */}
                 {event.reminders.map(minutes => (
                   <AppText key={minutes} variant="body">
@@ -304,7 +323,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
               </Line>
             ) : null}
             {event.files.map(file => (
-              <Line key={file.id} icon={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} label={file.name} onPress={() => openFile(file.uploaded)}>
+              <Line key={file.id} icon={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} label={file.name} single={file.uploaded} onPress={() => openFile(file.uploaded)}>
                 <AppText variant="body" numberOfLines={1}>
                   {file.name}
                 </AppText>
@@ -312,7 +331,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
               </Line>
             ))}
             {event.url.trim() ? (
-              <Line icon="link" label={event.url} onPress={() => openEventLink(event.url)}>
+              <Line icon="link" label={event.url} single onPress={() => openEventLink(event.url)}>
                 <AppText variant="body" numberOfLines={1}>
                   <AppText variant="bodyStrong" color={theme.color.link}>
                     {linkParts(event.url.trim()).host}
@@ -328,9 +347,10 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
 
         <MentionedIn id={occurrence.seriesId} />
 
-        {pages && !trashed ? (
+        {(pages && !trashed) || wakeable ? (
           <View style={styles.actions}>
-            <Button label={t('Create a notes page')} icon="pagePlus" kind="tonal" busy={making} onPress={() => later(meetingPage())} />
+            {pages && !trashed ? <Button label={t('Create a notes page')} icon="pagePlus" kind="tonal" busy={making} onPress={() => later(meetingPage())} /> : null}
+            {wakeable ? <Button label={t('Wake me up for this')} icon="bell" kind="tonal" onPress={wakeMe} /> : null}
           </View>
         ) : null}
       </EdgeScrollView>
@@ -359,11 +379,14 @@ const makeStyles = (theme: Theme) =>
     // A list row's geometry (6 in, 10, a 24 glyph slot, 16): the words on the form's text column.
     line: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, minHeight: 52, paddingHorizontal: 10, paddingVertical: 10, marginHorizontal: 6, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     lineIcon: { width: 24, alignItems: 'center', paddingTop: 1 },
+    // One line of words on the row's middle, its glyph beside it: no band left under a short row.
+    lineSingle: { alignItems: 'center' },
+    lineIconSingle: { paddingTop: 0 },
     // The labels as chips from the glyphs' edge, wrapping when there are many.
     labels: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingVertical: 8, marginVertical: GEOMETRY.rowGap / 2 },
     worn: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, maxWidth: '100%', paddingLeft: 12, paddingRight: 14, ...corners(SHAPES.chip) },
-    // On the panels' edge.
-    actions: { paddingHorizontal: 12 },
+    // On the panels' edge, one under the other.
+    actions: { paddingHorizontal: 12, gap: 8 },
     // A breath under the read-only line's words (the web's `.detailButton`).
     copy: { marginTop: 6 },
     // Its glyph and words on the rows' columns.

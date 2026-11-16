@@ -1,12 +1,12 @@
 /**
  * Where a drag lands, as a page action: blocks moved within or between pages (beside a block,
- * columns), a page moved in the tree, or dropped from the tree into a page's content (where it
+ * columns), a page (or several chosen together) moved in the tree, or dropped from the tree into a page's content (where it
  * becomes a sub-page, as any block would).
  */
 import { containingPage } from '@unlease/pages/services/blocks';
 
 import { useBlocksStore } from '../../../app/store/blocks';
-import { moveBlocks, movePage } from '../../../app/store/pages';
+import { moveBlocks, movePages } from '../../../app/store/pages';
 import { setExpanded } from '../../../app/store/pagesUi';
 import type { DropTarget } from './dragDrop';
 
@@ -31,7 +31,7 @@ export function applyDrop(dragged: Dragged, target: DropTarget): boolean {
   if (target.type === 'tree') {
     const moved =
       dragged.kind === 'page'
-        ? movePage(ids[0]!, target.zone === 'inside' ? { into: target.id } : { beside: target.id, after: target.zone === 'after' })
+        ? movePages(ids, target.zone === 'inside' ? { into: target.id } : { beside: target.id, after: target.zone === 'after' }) !== null
         : moveBlocks(dragged.page ?? target.id, ids, { parentId: target.id, afterId: lastChild(target.id, ids) }, outline);
     // Dropped in a page of the tree: it opens, so what landed there shows.
     if (moved && target.zone === 'inside') setExpanded(target.id, true);

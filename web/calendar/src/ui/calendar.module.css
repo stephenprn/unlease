@@ -130,6 +130,13 @@
   min-height: 420px;
 }
 
+/* A phone-sized window: the views end above the bottom bar (its 80 and the gesture's room), so a list's last rows are never under it; the bar draws no line over what has ended. */
+@media (max-width: 719px) {
+  .calendar {
+    height: calc(100dvh - var(--header-height, 64px) - 80px - env(safe-area-inset-bottom));
+  }
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -155,6 +162,25 @@
   display: none;
 }
 
+/* Today's number on Onde's day page, in the glyphs' 24 slot: centred in the page's body, under its band. */
+.todayMark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+.todayMark > * {
+  grid-area: 1 / 1;
+}
+
+.todayMark > span {
+  padding-top: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
 /* The arrow back is the arrow forward, turned. */
 .stepBack {
   display: inline-flex;
@@ -168,6 +194,67 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The title where it picks a day (under 1100px): its words, then a chevron saying a press opens the month; its words where they were, its tint round them. */
+.toolbarTitle:has(.titleButton) {
+  overflow: visible;
+}
+
+.titleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-height: 40px;
+  margin-left: -8px;
+  padding: 0 6px 0 8px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.titleButton > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.titleWords {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (hover: hover) {
+  .titleButton:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.titleButton:active,
+.titleButton[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+/* The month to pick from, as wide as the navigation's, centred in the sheet on a phone-sized window. */
+.titlePicker {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 8px 6px 6px;
+}
+
+/* The views' menu as tall as the bar's buttons, not a form's field. */
+.viewMenu {
+  display: inline-flex;
+}
+
+.viewMenu .fieldButton {
+  min-height: 44px;
+  padding: 0 12px 0 16px;
 }
 
 .toolbarEnd {
@@ -423,19 +510,21 @@
   white-space: nowrap;
 }
 
+/* Its time and place in the ink a fifth into the wash: the second ink tinted by its colour, 4.5:1 on every wash and its hover. */
 .chipMeta {
   overflow: hidden;
-  color: var(--ink-muted);
+  color: color-mix(in srgb, var(--ink) 80%, var(--chip-wash));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* A box with room for its title over several lines: it wraps there, cut by whole lines. */
+/* A box with room for its title over several lines: it wraps there between words (hyphenated in the page's language where one is too long), cut by whole lines. */
 .chipTitle[data-wrap] {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   hyphens: auto;
 }
 
@@ -484,6 +573,11 @@
 
 .chipLine .chipTitle {
   flex: 1;
+}
+
+/* A day off's sun, before its title: in the bar's ink, never wider than its glyph. */
+.chipMark {
+  flex: none;
 }
 
 /* A timed event in the month: a dot of its colour, not a bar. */
@@ -552,7 +646,7 @@
   top: 9px;
   left: 6px;
   color: var(--ink-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1;
   pointer-events: none;
 }
@@ -700,7 +794,7 @@
 
 .miniWeekday {
   color: var(--ink-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 24px;
 }
 
@@ -721,9 +815,9 @@
   cursor: pointer;
 }
 
+/* The days of the months around it in the second ink: plainly outside the month, still read at 4.5:1. */
 .miniDay[data-outside] {
   color: var(--ink-faint);
-  opacity: 0.6;
 }
 
 /* Its hover, the day shown and today lie on its pebble, a little inside the cell, so neighbours never touch; lifted with the number, it stays round around it. */
@@ -777,6 +871,19 @@
   padding: 4px 10px 12px;
 }
 
+/* A short window (a laptop's 900): the navigation's month a little tighter, so its calendars start above the pinned foot before the list scrolls. */
+@media (max-height: 959px) {
+  .navMini {
+    padding-bottom: 4px;
+  }
+  .navMini .miniWeekday {
+    line-height: 20px;
+  }
+  .navMini .miniDay {
+    max-height: 28px;
+  }
+}
+
 /* ── the planning, the search, the bin ─────────────────────────────────── */
 
 .schedule {
@@ -796,11 +903,11 @@
 .scheduleDate {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   color: var(--ink-muted);
 }
 
-/* The day's number on its first event's line (36), its month and weekday on its baseline. */
+/* « lun. 16 nov. »: the day's number on its first event's line (36), its weekday and month on its baseline. */
 .scheduleDate > strong {
   color: var(--ink);
   font-size: 1.25rem;
@@ -824,6 +931,7 @@
 .scheduleItem {
   display: grid;
   grid-template-columns: 14px 140px minmax(0, 1fr);
+  grid-template-areas: 'mark time title';
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -836,6 +944,27 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.scheduleItem > .swatch {
+  grid-area: mark;
+}
+
+.scheduleTime {
+  grid-area: time;
+}
+
+.scheduleTitle {
+  grid-area: title;
+}
+
+/* What is over lies back, as in « Ma journée »: its mark at 0.55, its words in the second ink. */
+.scheduleItem[data-over] > .swatch {
+  opacity: 0.55;
+}
+
+.scheduleItem[data-over] > .scheduleTitle {
+  color: var(--ink-muted);
 }
 
 @media (hover: hover) {
@@ -859,7 +988,7 @@
   padding: 16px;
 }
 
-/* Nothing on these days: the empty state centred in the view, as « Aujourd'hui »'s. */
+/* Nothing on these days: the empty state centred in the view, as « Ma journée »'s. */
 .scheduleEmpty {
   display: flex;
   justify-content: center;
@@ -1358,6 +1487,15 @@ li.person {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
+/* A switch's words over its line (« Jour de congé » and what it does), read from the start. */
+.switchWords {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  text-align: start;
+}
+
 /* The form's own fields: the suite's field (its edge inside, matcha on focus), a little lower. */
 /* Agenda's day, time and choice fields: the shared field's paper, edge, height and radius (`controls.module.css` `.input`). */
 .fieldButton,
@@ -1814,6 +1952,12 @@ li.person {
   font: inherit;
 }
 
+/* Its hint in the fields' second ink, as every field's (the browser's grey reads too faint on the paper). */
+.quickInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
 /* Narrower, it still holds its whole placeholder; the search strip beside it gives the room. */
 @media (max-width: 1100px) {
   .quickInput {
@@ -1989,18 +2133,41 @@ li.person {
     padding: 4px 8px 8px;
   }
   .scheduleDay {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 4px;
   }
+  /* The weekday over the day's number, the month under it, as the phone's lists head a day. */
+  .scheduleDate {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding-top: 4px;
+  }
+  .scheduleDate > strong {
+    line-height: 28px;
+  }
+  /* Its title, then its time and place under it in meta, as the phone's schedule row. */
   .scheduleItem {
     grid-template-columns: 14px minmax(0, 1fr);
+    grid-template-areas:
+      'mark title'
+      '. time';
+    row-gap: 2px;
+    padding: 6px 8px;
   }
-  .scheduleItem > :nth-child(2) {
-    display: none;
+  .scheduleTime {
+    overflow-wrap: anywhere;
   }
+  /* The gutter a little wider than its hours, so « Journée » and the hours keep clear of the panel's edge. */
   .grid,
   .heads,
   .allDay {
-    --gutter: 44px;
+    --gutter: 50px;
+  }
+  .allDayLabel {
+    padding: 0 2px 0 6px;
+    text-align: start;
   }
 }
 
@@ -2121,20 +2288,20 @@ li.person {
   overflow-wrap: anywhere;
 }
 
-/* A calendar shown or hidden (« Mes événements », a subscription, what another app brings): a small stone of its pigment, filled and ticked while it shows, its edge alone while hidden. Labels keep their tag. */
+/* A calendar shown or hidden (« Mes événements », a subscription, what another app brings): a small stone of its pigment, filled and ticked while it shows, its edge alone while hidden. Labels keep their tag. Without a pigment (one's own events), the primary their chips wear. */
 .calendarCheck {
   display: grid;
   place-items: center;
   width: 22px;
   height: 20px;
-  color: var(--on);
+  color: var(--on, var(--on-action));
   --pebble-fill: transparent;
-  --edge-color: var(--fill);
+  --edge-color: var(--fill, var(--action));
   --edge-width: 2px;
 }
 
 .calendarCheck[data-checked] {
-  --pebble-fill: var(--fill);
+  --pebble-fill: var(--fill, var(--action));
 }
 
 .calendarCheck > svg:last-child {
@@ -2144,6 +2311,12 @@ li.person {
 
 .calendarCheck[data-checked] > svg:last-child {
   opacity: 1;
+}
+
+/* The app a layer comes from, at its row's end in the second ink (« Contacts », « Carnet », « Pages »). */
+.navApp {
+  flex: none;
+  color: var(--ink-muted);
 }
 
 /*

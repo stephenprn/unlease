@@ -21,6 +21,7 @@ import { Floating } from '@shared/ui/components/Floating';
 import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
+import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
 import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
 import { MiniMonth } from '../views/MiniMonth';
@@ -110,6 +111,8 @@ export function TimeField({ value, onChange, label, from, twelveHours = false, i
   const [typed, setTyped] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const anchor = useFieldAnchor(open, input);
+  // Rows past the panel's top or foot fade there, as far as they run on.
+  useScrollEdgesOn(list, [anchor !== null], { fade: 'y' });
   const options = useMemo(() => {
     // An end's from a quarter after the start (its own quarter), a start's the whole day.
     const start = from ? Math.ceil((toMinutes(from) + 1) / 15) * 15 : 0;

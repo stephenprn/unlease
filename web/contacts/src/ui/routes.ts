@@ -1,6 +1,6 @@
 /**
  * Contacts' places, all under `/contacts`: every contact, the favourites, the birthdays, a label's
- * contacts, the labels, the duplicates, the bin, a contact (`/contacts/contact/<id>`, the address other
+ * contacts, the labels, the duplicates, « Nettoyer les contacts » and its tools, the bin, a contact (`/contacts/contact/<id>`, the address other
  * apps' references open: `suitePlaces`), its form, and a new contact's. The import is Réglages' page
  * (`/contacts/settings/import`, the shell's `paths.importer`); its old address leads there.
  */
@@ -15,6 +15,8 @@ declare module '@shared/ui/router' {
     readonly contactsLabels: object;
     readonly contactsImport: object;
     readonly contactsDuplicates: object;
+    readonly contactsCleanup: object;
+    readonly contactsCleanupTool: { readonly tool: string };
     readonly contactsTrash: object;
     readonly contact: { readonly id: string };
     readonly contactEdit: { readonly id: string };
@@ -30,6 +32,8 @@ export const CONTACTS_ROUTES = [
   'contactsLabels',
   'contactsImport',
   'contactsDuplicates',
+  'contactsCleanup',
+  'contactsCleanupTool',
   'contactsTrash',
   'contact',
   'contactEdit',
@@ -45,6 +49,7 @@ const FIXED: Readonly<Record<string, Route>> = {
   [`${HOME}/labels`]: { name: 'contactsLabels' },
   [`${HOME}/import`]: { name: 'contactsImport' },
   [`${HOME}/duplicates`]: { name: 'contactsDuplicates' },
+  [`${HOME}/cleanup`]: { name: 'contactsCleanup' },
   [`${HOME}/trash`]: { name: 'contactsTrash' },
   [`${HOME}/new`]: { name: 'contactNew' },
 };
@@ -54,6 +59,8 @@ export function parseContactsRoute(path: string): Route | null {
   if (fixed) return fixed;
   const label = /^\/contacts\/label\/([^/]+)$/.exec(path);
   if (label) return { name: 'contactsLabel', id: decodePart(label[1]!) };
+  const tool = /^\/contacts\/cleanup\/([\w-]+)$/.exec(path);
+  if (tool) return { name: 'contactsCleanupTool', tool: tool[1]! };
   const contact = /^\/contacts\/contact\/([^/]+)(\/edit)?$/.exec(path);
   if (contact) return contact[2] ? { name: 'contactEdit', id: decodePart(contact[1]!) } : { name: 'contact', id: decodePart(contact[1]!) };
   return null;
@@ -66,6 +73,8 @@ export const paths = {
   birthdays: `${HOME}/birthdays`,
   labels: `${HOME}/labels`,
   duplicates: `${HOME}/duplicates`,
+  cleanup: `${HOME}/cleanup`,
+  cleanupTool: (tool: string): string => `${HOME}/cleanup/${tool}`,
   trash: `${HOME}/trash`,
   newContact: `${HOME}/new`,
   label: (id: string): string => `${HOME}/label/${encodeURIComponent(id)}`,

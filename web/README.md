@@ -86,7 +86,7 @@ Set on first run (or in Administration): the server's address (shown when the se
 
 ## Storage
 
-- IndexedDB, a database per app (`carnet`, as Carnet's web app has always named it, and `pages`): the records it syncs with their field clocks and pending marks, the sync cursor and the types it was pulled with, this browser's clock node, and photos and page files waiting for upload. Memory is the working copy (`shared/src/app/store/records`, the app folding its records); writes reach disk a tick later.
+- IndexedDB, a database per app (its slug: `carnet`, as Carnet's web app has always named it, `pages`, `contacts`, `agenda`, `clock`): the records it syncs with their field clocks and pending marks, the sync cursor and the types it was pulled with, this browser's clock node, and photos and page files waiting for upload. Memory is the working copy (`shared/src/app/store/records`, the app folding its records); writes reach disk a tick later.
 - localStorage, the device's, every app's (`unlease.settings`): server address and token, the apps it runs as last heard, theme, grain, the colours and the ground, the interface language, the first run done; a change in one app's tab is followed in the other's, and v0.1's `carnet.settings` is read until it exists. The app's own, under its slug: `carnet.notes` (the board's layout, what the server said about links), `pages.pages` (the tree's open branches, the last page read), `<slug>.nav` (the folded sections), `<slug>.spotlight`.
 - Several tabs of one app share its database: each posts its writes to the others (BroadcastChannel) and ticks its own clock.
 

@@ -1,7 +1,9 @@
 /**
  * The top of an app's home (Carnet's board, Pages' list, Contacts' list): a search strip shaped like
- * habits-garden's field, pinned, the menu at its start and the sync dot at its end. `SyncLine` goes at
- * the head of what scrolls under it: a line when changes cannot reach the server. A search on a screen
+ * habits-garden's field, pinned, the menu at its start and the sync dot at its end, on the ground: what
+ * scrolls under it is cut at its foot, where its line comes in once content has gone under (the
+ * scroller's `ScrollEdges`). `SyncLine` goes at the head of what scrolls under it: a line when
+ * changes cannot reach the server. A search on a screen
  * of its own (Agenda's) is the same strip with Back at its start and no dot.
  */
 import React, { memo, useEffect, useRef, useState } from 'react';
@@ -154,7 +156,7 @@ function SyncLineComponent() {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    // A little ground under the strip: the wall scrolls out of sight there, never against its edge.
+    // A little ground under the strip: the wall scrolls out of sight there, its line at the ground's foot, never against the strip's edge.
     header: { paddingBottom: 6 },
     search: {
       marginHorizontal: 12,

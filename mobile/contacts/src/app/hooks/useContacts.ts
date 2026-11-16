@@ -7,11 +7,12 @@ import { useMemo } from 'react';
 
 import type { Contact } from '@unlease/contacts/models/contacts';
 import { upcomingBirthdays } from '@unlease/contacts/services/birthdays';
+import { cleanupCounts, shownCleanups, type CleanupFinding, type FixingTool } from '@unlease/contacts/services/cleanup';
 import { findDuplicates, resolveContact, type DuplicateGroup } from '@unlease/contacts/services/duplicates';
 import { searchContacts } from '@unlease/contacts/services/search';
 import { sortContacts, type SortOrder } from '@unlease/contacts/services/names';
 
-import { deviceRegion, regionFor } from '../reach';
+import { cleanupRegion, deviceRegion, regionFor } from '../reach';
 import { duplicateKey, selectRegion, selectSortOrder, useContactsUiStore } from '../store/contactsUi';
 import { useLibraryStore, type LibraryState } from '../store/libraryStore';
 
@@ -104,4 +105,32 @@ export function useDuplicates(): DuplicateGroup[] {
 /** The contact an id names now: itself, or the one it was merged into (a link from outside, a mention). */
 export function useResolvedContact(id: string): Contact | null {
   return useLibraryStore(s => resolveContact(s.contacts, id));
+}
+
+/** The live contacts, kept while the library does not change. */
+function useLive(): Contact[] {
+  const contacts = useLibraryStore(s => s.contacts);
+  const liveIds = useLibraryStore(s => s.liveContacts);
+  return useMemo(() => liveIds.map(id => contacts[id]).filter((contact): contact is Contact => contact !== undefined), [contacts, liveIds]);
+}
+
+/** The findings of « Nettoyer les contacts » set aside on this phone. */
+function useCleanupAside(): ReadonlySet<string> {
+  const aside = useContactsUiStore(s => s.cleanupAside);
+  return useMemo(() => new Set(aside), [aside]);
+}
+
+/** A tool's findings (`findCleanups`), but those set aside; `region` the country national numbers belong to. */
+export function useCleanups(tool: FixingTool, region: string | null): CleanupFinding[] {
+  const live = useLive();
+  const aside = useCleanupAside();
+  return useMemo(() => shownCleanups(tool, live, region, aside), [tool, live, region, aside]);
+}
+
+/** How many findings each tool has, the numbers read in the « Indicatif par défaut »'s country. */
+export function useCleanupCounts(): Readonly<Record<FixingTool, number>> {
+  const live = useLive();
+  const aside = useCleanupAside();
+  const chosenRegion = useContactsUiStore(selectRegion);
+  return useMemo(() => cleanupCounts(live, cleanupRegion(chosenRegion), aside), [live, chosenRegion, aside]);
 }

@@ -2,11 +2,12 @@
 import { useMemo } from 'react';
 
 import { isLive, type Contact, type ContactLabel } from '@unlease/contacts/models/contacts';
+import { cleanupCounts, shownCleanups, type CleanupFinding, type FixingTool } from '@unlease/contacts/services/cleanup';
 import { findDuplicates, type DuplicateGroup } from '@unlease/contacts/services/duplicates';
 import { sortContacts, sortLabels } from '@unlease/contacts/services/names';
 
 import { useContactsStore } from '../store/library';
-import { callingRegion, dismissalKey, usePrefsStore, useSortOrder } from '../store/prefs';
+import { callingRegion, cleanupRegion, dismissalKey, usePrefsStore, useSortOrder } from '../store/prefs';
 
 /** Every live contact, in the list's order. */
 export function useLiveContacts(): readonly Contact[] {
@@ -56,4 +57,25 @@ export function useDuplicates(): readonly DuplicateGroup[] {
     const aside = new Set(dismissed);
     return groups.filter(group => !aside.has(dismissalKey(group.ids)));
   }, [groups, dismissed]);
+}
+
+/** The findings of « Nettoyer les contacts » set aside on this device. */
+function useCleanupAside(): ReadonlySet<string> {
+  const aside = usePrefsStore(s => s.cleanupAside);
+  return useMemo(() => new Set(aside), [aside]);
+}
+
+/** A tool's findings (`findCleanups`), but those set aside; `region` the country national numbers belong to. */
+export function useCleanups(tool: FixingTool, region: string | null): readonly CleanupFinding[] {
+  const contacts = useContactsStore(s => s.contacts);
+  const aside = useCleanupAside();
+  return useMemo(() => shownCleanups(tool, Object.values(contacts), region, aside), [tool, contacts, region, aside]);
+}
+
+/** How many findings each tool has, the numbers read in the « Indicatif par défaut »'s country. */
+export function useCleanupCounts(): Readonly<Record<FixingTool, number>> {
+  const contacts = useContactsStore(s => s.contacts);
+  const region = usePrefsStore(cleanupRegion);
+  const aside = useCleanupAside();
+  return useMemo(() => cleanupCounts(Object.values(contacts), region, aside), [contacts, region, aside]);
 }

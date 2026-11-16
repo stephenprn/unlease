@@ -118,7 +118,6 @@
   flex-direction: column;
   gap: 8px;
   padding: 4px 16px 12px;
-  border-bottom: 1px solid var(--hairline);
 }
 
 .scope > p {
@@ -126,7 +125,7 @@
   color: var(--ink-muted);
 }
 
-/* The conversation scrolls; the question being written stays at the foot. */
+/* The conversation scrolls; the question being written stays at the foot. The scope over it and the question under it each meet it with a hairline once it runs on past them (`useScrollEdges`). */
 .thread {
   flex: 1;
   min-height: 0;
@@ -384,7 +383,6 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 16px 12px;
-  border-top: 1px solid var(--hairline);
 }
 
 .composeRow {

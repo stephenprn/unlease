@@ -24,6 +24,7 @@ const event = (id: string, extra: Partial<CalendarEvent> = {}): CalendarEvent =>
   uid: '',
   url: '',
   color: null,
+  dayOff: false,
   trashedAt: null,
   createdAt: 0,
   deletedAt: null,

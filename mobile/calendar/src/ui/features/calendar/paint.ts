@@ -40,11 +40,17 @@ export function itemTitle(item: AgendaItem): string {
   }
 }
 
-/** Its time in a list: « 14:30 – 15:30 », « Toute la journée ». */
+/** A day off (« Jour de congé », all day): its chips wear the sun, as the web's, and a list says so for its time. */
+export function isDayOff(item: AgendaItem): boolean {
+  return item.kind === 'event' && item.occurrence.allDay && item.occurrence.event.dayOff;
+}
+
+/** Its time in a list: « 14:30 – 15:30 », « Toute la journée », « Jour de congé ». */
 export function itemTime(item: AgendaItem, day: string, twelveHours: boolean): string {
   switch (item.kind) {
     case 'event': {
       const occurrence = item.occurrence;
+      if (isDayOff(item)) return t('Day off');
       if (occurrence.allDay || (occurrence.firstDay < day && occurrence.lastDay > day)) return t('All day');
       if (occurrence.firstDay < day) return t('Until {clock}', { clock: clockWords(formatClock(occurrence.endAt), twelveHours) });
       if (occurrence.lastDay > day) return t('From {clock}', { clock: clockWords(formatClock(occurrence.startAt), twelveHours) });

@@ -27,13 +27,14 @@ export function readmeLines(apps: readonly ServerApp[]): string[] {
 
 /** What the apps count for the Administration, on or off (their data is there either way). */
 export function countsOf(apps: readonly ServerApp[]): Required<AppCounts> {
-  const total = { notes: 0, pages: 0, contacts: 0, events: 0 };
+  const total = { notes: 0, pages: 0, contacts: 0, events: 0, alarms: 0 };
   for (const app of apps) {
     const counts = app.counts?.() ?? {};
     total.notes += counts.notes ?? 0;
     total.pages += counts.pages ?? 0;
     total.contacts += counts.contacts ?? 0;
     total.events += counts.events ?? 0;
+    total.alarms += counts.alarms ?? 0;
   }
   return total;
 }

@@ -1,21 +1,25 @@
 /**
  * The planning, Google's « Planning »: the days ahead that hold something, each with its events in
  * order (their hours, their colour, their title and place), « Afficher plus » going further while
- * something lies further; nothing on these days, the view's empty state, centred, alone.
+ * something lies further; nothing on these days, the view's empty state, centred, alone. What is
+ * over lies back, as in « Ma journée »; on a phone-sized window each title is over its time and
+ * place, as the phone's rows.
  */
 import { useMemo, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
-import { shortMonth, shortWeekday, timeRange } from '@unlease/calendar/services/eventText';
+import { longDay, shortMonth, shortWeekday, timeRange } from '@unlease/calendar/services/eventText';
 import { onDay, type Occurrence } from '@unlease/calendar/services/occurrences';
 import { addDays, daysBetween, partsOf, weekdayOf } from '@unlease/calendar/services/time';
 
 import { useColorOf, useItems } from '../../app/hooks/useItems';
+import { useNow } from '../../app/hooks/useToday';
 import { anchorOf, openPeek } from '../../app/store/calendarUi';
 import { usePrefsStore } from '../../app/store/prefs';
 import { Button } from '@shared/ui/components/Button';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { useScrollEdges } from '@shared/ui/components/scrollEdges';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import styles from '../calendar.module.css';
 
 /** Days a page of the planning reaches; « Afficher plus » adds as many. */
@@ -41,7 +45,10 @@ export function ScheduleView({ day, today }: { day: string; today: string }) {
 export function ScheduleList({ from, days, items, today, onMore }: { from: string; days: number; items: readonly Occurrence[]; today: string; onMore?: () => void }) {
   const twelveHours = usePrefsStore(s => s.twelveHours);
   const colorOf = useColorOf();
-  const scheduleEdges = useScrollEdges({ top: true });
+  const { now } = useNow();
+  const narrow = useMedia(NARROW);
+  // Days past the panel's top or foot fade there, as far as they run on.
+  const scheduleEdges = useScrollEdges({ fade: 'y' });
   const groups = useMemo(() => {
     const out: { day: string; items: Occurrence[] }[] = [];
     for (let index = 0; index < days; index += 1) {
@@ -55,30 +62,36 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
     <div className={`${styles.frame} paper`} data-outline="panel">
       <div ref={scheduleEdges} className={styles.schedule}>
         {groups.length === 0 ? (
-          // The view's empty place, centred in it as « Aujourd'hui »'s is.
+          // The view's empty place, centred in it as « Ma journée »'s is.
           <div className={styles.scheduleEmpty}>
             <EmptyState scene="reminders" title={t('Nothing planned')} text={t('No events on these days. “Create” adds one.')} />
           </div>
         ) : null}
         {groups.map(group => (
-          <section key={group.day} className={styles.scheduleDay} aria-label={group.day}>
-            <div className={styles.scheduleDate} data-today={group.day === today || undefined}>
-              <strong>{partsOf(group.day).day}</strong>
-              <span className="t-meta">{`${shortMonth(partsOf(group.day).month)}, ${shortWeekday(weekdayOf(group.day))}`}</span>
+          <section key={group.day} className={styles.scheduleDay} aria-label={longDay(group.day)}>
+            {/* « lun. 16 nov. », the day's number the line's weight. */}
+            <div className={styles.scheduleDate} data-today={group.day === today || undefined} aria-hidden="true">
+              <span className="t-meta">{shortWeekday(weekdayOf(group.day))}</span>
+              <strong className="tabular">{partsOf(group.day).day}</strong>
+              <span className="t-meta">{shortMonth(partsOf(group.day).month)}</span>
             </div>
             <ul className={styles.scheduleItems}>
-              {group.items.map(item => (
-                <li key={item.key}>
-                  <button type="button" className={styles.scheduleItem} data-line={colorOf(item) ?? undefined} onClick={event => openPeek(item.key, anchorOf(event.currentTarget))}>
-                    <span className={styles.swatch} aria-hidden="true" />
-                    <span className="t-meta tabular">{timeRange(item, twelveHours)}</span>
-                    <span className="t-body">
-                      {item.event.title.trim() || t('Untitled')}
-                      {item.event.place.trim() ? <span className={styles.muted}>{` · ${item.event.place.trim()}`}</span> : null}
-                    </span>
-                  </button>
-                </li>
-              ))}
+              {group.items.map(item => {
+                const place = item.event.place.trim();
+                const time = timeRange(item, twelveHours);
+                return (
+                  <li key={item.key}>
+                    <button type="button" className={styles.scheduleItem} data-line={colorOf(item) ?? undefined} data-over={item.endAt <= now || undefined} onClick={event => openPeek(item.key, anchorOf(event.currentTarget))}>
+                      <span className={styles.swatch} aria-hidden="true" />
+                      <span className={`${styles.scheduleTime} t-meta tabular`}>{narrow && place ? `${time} · ${place}` : time}</span>
+                      <span className={`${styles.scheduleTitle} t-body`}>
+                        {item.event.title.trim() || t('Untitled')}
+                        {place && !narrow ? <span className={styles.muted}>{` · ${place}`}</span> : null}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))}

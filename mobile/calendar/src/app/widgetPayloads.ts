@@ -26,6 +26,7 @@ import { appScheme } from '@shared/app/variant';
 import { agendaIn, itemsOn, LAYER_COLORS, type AgendaItem } from './agenda';
 import { nameOf } from './mentionNames';
 import type { LibraryState } from './store/libraryStore';
+import { useCalendarUiStore } from './store/calendarUi';
 
 export const SCHEDULE_DAYS = 14;
 const MOST_PER_DAY = 8;
@@ -279,7 +280,7 @@ export function countdownPayload(target: string, state: LibraryState, prefs: Cal
     target,
     gone: false,
     title: shown.title.trim() || t('Untitled'),
-    color: eventColor(shown, state.calendarLabels, state.feeds) ?? '',
+    color: eventColor(shown, state.calendarLabels, state.feeds, useCalendarUiStore.getState().prefs.ownColor),
     occurrences: occurrences.map(occurrence => countdownOccurrence(occurrence, year, prefs.twelveHours)),
   };
 }
@@ -303,7 +304,7 @@ function choice(state: LibraryState, occurrence: Occurrence, now: number, twelve
   return {
     eventId: occurrence.seriesId,
     title: event.title.trim() || t('Untitled'),
-    color: eventColor(event, state.calendarLabels, state.feeds),
+    color: eventColor(event, state.calendarLabels, state.feeds, useCalendarUiStore.getState().prefs.ownColor),
     when: occurrence.allDay ? from : `${from} · ${clockWords(formatClock(occurrence.startAt), twelve)}`,
     distance: occurrence.firstDay < first && occurrence.lastDay >= first ? t('Happening now') : dayDistance(occurrence.firstDay, first),
   };

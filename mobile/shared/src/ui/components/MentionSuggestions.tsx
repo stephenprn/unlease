@@ -73,8 +73,8 @@ function MentionSuggestionsComponent({ rows, label, empty = null, docked = true,
     rows.length === 0 ? (
       <EmptyLine text={empty ?? ''} glyph="info" style={styles.empty} />
     ) : (
-      // A small card of its own: its ends are its own, nothing slides under anything.
-      <EdgeScrollView top={false} keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: (SUGGESTION_ROW + GEOMETRY.rowGap) * ROWS_SHOWN + INSET * 2 }} contentContainerStyle={styles.list}>
+      // A small card of its own, capped at a few rows: its ends fade while rows continue past them, no head over it.
+      <EdgeScrollView capped keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: (SUGGESTION_ROW + GEOMETRY.rowGap) * ROWS_SHOWN + INSET * 2 }} contentContainerStyle={styles.list}>
         {rows.map(row => (
           <Tappable key={row.key} onPress={row.onPress} accessibilityLabel={row.title} accessibilityValue={row.detail ? { text: row.detail } : undefined} style={styles.row}>
             <View style={styles.mark}>{row.mark ?? (row.icon ? <Icon name={row.icon} size={22} color={theme.color.inkMuted} /> : null)}</View>

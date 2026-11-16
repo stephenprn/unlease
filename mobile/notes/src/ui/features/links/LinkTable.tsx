@@ -10,7 +10,7 @@
  * line pressed (either half) opens the link's page, held it moves the link, as a row.
  */
 import React, { memo, useMemo, useState } from 'react';
-import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { t } from '@unlease/core/i18n';
@@ -24,7 +24,7 @@ import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore
 import { showSnack } from '@shared/app/store/uiStore';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, Icon, Organic, Tappable } from '../../components';
+import { AppText, EdgeScrollView, Icon, Organic, Tappable } from '../../components';
 import { ReadingTrack } from '@shared/ui/components/ReadingTrack';
 import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
@@ -230,7 +230,8 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
             </React.Fragment>
           ))}
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEventThrottle={32} onScroll={event => setUnder(event.nativeEvent.contentOffset.x > 0)} style={styles.flex}>
+        {/* The held column is its start's head (its hairline once columns go under it); its end fades while columns continue past it. */}
+        <EdgeScrollView horizontal fade="end" showsHorizontalScrollIndicator={false} scrollEventThrottle={32} onScroll={event => setUnder(event.nativeEvent.contentOffset.x > 0)} style={styles.flex}>
           <View>
             <View style={styles.headRow}>
               <View style={[styles.cell, { width: WIDTHS.site }]}>
@@ -260,7 +261,7 @@ function LinkTableComponent({ open, done, sort, priced, onSort, onOpen, onLongPr
               </React.Fragment>
             ))}
           </View>
-        </ScrollView>
+        </EdgeScrollView>
       </View>
     </Organic>
   );

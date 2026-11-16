@@ -528,7 +528,7 @@ function MoveHost({ page, openPage }: { page: string; openPage: (id: string) => 
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search for a page')} accessibilityLabel={t('Search for a page')} />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.list}>
+      <SheetScroll contentContainerStyle={styles.list}>
         {headed ? (
           <>
             <AppText variant="section" style={styles.section} accessibilityRole="header">
@@ -572,7 +572,7 @@ function LanguageSheet({ page }: { page: string }) {
       <View style={styles.search}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search languages')} accessibilityLabel={t('Search languages')} autoCapitalize="none" autoCorrect={false} returnKeyType="done" onSubmitEditing={() => (found[0] ? pick(found[0].key) : undefined)} />
       </View>
-      <SheetScroll top={false} contentContainerStyle={styles.list}>
+      <SheetScroll contentContainerStyle={styles.list}>
         {found.map(language => (
           <ListRow
             key={language.key}

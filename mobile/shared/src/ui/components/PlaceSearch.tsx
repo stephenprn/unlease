@@ -5,7 +5,10 @@
  * with nothing typed, the places this device already used; as words come, « Utiliser « … » » to keep
  * them as written (Enter does the same), the places known that answer them (`clock`), then the
  * server's (`mapPin`, `GET /api/places`, after a short pause, three letters at least), each its name
- * over its detail, OpenStreetMap credited under them. A place picked, or the words kept, close it and
+ * over its detail, OpenStreetMap credited under them. A field that has contacts to offer (`people`)
+ * lists their addresses as a group of their own, « Adresses de vos contacts »: the contacts whose
+ * name or address answers the words, each its name over its address (a few with nothing typed, when
+ * the device has no place of its own yet), as Google Calendar offers them. A place picked, or the words kept, close it and
  * go back to the form; Back or the arrow leave it as it was.
  *
  * One at a time: a field asks (`openPlaceSearch`) and the screen's `PlaceSearchHost`, mounted at its
@@ -20,6 +23,7 @@ import { create } from 'zustand';
 
 import { t } from '@unlease/core/i18n';
 import { knownPlaces, PLACE_QUERY_MIN, type Place } from '@unlease/core/sync/places';
+import { foldText } from '@unlease/core/services/search';
 import { SHAPES } from '@unlease/design/shapes';
 
 import { findPlaces, placesFound } from '@shared/app/places';
@@ -38,12 +42,23 @@ import { Organic } from './Organic';
 import { SEARCH_HEIGHT, SEARCH_TOP } from './SearchHeader';
 import { useKeyboardTop } from './useKeyboardVisible';
 
+/** A contact's address, offered by name (« Léa Martin » over « 12 rue des Lilas, Lyon »). */
+export interface PersonPlace {
+  readonly who: string;
+  readonly place: Place;
+}
+
+/** The most of a group shown. */
+const PEOPLE_SHOWN = 4;
+
 /** What a field asks for. */
 export interface PlaceSearchRequest {
   /** What the field holds now: the search starts from it. */
   readonly value: string;
-  /** The places this device knows (a contact's address, an event's place used before), offered first. */
+  /** The places this device already used (an event's place), offered first. */
   readonly known: readonly Place[];
+  /** The contacts' addresses, a group of their own (Agenda's event, which knows Contacts'). */
+  readonly people?: readonly PersonPlace[];
   /** Read out for the screen (« Lieu », « Rue »). */
   readonly label: string;
   /** A place picked (`place`), or the words kept as written (`place` null; empty clears the field). */
@@ -134,6 +149,18 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
     };
     return { mine: knownPlaces(request.known, typed, typed ? 4 : 8).filter(fresh), theirs: found.places.filter(fresh) };
   }, [request.known, typed, found.places]);
+  // The contacts whose name or address starts with the words typed; with nothing typed, a few while the device has no place of its own.
+  const people = useMemo(() => {
+    const all = request.people ?? [];
+    const words = foldText(typed).split(/[\s,]+/).filter(Boolean);
+    if (words.length === 0) return request.known.length === 0 ? all.slice(0, PEOPLE_SHOWN) : [];
+    return all
+      .filter(({ who, place }) => {
+        const starts = foldText(`${who} ${place.label}`).split(/[\s,'’-]+/);
+        return words.every(word => starts.some(start => start.startsWith(word)));
+      })
+      .slice(0, PEOPLE_SHOWN);
+  }, [request.people, request.known.length, typed]);
 
   const typedEnough = typed.length >= PLACE_QUERY_MIN;
   const status = !typedEnough
@@ -144,7 +171,7 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
         ? t('Looking for places…')
         : found.failed
           ? t('The place search is not answering: the place is kept as written.')
-          : theirs.length === 0 && mine.length === 0
+          : theirs.length === 0 && mine.length === 0 && people.length === 0
             ? t('No place found: it is kept as written.')
             : null;
   // The rows keep clear of the keyboard: what lies under it scrolls up.
@@ -161,7 +188,7 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
             value={text}
             onChangeText={setText}
             autoFocus
-            placeholder={t('Search for a place or an address')}
+            placeholder={request.people?.length ? t('Search for a place, an address or a contact') : t('Search for a place or an address')}
             placeholderTextColor={theme.color.inkFaint}
             selectionColor={theme.color.highlight}
             selectionHandleColor={theme.color.focus}
@@ -187,6 +214,22 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
         {mine.map(place => (
           <ListRow key={`k:${place.name}|${place.detail}`} icon="clock" title={place.name} supporting={place.detail || undefined} onPress={() => done(place.label, place)} />
         ))}
+        {people.length > 0 ? (
+          <>
+            <AppText variant="metaStrong" color={theme.color.inkMuted} accessibilityRole="header" style={styles.group}>
+              {t('Your contacts’ addresses')}
+            </AppText>
+            {people.map(({ who, place }) => (
+              <ListRow key={`p:${who}|${place.label}`} icon="person" title={who} supporting={place.label} onPress={() => done(place.label, place)} />
+            ))}
+          </>
+        ) : null}
+        {/* After the contacts' group, the places found under a name of their own, so they never read as a contact's. */}
+        {people.length > 0 && theirs.length > 0 ? (
+          <AppText variant="metaStrong" color={theme.color.inkMuted} accessibilityRole="header" style={styles.group}>
+            {t('Places')}
+          </AppText>
+        ) : null}
         {theirs.map(place => (
           <ListRow key={`f:${place.name}|${place.detail}`} icon="mapPin" title={place.name} supporting={place.detail || undefined} onPress={() => done(place.label, place)} />
         ))}
@@ -231,5 +274,7 @@ const makeStyles = (theme: Theme) =>
     list: { paddingTop: 8, paddingHorizontal: 12 },
     // On the rows' columns (inset 6, padded 10): its glyph in their glyphs' slot, its words on their text.
     status: { paddingHorizontal: 16, paddingVertical: 14 },
+    // A group's name over its rows, on their words (16 in, past the 24 slot and its 16).
+    group: { paddingLeft: 16 + 24 + 16, paddingRight: 16, paddingTop: 16, paddingBottom: 4 },
     credit: { paddingLeft: 56, paddingRight: 16, paddingTop: 4 },
   });

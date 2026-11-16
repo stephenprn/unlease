@@ -1,7 +1,8 @@
 /**
  * The lists: every contact (Google's « Contacts », the favourites' faces and the week's birthdays
- * above it, as on the phone; the header's search filters it), the favourites alone, a label's
- * contacts. Each with its title and its count, then the list, or the same empty place.
+ * above it, as on the phone; the header's search filters it), the favourites alone (cards, not a
+ * list: a few people within reach, `FavoriteCards`), a label's contacts. Each with its title and its
+ * count, then the list, or the same empty place.
  */
 import { t, tx } from '@unlease/core/i18n';
 import { searchSummary } from '@unlease/core/services/searchWords';
@@ -21,6 +22,7 @@ import { NARROW, useMedia } from '@shared/ui/useMedia';
 import screens from '@shared/ui/screens/screens.module.css';
 import styles from '../contacts.module.css';
 import { ContactList, type ListSection } from '../features/ContactList';
+import { FavoriteCards } from '../features/FavoriteCards';
 import { BirthdayLine, FavoritesStrip } from '../features/HomeExtras';
 import { openNewContact } from '../features/newContact';
 import { visibleContacts } from '../features/visible';
@@ -102,7 +104,7 @@ function Favorites() {
       ) : favorites.length === 0 ? (
         <EmptyState scene="label" title={t('No favourites')} text={t('A contact’s star puts them here, within reach, and in the phone’s quick calls widget.')} />
       ) : (
-        <ContactList sections={[{ id: 'favorites', contacts: favorites, letters: true }]} />
+        <FavoriteCards contacts={favorites} />
       )}
     </div>
   );

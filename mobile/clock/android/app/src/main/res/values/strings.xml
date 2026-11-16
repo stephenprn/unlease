@@ -1,0 +1,12 @@
+<resources>
+    <!-- APPS.clock.name (packages/core/src/apps.ts). -->
+    <string name="app_name">Clock</string>
+    <!-- Another app's « set an alarm », as the system's chooser lists the app. -->
+    <string name="set_alarm">Set an alarm in Clock</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_alarm_short">Alarm</string>
+    <string name="shortcut_alarm_long">New alarm</string>
+    <string name="shortcut_settings_short">Settings</string>
+    <string name="shortcut_settings_long">Clock settings</string>
+</resources>

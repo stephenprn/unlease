@@ -31,6 +31,24 @@ export const contactPlace = (id?: string | null): SuitePlace => (id ? { phone: `
 /** An event in Agenda (`unlease-agenda://event/<id>`, on the web `/agenda/event/<id>`); its calendar without one. */
 export const eventPlace = (id?: string | null): SuitePlace => (id ? { phone: `event/${id}`, web: `/agenda/event/${id}` } : { phone: '', web: '/agenda' });
 
+/** A day in Agenda, its day view (`unlease-agenda://day/2026-11-17`, on the web `/agenda/day/2026-11-17`): Clock's « Voir la journée ». */
+export const dayPlace = (day: string): SuitePlace => ({ phone: `day/${day}`, web: `/agenda/day/${day}` });
+
+/** What Clock needs to wake the person for an event: which occurrence, its start (an instant) and its title, in case Clock has not synced it yet. */
+export interface AlarmForEvent {
+  readonly eventId: string;
+  /** The occurrence of a repeating event ('' for one that does not repeat). */
+  readonly occurrence: string;
+  readonly at: number;
+  readonly title: string;
+}
+
+const alarmQuery = ({ eventId, occurrence, at, title }: AlarmForEvent): string =>
+  `event=${encodeURIComponent(eventId)}&occurrence=${encodeURIComponent(occurrence)}&at=${at}&title=${encodeURIComponent(title)}`;
+
+/** A new alarm in Clock for an Agenda event (« Réveil » on the event): its form, linked to it (`unlease-clock://new?event=…`, on the web `/clock/new?event=…`). */
+export const alarmForEventPlace = (event: AlarmForEvent): SuitePlace => ({ phone: `new?${alarmQuery(event)}`, web: `/clock/new?${alarmQuery(event)}` });
+
 /** A new event in Agenda, its form filled from a draft (`unlease-agenda://new?…`, on the web `/agenda/new?…`). */
 export const newEventPlace = (query: string): SuitePlace => ({ phone: `new?${query}`, web: `/agenda/new?${query}` });
 

@@ -7,7 +7,7 @@ import { deletedForGoodWords, deletedWords, lengthWords, weekNumberShort } from 
 import { weekCodesFrom } from '../recurrence';
 
 const settings = (calendar: Partial<ServerSettings['calendar']>, keyed = true): ServerSettings =>
-  ({ analysis: { enabled: keyed }, calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, ...calendar } }) as unknown as ServerSettings;
+  ({ analysis: { enabled: keyed }, calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5], ...calendar } }) as unknown as ServerSettings;
 
 describe('the words both clients share', () => {
   beforeEach(() => setLocale('fr'));
@@ -45,8 +45,11 @@ describe('the words both clients share', () => {
   });
 
   it('gives the Administration’s lines', () => {
-    expect(holidaysLine(settings({})).tone).toBe('off');
-    expect(holidaysLine(settings({ holidays: { country: 'FR', region: 'FR-67' } })).title).toContain('FR-67');
+    expect(holidaysLine(settings({}))).toMatchObject({ title: 'Du lundi au vendredi', meta: 'Aucun jour férié' });
+    expect(holidaysLine(settings({ holidays: { country: 'FR', region: 'FR-67' } })).meta).toContain('FR-67');
+    expect(holidaysLine(settings({ workDays: [1, 3, 5] })).title).toBe('Lundi, mercredi, vendredi');
+    expect(holidaysLine(settings({ workDays: [2, 3, 4, 5, 6] })).title).toBe('Du mardi au samedi');
+    expect(holidaysLine(settings({ workDays: [] })).title).toBe('Aucun jour travaillé');
     expect(publishLine(settings({ publishPath: '/ical/secret.ics' })).title).toBe('Agenda publié');
     expect(publishLine(settings({})).title).toBe('Agenda non publié');
     expect(askLine(settings({ ask: true }, false)).title).toBe('Sans clé Claude');

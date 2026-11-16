@@ -166,7 +166,7 @@ function EmojiSheetComponent({ visible, allowNone, onPick, onDismiss, value = nu
           />
           {allowNone && value !== null ? <Button kind="text" label={t('Remove icon')} onPress={() => pick(null)} style={styles.none} /> : null}
         </View>
-        <SheetFlatList top={false}
+        <SheetFlatList
           data={rows}
           keyExtractor={row => row.key}
           renderItem={renderRow}

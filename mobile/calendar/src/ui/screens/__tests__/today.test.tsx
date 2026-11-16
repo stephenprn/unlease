@@ -1,5 +1,5 @@
 /**
- * « Aujourd'hui » on the phone: the drawer's place over the calendar's tiles; the day in reading order
+ * « Ma journée » on the phone: the drawer's place over the calendar's tiles; the day in reading order
  * with what runs and what comes next counting; Carnet's reminders missed; tomorrow; a row opening
  * its event; an empty day offering one at the next hour.
  */
@@ -23,7 +23,7 @@ jest.useFakeTimers();
 
 const day = today(Date.now());
 
-describe('« Aujourd’hui »', () => {
+describe('« Ma journée »', () => {
   beforeEach(() => {
     resetSuite();
     jest.setSystemTime(wallToInstant(`${day}T14:10`, ''));
@@ -44,8 +44,8 @@ describe('« Aujourd’hui »', () => {
     await act(async () => setDrawerOpen(true));
     await settle();
     await act(async () => {
-      // The drawer's row (the top bar's « Aujourd'hui » is an icon: it draws no words).
-      pressableWithText(tree, 'Aujourd’hui').props.onPress();
+      // The drawer's row (« Aujourd'hui », the jump to today, is the bar's dated page: it draws no words).
+      pressableWithText(tree, 'Ma journée').props.onPress();
     });
     await settle(600);
     expect(useCalendarUiStore.getState().view).toBe('today');

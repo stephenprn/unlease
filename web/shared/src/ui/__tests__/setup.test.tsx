@@ -42,7 +42,7 @@ function fakeServer(notes = 0, done = notes > 0) {
     pages: { enabled: false, everywhere: true, web: true, reach: 'medium' },
     backup,
     drive: { provider: null, url: '', folder: '/Unlease', library: null, tokenHint: null, leaving: false },
-    calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false },
+    calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] },
     seerr: { url: '', keyHint: null },
     immich: { url: '', keyHint: null },
   });

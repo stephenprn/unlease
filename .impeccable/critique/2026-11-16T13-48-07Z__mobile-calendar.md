@@ -1,0 +1,46 @@
+---
+target: full review and polish of Agenda
+total_score: 27
+max_score: 40
+na_heuristics: 
+p0_count: 0
+p1_count: 5
+target_identity: "file:/Volumes/data/git/unlease/mobile/calendar"
+timestamp: 2026-11-16T13-48-07Z
+slug: mobile-calendar
+---
+# Agenda critique (web/calendar and mobile/calendar), 2026-11-16
+
+Assessment A (design review, isolated) on 21 phone captures (Agenda Dev, Pixel) and ~45 web captures (1440×900, 390×844, light and dark); Assessment B (detector + browser overlay, isolated) on the web demo, 24 runs over 6 views. Native: A only.
+
+## Design specificity
+The shell is Unlease's own (two-tone grainy ground, pebble, Onde icons, Signika, warm palette); the calendar body is largely Google Calendar's layout in that skin. Most specific and best: « Aujourd'hui » (both clients), the other apps' layers (birthdays, Carnet's reminders, Pages' dates), the weather under day heads and in the peek, person chips. Least specific: the phone's default home, Planning (one card per event with a coloured left stripe).
+
+## Heuristics: 27/40
+Visibility 3 · Real world 3 · Control 3 · Consistency 2 · Error prevention 3 · Recognition 2 · Flexibility 3 · Minimalism 3 · Recovery 3 · Help 2.
+
+## Cognitive load: moderate (3 failures)
+View switcher of 6–7 options shown twice on the phone (top bar and drawer); the phone month needs every « 09:30 … » opened; seven link-coloured actions compete in the phone editor.
+
+## Priority issues
+- [P1] Month view on phone-width screens shows times, not titles (phone; web at 390 truncates « 09… »). Web month « +1/+2 » overflows into the next row (fixed 3 lanes × 22).
+- [P1] Mobile-web schedule hides every time (`.scheduleItem > :nth-child(2){display:none}`).
+- [P1] Phone light theme: white status-bar icons on cream on the calendar's home (`CalendarScreen` sets no StatusBar style).
+- [P1] Week and 3-day titles break mid-word in narrow columns (phone and web at 390).
+- [P1] Terracotta means too many things; the web's « Mes événements » key shows a green stone while its events are terracotta.
+- [P2] Phone Planning home: generic stripe cards, past not dimmed, no now marker, day heads with the year.
+- [P2] Ambiguous top-bar glyphs (today = calendar glyph, view switcher = grid), the title opens a day picker without a chevron.
+- [P2] Two places named « Aujourd'hui » (the jump and the view).
+- [P2] Notifications off buried in Réglages, without a warning tone.
+- [P2] Layers named three ways (« Anniversaires (Contacts) », « Rappels de Carnet », « Dates des pages (Pages) »); « Autres agendas » can show no row above the pinned foot at 1440×900.
+- [P2] Unlabelled person icon in the phone editor's place row.
+- [P3] Two « Retirer les rappels par défaut » rows in phone Réglages.
+
+## Detector (web)
+CLI: `side-tab` ×2 (`.ghost`, `.chip`: 3px coloured left border), `design-system-font-size` ×2 (0.6875rem). Overlay: `.quickInput` placeholder 4.2:1 / 3.3:1 (no ::placeholder rule), outside-month mini days 2.6:1 light, dark `.chipMeta` 4.2:1 on a wash, cramped padding of the time grid at 390, a straggler in Réglages; `bounce-easing` (`--ease-spring`, defined but unused: a false positive). No horizontal overflow anywhere.
+
+## Persona red flags
+One-handed: month unreadable at a glance, mangled week titles, invisible status-bar clock in light. Screen reader: month bars speak the title without the time. First-timer: two « Aujourd'hui », « Dates des pages (Pages) ». Power user: well served on the web; views in two places on the phone.
+
+## Strengths
+« Aujourd'hui »; the web time grid and peek (weather, layers, person chips); empty states and forms (collage, ⌘+Entrée, unsaved guard).

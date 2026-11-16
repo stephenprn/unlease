@@ -38,6 +38,7 @@ export const APPS = {
   pages: { name: 'Pages', slug: 'pages', scheme: 'unlease-pages', status: 'ready', reads: ['notes', 'contacts', 'calendar'] },
   calendar: { name: 'Agenda', slug: 'agenda', scheme: 'unlease-agenda', status: 'ready', reads: ['contacts', 'notes', 'pages'] },
   contacts: { name: 'Contacts', slug: 'contacts', scheme: 'unlease-contacts', status: 'ready', reads: [] },
+  clock: { name: 'Clock', slug: 'clock', scheme: 'unlease-clock', status: 'ready', reads: ['calendar'] },
 } as const satisfies Readonly<Record<string, AppInfo>>;
 
 export type AppId = keyof typeof APPS;

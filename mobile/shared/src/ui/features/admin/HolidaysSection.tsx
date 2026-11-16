@@ -1,14 +1,17 @@
 /**
- * « Jours fériés », Agenda's: the country (and its region, when it has days of its own) whose public
- * holidays the server fetches from Nager.Date and every device's calendar shows. In the setup (the
- * row « Jours fériés » of « Votre serveur » once Agenda is chosen) and in Agenda's Administration.
- * The shell knows no app: it asks the server's routes by their address (`/api/calendar/holidays/…`,
- * Agenda's `sync/routes`), and the settings through the shared ones (`ServerSettings.calendar`).
+ * « Votre semaine », Agenda's: the days the person works (each toggle saved at once: Agenda's week
+ * may leave the others out, Clock's « Jours travaillés » rings on them), then the country (and its
+ * region, when it has days of its own) whose public holidays the server fetches from Nager.Date and
+ * every device's calendar shows. In the setup (the row « Votre semaine » of « Votre serveur » once
+ * Agenda is chosen) and in Agenda's Administration. The shell knows no app: it asks the server's
+ * routes by their address (`/api/calendar/holidays/…`, Agenda's `sync/routes`), and the settings
+ * through the shared ones (`ServerSettings.calendar`).
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t, tx } from '@unlease/core/i18n';
+import { workDaysWords } from '@unlease/core/services/admin';
 import { foldText } from '@unlease/core/services/search';
 import { COUNTRY_NAMES, countryName } from '@unlease/core/services/setup';
 import { authHeader } from '@unlease/core/sync/protocol';
@@ -17,7 +20,7 @@ import type { ServerConfig } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { saveServerSettings } from '@shared/app/sync/transport';
 
-import { AppText, Button, EmptyLine, Icon, ListRow, TextField } from '../../components';
+import { AppText, Button, EmptyLine, Icon, ListRow, TextField, WeekdayToggles } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
 import { StatusRow } from './StatusRow';
 
@@ -46,6 +49,9 @@ export function holidaysLine(country: string | null, region: string | null): str
 export function HolidaysSection({ server, admin }: { server: ServerConfig; admin: AdminState }) {
   const theme = useTheme();
   const current = admin.settings!.calendar.holidays;
+  const workDays = admin.settings!.calendar.workDays;
+  /** The days as last toggled, shown until the server has said them back. */
+  const [toggled, setToggled] = useState<readonly number[] | null>(null);
   const [countries, setCountries] = useState<readonly Country[]>(() => Object.keys(COUNTRY_NAMES).map(code => ({ code, name: countryName(code) })));
   const [regions, setRegions] = useState<readonly string[]>([]);
   const [query, setQuery] = useState('');
@@ -90,6 +96,21 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
     }
   };
 
+  // A day toggled is saved at once, as a country pressed; the toggles wait for the answer.
+  const saveWorkDays = async (next: readonly number[]): Promise<void> => {
+    setToggled(next);
+    setBusy(true);
+    try {
+      admin.setSettings(await saveServerSettings(server, { calendar: { workDays: next } }));
+      showSnack(t('Working days: {days}', { days: workDaysWords(next) }), undefined, { tone: 'success' });
+    } catch (failure) {
+      showSnack(failure instanceof Error ? t(failure.message) : t('Setting refused'), undefined, { tone: 'error' });
+    } finally {
+      setToggled(null);
+      setBusy(false);
+    }
+  };
+
   const shown = useMemo(() => {
     const words = foldText(query.trim());
     return (words ? countries.filter(country => foldText(country.name).includes(words) || country.code.toLowerCase() === words) : countries.filter(country => COUNTRY_NAMES[country.code])).slice(0, 40);
@@ -110,10 +131,21 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
 
   return (
     <View>
-      {/* The same head as every section's, its removal in it. */}
-      <StatusRow line={{ tone: current.country ? 'ok' : 'off', title: holidaysLine(current.country, current.region), meta: '' }}>
+      {/* The same head as every section's (the Administration's line: the week, then the holidays), the holidays' removal in it. */}
+      <StatusRow line={{ tone: 'ok', title: workDaysWords(workDays), meta: current.country ? t('Public holidays: {place}', { place: holidaysLine(current.country, current.region) }) : t('No public holidays') }}>
         {current.country ? <Button label={t('Stop showing public holidays')} kind="dangerText" small disabled={busy} onPress={() => void save(null, null)} /> : null}
       </StatusRow>
+      <View style={styles.week}>
+        <AppText variant="metaStrong">{t('Days you work')}</AppText>
+        {/* A working week reads from Monday, whatever day the calendar starts on. */}
+        <WeekdayToggles days={toggled ?? workDays} weekStart={1} label={t('Days you work')} disabled={busy} onChange={days => void saveWorkDays(days)} />
+        <AppText variant="meta" color={theme.color.inkMuted}>
+          {t('Agenda can leave the other days out of its week, and Clock’s “Workdays” rings on them; for every device.')}
+        </AppText>
+      </View>
+      <AppText variant="metaStrong" style={styles.heading}>
+        {t('Public holidays')}
+      </AppText>
       {regions.length > 0 ? (
         <View accessibilityRole="radiogroup" accessibilityLabel={t('Region')}>
           <AppText variant="metaStrong" style={styles.heading}>
@@ -137,6 +169,8 @@ export function HolidaysSection({ server, admin }: { server: ServerConfig; admin
 const styles = StyleSheet.create({
   // On the panel's column (16 in), as the other sections' fields and heads.
   heading: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
+  // The label, the seven toggles and the help on the same column, the help a breath under them.
+  week: { gap: 10, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16 },
   field: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
   list: { paddingBottom: 4 },
   none: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },

@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APPS, type AppId } from '@unlease/core/apps';
+import { APP_WORDS } from '@unlease/core/appWords';
 import { t } from '@unlease/core/i18n';
 import { appOffWords } from '@unlease/core/services/setup';
 import { rememberServerSettings, selectServer, selectServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
@@ -61,6 +62,11 @@ export function AppOffScreen({ app, onSettings }: { app: AppId; onSettings?: () 
         <AppText variant="body" color={theme.color.inkMuted} style={styles.center}>
           {words.lead}
         </AppText>
+        {APP_WORDS[app].phoneOffNote ? (
+          <AppText variant="bodyStrong" style={styles.center}>
+            {APP_WORDS[app].phoneOffNote}
+          </AppText>
+        ) : null}
         <Button label={words.action} icon="server" busy={busy} disabled={!server} onPress={turnOn} style={styles.action} />
         {server ? (
           <AppText variant="meta" style={styles.center}>

@@ -4,7 +4,8 @@
  * Google Maps or OpenStreetMap, the weather that day); with whom (each person's face and name,
  * opening them in Contacts); its reminders, labels, calendar, description (its mentions opening where
  * they live), files and link; and what can be done with it (`EventActions`): change it, copy it,
- * write its notes in Pages, delete it (one's own; a subscription's is only copied).
+ * write its notes in Pages, be woken up for it by Clock (still to come, at an hour), delete it (one's
+ * own; a subscription's is only copied).
  */
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
@@ -19,10 +20,11 @@ import { describeRule, parseRule } from '@unlease/calendar/services/recurrence';
 import { temperatures, weatherKind, WEATHER_WORDS } from '@unlease/calendar/services/weather';
 import type { GlyphName } from '@unlease/design/glyphs';
 
+import { useServerRuns } from '@shared/app/apps';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { selectServer, selectServerApps, useSettingsStore } from '@shared/app/store/settings';
 import { showError, showUndo } from '@shared/app/store/ui';
-import { suitePlace } from '@shared/app/suitePlaces';
+import { alarmForEventPlace, suitePlace } from '@shared/app/suitePlaces';
 import { Button } from '@shared/ui/components/Button';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
@@ -30,6 +32,7 @@ import { LabelTag } from '@shared/ui/components/LabelMark';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { isEditable } from '@shared/ui/dom';
 import { navigate } from '@shared/ui/router';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { makeEventPage } from '../../app/api';
 import { saveEventFile } from '../../app/files';
 import { useWeather } from '../../app/hooks/useWeather';
@@ -88,6 +91,18 @@ export async function writeNotes(item: Occurrence): Promise<void> {
   }
 }
 
+/** « Me réveiller pour cet événement »: Clock's new alarm, linked to this occurrence (its page, loaded whole). */
+export function wakeMeUp(item: Occurrence): void {
+  navigate(alarmForEventPlace({ eventId: item.seriesId, occurrence: item.repeats ? item.occurrence : '', at: item.startAt, title: item.event.title.trim() }));
+}
+
+/** An alarm can be set for it: Clock runs on the server, and it is still to come, at an hour. */
+function useWakeable(item: Occurrence): boolean {
+  const clock = useServerRuns('clock');
+  const now = useMinute();
+  return clock && !item.allDay && item.startAt > now;
+}
+
 /** Its repeat in words and its own zone, when it has them: the line under when it happens. */
 export function useWhenNotes(item: Occurrence): string[] {
   const series = useCalendarStore(s => s.events[item.seriesId]) ?? item.event;
@@ -121,6 +136,13 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
               {note}
             </span>
           ))}
+        </Detail>
+      ) : null}
+      {/* What the day is, first (the phone's too): a day off is an all-day event's. */}
+      {event.dayOff && item.allDay ? (
+        <Detail icon="sun">
+          <span className="t-body">{t('Day off')}</span>
+          <span className="t-meta">{t('Clock’s alarms that ask for it stay quiet that day.')}</span>
         </Detail>
       ) : null}
       {place ? (
@@ -198,15 +220,17 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
   );
 }
 
-/** What can be done with an occurrence, from its menu: copy it, write its notes in Pages. */
+/** What can be done with an occurrence, from its menu: copy it, write its notes in Pages, an alarm for it in Clock. */
 function useMoreItems(item: Occurrence): MenuItem[] {
   const server = useSettingsStore(selectServer);
   const apps = useSettingsStore(selectServerApps);
   const own = isOwn(item.event);
   const pages = !!server && (!apps || apps.includes('pages'));
+  const wakeable = useWakeable(item);
   return [
     { label: own ? t('Duplicate') : t('Copy to my calendar'), icon: 'copy', onSelect: () => duplicateOccurrence(item) },
     ...(pages ? [{ label: t('Create a notes page'), icon: 'pagePlus' as const, onSelect: () => void writeNotes(item) }] : []),
+    ...(wakeable ? [{ label: t('Wake me up for this'), icon: 'bell' as const, onSelect: () => wakeMeUp(item) }] : []),
   ];
 }
 
@@ -216,6 +240,7 @@ export function EventActions({ item }: { item: Occurrence }) {
   const server = useSettingsStore(selectServer);
   const apps = useSettingsStore(selectServerApps);
   const pages = !!server && (!apps || apps.includes('pages'));
+  const wakeable = useWakeable(item);
   return (
     <div className={styles.eventActions}>
       {own ? (
@@ -229,6 +254,11 @@ export function EventActions({ item }: { item: Occurrence }) {
       {pages ? (
         <Button kind="text" icon="pagePlus" onClick={() => void writeNotes(item)}>
           {t('Notes page')}
+        </Button>
+      ) : null}
+      {wakeable ? (
+        <Button kind="text" icon="bell" onClick={() => wakeMeUp(item)}>
+          {t('Wake me up for this')}
         </Button>
       ) : null}
       {own ? (
@@ -249,6 +279,8 @@ export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose
   const tools = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState(false);
   const items = useMoreItems(item);
+  // Under 720 the peek is a sheet, which has no ×: a drag down, the scrim and Back close it.
+  const narrow = useMedia(NARROW);
   const edit = (): void => {
     onClose();
     navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null));
@@ -296,7 +328,7 @@ export function PeekTools({ item, onClose, onOpen }: { item: Occurrence; onClose
         }))}
       />
       <IconButton icon="external" label={t('Open the event’s page')} compact shape={3} onClick={onOpen} />
-      <IconButton icon="close" label={t('Close')} compact onClick={onClose} />
+      {narrow ? null : <IconButton icon="close" label={t('Close')} compact onClick={onClose} />}
     </div>
   );
 }

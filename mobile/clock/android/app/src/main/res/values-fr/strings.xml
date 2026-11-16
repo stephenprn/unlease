@@ -1,0 +1,9 @@
+<resources>
+    <string name="set_alarm">Régler une alarme dans Clock</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_alarm_short">Alarme</string>
+    <string name="shortcut_alarm_long">Nouvelle alarme</string>
+    <string name="shortcut_settings_short">Réglages</string>
+    <string name="shortcut_settings_long">Réglages de Clock</string>
+</resources>

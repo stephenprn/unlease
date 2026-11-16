@@ -1,0 +1,70 @@
+/* The days of a week, each a square toggle on the field's veil; on, the primary's wash within its edge. */
+.days {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 719px) {
+  .days {
+    justify-content: space-between;
+    gap: 4px;
+  }
+}
+
+.day {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .day:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--field-veil));
+  }
+}
+
+.day:active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--field-veil));
+}
+
+.day[aria-pressed='true'] {
+  background: var(--action-container);
+  box-shadow: inset 0 0 0 2px var(--focus);
+  color: var(--on-action-container);
+}
+
+@media (hover: hover) {
+  .day[aria-pressed='true']:hover {
+    background: color-mix(in srgb, var(--on-action-container) 8%, var(--action-container));
+  }
+}
+
+.day[aria-pressed='true']:active {
+  background: color-mix(in srgb, var(--on-action-container) 12%, var(--action-container));
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.day:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

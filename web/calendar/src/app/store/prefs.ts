@@ -4,13 +4,15 @@
  * its record's (`hidden`, synced), as Google keeps it. Every access is guarded: blocked storage only
  * means nothing is remembered.
  */
+import { useMemo } from 'react';
 import { create } from 'zustand';
 
 import { CALENDAR_PREFS_DEFAULTS, readCalendarPrefs, type CalendarPrefs } from '@unlease/calendar/models/prefs';
-import { isCalendarView, isPeriodView, type PeriodView } from '@unlease/calendar/services/eventText';
+import { isCalendarView, isPeriodView, shownWeekdays, type PeriodView } from '@unlease/calendar/services/eventText';
 import { readShownMemory, type ShownMemory } from '@unlease/calendar/services/shown';
 
 import { getStorageName } from '@shared/app/env';
+import { useWorkDays } from '@shared/app/store/serverSettings';
 
 export interface AgendaPrefs extends CalendarPrefs {
   /** One's own events left out of the views (« Mon agenda » unticked). */
@@ -21,7 +23,7 @@ export interface AgendaPrefs extends CalendarPrefs {
   readonly notify: boolean;
   /** What showed before « Afficher uniquement celui-ci », for « Tout afficher » (`services/shown`). */
   readonly shownBefore: ShownMemory | null;
-  /** The calendar's view chosen last (`view` may be « Aujourd'hui »): where the navigation's « Agenda » leads. */
+  /** The calendar's view chosen last (`view` may be « Ma journée »): where the navigation's « Agenda » leads. */
   readonly periodView: PeriodView;
 }
 
@@ -60,6 +62,13 @@ export function savePrefs(patch: Partial<AgendaPrefs>): void {
   } catch {
     // Blocked storage: the choice holds for this visit only.
   }
+}
+
+/** The days of the week the week and the month show (« Jours travaillés seulement »: the server's working days); null for all seven. */
+export function useShownWeekdays(): readonly number[] | null {
+  const workingDaysOnly = usePrefsStore(s => s.hideWeekends);
+  const workDays = useWorkDays();
+  return useMemo(() => shownWeekdays(workingDaysOnly, workDays), [workingDaysOnly, workDays]);
 }
 
 /** A label shown or left out of the views. */

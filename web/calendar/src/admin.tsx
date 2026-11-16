@@ -1,12 +1,14 @@
 /**
- * Agenda's own sections of the Administration (and of the setup's « Votre serveur »): the public
- * holidays the server fetches from Nager.Date (a country, and a region when it has days of its own),
- * the calendar published at a secret address (for Google Agenda, Apple or Thunderbird to subscribe
- * to), and questions about the calendar to Claude.
+ * Agenda's own sections of the Administration (and of the setup's « Votre serveur »): « Votre
+ * semaine », the days worked (Agenda's week may leave the others out, Clock's « Jours travaillés »
+ * rings on them) and the public holidays the server fetches from Nager.Date (a country, and a region
+ * when it has days of its own); the calendar published at a secret address (for Google Agenda,
+ * Apple or Thunderbird to subscribe to); and questions about the calendar to Claude.
  */
 import { useEffect, useState } from 'react';
 
 import { t, tx } from '@unlease/core/i18n';
+import { workDaysWords } from '@unlease/core/services/admin';
 import { COUNTRY_NAMES, countryName } from '@unlease/core/services/setup';
 import { ASK_INFO, askLine, HOLIDAYS_INFO, holidaysLine, PUBLISH_INFO, publishLine } from '@unlease/calendar/services/admin';
 import type { CalendarPatch, ServerSettings } from '@unlease/core/sync/settings';
@@ -18,7 +20,9 @@ import type { ServerConfig } from '@shared/app/store/settings';
 import { showError, showSnack } from '@shared/app/store/ui';
 import { saveServerSettings } from '@shared/app/sync/transport';
 import { Button } from '@shared/ui/components/Button';
+import controls from '@shared/ui/components/controls.module.css';
 import { SelectField } from '@shared/ui/components/SelectField';
+import { WeekdayToggles } from '@shared/ui/components/WeekdayToggles';
 import { StatusRow } from '@shared/ui/features/settings/Section';
 import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { Confirm } from '@shared/ui/components/Dialog';
@@ -38,7 +42,7 @@ async function save(server: ServerConfig, patch: CalendarPatch, done: string): P
   }
 }
 
-// ── the holidays ───────────────────────────────────────────────────────────
+// ── the week: the days worked, the holidays ────────────────────────────────
 
 /** The browser's country (`fr-FR` -> `FR`), proposed first. */
 function browserCountry(): string | null {
@@ -52,6 +56,9 @@ const NONE = 'none';
 
 function HolidaysSection({ server, settings }: { server: ServerConfig; settings: ServerSettings }) {
   const { country, region } = settings.calendar.holidays;
+  const workDays = settings.calendar.workDays;
+  // The days worked join the form: « Enregistrer » sends them with the country.
+  const [days, setDays] = useState<readonly number[]>(workDays);
   const [countries, setCountries] = useState<HolidayCountry[] | null>(null);
   const [regionsOf, setRegionsOf] = useState<{ readonly country: string; readonly regions: readonly string[] } | null>(null);
   const [chosen, setChosen] = useState(country ?? browserCountry() ?? '');
@@ -87,9 +94,17 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
     ...known.map(code => ({ code, name: countryName(code) })).sort((a, b) => a.name.localeCompare(b.name)),
     ...(countries ?? []).filter(each => !known.includes(each.code)).sort((a, b) => a.name.localeCompare(b.name)),
   ];
-  const apply = async (next: string | null, nextRegion: string | null): Promise<void> => {
+  const nextCountry = chosen || null;
+  const nextRegion = chosen ? pickedRegion : null;
+  const holidaysChanged = nextCountry !== country || nextRegion !== region;
+  const daysChanged = days.join() !== workDays.join();
+  const apply = async (): Promise<void> => {
+    // Only what changed is sent: the server tries a country again only when it is a new one.
+    const patch: CalendarPatch = { ...(holidaysChanged ? { holidays: { country: nextCountry, region: nextRegion } } : {}), ...(daysChanged ? { workDays: days } : {}) };
+    const holidaysWords = nextCountry ? t('Public holidays: {country}', { country: countryName(nextCountry) }) : t('Public holidays removed');
+    const daysWords = t('Working days: {days}', { days: workDaysWords(days) });
     setBusy(true);
-    await save(server, { holidays: { country: next, region: nextRegion } }, next ? t('Public holidays: {country}', { country: countryName(next) }) : t('Public holidays removed'));
+    await save(server, patch, holidaysChanged && daysChanged ? t('Your week is saved') : holidaysChanged ? holidaysWords : daysWords);
     setBusy(false);
   };
   // What the server holds now, as the other sections say it: the field below may propose this browser's country.
@@ -97,6 +112,15 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
   return (
     <div className={settingsStyles.block}>
       <StatusRow tone={line.tone} title={line.title} meta={line.meta} />
+      <div className={controls.field}>
+        {/* Seen, not read: the days' group says its name itself. */}
+        <span className={`${controls.fieldLabel} t-meta-strong`} aria-hidden="true">
+          {t('Days you work')}
+        </span>
+        {/* A working week reads from Monday, whatever day the calendar starts on. */}
+        <WeekdayToggles days={days} weekStart={1} label={t('Days you work')} disabled={busy} onChange={setDays} />
+        <p className={`${controls.help} ${controls.fieldNoteAlone} t-meta`}>{t('Agenda can leave the other days out of its week, and Clock’s “Workdays” rings on them; for every device.')}</p>
+      </div>
       <SelectField
         label={t('Country')}
         value={chosen || NONE}
@@ -118,7 +142,7 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
         />
       ) : null}
       <div className={styles.formFoot} style={{ justifyContent: 'flex-start' }}>
-        <Button icon="check" busy={busy} disabled={(chosen || null) === country && pickedRegion === region} onClick={() => void apply(chosen || null, chosen ? pickedRegion : null)}>
+        <Button icon="check" busy={busy} disabled={!holidaysChanged && !daysChanged} onClick={() => void apply()}>
           {t('Save')}
         </Button>
       </div>
@@ -217,7 +241,7 @@ function AskSection({ server, settings }: { server: ServerConfig; settings: Serv
 }
 
 export const CALENDAR_ADMIN_SECTIONS: readonly AdminSection[] = [
-  { id: 'calendar-holidays', app: 'calendar', title: () => t('Public holidays'), glyph: 'sun', line: holidaysLine, info: HOLIDAYS_INFO, task: 'holidays', Body: HolidaysSection },
+  { id: 'calendar-holidays', app: 'calendar', title: () => t('Your week'), glyph: 'calendar', line: holidaysLine, info: HOLIDAYS_INFO, task: 'holidays', Body: HolidaysSection },
   { id: 'calendar-publish', app: 'calendar', title: () => t('Publishing'), glyph: 'share', line: publishLine, info: PUBLISH_INFO, Body: PublishSection },
   { id: 'calendar-ask', app: 'calendar', title: () => t('Questions about the calendar'), glyph: 'bubble', line: askLine, info: ASK_INFO, claude: true, Body: AskSection },
 ];

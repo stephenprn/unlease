@@ -6,13 +6,13 @@
  * ticket, a club's season; the export stays in Réglages), « Ajouter en quelques mots »
  * beside the search, the tab's title of each place.
  */
-import { useEffect, useMemo, useRef, useState, type AnimationEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type AnimationEvent } from 'react';
 
 import { APPS } from '@unlease/core/apps';
 import { getLocale, t } from '@unlease/core/i18n';
 import { spotKey } from '@unlease/core/services/spotlight';
 import { readQuickAdd } from '@unlease/calendar/services/quickAdd';
-import { stepDay } from '@unlease/calendar/services/eventText';
+import { stepDay, VIEW_NAMES } from '@unlease/calendar/services/eventText';
 import { feedName } from '@unlease/calendar/services/holidays';
 import { aloneShown, feedKey, labelKey, layerKey, OWN_KEY, shownChoices, type Shown } from '@unlease/calendar/services/shown';
 import { pebbleTurnOf } from '@unlease/design/pebbles';
@@ -154,21 +154,21 @@ export const calendarOpened = (route: Route): string | null => (route.name === '
 /** Back from a place with no history: a form to its event, the rest to the calendar. */
 export const calendarBackTo = (route: Route): string => (route.name === 'agendaEdit' ? paths.event(route.id) : paths.home);
 
-/** The day the calendar on screen shows (its address's, else today; « Aujourd'hui » is today's). */
+/** The day the calendar on screen shows (its address's, else today; « Ma journée » is today's). */
 function useShownDay(route: Route, today: string): string {
   return route.name === 'agenda' && route.day && route.view !== 'today' ? route.day : today;
 }
 
-/** A row that shows or hides something from the views: its colour's box ticked or not. */
 /**
  * A calendar shown or hidden, by its colour: a small stone of its pigment (an event of it wears the
  * same at the head of its page), filled and ticked while it shows, its edge alone while hidden. A
  * label wears its tag; a calendar (one's own, a subscription, what another app brings) never does.
+ * One's own events without a colour are painted in the primary, and so is their stone (`null`).
  */
-function CalendarCheck({ stone, color, checked }: { stone: string; color: string; checked: boolean }) {
+function CalendarCheck({ stone, color, checked }: { stone: string; color: string | null; checked: boolean }) {
   const turn = pebbleTurnOf(stone);
   return (
-    <span className={styles.calendarCheck} data-line={color} data-checked={checked || undefined} data-pebble-under={turn} data-still aria-hidden="true">
+    <span className={styles.calendarCheck} data-line={color ?? undefined} data-checked={checked || undefined} data-pebble-under={turn} data-still aria-hidden="true">
       <PebbleEdge turn={turn} />
       <Icon name="check" size={14} />
     </span>
@@ -195,10 +195,12 @@ function onlyChoices(only: { readonly key: string; readonly shown: Shown } | und
   return { items, quick: () => (alone ? showAllCalendars() : showOnlyCalendar(only.key)) };
 }
 
-function ToggleRow({ label, color, checked, onToggle, onNavigate, to, stone, only }: { label: string; color: string | null; checked: boolean; onToggle: () => void; onNavigate?: () => void; to?: string; stone?: string; only?: { readonly key: string; readonly shown: Shown } }) {
+/** What another app lays on the calendar (`app`): named for what it lays, the app it comes from at the row's end, as the phone's chips. */
+function ToggleRow({ label, app, color, checked, onToggle, onNavigate, to, stone, only }: { label: string; app?: string; color: string | null; checked: boolean; onToggle: () => void; onNavigate?: () => void; to?: string; stone?: string; only?: { readonly key: string; readonly shown: Shown } }) {
   const menu = onlyChoices(only);
   const [menuOpen, setMenuOpen] = useState(false);
   const more = useRef<HTMLButtonElement>(null);
+  const appId = useId();
   return (
     <div
       className={menu ? `${navStyles.item} ${styles.calendarRow}` : navStyles.item}
@@ -217,11 +219,12 @@ function ToggleRow({ label, color, checked, onToggle, onNavigate, to, stone, onl
         role="checkbox"
         aria-checked={checked}
         aria-label={label}
+        aria-describedby={app ? appId : undefined}
         className={navStyles.markSlot}
         style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer' }}
         onClick={event => (menu && event.altKey ? menu.quick() : onToggle())}
       >
-        {stone ? <CalendarCheck stone={stone} color={color ?? 'green'} checked={checked} /> : <LabelCheck color={(color ?? 'green') as Parameters<typeof LabelCheck>[0]['color']} checked={checked} size={22} />}
+        {stone ? <CalendarCheck stone={stone} color={color} checked={checked} /> : <LabelCheck color={(color ?? 'green') as Parameters<typeof LabelCheck>[0]['color']} checked={checked} size={22} />}
       </button>
       {to ? (
         <a
@@ -238,6 +241,11 @@ function ToggleRow({ label, color, checked, onToggle, onNavigate, to, stone, onl
       ) : (
         <span className={navStyles.itemName}>{label}</span>
       )}
+      {app ? (
+        <span id={appId} className={`${styles.navApp} t-meta`}>
+          {app}
+        </span>
+      ) : null}
       {menu ? (
         <>
           <span className={styles.navMoreSlot}>
@@ -285,8 +293,8 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
           }}
         />
       </div>
-      {/* « Aujourd'hui », the day at a glance, then the calendar in the view chosen last. */}
-      <NavRow to={paths.view('today', today)} label={t('Today')} leading={<NavGlyph name="today" />} current={route.name === 'agenda' && view === 'today'} onNavigate={onNavigate} />
+      {/* « Ma journée », the day at a glance, then the calendar in the view chosen last. */}
+      <NavRow to={paths.view('today', today)} label={VIEW_NAMES.today} leading={<NavGlyph name="today" />} current={route.name === 'agenda' && view === 'today'} onNavigate={onNavigate} />
       <NavRow to={paths.view(prefs.periodView, today)} label={t('Calendar')} leading={<NavGlyph name="calendar" />} current={route.name === 'agenda' && view !== 'today'} onNavigate={onNavigate} />
       <NavFold
         id="calendarOwn"
@@ -305,7 +313,7 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
           </a>
         }
       >
-        <ToggleRow label={t('My events')} color={null} stone="own" checked={!prefs.hideOwn} onToggle={() => savePrefs({ hideOwn: !prefs.hideOwn })} only={{ key: OWN_KEY, shown: listed }} />
+        <ToggleRow label={t('My events')} color={prefs.ownColor} stone="own" checked={!prefs.hideOwn} onToggle={() => savePrefs({ hideOwn: !prefs.hideOwn })} only={{ key: OWN_KEY, shown: listed }} />
         {liveLabels.map(label => (
           <ToggleRow key={label.id} label={label.name} color={label.color} checked={!prefs.hiddenLabels.includes(label.id)} onToggle={() => toggleLabelShown(label.id)} to={paths.label(label.id)} onNavigate={onNavigate} only={{ key: labelKey(label.id), shown: listed }} />
         ))}
@@ -330,9 +338,10 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
         {liveFeeds.map(feed => (
           <ToggleRow key={feed.id} label={feedName(feed)} color={feed.color} stone={feed.id} checked={!feed.hidden} onToggle={() => setFeedHidden(feed.id, !feed.hidden)} to={paths.feeds} onNavigate={onNavigate} only={{ key: feedKey(feed.id), shown: listed }} />
         ))}
-        <ToggleRow label={t('Birthdays ({app})', { app: APPS.contacts.name })} color={LAYER_COLORS.birthday} stone="birthday" checked={prefs.birthdays} onToggle={() => savePrefs({ birthdays: !prefs.birthdays })} only={{ key: layerKey('birthdays'), shown: listed }} />
-        <ToggleRow label={t('{app} reminders', { app: APPS.notes.name })} color={LAYER_COLORS.reminder} stone="reminder" checked={prefs.noteReminders} onToggle={() => savePrefs({ noteReminders: !prefs.noteReminders })} only={{ key: layerKey('noteReminders'), shown: listed }} />
-        <ToggleRow label={t('Dates in pages ({app})', { app: APPS.pages.name })} color={LAYER_COLORS.page} stone="page" checked={prefs.pageDates} onToggle={() => savePrefs({ pageDates: !prefs.pageDates })} only={{ key: layerKey('pageDates'), shown: listed }} />
+        {/* What the other apps lay, each named for what it is, its app at the row's end (as the phone's chips). */}
+        <ToggleRow label={t('Birthdays')} app={APPS.contacts.name} color={LAYER_COLORS.birthday} stone="birthday" checked={prefs.birthdays} onToggle={() => savePrefs({ birthdays: !prefs.birthdays })} only={{ key: layerKey('birthdays'), shown: listed }} />
+        <ToggleRow label={t('Reminders')} app={APPS.notes.name} color={LAYER_COLORS.reminder} stone="reminder" checked={prefs.noteReminders} onToggle={() => savePrefs({ noteReminders: !prefs.noteReminders })} only={{ key: layerKey('noteReminders'), shown: listed }} />
+        <ToggleRow label={t('Dates in pages')} app={APPS.pages.name} color={LAYER_COLORS.page} stone="page" checked={prefs.pageDates} onToggle={() => savePrefs({ pageDates: !prefs.pageDates })} only={{ key: layerKey('pageDates'), shown: listed }} />
         <ToggleRow label={t('Weather')} color="sky" stone="weather" checked={prefs.weather} onToggle={() => savePrefs({ weather: !prefs.weather })} only={{ key: layerKey('weather'), shown: listed }} />
       </NavFold>
     </>

@@ -1,13 +1,13 @@
 /**
  * Each web app's brand files, drawn from the shared marks and palette: its tab icon, its install
  * icons and its web manifest. Carnet wears its card and its leaf, Pages its sheet and its writing,
- * Contacts its card and its person, Agenda its page and its days (`@unlease/design/mark`), each on the matcha pebble, the same marks as their Android launchers.
+ * Contacts its card and its person, Agenda its page and its days, Clock its dial (`@unlease/design/mark`), each on the matcha pebble, the same marks as their Android launchers.
  * Nothing here is drawn by hand, so the browser tab, the installed app and the phone show one mark.
  */
 import { APPS } from '@unlease/core/apps';
 import { APP_WORDS } from '@unlease/core/appWords';
 import { MARK_COLORS, ROLES } from '@unlease/design/palette';
-import { MARK_CALENDAR, MARK_CARD, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE } from '@unlease/design/mark';
+import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE } from '@unlease/design/mark';
 
 import { webPath, type WebApp } from './paths.ts';
 
@@ -24,7 +24,7 @@ export function webAppTagline(app: WebApp): string {
 }
 
 /** Each app's shape on its pebble. */
-const SHAPES: Readonly<Record<WebApp, string>> = { notes: MARK_CARD, pages: MARK_PAGE, contacts: MARK_CONTACT, calendar: MARK_CALENDAR };
+const SHAPES: Readonly<Record<WebApp, string>> = { notes: MARK_CARD, pages: MARK_PAGE, contacts: MARK_CONTACT, calendar: MARK_CALENDAR, clock: MARK_CLOCK };
 
 /** The app's shape, what it holds cut out, on the 100 grid of the visible tile, placed by `transform`. */
 function drawing(app: WebApp, transform: string): string {
@@ -71,6 +71,8 @@ const EXTRAS: Readonly<Record<WebApp, Record<string, unknown>>> = {
   contacts: { shortcuts: [{ name: 'Créer un contact', url: 'new' }] },
   // A new event from the installed app's shortcut (`/agenda/new`).
   calendar: { shortcuts: [{ name: 'Créer un événement', url: 'new' }] },
+  // A new alarm from the installed app's shortcut (`/clock/new`).
+  clock: { shortcuts: [{ name: 'Créer une alarme', url: 'new' }] },
 };
 
 /**

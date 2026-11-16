@@ -1,5 +1,5 @@
 /**
- * Agenda's places, all under `/agenda`: « Aujourd'hui » (`/agenda/today`), a view at a day (`/agenda/week/2026-11-02`), an event
+ * Agenda's places, all under `/agenda`: « Ma journée » (`/agenda/today`), a view at a day (`/agenda/week/2026-11-02`), an event
  * (`/agenda/event/<id>?at=<occurrence>`, the address other apps' references open: `suitePlaces`),
  * its form, a new event's (`/agenda/new?start=…&title=…`, prefilled by a quick add, Claude or
  * Carnet's « Ajouter à l'agenda »), a birthday, the labels, a label's events, the subscriptions, the
@@ -70,7 +70,7 @@ const at = (occurrence?: string | null): string => (occurrence ? `?at=${part(occ
 /** Agenda's places (the shell's, `settings` and `admin`, are `@shared/ui/router`'s `paths`). */
 export const paths = {
   home: HOME,
-  /** A view at a day; « Aujourd'hui » is today's, whatever the day (`/agenda/today`). */
+  /** A view at a day; « Ma journée » is today's, whatever the day (`/agenda/today`). */
   view: (view: CalendarView, day: string): string => (view === 'today' ? `${HOME}/today` : `${HOME}/${VIEW_PARTS[view]}/${view === 'year' ? day.slice(0, 4) : day}`),
   event: (id: string, occurrence?: string | null): string => `${HOME}/event/${part(id)}${at(occurrence)}`,
   edit: (id: string, occurrence?: string | null): string => `${HOME}/event/${part(id)}/edit${at(occurrence)}`,

@@ -1,8 +1,8 @@
 /**
  * What this phone alone remembers of Contacts: the list's order (Google's « Trier par », first or last
  * name), the country of the numbers kept without their `+` (« Indicatif par défaut », as the web's),
- * whether the first call already asked to call directly, the birthday notifications' setting, and the
- * duplicates set aside (« Ignorer »). Kept with the device's preferences, never synced.
+ * whether the first call already asked to call directly, the birthday notifications' setting, the
+ * duplicates and the findings of « Nettoyer les contacts » set aside (« Ignorer »). Kept with the device's preferences, never synced.
  */
 import { create } from 'zustand';
 
@@ -28,11 +28,13 @@ interface ContactsUiState {
   readonly birthdays: BirthdaySettings;
   /** Groups of duplicates set aside, each as its sorted ids joined (`duplicateKey`). */
   readonly ignoredDuplicates: readonly string[];
+  /** Findings of « Nettoyer les contacts » set aside, each by its `asideKey`. */
+  readonly cleanupAside: readonly string[];
 }
 
 const DEFAULT_BIRTHDAYS: BirthdaySettings = { enabled: false, dayBefore: false, hour: BIRTHDAY_ALERT_DEFAULTS.hour };
 
-const DEFAULTS: ContactsUiState = { sortOrder: 'firstName', region: null, callAsked: false, birthdays: DEFAULT_BIRTHDAYS, ignoredDuplicates: [] };
+const DEFAULTS: ContactsUiState = { sortOrder: 'firstName', region: null, callAsked: false, birthdays: DEFAULT_BIRTHDAYS, ignoredDuplicates: [], cleanupAside: [] };
 
 export const useContactsUiStore = create<ContactsUiState>(() => DEFAULTS);
 
@@ -58,12 +60,14 @@ export function loadContactsUi(): void {
   const sort = stored['contacts.sortOrder'];
   const ignored = stored['contacts.ignoredDuplicates'];
   const region = stored['contacts.region'];
+  const aside = stored['contacts.cleanupAside'];
   useContactsUiStore.setState({
     sortOrder: SORT_ORDERS.includes(sort as SortOrder) ? (sort as SortOrder) : DEFAULTS.sortOrder,
     region: region === 'none' || isCallingRegion(region) ? region : null,
     callAsked: stored['contacts.callAsked'] === true,
     birthdays: readBirthdays(stored['contacts.birthdays']),
     ignoredDuplicates: Array.isArray(ignored) ? ignored.filter((key): key is string => typeof key === 'string') : [],
+    cleanupAside: Array.isArray(aside) ? aside.filter((key): key is string => typeof key === 'string') : [],
   });
 }
 
@@ -97,4 +101,16 @@ export function ignoreDuplicates(ids: readonly string[]): void {
   const ignoredDuplicates = [...new Set([...useContactsUiStore.getState().ignoredDuplicates, duplicateKey(ids)])];
   writePreference('contacts.ignoredDuplicates', ignoredDuplicates);
   useContactsUiStore.setState({ ignoredDuplicates });
+}
+
+/** At most this many findings are remembered as set aside (the oldest go). */
+const ASIDE_MAX = 500;
+
+/** « Ignorer » on a finding of « Nettoyer les contacts » (its `asideKey`): not offered again on this phone while it reads the same. */
+export function setCleanupAside(key: string): void {
+  const current = useContactsUiStore.getState().cleanupAside;
+  if (current.includes(key)) return;
+  const cleanupAside = [...current, key].slice(-ASIDE_MAX);
+  writePreference('contacts.cleanupAside', cleanupAside);
+  useContactsUiStore.setState({ cleanupAside });
 }

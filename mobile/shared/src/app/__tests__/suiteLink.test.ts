@@ -62,7 +62,7 @@ describe('what the siblings hold', () => {
       { packageName: 'org.example.other', server: 'https://other.example.org', token: 'x', appearance: '', grain: '', locale: '', look: '' },
     ];
     const found = await findSiblings('notes');
-    expect(native.asked).toEqual([['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts']]);
+    expect(native.asked).toEqual([['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']]);
     expect(found).toEqual([{ app: 'pages', server: { url: 'https://unlease.example.org', token: 'jeton' }, appearance: expect.objectContaining(PALETTE_COLORS.sarcelle), grain: null, locale: null, look: null }]);
     expect(connectedSibling(found)?.app).toBe('pages');
   });

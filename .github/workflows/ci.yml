@@ -63,6 +63,7 @@ jobs:
           - { app: pages, name: Pages }
           - { app: contacts, name: Contacts }
           - { app: calendar, name: Agenda }
+          - { app: clock, name: Clock }
     defaults:
       run:
         working-directory: mobile/${{ matrix.app }}
@@ -78,6 +79,31 @@ jobs:
           cache-dependency-path: mobile/${{ matrix.app }}/package-lock.json
       - run: npm ci
       - run: npm run verify
+
+  alarm-engine:
+    name: Clock's alarm engine (JVM tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/clock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/clock/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      # Pinned to a commit, as in android.yml.
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+      - run: npm ci
+      # When an alarm rings: the Kotlin engine counts it as `@unlease/clock/services/schedule` does (src/test).
+      - run: ./gradlew app:testDebugUnitTest -PreactNativeArchitectures=x86_64 --no-daemon
+        working-directory: mobile/clock/android
 
   i18n:
     name: English dictionaries

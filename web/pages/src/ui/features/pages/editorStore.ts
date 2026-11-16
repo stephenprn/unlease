@@ -49,20 +49,22 @@ export interface EditorState {
   readonly hovered: { readonly target: BlockTarget; readonly block: string; readonly rect: DOMRect } | null;
   /** The block whose caption has the caret, or is about to: it shows even empty. */
   readonly caption: string | null;
+  /** The block whose menu opens without its grip being pressed (⌘/, a right click on a selected block). */
+  readonly blockMenu: string | null;
 }
 
 const EMPTY: ReadonlySet<string> = new Set();
 
-export const useEditorStore = create<EditorState>(() => ({ page: null, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null }));
+export const useEditorStore = create<EditorState>(() => ({ page: null, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null, blockMenu: null }));
 
 export const editorState = (): EditorState => useEditorStore.getState();
 
 export function openEditor(page: string): void {
-  useEditorStore.setState({ page, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null });
+  useEditorStore.setState({ page, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null, blockMenu: null });
 }
 
 export function closeEditor(page: string): void {
-  if (editorState().page === page) useEditorStore.setState({ page: null, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null });
+  if (editorState().page === page) useEditorStore.setState({ page: null, selected: EMPTY, anchor: null, menu: null, hovered: null, caption: null, blockMenu: null });
 }
 
 export function selectBlocks(ids: readonly string[], anchor: string | null = ids[0] ?? null): void {
@@ -72,6 +74,15 @@ export function selectBlocks(ids: readonly string[], anchor: string | null = ids
 export function clearBlockSelection(): void {
   if (editorState().selected.size === 0) return;
   useEditorStore.setState({ selected: EMPTY, anchor: null });
+}
+
+/** A block's menu, opened as its grip would open it: it acts on the selection when the block is in it. */
+export function openBlockMenu(id: string): void {
+  useEditorStore.setState({ blockMenu: id, menu: null });
+}
+
+export function closeBlockMenu(): void {
+  if (editorState().blockMenu !== null) useEditorStore.setState({ blockMenu: null });
 }
 
 export function setMenu(menu: MenuState | null): void {

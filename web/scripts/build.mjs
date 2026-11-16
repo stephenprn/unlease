@@ -1,6 +1,6 @@
 /**
  * Builds every web app, each on its own (`UNLEASE_APP=<app> vite build`), into `dist/notes/`,
- * `dist/pages/`, `dist/contacts/` and `dist/agenda/` (Agenda's, from `calendar/`), then the few files the site's root holds: the response headers and rewrites of a
+ * `dist/pages/`, `dist/contacts/`, `dist/agenda/` (Agenda's, from `calendar/`) and `dist/clock/`, then the few files the site's root holds: the response headers and rewrites of a
  * static host (`root/_headers`, `root/_redirects`) and the retired worker of the single app this
  * was before (`root/sw.js`). With `--demo`: the demo (`dist-demo/`, `?demo` always on), whose root
  * sends to Carnet and whose 404 page sends an app's address to that app's page (GitHub Pages has
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const WEB = fileURLToPath(new URL('..', import.meta.url));
 /** Each app's folder, and the path its build lands under (Agenda's addresses are `/agenda/…`). */
-const APPS = ['notes', 'pages', 'contacts', 'calendar'];
+const APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock'];
 /** Vite's own command, run by this Node (no `npx`, no shell). */
 const VITE = join(dirname(createRequire(import.meta.url).resolve('vite/package.json')), 'bin', 'vite.js');
 
@@ -48,7 +48,7 @@ if (demo) {
   writeFileSync(
     `${out}404.html`,
     page(
-      `var b=${JSON.stringify(base)},p=location.pathname,r=p.slice(b.length),m=/^(pages|contacts|agenda)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
+      `var b=${JSON.stringify(base)},p=location.pathname,r=p.slice(b.length),m=/^(pages|contacts|agenda|clock)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
         `if(p.indexOf(b)===0&&p!==b+a+'/'&&p!==b+a)location.replace(b+a+'/?to='+encodeURIComponent('/'+r+location.search)+location.hash);` +
         `else document.getElementById('lost').hidden=false;`,
       `<p id="lost" hidden>Page introuvable · Page not found. <a href="${base}">Unlease</a></p>\n`,

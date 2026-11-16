@@ -7,13 +7,13 @@ import { memo } from 'react';
 
 import type { AppId } from '@unlease/core/apps';
 import { markColors } from '@unlease/design/appearance';
-import { MARK_CALENDAR, MARK_CARD, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE, MARK_VIEWBOX } from '@unlease/design/mark';
+import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE, MARK_VIEWBOX } from '@unlease/design/mark';
 
 import { useSettingsStore } from '../../app/store/settings';
 import styles from './marks.module.css';
 
 /** Each app's shape on the pebble; an announced app without its own yet wears Carnet's card. */
-const SHAPES: Readonly<Partial<Record<AppId, string>>> = { notes: MARK_CARD, pages: MARK_PAGE, calendar: MARK_CALENDAR, contacts: MARK_CONTACT };
+const SHAPES: Readonly<Partial<Record<AppId, string>>> = { notes: MARK_CARD, pages: MARK_PAGE, calendar: MARK_CALENDAR, contacts: MARK_CONTACT, clock: MARK_CLOCK };
 
 /** An app's shape, cut out of the beige of its mark (the tab's icon draws it too). */
 export const markShape = (app: AppId): string => SHAPES[app] ?? MARK_CARD;

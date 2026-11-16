@@ -8,7 +8,7 @@
  * Held, up or down opens « Réorganiser », where the block is dragged to its place (`ReorderBlocks`).
  */
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,7 +22,7 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { indentBlocks, nudgeBlocks, outdentBlocks } from '@app/store/pages';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, footEdge, GroundSlice, ICON_PEBBLE, IconButton, MentionSuggestions, Tappable } from '@shared/ui/components';
+import { AppText, EdgeScrollView, footEdge, GroundSlice, ICON_PEBBLE, IconButton, MentionSuggestions, Tappable } from '@shared/ui/components';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
 import { accelerate, decelerate, duration } from '@shared/ui/theme/motion';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -138,7 +138,7 @@ function BlockBarComponent() {
       >
         {/* The ground itself, as a bar pinned over it paints it, so no seam shows where the page meets it. */}
         <GroundSlice top={barTop} />
-        <ScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        <EdgeScrollView horizontal keyboardShouldPersistTaps="always" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
           {formatting && handle ? (
             <>
               {dateChosen !== null ? <IconButton icon="calendar" label={t('Change the date')} shape={3} onPress={() => openDateSheet(id, dateChosen)} /> : null}
@@ -194,7 +194,7 @@ function BlockBarComponent() {
               />
             </>
           )}
-        </ScrollView>
+        </EdgeScrollView>
       </View>
     </Animated.View>
   );

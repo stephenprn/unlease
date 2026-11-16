@@ -4,7 +4,8 @@
  * Each app's own, in its Android project: Carnet's launcher, its reminders' notification icon and
  * its widgets' mark (the card and its leaf); Pages' launcher (the sheet and its writing); Contacts'
  * launcher, its birthdays' status bar icon and its widgets' mark (the card and its person); Agenda's
- * launcher, its reminders' status bar icon and its widgets' mark (the page and its days).
+ * launcher, its reminders' status bar icon and its widgets' mark (the page and its days); Clock's
+ * launcher and its alarms' status bar icon (the card and its dial).
  *
  * Each app's launcher comes in every palette's primary too (`PALETTES`, design/appearance.ts): the
  * pebble as `markColors` paints it, the card and the themed silhouette the same. Android cannot paint
@@ -50,6 +51,7 @@ const CARNET_RES = resolve('mobile/notes/android/app/src/main/res');
 const PAGES_RES = resolve('mobile/pages/android/app/src/main/res');
 const CONTACTS_RES = resolve('mobile/contacts/android/app/src/main/res');
 const CALENDAR_RES = resolve('mobile/calendar/android/app/src/main/res');
+const CLOCK_RES = resolve('mobile/clock/android/app/src/main/res');
 
 const markSource = readFileSync('packages/design/src/mark.ts', 'utf8');
 const markPath = name => new RegExp(`${name} =\\s*'([^']+)'`).exec(markSource)[1];
@@ -59,6 +61,7 @@ const CARD = markPath('MARK_CARD');
 const PAGE = markPath('MARK_PAGE');
 const CONTACT = markPath('MARK_CONTACT');
 const CALENDAR = markPath('MARK_CALENDAR');
+const CLOCK = markPath('MARK_CLOCK');
 const BOUNDS = markBox('MARK_BOUNDS');
 
 const paletteSource = readFileSync('packages/design/src/palette.ts', 'utf8');
@@ -91,6 +94,7 @@ const card = shapeOf(CARD);
 const page = shapeOf(PAGE);
 const contact = shapeOf(CONTACT);
 const calendar = shapeOf(CALENDAR);
+const clock = shapeOf(CLOCK);
 const vector = (dp, viewport, body) =>
   `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="${dp}dp" android:height="${dp}dp" android:viewportWidth="${viewport}" android:viewportHeight="${viewport}">\n${body}</vector>\n`;
 
@@ -262,3 +266,15 @@ launcherPalettes(CALENDAR_RES, writeCalendar, calendar);
 }
 writeCalendar('drawable/ic_widget_mark.xml', vector(32, 100, `  <path android:pathData="${PEBBLE}" android:fillColor="${TILE}"/>\n${calendar(1, 0, 0, '  ')}`));
 shortcutIcons(writeCalendar, { event: 'calendar', quick: 'sparkle', today: 'today', search: 'search' });
+
+// Clock: its launcher and its alarms' status bar icon (the card and its dial, white).
+const writeClock = writeIn(CLOCK_RES);
+launcher(writeClock, clock);
+launcherPalettes(CLOCK_RES, writeClock, clock);
+{
+  const scale = 20 / Math.max(BOUNDS.width, BOUNDS.height);
+  const tx = 12 - (BOUNDS.x + BOUNDS.width / 2) * scale;
+  const ty = 12 - (BOUNDS.y + BOUNDS.height / 2) * scale;
+  writeClock('drawable/ic_stat_clock.xml', vector(24, 24, clock(scale.toFixed(4), tx.toFixed(2), ty.toFixed(2), '  ', '#FFFFFFFF')));
+}
+shortcutIcons(writeClock, { alarm: 'bellPlus', settings: 'settings' });

@@ -17,6 +17,7 @@ import { useLibraryStore } from '../../../app/store/library';
 import { setNewLineOpen } from '../../../app/store/notesUi';
 import { EmblemStone } from '@shared/ui/components/Emblem';
 import { Icon } from '@shared/ui/components/Icon';
+import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { Link } from '@shared/ui/router';
 import { paths } from '../../routes';
 import styles from './board.module.css';
@@ -41,8 +42,10 @@ const CollectionChip = memo(function CollectionChip({ id }: { id: string }) {
 
 export function CollectionChips({ resting }: { resting: boolean }) {
   const lines = useLines();
+  // Chips past a side fade there, as far as they run on.
+  const strip = useScrollEdges<HTMLElement>({ fade: 'x' });
   return (
-    <nav className={styles.tabs} aria-label={t('Collections')} data-resting={resting || undefined} inert={resting}>
+    <nav ref={strip} className={styles.tabs} aria-label={t('Collections')} data-resting={resting || undefined} inert={resting}>
       {lines.map(line => (
         <CollectionChip key={line.id} id={line.id} />
       ))}

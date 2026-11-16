@@ -56,7 +56,7 @@ interface Sent {
 function fakeServer({ backup = S3, drive = NO_DRIVE, notes = 5, pages = 2 }: { backup?: BackupSettings; drive?: DriveSettings; notes?: number; pages?: number } = {}) {
   const state = { backup, drive, apps: ['notes', 'pages'] as AppId[], seerr: { url: '', keyHint: null } as SeerrSettings, refuse: null as { status: number; error: string } | null };
   const sent: Sent[] = [];
-  const view = (): ServerSettings => ({ apps: { enabled: state.apps }, setup: { done: true }, analysis: ANALYSIS, pages: { enabled: false, everywhere: true, web: true, reach: 'medium' }, backup: state.backup, drive: state.drive, calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false }, seerr: state.seerr, immich: { url: '', keyHint: null } });
+  const view = (): ServerSettings => ({ apps: { enabled: state.apps }, setup: { done: true }, analysis: ANALYSIS, pages: { enabled: false, everywhere: true, web: true, reach: 'medium' }, backup: state.backup, drive: state.drive, calendar: { holidays: { country: null, region: null }, publishPath: null, ask: false, workDays: [1, 2, 3, 4, 5] }, seerr: state.seerr, immich: { url: '', keyHint: null } });
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const { pathname, search } = new URL(url);
     const method = init?.method ?? 'GET';

@@ -1,8 +1,8 @@
 /**
  * Contacts' places a search finds (`core/services/settingsSearch`), beside every app's: in Réglages
  * the list's order and the default calling code (its « Contacts » section), the maps app addresses
- * open in and the birthdays' notifications (the phone's), the import (the web's page, the phone's row)
- * and the export.
+ * open in and the birthdays' notifications (the phone's), the import (the web's page, the phone's row),
+ * « Nettoyer les contacts » and the export.
  */
 import { tx } from '@unlease/core/i18n';
 import { SETTINGS_SECTIONS, type SettingsPlace } from '@unlease/core/services/settingsSearch';
@@ -23,5 +23,7 @@ export const CONTACTS_SETTINGS_PLACES: readonly SettingsPlace<GlyphName>[] = [
   { id: 'contacts-birthdays', app: 'contacts', area: 'settings', section: BIRTHDAYS_SETTINGS_SECTION, title: tx('Birthdays'), within: null, glyph: 'cake', words: ['notifications', 'prevenir', 'rappels', 'veille', 'heure', 'birthdays', 'notify', 'reminders'], only: 'phone' },
   // The web's wizard is a page of Réglages; the phone's, its own screen from the first row of « Données ».
   { id: 'contacts-import', app: 'contacts', area: 'settings', section: SETTINGS_SECTIONS.import, title: tx('Import contacts'), within: null, glyph: 'download', words: IMPORT_WORDS },
+  // « Nettoyer les contacts »: a row of « Données » opening its own place (the duplicates, the numbers, the names…).
+  { id: 'contacts-cleanup', app: 'contacts', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Clean up contacts'), within: tx('Data'), glyph: 'broom', words: ['nettoyer', 'doublons', 'indicatif', 'formater', 'majuscules', 'noms', 'numeros', 'vides', 'clean', 'tidy', 'duplicates', 'country code', 'format', 'capitals', 'names', 'numbers', 'empty'] },
   { id: 'contacts-export', app: 'contacts', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Export contacts'), within: tx('Data'), glyph: 'upload', words: ['vcf', 'vcard', 'export'] },
 ];

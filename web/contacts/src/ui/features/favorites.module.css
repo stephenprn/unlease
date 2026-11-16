@@ -1,0 +1,231 @@
+/*
+ * The favourites' cards (FavoriteCards): a grid of sheets on the ground, as Carnet's collections lie
+ * on theirs. Each slot lifts its card (a drop shadow along its outline, which a clipped sheet cannot
+ * cast itself), rings it on keyboard focus and holds the select pebble half outside its corner; the
+ * card is clipped to the card outline, grained (`paper`) and edged in the hairline.
+ */
+
+.cards {
+  /* Positioned: the cards' motion measures them in it, and a card leaving fades in it. */
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 196px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  color: var(--ink);
+  filter: var(--drop-card);
+  /* Layout only: the select pebble sits half outside the corner. */
+  contain: layout;
+  transition: filter var(--duration-short) var(--ease-standard);
+  /* A hold picks the card: no text selection, link menu, preview or tap flash of the browser's own. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Lifted a little more under the pointer: the shadow moves, the text never does. */
+@media (hover: hover) {
+  .slot:hover {
+    filter: var(--drop-raised);
+  }
+}
+
+/* Picked: its edge turns into a matcha ring, laid over the sheet so nothing on it moves. */
+.slot[data-picked] {
+  --edge-color: var(--focus);
+  --edge-width: 2.5px;
+}
+
+.card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 14px 10px;
+  clip-path: var(--outline-clip, none);
+  text-align: center;
+  transition: box-shadow var(--duration-short) var(--ease-standard);
+}
+
+/* Pressed: the tint inside the sheet's own outline, under its words. */
+.slot:has(.hit:active) .card {
+  box-shadow: inset 0 0 0 100vmax var(--veil);
+}
+
+/* The whole card opens the contact; its ways and its select pebble lie above it. */
+.hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Its focus is the slot's ring: the clip would cut an outline off. */
+.hit:focus-visible {
+  outline: none;
+}
+
+.slot:has(.hit:focus-visible) .ring {
+  opacity: 1;
+}
+
+/* The face in a slot of its full height, so a photo (on the pebble, a little shorter) keeps its name on the others' line. */
+.face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72px;
+  margin-bottom: 12px;
+}
+
+.name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-wrap: balance;
+}
+
+.sub {
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The ways to reach them, at the card's foot whatever its words: quiet glyphs, each its tint on its pebble. */
+.ways {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+/* A card with no way to reach them: its words as far from its foot as from its top. */
+.card:not(:has(.ways)) {
+  padding-bottom: 22px;
+}
+
+.ways > .way {
+  --icon-ink: var(--ink-muted);
+  transition: color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .ways > .way:hover {
+    --icon-ink: var(--ink);
+  }
+}
+
+/*
+ * The select pebble, pinned over the top-right corner as a note card's: under the pointer, on
+ * keyboard focus, and on every card while a pick is on. Hidden, it takes no click, so the corner
+ * still opens the contact.
+ */
+.select {
+  position: absolute;
+  z-index: 3;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  --pebble-fill: var(--paper);
+  --edge-color: var(--outline);
+  --edge-width: 1.5px;
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity var(--duration-short) var(--ease-standard),
+    transform var(--duration-medium) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .slot:hover .select {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .select:hover {
+    color: var(--ink);
+  }
+}
+
+.slot:has(:focus-visible) .select,
+.slot[data-picking] .select,
+.select[aria-checked='true'] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Picked: the tick settles from half its size, ringed in the ground so it reads off the sheet. */
+.select[aria-checked='true'] {
+  --pebble-fill: var(--leaf);
+  color: var(--on-leaf);
+  --edge-color: var(--wall);
+  --edge-width: 2px;
+  animation: tick-in var(--duration-medium) var(--ease-decelerate);
+}
+
+@keyframes tick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* Reduced motion: the tick fades in where it lies. */
+@media (prefers-reduced-motion: reduce) {
+  .select[aria-checked='true'] {
+    animation-name: fade-in;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Phone-sized: two columns (one on the narrowest), 8 apart, the face a little smaller, the ways a compact row. */
+@media (max-width: 719px) {
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 148px), 1fr));
+    gap: 8px;
+  }
+  .card {
+    padding: 18px 8px 8px;
+  }
+  .ways > .way {
+    width: 40px;
+    height: 40px;
+  }
+  .ways > .way::before {
+    inset: 2px;
+  }
+}

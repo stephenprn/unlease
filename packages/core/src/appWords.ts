@@ -22,6 +22,8 @@ export interface AppWords {
   readonly language: string;
   /** What that language changes, under the choice. */
   readonly languageNote: string;
+  /** What else stops on a phone while the server has the app off, under the off screen's words (Clock's alarms). */
+  readonly phoneOffNote?: string;
 }
 
 export const APP_WORDS: Record<AppId, AppWords> = {
@@ -60,6 +62,16 @@ export const APP_WORDS: Record<AppId, AppWords> = {
     searchHint: tx('Search a name, a company, a number, an email, an address or a label.'),
     language: tx('Interface language'),
     languageNote: tx('The app’s screens, dates, and the names of number types.'),
+  }),
+  clock: localized({
+    tagline: tx('Alarm clock'),
+    description: tx('Your alarms, with the weather and your day’s first event as they ring, and a word the evening before when an event comes too soon after your alarm.'),
+    replaces: tx('Replaces Google Clock'),
+    search: tx('Search your alarms'),
+    searchHint: tx('Search an alarm’s label or its time.'),
+    language: tx('Interface language'),
+    languageNote: tx('The app’s screens, the days and what the alarms say as they ring.'),
+    phoneOffNote: tx('Its alarms don’t ring on this phone while it is off.'),
   }),
 };
 

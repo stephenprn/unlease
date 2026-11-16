@@ -227,7 +227,7 @@ export interface LabelsListProps {
 
 /**
  * The labels under the strip, edge to edge over the keyboard (the lower rows' fields would stay
- * under it), edges softened. A label made or brought back settles in once the others have made
+ * under it), the strip's line coming in once they go under it. A label made or brought back settles in once the others have made
  * room; one deleted fades where it was and the rest close ranks; what is there when it opens and
  * what scrolls into view never move.
  */

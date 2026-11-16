@@ -67,6 +67,8 @@ export const FR_CORE: Dictionary = {
   'contact': 'contact',
   'contacts': 'contacts',
   'event': 'événement',
+  'alarm': 'alarme',
+  'alarms': 'alarmes',
   'events': 'événements',
   'pages': 'pages',
   'file': 'fichier',

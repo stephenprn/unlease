@@ -64,6 +64,7 @@ export const CALENDAR_RECORD_TYPES = defineRecordTypes({
       uid: str(EVENT_LIMITS.uid),
       url: str(EVENT_LIMITS.url),
       color: nullableColor,
+      dayOff: bool,
       trashedAt: nullableTime,
       createdAt: time,
       deletedAt: nullableTime,

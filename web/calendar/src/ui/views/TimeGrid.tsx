@@ -13,7 +13,7 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { hourLabel, shortWeekday, weekNumberShort, weekNumberWords } from '@unlease/calendar/services/eventText';
 import { layoutBars, layoutDay, minuteAt, minutesInDay, type TimedBox } from '@unlease/calendar/services/layout';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
-import { addMinutes, daysBetween, partsOf, weekdayOf } from '@unlease/calendar/services/time';
+import { addDays, addMinutes, daysBetween, partsOf, weekdayOf } from '@unlease/calendar/services/time';
 import { temperatures, weatherKind, WEATHER_WORDS } from '@unlease/calendar/services/weather';
 
 import { useColorOf } from '../../app/hooks/useItems';
@@ -86,8 +86,8 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
   const weather = useWeather(days, items);
   const quick = useCalendarUi(s => s.quick);
   const scroller = useRef<HTMLDivElement>(null);
-  // The hours fade and blur under the days' heads and the all-day strip as far as they run on.
-  useScrollEdgesOn(scroller, [], { top: true });
+  // The days' heads and the all-day strip keep their rule over the hours; past the panel's foot the hours fade, as far as they run on.
+  useScrollEdgesOn(scroller, [], { fade: 'bottom' });
   const columns = useRef<(HTMLDivElement | null)[]>([]);
   const dragged = useRef(false);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -174,7 +174,8 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
       moved = true;
       const minutes = item.allDay ? 0 : Math.round(((next.clientY - origin.y) / height) * 1440 / 15) * 15;
       const column = columnAt(next.clientX);
-      state = { key: item.key, resize, days: resize || column === null ? 0 : column - fromColumn, minutes };
+      // Days, not columns: « Jours travaillés seulement » may leave days out between two columns.
+      state = { key: item.key, resize, days: resize || column === null ? 0 : daysBetween(days[fromColumn]!, days[column]!), minutes };
       setDrag(state);
     };
     const up = (): void => {
@@ -226,7 +227,9 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
         <span className={styles.allDayLabel}>{bars.bars.length > 0 ? tc('short', 'All day') : ''}</span>
         <div className={styles.bars} style={{ '--lanes': Math.max(1, bars.lanes) } as CSSProperties}>
           {bars.bars.map(bar => {
-            const shift = drag && drag.key === bar.occurrence.key ? drag.days : 0;
+            // The days dragged, as columns: the column of the day it would land on (days may be left out between).
+            const landing = drag && drag.key === bar.occurrence.key ? days.indexOf(addDays(days[bar.column]!, drag.days)) : -1;
+            const shift = landing >= 0 ? landing - bar.column : 0;
             return (
               <div
                 key={bar.occurrence.key}
@@ -291,7 +294,7 @@ export function TimeGrid({ days, items, now, today }: TimeGridProps) {
                   {`${clockOf(ghost.from)} – ${clockOf(ghost.to % 1440)}`}
                 </div>
               ) : null}
-              {dragging && drag && !dragging.allDay && daysBetween(days[0]!, dragging.firstDay) + drag.days === index ? (
+              {dragging && drag && !dragging.allDay && addDays(dragging.firstDay, drag.days) === days[index] ? (
                 <DragGhost item={dragging} drag={drag} />
               ) : null}
             </div>

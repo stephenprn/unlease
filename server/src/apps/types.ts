@@ -24,7 +24,7 @@ export interface FilesOptions {
 }
 
 /** What the Administration counts of what the server holds, each app its own. */
-export type AppCounts = Partial<Pick<AdminStatus['server'], 'notes' | 'pages' | 'contacts' | 'events'>>;
+export type AppCounts = Partial<Pick<AdminStatus['server'], 'notes' | 'pages' | 'contacts' | 'events' | 'alarms'>>;
 
 export interface ServerApp {
   readonly id: AppId;

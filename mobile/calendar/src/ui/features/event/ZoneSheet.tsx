@@ -51,7 +51,7 @@ export function ZoneSheet({ visible, zone, onDismiss, onZone }: { visible: boole
         </View>
         <Button label={t('OK')} kind="tonal" disabled={!typed.trim()} onPress={() => later(form.submit(keepTyped))} style={styles.ok} />
       </View>
-      <SheetScroll top={false}>
+      <SheetScroll>
         {zones.map(each => (
           <ListRow key={each} title={each.replace(/_/g, ' ')} supporting={each === own ? t('This phone’s time zone') : undefined} icon={each === zone ? 'check' : 'globe'} onPress={() => pick(each)} />
         ))}

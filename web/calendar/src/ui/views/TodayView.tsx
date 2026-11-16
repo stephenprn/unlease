@@ -1,5 +1,5 @@
 /**
- * « Aujourd'hui »: the day at a glance, as a calm list on the view's sheet, in a reading column. The
+ * « Ma journée »: the day at a glance, as a calm list on the view's sheet, in a reading column. The
  * weather when its layer is on; what takes the whole day (birthdays, all-day events, a page's day);
  * then what has a time, in time order, what is over in muted ink, what is under way (its title a
  * weight up) and what comes next saying how long (« Encore 25 min », « Dans 20 min »), the now line between them; an empty day
@@ -159,7 +159,8 @@ export function TodayView({ today, now }: { today: string; now: number }) {
   const weather = useWeather(useMemo(() => [today], [today]), placed).get(today);
   const tomorrow = plan.tomorrow;
   const ids = useId();
-  const scrollEdges = useScrollEdges({ top: true });
+  // The day past the panel's top or foot fades there, as far as it runs on.
+  const scrollEdges = useScrollEdges({ fade: 'y' });
   return (
     <div className={`${calendar.frame} paper`} data-outline="panel">
       <div ref={scrollEdges} className={styles.scroll}>

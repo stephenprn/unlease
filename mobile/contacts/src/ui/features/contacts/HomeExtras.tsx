@@ -3,7 +3,7 @@
  * birthdays of the week in one line that leads to them all.
  */
 import React, { memo, useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 
 import { SHAPES } from '@unlease/design/shapes';
@@ -14,7 +14,7 @@ import { contactName } from '@unlease/contacts/services/names';
 import { useContact, useContactIds, useUpcomingBirthdays } from '@app/hooks/useContacts';
 import { useMinute } from '@shared/app/hooks/useMinute';
 
-import { AppText, Icon, Tappable } from '@shared/ui/components';
+import { AppText, EdgeScrollView, Icon, Tappable } from '@shared/ui/components';
 import { accelerate, decelerate, duration, listIn, listMove } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -65,13 +65,13 @@ export function FavoritesStrip({ onOpen }: { onOpen: (id: string) => void }) {
       <AppText variant="section" style={styles.head} accessibilityRole="header">
         {t('Favourites')}
       </AppText>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+      <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
         {ids.map(id => (
           <Animated.View key={id} layout={MAKE_ROOM} entering={arrived ? FACE_IN : undefined} exiting={FACE_OUT}>
             <Favorite id={id} onOpen={onOpen} />
           </Animated.View>
         ))}
-      </ScrollView>
+      </EdgeScrollView>
     </Animated.View>
   );
 }

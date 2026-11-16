@@ -6,7 +6,7 @@
  */
 import type { Day } from '../models/events';
 import type { Occurrence } from './occurrences';
-import { addDays, dayToInstant, daysBetween } from './time';
+import { addDays, dayToInstant } from './time';
 
 const MINUTE = 60_000;
 
@@ -97,19 +97,23 @@ export interface BarRow {
 }
 
 /**
- * The bars of a row of consecutive days (a week of the month, the week view's all-day strip): all-day
- * occurrences, and in the month timed ones too (`timed`), each in the first lane free on all its days.
- * Longer bars first, so they keep the top lanes.
+ * The bars of a row of days in order (a week of the month, the week view's all-day strip), which may
+ * leave days out (« Jours travaillés seulement »: a column per day shown): all-day occurrences, and in
+ * the month timed ones too (`timed`), each in the first lane free on all its days. Longer bars first,
+ * so they keep the top lanes. An occurrence that falls only on days left out has no bar; one that
+ * starts or ends on a day left out runs on from the edge of the days it covers.
  */
 export function layoutBars(occurrences: readonly Occurrence[], days: readonly Day[], options: { readonly timed: boolean; readonly maxLanes: number }): BarRow {
   const first = days[0]!;
   const last = days[days.length - 1]!;
   const items = occurrences
     .filter(item => (options.timed || item.allDay) && item.firstDay <= last && item.lastDay >= first)
-    .map(item => {
-      const column = Math.max(0, daysBetween(first, item.firstDay));
-      const end = Math.min(days.length - 1, daysBetween(first, item.lastDay));
-      return { item, column, span: end - column + 1 };
+    .flatMap(item => {
+      // Its first and last columns among the days shown (the same as counting days when none is left out).
+      const column = days.findIndex(day => day >= item.firstDay);
+      let end = days.length - 1;
+      while (end >= 0 && days[end]! > item.lastDay) end -= 1;
+      return column === -1 || end < column ? [] : [{ item, column, span: end - column + 1 }];
     })
     .sort((a, b) => a.column - b.column || b.span - a.span || (a.item.allDay === b.item.allDay ? a.item.startAt - b.item.startAt : a.item.allDay ? -1 : 1));
   const taken: boolean[][] = [];
@@ -124,7 +128,7 @@ export function layoutBars(occurrences: readonly Occurrence[], days: readonly Da
     }
     taken[lane] ??= [];
     for (let column = entry.column; column < entry.column + entry.span; column += 1) taken[lane]![column] = true;
-    bars.push({ occurrence: entry.item, lane, column: entry.column, span: entry.span, continuesBefore: entry.item.firstDay < first, continuesAfter: entry.item.lastDay > last });
+    bars.push({ occurrence: entry.item, lane, column: entry.column, span: entry.span, continuesBefore: entry.item.firstDay < days[entry.column]!, continuesAfter: entry.item.lastDay > days[entry.column + entry.span - 1]! });
   }
   return { bars, lanes: taken.length, hidden };
 }

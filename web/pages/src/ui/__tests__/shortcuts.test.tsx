@@ -41,7 +41,7 @@ describe('Pages’ keys', () => {
     render(<App />);
     await user.keyboard('?');
     expect(screen.getByRole('dialog', { name: 'Raccourcis clavier' })).toBeInTheDocument();
-    expect(shortcutTitles()).toEqual(['Partout', 'Dans une page']);
+    expect(shortcutTitles()).toEqual(['Partout', 'Dans une page', 'Blocs sélectionnés', 'Pages dans la barre latérale']);
     expect(shortcutGroups().get('Partout')).toContain('C Nouvelle page');
     expect(shortcutGroups().get('Partout')!.some(row => row.startsWith('P '))).toBe(false);
     expect(shortcutGroups().get('Dans une page')).toContain('/ Ajouter un bloc');

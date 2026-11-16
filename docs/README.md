@@ -21,10 +21,11 @@ Sorted by what you came for (the [Diátaxis](https://diataxis.fr/) split): learn
 - [Server API](../server/README.md): every route, the settings, the data on disk.
 - [Changelog](../CHANGELOG.md): what each release changed, breaking changes marked.
 - [Security policy](../SECURITY.md): reporting a vulnerability, supported versions.
+- [Clock's sounds](SOUNDS.md): where each alarm sound comes from, its author and its licence.
 
 ## Explanation
 
-- [Architecture](ARCHITECTURE.md): one repository, one server for the suite, a web app and an APK per app, data across apps (ids, record types, references), the sync, Carnet's link reading, Pages and search.
+- [Architecture](ARCHITECTURE.md): one repository, one server for the suite, a web app and an APK per app, data across apps (ids, record types, references), the sync, Carnet's link reading, Pages, Clock's alarm engine and search.
 - [The phone apps](../mobile/README.md): the shared layer, each app's APK, adding one.
 - [Privacy and costs](PRIVACY.md): what leaves your server, when, and what Claude costs.
 - [Design system](../DESIGN.md): the look every app shares; [design research](DESIGN-RESEARCH.md) behind it.

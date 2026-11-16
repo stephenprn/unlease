@@ -17,6 +17,7 @@ import { EmptyLine } from './EmptyLine';
 import { Floating } from './Floating';
 import { Icon } from './Icon';
 import styles from './placeField.module.css';
+import { useScrollEdges } from './scrollEdges';
 
 export interface PlaceFieldProps {
   readonly label?: string;
@@ -145,6 +146,8 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
   };
 
   const optionId = (index: number): string => `${id}-place-${index}`;
+  // Rows past the panel's top or foot fade there, as far as they run on.
+  const listEdges = useScrollEdges({ fade: 'y' });
   return (
     <div className={[controls.field, className ?? ''].join(' ')}>
       {label ? (
@@ -189,7 +192,7 @@ function PlaceFieldComponent({ label, ariaLabel, value, onChange, onPick, known 
       ) : null}
       {shown && anchor ? (
         <Floating anchor={anchor} label={label ?? ariaLabel ?? t('Places')} className={styles.panel} role="listbox" id={listId}>
-          <div className={styles.list} style={{ width: Math.min(Math.max(anchor.width, 300), 520) }}>
+          <div ref={listEdges} className={styles.list} style={{ width: Math.min(Math.max(anchor.width, 300), 520) }}>
             {rows.map((row, index) => (
               <div
                 key={`${row.known ? 'k' : 'f'}:${row.place.name}|${row.place.detail}`}

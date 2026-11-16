@@ -60,7 +60,7 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
       <View style={styles.field}>
         <TextField value={query} onChangeText={setQuery} placeholder={t('Search for someone')} accessibilityLabel={t('Search for someone')} autoCorrect={false} returnKeyType="search" />
       </View>
-      <SheetScroll top={false}>
+      <SheetScroll>
         {!typing && chosen.length > 0 ? (
           <>
             {chosen.map(person => (
