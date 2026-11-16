@@ -94,8 +94,8 @@ android {
         applicationId "com.stephenprn.agenda"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10299
-        versionName "0.1.2"
+        versionCode 20099
+        versionName "0.2.0"
     }
     signingConfigs {
         debug {

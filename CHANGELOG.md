@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-16
+
 ### Added
 
 - **Clock**, a fifth app: an alarm clock for Android, its alarms also shown and edited in its web app (`/clock`). Set an alarm for once or for some days of the week, with a label, one of nine sounds (gentle, classic or lively, all freely licensed; or one of your phone's own) and vibration. As it rings, the screen lights over the lock screen with the time, the weather where you are and your day from Agenda, with "View the day" to open it in Agenda; snooze with one tap, stop by sliding the pebble along its track (or with the notification's buttons, or the volume keys if you choose). The evening before (21:00 by default), Clock warns you when tomorrow's first event starts before your alarm or less than 30 minutes after it (both adjustable), and offers to ring earlier that morning. Each alarm rings on the minute through Android's alarm-clock alarms, even with the battery saver on or the app closed, after a restart before the phone is unlocked (in a plain window of its own, since the app waits for the unlock), and again after an update; during a call it rings at an eighth of its volume, and fully once the call ends; an alarm volume left at nothing is raised to a third for the ring; a ring cut short (the app closed by Android while it rang) starts again within its ringing time; a ring missed while the phone was off rings late if you are still within its ringing time, or is said missed. The home warns when something would keep an alarm from ringing (notifications, the ringing notification turned down, Do Not Disturb letting no alarm through, the alarm volume, exact alarms, full-screen notifications, the battery's « Restricted »). An alarm can be for an Agenda event ("Wake me up for this" on the event): it rings 30 minutes to 2 hours before it, as you choose, and follows the event if it moves. A repeating alarm can stay quiet on public holidays and your days off ("Not on holidays and days off", from Agenda), and "Weekdays" sets the days you work. An assistant's « set an alarm for 7 » sets it at once; another app's « set an alarm » opens the form, filled. Administration counts your alarms. Install `clock-vX.Y.Z.apk` from the release beside the others; turn Clock on in Administration › Apps. The weather comes from Open-Meteo through your server, asked with your phone's approximate location (rounded to about a kilometre) or a place you choose in Settings.
@@ -162,7 +164,8 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/stephenprn/unlease/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/stephenprn/unlease/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/stephenprn/unlease/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/stephenprn/unlease/releases/tag/v0.1.0

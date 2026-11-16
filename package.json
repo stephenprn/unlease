@@ -1,6 +1,6 @@
 {
   "name": "unlease",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Stop leasing your data to Google: a self-hosted suite of apps, one server, apps you install one by one, their data linked.",
   "license": "MIT",
   "repository": {
