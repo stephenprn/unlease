@@ -489,6 +489,11 @@
   min-height: calc(100vh - var(--header-height, 64px));
 }
 
+/* Focus handed to the page itself (« Aller au contenu », a list whose last row went) rings nothing: a ring round the whole page says nothing; the next Tab starts there. */
+.main:focus-visible {
+  outline: none;
+}
+
 /* ── a phone-sized window, away from the board: the phone's top bar ─────────── */
 
 /* The ground itself, its grain fixed to the window like the header's, so no seam shows; it stays while the page scrolls under it. */
@@ -554,6 +559,11 @@
 .pageTitle {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* The head's action (a button's 42) overhangs the head's 40 line rather than heightening it: the title stays where it is on a page without one. */
+.pageHead > button {
+  margin-block: -1px;
 }
 
 /*

@@ -135,6 +135,19 @@
   padding: 0 14px;
 }
 
+/* Under a finger a small button keeps its 32 and takes the press 6 past its top and foot (44), as the phone's does with its slop: nothing is drawn there. */
+@media (pointer: coarse) {
+  /* Without weight, so a small button placed by its own class keeps that place. */
+  :where(.small) {
+    position: relative;
+  }
+  .small::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+}
+
 .stretch {
   width: 100%;
 }

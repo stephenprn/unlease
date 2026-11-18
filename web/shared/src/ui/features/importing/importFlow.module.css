@@ -25,7 +25,9 @@
   text-wrap: pretty;
 }
 
+/* On the column of the title and the lead under it. */
 .where {
+  padding: 0 4px;
   color: var(--ink-muted);
 }
 
@@ -133,9 +135,10 @@
   color: var(--ink-muted);
 }
 
+/* The box's 40 target centred on the glyphs' 24 column, so every name starts on one line whether a box or a glyph leads it. */
 .itemBox {
   flex: none;
-  margin: -10px 0 -10px -6px;
+  margin: -10px -8px;
 }
 
 .itemText {

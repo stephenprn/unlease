@@ -23,8 +23,9 @@
   scroll-margin-top: calc(var(--header-height, 64px) + 16px);
 }
 
+/* On the column of what its sheet holds (the sheet's own 16), as on the phone. */
 .sectionTitle {
-  padding: 0 8px;
+  padding: 0 16px;
 }
 
 /* The title, and the phone's info pebble at the far end when the section explains itself. */
@@ -41,12 +42,13 @@
  * its sheet as every other section's does; its tint still keeps 4 clear of the sheet.
  */
 .sectionHead > button {
-  margin-block: -8px;
+  /* Its glyph ends on the sheet's own column (16 in), as the title starts on it. */
+  margin: -8px 6px;
 }
 
 @media (pointer: coarse) {
   .sectionHead > button {
-    margin-block: -10px;
+    margin: -10px 4px;
   }
 }
 
@@ -139,6 +141,10 @@
   flex-direction: column;
   gap: 14px;
   padding: 12px 16px;
+}
+/* A control's name over its track or its swatches (« Tableau », « Thème », « Trier par »): set in as a field's label is, so both stand on one column in every app's settings. */
+.block > :global(p.t-meta-strong) {
+  margin-left: 4px;
 }
 
 .status {
@@ -615,6 +621,19 @@ button.row:focus-visible {
   color: var(--ink);
 }
 
+/* Under a finger the count keeps its size and takes the press 7 past its top and foot (44). */
+@media (pointer: coarse) {
+  .labelCount {
+    position: relative;
+    min-width: 44px;
+  }
+  .labelCount::after {
+    content: '';
+    position: absolute;
+    inset: -7px 0;
+  }
+}
+
 .labelColors {
   padding: 8px;
 }
@@ -665,6 +684,17 @@ button.row:focus-visible {
   }
   .fields {
     grid-template-columns: minmax(0, 1fr);
+  }
+  /* A status' small button (« Supprimer la clé », « Retirer le stockage S3 ») goes under the status words, which keep the row's width as on the phone, its label on their column. */
+  .statusTop {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .statusTop > .rowText {
+    flex-basis: calc(100% - 22px);
+  }
+  .statusTop > button {
+    margin: 0 0 -4px 8px;
   }
   .budgetField {
     max-width: none;

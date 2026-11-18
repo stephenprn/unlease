@@ -82,7 +82,8 @@ self.addEventListener('fetch', event => {
 
 /**
  * A push carries `{ title, body, path, tag }`: shown as a notification, its tap opening `path` in this
- * app. It stays on screen until it is dismissed or tapped (a computer's browser otherwise lets it fade
+ * app; a reminder whose event has a place carries `directions` too (`{ title, url }`): its button
+ * « Y aller » opens the way there in a new window (the maps' app on a phone). It stays on screen until it is dismissed or tapped (a computer's browser otherwise lets it fade
  * in seconds, unseen by someone away from the keyboard); the same reminder pushed twice (the server
  * restarted) replaces the first, quietly.
  */
@@ -94,18 +95,25 @@ self.addEventListener('push', event => {
     data = { title: event.data ? event.data.text() : '' };
   }
   const title = typeof data.title === 'string' && data.title ? data.title : 'Rappel';
+  const way = data.directions && typeof data.directions.title === 'string' && typeof data.directions.url === 'string' && data.directions.url.startsWith('https://') ? data.directions : null;
   const options = {
     body: typeof data.body === 'string' ? data.body : '',
     tag: typeof data.tag === 'string' ? data.tag : undefined,
     requireInteraction: true,
     icon: `${SCOPE}icon.svg`,
-    data: { path: typeof data.path === 'string' && data.path.startsWith('/') ? data.path : HOME },
+    data: { path: typeof data.path === 'string' && data.path.startsWith('/') ? data.path : HOME, ...(way ? { directions: way.url } : {}) },
+    ...(way ? { actions: [{ action: 'directions', title: way.title }] } : {}),
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  // « Y aller »: the way there, in its own window.
+  if (event.action === 'directions' && event.notification.data?.directions) {
+    event.waitUntil(self.clients.openWindow(event.notification.data.directions));
+    return;
+  }
   // The path is the server's (`/agenda/event/…`); the suite may be served under a base (the scope's path before the app's own).
   const path = event.notification.data?.path ?? HOME;
   const appPath = `/${HOME.split('/').pop()}`;

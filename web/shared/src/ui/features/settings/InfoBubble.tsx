@@ -12,8 +12,8 @@ import { useOutline } from '../../components/Outline';
 import { usePresence } from '../../components/presence';
 import styles from './settings.module.css';
 
-/** Its pointer stands under the info pebble, this far in from its right. */
-const TAIL_FROM_RIGHT = 22;
+/** Its pointer stands under the info pebble's middle, this far in from the sheet's right (the pebble's glyph ends on the sheet's own 16: `.sectionHead > button`). */
+const TAIL_FROM_RIGHT = 28;
 
 /** Its fade out (`--duration-short`). */
 const OUT_MS = 150;

@@ -1,6 +1,6 @@
 /**
  * One tooltip for the whole app: any element with `data-tip` gets it on hover
- * (after a short delay) or on keyboard focus; never on touch, nor at all
+ * (after a short delay) or when the keyboard walks to it (Tab, an arrow); never on touch, nor at all
  * where the pointer is a finger (the phone has no tooltips). A single listener,
  * so a wall of cards does not pay for a hundred tooltip components.
  */
@@ -18,6 +18,9 @@ interface Tip {
 const DELAY_MS = 450;
 /** Moving from one tooltip to the next shows the next almost at once. */
 const CHAIN_MS = 80;
+
+/** How long after a Tab or an arrow the focus it moved still counts as walked to. */
+const WALK_MS = 300;
 
 /** Its fade when the pointer drifts off (layers.module.css), with room to spare. */
 const FADE_MS = 220;
@@ -69,8 +72,14 @@ export function Tooltip() {
       }
       schedule(target, showing ? CHAIN_MS : DELAY_MS);
     };
+    // Focus names a control only when the keyboard walked to it (Tab, an arrow): a dialog opened by a key puts the focus on its first control, which says nothing unasked.
+    let walked = 0;
+    const onKey = (event: KeyboardEvent): void => {
+      hide();
+      walked = event.key === 'Tab' || event.key.startsWith('Arrow') ? event.timeStamp : 0;
+    };
     const onFocus = (event: FocusEvent): void => {
-      if (finger?.matches) return;
+      if (finger?.matches || walked === 0 || event.timeStamp - walked > WALK_MS) return;
       const target = (event.target as Element | null)?.closest?.<HTMLElement>('[data-tip]') ?? null;
       if (target && target.matches(':focus-visible')) schedule(target, DELAY_MS);
     };
@@ -78,7 +87,7 @@ export function Tooltip() {
     document.addEventListener('focusin', onFocus);
     document.addEventListener('focusout', hide);
     document.addEventListener('pointerdown', hide, true);
-    document.addEventListener('keydown', hide, true);
+    document.addEventListener('keydown', onKey, true);
     window.addEventListener('scroll', hide, true);
     return () => {
       if (timer) clearTimeout(timer);
@@ -86,7 +95,7 @@ export function Tooltip() {
       document.removeEventListener('focusin', onFocus);
       document.removeEventListener('focusout', hide);
       document.removeEventListener('pointerdown', hide, true);
-      document.removeEventListener('keydown', hide, true);
+      document.removeEventListener('keydown', onKey, true);
       window.removeEventListener('scroll', hide, true);
     };
   }, []);
