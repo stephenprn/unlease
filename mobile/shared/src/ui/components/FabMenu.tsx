@@ -22,6 +22,7 @@ import type { Theme } from '../theme/theme';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 import { Tappable } from './Tappable';
+import { useModalLayer } from './useModalLayer';
 
 export interface FabAction {
   readonly icon: GlyphName;
@@ -71,6 +72,8 @@ function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: Fab
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
+  // Open, its actions (and the cross that closes them) are all TalkBack reaches, with the slip.
+  const layer = useModalLayer(open);
   const menu = actions.length > 1;
   const shown = visible && actions.length > 0;
   // The plus turns an eighth into the cross.
@@ -103,7 +106,7 @@ function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: Fab
 
   // The host stays, so the pebble's and the sheets' exits can play.
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View ref={layer} collapsable={false} style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {open ? (
         <Animated.View entering={DIM_IN} exiting={DIM_OUT} style={StyleSheet.absoluteFill}>
           <Tappable accessibilityLabel={t('Close')} noTint onPress={() => setOpen(false)} style={[styles.fill, { backgroundColor: theme.color.scrim }]} />

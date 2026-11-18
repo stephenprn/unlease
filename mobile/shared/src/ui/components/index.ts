@@ -44,3 +44,4 @@ export { FormMessage } from './FormMessage';
 export { PickerField, type PickerFieldProps } from './PickerField';
 export { TopBar } from './TopBar';
 export { WeekdayToggles, type WeekdayTogglesProps } from './WeekdayToggles';
+export { useModalLayer } from './useModalLayer';

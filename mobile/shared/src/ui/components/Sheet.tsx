@@ -39,6 +39,7 @@ import { AnimatedOrganic, Organic } from './Organic';
 import { ScrollEdges, splitScrollStyle, type EdgeProps } from './ScrollEdges';
 import { Tappable } from './Tappable';
 import { OverlayFocus, useKeyboardTop, useOverlayKeyboard } from './useKeyboardVisible';
+import { useModalLayer } from './useModalLayer';
 
 export interface SheetProps {
   readonly visible: boolean;
@@ -110,6 +111,8 @@ function SheetComponent({ visible, onDismiss, title, children, tall = false, kee
   // Stays mounted while it leaves; `shown` runs 0 to 1, `drag` is the hand's pull, `height` the panel's own.
   const [mounted, setMounted] = useState(visible);
   if (visible && !mounted) setMounted(true);
+  // Open, it is all TalkBack reaches (with the slip), as it is all the hand reaches.
+  const layer = useModalLayer(visible && mounted);
   const shown = useSharedValue(0);
   const drag = useSharedValue(0);
   const height = useSharedValue(0);
@@ -278,7 +281,7 @@ function SheetComponent({ visible, onDismiss, title, children, tall = false, kee
 
   if (!mounted) return null;
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'box-none' : 'none'}>
+    <View ref={layer} collapsable={false} style={StyleSheet.absoluteFill} pointerEvents={visible ? 'box-none' : 'none'}>
       <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
         <Tappable accessibilityLabel={t('Close')} onPress={onDismiss} style={scrim ? styles.scrim : styles.clear} noTint />
       </Animated.View>

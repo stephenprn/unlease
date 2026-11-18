@@ -13,6 +13,7 @@ import com.stephenprn.unlease.clipboard.ClipboardPackage
 import com.stephenprn.unlease.backgroundsync.BackgroundSyncPackage
 import com.stephenprn.unlease.connectivity.ConnectivityPackage
 import com.stephenprn.unlease.haptics.HapticsPackage
+import com.stephenprn.unlease.overlays.OverlaysPackage
 import com.stephenprn.unlease.textfields.TextFieldsPackage
 import com.stephenprn.unlease.launcher.LauncherIconPackage
 import com.stephenprn.unlease.maps.MapAppsPackage
@@ -33,6 +34,7 @@ class MainApplication : Application(), ReactApplication {
           add(MediaPackage())
           add(HapticsPackage())
           add(TextFieldsPackage())
+          add(OverlaysPackage())
           add(ConnectivityPackage())
           add(BackgroundSyncPackage())
           add(OrganicPackage())

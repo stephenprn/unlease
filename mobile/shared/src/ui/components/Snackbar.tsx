@@ -24,6 +24,7 @@ import { Icon } from './Icon';
 import { AnimatedOrganic, Organic } from './Organic';
 import { Tappable } from './Tappable';
 import { useKeyboardTop } from './useKeyboardVisible';
+import { KEEP_REACHABLE } from '../../platform/overlays';
 
 /** Room left under the slip for the capture pebble (`FabMenu`), which it never covers. */
 export const SNACK_CLEARANCE = 88;
@@ -51,7 +52,8 @@ function SnackbarComponent() {
 
   // The host stays, so the slip's own exit can play when it goes.
   return (
-    <View pointerEvents="box-none" collapsable={false} style={[styles.host, { bottom }]}>
+    // Over an open sheet or the drawer, the slip and its action stay within TalkBack's reach.
+    <View nativeID={KEEP_REACHABLE} pointerEvents="box-none" collapsable={false} style={[styles.host, { bottom }]}>
       {snack ? (
         <Animated.View key={snack.id} entering={SLIP_IN} exiting={SLIP_OUT} accessibilityLiveRegion="polite">
           <Slip id={snack.id} message={snack.message} tone={snack.tone} action={snack.action} />

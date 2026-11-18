@@ -14,6 +14,7 @@ import { Grain } from './Grain';
 import { AnimatedOrganic, Organic } from './Organic';
 import { Tappable } from './Tappable';
 import { OverlayFocus, useOverlayKeyboard } from './useKeyboardVisible';
+import { useModalLayer } from './useModalLayer';
 
 /** The scrim dims, the card settles in from a touch smaller; it leaves faster than it came, both together. */
 /** A confirmation's own outline. */
@@ -41,6 +42,8 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
   const styles = useThemedStyles(makeStyles);
   // Opened while a field held the keyboard: the field steps aside, unless one of its own takes it.
   const overlay = useOverlayKeyboard(visible);
+  // Open, it is all TalkBack reaches (with the slip).
+  const layer = useModalLayer(visible);
   useEffect(() => {
     if (!visible) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -51,7 +54,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
   }, [visible, onCancel]);
   // The host stays, empty and untouchable (and unflattened, so what leaves keeps its place above the page), so the dialog's own exit can play.
   return (
-    <View style={styles.host} pointerEvents="box-none" collapsable={false}>
+    <View ref={layer} style={styles.host} pointerEvents="box-none" collapsable={false}>
       {visible ? (
         <Animated.View entering={SCRIM_IN} exiting={SCRIM_OUT} style={StyleSheet.absoluteFill}>
           <Tappable accessibilityLabel={t('Cancel')} onPress={onCancel} style={styles.scrim} noTint />

@@ -38,6 +38,7 @@ import { EmptyLine } from './EmptyLine';
 import { Ground } from './Ground';
 import { IconButton } from './IconButton';
 import { ListRow } from './ListRow';
+import { useModalLayer } from './useModalLayer';
 import { Organic } from './Organic';
 import { SEARCH_HEIGHT, SEARCH_TOP } from './SearchHeader';
 import { useKeyboardTop } from './useKeyboardVisible';
@@ -174,11 +175,13 @@ function PlaceSearchLayer({ request }: { request: PlaceSearchRequest }) {
           : theirs.length === 0 && mine.length === 0 && people.length === 0
             ? t('No place found: it is kept as written.')
             : null;
+  // Over the whole screen, it is all TalkBack reaches (with the slip) while it is up.
+  const layer = useModalLayer(true);
   // The rows keep clear of the keyboard: what lies under it scrolls up.
   const under = keyboardTop !== null && height > 0 ? Math.max(0, height - keyboardTop) : 0;
 
   return (
-    <Animated.View entering={IN} exiting={OUT} style={styles.layer} onLayout={event => setHeight(event.nativeEvent.layout.height)} accessibilityViewIsModal>
+    <Animated.View ref={layer} collapsable={false} entering={IN} exiting={OUT} style={styles.layer} onLayout={event => setHeight(event.nativeEvent.layout.height)} accessibilityViewIsModal>
       <Ground />
       <View style={{ paddingTop: insets.top + SEARCH_TOP }}>
         <Organic frost style={styles.strip}>

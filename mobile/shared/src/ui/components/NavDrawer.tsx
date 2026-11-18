@@ -30,6 +30,7 @@ import { AppText } from './AppText';
 import { GroundSlice } from './Ground';
 import { Icon } from './Icon';
 import { Tappable } from './Tappable';
+import { useModalLayer } from './useModalLayer';
 
 /** Pushed back past this share of its width (or flung), it closes. */
 const CLOSE_SHARE = 0.35;
@@ -62,6 +63,8 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  // Open, it is all TalkBack reaches (with the slip); closed, it is out of its reach.
+  const layer = useModalLayer(open);
 
   // Always mounted, off its edge when closed, so its glyphs are drawn before it ever slides out.
   // `shown` runs 0 to 1, `drag` is the hand pushing it back (negative), `width` its own.
@@ -157,6 +160,8 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   return (
     // Closed, it is out of reach of the hand and of TalkBack alike.
     <View
+      ref={layer}
+      collapsable={false}
       style={StyleSheet.absoluteFill}
       pointerEvents={open ? 'auto' : 'none'}
       accessibilityElementsHidden={!open}

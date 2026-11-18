@@ -23,6 +23,7 @@ import { Icon } from './Icon';
 import { AnimatedOrganic, Organic } from './Organic';
 import { Tappable } from './Tappable';
 import { useOverlayKeyboard } from './useKeyboardVisible';
+import { useModalLayer } from './useModalLayer';
 
 export interface MenuItem {
   readonly label: string;
@@ -48,6 +49,8 @@ function MenuComponent({ visible, items, onDismiss, top = 56, bottom }: { visibl
   const insets = useSafeAreaInsets();
   // Opened while a field held the keyboard: the field steps aside.
   useOverlayKeyboard(visible);
+  // Open, it is all TalkBack reaches (with the slip).
+  const layer = useModalLayer(visible);
   useEffect(() => {
     if (!visible) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -58,7 +61,7 @@ function MenuComponent({ visible, items, onDismiss, top = 56, bottom }: { visibl
   }, [visible, onDismiss]);
   // The host stays, empty and untouchable, so the menu's own exit can play when it closes.
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none" collapsable={false}>
+    <View ref={layer} style={StyleSheet.absoluteFill} pointerEvents="box-none" collapsable={false}>
       {visible ? <Tappable accessibilityLabel={t('Close the menu')} onPress={onDismiss} style={StyleSheet.absoluteFill} noTint /> : null}
       {visible ? (
         <AnimatedOrganic

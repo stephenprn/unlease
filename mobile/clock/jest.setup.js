@@ -22,6 +22,7 @@ jest.mock('react-native-safe-area-context', () => {
 jest.mock('../shared/specs/NativeMedia', () => require('../shared/__mocks__/NativeMedia'));
 jest.mock('../shared/specs/NativeHaptics', () => require('../shared/__mocks__/NativeHaptics'));
 jest.mock('../shared/specs/NativeTextFields', () => require('../shared/__mocks__/NativeTextFields'));
+jest.mock('../shared/specs/NativeOverlays', () => require('../shared/__mocks__/NativeOverlays'));
 jest.mock('../shared/specs/NativeUnleaseClipboard', () => require('../shared/__mocks__/NativeUnleaseClipboard'));
 jest.mock('../shared/specs/NativeMapApps', () => require('../shared/__mocks__/NativeMapApps'));
 jest.mock('../shared/specs/NativeSuiteLink', () => require('../shared/__mocks__/NativeSuiteLink'));

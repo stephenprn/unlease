@@ -28,6 +28,7 @@
       "react": ["./node_modules/@types/react/index.d.ts"],
       "react/*": ["./node_modules/@types/react/*"],
       "react-native": ["./node_modules/react-native/types_generated/index.d.ts"],
+      "react-test-renderer": ["./node_modules/@types/react-test-renderer/index.d.ts"],
       "react-native-reanimated": ["./node_modules/react-native-reanimated/lib/typescript/index.d.ts"],
       "react-native-gesture-handler": ["./node_modules/react-native-gesture-handler/lib/typescript/index.d.ts"],
       "react-native-safe-area-context": ["./node_modules/react-native-safe-area-context/lib/typescript/src/index.d.ts"],
