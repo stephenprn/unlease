@@ -44,6 +44,7 @@ const { GRADIENTS } = await import(pathToFileURL(resolve('packages/design/src/ba
 const { EMBLEMS, emblemShape, LABEL_TAG_PATH, LABEL_TAG_BOX } = await import(pathToFileURL(resolve('packages/design/src/emblems.ts')).href);
 const { GLYPHS, GLYPH_STROKE } = await import(pathToFileURL(resolve('packages/design/src/glyphs.ts')).href);
 const { LINE_COLORS, NOTE_GRADIENTS } = await import(pathToFileURL(resolve('packages/design/src/colors.ts')).href);
+const { CHECK_EDGE, CHECK_EDGE_PATH, CHECK_FILL_PATH, CHECK_GRID } = await import(pathToFileURL(resolve('packages/design/src/checkbox.ts')).href);
 
 /** The app being generated (`generate`): its folder and its resources. */
 let APP = '';
@@ -108,7 +109,10 @@ function colors(mode) {
   // The ground's two tones (palette GROUNDS), and the slice the bottom bar covers, at its foot.
   entries.push(['ground_top', GROUNDS[mode].top], ['ground_bottom', GROUNDS[mode].bottom], ['ground_foot', groundAt(mode, 0.94)]);
   // The paper at no opacity: where a list fades out at a note's foot, it fades into the paper, never through grey.
-  entries.push(['paper_clear', `rgba(${[1, 3, 5].map(i => parseInt(ROLES[mode].paper.slice(i, i + 2), 16)).join(', ')}, 0)`]);
+  const clear = hex => `rgba(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ')}, 0)`;
+  entries.push(['paper_clear', clear(ROLES[mode].paper)]);
+  // The ground's foot at no opacity: where a list fades out at a slab's foot.
+  entries.push(['ground_bottom_clear', clear(GROUNDS[mode].bottom)]);
   for (const key of LINE_COLORS) entries.push([`pigment_${key}`, LINES[mode][key].fill], [`wash_${key}`, LINES[mode][key].tint]);
   // A gradient cannot be drawn by a launcher: a note wearing one shows its base.
   for (const key of NOTE_GRADIENTS) entries.push([`wash_${key}`, GRADIENTS[mode][key].base]);
@@ -391,6 +395,17 @@ function carnetCutouts() {
 
 }
 
+/**
+ * The checkbox as both apps draw it (`design/checkbox`): open, its edge in the second ink; an item
+ * done, filled in the second ink with the tick punched through (the paper or its wash shows in it).
+ */
+function carnetChecks() {
+  const box = (name, path) =>
+    drawable(name, `<vector ${ANDROID} android:width="${CHECK_GRID}dp" android:height="${CHECK_GRID}dp" android:viewportWidth="${CHECK_GRID}" android:viewportHeight="${CHECK_GRID}">\n  ${path}\n</vector>\n`);
+  box('check_open', `<path android:pathData="${CHECK_EDGE_PATH}" android:fillColor="#00000000" android:strokeColor="@color/${PREFIX}ink_muted" android:strokeWidth="${CHECK_EDGE}"/>`);
+  box('check_done', `<path android:pathData="${CHECK_FILL_PATH}" android:fillColor="@color/${PREFIX}ink_muted" android:fillType="evenOdd"/>`);
+}
+
 /** Carnet's glyphs, by the inks they are shown in, and a link's kind's. */
 let carnetKinds = {};
 function carnetGlyphs() {
@@ -398,8 +413,8 @@ function carnetGlyphs() {
   const KIND_ICONS = Object.fromEntries([...KIND_SOURCE.matchAll(/^\s+(\w+): '(\w+)',$/gm)].map(([, kind, name]) => [kind, name]));
   if (!KIND_ICONS.other) throw new Error('KIND_ICONS not found in kindIcon.ts');
 
-  for (const name of ['search', 'checklist', 'image', 'camera', 'link', 'bellPlus', 'plus', 'box', 'note', 'edit']) glyph(name, 'ink');
-  for (const name of ['chevronRight', 'external', 'boxChecked', 'sparkle', 'link', 'edit']) glyph(name, 'ink_muted');
+  for (const name of ['search', 'checklist', 'image', 'camera', 'link', 'bellPlus', 'plus', 'note', 'edit']) glyph(name, 'ink');
+  for (const name of ['chevronRight', 'external', 'sparkle', 'link']) glyph(name, 'ink_muted');
   // Beside a collection's name, at the end of its line.
   glyph('chevronDown', 'ink_muted', 18);
   for (const name of ['plus', 'link']) glyph(name, 'on_leaf');
@@ -438,6 +453,13 @@ function calendarExtras() {
   for (const name of ['chevronRight', 'calendar']) glyph(name, 'ink_muted');
   glyph('plus', 'on_leaf');
   for (const name of ['plus', 'chevronRight']) glyph(name, 'link', 18);
+}
+
+/** Clock's own: « + » in a head, the morning's day glyph, the clash's alert in Safran. */
+function clockExtras() {
+  glyph('plus', 'ink');
+  glyph('today', 'ink_muted');
+  glyph('alert', 'waiting');
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -517,6 +539,19 @@ ${map(LINE_COLORS.map(c => [c, `${PREFIX}pigment_${c}`]), 'color')}
 }
 `;
 
+/** Clock's WidgetRes.kt: its widget names nothing by key; the pebble's turns, as every app's. */
+const clockKotlin = () => `// ${NOTE}
+package com.stephenprn.clock.widget
+
+import com.stephenprn.clock.R
+
+/** The resources a widget's data names by key. */
+internal object WidgetRes {
+  /** The pebble's four turns, white, for a stone. */
+  val stones: IntArray = intArrayOf(${[...Array(PEBBLE_TURNS).keys()].map(t => `R.drawable.${PREFIX}pebble_${t}`).join(', ')})
+}
+`;
+
 /** One app's widget resources, written into its Android project. */
 function generate(app) {
   APP = app.dir;
@@ -563,6 +598,8 @@ function generate(app) {
   grainedSheet('bar_ground', BAR, 'ground_foot', 'grain_ground');
   // A note's list fades out at its foot, so a row cut there reads as more below, not a glitch; a wash tints it.
   drawable('fade_paper', `<shape ${ANDROID} android:shape="rectangle"><gradient android:angle="90" android:startColor="@color/${PREFIX}paper" android:endColor="@color/${PREFIX}paper_clear"/></shape>\n`);
+  // The same at the foot of a slab of the ground (Agenda's lists), into the ground's foot tone.
+  drawable('fade_ground', `<shape ${ANDROID} android:shape="rectangle"><gradient android:angle="90" android:startColor="@color/${PREFIX}ground_bottom" android:endColor="@color/${PREFIX}ground_bottom_clear"/></shape>\n`);
   // Paper sheets keep their grain apart, so a wash can tint the paper and not the grain.
   grainLayer('grain_panel', PANEL, 'grain_sheet');
   grainLayer('grain_card', CARD, 'grain_sheet');
@@ -602,6 +639,7 @@ generate({
   kotlinPath: 'com/stephenprn/carnet/widget/WidgetRes.kt',
   extras: () => {
     carnetCutouts();
+    carnetChecks();
     carnetGlyphs();
   },
   kotlin: () => carnetKotlin(carnetKinds),
@@ -619,6 +657,17 @@ generate({
 generate({
   dir: 'mobile/calendar',
   kotlinPath: 'com/stephenprn/agenda/widget/WidgetRes.kt',
+  // The now line's red (`danger`), as the app draws it over today's list.
+  extraColors: mode => [['danger', ROLES[mode].danger]],
   extras: calendarExtras,
   kotlin: calendarKotlin,
+});
+
+generate({
+  dir: 'mobile/clock',
+  kotlinPath: 'com/stephenprn/clock/widget/WidgetRes.kt',
+  // Safran (`waiting`): a morning whose first event comes too soon after the alarm.
+  extraColors: mode => [['waiting', ROLES[mode].waiting]],
+  extras: clockExtras,
+  kotlin: clockKotlin,
 });

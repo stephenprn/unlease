@@ -116,7 +116,7 @@ def scaled(rows, size):
 
 
 # The phone apps whose widgets lay the grain (tools/widgets/build_widget_resources.mjs).
-WIDGET_APPS = ('notes', 'contacts')
+WIDGET_APPS = ('notes', 'contacts', 'calendar', 'clock')
 
 
 def widget_tiles():

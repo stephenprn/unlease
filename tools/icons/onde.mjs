@@ -437,6 +437,8 @@ export const ICONS = {
   // « Aujourd'hui », the jump (Agenda's bar): a day's page without its rings, its band across the top, the body left for the date the app writes in it (centred at 12, 14.6).
   datePage: { line: form([pillow(3.6, 3.4, 16.8, 17.2, 3.2, 0.4), wave(3.8, 8.4, 20.2, 8.4, 0.4)]) },
   mapPin: { line: form(['M12 21.2C12 21.2 4.8 15 4.8 9.6C4.8 5.6 8 2.6 12 2.6C16 2.6 19.2 5.6 19.2 9.6C19.2 15 12 21.2 12 21.2Z', circle(12, 9.6, 2.6)]) },
+  // The way there: a road sign's diamond, its arrow turning right.
+  directions: { line: form([soft([[12, 2.6], [21.4, 12], [12, 21.4], [2.6, 12]], { r: 2.2, swell: 0.3 }), 'M9.2 16V12.8C9.2 11.5 10.1 10.6 11.4 10.6H15.2', head(15.6, 10.6, 0, 5.2)]) },
   bag: { line: form([pillow(3.8, 6.8, 16.4, 13.8, 3, 0.4), 'M8.6 9.8V7.2C8.6 5.2 10.1 3.6 12 3.6C13.9 3.6 15.4 5.2 15.4 7.2V9.8']) },
   film: {
     line: form([pillow(3.6, 10, 16.8, 10.2, 2.4, 0.35), turn(pillow(3.6, 5.2, 16.6, 3.8, 1.6, 0.2), -9, 3.8, 9), line(8.6, 4.8, 7.6, 8.8), line(13.4, 4.1, 12.4, 8.1)]),
