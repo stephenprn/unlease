@@ -6,7 +6,7 @@
  * paper (« 12/03/2031 »). Leaving with changes asks first.
  */
 import React, { useMemo, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { getLocale, t } from '@unlease/core/i18n';
 import { isLineColor } from '@unlease/design/colors';
@@ -252,151 +252,153 @@ function EditForm({ kind: startKind, item, onDone }: { kind: ItemKind; item: Wal
   return (
     <>
       <TopBar title={item ? t('Edit {name}', { name: item.title || kindName(kind) }) : kindName(kind)} onBack={unsaved.guard(cancel)} closes />
-      <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {sides.length > 0 ? (
-          <View style={styles.files}>
-            {draft.files.map((file, index) => (
-              <Thumb key={file.id} itemId={itemId} file={file} index={index} onRemove={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
-            ))}
-            {sides.map(side =>
-              side === 'page' || !draft.files.some(file => file.role === side) ? (
-                <Tappable
-                  key={side}
-                  outline="card"
-                  style={[styles.addFile, { borderColor: theme.color.dashed }]}
-                  onPress={() => {
-                    setRole(side);
-                    setSheet('source');
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={side === 'page' ? t('Add pages') : t(ROLE_WORDS[side])}>
-                  <Icon name={side === 'page' ? 'scan' : 'camera'} size={24} color={theme.color.link} />
-                  <AppText variant="label" color={theme.color.link}>
-                    {side === 'page' ? t('Add pages') : t(ROLE_WORDS[side])}
-                  </AppText>
-                </Tappable>
-              ) : null,
-            )}
-          </View>
-        ) : null}
-
-        {identity ? <PickerField label={t('Type')} value={kindName(kind)} icon={KIND_GLYPHS[kind]} onPress={() => setSheet('kind')} /> : null}
-
-        <TextField
-          label={kind === 'card' || kind === 'giftCard' ? t('Shop or card') : identity ? t('Name in the wallet') : t('Name')}
-          placeholder={kind === 'document' ? t('Tax notice 2026, flat lease…') : kind === 'card' ? t('Bakery, library, gym…') : kindName(kind)}
-          value={draft.title}
-          onChangeText={title => set({ title })}
-          error={shown('title')}
-          optional={!(kind === 'card' || kind === 'giftCard' || kind === 'document')}
-          maxLength={200}
-        />
-
-        {kind === 'document' ? (
-          <>
-            <PickerField label={t('Type')} value={documentTypeName(draft.docType)} icon={KIND_GLYPHS.document} onPress={() => setSheet('docType')} />
-            <TextField label={t('Issued by')} placeholder={t('Tax office, insurer, landlord…')} value={draft.issuer} onChangeText={issuer => set({ issuer })} optional />
-          </>
-        ) : null}
-
-        {cards && kind !== 'emergency' ? (
-          <>
-            <TextField
-              label={t('Card number')}
-              value={draft.number}
-              onChangeText={number => set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format })}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              error={shown('number')}
-              optional
-              help={t('Type it as written under the barcode, or add the card’s picture.')}
-            />
-            <PickerField label={t('Barcode')} value={draft.format === 'none' ? t('No barcode') : formatName(draft.format)} icon="barcode" onPress={() => setSheet('format')} />
-            <View style={styles.colour}>
-              <AppText variant="metaStrong" style={styles.colourLabel}>
-                {t('Colour')}
-              </AppText>
-              <LineColorPicker value={draft.color && isLineColor(draft.color) ? draft.color : 'grey'} onChange={color => set({ color })} flush accessibilityLabel={t('Colour')} />
+      <KeyboardAvoidingView behavior="padding" style={styles.fill}>
+        <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {sides.length > 0 ? (
+            <View style={styles.files}>
+              {draft.files.map((file, index) => (
+                <Thumb key={file.id} itemId={itemId} file={file} index={index} onRemove={() => set({ files: draft.files.filter(each => each.id !== file.id) })} />
+              ))}
+              {sides.map(side =>
+                side === 'page' || !draft.files.some(file => file.role === side) ? (
+                  <Tappable
+                    key={side}
+                    outline="card"
+                    style={[styles.addFile, { borderColor: theme.color.dashed }]}
+                    onPress={() => {
+                      setRole(side);
+                      setSheet('source');
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={side === 'page' ? t('Add pages') : t(ROLE_WORDS[side])}>
+                    <Icon name={side === 'page' ? 'scan' : 'camera'} size={24} color={theme.color.link} />
+                    <AppText variant="label" color={theme.color.link}>
+                      {side === 'page' ? t('Add pages') : t(ROLE_WORDS[side])}
+                    </AppText>
+                  </Tappable>
+                ) : null,
+              )}
             </View>
-          </>
-        ) : null}
+          ) : null}
 
-        {identity || kind === 'emergency' ? (
-          <>
-            <TextField label={t('Name on it')} value={draft.holder} onChangeText={holder => set({ holder })} optional autoCorrect={false} />
-            <PickerField label={t('For')} value={personName} icon="person" onPress={() => setSheet('person')} />
-          </>
-        ) : null}
-        {identity ? (
-          <>
-            <TextField label={t('Number [paper]')} value={draft.number} onChangeText={number => set({ number })} optional autoCapitalize="characters" autoCorrect={false} />
+          {identity ? <PickerField label={t('Type')} value={kindName(kind)} icon={KIND_GLYPHS[kind]} onPress={() => setSheet('kind')} /> : null}
+
+          <TextField
+            label={kind === 'card' || kind === 'giftCard' ? t('Shop or card') : identity ? t('Name in the wallet') : t('Name')}
+            placeholder={kind === 'document' ? t('Tax notice 2026, flat lease…') : kind === 'card' ? t('Bakery, library, gym…') : kindName(kind)}
+            value={draft.title}
+            onChangeText={title => set({ title })}
+            error={shown('title')}
+            optional={!(kind === 'card' || kind === 'giftCard' || kind === 'document')}
+            maxLength={200}
+          />
+
+          {kind === 'document' ? (
+            <>
+              <PickerField label={t('Type')} value={documentTypeName(draft.docType)} icon={KIND_GLYPHS.document} onPress={() => setSheet('docType')} />
+              <TextField label={t('Issued by')} placeholder={t('Tax office, insurer, landlord…')} value={draft.issuer} onChangeText={issuer => set({ issuer })} optional />
+            </>
+          ) : null}
+
+          {cards && kind !== 'emergency' ? (
+            <>
+              <TextField
+                label={t('Card number')}
+                value={draft.number}
+                onChangeText={number => set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format })}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                error={shown('number')}
+                optional
+                help={t('Type it as written under the barcode, or add the card’s picture.')}
+              />
+              <PickerField label={t('Barcode')} value={draft.format === 'none' ? t('No barcode') : formatName(draft.format)} icon="barcode" onPress={() => setSheet('format')} />
+              <View style={styles.colour}>
+                <AppText variant="metaStrong" style={styles.colourLabel}>
+                  {t('Colour')}
+                </AppText>
+                <LineColorPicker value={draft.color && isLineColor(draft.color) ? draft.color : 'grey'} onChange={color => set({ color })} flush accessibilityLabel={t('Colour')} />
+              </View>
+            </>
+          ) : null}
+
+          {identity || kind === 'emergency' ? (
+            <>
+              <TextField label={t('Name on it')} value={draft.holder} onChangeText={holder => set({ holder })} optional autoCorrect={false} />
+              <PickerField label={t('For')} value={personName} icon="person" onPress={() => setSheet('person')} />
+            </>
+          ) : null}
+          {identity ? (
+            <>
+              <TextField label={t('Number [paper]')} value={draft.number} onChangeText={number => set({ number })} optional autoCapitalize="characters" autoCorrect={false} />
+              <View style={styles.pair}>
+                <View style={styles.half}>
+                  <TextField label={t('Issued on')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.issuedOn} onChangeText={issuedOn => set({ issuedOn })} error={shown('issuedOn')} optional />
+                </View>
+                <View style={styles.half}>
+                  <TextField label={t('Born on')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.birthDate} onChangeText={birthDate => set({ birthDate })} error={shown('birthDate')} optional />
+                </View>
+              </View>
+              <TextField label={t('Nationality')} placeholder={t('Three letters: FRA…')} value={draft.nationality} onChangeText={nationality => set({ nationality })} optional maxLength={3} autoCapitalize="characters" />
+            </>
+          ) : null}
+
+          {kind === 'giftCard' ? (
             <View style={styles.pair}>
               <View style={styles.half}>
-                <TextField label={t('Issued on')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.issuedOn} onChangeText={issuedOn => set({ issuedOn })} error={shown('issuedOn')} optional />
+                <TextField label={t('Balance')} keyboardType="decimal-pad" value={draft.amount} onChangeText={amount => set({ amount })} optional />
               </View>
               <View style={styles.half}>
-                <TextField label={t('Born on')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.birthDate} onChangeText={birthDate => set({ birthDate })} error={shown('birthDate')} optional />
+                <PickerField label={t('Currency')} value={draft.currency} onPress={() => setSheet('currency')} />
               </View>
             </View>
-            <TextField label={t('Nationality')} placeholder={t('Three letters: FRA…')} value={draft.nationality} onChangeText={nationality => set({ nationality })} optional maxLength={3} autoCapitalize="characters" />
-          </>
-        ) : null}
+          ) : null}
 
-        {kind === 'giftCard' ? (
-          <View style={styles.pair}>
-            <View style={styles.half}>
-              <TextField label={t('Balance')} keyboardType="decimal-pad" value={draft.amount} onChangeText={amount => set({ amount })} optional />
-            </View>
-            <View style={styles.half}>
-              <PickerField label={t('Currency')} value={draft.currency} onPress={() => setSheet('currency')} />
-            </View>
-          </View>
-        ) : null}
-
-        {kind !== 'emergency' ? (
-          <View style={styles.pair}>
-            {kind === 'document' ? (
+          {kind !== 'emergency' ? (
+            <View style={styles.pair}>
+              {kind === 'document' ? (
+                <View style={styles.half}>
+                  <TextField label={t('Date of the document')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.docDate} onChangeText={docDate => set({ docDate })} error={shown('docDate')} optional />
+                </View>
+              ) : null}
+              {/* A TextField's style is its input's: the box around it takes the row's share. */}
               <View style={styles.half}>
-                <TextField label={t('Date of the document')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.docDate} onChangeText={docDate => set({ docDate })} error={shown('docDate')} optional />
+                <TextField
+                  label={kind === 'document' ? t('Ends on') : t('Valid until')}
+                  placeholder={t('DD/MM/YYYY')}
+                  keyboardType="numbers-and-punctuation"
+                  value={draft.expiresOn}
+                  onChangeText={expiresOn => set({ expiresOn })}
+                  error={shown('expiresOn')}
+                  optional
+                />
               </View>
-            ) : null}
-            {/* A TextField's style is its input's: the box around it takes the row's share. */}
-            <View style={styles.half}>
-              <TextField
-                label={kind === 'document' ? t('Ends on') : t('Valid until')}
-                placeholder={t('DD/MM/YYYY')}
-                keyboardType="numbers-and-punctuation"
-                value={draft.expiresOn}
-                onChangeText={expiresOn => set({ expiresOn })}
-                error={shown('expiresOn')}
-                optional
-              />
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {kind === 'document' ? (
-          <>
-            <PickerField label={t('Keep it')} value={keepChoices.find(choice => choice.value === draft.keep)!.label} icon="archive" onPress={() => setSheet('keep')} />
-            {draft.keep === 'date' ? <TextField label={t('Keep until')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.keepUntil} onChangeText={keepUntil => set({ keepUntil })} error={shown('keepUntil')} /> : null}
-            <TextField label={t('Labels')} placeholder={t('Flat, car…')} value={draft.labels} onChangeText={labels => set({ labels })} optional />
-          </>
-        ) : null}
+          {kind === 'document' ? (
+            <>
+              <PickerField label={t('Keep it')} value={keepChoices.find(choice => choice.value === draft.keep)!.label} icon="archive" onPress={() => setSheet('keep')} />
+              {draft.keep === 'date' ? <TextField label={t('Keep until')} placeholder={t('DD/MM/YYYY')} keyboardType="numbers-and-punctuation" value={draft.keepUntil} onChangeText={keepUntil => set({ keepUntil })} error={shown('keepUntil')} /> : null}
+              <TextField label={t('Labels')} placeholder={t('Flat, car…')} value={draft.labels} onChangeText={labels => set({ labels })} optional />
+            </>
+          ) : null}
 
-        <TextField
-          label={kind === 'emergency' ? t('What to know') : t('Notes')}
-          placeholder={kind === 'emergency' ? t('Blood type, allergies, treatments, people to call…') : undefined}
-          multiline
-          value={draft.notes}
-          onChangeText={notes => set({ notes })}
-          optional={kind !== 'emergency'}
-        />
-        {item ? <Button kind="dangerText" icon="trash" label={t('Delete')} onPress={remove} style={styles.delete} /> : null}
-      </EdgeScrollView>
-      <FormFoot>
-        <Button kind="text" label={t('Cancel')} onPress={unsaved.guard(cancel)} />
-        <Button icon="check" label={t('Save')} onPress={save} />
-      </FormFoot>
+          <TextField
+            label={kind === 'emergency' ? t('What to know') : t('Notes')}
+            placeholder={kind === 'emergency' ? t('Blood type, allergies, treatments, people to call…') : undefined}
+            multiline
+            value={draft.notes}
+            onChangeText={notes => set({ notes })}
+            optional={kind !== 'emergency'}
+          />
+          {item ? <Button kind="dangerText" icon="trash" label={t('Delete')} onPress={remove} style={styles.delete} /> : null}
+        </EdgeScrollView>
+        <FormFoot screen>
+          <Button kind="text" label={t('Cancel')} onPress={unsaved.guard(cancel)} />
+          <Button icon="check" label={t('Save')} onPress={save} />
+        </FormFoot>
+      </KeyboardAvoidingView>
 
       <ChoiceSheet title={t('Type')} visible={sheet === 'kind'} value={kind} choices={IDENTITY_KINDS.map(each => ({ value: each as ItemKind, label: kindName(each), icon: KIND_GLYPHS[each] }))} onChoose={setKind} onDismiss={() => setSheet(null)} />
       <ChoiceSheet title={t('Barcode')} visible={sheet === 'format'} value={draft.format} choices={[...BARCODE_FORMATS.map(format => ({ value: format as BarcodeFormat | 'none', label: formatName(format) })), { value: 'none' as const, label: t('No barcode') }]} onChoose={format => set({ format })} onDismiss={() => setSheet(null)} />
@@ -455,6 +457,7 @@ export function EditScreen({ navigation, route }: ScreenProps<'Edit'>) {
 function makeStyles(theme: Theme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
+    fill: { flex: 1 },
     content: { padding: 16, paddingBottom: 32, gap: 14 },
     files: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     thumb: { width: 104, gap: 4 },

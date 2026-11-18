@@ -8,7 +8,6 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t, tc } from '@unlease/core/i18n';
 import { TIMER_LIMITS } from '@unlease/clock/models/timer';
@@ -39,7 +38,6 @@ export function TimerScreen({ navigation, route }: ScreenProps<'Timer'>) {
   const prefs = useClockUiStore(selectPrefs);
   const timer = useLibraryStore(state => (editing ? state.timers[editing] : undefined));
   const recent = useToolsStore(state => state.recent);
-  const insets = useSafeAreaInsets();
   const [initial] = useState(() => ({
     digits: timer ? digitsOf(timer.seconds) : '',
     label: timer?.label ?? '',
@@ -153,13 +151,10 @@ export function TimerScreen({ navigation, route }: ScreenProps<'Timer'>) {
 
           {editing ? <Button label={t('Delete')} kind="dangerText" icon="trash" onPress={remove} style={styles.delete} /> : null}
         </RevealScrollView>
-        {/* The foot's buttons over the gesture bar's room, never under it. */}
-        <View style={{ paddingBottom: insets.bottom + 12 }}>
-          <FormFoot>
-            <Button kind="tonal" label={editing ? t('Save') : t('Save for later')} disabled={seconds <= 0} onPress={keep} />
-            <Button icon="go" label={tc('timer', 'Start')} disabled={seconds <= 0} onPress={start} />
-          </FormFoot>
-        </View>
+        <FormFoot screen>
+          <Button kind="tonal" label={editing ? t('Save') : t('Save for later')} disabled={seconds <= 0} onPress={keep} />
+          <Button icon="go" label={tc('timer', 'Start')} disabled={seconds <= 0} onPress={start} />
+        </FormFoot>
       </KeyboardAvoidingView>
 
       <SoundSheet visible={picking} sound={sound} onSound={setSound} onDismiss={() => setPicking(false)} title={t('Timer sound')} />

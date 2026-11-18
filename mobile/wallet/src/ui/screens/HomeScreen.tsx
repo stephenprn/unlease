@@ -7,7 +7,7 @@
  * strip looks through what is open, in memory only. The capture pebble adds what the place holds.
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { BackHandler, StyleSheet, View } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -263,12 +263,15 @@ export function HomeScreen({ navigation, route }: ScreenProps<'Home'>) {
     <View style={styles.screen}>
       <Ground />
       <SearchHeader query={query} onQuery={setQuery} onMenu={() => setDrawerOpen(true)} placeholder={APP_WORDS.wallet.search} onServer={() => navigation.navigate('Admin', { section: 'server' })} localText={t('No server: your wallet stays on this phone.')} />
-      <Animated.View key={place} entering={still ? undefined : PLACE_IN} style={styles.place}>
-        <EdgeScrollView contentContainerStyle={[styles.content, { paddingBottom: (fab.length > 0 ? FAB_CLEARANCE : 24) + bottom }]} keyboardShouldPersistTaps="handled" refreshControl={pullToSync}>
-          <SyncLine />
-          {body}
-        </EdgeScrollView>
-      </Animated.View>
+      {/* The vault's passphrase is typed here (made, or asked to open): the keyboard shortens the place above the tab bar, so every field can come up over it. */}
+      <KeyboardAvoidingView behavior="padding" style={styles.place}>
+        <Animated.View key={place} entering={still ? undefined : PLACE_IN} style={styles.place}>
+          <EdgeScrollView contentContainerStyle={[styles.content, { paddingBottom: (fab.length > 0 ? FAB_CLEARANCE : 24) + bottom }]} keyboardShouldPersistTaps="handled" refreshControl={pullToSync}>
+            <SyncLine />
+            {body}
+          </EdgeScrollView>
+        </Animated.View>
+      </KeyboardAvoidingView>
       <WalletTabBar tab={place} marks={{ cards: locked('cards') && status !== 'none' ? 'locked' : null, papers: locked('papers') && status !== 'none' ? 'locked' : null, documents: locked('papers') && status !== 'none' ? 'locked' : null }} onTab={choose} />
       <FabMenu actions={fab} visible={fab.length > 0} above={bottom} />
       <Drawer open={drawerOpen} current={null} onClose={() => setDrawerOpen(false)} onPlace={goPlace} />

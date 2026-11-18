@@ -4,15 +4,18 @@
  * one primary filled at the end; above them, the form's own line (`FormMessage`) when it has one.
  * Never inside the scroll, where the keyboard and the fields above would bury it. Its buttons stand on
  * the sheet's column (`SHEET_INSET` in), its edge runs the sheet's whole width: place it straight in
- * the sheet, never in a box that insets it already.
+ * the sheet, never in a box that insets it already. At a screen's foot (`screen`) it keeps the gesture
+ * bar's room under its buttons, given up while the keyboard is up (it then stands on the keyboard).
  */
 import React, { memo } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/theme';
 import { FormMessage } from './FormMessage';
 import { SHEET_INSET } from './Sheet';
+import { useKeyboardVisible } from './useKeyboardVisible';
 
 /**
  * A footer's top edge (a form's actions, a toolbar, a composer): one firm rule across its whole
@@ -31,12 +34,18 @@ export interface FormFootProps {
   readonly message?: string | null;
   /** Its top edge (`footEdge`); off where the box above it already draws one. */
   readonly edge?: boolean;
+  /** At a screen's foot rather than a sheet's (which keeps that room itself): the gesture bar's room under it. */
+  readonly screen?: boolean;
 }
 
-function FormFootComponent({ children, message, edge = true }: FormFootProps) {
+function FormFootComponent({ children, message, edge = true, screen = false }: FormFootProps) {
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardVisible();
+  // Its buttons over the gesture bar, never under it; on the keyboard, nothing between them.
+  const room = screen ? { paddingBottom: (keyboard ? 0 : insets.bottom) + SCREEN_FOOT } : null;
   return (
-    <View style={[styles.foot, edge ? styles.edge : null]}>
+    <View style={[styles.foot, edge ? styles.edge : null, room]}>
       <FormMessage message={message} />
       <View style={styles.actions}>{children}</View>
     </View>
@@ -44,6 +53,9 @@ function FormFootComponent({ children, message, edge = true }: FormFootProps) {
 }
 
 export const FormFoot = memo(FormFootComponent);
+
+/** Under a screen's foot's buttons, above the gesture bar's room: as much as over them. */
+const SCREEN_FOOT = 12;
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
