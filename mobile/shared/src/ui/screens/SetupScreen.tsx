@@ -3,13 +3,15 @@
  * parameterised by the app this phone is (`app`):
  *
  * 1. The welcome: the app's brand and what it does, the interface's language, and one decision:
- *    connect to the server (when a sibling app on this phone is connected, « Utiliser la connexion
- *    de Carnet » does it in one tap), or keep everything on this phone.
+ *    connect to the server (when a sibling app on this phone is connected, « Utiliser la configuration
+ *    de Carnet » takes its connection and its look in one tap, and the setup skips the look; « L'utiliser,
+ *    et choisir l'apparence » takes the connection only), or keep everything on this phone.
  * 2. On a server whose own setup is not done: « Vos applications » (which apps it runs, this one
  *    locked on, the announced ones « Bientôt disponible »; saved at once), then « Votre serveur »
  *    (what the Administration sets, only what the chosen apps use, each row optional and opened on
  *    its own, every field saying where its value comes from).
- * 3. How the apps look on this phone (started from the sibling's colours when there is one).
+ * 3. How the apps look on this phone (started from the sibling's colours when there is one), unless
+ *    the sibling's look came with its setup.
  *
  * « Commencer » marks the server set up, so the next device goes from its colours to its app.
  * Reopened mid-setup, it resumes after the welcome.
@@ -59,7 +61,7 @@ import { setupImportLead } from '@unlease/core/services/importFlow';
 import type { AdminStatus } from '@unlease/core/sync/admin';
 import { useAdmin, useBackups } from '@shared/app/hooks/useAdmin';
 import { useMinute } from '@shared/app/hooks/useMinute';
-import { selectAppearance, selectLocale, selectServer, setAppearance, setInterfaceLocale, setOnboarded, setReading, setServer, setServerApps, useSettingsStore, type ServerConfig } from '@shared/app/store/settingsStore';
+import { selectAppearance, selectLocale, selectServer, setAppearance, setInterfaceLocale, setOnboarded, setReading, setServer, setServerApps, takeLook, useSettingsStore, type ServerConfig } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { connectedSibling, findSiblings, type Sibling } from '@shared/app/suiteLink';
 import { checkServer, fetchAdminStatus, saveServerSettings, SyncError, type Health } from '@shared/app/sync/transport';
@@ -148,6 +150,8 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
   // Once this phone sets the server up, its steps stay, whatever is set there.
   const [settingUp, setSettingUp] = useState(false);
   const [siblings, setSiblings] = useState<readonly Sibling[]>([]);
+  // The look came with a sibling's setup (« Utiliser la configuration de Carnet »): the setup does not ask it.
+  const [lookTaken, setLookTaken] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const serverSetup = settingUp || setupServerShown(server !== null, serverDone);
   // Whether the app's import is offered, decided once its records are counted (none yet: offered), kept for the whole setup.
@@ -164,9 +168,11 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
   // The import's wizard is past its first step: its own foot leads.
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState(false);
-  const steps = setupSteps(server !== null, serverSetup, importShown);
+  const steps = setupSteps(server !== null, serverSetup, importShown, lookTaken);
   // A step this setup turned out not to have (the import, for an app that holds something): on to the next one there is.
-  const step = steps.includes(place.step) ? place.step : place.step === 'server' ? 'server' : 'appearance';
+  const step = steps.includes(place.step) ? place.step : place.step === 'server' || !steps.includes('appearance') ? 'server' : 'appearance';
+  // The look taken with a sibling's setup and no step left (the import not due): the app opens.
+  const entering = lookTaken && place.step !== 'server' && !steps.includes(place.step) && !steps.includes('appearance');
   const task = step === place.step ? place.task : null;
   const enabled = admin.settings?.apps.enabled ?? NO_APPS;
   const backups = useBackups(server, admin.settings?.backup.configured === true, admin.backupsVersion, focused && task === 'restore');
@@ -196,6 +202,8 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
   const go = useCallback(
     (next: SetupStep, opened: SetupTask | null = null) => {
       resumed.current = false;
+      // Back on the welcome, the choice is open again.
+      if (next === 'server') setLookTaken(false);
       setPlace(current => ({ step: next, task: opened, back: depth(next, opened) < depth(current.step, current.task) }));
       // What a row changed shows on the list (and the list's rows on what they open).
       if (next !== 'server') reload();
@@ -224,7 +232,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     if (step !== 'appearance' || tookSibling.current || !sibling?.appearance) return;
     tookSibling.current = true;
     if (!isDefaultAppearance(useSettingsStore.getState().appearance)) return;
-    setAppearance(sibling.appearance);
+    takeLook(sibling.theme, sibling.appearance);
     setFromSibling(sibling.app);
   }, [step, sibling]);
 
@@ -264,6 +272,14 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     setOnboarded();
     onDone();
   };
+
+  // Once, when nothing is left to ask: the app opens.
+  const entered = useRef(false);
+  useEffect(() => {
+    if (!entering || entered.current) return;
+    entered.current = true;
+    void finish();
+  });
 
   // The setup's sections list no snapshot and restore nothing: its own row does.
   const overlays: AdminOverlays = { ask: setConfirmation, openSnapshot: () => undefined, restore: () => undefined };
@@ -388,13 +404,15 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     );
   };
 
-  const connected = (empty: boolean, health: Health) => {
+  const connected = (empty: boolean, health: Health, tookLook: boolean) => {
     setStartedEmpty(empty);
     // An older server knows no setup of its own: it counts as done.
     const done = health.setup !== false;
     setServerDone(done);
     setServerApps(health.apps);
-    // A server set up already: the import when the app holds nothing there, else straight to the look.
+    setLookTaken(tookLook);
+    // A server set up already: the import when the app holds nothing there, else straight to the look
+    // (or, the look taken with a sibling's setup, into the app: `entering`).
     go(done ? 'import' : 'apps');
   };
 
@@ -402,7 +420,7 @@ export function SetupScreen({ app, onDone, claudeExtra, appSections, importer }:
     <KeyboardAvoidingView behavior="padding" style={styles.screen}>
       <Ground />
       <LayoutAnimationConfig skipExiting>
-        {step === 'server' ? (
+        {entering ? null : step === 'server' ? (
           <Welcome app={app} siblings={siblings} onConnected={connected} onLater={() => go('import')} />
         ) : step === 'import' && importer && !importPending ? (
           // The wizard is the step's whole body: the setup's head above its title, the setup's foot under its first and last steps.
@@ -559,11 +577,12 @@ function StepHead({ app, steps, step, task, status, importSource }: { app: AppId
 /**
  * The welcome: the app's brand and what it does, the interface's language, and the one decision:
  * connect to the server (its address and its token, each saying where it comes from; or, when a
- * sibling app on this phone is connected, its connection in one tap), or keep everything on this
- * phone. Connected, it reads whether the server holds anything before this device sends a thing.
- * Keeping everything here leaves no server behind.
+ * sibling app on this phone is connected, its setup in one tap: its connection and its look, or its
+ * connection only, the look chosen next), or keep everything on this phone. Connected, it reads
+ * whether the server holds anything before this device sends a thing. Keeping everything here leaves
+ * no server behind.
  */
-function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings: readonly Sibling[]; onConnected: (startedEmpty: boolean, health: Health) => void; onLater: () => void }) {
+function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings: readonly Sibling[]; onConnected: (startedEmpty: boolean, health: Health, tookLook: boolean) => void; onLater: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -572,7 +591,8 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
   const other = locale === 'fr' ? 'en' : 'fr';
   const [url, setUrl] = useState(server?.url ?? '');
   const [token, setToken] = useState(server?.token ?? '');
-  const [siblingBusy, setSiblingBusy] = useState(false);
+  // Which of the sibling's buttons is at work: its whole setup, or its connection only.
+  const [siblingBusy, setSiblingBusy] = useState<'setup' | 'connection' | null>(null);
   const sibling = connectedSibling(siblings);
 
   const typed = (): ServerConfig => {
@@ -590,14 +610,16 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
     { order: ['address', 'token'], sendOnDone: () => connect(typed()) },
   );
 
-  async function connect(config: ServerConfig, fromSibling = false): Promise<boolean> {
+  /** `fromSibling`: its connection, and with `withLook` its look too (theme, colours, ground). */
+  async function connect(config: ServerConfig, fromSibling: Sibling | null = null, withLook = false): Promise<boolean> {
     try {
       const health = await checkServer(config);
       const status = await fetchAdminStatus(config);
       setServer(config);
       setReading(health.analysis);
+      if (fromSibling && withLook) takeLook(fromSibling.theme, fromSibling.appearance);
       startSync();
-      onConnected(serverEmpty(status), health);
+      onConnected(serverEmpty(status), health, fromSibling !== null && withLook);
       return true;
     } catch (failure) {
       const message = failure instanceof Error ? t(failure.message) : t('Server unreachable');
@@ -623,6 +645,11 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
   };
 
   const words = sibling ? siblingConnectionWords(sibling.app, sibling.server.url) : null;
+  const takeSibling = (withLook: boolean) => {
+    if (!sibling) return;
+    setSiblingBusy(withLook ? 'setup' : 'connection');
+    void connect(sibling.server, sibling, withLook).finally(() => setSiblingBusy(null));
+  };
 
   return (
     <EdgeScrollView style={{ marginTop: insets.top }} contentContainerStyle={[styles.welcome, { paddingBottom: insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
@@ -641,16 +668,24 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
       {sibling && words ? (
         <Organic outline="card" style={[styles.sibling, { backgroundColor: theme.color.paperHigh }]}>
           <AppText variant="body">{words.note}</AppText>
+          {/* Its whole setup first: connected and looking the same, the app opens (by way of the import when it is due). */}
           <Button
             label={words.action}
             icon="link"
-            busy={siblingBusy}
-            disabled={form.busy}
-            onPress={() => {
-              setSiblingBusy(true);
-              void connect(sibling.server, true).finally(() => setSiblingBusy(false));
-            }}
+            busy={siblingBusy === 'setup'}
+            disabled={form.busy || siblingBusy === 'connection'}
+            onPress={() => takeSibling(true)}
             style={styles.submit}
+          />
+          {/* Its connection only: the setup asks the look next, started from the sibling's. */}
+          <Button
+            kind="text"
+            label={words.lookAction}
+            icon="palette"
+            busy={siblingBusy === 'connection'}
+            disabled={form.busy || siblingBusy === 'setup'}
+            onPress={() => takeSibling(false)}
+            style={styles.centered}
           />
         </Organic>
       ) : null}
@@ -671,7 +706,7 @@ function Welcome({ app, siblings, onConnected, onLater }: { app: AppId; siblings
           label={t('Connect')}
           icon="server"
           busy={form.busy}
-          disabled={siblingBusy}
+          disabled={siblingBusy !== null}
           onPress={() => void form.submit(() => connect(typed()))}
           style={styles.submit}
         />

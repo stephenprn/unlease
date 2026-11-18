@@ -18,6 +18,8 @@ export interface SiblingHolding {
   readonly locale: string;
   /** The look it last sent, JSON, '' when it never sent one (or from a build before it was shared). */
   readonly look: string;
+  /** Its theme (`system`, `light`, `dark`), '' when unknown (or from a build before it was shared). */
+  readonly theme: string;
 }
 
 /** This app's applicationId (`….dev` in a dev build); '' without the module (a test, an older native build). */
@@ -29,9 +31,9 @@ export function ownPackage(): string {
   }
 }
 
-export function shareWithSiblings(server: string, token: string, appearance: string, grain: string, locale: string, look: string): void {
+export function shareWithSiblings(server: string, token: string, appearance: string, grain: string, locale: string, look: string, theme: string): void {
   try {
-    NativeSuiteLink?.share(server, token, appearance, grain, locale, look);
+    NativeSuiteLink?.share(server, token, appearance, grain, locale, look, theme);
   } catch {
     // Nothing to hand on: the siblings find nothing, as before they shipped.
   }
@@ -40,7 +42,7 @@ export function shareWithSiblings(server: string, token: string, appearance: str
 export async function siblingHoldings(packages: readonly string[]): Promise<SiblingHolding[]> {
   if (!NativeSuiteLink || packages.length === 0) return [];
   try {
-    return (await NativeSuiteLink.siblings([...packages])).links.map(link => ({ ...link, grain: link.grain ?? '', locale: link.locale ?? '', look: link.look ?? '' }));
+    return (await NativeSuiteLink.siblings([...packages])).links.map(link => ({ ...link, grain: link.grain ?? '', locale: link.locale ?? '', look: link.look ?? '', theme: link.theme ?? '' }));
   } catch {
     return [];
   }

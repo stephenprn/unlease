@@ -116,16 +116,21 @@ export function ImportFrame({ step, title, lead, children, back, forward, onBack
       <EdgeScrollView key={step} style={host.top ? { marginTop: host.top } : null} contentContainerStyle={[styles.content, host.embedded ? styles.embedded : null]} keyboardShouldPersistTaps="handled">
         {host.head}
         <View style={styles.head}>
-          <View style={styles.progress} accessible accessibilityLabel={`${IMPORT_STEP_NAMES[step]} · ${importProgress(step)}`}>
-            {IMPORT_STEPS.map((each, at) => (
-              <View key={each} style={styles.mark}>
-                <View style={[styles.dot, { backgroundColor: at <= index ? theme.color.focus : theme.color.edge }]} />
-                <AppText variant="labelSmall" color={each === step ? theme.color.ink : theme.color.inkMuted}>
-                  {IMPORT_STEP_NAMES[each]}
-                </AppText>
-              </View>
-            ))}
-          </View>
+          {host.embedded ? (
+            // Inside the first run, whose own steps head the screen: no second trail, the wizard's step in a line (as the web's).
+            <AppText variant="meta">{`${IMPORT_STEP_NAMES[step]} · ${importProgress(step)}`}</AppText>
+          ) : (
+            <View style={styles.progress} accessible accessibilityLabel={`${IMPORT_STEP_NAMES[step]} · ${importProgress(step)}`}>
+              {IMPORT_STEPS.map((each, at) => (
+                <View key={each} style={styles.mark}>
+                  <View style={[styles.dot, { backgroundColor: at <= index ? theme.color.focus : theme.color.edge }]} />
+                  <AppText variant="labelSmall" color={each === step ? theme.color.ink : theme.color.inkMuted}>
+                    {IMPORT_STEP_NAMES[each]}
+                  </AppText>
+                </View>
+              ))}
+            </View>
+          )}
           <AppText variant="title" accessibilityRole="header">
             {title}
           </AppText>

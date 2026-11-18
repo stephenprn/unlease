@@ -34,6 +34,10 @@ describe('the first run', () => {
     expect(setupSteps(false, true)).toEqual(['server', 'appearance']);
     expect(setupSteps(true, false)).toEqual(['server', 'appearance']);
     expect(setupSteps(true, true)).toEqual(['server', 'apps', 'checklist', 'appearance']);
+    // A sibling's setup taken whole brings its look: nothing to ask on a server set up already.
+    expect(setupSteps(true, false, false, true)).toEqual(['server']);
+    expect(setupSteps(true, false, true, true)).toEqual(['server', 'import']);
+    expect(setupSteps(true, true, false, true)).toEqual(['server', 'apps', 'checklist']);
     // A server not set up yet (or not known yet) is set up here, once; one already set up is joined.
     expect(setupServerShown(true, false)).toBe(true);
     expect(setupServerShown(true, null)).toBe(true);

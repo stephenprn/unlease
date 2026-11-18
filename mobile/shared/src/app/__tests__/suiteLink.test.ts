@@ -28,9 +28,11 @@ beforeEach(() => {
 afterEach(() => stopSuiteLink());
 
 describe('what this app hands its siblings', () => {
-  it('is its connection and appearance, again whenever they change, cleared without a server', () => {
+  it('is its connection, appearance and theme, again whenever they change, cleared without a server', () => {
     startSuiteLink();
-    expect(native.shared).toEqual({ server: '', token: '', appearance: JSON.stringify(DEFAULT_APPEARANCE), grain: '', locale: '', look: '' });
+    expect(native.shared).toEqual({ server: '', token: '', appearance: JSON.stringify(DEFAULT_APPEARANCE), grain: '', locale: '', look: '', theme: 'system' });
+    setTheme('dark');
+    expect(native.shared).toMatchObject({ theme: 'dark' });
     setServer({ url: 'unlease.example.org', token: 'jeton' });
     expect(native.shared).toMatchObject({ server: 'https://unlease.example.org', token: 'jeton' });
     setAppearance({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle });
@@ -57,13 +59,13 @@ describe('what this app hands its siblings', () => {
 describe('what the siblings hold', () => {
   it('is asked of the other apps only, and read as connections and appearances', async () => {
     native.siblings = [
-      { packageName: 'com.stephenprn.pages', server: 'https://unlease.example.org', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '', look: '' },
+      { packageName: 'com.stephenprn.pages', server: 'https://unlease.example.org', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '', look: '', theme: 'dark' },
       // Not of the suite: left out.
       { packageName: 'org.example.other', server: 'https://other.example.org', token: 'x', appearance: '', grain: '', locale: '', look: '' },
     ];
     const found = await findSiblings('notes');
     expect(native.asked).toEqual([['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']]);
-    expect(found).toEqual([{ app: 'pages', server: { url: 'https://unlease.example.org', token: 'jeton' }, appearance: expect.objectContaining(PALETTE_COLORS.sarcelle), grain: null, locale: null, look: null }]);
+    expect(found).toEqual([{ app: 'pages', server: { url: 'https://unlease.example.org', token: 'jeton' }, appearance: expect.objectContaining(PALETTE_COLORS.sarcelle), grain: null, locale: null, look: null, theme: 'dark' }]);
     expect(connectedSibling(found)?.app).toBe('pages');
   });
 
@@ -73,7 +75,8 @@ describe('what the siblings hold', () => {
       { packageName: 'com.stephenprn.agenda', server: 'https://unlease.example.org', token: 'jeton', appearance: '{broken', grain: '{broken', locale: '{broken', look: '' },
     ];
     const found = await findSiblings('pages');
-    expect(found).toEqual([{ app: 'calendar', server: { url: 'https://unlease.example.org', token: 'jeton' }, appearance: null, grain: null, locale: null, look: null }]);
+    // A build before the theme was shared hands none: read as unknown.
+    expect(found).toEqual([{ app: 'calendar', server: { url: 'https://unlease.example.org', token: 'jeton' }, appearance: null, grain: null, locale: null, look: null, theme: null }]);
   });
 });
 

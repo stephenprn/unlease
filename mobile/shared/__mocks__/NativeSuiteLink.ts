@@ -2,7 +2,7 @@
 import type { SiblingLink, SiblingLinks } from '../specs/NativeSuiteLink';
 
 export const state = {
-  shared: null as { server: string; token: string; appearance: string; grain: string; locale: string; look: string } | null,
+  shared: null as { server: string; token: string; appearance: string; grain: string; locale: string; look: string; theme: string } | null,
   siblings: [] as SiblingLink[],
   asked: [] as string[][],
   /** The applicationId this build answers (`@shared/app/variant` reads it once, when first imported). */
@@ -16,8 +16,8 @@ export function __reset(): void {
 }
 
 const NativeSuiteLink = {
-  share: (server: string, token: string, appearance: string, grain: string, locale: string, look: string): void => {
-    state.shared = { server, token, appearance, grain, locale, look };
+  share: (server: string, token: string, appearance: string, grain: string, locale: string, look: string, theme: string): void => {
+    state.shared = { server, token, appearance, grain, locale, look, theme };
   },
   siblings: async (packages: string[]): Promise<SiblingLinks> => {
     state.asked.push(packages);

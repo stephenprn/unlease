@@ -1,8 +1,8 @@
 /**
- * The suite's apps on one phone hand each other their connection, their appearance, their grain,
- * their language and the look they sent (`platform/suiteLink`, a signature-protected provider), so
- * the second app installed connects in one tap (« Utiliser la connexion de Carnet ») and starts from
- * the same colours, in the same language.
+ * The suite's apps on one phone hand each other their connection, their appearance and theme, their
+ * grain, their language and the look they sent (`platform/suiteLink`, a signature-protected provider),
+ * so the second app installed is set up in one tap (« Utiliser la configuration de Carnet »: the
+ * connection and the look) or starts from the same colours, in the same language.
  *
  * This app tells it whenever its server, its appearance, its grain, its language or the look it sent
  * changes (cleared when it lets its server go); its welcome asks what the siblings hold. The grain
@@ -21,7 +21,7 @@ import { shareWithSiblings, siblingHoldings } from '@shared/platform/suiteLink';
 
 import { ownApp } from './store/library';
 import { appPackage } from './variant';
-import { followGrain, followLocale, followLook, readLookOffer, useSettingsStore, type GrainChoice, type LocaleChoice, type LookOffer, type ServerConfig } from './store/settingsStore';
+import { followGrain, followLocale, followLook, readLookOffer, useSettingsStore, type GrainChoice, type LocaleChoice, type LookOffer, type ServerConfig, type ThemePreference } from './store/settingsStore';
 
 /** What a sibling app holds, as this app can use it. */
 export interface Sibling {
@@ -34,6 +34,8 @@ export interface Sibling {
   readonly locale: LocaleChoice | null;
   /** The look (theme, colours, ground) it last sent, and the apps it is for. */
   readonly look: LookOffer | null;
+  /** Its own theme, null when unknown (an older build): with its appearance, the look it wears. */
+  readonly theme: ThemePreference | null;
 }
 
 /** A sibling's grains as it shares them, or null when it has none or they are unreadable. */
@@ -94,7 +96,8 @@ export async function findSiblings(own: AppId = ownApp()): Promise<Sibling[]> {
     const grain = parseGrainChoice(holding.grain);
     const locale = parseLocaleChoice(holding.locale);
     const look = parseLookOffer(holding.look);
-    if (server || appearance || grain || locale || look) found.push({ app, server, appearance, grain, locale, look });
+    const theme = holding.theme === 'system' || holding.theme === 'light' || holding.theme === 'dark' ? holding.theme : null;
+    if (server || appearance || grain || locale || look) found.push({ app, server, appearance, grain, locale, look, theme });
   }
   return found.sort((a, b) => APP_IDS.indexOf(a.app) - APP_IDS.indexOf(b.app));
 }
@@ -106,14 +109,14 @@ export const connectedSibling = (siblings: readonly Sibling[]): (Sibling & { rea
 let last = '';
 
 function publish(): void {
-  const { server, appearance, grain, grainAt, locale, localeAt, lookOffer } = useSettingsStore.getState();
+  const { server, appearance, theme, grain, grainAt, locale, localeAt, lookOffer } = useSettingsStore.getState();
   const choice: GrainChoice = { paper: grain, ground: appearance.grain, at: grainAt };
   const language: LocaleChoice = { locale, at: localeAt };
-  const next = [server?.url ?? '', server?.token ?? '', JSON.stringify(appearance), grainAt > 0 ? JSON.stringify(choice) : '', localeAt > 0 ? JSON.stringify(language) : '', lookOffer ? JSON.stringify(lookOffer) : ''];
+  const next = [server?.url ?? '', server?.token ?? '', JSON.stringify(appearance), grainAt > 0 ? JSON.stringify(choice) : '', localeAt > 0 ? JSON.stringify(language) : '', lookOffer ? JSON.stringify(lookOffer) : '', theme];
   const key = next.join('\n');
   if (key === last) return;
   last = key;
-  shareWithSiblings(next[0]!, next[1]!, next[2]!, next[3]!, next[4]!, next[5]!);
+  shareWithSiblings(next[0]!, next[1]!, next[2]!, next[3]!, next[4]!, next[5]!, next[6]!);
 }
 
 /** The latest of the siblings' choices, or null when none chose. */
@@ -149,7 +152,7 @@ let foreground: NativeEventSubscription | null = null;
 export function startSuiteLink(): void {
   publish();
   unsubscribe ??= useSettingsStore.subscribe((state, before) => {
-    if (state.server !== before.server || state.appearance !== before.appearance || state.grain !== before.grain || state.grainAt !== before.grainAt || state.locale !== before.locale || state.localeAt !== before.localeAt || state.lookOffer !== before.lookOffer) publish();
+    if (state.server !== before.server || state.appearance !== before.appearance || state.theme !== before.theme || state.grain !== before.grain || state.grainAt !== before.grainAt || state.locale !== before.locale || state.localeAt !== before.localeAt || state.lookOffer !== before.lookOffer) publish();
   });
   foreground ??= AppState.addEventListener('change', next => {
     if (next === 'active') follow();

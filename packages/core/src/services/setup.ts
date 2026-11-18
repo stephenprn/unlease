@@ -13,7 +13,8 @@
  *    device keeping everything to itself), its own wizard (`importFlow.ts`), skipped with « Plus
  *    tard » (Réglages › Données keeps it).
  * 4. `appearance`: this device's colours and ground (kept with « Garder l’apparence d’origine »:
- *    `isDefaultAppearance`; a phone app starts from its sibling's).
+ *    `isDefaultAppearance`; a phone app starts from its sibling's). A phone app that takes its
+ *    sibling's whole setup (« Utiliser la configuration de Carnet ») takes its look too, and skips it.
  *
  * A device joining a server already set up goes from its colours straight to its app (by way of the
  * import when its app holds nothing there yet).
@@ -187,12 +188,12 @@ export function setupServerShown(connected: boolean, serverDone: boolean | null)
 /**
  * The steps, in order: the server (or this device alone), the server's own when this device sets it
  * up, the import when the app has one and holds nothing yet (`setupImportShown`), then how the apps
- * look here.
+ * look here, unless the look came with a sibling's setup (`lookTaken`).
  */
-export function setupSteps(connected: boolean, serverSetup: boolean, importShown = false): SetupStep[] {
+export function setupSteps(connected: boolean, serverSetup: boolean, importShown = false, lookTaken = false): SetupStep[] {
   const steps: SetupStep[] = connected && serverSetup ? ['server', 'apps', 'checklist'] : ['server'];
   if (importShown) steps.push('import');
-  steps.push('appearance');
+  if (!lookTaken) steps.push('appearance');
   return steps;
 }
 
@@ -308,10 +309,17 @@ export function previousSetupStep(steps: readonly SetupStep[], step: SetupStep):
   return steps[Math.max(0, index - 1)] ?? step;
 }
 
-/** A phone app finding its sibling's connection on the welcome: the one tap that saves typing it. */
-export function siblingConnectionWords(app: AppId, server: string): { readonly action: string; readonly note: string } {
+/**
+ * A phone app finding its sibling's connection on the welcome: the one tap that saves typing it and
+ * takes its look too (`action`), or its connection only, the look chosen next (`lookAction`).
+ */
+export function siblingConnectionWords(app: AppId, server: string): { readonly action: string; readonly lookAction: string; readonly note: string } {
   const name = APPS[app].name;
-  return { action: t('Use {app}’s connection', { app: name }), note: t('{app} is already connected to {server} on this phone.', { app: name, server: server.replace(/^https?:\/\//, '') }) };
+  return {
+    action: t('Use {app}’s setup', { app: name }),
+    lookAction: t('Use it, and choose the look'),
+    note: t('{app} is already set up on this phone, connected to {server}: this app can take its connection and its look.', { app: name, server: server.replace(/^https?:\/\//, '') }),
+  };
 }
 
 /** The appearance step's note when it starts from a sibling phone app's colours. */

@@ -13,8 +13,8 @@ import java.util.concurrent.Executors
 class SuiteLinkModule(private val reactContext: ReactApplicationContext) : NativeSuiteLinkSpec(reactContext) {
   private val worker = Executors.newSingleThreadExecutor()
 
-  override fun share(server: String, token: String, appearance: String, grain: String, locale: String, look: String) {
-    worker.execute { SuiteLink.store(reactContext, server, token, appearance, grain, locale, look) }
+  override fun share(server: String, token: String, appearance: String, grain: String, locale: String, look: String, theme: String) {
+    worker.execute { SuiteLink.store(reactContext, server, token, appearance, grain, locale, look, theme) }
   }
 
   override fun ownPackage(): String = reactContext.packageName
@@ -35,6 +35,7 @@ class SuiteLinkModule(private val reactContext: ReactApplicationContext) : Nativ
               putString("grain", values[3])
               putString("locale", values[4])
               putString("look", values[5])
+              putString("theme", values[6])
             },
         )
       }

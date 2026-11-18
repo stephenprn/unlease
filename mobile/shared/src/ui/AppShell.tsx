@@ -13,7 +13,7 @@ import { NavigationContainer, type InitialState, type LinkingOptions, type Navig
 
 import type { AppId } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
-import { selectLocale, useSettingsStore } from '@shared/app/store/settingsStore';
+import { selectLocale, selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
 import { useBackgroundSyncWarning } from '@shared/app/hooks/useBackgroundHealth';
 
 import { AppText, Snackbar } from './components';
@@ -75,6 +75,8 @@ function Gate<P extends object>({ boot, app, linking, navigationRef, children, o
   const locale = useSettingsStore(selectLocale);
   const navigation = useRef<InitialState | undefined>(undefined);
   const off = useAppOff(app);
+  // The first run asks one thing at a time: what Android holds back is said once the app is set up.
+  const onboarded = useSettingsStore(selectOnboarded);
   if (!boot.ok) {
     return (
       <View style={styles.centre}>
@@ -106,7 +108,7 @@ function Gate<P extends object>({ boot, app, linking, navigationRef, children, o
       </View>
       {off ? <AppOffScreen app={app} onSettings={onSettings} /> : null}
       <Snackbar />
-      <BackgroundSyncWarning enabled={!off} />
+      <BackgroundSyncWarning enabled={!off && onboarded} />
     </NavigationContainer>
   );
 }

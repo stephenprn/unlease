@@ -260,6 +260,13 @@ export function applyLookTo(apps: readonly AppId[]): void {
   save('lookOffer', { theme, appearance, at: Date.now(), to });
 }
 
+/** Another app's look taken whole as this app's own, now (the setup's « Utiliser la configuration de Carnet »): its theme and colours, the ground's grain left to the grains. Null keeps this app's. */
+export function takeLook(theme: ThemePreference | null, appearance: Appearance | null): void {
+  const state = useSettingsStore.getState();
+  if (appearance) setAppearance({ ...appearance, grain: state.appearance.grain });
+  if (theme && theme !== state.theme) setTheme(theme);
+}
+
 /** Another app of the suite sent its look, later than this app chose its own: it becomes this app's, kept with that app's time (never stamped again, so nothing echoes back). */
 export function followLook(choice: LookChoice): void {
   const state = useSettingsStore.getState();

@@ -1,6 +1,6 @@
 /**
  * The link between the suite's apps on one phone (`SuiteLink`, `mobile/shared/android`): each app
- * keeps what it hands its siblings (its server's address, its token, its appearance, its grain, its language, the look it sent) and serves it
+ * keeps what it hands its siblings (its server's address, its token, its appearance, its grain, its language, the look it sent, its theme) and serves it
  * through its own ContentProvider (`<applicationId>.suite`), which only an app signed by the same
  * key may read (the signature permission `com.stephenprn.unlease.permission.SUITE`, `.unlease.dev.` in a
  * dev build: the token is a secret). The second app installed reads the first one's on its welcome, so nobody types them twice;
@@ -24,6 +24,8 @@ export interface SiblingLink {
   locale: string;
   /** The look (theme, colours, ground) it last sent, when, and the apps it is for, as JSON (`LookOffer`), '' when it never sent one or from an older build. */
   look?: string;
+  /** Its theme (`system`, `light`, `dark`), '' when unknown or from an older build: with its appearance, the look it wears. */
+  theme?: string;
 }
 
 export interface SiblingLinks {
@@ -32,7 +34,7 @@ export interface SiblingLinks {
 
 export interface Spec extends TurboModule {
   /** What this app hands its siblings from now on; '' clears a value (disconnected). */
-  share(server: string, token: string, appearance: string, grain: string, locale: string, look: string): void;
+  share(server: string, token: string, appearance: string, grain: string, locale: string, look: string, theme: string): void;
   /** What these siblings hold, those installed and signed alike that answer; never this app itself. */
   siblings(packages: string[]): Promise<SiblingLinks>;
   /** This app's applicationId: `com.stephenprn.carnet`, `com.stephenprn.carnet.dev` in a dev build (`@shared/app/variant`). */
