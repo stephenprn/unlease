@@ -493,6 +493,9 @@
 
 .frameHead {
   flex: none;
+  /* Over the body, as the foot is: a frosted field scrolled under it still takes clicks in Chromium. */
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -530,6 +533,9 @@
 /* The actions: the last one stands in the dialog's corner, as far in from its foot as from its side (24). */
 .frameFoot {
   flex: none;
+  /* Over the body: a frosted field scrolled under it (its backdrop-filter) still takes clicks in Chromium. */
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

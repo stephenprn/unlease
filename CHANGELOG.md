@@ -45,6 +45,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Fixed
 
+- In the web apps, a dialog's buttons (« Enregistrer », « Annuler ») take the click again when a field has scrolled under them; before, the field behind took it.
 - Carnet's Note widget no longer shows an unticked item as ticked, nor leaves a grey square behind after a tap on an item; a note's colour, a card's spacing and a link's picture no longer stay on the widgets after they changed.
 - In Agenda, an event whose place is a web address (a Google Meet, Zoom or Teams link) opens that link, on Android and on the web, instead of searching for it in maps, and asks no weather for it.
 - A day off reads « Day off » in My day (Android and web) and on Agenda's widgets, as in the Planning, instead of « All day ».
