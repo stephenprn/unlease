@@ -31,6 +31,7 @@ export { PictureStage } from './PictureStage';
 export { Sheet, SHEET_INSET, SheetFlatList, SheetScrim, SheetScroll } from './Sheet';
 export { Snackbar, SNACK_CLEARANCE } from './Snackbar';
 export { Switch, SwitchMark } from './Switch';
+export { TabBar, TAB_BAR_HEIGHT, type TabPlace } from './TabBar';
 export { PlaceField, searchPlace, type PlaceFieldProps } from './PlaceField';
 export { openPlaceSearch, PlaceSearchHost, type PersonPlace, type PlaceSearchRequest } from './PlaceSearch';
 export { PressSurface, Tappable } from './Tappable';

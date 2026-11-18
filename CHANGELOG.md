@@ -26,6 +26,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
+- The bar at the foot of Clock and Wallet on Android marks the chosen place with a wash of your primary colour under its icon and its name, sliding from place to place, instead of an oval around the icon.
 - In Carnet's notes, the link (or the mention) the cursor stands on shows as a chip in the middle of the note's bar, in place of the date, on Android and on the web: the editor no longer jumps as a row came and went above the bar. On the web, Ctrl+click (⌘ on a Mac) on a link still opens it at once (the chip's tooltip says so).
 - The web apps' security policy lets WebAssembly compile (`'wasm-unsafe-eval'`), for Wallet's Argon2id; it still refuses any string run as JavaScript.
 - Clock's drawer on Android keeps Settings and the Administration: its places are the bar at the foot.
