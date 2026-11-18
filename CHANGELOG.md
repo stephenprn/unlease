@@ -10,6 +10,10 @@ All notable changes to Unlease are written here: the server and every app share 
   - **Carnet's protected section:** turn « Section protégée » on in Carnet's Réglages, then « Protéger » a note or a collection from its menu or a selection. It leaves the board, the archive, labels, reminders, search, the collections, the widgets, the share sheet, Agenda and Pages, and shows only in « Protégées », once unlocked; links are never filed into a protected collection, and a protected note's reminder rings as « Note protégée ». Turning the section off brings its notes back.
   - **Pages' protected pages:** « Protéger par mot de passe » in a page's menu. The page and its sub-pages keep their titles in the tree, but opening one asks the password; their words stay out of search, previews and questions to Claude.
 
+### Fixed
+
+- Clock's alarm wheels on Android turn under the finger again: an hour or a minute passing no longer jolted the wheel half a row ahead or cut its fling short, and a wheel no longer lets the page scroll once it has turned a long way. AM and PM are two rows a tap chooses.
+
 ## [0.3.0] - 2026-11-18
 
 ### Added
