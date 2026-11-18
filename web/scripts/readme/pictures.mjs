@@ -18,7 +18,7 @@ const SITE = { light: '#ffffff', dark: '#0d1117' };
 export const WIDTH = 920;
 
 /** What the README says each app replaces. */
-const REPLACES = { notes: 'Google Keep', pages: 'Google Docs, Notion', calendar: 'Google Calendar', contacts: 'Google Contacts' };
+const REPLACES = { notes: 'Google Keep', pages: 'Google Docs, Notion', calendar: 'Google Calendar', contacts: 'Google Contacts', clock: 'Google Clock', wallet: 'Google Wallet' };
 
 /** The page's frame: the palette's roles for the scheme as custom properties, the font, the shared pieces. */
 function frame(design, scheme, body, threads = []) {
@@ -177,7 +177,7 @@ function pieces(design, brand) {
   return { glyph, pebble, mark, tag, appHead };
 }
 
-/** The four apps' homes, two by two, each under its mark, its name and what it replaces. */
+/** The six apps' homes, two by two, each under its mark, its name and what it replaces. */
 export function bannerPage(design, brand, scheme, shots) {
   const { appHead } = pieces(design, brand);
   const tiles = [
@@ -185,6 +185,8 @@ export function bannerPage(design, brand, scheme, shots) {
     ['pages', 'pages-home'],
     ['calendar', 'agenda-week'],
     ['contacts', 'contacts-list'],
+    ['clock', 'clock-alarms'],
+    ['wallet', 'wallet-cards'],
   ]
     .map(
       ([app, shot]) =>

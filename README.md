@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/images/marks.svg" alt="The marks of Carnet, Pages, Agenda, Contacts and Clock" height="64">
+  <img src="docs/images/marks.svg" alt="The marks of Carnet, Pages, Agenda, Contacts, Clock and Wallet" height="64">
 </p>
 
 <h1 align="center">Unlease</h1>
 
 <p align="center">
   <b>Stop leasing your data to Google, and unleash yourself.</b><br>
-  Notes, documents, a calendar, contacts and an alarm clock on your own server, in place of Google Keep, Docs, Calendar, Contacts and Clock.<br>
+  Notes, documents, a calendar, contacts, an alarm clock and a wallet on your own server, in place of Google Keep, Docs, Calendar, Contacts, Clock and Wallet.<br>
   One Docker container, apps for the web and Android, offline first.
 </p>
 
@@ -26,17 +26,17 @@
 </p>
 
 <p align="center">
-  <a href="https://demo.unlease.org/?lang=en"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.jpg"><img src="docs/images/banner-light.jpg" alt="The four apps side by side: Carnet's wall of notes, Pages' recent pages, a week in Agenda and the list in Contacts"></picture></a>
+  <a href="https://demo.unlease.org/?lang=en"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.jpg"><img src="docs/images/banner-light.jpg" alt="The six apps side by side: Carnet's wall of notes, Pages' recent pages, a week in Agenda, the list in Contacts, the alarms in Clock and the cards in Wallet"></picture></a>
 </p>
 
-Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep, **Pages** for Docs and Notion, **Agenda** for Calendar, **Contacts** for Contacts and **Clock** for Clock. Your notes, documents, calendar, address book and alarms live in one place you own and on every device you use, and they keep working without a network. Take one app or all five: each stands on its own, and together they see into each other. A page cites a checklist, your contacts' birthdays show in your calendar, a note's reminder sits beside your meetings, and your alarm shows the day ahead.
+Unlease is six apps you run yourself, in place of Google's: **Carnet** for Keep, **Pages** for Docs and Notion, **Agenda** for Calendar, **Contacts** for Contacts, **Clock** for Clock and **Wallet** for Wallet. Your notes, documents, calendar, address book, alarms, cards and papers live in one place you own and on every device you use, and they keep working without a network. Take one app or all six: each stands on its own, and together they see into each other. A page cites a checklist, your contacts' birthdays show in your calendar, a note's reminder sits beside your meetings, and your alarm shows the day ahead.
 
-- **Modular.** Run one app or all five, and turn each on or off later in the Administration (its data is kept). On Android, install only the apps you want: each is its own APK.
+- **Modular.** Run one app or all six, and turn each on or off later in the Administration (its data is kept). On Android, install only the apps you want: each is its own APK.
 - **One container on your homelab.** One Docker image for amd64 and arm64: a NAS, a Raspberry Pi 4 or 5, a small VPS. 1 GB of memory is comfortable. All your data is one SQLite file plus your photos, copied every day.
 - **Offline first.** The Android apps keep everything on the phone and sync with your server when they reach it. Installed from your server, the web apps keep an offline copy too.
 - **A server is optional.** Without one, an app keeps everything on that phone or in that browser, and you connect it to a server whenever you like.
 - **Claude is optional.** With your own API key, the links you save are read, summarised and filed, and you can ask about your pages or your week, within a monthly budget you set. Without one, everything else works.
-- **Private.** No analytics, no tracker, no Google service. Backups go to your own S3 storage as Markdown, JSON, vCard and iCalendar, which you can read without Unlease.
+- **Private.** No analytics, no tracker, no Google service. Backups go to your own S3 storage as Markdown, JSON, vCard and iCalendar, which you can read without Unlease. Wallet goes further: your cards and papers are encrypted on your devices, so your server only ever holds what it cannot read.
 
 | What you need | Needed? | What it gives you |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 | A Claude API key | No | Links read and filed, answers about your pages and your week |
 | S3 storage, Seafile | No | Backups away from home; photos and files in your Seafile library |
 
-**Try it first:** [the demo](https://demo.unlease.org/?lang=en) runs the five web apps in your browser, with made-up notes, pages, people and events, in English or French. Nothing leaves your browser, and every reload starts afresh. The pictures below come from it.
+**Try it first:** [the demo](https://demo.unlease.org/?lang=en) runs the six web apps in your browser, with made-up notes, pages, people, events, alarms and cards, in English or French. Nothing leaves your browser, and every reload starts afresh. The pictures below come from it.
 
 > [!WARNING]
 > Unlease is young (0.x). Until 1.0, a minor version (0.2 to 0.3) may break things, and the [changelog](CHANGELOG.md) says what to do. The Android apps are APKs from the [releases](https://github.com/stephenprn/unlease/releases/latest), not on a store.
@@ -65,7 +65,7 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 <details>
 <summary><b>Everything Carnet does</b></summary>
 
-- **Notes and checklists**, Keep's way: a wall of cards, pinned and archived, labels, colours and papers, reminders, photos, drawings, undo and a bin. Moves in from a Google Keep export (Takeout).
+- **Notes and checklists**, Keep's way: a wall of cards, pinned and archived, labels, colours and papers, reminders, photos, drawings, undo and a bin. A link written in a note opens from the note's bar while your cursor is on it, without the text jumping. Moves in from a Google Keep export (Takeout).
 - **Collections of links**: share a link from any app, or paste it, and Claude writes what matters (title, price, key facts, its pictures kept) and files it in the right collection, so your lists stay useful after the pages disappear.
 - **Modules on links**, switched on per collection: promo codes, the same item cheaper elsewhere or second-hand, a recipe for N people with its shopping list and a cook mode, ratings, a series' recap up to where you stopped, the way to a place, a copy of an article kept as a page in Pages, a question to Claude.
 - **On Android**: the share sheet, with your collections in its first row; « Note in Carnet » on any selected text; shortcuts on the icon and a Quick Settings tile for a new note; six home-screen widgets, among them a label's lists to tick and add to from the home screen; reminders that ring on time.
@@ -104,14 +104,15 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 
 - **Day, three days, week, month, year, a schedule and Today**; repeating events and their exceptions, reminders, time zones, labels, places with their weather, guests from Contacts, files kept with an event.
 - **Beside your events**: your contacts' birthdays (with a message or a gift idea a tap away), Carnet's reminders, the days written in your pages and your country's public holidays.
+- **Getting there**: an event with a place shows the way there in your maps app (or Google Maps or OpenStreetMap on the web), and its reminder has a « Get there » button.
 - **Calendars in and out**: subscribe to any calendar by its address (Google's secret iCal address included), or with a login over CalDAV (your mailbox's, Nextcloud's, iCloud's), import Google Calendar's export, publish yours at a secret address. Type an event in a few words, or ask Claude about your week; a meeting's notes become a page in one tap.
-- **On Android**: five widgets (the schedule, today, the month, the next event and a countdown); « Add to calendar » in your other apps opens Agenda's form, filled in; `webcal://` links subscribe; selected text becomes an event; a Quick Settings tile and the icon's shortcuts.
+- **On Android**: five widgets (the schedule with the line marking now, today, the month, the next event and a countdown); « Add to calendar » in your other apps opens Agenda's form, filled in; `webcal://` links subscribe; selected text becomes an event; a Quick Settings tile and the icon's shortcuts.
 
 </details>
 
 ### <img src="docs/images/marks/contacts.svg" width="28" height="28" align="top" alt=""> Contacts
 
-**Replaces Google Contacts.** People, their numbers, addresses and birthdays, labels and favourites, moved in from Google; a call, a message or WhatsApp in one tap.
+**Replaces Google Contacts.** People, their numbers, addresses (with the door code to get in) and birthdays, labels and favourites, moved in from Google; a call, a message or WhatsApp in one tap.
 
 <p align="center">
   <a href="https://demo.unlease.org/contacts/?lang=en"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/contacts-dark.jpg"><img src="docs/images/contacts-light.jpg" alt="A contact in Contacts, Léa Martin: a call, WhatsApp or an e-mail in one tap, her number and e-mail, her birthday in three days and a note about her"></picture></a>
@@ -121,6 +122,7 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 <summary><b>Everything Contacts does</b></summary>
 
 - **An address book**: names, numbers, e-mails, addresses, birthdays, labels and favourites, imported from Google Contacts (vCard or CSV) or from the phone's own contacts; duplicates found and merged.
+- **The door code** of a building or its intercom, kept with the address and shown on its card for the day you go there; it stays in Unlease, never in the phone's own contacts.
 - **One tap** to call, text or open WhatsApp; birthday notifications and wishes; gift ideas kept in Carnet.
 - **Where each person appears**: the pages and notes that mention them, the events you share.
 - **On Android**: two widgets, quick calls to your favourites (or a label) and a new contact; « Add contact » in your dialer or Messages opens Contacts' form, filled in.
@@ -129,31 +131,57 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 
 ### <img src="docs/images/marks/clock.svg" width="28" height="28" align="top" alt=""> Clock
 
-**Replaces Google Clock.** Alarms that ring on the minute, and the morning ahead as they ring: the weather where you are and your day from Agenda. The evening before, it tells you when tomorrow's first event comes too soon after your alarm.
+**Replaces Google Clock.** Alarms that ring on the minute, with the morning ahead as they ring (the weather where you are and your day from Agenda), and timers, a stopwatch and world clocks beside them. The evening before, it tells you when tomorrow's first event comes too soon after your alarm.
+
+<p align="center">
+  <a href="https://demo.unlease.org/clock/?lang=en"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/clock-dark.jpg"><img src="docs/images/clock-light.jpg" alt="The alarms in Clock: the week ahead with each morning's alarm, the next alarm with what Agenda holds after it, and the list of alarms with their days"></picture></a>
+</p>
 
 <details>
 <summary><b>Everything Clock does</b></summary>
 
-- **Alarms** for once or for some days of the week, with a label, one of nine sounds (gentle, classic or lively, all freely licensed) or one of your phone's own, and vibration; skip the next one, or set one from another app or the assistant.
+- **Alarms** for once or for some days of the week, with a label, one of nine sounds (gentle, classic or lively, all freely licensed) or one of your phone's own, and vibration; skip the next one, or set one from another app or the assistant; search them by label or time.
 - **As it rings**: the time large on a dark screen over the lock screen, the weather where you are, your day from Agenda and « View the day »; snooze with one tap, stop by sliding the pebble (or with the notification, or the volume keys); its volume rises gently, and an alarm left ringing stops after a while and says it was missed.
 - **The evening before** (21:00 by default): when tomorrow's first event starts before your alarm or less than 30 minutes after it, a notification says so and offers to ring earlier that morning.
+- **Timers**: one tap on a usual length, or any length typed on a keypad as on a microwave; save the ones you use (« Pasta », « Green tea ») on every device. Several run at once; on Android each counts in its notification and rings on time with the app closed.
+- **Stopwatch** with hundredths and laps, the fastest and slowest named, counting on with the app closed; **world clocks** for the cities you choose, day or night there, with a ruler of hours to find a good time to call.
 - **Rings whatever happens**: Android's own alarm-clock alarms, so neither the battery saver nor a closed app holds it back; armed again after a restart, before you unlock the phone too, and after an update; a ring missed while the phone was off rings late if there is still time, or says it was missed. « Try an alarm » in Settings rings one ten seconds later.
-- **On the web**: your alarms, to see and change them from a computer; they ring on your phone.
+- **On Android**: five widgets (the next alarm with the morning's first event, the clock, your timers, the stopwatch and your world clocks); « New timer » and « Stopwatch » on the icon's shortcuts.
+- **On the web**: your alarms, timers and world clocks, to see and change them from a computer; alarms ring on your phone, a timer in the open page.
 
 </details>
 
-| | Carnet | Pages | Agenda | Contacts | Clock |
-| --- | :-: | :-: | :-: | :-: | :-: |
-| On the web | `/notes` | `/pages` | `/agenda` | `/contacts` | `/clock` (to edit; alarms ring on the phone) |
-| On Android | `carnet-vX.Y.Z.apk` | `pages-vX.Y.Z.apk` | `agenda-vX.Y.Z.apk` | `contacts-vX.Y.Z.apk` | `clock-vX.Y.Z.apk` |
-| Without a server | ✓ | ✓ | ✓ | ✓ | ✓ (no weather) |
-| Home-screen widgets | 6 | – | 5 | 2 | – |
-| Moves in from | Google Keep (Takeout) | – | Google Calendar (iCalendar) | Google Contacts (vCard, CSV), the phone | – |
-| With Claude | reads and files links | answers about your pages | answers about your week | – | – |
+### <img src="docs/images/marks/wallet.svg" width="28" height="28" align="top" alt=""> Wallet
+
+**Replaces Google Wallet.** Your loyalty cards, identity papers and important documents, encrypted on your devices before they reach your server: the cards ready at the till, the papers behind your fingerprint.
+
+<p align="center">
+  <a href="https://demo.unlease.org/wallet/?lang=en"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/wallet-dark.jpg"><img src="docs/images/wallet-light.jpg" alt="The cards in Wallet: loyalty cards, a gift card with its balance and an emergency card, each a tile of its own colour, the most used first"></picture></a>
+</p>
+
+<details>
+<summary><b>Everything Wallet does</b></summary>
+
+- **End-to-end encrypted**: a passphrase of yours, with a recovery kit to print, seals every card and paper on the device; your server, Seafile and your backups only hold sealed bytes, and a script opens a backup with the recovery kit, without the apps.
+- **Cards at the till**: loyalty cards, gift cards with their balance and an emergency card, the most used first; opened, the barcode shows black on white with the screen brightened (13 formats), the number under it.
+- **Papers**: identity card, passport, driving licence, health insurance card and residence permit, both sides, with their expiry dates. « Copy to send » makes a watermarked PDF that names who it is for; « Fill in with Claude » reads a paper's fields when you ask, keeping nothing.
+- **Documents** filed by type (taxes, bills, housing, health…), with how long each must be kept in France, and those you may now throw away.
+- **On Android**: the cards open at once, the papers with your fingerprint or screen lock; it locks again when it leaves the screen, and stays out of screenshots and the recent apps. In a browser the passphrase opens it for a visit.
+
+</details>
+
+| | Carnet | Pages | Agenda | Contacts | Clock | Wallet |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: |
+| On the web | `/notes` | `/pages` | `/agenda` | `/contacts` | `/clock` (alarms ring on the phone) | `/wallet` |
+| On Android | `carnet-vX.Y.Z.apk` | `pages-vX.Y.Z.apk` | `agenda-vX.Y.Z.apk` | `contacts-vX.Y.Z.apk` | `clock-vX.Y.Z.apk` | `wallet-vX.Y.Z.apk` |
+| Without a server | ✓ | ✓ | ✓ | ✓ | ✓ (no weather) | ✓ |
+| Home-screen widgets | 6 | – | 5 | 2 | 5 | – |
+| Moves in from | Google Keep (Takeout) | – | Google Calendar (iCalendar) | Google Contacts (vCard, CSV), the phone | – | – |
+| With Claude | reads and files links | answers about your pages | answers about your week | – | – | fills in a paper's fields |
 
 ## How the apps behave
 
-The five apps are one suite: on the phone and on the web they look, move and answer alike, so what you learn in one works in the others.
+The six apps are one suite: on the phone and on the web they look, move and answer alike, so what you learn in one works in the others.
 
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/android-dark.jpg"><img src="docs/images/android-light.jpg" alt="The four Android apps side by side: Carnet's wall of notes, a page in Pages, a week in Agenda and the list in Contacts"></picture>

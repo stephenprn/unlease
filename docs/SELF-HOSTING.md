@@ -119,10 +119,10 @@ Set `UNLEASE_TRUSTED_PROXY_HEADER=cf-connecting-ip` in `.env`: Cloudflare writes
 
 ## The setup
 
-Open your address in a browser: it opens the first app the server runs (Carnet at `/notes`, Pages at `/pages`, Contacts at `/contacts`, Agenda at `/agenda`, Clock at `/clock`, each installable on its own). The setup is done once for the whole server; every device that comes after only connects, and the other app's web app in the same browser asks nothing.
+Open your address in a browser: it opens the first app the server runs (Carnet at `/notes`, Pages at `/pages`, Contacts at `/contacts`, Agenda at `/agenda`, Clock at `/clock`, Wallet at `/wallet`, each installable on its own). The setup is done once for the whole server; every device that comes after only connects, and the other app's web app in the same browser asks nothing.
 
 1. **Connexion** (Connection): the address is already filled in (the server serves this page), type the token. The language switch sits at the top right.
-2. **Vos applications** (Your apps): tick the apps your server runs, every ready app by default (Carnet, Pages, Contacts, Agenda and Clock). Nothing is lost by leaving one out: turn it on later in Administration.
+2. **Vos applications** (Your apps): tick the apps your server runs, every ready app by default (Carnet, Pages, Contacts, Agenda, Clock and Wallet). Nothing is lost by leaving one out: turn it on later in Administration.
 3. **Votre serveur** (Your server): what the server can do on top, for every app you ticked, each row optional and opened on its own; each field says where its value comes from ([the table above](#before-you-start)):
    1. **Retrouver vos données** (Restore), first, only when this server holds nothing yet: the newest backup from S3 (add S3 first, from its row), or an archive kept elsewhere.
    2. **Claude**: the API key, the model and a monthly budget, shared by every app; and, off until you turn them on, the questions about pages (whether a question may read all pages, whether it may search the web, and how much one question may read).

@@ -1,10 +1,10 @@
 /**
  * The README's pictures, into `docs/images/` (replaced whole), each by day and by night:
  *  - screens of the dev-only demo (`?demo`), in English at 1440×900: each app's home (the banner, the
- *    four together) and a closer look at each, cut to what it shows and taken at twice the size;
+ *    six together) and a closer look at each, cut to what it shows and taken at twice the size;
  *  - pictures drawn in the apps' own materials (`readme/pictures.mjs`): the banner and the close-ups laid
  *    on the ground, how the apps link, how Unlease runs, what leaves the server, the install;
- *  - the apps' marks, and the four in a row (the README's header).
+ *  - the apps' marks, and the six in a row (the README's header).
  * Run it again when a screen or a fact they show changes.
  *
  *   npm run readme-images                                  # starts Vite itself
@@ -25,7 +25,9 @@ const QUALITY = 86;
 const SCHEMES = ['light', 'dark'];
 
 /** The banner's screens: each app's home. */
-const HOMES = { 'carnet-board': '/notes', 'pages-home': '/pages', 'agenda-week': '/agenda/week', 'contacts-list': '/contacts' };
+const HOMES = { 'carnet-board': '/notes', 'pages-home': '/pages', 'agenda-week': '/agenda/week', 'contacts-list': '/contacts', 'clock-alarms': '/clock', 'wallet-cards': '/wallet' };
+/** Pictures in `docs/images/` this script does not make: the Android apps, captured on a phone. */
+const HANDMADE = ['android-light.jpg', 'android-dark.jpg'];
 /** The drawn pictures, by file name. */
 const PICTURES = { links: linksPage, run: runPage, privacy: privacyPage, install: installPage };
 /** The ground left round a close-up's content on every side, in CSS pixels. */
@@ -65,6 +67,16 @@ const CLOSEUPS = {
   contacts: {
     path: '/contacts/contact/demo-contact-lea',
     roots: page => [page.locator('main header').first(), page.locator('main nav').first(), page.locator('main section').nth(0), page.locator('main section').nth(1)],
+  },
+  clock: {
+    path: '/clock',
+    size: { width: 1440, height: 1000 },
+    roots: page => [page.locator('main').first()],
+  },
+  wallet: {
+    path: '/wallet',
+    size: { width: 1440, height: 1000 },
+    roots: page => [page.locator('main').first()],
   },
 };
 
@@ -215,8 +227,8 @@ async function main() {
       console.log(`docs/images/: ${only.map(name => `${name}-light.jpg, ${name}-dark.jpg`).join(', ')}`);
       return;
     }
-    // The pictures afresh: none left of an earlier set.
-    rmSync(OUT, { recursive: true, force: true });
+    // The pictures afresh: none left of an earlier set, but those this script does not make (the phones', taken on a device).
+    for (const name of readdirSync(OUT, { withFileTypes: true })) if (!HANDMADE.includes(name.name)) rmSync(`${OUT}${name.name}`, { recursive: true, force: true });
     mkdirSync(`${OUT}marks`, { recursive: true });
     const shots = {};
     for (const scheme of SCHEMES) {
@@ -230,12 +242,12 @@ async function main() {
       for (const [name, page] of Object.entries(PICTURES)) writeFileSync(`${OUT}${name}-${scheme}.jpg`, await draw(browser, page(design, brand, scheme)));
     }
 
-    // Each app's mark, and the four in a row (the README's header).
-    const apps = ['notes', 'pages', 'calendar', 'contacts'];
+    // Each app's mark, and the six in a row (the README's header).
+    const apps = ['notes', 'pages', 'calendar', 'contacts', 'clock', 'wallet'];
     const inner = svg => svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
     for (const app of apps) writeFileSync(`${OUT}marks/${APPS[app].slug}.svg`, `${brand.iconSvg(app)}\n`);
     const row = apps.map((app, at) => `<g transform="translate(${at * 600} 0)">${inner(brand.iconSvg(app))}</g>`).join('');
-    writeFileSync(`${OUT}marks.svg`, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2312 512">${row}</svg>\n`);
+    writeFileSync(`${OUT}marks.svg`, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${apps.length * 600 - 88} 512">${row}</svg>\n`);
     console.log(`docs/images/: ${readdirSync(OUT).join(', ')}`);
   } finally {
     await browser.close();
