@@ -1,27 +1,21 @@
 package com.stephenprn.agenda.widget
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
 import com.stephenprn.agenda.BuildConfig
 import com.stephenprn.agenda.R
-import java.time.LocalDate
-import java.time.ZoneId
 import org.json.JSONObject
 
 /**
  * Aujourd'hui: the day at a glance, as the app's view reads it (`todayWidget.ts` hands it over: today
  * and the day after, so a draw after midnight starts on the right day). As it draws it drops what
  * ended (a reminder's moment stays: still to do until Carnet's « Fait ») and says « En cours » for
- * what runs; it asks to be drawn again at the next start or end it holds, and at midnight, so that
- * stays true between the half-hourly draws.
+ * what runs, and lays the now line where it falls among today's rows; it asks to be drawn again at
+ * the next start or end it holds, and at midnight, so that stays true between the half-hourly draws.
  *
  * Two cells: what runs or comes next (its time, its title in Signika, its place or how many more
  * today), else tomorrow's first thing. Three cells or rows and more: its head (the day, its weather,
@@ -42,7 +36,8 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
     val data = WidgetStore(context).payload(id) ?: return WidgetMessage.waiting(context)
     val now = System.currentTimeMillis()
     val day = day(data, now) ?: return WidgetMessage.waiting(context)
-    scheduleNext(context, id, day, now)
+    // At the next start or end it holds today (or a reminder's moment): what runs changes, the now line moves.
+    redrawAt(context, id, day.rows.filter { !it.optBoolean("allDay") }.flatMap { listOf(it.optLong("startAt"), it.optLong("endAt")) }, now)
     val width = WidgetType.widthDp(manager, id)
     if (Build.VERSION.SDK_INT >= 31) {
       return RemoteViews(
@@ -59,11 +54,7 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
     return views(context, data, day, now, if (wide || tall) Form.LIST else Form.SMALL, width, id)
   }
 
-  override fun onDeleted(context: Context, widgetIds: IntArray) {
-    super.onDeleted(context, widgetIds)
-    val alarms = context.getSystemService(AlarmManager::class.java) ?: return
-    for (id in widgetIds) alarms.cancel(redrawIntent(context, id))
-  }
+  override val redrawName = "today"
 
   /** Today's day of the picture (the first not past), what of it is left: whole days, what runs or is to come, reminders come and still set. */
   private fun day(data: JSONObject, now: Long): Day? {
@@ -141,6 +132,11 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
 
     val out = mutableListOf<Pair<Long, RemoteViews>>()
     for (row in day.rows) out += WidgetKit.key(row.optString("key")) to item(context, row, words, now)
+    // The now line among what is left of today, as « Ma journée » draws it.
+    if (day.data.optString("day") == WidgetKit.today()) {
+      val at = WidgetKit.nowLineAt(day.rows, now) { if (it.optBoolean("allDay")) null else it.optLong("startAt") }
+      if (at != null) out.add(at, WidgetKit.key("today:now") to WidgetKit.nowLine(context, words.optString("nowLine")))
+    }
     if (day.rows.isEmpty()) out += WidgetKit.key("today:none") to quiet(context, words.optString(if (day.all == 0) "empty" else "done"), null)
     val overdue = rows(data, "overdue")
     if (overdue.isNotEmpty()) {
@@ -184,23 +180,4 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
         WidgetKit.textColor(context, this, R.id.line_text, if (open.isNullOrEmpty()) R.color.wgen_ink_muted else R.color.wgen_link)
         WidgetKit.route(context, this, R.id.line, if (open.isNullOrEmpty()) "today" else open)
       }
-
-  /** Draws this widget again at the next start or end it holds today (or a reminder's moment), else at midnight: inexact, never waking the phone. */
-  private fun scheduleNext(context: Context, id: Int, day: Day, now: Long) {
-    val alarms = context.getSystemService(AlarmManager::class.java) ?: return
-    val midnight = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    val next = day.rows.filter { !it.optBoolean("allDay") }.flatMap { listOf(it.optLong("startAt"), it.optLong("endAt")) }.filter { it > now }.minOrNull()
-    val at = minOf(next ?: midnight, midnight) + 1_000
-    runCatching { alarms.set(AlarmManager.RTC, at, redrawIntent(context, id)) }
-  }
-
-  private fun redrawIntent(context: Context, id: Int): PendingIntent {
-    val intent =
-        Intent(context, TodayWidgetProvider::class.java)
-            .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-            // One alarm per widget: the data only tells them apart.
-            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://widget-today/$id"))
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
-    return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-  }
 }

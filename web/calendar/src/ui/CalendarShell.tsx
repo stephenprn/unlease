@@ -221,7 +221,7 @@ function ToggleRow({ label, app, color, checked, onToggle, onNavigate, to, stone
         aria-label={label}
         aria-describedby={app ? appId : undefined}
         className={navStyles.markSlot}
-        style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer' }}
+        style={{ border: 0, borderRadius: 'var(--cut-small)', background: 'transparent', padding: 0, cursor: 'pointer' }}
         onClick={event => (menu && event.altKey ? menu.quick() : onToggle())}
       >
         {stone ? <CalendarCheck stone={stone} color={color} checked={checked} /> : <LabelCheck color={(color ?? 'green') as Parameters<typeof LabelCheck>[0]['color']} checked={checked} size={22} />}
@@ -265,8 +265,9 @@ export function CalendarNav({ route, onNavigate }: { route: Route; onNavigate: (
   const shownDay = useShownDay(route, today);
   const [month, setMonth] = useState<string | null>(null);
   const showing = month ?? startOfMonth(shownDay);
-  const weeks = useMemo(() => monthGrid(showing, usePrefsStore.getState().weekStart), [showing]);
-  const items = useItems(weeks[0]![0]!, addDays(weeks[weeks.length - 1]![6]!, 1));
+  // The six weeks the mini-month always shows (`MiniMonth`), from the week holding the 1st.
+  const from = useMemo(() => monthGrid(showing, usePrefsStore.getState().weekStart)[0]![0]!, [showing]);
+  const items = useItems(from, addDays(from, 42));
   const busy = useMemo(() => new Set(items.flatMap(item => (item.firstDay === item.lastDay ? [item.firstDay] : [item.firstDay, item.lastDay]))), [items]);
   const prefs = usePrefsStore();
   // Each calendar listed, shown or not: what its menu offers (« Afficher uniquement celui-ci »).

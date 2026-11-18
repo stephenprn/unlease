@@ -19,7 +19,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { IconButton, pebbleUnder } from '@shared/ui/components/IconButton';
 import { Popover } from '@shared/ui/components/Popover';
 import { Segmented } from '@shared/ui/components/Segmented';
-import { DOCKED, useMedia } from '@shared/ui/useMedia';
+import { DOCKED, NARROW, useMedia } from '@shared/ui/useMedia';
 import { navigate } from '@shared/ui/router';
 import { useItems } from '../../app/hooks/useItems';
 import { useNow } from '../../app/hooks/useToday';
@@ -143,6 +143,8 @@ export function CalendarScreen({ view: asked, day: dayAsked }: { view: CalendarV
   const days = useMemo(() => viewDays(view, day, prefs.weekStart, weekdays), [view, day, prefs.weekStart, weekdays]);
   // The six views side by side where the bar has room for them, else in a menu.
   const wide = useMedia(WIDE_BAR);
+  // On a phone-sized window the title stands on its own line over the bar's tools: it comes first for the keyboard too.
+  const narrow = useMedia(NARROW);
 
   // The view chosen last opens next time; the calendar's last is where the navigation's « Agenda » leads.
   useEffect(() => {
@@ -157,10 +159,12 @@ export function CalendarScreen({ view: asked, day: dayAsked }: { view: CalendarV
   const showMonth = view === 'month' ? startOfMonth(day) : day;
   // The calendar's six: « Ma journée » is a place of the navigation (its row, O), so none is chosen there.
   const viewChoices = PERIOD_VIEWS.map(each => ({ value: each as CalendarView, label: VIEW_NAMES[each] }));
+  const periodTitle = <PeriodTitle title={viewTitle(view, showMonth, prefs.weekStart, weekdays)} view={view} day={day} today={today} days={days} weekStart={prefs.weekStart} />;
   return (
     <div className={styles.calendar}>
       <div className={styles.toolbar} role="toolbar" aria-label={t('Period shown')}>
         <div className={styles.toolbarStart}>
+          {narrow ? periodTitle : null}
           {isToday ? null : (
             <>
               <Button kind="outlined" className={styles.todayButton} onClick={() => navigate(paths.view(view, today), { replace: true })} title={t('Today (T)')}>
@@ -175,7 +179,7 @@ export function CalendarScreen({ view: asked, day: dayAsked }: { view: CalendarV
               <IconButton icon="chevronRight" label={t('Next period')} shortcut="J" shape={2} onClick={() => stepView(view, day, 1)} />
             </>
           )}
-          <PeriodTitle title={viewTitle(view, showMonth, prefs.weekStart, weekdays)} view={view} day={day} today={today} days={days} weekStart={prefs.weekStart} />
+          {narrow ? null : periodTitle}
         </div>
         <div className={styles.toolbarEnd}>
           {view === 'day' && pages ? <IconButton icon="pagePlus" label={t('Today’s note')} shape={3} onClick={() => void openDailyNote(day)} /> : null}

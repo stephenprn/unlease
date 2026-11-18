@@ -111,6 +111,8 @@ export const FR_WEB: Dictionary = {
   'No Claude key [line]': 'Sans clé Claude',
   'Unsubscribe from {name}': 'Se désabonner de {name}',
   'Delete the label {name}': 'Supprimer le libellé {name}',
+  '{events} with {name}': '{events} avec {name}',
+  'See the events': 'Voir les événements',
   'Find a gift: keep an idea in {app}.': 'Trouver un cadeau : gardez une idée dans {app}.',
   'Find a gift: your ideas are here.': 'Trouver un cadeau : vos idées sont là.',
   'A label sorts your events and gives them its colour; untick it in the navigation to hide its events.': 'Un libellé range vos événements et leur donne sa couleur ; décochez-le dans la navigation pour cacher ses événements.',
@@ -129,7 +131,6 @@ export const FR_WEB: Dictionary = {
   'The browser won’t copy': 'Le navigateur refuse de copier',
   '{key} + Enter to save': '{key} + Entrée pour enregistrer',
   'Ideas go through your server: connect one first.': 'Les idées passent par votre serveur : connectez-en un d’abord.',
-  'Work, Family, Sport…': 'Travail, Famille, Sport…',
   // The import wizard on the web: Google's archive dropped whole, several files at once
   'Google gives you a .zip archive: one .ics file per calendar. Google Takeout, with only Calendar ticked, gives the same.': 'Google vous donne une archive .zip : un fichier .ics par agenda. Google Takeout, en ne cochant qu’Agenda, donne la même.',
   'Drop the archive here as it is, or the .ics files of the calendars you want.': 'Déposez l’archive ici telle quelle, ou les fichiers .ics des agendas voulus.',

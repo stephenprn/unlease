@@ -11,13 +11,14 @@
 import { t } from '@unlease/core/i18n';
 import { formatClock } from '@unlease/core/services/format';
 import { alarmsBetween, LATE_RING_MS, stillWorthRinging, type Alarm } from '@unlease/calendar/services/alarms';
+import { directionsTo } from '@unlease/calendar/services/links';
 import { hiddenFeedIds } from '@unlease/calendar/services/occurrences';
 import { mustArmAgain, planAlarms, readBook, rememberMode, type AlarmEntry } from '@shared/app/alarms';
 import { pullNow } from '@shared/app/sync/syncManager';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { keepRemindersFresh } from '@shared/platform/reminders';
 import { digestEntries, digestWorthRinging, nextDigest, writeDigest } from '@unlease/calendar/services/digest';
-import { armDigest, armEvent, canScheduleExact, DIGEST_ID, disarmEvent, ringDigestNow, ringEventNow, type DigestNotification, type EventNotification } from '@platform/notifications';
+import { armDigest, armEvent, canScheduleExact, DIGEST_ID, directionsWords, disarmEvent, ringDigestNow, ringEventNow, type DigestNotification, type EventNotification } from '@platform/notifications';
 
 import { bootstrap } from './bootstrap';
 import { calendarMirror } from './phoneMirror';
@@ -34,7 +35,7 @@ const MOST = 64;
 /** How often the reminders are seen to with the app closed: an event written elsewhere is armed within the hour. */
 export const REFRESH_MINUTES = 60;
 
-/** What a reminder says: the event's title, and when and where. */
+/** What a reminder says: the event's title, and when and where; with a place a map can find, « Y aller ». */
 export function notificationOf(alarm: Alarm): EventNotification {
   const when = alarm.allDay ? t('All day') : formatClock(alarm.startAt);
   return {
@@ -44,11 +45,12 @@ export function notificationOf(alarm: Alarm): EventNotification {
     at: alarm.fireAt,
     title: alarm.title.trim() || t('Untitled'),
     body: alarm.place.trim() ? `${when} · ${alarm.place.trim()}` : when,
+    directions: directionsTo(alarm.place),
   };
 }
 
-/** What a reminder is armed with, as kept: a change of its moment or its words arms it again. */
-const keyOf = (alarm: EventNotification): string => JSON.stringify([alarm.at, alarm.title, alarm.body]);
+/** What a reminder is armed with, as kept: a change of its moment, its words or its button arms it again. */
+const keyOf = (alarm: EventNotification): string => JSON.stringify([alarm.at, alarm.title, alarm.body, alarm.directions, directionsWords(alarm)]);
 
 /** The reminders wanted now, by id: those to come, and those gone by within the hour still worth ringing. */
 export function wantedAlarms(now: number): Map<string, EventNotification> {

@@ -3,12 +3,14 @@
  * order (their hours, their colour, their title and place), « Afficher plus » going further while
  * something lies further; nothing on these days, the view's empty state, centred, alone. What is
  * over lies back, as in « Ma journée »; on a phone-sized window each title is over its time and
- * place, as the phone's rows.
+ * place, as the phone's rows. An event not over whose place a map can find has « Y aller » at its
+ * end (`DirectionsButton`).
  */
 import { useMemo, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { longDay, shortMonth, shortWeekday, timeRange } from '@unlease/calendar/services/eventText';
+import { directionsTo } from '@unlease/calendar/services/links';
 import { onDay, type Occurrence } from '@unlease/calendar/services/occurrences';
 import { addDays, daysBetween, partsOf, weekdayOf } from '@unlease/calendar/services/time';
 
@@ -20,6 +22,7 @@ import { Button } from '@shared/ui/components/Button';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { useScrollEdges } from '@shared/ui/components/scrollEdges';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
+import { DirectionsButton } from '../features/PlaceAndLink';
 import styles from '../calendar.module.css';
 
 /** Days a page of the planning reaches; « Afficher plus » adds as many. */
@@ -79,9 +82,11 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
               {group.items.map(item => {
                 const place = item.event.place.trim();
                 const time = timeRange(item, twelveHours);
+                const over = item.endAt <= now;
+                const directions = over ? '' : directionsTo(place);
                 return (
-                  <li key={item.key}>
-                    <button type="button" className={styles.scheduleItem} data-line={colorOf(item) ?? undefined} data-over={item.endAt <= now || undefined} onClick={event => openPeek(item.key, anchorOf(event.currentTarget))}>
+                  <li key={item.key} className={directions ? styles.withEnd : undefined}>
+                    <button type="button" className={styles.scheduleItem} data-line={colorOf(item) ?? undefined} data-over={over || undefined} onClick={event => openPeek(item.key, anchorOf(event.currentTarget))}>
                       <span className={styles.swatch} aria-hidden="true" />
                       <span className={`${styles.scheduleTime} t-meta tabular`}>{narrow && place ? `${time} · ${place}` : time}</span>
                       <span className={`${styles.scheduleTitle} t-body`}>
@@ -89,6 +94,7 @@ export function ScheduleList({ from, days, items, today, onMore }: { from: strin
                         {place && !narrow ? <span className={styles.muted}>{` · ${place}`}</span> : null}
                       </span>
                     </button>
+                    {directions ? <DirectionsButton place={directions} compact className={styles.rowEnd} /> : null}
                   </li>
                 );
               })}

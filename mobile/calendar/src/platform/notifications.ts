@@ -4,7 +4,9 @@
  * meeting at 14:00 rings at 13:50, not some minutes after): Android 13 and later grant them to a
  * calendar at install (USE_EXACT_ALARM, AndroidManifest.xml); Android 12 asks, and without the grant
  * they are inexact (Android may hold one up to an hour). A reminder is an event's (CATEGORY_EVENT):
- * « Ne pas déranger » lets it through when events are allowed there.
+ * « Ne pas déranger » lets it through when events are allowed there. One whose event has a place offers
+ * « Y aller »: it opens the app, which opens the way there in the maps chosen (only an activity may
+ * start another app's on Android 12 and later).
  */
 import notifee, { AlarmType, AndroidCategory, AndroidImportance, AndroidNotificationSetting, AndroidStyle, AuthorizationStatus, EventType, TriggerType, type Event, type Notification } from '@notifee/react-native';
 
@@ -12,6 +14,8 @@ import { t } from '@unlease/core/i18n';
 import { launchActivity } from '@shared/platform/launcherIcon';
 
 const CHANNEL = 'events';
+/** A reminder's « Y aller ». */
+const ACTION_DIRECTIONS = 'directions';
 
 let channelReady: Promise<string> | null = null;
 
@@ -59,14 +63,19 @@ export interface EventNotification {
   readonly at: number;
   readonly title: string;
   readonly body: string;
+  /** Where « Y aller » leads (`directionsTo`): '' offers none. */
+  readonly directions: string;
 }
+
+/** The words of a reminder's button, '' with no place to go to: they change the notification armed. */
+export const directionsWords = (alarm: Pick<EventNotification, 'directions'>): string => (alarm.directions ? t('Get there') : '');
 
 function eventNotification(alarm: EventNotification, channelId: string): Notification {
   return {
     id: alarm.id,
     title: alarm.title,
     body: alarm.body,
-    data: { eventId: alarm.seriesId, occurrence: alarm.occurrence },
+    data: { eventId: alarm.seriesId, occurrence: alarm.occurrence, ...(alarm.directions ? { directions: alarm.directions } : {}) },
     android: {
       channelId,
       category: AndroidCategory.EVENT,
@@ -74,6 +83,7 @@ function eventNotification(alarm: EventNotification, channelId: string): Notific
       importance: AndroidImportance.HIGH,
       smallIcon: 'ic_stat_agenda',
       pressAction: { id: 'default', launchActivity: launchActivity() },
+      ...(alarm.directions ? { actions: [{ title: directionsWords(alarm), pressAction: { id: ACTION_DIRECTIONS, launchActivity: launchActivity() } }] } : {}),
     },
   };
 }
@@ -97,6 +107,11 @@ export async function ringEventNow(alarm: EventNotification): Promise<void> {
 
 export async function disarmEvent(id: string): Promise<void> {
   await notifee.cancelTriggerNotification(id);
+}
+
+/** Gone from the shade: its « Y aller » answered (a button press leaves it there). */
+export async function dismissReminder(id: string): Promise<void> {
+  await notifee.cancelDisplayedNotification(id);
 }
 
 /**
@@ -162,27 +177,36 @@ export async function ringDigestNow(digest: DigestNotification): Promise<void> {
   await notifee.displayNotification(digestNotification(digest, channelId));
 }
 
-/** What a pressed notification opens: a reminder's event at its occurrence, or the morning digest's day (« Aujourd'hui »). */
-export type PressedEvent = { readonly eventId: string; readonly occurrence: string } | { readonly digestDay: string };
+/**
+ * What a pressed notification opens: a reminder's event at its occurrence (with « Y aller », the way
+ * to `directions` too, its notification `id` taken from the shade), or the morning digest's day
+ * (« Aujourd'hui »).
+ */
+export type PressedEvent = { readonly eventId: string; readonly occurrence: string; readonly directions?: { readonly place: string; readonly id: string } } | { readonly digestDay: string };
 
-function pressed(data: Record<string, unknown> | undefined): PressedEvent | null {
+export function pressed(data: Record<string, unknown> | undefined, action: string | undefined, id: string | undefined): PressedEvent | null {
   const eventId = data?.eventId;
-  if (typeof eventId === 'string') return { eventId, occurrence: typeof data?.occurrence === 'string' ? data.occurrence : '' };
+  if (typeof eventId === 'string') {
+    const occurrence = typeof data?.occurrence === 'string' ? data.occurrence : '';
+    const place = data?.directions;
+    return action === ACTION_DIRECTIONS && typeof place === 'string' && place ? { eventId, occurrence, directions: { place, id: id ?? '' } } : { eventId, occurrence };
+  }
   return typeof data?.digestDay === 'string' ? { digestDay: data.digestDay } : null;
 }
 
 export function onForegroundEvent(listener: (event: PressedEvent) => void): () => void {
   return notifee.onForegroundEvent((event: Event) => {
-    if (event.type !== EventType.PRESS) return;
-    const found = pressed(event.detail.notification?.data);
+    if (event.type !== EventType.PRESS && event.type !== EventType.ACTION_PRESS) return;
+    const notification = event.detail.notification;
+    const found = pressed(notification?.data, event.type === EventType.ACTION_PRESS ? event.detail.pressAction?.id : undefined, notification?.id);
     if (found) listener(found);
   });
 }
 
-/** The reminder that launched the app from cold, if any. */
+/** The reminder that launched the app from cold, if any (its button too). */
 export async function initialEvent(): Promise<PressedEvent | null> {
   const initial = await notifee.getInitialNotification();
-  return initial ? pressed(initial.notification.data) : null;
+  return initial ? pressed(initial.notification.data, initial.pressAction.id, initial.notification.id) : null;
 }
 
 /** Notifee asks every app for a handler of what is pressed with the app closed: the press opens the app, which answers it. */

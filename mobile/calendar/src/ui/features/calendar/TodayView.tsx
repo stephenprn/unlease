@@ -5,7 +5,8 @@
  * (« Encore 25 min », « Dans 20 min »), the now line between them; an empty day says so and offers
  * an event (the view's empty state when nothing follows either, else a line); « Note du jour »; Carnet's reminders missed and still set; tomorrow's birthdays, all-day
  * events and first events. Each row opens what it is (`onOpen`: the event, the birthday, the note in
- * Carnet, the page in Pages). Rows are list rows (`ListRow`'s geometry): the mark in a 24 slot 16 in,
+ * Carnet, the page in Pages); an event's place a map can find, « Y aller » at its end while it is not
+ * over (`DirectionsButton`). Rows are list rows (`ListRow`'s geometry): the mark in a 24 slot 16 in,
  * the words at 56. Drawn again each minute by the screen.
  */
 import React, { memo, useMemo } from 'react';
@@ -31,6 +32,7 @@ import { listIn, listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { DirectionsButton, directionsAction, rowDirections } from './DirectionsButton';
 import { ItemMark } from './ItemMark';
 
 export interface TodayViewProps {
@@ -73,6 +75,7 @@ const Row = memo(function ListLine({
   strong,
   over,
   label,
+  directions = '',
   onPress,
 }: {
   lead: React.ReactNode;
@@ -83,12 +86,14 @@ const Row = memo(function ListLine({
   strong?: boolean;
   over?: boolean;
   label: string;
+  /** Where its « Y aller » leads ('' none). */
+  directions?: string;
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <Tappable unstable_pressDelay={listPressDelay} onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={label}>
+    <Tappable unstable_pressDelay={listPressDelay} onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={label} {...directionsAction(directions)}>
       <View style={[styles.slot, over ? styles.over : null]}>{lead}</View>
       <View style={styles.words}>
         <AppText variant={strong ? 'bodyStrong' : 'body'} color={over ? theme.color.inkMuted : undefined} numberOfLines={2}>
@@ -103,6 +108,7 @@ const Row = memo(function ListLine({
           {end}
         </AppText>
       ) : null}
+      {directions ? <DirectionsButton place={directions} /> : null}
     </Tappable>
   );
 });
@@ -116,6 +122,7 @@ function ItemRow({ row, day, now, today, twelveHours, onOpen }: { row: DayRow; d
   // A reminder's moment come is still to do (« Fait » in Carnet clears it): its time says so in danger ink.
   const due = item.kind === 'reminder' && row.state === 'past';
   const title = titleOf(item);
+  const over = row.state === 'past' && !due;
   return (
     <Row
       lead={<ItemMark item={item} />}
@@ -130,8 +137,9 @@ function ItemRow({ row, day, now, today, twelveHours, onOpen }: { row: DayRow; d
       }
       end={end}
       strong={row.state === 'now'}
-      over={row.state === 'past' && !due}
+      over={over}
       label={[title, time, place, end].filter(Boolean).join(', ')}
+      directions={rowDirections(item, over)}
       onPress={() => onOpen(item, day)}
     />
   );
@@ -281,8 +289,8 @@ const makeStyles = (_theme: Theme) =>
     over: { opacity: 0.55 },
     words: { flex: 1, gap: 2 },
     end: { flexShrink: 0 },
-    // The dot's centre on the marks' column (6 + 10 + 12).
-    now: { height: 10, flexDirection: 'row', alignItems: 'center', marginLeft: 23, marginRight: 6 },
+    // The dot's centre on the marks' column (6 + 10 + 12), the line to the rows' own end (6 + 10 from the screen's edge).
+    now: { height: 10, flexDirection: 'row', alignItems: 'center', marginLeft: 23, marginRight: 16 },
     nowDot: { width: 10, height: 10, borderRadius: 5 },
     nowLine: { flex: 1, height: 2 },
     weather: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 },

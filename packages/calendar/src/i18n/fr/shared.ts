@@ -75,6 +75,7 @@ export const FR_SHARED: Dictionary = {
   'Snow': 'Neige',
   'Thunderstorm': 'Orage',
   'Happening now': 'En cours',
+  'Now': 'Maintenant',
   'In {minutes} min': 'Dans {minutes} min',
   'In {count}': 'Dans {count}',
   'Open the place': 'Ouvrir le lieu',

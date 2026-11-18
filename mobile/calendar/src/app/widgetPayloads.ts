@@ -23,7 +23,7 @@ import { searchEvents } from '@unlease/calendar/services/search';
 import { addDays, addMonths, dayToInstant, monthGrid, startOfMonth, today } from '@unlease/calendar/services/time';
 import { appScheme } from '@shared/app/variant';
 
-import { agendaIn, itemsOn, LAYER_COLORS, type AgendaItem } from './agenda';
+import { agendaIn, itemsOn, LAYER_COLORS, timedStartOn, type AgendaItem } from './agenda';
 import { nameOf } from './mentionNames';
 import type { LibraryState } from './store/libraryStore';
 import { useCalendarUiStore } from './store/calendarUi';
@@ -43,6 +43,8 @@ export interface WidgetItem {
   readonly open: string;
   /** When it ends (ms): past it, a widget drops it. */
   readonly endAt: number;
+  /** When it starts (ms), 0 for what takes the day: today's now line lies before the first to start after now. */
+  readonly startAt: number;
 }
 
 export interface WidgetDay {
@@ -58,6 +60,8 @@ export interface SchedulePayload {
   readonly today: string;
   readonly tomorrow: string;
   readonly empty: string;
+  /** The now line, read out: « Maintenant ». */
+  readonly now: string;
   readonly days: readonly WidgetDay[];
 }
 
@@ -92,12 +96,17 @@ export interface NextPayload {
 }
 
 function asWidgetItem(item: AgendaItem, day: string, twelve: boolean): WidgetItem {
+  return { ...widgetItemWords(item, day, twelve), startAt: timedStartOn(item, day) ?? 0 };
+}
+
+function widgetItemWords(item: AgendaItem, day: string, twelve: boolean): Omit<WidgetItem, 'startAt'> {
   const end = dayToInstant(addDays(day, 1));
   switch (item.kind) {
     case 'event': {
       const occurrence = item.occurrence;
       const allDay = occurrence.allDay || (occurrence.firstDay < day && occurrence.lastDay > day);
-      const time = allDay ? t('All day') : `${clockWords(formatClock(occurrence.startAt), twelve)} – ${clockWords(formatClock(occurrence.endAt), twelve)}`;
+      // A day off says so, as in the app's lists.
+      const time = occurrence.allDay && occurrence.event.dayOff ? t('Day off') : allDay ? t('All day') : `${clockWords(formatClock(occurrence.startAt), twelve)} – ${clockWords(formatClock(occurrence.endAt), twelve)}`;
       return {
         key: `${item.key}|${day}`,
         title: occurrence.event.title.trim() || t('Untitled'),
@@ -126,7 +135,7 @@ export function schedulePayload(state: LibraryState, prefs: CalendarPrefs, now: 
     const items = itemsOn(state, agenda, day).slice(0, MOST_PER_DAY).map(item => asWidgetItem(item, day, prefs.twelveHours));
     if (items.length > 0) days.push({ day, label: weekdayDay(day), items });
   }
-  return { id: 'schedule', title: t('Schedule'), today: t('Today'), tomorrow: t('Tomorrow'), empty: t('Nothing planned for the next two weeks.'), days };
+  return { id: 'schedule', title: t('Schedule'), today: t('Today'), tomorrow: t('Tomorrow'), empty: t('Nothing planned for the next two weeks.'), now: t('Now'), days };
 }
 
 export function monthPayload(state: LibraryState, prefs: CalendarPrefs, now: number): MonthPayload {

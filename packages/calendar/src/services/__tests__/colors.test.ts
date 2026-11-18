@@ -28,3 +28,14 @@ describe('an event’s colour', () => {
     expect(readCalendarPrefs({}).ownColor).toBe('blue');
   });
 });
+
+describe('a new event’s reminders', () => {
+  it('ring 30 minutes before, time to leave; the 10 stored untouched before then takes the new default, a choice is kept', () => {
+    expect(readCalendarPrefs({}).reminders).toEqual([30]);
+    expect(readCalendarPrefs({ reminders: [10] }).reminders).toEqual([30]);
+    expect(readCalendarPrefs({ reminders: [10, 60] }).reminders).toEqual([10, 60]);
+    // Stored since: 10 is a choice.
+    expect(readCalendarPrefs({ reminders: [10], version: 2 }).reminders).toEqual([10]);
+    expect(readCalendarPrefs({ reminders: [10] }).version).toBe(2);
+  });
+});

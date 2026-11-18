@@ -288,4 +288,6 @@ export interface PushReminder {
   /** Where a tap opens: `/agenda/event/<id>?at=<occurrence>`. */
   readonly path: string;
   readonly tag: string;
+  /** « Y aller », when the event's place is one a map can find: the button's words and the way there (Google Maps', which opens its app on a phone). */
+  readonly directions?: { readonly title: string; readonly url: string };
 }

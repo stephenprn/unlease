@@ -150,6 +150,10 @@ export const FR_PHONE: Dictionary = {
   'No maps app on this phone.': 'Aucune application de cartes sur ce téléphone.',
   '{place}, open in maps': '{place}, ouvrir dans les cartes',
   '{place}, open in {maps}': '{place}, ouvrir dans {maps}',
+  // A place that is a web address (a video call)
+  '{place}, open the link': '{place}, ouvrir le lien',
+  'A long press copies the link.': 'Un appui long copie le lien.',
+  'Link copied': 'Lien copié',
   // The forms' sheets
   'A time such as 8 pm, 20:00 or 8:30.': 'Une heure comme 20h, 8:30 ou 9 pm.',
   'A time zone such as Europe/Paris or America/New_York.': 'Un fuseau comme Europe/Paris ou America/New_York.',

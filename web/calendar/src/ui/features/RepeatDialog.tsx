@@ -9,17 +9,16 @@ import { useEffect, useId, useState } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { weekdayNames } from '@unlease/core/services/format';
-import { FREQUENCIES, describeRule, makeRule, parseRule, serializeRule, weekCodesFrom, type Frequency, type Rule } from '@unlease/calendar/services/recurrence';
-import { narrowWeekday } from '@unlease/calendar/services/eventText';
+import { FREQUENCIES, describeRule, makeRule, parseRule, serializeRule, type Frequency, type Rule } from '@unlease/calendar/services/recurrence';
 import { addMonths, daysInMonth, partsOf, weekdayOf } from '@unlease/calendar/services/time';
 
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { FormMessage } from '@shared/ui/components/FormMessage';
-import layers from '@shared/ui/components/layers.module.css';
 import { Layer } from '@shared/ui/components/Layer';
 import { Segmented } from '@shared/ui/components/Segmented';
 import { SelectField } from '@shared/ui/components/SelectField';
+import { WeekdayToggles } from '@shared/ui/components/WeekdayToggles';
 import { TextField } from '@shared/ui/components/TextField';
 import { useForm } from '@shared/ui/components/useForm';
 import { useUnsaved } from '@shared/ui/components/useUnsaved';
@@ -88,7 +87,7 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
       title={t('Custom repeat')}
       titleId={titleId}
       onClose={onCancel}
-      className={layers.dialog}
+      className={styles.repeatDialog}
       onSubmit={form.onSubmit(() => onDone(built))}
       foot={
         <>
@@ -106,20 +105,8 @@ function RepeatForm({ start, rrule, onDone, onCancel, onDirty }: { start: string
           <SelectField label={t('Frequency')} value={freq} onChange={setFreq} options={FREQUENCIES.map(each => ({ value: each, label: unitWords(each) }))} className={styles.repeatUnit} />
         </div>
         {freq === 'WEEKLY' ? (
-          <div className={styles.picker} role="group" aria-label={t('The days')}>
-            {weekCodesFrom(prefs.weekStart).map(weekday => (
-              <button
-                key={weekday}
-                type="button"
-                className={styles.pick}
-                aria-pressed={days.includes(weekday)}
-                aria-label={names[weekday]}
-                onClick={() => setDays(days.includes(weekday) ? (days.length > 1 ? days.filter(each => each !== weekday) : days) : [...days, weekday])}
-              >
-                {narrowWeekday(weekday)}
-              </button>
-            ))}
-          </div>
+          // The week's days as everywhere a week is chosen (Clock's alarm, the days worked); one stays on.
+          <WeekdayToggles days={days} weekStart={prefs.weekStart} label={t('The days')} onChange={next => (next.length > 0 ? setDays(next) : undefined)} />
         ) : null}
         {freq === 'MONTHLY' ? (
           <SelectField<'day' | 'weekday'>

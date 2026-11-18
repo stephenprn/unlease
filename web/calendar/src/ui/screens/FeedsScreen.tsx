@@ -242,7 +242,7 @@ export function FeedsScreen() {
           value={url}
           onChange={changeUrl}
           field={form.field('url')}
-          placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+          help={t('An address starting with https:// or webcal://, such as https://example.org/calendar.ics.')}
         />
         {login ? (
           <>

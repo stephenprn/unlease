@@ -144,6 +144,11 @@
   min-height: 52px;
 }
 
+/* A page of events under its title (a label's): the title where every screen's stands. */
+.calendar.titled {
+  padding-top: var(--screen-top);
+}
+
 .toolbarStart {
   display: flex;
   flex: 1;
@@ -194,6 +199,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* With nothing before it (« Ma journée »), the title stands on the screens' title column, 4 in from the frame's edge. */
+.toolbarStart > .toolbarTitle:first-child {
+  margin-left: 4px;
 }
 
 /* The title where it picks a day (under 1100px): its words, then a chevron saying a press opens the month; its words where they were, its tint round them. */
@@ -306,6 +316,12 @@
   color: var(--ink-muted);
   font: inherit;
   cursor: pointer;
+}
+
+/* The frame clips its heads at its top: the keyboard's ring lies inside the head, on the tab's corners. */
+.head:focus-visible {
+  border-radius: var(--cut-tab);
+  outline-offset: -2px;
 }
 
 .headDay {
@@ -518,12 +534,16 @@
   white-space: nowrap;
 }
 
-/* A box with room for its title over several lines: it wraps there between words (hyphenated in the page's language where one is too long), cut by whole lines. */
+/*
+ * A box with room for its title over several lines: it wraps there between words (hyphenated in the
+ * page's language where one is too long), cut by whole lines. A word no hyphen can fit (Firefox
+ * hyphenates fewer words than Chromium) breaks where it must rather than running out of its box.
+ */
 .chipTitle[data-wrap] {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   white-space: normal;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
   word-break: normal;
   hyphens: auto;
 }
@@ -867,6 +887,16 @@
   text-decoration: none;
 }
 
+/* The name's link rings its whole row, as the navigation's other rows are: its words alone would wear a ring cut by the menu laid over their end. */
+.navLink:focus-visible {
+  outline: none;
+}
+
+:has(> .navLink:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .navMini {
   padding: 4px 10px 12px;
 }
@@ -970,6 +1000,38 @@
 @media (hover: hover) {
   .scheduleItem:hover {
     background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+/*
+ * « Y aller » at an event's end (compact: the row is 36): beside its button, laid over its end padding,
+ * its glyph in the second ink. The row keeps its tint while the pointer is on it.
+ */
+.withEnd {
+  position: relative;
+}
+
+.withEnd > .scheduleItem {
+  padding-right: 44px;
+}
+
+.withEnd > .rowEnd {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  --icon-ink: var(--ink-muted);
+  transform: translateY(-50%);
+}
+
+@media (hover: hover) {
+  .withEnd:has(> .rowEnd:hover) > .scheduleItem {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+@media (pointer: coarse) {
+  .withEnd > .scheduleItem {
+    padding-right: 52px;
   }
 }
 
@@ -1137,16 +1199,28 @@
   font-weight: 600;
 }
 
-/* The page's actions: « Modifier » first, « Supprimer » at the far end. */
+/* The page's actions: « Modifier » first, « Supprimer » at the far end of their first line, however many lines the others take. */
 .eventActions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 0 0 0 50px;
 }
 
+.eventActionsMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .eventActionsEnd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-left: auto;
 }
 
@@ -1778,12 +1852,6 @@ li.person {
   outline: none;
 }
 
-.picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .pick {
   display: inline-flex;
   align-items: center;
@@ -2089,7 +2157,9 @@ li.person {
     gap: 2px;
     min-height: 48px;
   }
+  /* A phone-sized window: the first action written out, the menu and the bin at the line's end. */
   .eventActions {
+    align-items: center;
     padding-left: 0;
   }
   /* The period's title on its own line over the bar's tools. */
@@ -2099,11 +2169,16 @@ li.person {
   .toolbarStart {
     display: contents;
   }
-  .toolbarTitle {
+  .toolbarTitle,
+  .toolbarStart > .toolbarTitle:first-child {
     order: -1;
     flex-basis: 100%;
     margin: 0 4px;
     font-size: 1.25rem;
+  }
+  /* A plain title (« Ma journée », the year) keeps the line of one that is a button (40), so the bar stands as tall in every view. */
+  .toolbarTitle:not(:has(.titleButton)) {
+    line-height: 40px;
   }
   .toolbarEnd {
     margin-left: auto;
@@ -2173,6 +2248,11 @@ li.person {
 
 /* ── the custom repeat (`RepeatDialog`) ─────────────────────────────────── */
 
+/* A form's dialog (a sheet on a phone-sized window), wide enough for the week's seven days on one line. */
+.repeatDialog {
+  --frame-width: min(440px, 100vw - 32px);
+}
+
 .repeatForm {
   display: flex;
   flex-direction: column;
@@ -2223,26 +2303,17 @@ li.person {
   justify-content: flex-end;
 }
 
-/* A new label: its field, and « Créer » level with the field itself (not its label). */
-.newLabel {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.newLabelField {
-  flex: 1;
-}
-
-.newLabelButton {
-  /* Level with the field itself, under its label's line (18 and its 6 gap), and as tall (52), so the two share their edges. */
-  min-height: 52px;
-  margin-top: calc(18px + 6px);
+/* A line under a page's title (what labels do here), on the title's column. */
+.headNote {
+  margin: 0;
+  padding: 0 4px;
+  color: var(--ink-muted);
+  text-wrap: pretty;
 }
 
 /*
- * A label or a calendar on its panel (« Libellés », « Autres agendas »): its line (its switch, its name,
- * its tools, each centred on the 52 field even when a problem shows under it), what it says, its colours.
+ * A calendar on its panel (« Autres agendas »): its line (its switch, its name, its tools at the line's
+ * end, each centred on the 52 field even when a problem shows under it), what it says, its colours.
  */
 .item {
   display: flex;
@@ -2271,11 +2342,17 @@ li.person {
   min-height: 52px;
 }
 
-/* A label's count of events, in a slot wide enough for « 99 événements », so every name's field is as wide as the others. */
-.itemCount {
-  display: inline-block;
-  min-width: 96px;
-  text-align: end;
+/* Its tools stand at the line's end, as every row's do, whatever the name's width. */
+.itemHead > .itemLine:last-child {
+  margin-left: auto;
+}
+
+/* A link in a line of meta: the links' ink and weight, underlined, as the shell's. */
+.itemNotes a {
+  align-self: flex-start;
+  color: var(--link);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
 }
 
 .itemNotes {

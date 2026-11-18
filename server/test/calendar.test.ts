@@ -391,9 +391,19 @@ describe('the web’s reminders', () => {
     server.time.value = T0 + 21 * 60_000;
     expect(await server.calendar.reminders.tick()).toBe(1);
     const reminder = JSON.parse(decrypt(sent[0]!.body, browser, auth));
-    expect(reminder).toEqual({ title: 'Dentiste', body: 'Sun 18\u00a0Oct · 14:30 · Cabinet', path: '/agenda/event/rdv?at=2026-10-18T14%3A30', tag: 'rdv@2026-10-18T14:30#10' });
+    // Its place a map can find: « Y aller » and the way there.
+    expect(reminder).toEqual({
+      title: 'Dentiste',
+      body: 'Sun 18\u00a0Oct · 14:30 · Cabinet',
+      path: '/agenda/event/rdv?at=2026-10-18T14%3A30',
+      tag: 'rdv@2026-10-18T14:30#10',
+      directions: { title: 'Get there', url: 'https://www.google.com/maps/dir/?api=1&destination=Cabinet' },
+    });
+    // A video call opens as a link, never a map: no « Y aller ».
+    server.sync.push([event('visio', { title: 'Point', start: '2026-10-18T14:40', end: '2026-10-18T15:00', reminders: [10], place: 'https://meet.example.org/abc' })]);
     server.time.value = T0 + 30 * 60_000;
-    expect(await server.calendar.reminders.tick()).toBe(0);
+    expect(await server.calendar.reminders.tick()).toBe(1);
+    expect(JSON.parse(decrypt(sent[1]!.body, browser, auth))).not.toHaveProperty('directions');
     server.sync.push([event('rdv2', { title: 'Encore', start: '2026-10-18T14:45', end: '2026-10-18T15:00', reminders: [10] })]);
     status = 410;
     server.time.value = T0 + 40 * 60_000;

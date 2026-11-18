@@ -134,6 +134,12 @@ describe('« Aujourd’hui »', () => {
     expect(rowStateWords(morning.timed[0]!, at(`${TOMORROW}T05:00`), TOMORROW)).toBe('Encore 1 h');
   });
 
+  it('says a day off as the Planning does, a plain whole day as « Toute la journée »', () => {
+    const plan = planToday({ today: TODAY, now: at(`${TODAY}T08:00`), items: items([event('Congé', TODAY, TOMORROW, { dayOff: true }), event('Salon', TODAY, TOMORROW)]) });
+    const words = Object.fromEntries(plan.allDay.map(row => [row.item.kind === 'event' ? row.item.occurrence.event.title : '', rowTimeWords(row, TODAY)]));
+    expect(words).toEqual({ Congé: 'Jour de congé', Salon: 'Toute la journée' });
+  });
+
   it('draws the now line on top when nothing has started, at the foot once all is over', () => {
     const events = [event('A', `${TODAY}T09:00`, `${TODAY}T10:00`), event('B', `${TODAY}T11:00`, `${TODAY}T12:00`)];
     expect(planToday({ today: TODAY, now: at(`${TODAY}T07:00`), items: items(events) }).nowAt).toBe(0);

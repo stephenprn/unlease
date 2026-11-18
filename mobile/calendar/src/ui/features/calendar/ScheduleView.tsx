@@ -56,12 +56,16 @@ function placeOn(index: number, count: number, nowAt: number | null): RowPlace |
   return first && last ? 'only' : first ? 'first' : last ? 'last' : null;
 }
 
-/** The now line, as « Ma journée » and the time grid draw it: a red dot in the marks' column, its line to the panel's edge. */
-function NowLine({ label }: { label: string }) {
+/**
+ * The now line, as « Ma journée » and the time grid draw it: a red dot in the marks' column, its line
+ * to where the rows' words end. At the panel's first or last line it keeps the rows' room from that
+ * edge, so it never lies in the panel's corner.
+ */
+function NowLine({ label, edge }: { label: string; edge: 'first' | 'last' | null }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   return (
-    <View style={styles.now} accessible accessibilityLabel={label}>
+    <View style={[styles.now, edge === 'first' ? styles.nowFirst : edge === 'last' ? styles.nowLast : null]} accessible accessibilityLabel={label}>
       <View style={[styles.nowDot, { backgroundColor: theme.color.danger }]} />
       <View style={[styles.nowLine, { backgroundColor: theme.color.danger }]} />
     </View>
@@ -111,7 +115,7 @@ function ScheduleViewComponent({ from, today, labelId, twelveHours, onOpen }: Sc
 
   const renderPanel = ({ item: panel }: { item: DayPanel }) => {
     const nowAt = nowLineAt(panel.items, panel.day, today, now);
-    const line = <NowLine label={t('Now, {clock}', { clock })} />;
+    const line = <NowLine label={t('Now, {clock}', { clock })} edge={nowAt === 0 ? 'first' : nowAt === panel.items.length ? 'last' : null} />;
     return (
       <Organic outline="panel" style={styles.panel}>
         <RowPanel outline="panel" style={styles.panelClip} backdrop={<Grain />}>
@@ -182,8 +186,11 @@ const makeStyles = (theme: Theme) =>
     panel: { marginHorizontal: 12, backgroundColor: theme.color.paper, borderWidth: 1, borderColor: theme.color.hairline, boxShadow: theme.lift.card },
     panelClip: { overflow: 'hidden', paddingVertical: 4 },
     none: { paddingHorizontal: 28, paddingVertical: 8 },
-    // The dot's centre on the marks' column (6 + 10 + 12), the line to 6 from the panel's edge.
-    now: { height: 10, flexDirection: 'row', alignItems: 'center', marginLeft: 23, marginRight: 6, marginVertical: 1 },
+    // The dot's centre on the marks' column (6 + 10 + 12), the line to the rows' own end (6 + 10 from the panel's edge).
+    now: { height: 10, flexDirection: 'row', alignItems: 'center', marginLeft: 23, marginRight: 16, marginVertical: 1 },
+    // Heading or closing the panel: a row's inner room (8) from its edge, clear of the corner.
+    nowFirst: { marginTop: 8 },
+    nowLast: { marginBottom: 8 },
     nowDot: { width: 10, height: 10, borderRadius: 5 },
     nowLine: { flex: 1, height: 2 },
   });

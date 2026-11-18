@@ -21,6 +21,7 @@ import { isLive, type CalendarEvent } from '@unlease/calendar/models/events';
 import { alarmStaleAt, alarmsBetween, LATE_RING_MS, stillWorthRinging, type Alarm } from '@unlease/calendar/services/alarms';
 import { digestMoment, writeDigest, zonedDigest, DIGEST_LATE_MS } from '@unlease/calendar/services/digest';
 import { weekdayDay } from '@unlease/calendar/services/eventText';
+import { directionsTo } from '@unlease/calendar/services/links';
 import { hiddenFeedIds } from '@unlease/calendar/services/occurrences';
 import { addDays, dayToInstant, instantToDay, instantToWall } from '@unlease/calendar/services/time';
 import { addCalendarFrench } from '@unlease/calendar/i18n';
@@ -33,6 +34,7 @@ import { blockFromRecord } from '@unlease/pages/sync/entities';
 import type { Block } from '@unlease/pages/models/blocks';
 import { SELF_HOSTING_GUIDE } from '@unlease/core/apps';
 import { getLocale, setLocale, t } from '@unlease/core/i18n';
+import { lineDirectionsUrl } from '@unlease/core/services/maps';
 import { readMeta, writeMeta, type Database } from '../../db/database';
 import { log } from '../../log';
 import type { RecordStore } from '../../sync/records';
@@ -139,7 +141,7 @@ export class PushReminders {
       .filter(alarm => alarm.fireAt >= from && alarm.fireAt < to);
   }
 
-  /** What a browser shows for one reminder, in its language. */
+  /** What a browser shows for one reminder, in its language; with a place a map can find, « Y aller » and the way there. */
   reminder(alarm: Alarm, subscription: StoredSubscription): PushReminder {
     if (!englishAdded) {
       addCalendarFrench();
@@ -151,11 +153,13 @@ export class PushReminders {
       const wall = instantToWall(alarm.startAt, alarm.allDay ? '' : subscription.timeZone);
       const day = weekdayDay(wall.slice(0, 10));
       const when = alarm.allDay ? `${day} · ${t('All day')}` : `${day} · ${wall.slice(11, 16)}`;
+      const way = lineDirectionsUrl(directionsTo(alarm.place), 'google');
       return {
         title: alarm.title.trim() || APP_NAME,
         body: [when, alarm.place.trim()].filter(Boolean).join(' · '),
         path: `/agenda/event/${encodeURIComponent(alarm.seriesId)}?at=${encodeURIComponent(alarm.occurrence)}`,
         tag: alarm.key,
+        ...(way ? { directions: { title: t('Get there'), url: way } } : {}),
       };
     } finally {
       setLocale(before);

@@ -48,4 +48,26 @@
     <string name="shortcut_today_long">Ma journée</string>
     <string name="shortcut_search_short">Rechercher</string>
     <string name="shortcut_search_long">Rechercher un événement</string>
+    <!-- Les aperçus du sélecteur : des journées d’exemple. -->
+    <string name="widget_preview_day_today">Aujourd’hui · lun. 9 nov.</string>
+    <string name="widget_preview_day_tomorrow">Demain · mar. 10 nov.</string>
+    <string name="widget_preview_tomorrow_line">Demain · Train pour Lyon</string>
+    <string name="widget_preview_now">En cours · 9:00 – 10:00</string>
+    <string name="widget_preview_weather">12° · Soleil</string>
+    <string name="widget_preview_today_short">Lundi 9</string>
+    <string name="widget_preview_lunch">Déjeuner avec Camille</string>
+    <string name="widget_preview_lunch_time">12:30 – 13:45 · Café des Arts</string>
+    <string name="widget_preview_train">Train pour Lyon</string>
+    <string name="widget_preview_train_time">7:45 – 8:15</string>
+    <string name="widget_preview_piano">Cours de piano</string>
+    <string name="widget_preview_piano_time">18:00 – 19:00</string>
+    <string name="widget_preview_place">Cabinet du Dr Martin</string>
+    <string name="widget_preview_month">Novembre 2026</string>
+    <string name="widget_preview_weekday_1">L</string>
+    <string name="widget_preview_weekday_2">M</string>
+    <string name="widget_preview_weekday_3">M</string>
+    <string name="widget_preview_weekday_4">J</string>
+    <string name="widget_preview_weekday_5">V</string>
+    <string name="widget_preview_weekday_6">S</string>
+    <string name="widget_preview_weekday_7">D</string>
 </resources>

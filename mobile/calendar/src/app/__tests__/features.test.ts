@@ -15,6 +15,7 @@ import { state as native, __reset as resetNative } from '../../../../shared/__mo
 import { resetReminders } from '@shared/platform/reminders';
 import { agendaIn, itemsOn } from '../agenda';
 import { giftIdeas } from '../gifts';
+import { pressed } from '@platform/notifications';
 import { keepAlarmsFresh, reconcileAlarms, REFRESH_MINUTES } from '../reminders';
 import { addEvent, deleteLabel, createLabel, removeImported, undoImport, writeImport } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore, writeLocal } from '../store/libraryStore';
@@ -44,6 +45,23 @@ describe('reminders', () => {
     writeLocal([{ type: 'calendarEvent', id, patch: { trashedAt: now } }]);
     await reconcileAlarms(now);
     expect(notifee.armed.size).toBe(0);
+  });
+
+  it('offers « Y aller » on a reminder whose place a map can find, never on a video call’s', async () => {
+    const id = addEvent({ ...blankDraft(`${addDays(day, 2)}T10:00`, `${addDays(day, 2)}T11:00`, ''), title: 'Dîner', place: '12 rue des Lilas, Lyon', reminders: [30] });
+    addEvent({ ...blankDraft(`${addDays(day, 2)}T12:00`, `${addDays(day, 2)}T13:00`, ''), title: 'Point', place: 'https://meet.example.org/abc', reminders: [30] });
+    await reconcileAlarms(now);
+    const [dinner, call] = [...notifee.armed.values()];
+    expect(dinner).toMatchObject({ title: 'Dîner', actions: ['Y aller'], data: { eventId: id, directions: '12 rue des Lilas, Lyon' } });
+    expect(call).toMatchObject({ title: 'Point', actions: [] });
+    expect(call!.data).not.toHaveProperty('directions');
+  });
+
+  it('reads a press of « Y aller » as the way there, a press elsewhere as the event', () => {
+    const data = { eventId: 'e1', occurrence: '2026-11-20T10:00', directions: 'Mairie' };
+    expect(pressed(data, 'directions', 'n1')).toEqual({ eventId: 'e1', occurrence: '2026-11-20T10:00', directions: { place: 'Mairie', id: 'n1' } });
+    expect(pressed(data, 'default', 'n1')).toEqual({ eventId: 'e1', occurrence: '2026-11-20T10:00' });
+    expect(pressed(data, undefined, 'n1')).toEqual({ eventId: 'e1', occurrence: '2026-11-20T10:00' });
   });
 
   it('arms exact alarms, once, and the hourly run with the app closed is asked for', async () => {

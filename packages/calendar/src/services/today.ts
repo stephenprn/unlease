@@ -241,12 +241,14 @@ export function rowStateWords(row: Pick<DayRow, 'state' | 'startAt' | 'endAt'>, 
 }
 
 /**
- * A row's time on `day`: « 14:30 – 15:30 », « Toute la journée », « Jusqu’à 10:00 » (begun the day
- * before), « À partir de 22:00 » (going on past midnight), a reminder's or a page's moment.
+ * A row's time on `day`: « 14:30 – 15:30 », « Toute la journée », « Jour de congé » (as the Planning
+ * says it), « Jusqu’à 10:00 » (begun the day before), « À partir de 22:00 » (going on past midnight),
+ * a reminder's or a page's moment.
  */
 export function rowTimeWords(row: Pick<DayRow, 'item' | 'allDay'>, day: Day, twelveHours = false): string {
-  if (row.allDay) return t('All day');
   const item = row.item;
+  if (item.kind === 'event' && item.occurrence.allDay && item.occurrence.event.dayOff) return t('Day off');
+  if (row.allDay) return t('All day');
   switch (item.kind) {
     case 'event': {
       const occurrence = item.occurrence;

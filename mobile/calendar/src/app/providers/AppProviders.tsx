@@ -2,13 +2,14 @@
 import React, { useEffect } from 'react';
 
 import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
+import { openPlace } from '@shared/app/openPlace';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
 import { AppShell } from '@shared/ui/AppShell';
 import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
 import { MapsSheets } from '@shared/ui/features/maps/MapsSheets';
 import { linking, RootNavigator } from '@ui/navigation/RootNavigator';
 import { backToCalendar, navigate, navigationRef, push } from '@ui/navigation/navigationRef';
-import type { PressedEvent } from '@platform/notifications';
+import { dismissReminder, type PressedEvent } from '@platform/notifications';
 
 import { bootstrap } from '../bootstrap';
 import { useEventAlarms } from '../hooks/useEventAlarms';
@@ -16,10 +17,20 @@ import { listenForShares } from '../intake';
 import { publishWidgets } from '../widgets';
 import { later } from '../later';
 
-/** A reminder pressed: its event, at that occurrence; the morning digest: « Aujourd'hui » on its day. */
+/**
+ * A reminder pressed: its event, at that occurrence; its « Y aller »: the way there too, over the
+ * event (back from the maps, the event), the reminder gone from the shade. The morning digest:
+ * « Aujourd'hui » on its day.
+ */
 const openEvent = (event: PressedEvent): void => {
-  if ('digestDay' in event) backToCalendar({ view: 'today', day: event.digestDay });
-  else navigate('Event', { id: event.eventId, at: event.occurrence || undefined });
+  if ('digestDay' in event) {
+    backToCalendar({ view: 'today', day: event.digestDay });
+    return;
+  }
+  navigate('Event', { id: event.eventId, at: event.occurrence || undefined });
+  if (!event.directions) return;
+  if (event.directions.id) later(dismissReminder(event.directions.id));
+  later(openPlace(event.directions.place, { directions: true }));
 };
 
 /** Back in the foreground: the widgets learn the new day. Stable, as the lifecycle hook restarts on a new one. */

@@ -174,8 +174,8 @@ function MonthViewComponent({ month, today, weekStart, weekdays, weekNumbers, la
                       {chip.form === 'bar' ? <EventEdge color={paint.fill} /> : null}
                       {off ? <Icon name="sun" size={12} color={paint.text} /> : null}
                       {chip.form === 'dot' ? <View style={[styles.dot, { backgroundColor: paint.fill }]} /> : null}
-                      {/* A day too narrow for its time and its title: the title alone on its wash, cut at the bar's end rather than dotted. */}
-                      <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1} ellipsizeMode={chip.form === 'wash' ? 'clip' : 'tail'} style={styles.barText}>
+                      {/* A day too narrow for its time and its title: the title alone on its wash, cut at the bar's end rather than dotted; a whole day's bar as narrow is cut the same way, so one day's titles end alike. */}
+                      <AppText variant="labelSmall" color={theme.color.ink} numberOfLines={1} ellipsizeMode={chip.form === 'wash' || bar.span * cell < NARROW_CELL ? 'clip' : 'tail'} style={styles.barText}>
                         {chip.text}
                       </AppText>
                     </Tappable>

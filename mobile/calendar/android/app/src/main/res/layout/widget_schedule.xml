@@ -77,15 +77,24 @@
 
             <ListView
                 android:id="@+id/schedule_list"
+                android:listSelector="@android:color/transparent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:divider="@null"
                 android:dividerHeight="0dp"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
-                android:paddingBottom="6dp"
-                android:clipToPadding="false"
+                android:paddingBottom="10dp"
+                android:clipToPadding="true"
                 android:scrollbars="none" />
+
+            <!-- The list's foot fades into the ground, where its padding starts: a row cut there reads as more below. -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/wgen_fade_ground" />
 
             <LinearLayout
                 android:id="@+id/schedule_static"

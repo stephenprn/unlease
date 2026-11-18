@@ -16,6 +16,7 @@ import { asksScope } from '@unlease/calendar/services/editing';
 import { deletedWords, reminderWords, whenLine, zoneNote } from '@unlease/calendar/services/eventText';
 import { feedName } from '@unlease/calendar/services/holidays';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
+import { placeLink } from '@unlease/calendar/services/links';
 import { describeRule, parseRule } from '@unlease/calendar/services/recurrence';
 import { temperatures, weatherKind, WEATHER_WORDS } from '@unlease/calendar/services/weather';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -146,9 +147,10 @@ export function EventDetails({ item, withWhen = false, onCopy }: { item: Occurre
         </Detail>
       ) : null}
       {place ? (
-        <Detail icon="mapPin" label={t('Place')}>
+        <Detail icon={placeLink(place) ? 'link' : 'mapPin'} label={t('Place')}>
           <PlaceButton place={place} />
-          {weather ? (
+          {/* A place that is a web address has no weather of its own. */}
+          {weather && !placeLink(place) ? (
             <span className={`${styles.weatherLine} t-meta`}>
               <Icon name={weatherKind(weather.day.code) === 'clear' ? 'sun' : 'cloud'} size={14} />
               {`${WEATHER_WORDS[weatherKind(weather.day.code)]} · ${temperatures(weather.day.max, weather.day.min)} · ${t('{chance}% chance of rain', { chance: Math.round(weather.day.rain) })}`}
@@ -234,36 +236,72 @@ function useMoreItems(item: Occurrence): MenuItem[] {
   ];
 }
 
-/** The event page's actions: « Modifier » first (« Copier dans mon agenda » for a subscription's), the rest quieter, « Supprimer » last. */
+/**
+ * The event page's actions: « Modifier » first (« Copier dans mon agenda » for a subscription's), the rest quieter, « Supprimer » last.
+ * On a phone-sized window, where they would take four lines, the first alone is written out: the rest are the peek's menu and its bin at the line's end.
+ */
 export function EventActions({ item }: { item: Occurrence }) {
   const own = isOwn(item.event);
   const server = useSettingsStore(selectServer);
   const apps = useSettingsStore(selectServerApps);
   const pages = !!server && (!apps || apps.includes('pages'));
   const wakeable = useWakeable(item);
+  const narrow = useMedia(NARROW);
+  const more = useRef<HTMLButtonElement>(null);
+  const [menu, setMenu] = useState(false);
+  const items = useMoreItems(item);
+  const remove = (): void => void removeOccurrence(item).then(gone => (gone ? navigate(paths.home) : undefined));
+  if (narrow) {
+    // A subscription's first action is the copy itself: the menu holds what is left.
+    const rest = own ? items : items.slice(1);
+    return (
+      <div className={styles.eventActions}>
+        {own ? (
+          <Button icon="edit" onClick={() => navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null))}>
+            {t('Edit')}
+          </Button>
+        ) : (
+          <Button icon="copy" onClick={() => duplicateOccurrence(item)}>
+            {t('Copy to my calendar')}
+          </Button>
+        )}
+        <span className={styles.eventActionsEnd}>
+          {rest.length > 0 ? (
+            <>
+              <IconButton ref={more} icon="more" label={t('More actions')} shape={2} hasPopup="menu" expanded={menu} onClick={() => setMenu(true)} />
+              <Menu open={menu} anchor={more} onDismiss={() => setMenu(false)} label={t('More actions')} items={rest} />
+            </>
+          ) : null}
+          {own ? <IconButton icon="trash" label={t('Delete')} shape={1} onClick={remove} /> : null}
+        </span>
+      </div>
+    );
+  }
   return (
     <div className={styles.eventActions}>
-      {own ? (
-        <Button icon="edit" onClick={() => navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null))}>
-          {t('Edit')}
+      <div className={styles.eventActionsMain}>
+        {own ? (
+          <Button icon="edit" onClick={() => navigate(paths.edit(item.seriesId, item.repeats ? item.occurrence : null))}>
+            {t('Edit')}
+          </Button>
+        ) : null}
+        <Button kind={own ? 'text' : 'filled'} icon="copy" onClick={() => duplicateOccurrence(item)}>
+          {own ? t('Duplicate') : t('Copy to my calendar')}
         </Button>
-      ) : null}
-      <Button kind={own ? 'text' : 'filled'} icon="copy" onClick={() => duplicateOccurrence(item)}>
-        {own ? t('Duplicate') : t('Copy to my calendar')}
-      </Button>
-      {pages ? (
-        <Button kind="text" icon="pagePlus" onClick={() => void writeNotes(item)}>
-          {t('Notes page')}
-        </Button>
-      ) : null}
-      {wakeable ? (
-        <Button kind="text" icon="bell" onClick={() => wakeMeUp(item)}>
-          {t('Wake me up for this')}
-        </Button>
-      ) : null}
+        {pages ? (
+          <Button kind="text" icon="pagePlus" onClick={() => void writeNotes(item)}>
+            {t('Notes page')}
+          </Button>
+        ) : null}
+        {wakeable ? (
+          <Button kind="text" icon="bell" onClick={() => wakeMeUp(item)}>
+            {t('Wake me up for this')}
+          </Button>
+        ) : null}
+      </div>
       {own ? (
         <span className={styles.eventActionsEnd}>
-          <Button kind="dangerText" icon="trash" onClick={() => void removeOccurrence(item).then(gone => (gone ? navigate(paths.home) : undefined))}>
+          <Button kind="dangerText" icon="trash" onClick={remove}>
             {t('Delete')}
           </Button>
         </span>

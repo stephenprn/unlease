@@ -1,11 +1,18 @@
 package com.stephenprn.agenda.widget
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.RemoteViews
+import com.stephenprn.agenda.BuildConfig
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * A home-screen widget: it draws from what the store holds (JavaScript hands it over, `WidgetsModule`).
@@ -25,6 +32,34 @@ abstract class AgendaWidgetProvider : AppWidgetProvider() {
 
   override fun onDeleted(context: Context, widgetIds: IntArray) {
     WidgetStore(context).forget(widgetIds)
+    val name = redrawName ?: return
+    val alarms = context.getSystemService(AlarmManager::class.java) ?: return
+    for (id in widgetIds) alarms.cancel(redrawIntent(context, id, name))
+  }
+
+  /** The name of a widget that asks to be drawn again at a moment (`redrawAt`); null for one that never does. */
+  internal open val redrawName: String? = null
+
+  /**
+   * Draws this widget again at the first of `moments` still to come (a start or an end: what runs
+   * changes, the now line moves), else at midnight: inexact, never waking the phone.
+   */
+  internal fun redrawAt(context: Context, id: Int, moments: List<Long>, now: Long) {
+    val name = redrawName ?: return
+    val alarms = context.getSystemService(AlarmManager::class.java) ?: return
+    val midnight = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val at = minOf(moments.filter { it > now }.minOrNull() ?: midnight, midnight) + 1_000
+    runCatching { alarms.set(AlarmManager.RTC, at, redrawIntent(context, id, name)) }
+  }
+
+  private fun redrawIntent(context: Context, id: Int, name: String): PendingIntent {
+    val intent =
+        Intent(context, javaClass)
+            .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+            // One alarm per widget: the data only tells them apart.
+            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://widget-$name/$id"))
+            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
+    return PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
   }
 }
 

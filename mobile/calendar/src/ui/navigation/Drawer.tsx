@@ -126,7 +126,8 @@ function LayerToggle({ title, app, icon, on, onPress, hold }: { title: string; a
     >
       <Icon name={icon} size={20} color={ink} solid={on} />
       <View style={styles.layerWords}>
-        <AppText variant="label" color={on ? theme.color.onActionContainer : theme.color.ink} numberOfLines={2}>
+        {/* A long word (« Anniversaires » at a large text size) breaks at a syllable with its hyphen, never mid-word. */}
+        <AppText variant="label" color={on ? theme.color.onActionContainer : theme.color.ink} numberOfLines={2} textBreakStrategy="balanced" android_hyphenationFrequency="full">
           {title}
         </AppText>
         {app ? (

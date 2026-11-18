@@ -12,9 +12,13 @@ import org.json.JSONObject
  * Planning: the next two weeks, day by day, on a slab of the ground. Each day under its heading
  * (« Aujourd'hui », « Demain », or its date), each item a row: its colour, title, time and place; a
  * tap opens it (an event in the app, a note's reminder in Carnet, a page in Pages). The head opens
- * the app, its + a new event. Days gone and items over are left out as it draws.
+ * the app, its + a new event. Days gone and items over are left out as it draws; today's now line
+ * lies where it falls among them, as the app's list draws it. It asks to be drawn again at the next
+ * start or end of today, so what ended goes and the line moves on time.
  */
 class ScheduleWidgetProvider : AgendaWidgetProvider() {
+
+  override val redrawName = "schedule"
 
   override fun draw(context: Context, manager: AppWidgetManager, id: Int): RemoteViews {
     val data = WidgetStore(context).payload(id) ?: return WidgetMessage.waiting(context)
@@ -29,6 +33,7 @@ class ScheduleWidgetProvider : AgendaWidgetProvider() {
     val tomorrow = WidgetKit.tomorrow()
     val now = System.currentTimeMillis()
     val rows = mutableListOf<Pair<Long, RemoteViews>>()
+    val moments = mutableListOf<Long>()
     val days = data.optJSONArray("days")
     for (i in 0 until (days?.length() ?: 0)) {
       val day = days!!.optJSONObject(i) ?: continue
@@ -43,8 +48,16 @@ class ScheduleWidgetProvider : AgendaWidgetProvider() {
         else -> day.optString("label")
       }
       rows += WidgetKit.key("day:$date") to heading(context, heading, date == today)
-      for (item in shown) rows += WidgetKit.key(item.optString("key")) to item(context, item)
+      // Today's now line: before the first with a time still to start, else after the last (`startAt` 0 takes the day).
+      val nowAt = if (date == today) WidgetKit.nowLineAt(shown, now) { it.optLong("startAt").takeIf { start -> start > 0 } } else null
+      shown.forEachIndexed { index, item ->
+        if (index == nowAt) rows += WidgetKit.key("now") to WidgetKit.nowLine(context, data.optString("now"))
+        rows += WidgetKit.key(item.optString("key")) to item(context, item)
+      }
+      if (nowAt == shown.size) rows += WidgetKit.key("now") to WidgetKit.nowLine(context, data.optString("now"))
+      if (date == today) for (item in shown) moments += listOf(item.optLong("startAt"), item.optLong("endAt"))
     }
+    redrawAt(context, id, moments.filter { it > 0 }, now)
     WidgetKit.list(views, R.id.schedule_list, R.id.schedule_static, R.id.schedule_empty, rows, WidgetIntents.routeTemplate(context, id))
     return views
   }

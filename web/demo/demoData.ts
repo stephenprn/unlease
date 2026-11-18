@@ -864,6 +864,9 @@ const CONTACTS: readonly ContactSeed[] = [
   { id: 'demo-contact-lucas', first: 'lucas', last: 'girard', phones: [['+33612121212', 'mobile'], ['06 12 12 12 12', 'home']], emails: [['lucas.girard@gmial.com', 'home']], ago: 11 * DAY },
   { id: 'demo-contact-plumbing', first: 'contact@quickfix.example', last: '', company: '', phones: [['01 45 67 89 10', 'work']], ago: 10 * DAY },
   { id: 'demo-contact-blank', first: '', last: '', ago: 8 * DAY },
+  // What « Duplicates » finds: Camille saved again from her work e-mail, Noah from an old phone's number written its own way.
+  { id: 'demo-contact-camille-again', first: 'Camille', last: 'Durand', emails: [['camille@atelier-nord.example', 'work']], ago: 7 * DAY },
+  { id: 'demo-contact-noah-again', first: 'Noah B.', last: '', phones: [['+33 6 55 44 33 22', 'mobile']], note: 'From the old phone.', ago: 5 * DAY },
   { id: 'demo-contact-old', first: 'Bruno', last: 'Lambert', phones: [['06 00 00 00 01', 'mobile']], ago: 50 * DAY, trashedAgo: 2 * DAY },
 ];
 

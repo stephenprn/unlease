@@ -43,7 +43,17 @@ export interface CalendarPrefs {
   readonly digestEmpty: boolean;
   /** « Couleur de vos événements »: the pigment of the events without one of their own, a label's or a calendar's (« Mes événements »). */
   readonly ownColor: LineColor;
+  /** Which defaults these prefs were stored under (`PREFS_VERSION`): read, older ones take what changed since. */
+  readonly version: number;
 }
+
+/**
+ * The prefs' version: 2 since a new event's reminder became 30 minutes (time to leave), from 10.
+ * Prefs are stored whole at their first change, so a device stored 10 without anyone choosing it.
+ */
+export const PREFS_VERSION = 2;
+/** The reminders version 1 stored for a new timed event, untouched: taken as the new default. */
+const FIRST_REMINDERS = [10];
 
 export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
   view: 'week',
@@ -52,7 +62,8 @@ export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
   weekNumbers: false,
   twelveHours: false,
   eventLength: 60,
-  reminders: [10],
+  // Time to leave: a reminder with a place offers the way there (« Y aller »).
+  reminders: [30],
   allDayReminders: [-540],
   birthdays: true,
   noteReminders: true,
@@ -63,6 +74,7 @@ export const CALENDAR_PREFS_DEFAULTS: CalendarPrefs = {
   digestAt: DIGEST_AT,
   digestEmpty: false,
   ownColor: OWN_EVENTS_COLOR,
+  version: PREFS_VERSION,
 };
 
 export const EVENT_LENGTHS = [15, 30, 45, 60, 90, 120] as const;
@@ -80,7 +92,7 @@ export function readCalendarPrefs(value: unknown): CalendarPrefs {
     weekNumbers: flag('weekNumbers', d.weekNumbers),
     twelveHours: flag('twelveHours', d.twelveHours),
     eventLength: typeof raw.eventLength === 'number' && (EVENT_LENGTHS as readonly number[]).includes(raw.eventLength) ? raw.eventLength : d.eventLength,
-    reminders: minutes(raw.reminders, d.reminders),
+    reminders: olderDefault(raw.version, raw.reminders) ? d.reminders : minutes(raw.reminders, d.reminders),
     allDayReminders: minutes(raw.allDayReminders, d.allDayReminders),
     birthdays: flag('birthdays', d.birthdays),
     noteReminders: flag('noteReminders', d.noteReminders),
@@ -91,5 +103,11 @@ export function readCalendarPrefs(value: unknown): CalendarPrefs {
     digestAt: isDigestTime(raw.digestAt) ? raw.digestAt : d.digestAt,
     digestEmpty: flag('digestEmpty', d.digestEmpty),
     ownColor: isLineColor(raw.ownColor) ? raw.ownColor : d.ownColor,
+    version: PREFS_VERSION,
   };
+}
+
+/** Stored before version 2 with the reminders it gave a new event then: the new default stands in. */
+function olderDefault(version: unknown, reminders: unknown): boolean {
+  return (typeof version !== 'number' || version < 2) && Array.isArray(reminders) && reminders.length === FIRST_REMINDERS.length && reminders.every((value, index) => value === FIRST_REMINDERS[index]);
 }

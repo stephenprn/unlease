@@ -1,7 +1,8 @@
 /**
  * One thing of a day on the Planning's panel, as « Ma journée » draws its rows (`ListRow`'s geometry):
- * its calendar's stone or its layer's glyph in the 24 slot, its title over its time and place. What is
- * over lies back (its mark at 0.55, its words in the second ink); what runs now reads a weight up.
+ * its calendar's stone or its layer's glyph in the 24 slot, its title over its time and place, and an
+ * event's place a map can find, « Y aller » at its end while it is not over (`DirectionsButton`). What
+ * is over lies back (its mark at 0.55, its words in the second ink); what runs now reads a weight up.
  */
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -15,6 +16,7 @@ import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { DirectionsButton, directionsAction, rowDirections } from './DirectionsButton';
 import { ItemMark } from './ItemMark';
 import { itemTime, itemTitle } from './paint';
 
@@ -38,9 +40,17 @@ function AgendaRowComponent({ item, day, twelveHours, over = false, now = false,
   const title = itemTitle(item);
   const time = itemTime(item, day, twelveHours);
   const placeName = item.kind === 'event' ? item.occurrence.event.place.trim() : '';
+  const directions = rowDirections(item, over);
   return (
     // In a scrolling list: its tint once the touch is clearly a tap.
-    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(item)} style={[styles.row, shape]} accessibilityRole="button" accessibilityLabel={[title, time, placeName].filter(Boolean).join(', ')}>
+    <Tappable
+      unstable_pressDelay={listPressDelay}
+      onPress={() => onOpen(item)}
+      style={[styles.row, shape]}
+      accessibilityRole="button"
+      accessibilityLabel={[title, time, placeName].filter(Boolean).join(', ')}
+      {...directionsAction(directions)}
+    >
       <View style={[styles.slot, over ? styles.over : null]}>
         <ItemMark item={item} />
       </View>
@@ -52,6 +62,7 @@ function AgendaRowComponent({ item, day, twelveHours, over = false, now = false,
           {placeName ? `${time} · ${placeName}` : time}
         </AppText>
       </View>
+      {directions ? <DirectionsButton place={directions} /> : null}
     </Tappable>
   );
 }

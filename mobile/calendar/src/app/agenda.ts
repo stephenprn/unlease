@@ -118,7 +118,12 @@ export function itemUnderWay(item: AgendaItem, now: number): boolean {
  */
 export function nowLineAt(items: readonly AgendaItem[], day: string, today: string, now: number): number | null {
   if (day !== today) return null;
-  const timed = items.map((item, index) => ({ item, index })).filter(({ item }) => rankOn(item, day) === 3);
+  const timed = items.map((item, index) => ({ item, index, start: timedStartOn(item, day) })).filter(({ start }) => start !== null);
   if (timed.length === 0) return null;
-  return timed.find(({ item }) => startOn(item, day) > now)?.index ?? items.length;
+  return timed.find(({ start }) => start! > now)?.index ?? items.length;
+}
+
+/** When an item starts on a day as the now line counts it (ms); null for what takes the day (a birthday, a day's page, an event all day or begun before). */
+export function timedStartOn(item: AgendaItem, day: string): number | null {
+  return rankOn(item, day) === 3 ? startOn(item, day) : null;
 }

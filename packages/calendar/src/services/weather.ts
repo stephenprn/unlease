@@ -5,6 +5,8 @@
  */
 import { localized, tx } from '@unlease/core/i18n';
 
+import { placeLink } from './links';
+
 export type WeatherKind = 'clear' | 'cloudy' | 'fog' | 'rain' | 'snow' | 'storm';
 
 /** WMO's weather codes, grouped as people say them. */
@@ -43,7 +45,8 @@ export function weatherTries(places: readonly string[], home: string): string[] 
   const add = (place: string): void => {
     const clean = place.trim();
     const key = clean.toLocaleLowerCase();
-    if (!clean || seen.has(key)) return;
+    // A video call's address is no place on a map: never asked.
+    if (!clean || seen.has(key) || placeLink(clean)) return;
     seen.add(key);
     out.push(clean);
   };

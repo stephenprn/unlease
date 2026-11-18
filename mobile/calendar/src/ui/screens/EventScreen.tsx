@@ -21,7 +21,7 @@ import { eventColor } from '@unlease/calendar/services/colors';
 import { asksScope, type EditScope } from '@unlease/calendar/services/editing';
 import { deletedWords, relativeWhen, reminderWords, whenLine, zoneNote } from '@unlease/calendar/services/eventText';
 import { feedName } from '@unlease/calendar/services/holidays';
-import { linkParts } from '@unlease/calendar/services/links';
+import { linkParts, placeLink } from '@unlease/calendar/services/links';
 import { findOccurrence } from '@unlease/calendar/services/occurrences';
 import { today as todayOf } from '@unlease/calendar/services/time';
 import { describeRule, parseRule } from '@unlease/calendar/services/recurrence';
@@ -123,7 +123,9 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
   const seriesId = named?.recurringId ?? route.params.id;
   const at = named?.recurringId ? named.originalStart : (route.params.at ?? null);
   const occurrence = findOccurrence(events, seriesId, at);
-  const weather = useWeather(occurrence?.event.place ?? '', occurrence?.firstDay ?? '')?.day ?? null;
+  // A place that is a web address opens it: no map, no weather there.
+  const placeAddress = placeLink(occurrence?.event.place ?? '');
+  const weather = useWeather(placeAddress ? '' : (occurrence?.event.place ?? ''), occurrence?.firstDay ?? '')?.day ?? null;
 
   if (!occurrence || occurrence.event.deletedAt !== null) {
     return (
@@ -256,7 +258,29 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
                 <AppText variant="meta">{t('Clock’s alarms that ask for it stay quiet that day.')}</AppText>
               </Line>
             ) : null}
-            {event.place.trim() ? (
+            {placeAddress ? (
+              // A place that is a web address (a video call) opens it, never a map; a long press copies it.
+              <Line
+                icon="link"
+                label={t('{place}, open the link', { place: event.place.trim() })}
+                hint={t('A long press copies the link.')}
+                single
+                onPress={() => openEventLink(placeAddress)}
+                onLongPress={() => later(copyText(placeAddress).then(done => done && showSnack(t('Link copied'), undefined, { tone: 'success' })))}
+              >
+                <View style={styles.placeLine}>
+                  <AppText variant="body" numberOfLines={2} style={styles.shrink}>
+                    <AppText variant="bodyStrong" color={theme.color.link}>
+                      {linkParts(placeAddress).host}
+                    </AppText>
+                    <AppText variant="body" color={theme.color.inkMuted}>
+                      {linkParts(placeAddress).rest}
+                    </AppText>
+                  </AppText>
+                  <Icon name="external" size={16} color={theme.color.link} />
+                </View>
+              </Line>
+            ) : event.place.trim() ? (
               <Line
                 icon="mapPin"
                 label={maps ? t('{place}, open in {maps}', { place: event.place.trim(), maps: mapsChoiceName(maps) }) : t('{place}, open in maps', { place: event.place.trim() })}

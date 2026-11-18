@@ -3,7 +3,7 @@ import { CALENDAR_PREFS_DEFAULTS } from '@unlease/calendar/models/prefs';
 import { blankDraft } from '@unlease/calendar/services/editing';
 import { dayDistance, weekdayDay } from '@unlease/calendar/services/eventText';
 import { findOccurrence } from '@unlease/calendar/services/occurrences';
-import { addDays, today } from '@unlease/calendar/services/time';
+import { addDays, deviceZone, today, wallToInstant } from '@unlease/calendar/services/time';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 
 import { addEvent, createLabel, deleteEvent } from '../store/actions';
@@ -31,6 +31,9 @@ describe('the widgets’ pictures', () => {
     const schedule = schedulePayload(state, prefs, now);
     expect(schedule.days.map(each => each.day)).toEqual([tomorrow, addDays(day, 3)]);
     expect(schedule.days[0]!.items[0]).toMatchObject({ title: 'Dentiste', time: '09:00 – 10:00', place: 'Cabinet', open: `event/${id}?at=${encodeURIComponent(`${tomorrow}T09:00`)}` });
+    // The now line counts what has a time from its start; what takes the day has none.
+    expect(schedule.days[0]!.items[0]!.startAt).toBe(wallToInstant(`${tomorrow}T09:00`, deviceZone()));
+    expect(schedule.days[1]!.items[0]!.startAt).toBe(0);
 
     const month = monthPayload(state, prefs, now);
     const cells = month.months[0]!.weeks.flat();

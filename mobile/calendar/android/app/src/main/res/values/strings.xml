@@ -60,4 +60,26 @@
     <string name="shortcut_today_long">My day</string>
     <string name="shortcut_search_short">Search</string>
     <string name="shortcut_search_long">Search events</string>
+    <!-- The picker's previews: sample days. -->
+    <string name="widget_preview_day_today">Today · Mon 9 Nov</string>
+    <string name="widget_preview_day_tomorrow">Tomorrow · Tue 10 Nov</string>
+    <string name="widget_preview_tomorrow_line">Tomorrow · Train to Lyon</string>
+    <string name="widget_preview_now">Now · 9:00 – 10:00</string>
+    <string name="widget_preview_weather">12° · Sunny</string>
+    <string name="widget_preview_today_short">Monday 9</string>
+    <string name="widget_preview_lunch">Lunch with Camille</string>
+    <string name="widget_preview_lunch_time">12:30 – 13:45 · Café des Arts</string>
+    <string name="widget_preview_train">Train to Lyon</string>
+    <string name="widget_preview_train_time">7:45 – 8:15</string>
+    <string name="widget_preview_piano">Piano lesson</string>
+    <string name="widget_preview_piano_time">18:00 – 19:00</string>
+    <string name="widget_preview_place">Dr Martin’s practice</string>
+    <string name="widget_preview_month">November 2026</string>
+    <string name="widget_preview_weekday_1">M</string>
+    <string name="widget_preview_weekday_2">T</string>
+    <string name="widget_preview_weekday_3">W</string>
+    <string name="widget_preview_weekday_4">T</string>
+    <string name="widget_preview_weekday_5">F</string>
+    <string name="widget_preview_weekday_6">S</string>
+    <string name="widget_preview_weekday_7">S</string>
 </resources>

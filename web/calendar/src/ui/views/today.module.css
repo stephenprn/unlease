@@ -58,6 +58,42 @@
   background-color: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
+/*
+ * « Y aller » at a row's end: beside the row's link (a control never sits in another), laid over its
+ * end padding, its pebble 8 clear of the row's tint, its glyph in the second ink. The row keeps its
+ * tint while the pointer is on it, as the phone's row holds its button.
+ */
+.withEnd {
+  position: relative;
+}
+
+.withEnd > .row {
+  padding-right: 58px;
+}
+
+.withEnd > .rowEnd {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  --icon-ink: var(--ink-muted);
+  transform: translateY(-50%);
+}
+
+@media (hover: hover) {
+  .withEnd:has(> .rowEnd:hover) > .row {
+    background-color: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+@media (pointer: coarse) {
+  .withEnd > .row {
+    padding-right: 62px;
+  }
+  .withEnd > .rowEnd {
+    right: 10px;
+  }
+}
+
 .slot {
   display: flex;
   align-items: center;

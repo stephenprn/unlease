@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The now line among today's rows (« Planning », « Aujourd'hui »), as the app draws it: a red dot
+     centred on the rows' colour stripes, its line to where their words end. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/now"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="7.5dp"
+    android:paddingTop="3dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="3dp">
+
+    <ImageView
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/wgen_dot"
+        android:tint="@color/wgen_danger" />
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_weight="1"
+        android:background="@color/wgen_danger"
+        android:importantForAccessibility="no" />
+</LinearLayout>

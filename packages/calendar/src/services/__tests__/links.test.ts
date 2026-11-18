@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { relativeWhen } from '../eventText';
-import { cleanEventUrl, linkParts, readsAsEventUrl } from '../links';
+import { cleanEventUrl, directionsTo, linkParts, placeLink, readsAsEventUrl } from '../links';
 
 describe('an event’s link', () => {
   it('reads as a link once tidied, or not at all', () => {
@@ -21,6 +21,35 @@ describe('an event’s link', () => {
   it('reads as its site, then the rest of its address', () => {
     expect(linkParts('https://www.visitlisboa.com/')).toEqual({ host: 'visitlisboa.com', rest: '' });
     expect(linkParts('https://meet.example.org/abc-def?pwd=1')).toEqual({ host: 'meet.example.org', rest: '/abc-def?pwd=1' });
+  });
+});
+
+describe('the way to a place', () => {
+  it('leads to a place a map can find, on one line, never to a video call', () => {
+    expect(directionsTo('  12 rue des Lilas\n69003 Lyon ')).toBe('12 rue des Lilas 69003 Lyon');
+    expect(directionsTo('https://meet.example.org/abc-def')).toBe('');
+    expect(directionsTo('Zoom : https://zoom.example.org/j/123')).toBe('');
+    expect(directionsTo('   ')).toBe('');
+  });
+
+  it('never leads to a meeting held online, but to a place that only shares its name', () => {
+    for (const nowhere of ['Video call', 'Visio', 'Visioconférence', 'En ligne', 'Teams', 'Google Meet', 'Téléphone']) expect(directionsTo(nowhere)).toBe('');
+    expect(directionsTo('Zoom Café, Lyon')).toBe('Zoom Café, Lyon');
+  });
+});
+
+describe('a place that is a link', () => {
+  it('opens the address it holds', () => {
+    expect(placeLink('https://meet.google.com/abc-defg-hij')).toBe('https://meet.google.com/abc-defg-hij');
+    expect(placeLink('  meet.google.com/abc-defg-hij ')).toBe('https://meet.google.com/abc-defg-hij');
+    expect(placeLink('Zoom : https://zoom.us/j/123456789?pwd=x')).toBe('https://zoom.us/j/123456789?pwd=x');
+  });
+
+  it('leaves a place a map can find to the map', () => {
+    expect(placeLink('12 rue de la Paix, Paris')).toBeNull();
+    expect(placeLink('Salle 3')).toBeNull();
+    expect(placeLink('Visio')).toBeNull();
+    expect(placeLink('')).toBeNull();
   });
 });
 

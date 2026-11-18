@@ -14,6 +14,7 @@ import { t } from '@unlease/core/i18n';
 import { formatClock, plural } from '@unlease/core/services/format';
 import { LAYER_COLORS } from '@unlease/calendar/services/colors';
 import { birthdayTitle, clockWords, weekdayDay } from '@unlease/calendar/services/eventText';
+import { directionsTo } from '@unlease/calendar/services/links';
 import type { ReminderItem } from '@unlease/calendar/services/layers';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
 import { weatherKind } from '@unlease/calendar/services/weather';
@@ -33,6 +34,7 @@ import { useWeather } from '../../app/hooks/useWeather';
 import { usePrefsStore } from '../../app/store/prefs';
 import calendar from '../calendar.module.css';
 import { openDailyNote, useDailyNoteOffered } from '../features/dailyNote';
+import { DirectionsButton } from '../features/PlaceAndLink';
 import { paths } from '../routes';
 import styles from './today.module.css';
 
@@ -85,7 +87,7 @@ function Lead({ item }: { item: DayItem }) {
   );
 }
 
-/** One thing of the day: its mark, its title over its time (and place), what it says of now at its end. */
+/** One thing of the day: its mark, its title over its time (and place), what it says of now at its end, then « Y aller » for a place a map can find while it is not over. */
 const Row = memo(function Row({ row, day, now, today, twelveHours }: { row: DayRow; day: string; now: number; today: string; twelveHours: boolean }) {
   const item = row.item;
   const place = item.kind === 'event' ? item.occurrence.event.place.trim() : '';
@@ -94,8 +96,9 @@ const Row = memo(function Row({ row, day, now, today, twelveHours }: { row: DayR
   // A reminder's moment come is still to do (« Fait » in Carnet clears it): its time says so in danger ink.
   const due = item.kind === 'reminder' && row.state === 'past';
   const over = row.state === 'past' && !due;
+  const directions = item.kind === 'event' && !over ? directionsTo(item.occurrence.event.place) : '';
   return (
-    <li>
+    <li className={directions ? styles.withEnd : undefined}>
       <Link to={placeOf(item)} className={styles.row}>
         <span className={styles.slot} data-over={over || undefined}>
           <Lead item={item} />
@@ -113,6 +116,7 @@ const Row = memo(function Row({ row, day, now, today, twelveHours }: { row: DayR
         </span>
         {state ? <span className={`${styles.state} t-meta-strong`}>{state}</span> : null}
       </Link>
+      {directions ? <DirectionsButton place={directions} className={styles.rowEnd} /> : null}
     </li>
   );
 });

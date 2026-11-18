@@ -27,7 +27,7 @@ export function LabelScreen({ id }: { id: string }) {
     );
   }
   return (
-    <div className={styles.calendar}>
+    <div className={`${styles.calendar} ${styles.titled}`}>
       <PageHead title={label.name} />
       <ScheduleList from={today} days={DAYS} items={items} today={today} />
     </div>

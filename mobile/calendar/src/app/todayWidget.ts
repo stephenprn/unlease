@@ -62,6 +62,8 @@ export interface TodayPayload {
   readonly words: {
     /** What runs as the widget draws: « En cours ». */
     readonly now: string;
+    /** The now line among today's rows, read out: « Maintenant ». */
+    readonly nowLine: string;
     /** Nothing at all today. */
     readonly empty: string;
     /** All of today over. */
@@ -151,7 +153,7 @@ export function todayPayload(state: LibraryState, prefs: CalendarPrefs, now: num
       startAt: reminder.at,
       endAt: reminder.at,
     })),
-    words: { now: t('Happening now'), empty: t('Nothing planned today'), done: t('Nothing else today'), more: t('+{count}') },
+    words: { now: t('Happening now'), nowLine: t('Now'), empty: t('Nothing planned today'), done: t('Nothing else today'), more: t('+{count}') },
   };
 }
 
