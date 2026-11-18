@@ -96,7 +96,7 @@ jobs:
           ## Install or upgrade
 
           - **Server:** \`${IMAGE}:${VERSION}\` (amd64, arm64). A new server: download \`docker-compose.yml\` and \`example.env\` below, as [docs/SELF-HOSTING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/SELF-HOSTING.md) shows. An upgrade: set \`UNLEASE_VERSION=${VERSION}\` in \`.env\`, server first ([docs/UPGRADING.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/docs/UPGRADING.md)).
-          - **Android:** \`carnet-${GITHUB_REF_NAME}.apk\` (Carnet), \`pages-${GITHUB_REF_NAME}.apk\` (Pages), \`contacts-${GITHUB_REF_NAME}.apk\` (Contacts), \`agenda-${GITHUB_REF_NAME}.apk\` (Agenda) and \`clock-${GITHUB_REF_NAME}.apk\` (Clock) below, once the server runs this version. Install the ones whose apps your server runs; each one installed after the first reuses its connection.
+          - **Android:** \`carnet-${GITHUB_REF_NAME}.apk\` (Carnet), \`pages-${GITHUB_REF_NAME}.apk\` (Pages), \`contacts-${GITHUB_REF_NAME}.apk\` (Contacts), \`agenda-${GITHUB_REF_NAME}.apk\` (Agenda), \`clock-${GITHUB_REF_NAME}.apk\` (Clock) and \`wallet-${GITHUB_REF_NAME}.apk\` (Wallet) below, once the server runs this version. Install the ones whose apps your server runs; each one installed after the first reuses its connection.
           - **Checksums:** \`SHA256SUMS\` (\`sha256sum -c SHA256SUMS\`).
           EOF
       # A third party's action holding `contents: write`: pinned to a commit, not a tag that can move.

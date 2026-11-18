@@ -64,6 +64,7 @@ jobs:
           - { app: contacts, name: Contacts }
           - { app: calendar, name: Agenda }
           - { app: clock, name: Clock }
+          - { app: wallet, name: Wallet }
     defaults:
       run:
         working-directory: mobile/${{ matrix.app }}

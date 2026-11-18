@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 /** The phone apps of the suite, each its own install and its own APK. */
-const PHONE_APPS = ['mobile/notes', 'mobile/pages', 'mobile/contacts', 'mobile/calendar', 'mobile/clock'];
+const PHONE_APPS = ['mobile/notes', 'mobile/pages', 'mobile/contacts', 'mobile/calendar', 'mobile/clock', 'mobile/wallet'];
 const PACKAGES = ['package.json', 'server/package.json', 'web/package.json', ...PHONE_APPS.map(app => `${app}/package.json`)];
 const LOCKS = {
   'package-lock.json': ['', 'server', 'web'],

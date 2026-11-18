@@ -49,6 +49,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Fixed
 
+- Wallet's APK is built, checked and attached to each release (`wallet-vX.Y.Z.apk`) like the other apps'.
 - In the web apps, a dialog's buttons (« Enregistrer », « Annuler ») take the click again when a field has scrolled under them; before, the field behind took it.
 - Carnet's Note widget no longer shows an unticked item as ticked, nor leaves a grey square behind after a tap on an item; a note's colour, a card's spacing and a link's picture no longer stay on the widgets after they changed.
 - In Agenda, an event whose place is a web address (a Google Meet, Zoom or Teams link) opens that link, on Android and on the web, instead of searching for it in maps, and asks no weather for it.
