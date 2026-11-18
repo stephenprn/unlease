@@ -168,4 +168,5 @@ Java 17 for Gradle (`JAVA_HOME` pointing at a JDK 17). Generators run from the r
 
 ### Git
 
-- Never commit or push unless asked.
+- **Commit each change as soon as it is done and verified**, without waiting to be asked: a feature, a fix or anything else is its own commit (two unrelated changes, two commits), its message one line, `type: description` (feat, fix, design, docs, chore, refactor, test), no scope, body or trailers. Leave out what another piece of work in progress changed.
+- Never push unless asked.
