@@ -626,6 +626,8 @@ Per device, never synced (`Appearance`, `design/appearance.ts`), resolved for ea
 - While a layer is open the page holds still and the scrollbar's room becomes padding (`html[data-locked]`): nothing shifts and the scrim reaches the window's edge.
 
 **Web breakpoints.** Header row 64; the search strip caps at 760px (height 50).
+
+**Page widths (web).** Two, in every app (`--page-narrow` 760 and `--page-wide` 1120, `base.css`), so a page's right edge never wanders: narrow for what is read or filled in (Réglages, a contact, a form, Clock's alarms, Agenda's day), wide for what is laid out as many (a collection in every layout, the collections, the contacts, a calendar, Pages' home, Wallet's cards, a collection's facts). A page's head takes its body's width: its actions end where the body ends. Pages' document column (below) is its own, centred.
 - **Under 720px,** the phone layout: the search header heads the homes alone; every other page takes the phone's top bar (the ground, a back button, the title, its one action), pinned while the page scrolls; a page's title fades into the bar (150) only once its own has gone up under it. Carnet's bottom bar shows on the notes, Rappels and a label; it slides away while notes are picked (150, accelerate) and back (250, decelerate). Another page comes in whole with a 24px shift and a fade (250, decelerate), from the left going back.
 - **Under 900px** the header's action ("Classer un lien", "Nouvelle page") folds to its icon.
 - **From 1100px** a docked navigation column (264px) lists the app's places.

@@ -5,7 +5,7 @@
  */
 
 .screen {
-  max-width: 920px;
+  max-width: var(--page-wide);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
   display: flex;
   flex-direction: column;

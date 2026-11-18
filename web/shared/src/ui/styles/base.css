@@ -80,6 +80,14 @@
   --screen-top: 8px;
   --screen-side: 24px;
   --screen-foot: 120px;
+  /*
+   * The two widths a page takes, in every app, so its right edge never wanders from page to page:
+   * narrow for what is read or filled in (a form, a person, settings, the alarms), wide for what is
+   * laid out as many (a collection, the collections, the contacts, a calendar, the cards). A page's
+   * head always takes its body's width.
+   */
+  --page-narrow: 760px;
+  --page-wide: 1120px;
 }
 
 @media (max-width: 719px) {

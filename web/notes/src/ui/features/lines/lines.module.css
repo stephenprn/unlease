@@ -67,7 +67,7 @@
   grid-template-areas: 'mark text actions';
   align-items: start;
   column-gap: 20px;
-  max-width: 880px;
+  max-width: var(--page-wide);
   padding: 30px 24px 2px;
 }
 
@@ -117,13 +117,9 @@
 }
 
 .page {
-  max-width: 880px;
+  /* Every layout, rows too, on the head's width: switching layouts never moves the page's edge. */
+  max-width: var(--page-wide);
   padding: 20px 24px 120px;
-}
-
-/* Pictures and columns take a wider page than rows do. */
-.page:is([data-layout='gallery'], [data-layout='mosaic'], [data-layout='table']) {
-  max-width: 1120px;
 }
 
 /* The add strip, as on the phone: field paper cut like the search strip, edged in outline; matcha while typed in. */
@@ -233,7 +229,7 @@
 /* ── the Collections wall ─────────────────────────────────────────────────── */
 
 .collections {
-  max-width: 1040px;
+  max-width: var(--page-wide);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
 }
 

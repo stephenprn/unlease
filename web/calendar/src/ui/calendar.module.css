@@ -7,7 +7,7 @@
 /* ── a screen ─────────────────────────────────────────────────────────── */
 
 .screen {
-  max-width: 1080px;
+  max-width: var(--page-wide);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
   display: flex;
   flex-direction: column;
@@ -15,7 +15,7 @@
 }
 
 .narrowScreen {
-  max-width: 760px;
+  max-width: var(--page-narrow);
 }
 
 .lead {

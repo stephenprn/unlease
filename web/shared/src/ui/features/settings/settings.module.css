@@ -4,7 +4,7 @@
  */
 
 .page {
-  max-width: 760px;
+  max-width: var(--page-narrow);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
   display: flex;
   flex-direction: column;

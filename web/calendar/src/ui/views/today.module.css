@@ -13,7 +13,7 @@
 .column {
   display: flex;
   flex-direction: column;
-  max-width: 720px;
+  max-width: var(--page-narrow);
   margin: 0 auto;
   padding: 12px 0 32px;
 }

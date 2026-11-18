@@ -39,7 +39,7 @@
 
 .editor {
   container: template-editor / inline-size;
-  max-width: 1160px;
+  max-width: var(--page-wide);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
   display: flex;
   flex-direction: column;

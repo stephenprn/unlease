@@ -3052,7 +3052,7 @@ thead .rowEnd {
 
 /* The notes' frame (the board's): the create strip on the search strip's edge, then the sections. */
 .home {
-  max-width: 1040px;
+  max-width: var(--page-wide);
   padding: var(--screen-top) var(--screen-side) var(--screen-foot);
 }
 
