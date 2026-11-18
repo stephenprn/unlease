@@ -138,4 +138,6 @@ export const FR_WEB: Dictionary = {
   'Choose another photo…': 'Choisir une autre photo…',
   // The shortcuts dialog's rows (`CONTACTS_SHORTCUTS`).
   'Select up to this contact': 'Sélectionner jusqu’à ce contact',
+  // A merged contact's row in the bin (« Fusionné dans Camille Durand il y a 2 jours »).
+  'Merged into {name} {when}': 'Fusionné dans {name} {when}',
 };

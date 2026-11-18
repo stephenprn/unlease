@@ -96,11 +96,15 @@ export function setBirthdaySettings(patch: Partial<BirthdaySettings>): void {
 /** A group of duplicates by its people, whatever their order. */
 export const duplicateKey = (ids: readonly string[]): string => [...ids].sort().join(',');
 
-/** « Ignorer »: this group is not offered again on this phone (a new person joining it makes another group). */
-export function ignoreDuplicates(ids: readonly string[]): void {
-  const ignoredDuplicates = [...new Set([...useContactsUiStore.getState().ignoredDuplicates, duplicateKey(ids)])];
-  writePreference('contacts.ignoredDuplicates', ignoredDuplicates);
-  useContactsUiStore.setState({ ignoredDuplicates });
+/** « Ignorer »: this group is not offered again on this phone (a new person joining it makes another group); the undo offers it again. */
+export function ignoreDuplicates(ids: readonly string[]): () => void {
+  const key = duplicateKey(ids);
+  const save = (ignoredDuplicates: readonly string[]): void => {
+    writePreference('contacts.ignoredDuplicates', ignoredDuplicates);
+    useContactsUiStore.setState({ ignoredDuplicates });
+  };
+  save([...new Set([...useContactsUiStore.getState().ignoredDuplicates, key])]);
+  return () => save(useContactsUiStore.getState().ignoredDuplicates.filter(each => each !== key));
 }
 
 /** At most this many findings are remembered as set aside (the oldest go). */

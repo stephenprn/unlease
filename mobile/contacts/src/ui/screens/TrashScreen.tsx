@@ -1,6 +1,6 @@
 /**
  * The contacts in the bin, as every app's (Carnet's, the web's): a card each (`BinRow`) with when it
- * went there, opening the contact, « Restaurer » (undone from the slip) and « Supprimer
+ * went there (one a merge put there: into whom), opening the contact, « Restaurer » (undone from the slip) and « Supprimer
  * définitivement » (asked first); the bar's broom empties them all (asked first). The server empties
  * the bin itself after its retention.
  */
@@ -10,9 +10,11 @@ import { StyleSheet, View } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import { formatRelative, plural } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS } from '@unlease/contacts/models/contacts';
+import { resolveContact } from '@unlease/contacts/services/duplicates';
 import { contactName } from '@unlease/contacts/services/names';
 import { useContact, useTrashedContacts } from '@app/hooks/useContacts';
 import { deleteContactsForever, emptyContactsBin, restoreContacts } from '@app/store/actions';
+import { useLibraryStore } from '@app/store/libraryStore';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { showSnack } from '@shared/app/store/uiStore';
 
@@ -24,11 +26,14 @@ import type { ScreenProps } from '../navigation/types';
 
 function TrashedRow({ id, now, onOpen, onDelete }: { id: string; now: number; onOpen: (id: string) => void; onDelete: (id: string) => void }) {
   const contact = useContact(id);
+  // One a merge put here opens as the one kept: its line says into whom, so the press is no surprise.
+  const kept = useLibraryStore(s => (s.contacts[id]?.mergedInto ? resolveContact(s.contacts, id) : null));
   if (!contact) return null;
+  const when = formatRelative(contact.trashedAt ?? now, now);
   return (
     <BinRow
       title={contactName(contact)}
-      meta={t('Moved to the bin {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}
+      meta={kept && kept.id !== id ? t('Merged into {name} {when}', { name: contactName(kept), when }) : t('Moved to the bin {when}', { when })}
       leading={<ContactAvatar contact={contact} size={40} />}
       onOpen={() => onOpen(id)}
       onRestore={() => showSnack(t('Contact restored'), { label: t('Undo'), run: restoreContacts([id]) }, { tone: 'success' })}

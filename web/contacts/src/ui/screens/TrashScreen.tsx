@@ -8,11 +8,13 @@ import { memo, useRef, useState } from 'react';
 import { t } from '@unlease/core/i18n';
 import { formatRelative, plural } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS, type Contact } from '@unlease/contacts/models/contacts';
+import { resolveContact } from '@unlease/contacts/services/duplicates';
 import { contactName } from '@unlease/contacts/services/names';
 
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { useTrashedContacts } from '../../app/hooks/useContacts';
 import { deleteForever, emptyContactsBin, restoreContacts } from '../../app/store/actions';
+import { useContactsStore } from '../../app/store/library';
 import { showSnack, showUndo } from '@shared/app/store/ui';
 import { Confirm } from '@shared/ui/components/Dialog';
 import { EmptyState } from '@shared/ui/components/EmptyState';
@@ -27,15 +29,18 @@ import { paths } from '../routes';
 
 const BinRow = memo(function BinRow({ contact, now, onDelete }: { contact: Contact; now: number; onDelete: (id: string) => void }) {
   const name = contactName(contact);
+  // One merged into another says into whom: its address opens that one.
+  const kept = useContactsStore(s => (contact.mergedInto ? resolveContact(s.contacts, contact.id) : null));
+  const when = formatRelative(contact.trashedAt ?? now, now);
   return (
     <li className={styles.row} data-motion={contact.id}>
       <span className={styles.pick}>
         <Avatar contact={contact} size={40} />
       </span>
       <Link to={paths.contact(contact.id)} className={styles.rowLink} ariaLabel={name}>
-        <span className={styles.nameCell}>
+        <span className={`${styles.nameCell} ${styles.wide}`}>
           <span className={`${styles.cell} t-body-strong`}>{name}</span>
-          <span className={`${styles.cell} t-meta`}>{t('Moved to the bin {when}', { when: formatRelative(contact.trashedAt ?? now, now) })}</span>
+          <span className={`${styles.cell} t-meta`}>{kept && kept.id !== contact.id ? t('Merged into {name} {when}', { name: contactName(kept), when }) : t('Moved to the bin {when}', { when })}</span>
         </span>
       </Link>
       <span className={styles.rowEnd}>

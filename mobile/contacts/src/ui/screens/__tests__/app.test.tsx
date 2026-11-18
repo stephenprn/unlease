@@ -71,23 +71,21 @@ describe('Contacts, its root', () => {
 
   afterAll(unmountAll);
 
-  it('opens on the first run on a fresh install, a sibling’s connection offered in one tap', async () => {
+  it('opens on the first run on a fresh install, a sibling’s setup offered in one tap', async () => {
     suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://suite.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
     expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.clock']);
     expect(textOf(tree)).toContain('Contacts');
     await act(async () => {
-      pressables(tree, 'Utiliser la connexion de Pages')[0]!.props.onPress();
+      pressables(tree, 'Utiliser la configuration de Pages')[0]!.props.onPress();
     });
     await settle();
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://suite.test', token: 'jeton' });
     // The app's import is offered (« Vos données »), and can wait.
     expect(textOf(tree)).toContain('Vos données');
-    await act(async () => {
-      pressableWithText(tree, 'Plus tard').props.onPress();
-    });
-    await settle();
+    // Its look came with the sibling's setup: the import is the last step, and « Commencer » ends it.
+    expect(textOf(tree)).not.toContain('Apparence');
     await act(async () => {
       pressableWithText(tree, 'Commencer').props.onPress();
     });

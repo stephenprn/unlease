@@ -196,6 +196,11 @@ h3.letter::before {
   }
 }
 
+/* The same where the query is missing (Firefox): told by the list's script (`useStuckBands`). */
+.letter[data-stuck] .letterName {
+  border-bottom-color: var(--hairline);
+}
+
 .row {
   position: relative;
   min-height: 56px;
@@ -299,6 +304,11 @@ h3.letter::before {
 .sub {
   display: none;
   color: var(--ink-muted);
+}
+
+/* A row of words alone (the bin's): they take the link's whole width, never the name's column. */
+.nameCell.wide {
+  grid-column: 1 / -1;
 }
 
 .chips {
@@ -1175,6 +1185,12 @@ a.simpleRow:active {
 
 /* ── the duplicates ───────────────────────────────────────────────────── */
 
+/* A group's reasons, its title on the panel's content column (16 in: the panel's 6, then 10). */
+.detailsTitle {
+  margin: 0;
+  padding: 10px 10px 4px;
+}
+
 .twins {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
@@ -1245,11 +1261,12 @@ a.simpleRow:active {
 }
 
 /* The favourites as the phone's row of faces: each face over its first name, the row scrolling sideways when long. */
+/* A scroller clips what it holds: 4 of room on every side for a face's focus ring (2px, 2 out), given back by the margin. */
 .faces {
   display: flex;
   gap: 4px;
-  margin: 0;
-  padding: 0;
+  margin: -4px;
+  padding: 4px;
   overflow-x: auto;
   list-style: none;
   scrollbar-width: none;

@@ -4,7 +4,7 @@
  * (the first kept and completed, the others to the bin; the slip takes it back); « Ignorer » sets the
  * group aside on this device; « Tout fusionner » does every group shown.
  */
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 
 import { t, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -71,7 +71,21 @@ function merge(groups: readonly DuplicateGroup[]): void {
   showUndo(kept ? t('Merged into {name}', { name: contactName(kept) }) : t('{contacts} merged', { contacts: plural(merged, 'contact') }), undo);
 }
 
-function Group({ group }: { group: DuplicateGroup }) {
+/**
+ * A group merged or set aside leaves the page with the button just pressed: the keyboard's focus goes
+ * on to the next group's « Fusionner » (the one that took its place, else the last), or to the page
+ * once none is left, never back to the window's start.
+ */
+function focusOnAfter(screen: HTMLElement | null, index: number): void {
+  requestAnimationFrame(() => {
+    if (!screen || (document.activeElement && document.activeElement !== document.body && document.activeElement.isConnected)) return;
+    const merges = screen.querySelectorAll<HTMLElement>(`.${styles.groupTools} > :last-child`);
+    const next = merges[Math.min(index, merges.length - 1)] ?? screen.closest<HTMLElement>('main');
+    next?.focus({ preventScroll: true });
+  });
+}
+
+function Group({ group, onGone }: { group: DuplicateGroup; onGone: () => void }) {
   return (
     <OutlinedBox kind="panel" lift="card" className={`${styles.details} paper`} role="group" aria-label={reasonsLine(group.reasons)}>
       <p className={`${styles.detailsTitle} t-meta-strong`}>{reasonsLine(group.reasons)}</p>
@@ -81,10 +95,23 @@ function Group({ group }: { group: DuplicateGroup }) {
         ))}
       </ul>
       <div className={styles.groupTools}>
-        <Button kind="text" onClick={() => dismissDuplicates(group.ids)}>
+        <Button
+          kind="text"
+          onClick={() => {
+            dismissDuplicates(group.ids);
+            onGone();
+          }}
+        >
           {t('Ignore')}
         </Button>
-        <Button kind="tonal" icon="people" onClick={() => merge([group])}>
+        <Button
+          kind="tonal"
+          icon="people"
+          onClick={() => {
+            merge([group]);
+            onGone();
+          }}
+        >
           {t('Merge')}
         </Button>
       </div>
@@ -94,16 +121,28 @@ function Group({ group }: { group: DuplicateGroup }) {
 
 export function DuplicatesScreen() {
   const groups = useDuplicates();
+  const screen = useRef<HTMLDivElement>(null);
   return (
-    <div className={`${styles.screen} ${styles.narrowScreen}`}>
+    <div ref={screen} className={`${styles.screen} ${styles.narrowScreen}`}>
       <div>
-        <PageHead title={t('Duplicates')} action={groups.length > 1 ? { icon: 'people', label: t('Merge all'), onClick: () => merge(groups) } : undefined} />
+        <PageHead title={t('Duplicates')} action={
+            groups.length > 1
+              ? {
+                  icon: 'people',
+                  label: t('Merge all'),
+                  onClick: () => {
+                    merge(groups);
+                    focusOnAfter(screen.current, 0);
+                  },
+                }
+              : undefined
+          } />
         {groups.length > 0 ? <p className={`${styles.count} t-meta`}>{t('Contacts with the same email, number or name. Merging keeps the first, completes it with what the others have besides, and moves the others to the bin.')}</p> : null}
       </div>
       {groups.length === 0 ? (
         <EmptyState scene="label" title={t('No duplicates')} text={t('Everyone appears once. After an import, come back here: duplicate contacts gather here.')} />
       ) : (
-        groups.map(group => <Group key={group.ids.join(',')} group={group} />)
+        groups.map((group, index) => <Group key={group.ids.join(',')} group={group} onGone={() => focusOnAfter(screen.current, index)} />)
       )}
     </div>
   );

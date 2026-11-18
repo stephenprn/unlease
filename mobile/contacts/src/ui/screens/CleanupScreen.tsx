@@ -108,6 +108,9 @@ function Value({ shown, other, side, off }: { shown: Shown; other: Shown | null;
   );
 }
 
+/** The face and name stand 32 high: their press reaches the 48 a finger needs, above and below. */
+const WHO_SLOP = { top: 8, bottom: 8 };
+
 function FindingRow({ finding, ticked, first, onToggle, onEdit, onOpen }: { finding: CleanupFinding; ticked: boolean; first: boolean; onToggle: (key: string) => void; onEdit: (id: string) => void; onOpen: (id: string) => void }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
@@ -129,7 +132,7 @@ function FindingRow({ finding, ticked, first, onToggle, onEdit, onOpen }: { find
         </View>
       )}
       <View style={styles.column}>
-        <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(contact.id)} style={styles.who} accessibilityRole="link" accessibilityLabel={name}>
+        <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(contact.id)} hitSlop={WHO_SLOP} style={styles.who} accessibilityRole="link" accessibilityLabel={name}>
           <ContactAvatar contact={contact} size={28} />
           <AppText variant="bodyStrong" numberOfLines={1} style={styles.name}>
             {name}

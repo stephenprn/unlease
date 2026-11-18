@@ -135,6 +135,7 @@ export const FR_PHONE: Dictionary = {
 
   // The bin
   'Moved to the bin {when}': 'Mis à la corbeille {when}',
+  'Merged into {name} {when}': 'Fusionné avec {name} {when}',
   'Delete forever?': 'Supprimer définitivement ?',
   // The widgets
   'Call {name}': 'Appeler {name}',
@@ -163,10 +164,8 @@ export const FR_PHONE: Dictionary = {
   // Duplicates
   'Duplicates': 'Doublons',
   'Merging keeps the first, completes it with what the others have besides, and moves the others to the bin.': 'La fusion garde le premier, le complète avec ce que les autres ont en plus, et met les autres à la corbeille.',
-  'Same email': 'Même e-mail',
-  'Same number': 'Même numéro',
-  'Same name': 'Même nom',
   'Kept': 'Gardé',
+  'These duplicates won’t be offered again on this phone': 'Ces doublons ne seront plus proposés sur ce téléphone',
   'Merged into {name}': 'Fusionnés en {name}',
   'Ignore': 'Ignorer',
   'Merge': 'Fusionner',

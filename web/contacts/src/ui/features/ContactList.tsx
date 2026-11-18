@@ -5,7 +5,7 @@
  * each group when the list is long enough to look one up. A face is the box that picks its row,
  * under a pointer and while a pick is on; the selection bar acts on what is picked.
  */
-import { memo, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import type { Contact } from '@unlease/contacts/models/contacts';
@@ -129,6 +129,37 @@ function SectionRows({ section, order, picking }: { section: ListSection; order:
   );
 }
 
+/**
+ * A letter's band draws its hairline once its people run on under it (`scroll-state(stuck)` in the
+ * stylesheet). A browser without that query (Firefox) is told from the page's scrolling: a band is
+ * held when its group's top has gone above it, and wears `data-stuck` while it is.
+ */
+function useStuckBands(root: RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    if (typeof CSS === 'undefined' || CSS.supports('container-type', 'scroll-state')) return;
+    let frame = 0;
+    const measure = (): void => {
+      frame = 0;
+      for (const band of root.current?.querySelectorAll<HTMLElement>(`.${styles.letter}`) ?? []) {
+        const group = band.parentElement;
+        const stuck = !!group && group.getBoundingClientRect().top < band.getBoundingClientRect().top - 0.5;
+        if (stuck !== (band.dataset.stuck !== undefined)) band.toggleAttribute('data-stuck', stuck);
+      }
+    };
+    const schedule = (): void => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [root]);
+}
+
 /** More contacts than this coming or going at once (a whole pick binned, an import): the list just changes. */
 const MOVING_AT_MOST = 40;
 
@@ -140,6 +171,7 @@ export function ContactList({ sections }: { sections: readonly ListSection[] }) 
   const root = useRef<HTMLDivElement>(null);
   // A contact deleted, unstarred from the favourites or binned with others fades where it was, the rest (and the letters) close ranks; one put back settles in. A search typed, another order or another list is drawn anew.
   useListMotion(root, { scene: `${query}|${order}|${sections.map(section => section.id).join(',')}`, most: MOVING_AT_MOST, late: true });
+  useStuckBands(root);
   return (
     <div ref={root} className={styles.lists}>
       {shown.map((section, index) => (

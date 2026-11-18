@@ -2,11 +2,12 @@
  * « Doublons » (Google's « Fusionner et corriger »): the contacts that are surely one person, each
  * group with why (the same e-mail, number or name). « Fusionner » keeps the most complete, gives it
  * what the others held, and puts them in the bin pointing at it, in one batch, undone from the slip;
- * « Ignorer » sets the group aside on this phone; « Tout fusionner », in the bar, does every group (as
+ * « Ignorer » sets the group aside on this phone (the slip offers it again); « Tout fusionner », in the bar, does every group (as
  * on the web).
  */
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t, tx } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
@@ -28,11 +29,17 @@ import { SHAPES } from '@unlease/design/shapes';
 import { ContactAvatar } from '../features/contacts/ContactAvatar';
 import type { ScreenProps } from '../navigation/types';
 
+// The web's words: « Même e-mail · même numéro », one sentence, its first letter up.
 const REASONS: Readonly<Record<DuplicateReason, string>> = {
-  email: tx('Same email'),
-  phone: tx('Same number'),
-  name: tx('Same name'),
+  email: tx('same email'),
+  phone: tx('same number'),
+  name: tx('same name'),
 };
+
+function reasonsLine(reasons: readonly DuplicateReason[]): string {
+  const line = reasons.map(reason => t(REASONS[reason])).join(' · ');
+  return line.charAt(0).toUpperCase() + line.slice(1);
+}
 
 function Member({ id, kept, onOpen }: { id: string; kept: boolean; onOpen: (id: string) => void }) {
   const styles = useThemedStyles(makeStyles);
@@ -41,8 +48,10 @@ function Member({ id, kept, onOpen }: { id: string; kept: boolean; onOpen: (id: 
   if (!contact) return null;
   const name = contactName(contact);
   const detail = [workLine(contact), contact.phones[0]?.number, contact.emails[0]?.address].filter(Boolean).join(' · ');
+  // TalkBack reads the whole row: who, what tells them apart, and the one the merge keeps.
+  const said = [name, detail, kept ? t('Kept') : ''].filter(Boolean).join(', ');
   return (
-    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(id)} style={styles.member} accessibilityRole="link" accessibilityLabel={name}>
+    <Tappable unstable_pressDelay={listPressDelay} onPress={() => onOpen(id)} style={styles.member} accessibilityRole="link" accessibilityLabel={said}>
       <ContactAvatar contact={contact} size={40} />
       <View style={styles.fill}>
         <AppText variant="bodyStrong" numberOfLines={1}>
@@ -71,16 +80,21 @@ function Group({ group, onOpen }: { group: DuplicateGroup; onOpen: (id: string) 
     const undo = mergeDuplicates(keep, group.ids);
     if (undo) showSnack(t('Merged into {name}', { name }), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
+  // Set aside on this phone for good: the slip offers it again.
+  const ignore = (): void => {
+    const undo = ignoreDuplicates(group.ids);
+    showSnack(t('These duplicates won’t be offered again on this phone'), { label: t('Undo'), run: undo });
+  };
   return (
     <Organic outline="card" style={styles.group}>
       <AppText variant="meta" style={styles.reasons}>
-        {group.reasons.map(reason => t(REASONS[reason])).join(' · ')}
+        {reasonsLine(group.reasons)}
       </AppText>
       {group.ids.map(id => (
         <Member key={id} id={id} kept={id === keep} onOpen={onOpen} />
       ))}
       <View style={styles.buttons}>
-        <Button label={t('Ignore')} kind="text" onPress={() => ignoreDuplicates(group.ids)} />
+        <Button label={t('Ignore')} kind="text" onPress={ignore} />
         <Button label={t('Merge')} icon="people" kind="tonal" onPress={merge} />
       </View>
     </Organic>
@@ -91,6 +105,7 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const groups = useDuplicates();
+  const insets = useSafeAreaInsets();
   const open = (id: string): void => navigation.navigate('Contact', { id });
   // Every group at once, one slip that takes them all back.
   const mergeAll = (): void => {
@@ -105,7 +120,7 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
       <EdgeFlatList
         data={groups}
         keyExtractor={group => group.ids.join(',')}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}
         ListHeaderComponent={
           // Why each group is here is its own first line (« Même e-mail »): the notice says only what merging does.
           groups.length > 0 ? (
@@ -126,7 +141,8 @@ export function DuplicatesScreen({ navigation }: ScreenProps<'Duplicates'>) {
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
-    content: { padding: 12, paddingBottom: 48, gap: 12 },
+    // The gesture bar's room inside the list's end, as the bin's.
+    content: { padding: 12, gap: 12 },
     notice: { paddingHorizontal: 4, paddingBottom: 4 },
     group: { paddingVertical: 8, backgroundColor: theme.color.paper },
     reasons: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
