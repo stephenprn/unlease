@@ -1,53 +1,70 @@
 /**
- * The address the caret stands on in a note (the body's `linkAtCaret`, an item's `onLinkAtCaret`), as
- * the first row of the editor's footer: a field cannot open what it holds, so this row does, in the
- * browser (or the app the address belongs to). It draws the footer's edge (`footEdge`), comes and goes
- * with the caret, and its address is cut to one line (no underline: the line may be cut).
+ * What the caret stands on in a note (an address: the body's `linkAtCaret`, an item's `onLinkAtCaret`;
+ * a mention: the body's `mentionAtCaret`), as a chip in the middle of the editor's bar, where the date
+ * or the history's pair sits: a field cannot open what it holds, so this chip does. It takes their
+ * place in place, the bar's height and its buttons left where they were, so nothing moves as the
+ * caret walks through the words. Its words are cut to one line (no underline: the line may be cut).
  */
 import React from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Linking, StyleSheet } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { prettyUrl } from '@unlease/core/services/url';
+import { withAlpha } from '@unlease/design/color';
 import { SHAPES } from '@unlease/design/shapes';
+import type { GlyphName } from '@unlease/design/glyphs';
 import { showSnack } from '@shared/app/store/uiStore';
 
-import { AppText, footEdge, Icon, Tappable } from '../../components';
-import { accelerate, decelerate, duration } from '@shared/ui/theme/motion';
+import { AppText, Icon, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
-const ROW_IN = FadeIn.duration(duration.short).easing(decelerate);
-const ROW_OUT = FadeOut.duration(duration.short).easing(accelerate);
+interface CaretChipProps {
+  readonly icon: GlyphName;
+  readonly text: string;
+  readonly label: string;
+  readonly onPress: () => void;
+  readonly role?: 'link' | 'button';
+}
 
-export function CaretLink({ href }: { readonly href: string }) {
+/** A chip in the bar's middle: a glyph and one line, in the link's ink. */
+export function CaretChip({ icon, text, label, onPress, role = 'button' }: CaretChipProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  return (
+    <Tappable onPress={onPress} accessibilityRole={role} accessibilityLabel={label} hitSlop={4} style={styles.chip}>
+      <Icon name={icon} size={18} color={theme.color.link} />
+      <AppText variant="label" color={theme.color.link} numberOfLines={1} style={styles.words}>
+        {text}
+      </AppText>
+    </Tappable>
+  );
+}
+
+/** The address the caret stands on: a tap away from the browser (or the app the address belongs to). */
+export function CaretLink({ href }: { readonly href: string }) {
   const shown = prettyUrl(href, 120);
   const open = (): void => {
     Linking.openURL(href).catch(() => showSnack(t('Couldn’t open this link'), undefined, { tone: 'error' }));
   };
-  return (
-    <Animated.View entering={ROW_IN} exiting={ROW_OUT} style={styles.foot}>
-      <Tappable onPress={open} accessibilityRole="link" accessibilityLabel={t('Open {address}', { address: shown })} style={styles.row}>
-        <Icon name="external" size={20} color={theme.color.link} />
-        <View style={styles.fill}>
-          <AppText variant="label" color={theme.color.link} numberOfLines={1}>
-            {shown}
-          </AppText>
-        </View>
-      </Tappable>
-    </Animated.View>
-  );
+  return <CaretChip icon="external" text={shown} label={t('Open {address}', { address: shown })} onPress={open} role="link" />;
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    // The footer's first row: its edge on top, its press 6 in and 2 off the edge, as a list row's.
-    foot: { paddingHorizontal: 6, paddingVertical: 2, ...footEdge(theme) },
-    // The glyph on the bar's first button's (its centre 28 from the screen's edge).
-    row: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 12, paddingRight: 16, ...corners(SHAPES.tab) },
-    fill: { flex: 1 },
+    // 40 high (48 under a finger), as wide as its words up to the bar's middle, the tab's corners and a wash of the link's ink.
+    chip: {
+      flexShrink: 1,
+      minHeight: 40,
+      maxWidth: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingLeft: 12,
+      paddingRight: 14,
+      backgroundColor: withAlpha(theme.color.link, theme.mode === 'dark' ? 0.12 : 0.08),
+      ...corners(SHAPES.tab),
+    },
+    words: { flexShrink: 1 },
   });

@@ -652,7 +652,6 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
               <EventsMentioning type="note" id={id} className={styles.events} />
               </div>
             </div>
-            {caretHref ? <CaretLink href={caretHref} /> : null}
             {/* What the note wears, at its foot above the bar that changes it, as on its card: never lost mid-sheet or after the ticked items. */}
             {chipped ? (
               <div className={styles.chips}>
@@ -690,7 +689,8 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                   forever
                 )}
                 {/* The date, until something is done to the note: then « Annuler » and « Rétablir » in its place, as on the phone. */}
-                {history.started ? <span className={styles.steps}>{steps}</span> : edited}
+                {/* The address the caret stands on takes the middle while it is there: the bar keeps its height and its buttons. */}
+                {caretHref ? <CaretLink href={caretHref} /> : history.started ? <span className={styles.steps}>{steps}</span> : edited}
                 {editable ? moreButton : <span className={styles.barEnd} aria-hidden="true" />}
               </div>
             ) : (
@@ -709,7 +709,7 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
                 ) : (
                   forever
                 )}
-                {edited}
+                {caretHref ? <CaretLink href={caretHref} /> : edited}
                 <Button kind="text" onClick={close}>
                   {t('Close')}
                 </Button>

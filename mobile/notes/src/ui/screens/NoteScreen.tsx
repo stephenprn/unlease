@@ -48,7 +48,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { AppText, Button, Dialog, EdgeScrollView, EmptyState, footEdge, Grain, Ground, IconButton, LabelMark, ListRow, Menu, MentionSuggestions, Sheet, Tappable, TopBar, Icon } from '../components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
 import { useKeyboardVisible } from '@shared/ui/components/useKeyboardVisible';
-import { CaretLink } from '../features/note/CaretLink';
+import { CaretChip, CaretLink } from '../features/note/CaretLink';
 import { ChecklistEditor } from '../features/note/ChecklistEditor';
 import { FormatBar } from '../features/note/FormatBar';
 import { NoteColorSheet } from '../features/note/NoteColorSheet';
@@ -218,6 +218,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
   const noteLabels = note.labelIds.map(lid => labels[lid]).filter(l => !!l && l.deletedAt === null);
   const chipsShown = !keyboard && (note.reminderAt !== null || noteLabels.length > 0 || note.contactIds.length > 0);
   const caretLink = note.kind === 'text' ? body.linkAtCaret : note.kind === 'checklist' ? itemLink : null;
+  const caretMention = note.kind === 'text' ? body.mentionAtCaret : null;
   const formatting = note.kind === 'text' && editable ? body.range : null;
 
   /** Saves what is typed; true when the note is empty, so leaving discards it and there is nothing to undo. */
@@ -367,11 +368,9 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             {/* The events that mention the note, in Agenda. */}
             {keyboard ? null : <EventsMentioning type="note" id={id} />}
           </EdgeScrollView>
-          {/* The address the caret stands on: the footer's first row, a tap away from the browser. */}
-          {caretLink ? <CaretLink href={caretLink} /> : null}
           {/* What the note wears, at its foot above the bar that changes it, as on its card (aside while typing): the two are one footer, its edge on top. */}
           {chipsShown ? (
-            <View style={[styles.chips, caretLink ? styles.edgeless : null]}>
+            <View style={styles.chips}>
               {note.reminderAt !== null ? (
                 <Tappable onPress={() => openSheet('reminder')} disabled={!editable} ownDisabled hitSlop={CHIP_SLOP} style={[styles.chip, CHIP, { borderColor: theme.color.outline }]} accessibilityLabel={t('Edit the reminder')}>
                   <Icon name="bell" size={16} color={note.reminderAt < now ? theme.color.danger : theme.color.inkMuted} />
@@ -396,7 +395,7 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             />
           ) : null}
           {/* Lifted onto the keyboard, the bar is already clear of the gesture bar: no second inset. */}
-          <View style={[chipsShown || caretLink ? null : styles.toolbarEdge, { paddingBottom: keyboard ? 0 : insets.bottom }]}>
+          <View style={[chipsShown ? null : styles.toolbarEdge, { paddingBottom: keyboard ? 0 : insets.bottom }]}>
             {/* Words selected in the text: the bar turns into their formatting in place, and back once nothing is selected. */}
             <View style={styles.toolbarSlot}>
               <LayoutAnimationConfig skipEntering>
@@ -408,13 +407,6 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                   <Animated.View key="note" entering={BAR_IN} exiting={BAR_OUT} style={styles.toolbarRow}>
                     {editable ? (
                       <>
-                        {body.mentionAtCaret?.type === 'event' ? (
-                          // The caret on an event: a tap away in Agenda.
-                          <IconButton icon="calendar" label={t('Open {name} in {app}', { name: mentionName(body.mentionAtCaret), app: APPS.calendar.name })} onPress={() => openInApp('calendar', eventPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
-                        ) : body.mentionAtCaret ? (
-                          // The caret on a mention: its person, a tap away in Contacts.
-                          <IconButton icon="person" label={t('Open {name} in {app}', { name: mentionName(body.mentionAtCaret), app: APPS.contacts.name })} onPress={() => openInApp('contacts', contactPlace(body.mentionAtCaret!.id)).catch(() => undefined)} shape={2} />
-                        ) : null}
                         <IconButton icon="plus" label={t('Add')} onPress={() => openSheet('add')} shape={0} />
                         <IconButton icon="palette" label={t('Colour and paper')} onPress={() => openSheet('color')} shape={1} />
                         <IconButton icon="tag" label={tc('notes', 'Labels')} onPress={() => openSheet('labels')} shape={2} />
@@ -423,9 +415,24 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
                       // In the bin nothing is edited: the note comes back (the banner) or goes for good.
                       <IconButton icon="trash" label={t('Delete forever')} onPress={() => setConfirmForever(true)} shape={0} />
                     )}
-                    {/* The date, until something is done to the note: then « Annuler » and « Rétablir » take its place for the session, as in Keep, each disabled at its end of the history. */}
+                    {/* The date, until something is done to the note: then « Annuler » and « Rétablir » take its place for the session, as in Keep, each disabled at its end of the history.
+                        What the caret stands on (an address, a mention) takes the middle while it is there: the bar keeps its height and its buttons, so nothing jumps. */}
                     <View style={styles.middle}>
-                      {history.started ? (
+                      {caretMention && editable ? (
+                        <Animated.View key="mention" entering={BAR_IN} exiting={BAR_OUT} style={styles.middleRow}>
+                          {caretMention.type === 'event' ? (
+                            // The caret on an event: a tap away in Agenda.
+                            <CaretChip icon="calendar" text={mentionName(caretMention)} label={t('Open {name} in {app}', { name: mentionName(caretMention), app: APPS.calendar.name })} onPress={() => openInApp('calendar', eventPlace(caretMention.id)).catch(() => undefined)} />
+                          ) : (
+                            // The caret on a mention: its person, a tap away in Contacts.
+                            <CaretChip icon="person" text={mentionName(caretMention)} label={t('Open {name} in {app}', { name: mentionName(caretMention), app: APPS.contacts.name })} onPress={() => openInApp('contacts', contactPlace(caretMention.id)).catch(() => undefined)} />
+                          )}
+                        </Animated.View>
+                      ) : caretLink ? (
+                        <Animated.View key="link" entering={BAR_IN} exiting={BAR_OUT} style={styles.middleRow}>
+                          <CaretLink href={caretLink} />
+                        </Animated.View>
+                      ) : history.started ? (
                         <Animated.View key="history" entering={BAR_IN} exiting={BAR_OUT} style={styles.middleRow}>
                           <IconButton icon="undo" label={t('Undo')} shape={3} disabled={!history.canUndo} onPress={history.undo} />
                           <IconButton icon="undo" label={t('Redo')} shape={0} disabled={!history.canRedo} onPress={history.redo} style={styles.mirrored} />
@@ -595,14 +602,12 @@ const makeStyles = (theme: Theme) =>
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, ...footEdge(theme) },
     chip: { minHeight: 40, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 6 },
     toolbarEdge: footEdge(theme),
-    // Under the caret's address, which draws the footer's edge.
-    edgeless: { borderTopWidth: 0 },
     // The note's actions and the selection's formatting take turns in it, laid over each other while one fades into the other.
     toolbarSlot: { height: 56 },
     toolbarRow: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
     // Between the bar's two groups: the date, or the history's pair, one fading into the other in place.
     middle: { flex: 1, alignSelf: 'stretch' },
-    middleRow: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+    middleRow: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
     edited: { flex: 1, textAlign: 'center' },
     // « Rétablir » is undo's glyph, mirrored.
     mirrored: { transform: [{ scaleX: -1 }] },

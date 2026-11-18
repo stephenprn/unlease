@@ -212,26 +212,48 @@
 }
 
 /*
- * The address the caret stands on (`CaretLink`): a row over the note's foot, in link ink, its address
- * cut to one line, the shorter way (Ctrl+click) said quietly at its end where a key can be held.
+ * The address the caret stands on (`CaretLink`): a chip in the bar's middle, in the date's place,
+ * as wide as its words up to the room there, washed in link ink and cut to one line.
  */
+.caretSlot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 4px;
+  animation: caret-in var(--duration-short) var(--ease-decelerate);
+}
+
+@keyframes caret-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .caretLink {
-  flex: none;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin: 2px 8px 0;
-  padding: 0 12px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
   border-radius: var(--cut-tab);
+  background: color-mix(in srgb, var(--link) 9%, transparent);
   color: var(--link);
   text-decoration: none;
   transition: background-color var(--duration-short) var(--ease-standard);
 }
 
+@media (pointer: coarse) {
+  .caretLink {
+    min-height: 40px;
+  }
+}
+
 @media (hover: hover) {
   .caretLink:hover {
-    background: color-mix(in srgb, var(--link) 8%, transparent);
+    background: color-mix(in srgb, var(--link) 14%, transparent);
   }
 
   .caretLink:hover .caretLinkUrl {
@@ -241,11 +263,7 @@
 }
 
 .caretLink:active {
-  background: color-mix(in srgb, var(--link) 14%, transparent);
-}
-
-.caretLink:focus-visible {
-  outline-offset: -2px;
+  background: color-mix(in srgb, var(--link) 18%, transparent);
 }
 
 .caretLinkGlyph {
@@ -259,16 +277,9 @@
   white-space: nowrap;
 }
 
-.caretLinkHint {
-  flex: none;
-  margin-left: auto;
-  padding-left: 8px;
-  color: var(--ink-muted);
-}
-
-@media not ((hover: hover) and (pointer: fine)) {
-  .caretLinkHint {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .caretSlot {
+    animation: none;
   }
 }
 

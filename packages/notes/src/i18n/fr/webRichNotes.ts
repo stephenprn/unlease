@@ -5,7 +5,7 @@ export const FR_WEB_RICH_NOTES: Dictionary = {
   'Clear formatting': 'Effacer la mise en forme',
   // The address the caret stands on, in a row over the note's foot.
   'Open {address}': 'Ouvrir {address}',
-  'or {key}+click the link': 'ou {key}+clic sur le lien',
+  '{key}+click on a link opens it at once': '{key}+clic sur un lien l’ouvre directement',
   // A person mentioned with « @ »
   'Mention a contact': 'Mentionner un contact',
   'No contact goes by that name.': 'Aucun contact ne s’appelle ainsi.',
