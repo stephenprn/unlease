@@ -9,7 +9,7 @@ related_targets: ["docs/images","web/scripts/readme-images.mjs"]
 
 Scope: the repository's README and its pictures (`docs/images/`, made by `web/scripts/readme-images.mjs`). Mode: Read, with a Persuade opening (the README is the project's front page).
 
-Audience: self-hosters weighing a Google replacement; they decide in one screen whether to try the demo or install. Job: see the four apps, understand that they are one suite on one server, trust where the data goes, and install. Proof: real screens from the demo, its synthetic data (Léa Martin, the Lisbon trip, Carnet's reminders); claims only from docs (PRIVACY.md, SELF-HOSTING.md).
+Audience: self-hosters weighing a Google replacement; they decide in one screen whether to try the demo or install. Job: see the apps, understand that they are one suite on one server, trust where the data goes, and install. Proof: real screens from the demo, its synthetic data (Léa Martin, the Lisbon trip, Carnet's reminders); claims only from docs (PRIVACY.md, SELF-HOSTING.md).
 
 Constraints: GitHub strips CSS and inline SVG, so every picture is an image, in light and dark through `<picture>`; on GitHub's own backgrounds so no edge shows; relative paths; English.
 

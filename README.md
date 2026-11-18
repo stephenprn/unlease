@@ -68,7 +68,7 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 - **Notes and checklists**, Keep's way: a wall of cards, pinned and archived, labels, colours and papers, reminders, photos, drawings, undo and a bin. Moves in from a Google Keep export (Takeout).
 - **Collections of links**: share a link from any app, or paste it, and Claude writes what matters (title, price, key facts, its pictures kept) and files it in the right collection, so your lists stay useful after the pages disappear.
 - **Modules on links**, switched on per collection: promo codes, the same item cheaper elsewhere or second-hand, a recipe for N people with its shopping list and a cook mode, ratings, a series' recap up to where you stopped, the way to a place, a copy of an article kept as a page in Pages, a question to Claude.
-- **On Android**: the share sheet, with your collections in its first row; « Note in Carnet » on any selected text; shortcuts on the icon and a Quick Settings tile for a new note; five home-screen widgets; reminders that ring on time.
+- **On Android**: the share sheet, with your collections in its first row; « Note in Carnet » on any selected text; shortcuts on the icon and a Quick Settings tile for a new note; six home-screen widgets, among them a label's lists to tick and add to from the home screen; reminders that ring on time.
 
 </details>
 
@@ -147,7 +147,7 @@ Unlease is five apps you run yourself, in place of Google's: **Carnet** for Keep
 | On the web | `/notes` | `/pages` | `/agenda` | `/contacts` | `/clock` (to edit; alarms ring on the phone) |
 | On Android | `carnet-vX.Y.Z.apk` | `pages-vX.Y.Z.apk` | `agenda-vX.Y.Z.apk` | `contacts-vX.Y.Z.apk` | `clock-vX.Y.Z.apk` |
 | Without a server | ✓ | ✓ | ✓ | ✓ | ✓ (no weather) |
-| Home-screen widgets | 5 | – | 5 | 2 | – |
+| Home-screen widgets | 6 | – | 5 | 2 | – |
 | Moves in from | Google Keep (Takeout) | – | Google Calendar (iCalendar) | Google Contacts (vCard, CSV), the phone | – |
 | With Claude | reads and files links | answers about your pages | answers about your week | – | – |
 

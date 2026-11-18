@@ -4,6 +4,61 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Added
+
+- Carnet on Android has a sixth widget, **A label's lists**, made to keep tasks on the home screen: choose a label as you place it, then pick which of its lists (or notes) it shows from the widget's own head, as in Google Tasks; the head also makes a new list wearing the label, or switches to another label. Its items tick right there, « + » adds items, and the pen opens the list in the app.
+- Clock on Android has a widget, **Next alarm**: when your next alarm rings and, on a taller widget, the first event of that morning and how long after the alarm it starts, in saffron when it leaves too little time to get ready. It follows a snooze and an alarm ringing, keeps right with the app closed, and « + » sets a new alarm. It fits one cell, one row or a larger square.
+- Clock on Android can search your alarms by label or time, with the settings the words name and the sync dot, as the other apps do.
+- Carnet's Note widget adds items to a list from the home screen: « + » in its head opens a field over the home screen, the app staying closed; type an item, then the next one, and they show on the widget at once.
+- An Agenda reminder whose event has a place has a **Get there** button: on Android it opens the event and the way there in the maps app you chose in Settings (or asks which one), and takes the reminder off the screen; in the browser it opens the way there in Google Maps. A place that is a web address or only says the meeting is online (« Video call », « Teams »…) has none.
+- Agenda's Planning and My day show a directions button at the end of each event that has a place and is not over, on Android (in your chosen maps app) and on the web (Google Maps, OpenStreetMap, or copy the address).
+- Agenda's Planning and My day widgets on Android draw the now line among today's events, as the app does, and move it as events start and end.
+
+### Changed
+
+- A new event in Agenda gets a reminder 30 minutes before it instead of 10, time to leave for its place. A device still on the old 10 minutes it never chose moves to 30; another choice in Settings stays as it is.
+- When a second app of the suite is set up on Android while another is already connected, its welcome offers « Use Carnet's setup », which takes that app's connection and its look (theme, colours and background) and skips the appearance step, and, under it, « Use it, and choose the look », which takes the connection and asks the look, as before.
+- Carnet's widgets draw checkboxes as the app does (a rounded box, filled with the tick cut out once done).
+- Agenda's widgets show a sample of what they hold in the launcher's widget picker (Planning, Month, My day, Next event) instead of an empty frame, and the Planning and My day widgets fade out at their foot where the list goes on, as Carnet's do, rather than cutting a line in half.
+- Carnet's Note widget draws its pen as the lists widget does, in the same ink and place beside « + ».
+- On Android, the first run no longer shows the warning about Android's Data Saver or a restricted battery over its steps: it comes once the app is set up. The import offered during the first run names its step in one line, as on the web, instead of a second row of steps.
+- Agenda's labels page on the web works like Carnet's and Contacts': rename a label where it is written, change its colour from its tag, and open its events from their count.
+- On a phone-sized window, an event's page on the web keeps « Edit » and puts the other actions in a menu.
+- Clock's search on the web shows the settings it finds and a count, and says what it looks through when nothing matches.
+- On the web, a new or edited collection's emblems and colours are two aligned rows of seven, and in every app's settings a section's title and a control's name line up with what their panel holds.
+- The samples in Carnet's widget previews are short enough to read whole in the launcher's widget picker.
+- In Pages on Android, a search marks the words that matched and opens the page at the block that matched.
+- In Contacts on Android, « Ignore » in « Duplicates » can be taken back from its message (« Undo »), and it reads its reasons as one sentence.
+- Agenda's day picker on Android (« Go to day », a date field) turns its months as the calendar does: the month follows the finger with the next one beside it, and the sheet keeps its size from month to month.
+
+### Fixed
+
+- Carnet's Note widget no longer shows an unticked item as ticked, nor leaves a grey square behind after a tap on an item; a note's colour, a card's spacing and a link's picture no longer stay on the widgets after they changed.
+- In Agenda, an event whose place is a web address (a Google Meet, Zoom or Teams link) opens that link, on Android and on the web, instead of searching for it in maps, and asks no weather for it.
+- A day off reads « Day off » in My day (Android and web) and on Agenda's widgets, as in the Planning, instead of « All day ».
+- In Agenda's Planning on Android, the line marking now no longer runs into the corner of today's panel once everything today is over; it ends where the rows' words end, in My day too.
+- In Agenda's month on Android, a whole-day event in a narrow day is cut at the bar's end like the events under it, without dots; in its drawer, a long calendar name breaks at a syllable when the phone's text is large.
+- Clock says « Nothing left in your calendar today. » once today's events are over, on Android and on the web, instead of « Nothing in your calendar that day. » under a day whose dot says it held some.
+- TalkBack reads Clock's time wheels as two controls to adjust, no longer one row at a time.
+- On Android, TalkBack no longer reaches the screen behind an open sheet, the side menu, a dialog, a menu or the new-item actions: it stays inside them, with « Close » and the message at the foot of the screen, until they close.
+- In Clock on Android, the ringing window keeps « All day » whole, counts the rest as « + n more », and its panel no longer covers « Snooze » or « Stop » on a small screen; « Snooze » and « Stop » on the home's message are readable buttons; TalkBack hears which mornings a holiday, a day off or « Skip this time » keeps quiet, and that the morning's time opens its alarm.
+- In Pages on Android, TalkBack can reach every block's actions (« Block actions ») and a table's (« Row actions »), even a bookmark whose note is gone; version history offers « Retry » when it cannot load.
+- In Contacts on Android, a merged contact in the bin says who it was merged into, TalkBack reads each person in « Duplicates » whole, and names in « Clean up contacts » are easier to tap.
+- Clock no longer takes an event before an afternoon or evening alarm for a clash (as when the morning's alarm is skipped), so it no longer offers « Ring at … » for it, on Android, on the web and in the evening check.
+- In Agenda on the web, the navigation's month is one stop of the Tab key: the arrows move the day, Home and End go to the week's ends, and past its edges into the next month. On a phone-sized window the period's title comes before the arrows for the keyboard, as it reads, and a calendar's row is ringed whole when its name has focus.
+- On the web, focus rings are no longer cut on Contacts' favourite faces, Agenda's day heads and Pages' list on a phone-sized window.
+- In Firefox, a long word in a narrow Agenda event breaks inside its box instead of running out of it, and a letter's band in Contacts draws its line once contacts scroll under it.
+- In Contacts on the web, « Duplicates » keeps its title on the panel's column, the keyboard's focus moves on to the next group after « Merge » or « Ignore », and a merged contact in the bin says « Merged into … ».
+- In an import's preview on the web, every name starts on one column, whether a checkbox or a glyph leads it.
+- In Clock on the web, after « Skip this time », « Ring after all » or « Ring at … » the keyboard's focus stays in the morning, and Home and End reach the week's ends.
+- The navigation's month in Agenda on the web no longer changes height from one month to the next, and a custom repeat's days use the same toggles as Clock's alarms.
+- A contact in the bin on the web no longer has its « Moved to the bin » line cut short.
+- In Carnet on the web, a checklist's « ticked items » line stands on the items' columns, and a collection's filter and order stay side by side on a narrow window.
+- On a phone-sized window, a server section's « Remove… » button in the Administration goes under its status instead of squeezing it; small buttons, a link's « Retry » and a label's count are easier to press on a touch screen.
+- On the web, a page's title no longer shifts by a pixel on pages whose head has a button, and a dialog opened from the keyboard no longer shows a tooltip on its close button.
+- In Pages on the web, the bar over a mention no longer stays behind at the window's corner when you start typing.
+- Agenda's My day widget on Android no longer fails to draw when its list holds a quiet line (« Nothing else today »), a heading and events at once.
+
 ## [0.2.0] - 2026-11-16
 
 ### Added
