@@ -3280,6 +3280,10 @@ thead .rowEnd {
     grid-column: 2;
     white-space: normal;
   }
+  /* The list runs to the window's edges here: the keyboard's ring lies inside the row, or the window would cut its sides. */
+  .pageRow:focus-visible {
+    outline-offset: -2px;
+  }
 }
 
 /* A finger: the bar on the keyboard holds the block's actions, so no gutter by the screen's edge, and the column is even; the page's foot keeps room for the bar, so the last blocks scroll clear of it. */

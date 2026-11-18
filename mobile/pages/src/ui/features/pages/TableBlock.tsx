@@ -8,7 +8,7 @@
  * The sheets are drawn by the page screen's `TableSheetHost`.
  */
 import React, { memo, useCallback, useState } from 'react';
-import { Linking, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Linking, StyleSheet, View, type AccessibilityActionEvent, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { parseHex } from '@unlease/design/palette';
@@ -37,6 +37,14 @@ const END = 52;
 /** The fade over the right edge while columns hide past it. */
 const FADE = 36;
 const CELL_LINES = 4;
+
+/** TalkBack holds nothing: what a hold opens is a named action of the press (its actions menu). */
+const ROW_ACTIONS = 'rowActions';
+const TABLE_ACTIONS = 'tableActions';
+const tableActions = () => [{ name: TABLE_ACTIONS, label: t('Block actions') }];
+const onTableAction = (open: () => void) => (event: AccessibilityActionEvent) => {
+  if (event.nativeEvent.actionName === TABLE_ACTIONS) open();
+};
 
 /** What a cell shows: chips for choices, a number at its right edge, an address in link ink, words; a value its type no longer takes keeps its words beside a danger mark. */
 const CellView = memo(function CellViewBody({ column, value }: { column: TableColumn; value: CellValue | undefined }) {
@@ -109,6 +117,10 @@ const Cell = memo(function CellBody({ table, rowId, column, value, width, index,
   const text = cellText(value, column);
   const format = CELL_FORMATS[type];
   const shown = text || t('empty');
+  const openRow = (): void => {
+    haptic('pick');
+    openTableSheet({ kind: 'row', page, table, row: rowId });
+  };
   const label = format && !cellFits(value, column) ? t('{column}: {value} (not {expected})', { column: column.name, value: shown, expected: t(format.expected) }) : t('{column}: {value}', { column: column.name, value: shown });
   const body =
     type === 'checkbox' ? (
@@ -125,14 +137,9 @@ const Cell = memo(function CellBody({ table, rowId, column, value, width, index,
           if (!readOnly) openTableSheet({ kind: 'cell', page, table, row: rowId, column: column.id });
           else if (address) Linking.openURL(address).catch(() => {});
         }}
-        onLongPress={
-          readOnly
-            ? undefined
-            : () => {
-                haptic('pick');
-                openTableSheet({ kind: 'row', page, table, row: rowId });
-              }
-        }
+        onLongPress={readOnly ? undefined : openRow}
+        accessibilityActions={readOnly ? undefined : [{ name: ROW_ACTIONS, label: t('Row actions') }]}
+        onAccessibilityAction={readOnly ? undefined : event => (event.nativeEvent.actionName === ROW_ACTIONS ? openRow() : undefined)}
         style={styles.press}
       >
         <CellView column={column} value={value} />
@@ -188,6 +195,8 @@ const ColumnHead = memo(function ColumnHeadView({ table, column, width, index, s
       ownDisabled
       onPress={() => openTableSheet({ kind: 'column', page, table, column: column.id })}
       onLongPress={onHold}
+      accessibilityActions={readOnly ? undefined : tableActions()}
+      onAccessibilityAction={readOnly ? undefined : onTableAction(onHold)}
       style={styles.headPress}
     >
       <Icon name={COLUMN_ICONS[type]} size={16} color={theme.color.inkMuted} />
@@ -285,7 +294,7 @@ function TableBlockComponent({ block }: { block: Block }) {
         <Animated.View pointerEvents="none" style={[styles.fade, { backgroundImage: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0), rgba(${r}, ${g}, ${b}, 1))` }, fade]} />
       </View>
       {readOnly ? null : (
-        <Tappable accessibilityRole="button" accessibilityLabel={t('New row')} accessibilityHint={t('Hold for the table’s actions')} onPress={() => addRow(page, block.id)} onLongPress={holdTable} style={styles.addRow}>
+        <Tappable accessibilityRole="button" accessibilityLabel={t('New row')} accessibilityHint={t('Hold for the table’s actions')} onPress={() => addRow(page, block.id)} onLongPress={holdTable} accessibilityActions={tableActions()} onAccessibilityAction={onTableAction(holdTable)} style={styles.addRow}>
           <Icon name="plus" size={18} color={theme.color.link} />
           <AppText variant="label" color={theme.color.link}>
             {t('New row')}
@@ -301,7 +310,8 @@ const styles = StyleSheet.create({
   // Each cell presses inside its own small sheet, 3 in from the grid's lines (the web's), as tall as before.
   press: { flex: 1, minHeight: 42, margin: 3, paddingHorizontal: 7, paddingVertical: 10, justifyContent: 'center', ...corners(SHAPES.small) },
   box: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  headPress: { minHeight: 38, margin: 3, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', gap: 6, ...corners(SHAPES.small) },
+  // 42 and its 3 around: a 48 target, as a cell's.
+  headPress: { minHeight: 42, margin: 3, paddingHorizontal: 7, flexDirection: 'row', alignItems: 'center', gap: 6, ...corners(SHAPES.small) },
   headName: { flexShrink: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   number: { textAlign: 'right' },

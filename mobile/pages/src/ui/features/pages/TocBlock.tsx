@@ -20,6 +20,7 @@ import { listPressDelay } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme } from '@shared/ui/theme/ThemeProvider';
 import { usePageContext } from './PageContext';
+import { useBlockHold } from './blockHold';
 
 /** Further in for each step down from the page's biggest heading. */
 const STEP = 16;
@@ -45,6 +46,7 @@ function headingsKey(s: LibraryState, page: string): string {
 function TocBlockComponent() {
   const theme = useTheme();
   const { page, jumpTo } = usePageContext();
+  const hold = useBlockHold();
   const key = useLibraryStore(s => headingsKey(s, page));
   const lines = useMemo<Line[]>(
     () =>
@@ -57,12 +59,17 @@ function TocBlockComponent() {
     [key],
   );
   if (lines.length === 0) {
-    return <EmptyLine glyph="contents" text={t('Add headings to the page: they will show here.')} style={styles.empty} />;
+    return (
+      // Nothing to press: its line is one stop, carrying the block's actions.
+      <View accessible {...hold}>
+        <EmptyLine glyph="contents" text={t('Add headings to the page: they will show here.')} style={styles.empty} />
+      </View>
+    );
   }
   return (
     <View>
       {lines.map(line => (
-        <Tappable key={line.id} unstable_pressDelay={listPressDelay} accessibilityRole="link" accessibilityLabel={line.words} onPress={() => jumpTo?.(line.id)} style={[styles.row, { paddingLeft: 8 + STEP * line.depth }]}>
+        <Tappable key={line.id} unstable_pressDelay={listPressDelay} {...hold} accessibilityRole="link" accessibilityLabel={line.words} onPress={() => jumpTo?.(line.id)} style={[styles.row, { paddingLeft: 8 + STEP * line.depth }]}>
           <AppText variant="body" color={theme.color.inkMuted} numberOfLines={2}>
             {line.words}
           </AppText>

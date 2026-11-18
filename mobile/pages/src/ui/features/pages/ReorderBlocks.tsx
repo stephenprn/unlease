@@ -39,7 +39,7 @@ import { canRedo, canUndo, redoPage, undoPage } from '@app/store/pageHistory';
 import { indentBlocks, moveBlocks, nudgeBlocks, outdentBlocks } from '@app/store/pages';
 import { haptic } from '@shared/platform/haptics';
 
-import { AppText, Button, EdgeScrollView, EmptyLine, Grain, Ground, Icon, IconButton, Organic, TopBar } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, EmptyLine, Grain, Ground, Icon, IconButton, Organic, TopBar, useModalLayer } from '@shared/ui/components';
 import { accelerate, decelerate, duration, listIn, listMove, listOut, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -326,6 +326,8 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
   const liveRef = useRef(live);
   liveRef.current = live;
 
+  // Over the whole page, it is all TalkBack reaches (with the slip) while it is up.
+  const layer = useModalLayer(true);
   const [lifted, setLifted] = useState<Lifted | null>(null);
   const [target, setTarget] = useState<Target | null>(null);
   const [settling, setSettling] = useState<{ readonly id: string; readonly depth: number } | null>(null);
@@ -592,7 +594,7 @@ function ReorderLayer({ request }: { request: ReorderRequest }) {
   }
   if (landing && landing.gap >= other) laid.push(gapRow);
   return (
-    <Animated.View entering={IN} exiting={OUT} style={styles.layer} accessibilityViewIsModal>
+    <Animated.View ref={layer} collapsable={false} entering={IN} exiting={OUT} style={styles.layer} accessibilityViewIsModal>
       <Ground />
       <TopBar
         title={t('Reorder')}

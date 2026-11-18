@@ -44,6 +44,7 @@ function MonthCalendarComponent({ chosen, today, onPick }: MonthCalendarProps) {
   }, [chosen]);
   const months = monthNames();
   const weekdays = weekdayNames();
+  const dayLabel = (iso: string): string => `${weekdays[dayStart(iso).getDay()]} ${Number(iso.slice(8))} ${months[shown.month - 1]} ${shown.year}`;
   const step = (by: -1 | 1) => setShown(({ year, month }) => ({ year: month + by < 1 ? year - 1 : month + by > 12 ? year + 1 : year, month: ((month - 1 + by + 12) % 12) + 1 }));
   return (
     <View>
@@ -57,7 +58,8 @@ function MonthCalendarComponent({ chosen, today, onPick }: MonthCalendarProps) {
         </AppText>
         <IconButton icon="chevronRight" label={t('Next month')} onPress={() => step(1)} shape={2} />
       </View>
-      <View style={styles.week}>
+      {/* Each day reads its weekday in full: the initials are for the eye alone. */}
+      <View style={styles.week} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {weekdayInitials().map((day, index) => (
           <AppText key={index} variant="metaStrong" style={styles.weekday}>
             {day}
@@ -76,7 +78,7 @@ function MonthCalendarComponent({ chosen, today, onPick }: MonthCalendarProps) {
                 <Tappable
                   accessibilityRole="button"
                   accessibilityState={{ selected: picked }}
-                  accessibilityLabel={`${weekdays[dayStart(iso).getDay()]} ${day} ${months[shown.month - 1]} ${shown.year}`}
+                  accessibilityLabel={isToday ? t('{day}, today', { day: dayLabel(iso) }) : dayLabel(iso)}
                   onPress={() => onPick(iso)}
                   style={[styles.day, picked ? styles.dayChosen : null, isToday ? styles.dayToday : null]}
                 >

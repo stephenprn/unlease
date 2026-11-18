@@ -81,7 +81,7 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
   const save = (next: readonly SelectOption[]) => setColumnOptions(page, table, column.id, next);
   return (
     <View style={styles.group}>
-      <AppText variant="section" style={styles.heading}>
+      <AppText variant="section" style={styles.heading} accessibilityRole="header">
         {t('Options')}
       </AppText>
       {options.map((option, index) => (
@@ -91,6 +91,8 @@ function OptionsEditor({ page, table, column }: { page: string; table: string; c
               accessibilityLabel={t('Colour of {name}: {color}', { name: option.name, color: LINE_COLOR_NAMES[option.color] })}
               accessibilityState={{ expanded: painting === option.id }}
               onPress={() => setPainting(painting === option.id ? null : option.id)}
+              // The 36 pebble reaches 48 under a finger.
+              hitSlop={6}
               pebble={index}
               style={[styles.swatch, { backgroundColor: theme.line[option.color].tint, borderColor: theme.line[option.color].fill }]}
             />
@@ -163,7 +165,7 @@ function ColumnEditor({ request, column, index, count, onDone }: { request: Colu
         ) : null}
       </View>
       <View style={styles.group} accessibilityRole="radiogroup" accessibilityLabel={t('Column type')}>
-        <AppText variant="section" style={styles.heading}>
+        <AppText variant="section" style={styles.heading} accessibilityRole="header">
           {t('Type')}
         </AppText>
         {COLUMN_TYPES.map(choice => (

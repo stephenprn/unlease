@@ -189,6 +189,7 @@ export const FR_PHONE_PAGES: Dictionary = {
   'Call': 'Appeler',
   'Row deleted': 'Ligne supprimée',
   'Row': 'Ligne',
+  'Row actions': 'Actions de la ligne',
   'Insert a row below': 'Insérer une ligne en dessous',
   'Delete row': 'Supprimer la ligne',
 

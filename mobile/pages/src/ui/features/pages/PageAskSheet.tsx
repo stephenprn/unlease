@@ -352,7 +352,8 @@ const makeStyles = (theme: Theme) =>
     // A list row's geometry out of the conversation's column: inset 6 from the sheet's own, padded 10, its mark in a 24 slot on the column, the words 16 after it.
     source: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 6 - SHEET_INSET, paddingHorizontal: 10, paddingVertical: 6, marginVertical: GEOMETRY.rowGap / 2, ...corners(SHAPES.tab) },
     slot: { minWidth: 24, alignItems: 'center' },
-    sourceNumber: { minWidth: 22, height: 22, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.actionContainer, ...corners(SHAPES.detail) },
+    // Grows with the reader's font size, never cutting its number.
+    sourceNumber: { minWidth: 22, minHeight: 22, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.actionContainer, ...corners(SHAPES.detail) },
     actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
     private: { gap: 12, alignItems: 'flex-start', paddingHorizontal: SHEET_INSET, paddingBottom: 16 },
     // A footer under the conversation (its edge across the sheet): the field on the conversation's start, its send pebble ending on its end.

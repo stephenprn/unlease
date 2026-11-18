@@ -180,9 +180,9 @@ describe('inline pieces of a page', () => {
     await type(root, 'Bravo [', 'Bravo [[');
     // The pages to cite ride over the bar, the keyboard staying up.
     expect(root.root.findAll(node => node.props.accessibilityLabel === 'Citer une page', { deep: false }).length).toBeGreaterThan(0);
-    // The pages' home lies under the page and lists Lisbonne too: the suggestion is drawn last, over it.
+    // The pages' home lies under the page and lists Lisbonne too (its row read whole: « Lisbonne, … »); the suggestion is drawn last, over it.
     const lisbonne = pressable(root, 'Lisbonne');
-    expect(lisbonne.length).toBeGreaterThan(1);
+    expect(lisbonne.length).toBeGreaterThan(0);
     await act(async () => {
       lisbonne[lisbonne.length - 1]!.props.onPress();
       jest.advanceTimersByTime(400);

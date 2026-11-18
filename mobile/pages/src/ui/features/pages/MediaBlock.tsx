@@ -23,6 +23,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { AppText, Button, FormFoot, Grain, Icon, Organic, Sheet, SHEET_INSET, Tappable, TextField, useForm } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { useBlockHold } from './blockHold';
 import { MediaViewer } from './MediaViewer';
 import { usePageContext } from './PageContext';
 import { formatBytes } from '@unlease/core/services/format';
@@ -119,9 +120,10 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
   const theme = useTheme();
   const { page, readOnly } = usePageContext();
   const words = WORDS[kind];
+  const hold = useBlockHold();
   return (
     <Organic outline="panel" style={styles.empty}>
-      <View style={styles.emptyHead}>
+      <View style={styles.emptyHead} accessible {...hold}>
         <Icon name={words.icon} size={24} color={theme.color.inkMuted} />
         <AppText variant="body" color={theme.color.inkMuted} style={styles.flex}>
           {t(words.add)}
@@ -140,8 +142,10 @@ function EmptyMedia({ block, kind }: { block: Block; kind: MediaKind }) {
 /** A well where a picture or a file will be. */
 function Waiting({ text }: { text: string }) {
   const styles = useThemedStyles(makeStyles);
+  // Nothing to press: its words are one stop, carrying the block's actions.
+  const hold = useBlockHold();
   return (
-    <Organic outline="frame" style={styles.waiting}>
+    <Organic outline="frame" style={styles.waiting} accessible {...hold}>
       <AppText variant="meta">{text}</AppText>
     </Organic>
   );
@@ -155,6 +159,7 @@ function ImageMedia({ block }: { block: Block }) {
   const [loaded, setLoaded] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState<ImageSource | null>(null);
+  const hold = useBlockHold();
   // A file from another device shows once the server has it; this phone's own copy shows at once.
   const local = !!blob && blob.uri.startsWith('file://');
   const source: ImageSource | null = block.fileId ? (local || block.uploaded ? blob : null) : block.url ? { uri: block.url } : null;
@@ -171,7 +176,7 @@ function ImageMedia({ block }: { block: Block }) {
     <View onLayout={onLayout}>
       {width > 0 ? (
         <Organic outline="frame" style={[styles.picture, { width, height: Math.round(width / ratio) }]}>
-          <Tappable onPress={() => setOpen(block.fileId ? (local || block.uploaded ? whole : source) : source)} accessibilityRole="imagebutton" accessibilityLabel={t('Open image {name}', { name })} style={StyleSheet.absoluteFill}>
+          <Tappable {...hold} onPress={() => setOpen(block.fileId ? (local || block.uploaded ? whole : source) : source)} accessibilityRole="imagebutton" accessibilityLabel={t('Open image {name}', { name })} style={StyleSheet.absoluteFill}>
             <Image
               source={source}
               style={StyleSheet.absoluteFill}
@@ -204,9 +209,10 @@ function VideoCard({ url }: { url: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const site = displayHost(url);
+  const hold = useBlockHold();
   return (
     <Organic outline="frame" style={[styles.video, { backgroundColor: theme.color.viewer }]}>
-      <Tappable onDark onPress={() => openAddress(url)} accessibilityRole="link" accessibilityLabel={t('Play the video on {site}', { site })} style={styles.videoPress}>
+      <Tappable onDark {...hold} onPress={() => openAddress(url)} accessibilityRole="link" accessibilityLabel={t('Play the video on {site}', { site })} style={styles.videoPress}>
         <Organic pebble={1} style={styles.play}>
           <Icon name="play" size={28} color={theme.color.onSlip} />
         </Organic>
@@ -225,10 +231,11 @@ function VideoCard({ url }: { url: string }) {
 function FileCard({ icon, name, detail, trailing, onPress, label }: { icon: GlyphName; name: string; detail: string; trailing: GlyphName | null; onPress: () => void; label: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  const hold = useBlockHold();
   return (
     <Organic outline="frame" style={styles.fileCard}>
       <Grain />
-      <Tappable onPress={onPress} accessibilityLabel={label} style={styles.filePress}>
+      <Tappable {...hold} onPress={onPress} accessibilityLabel={label} style={styles.filePress}>
         <Icon name={icon} size={24} color={theme.color.inkMuted} />
         <View style={styles.flex}>
           <AppText variant="bodyStrong" numberOfLines={1}>

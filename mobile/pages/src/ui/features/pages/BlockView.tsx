@@ -6,7 +6,7 @@
  * themselves (code, table, media, bookmark, embed); held down, any block opens its actions (a table
  * on its frame, its cells holding for their row's). Side by side columns stack, as on the web's phone width.
  */
-import React, { memo, useEffect } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, Keyframe, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -26,6 +26,7 @@ import { decelerate, duration, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
+import { BlockHoldContext, useBlockHold } from './blockHold';
 import { Caption } from './Caption';
 import { placeBlock, useBlockFlash } from './blockJump';
 import { CodeBlock } from './CodeBlock';
@@ -246,9 +247,10 @@ function PageLink({ block }: { block: Block }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { openTarget } = usePageContext();
+  const hold = useBlockHold();
   const title = block.text.trim() || t(UNTITLED_PAGE);
   return (
-    <Tappable accessibilityRole="link" onPress={() => openTarget({ type: 'page', id: block.id })} style={styles.pageLink}>
+    <Tappable accessibilityRole="link" {...hold} onPress={() => openTarget({ type: 'page', id: block.id })} style={styles.pageLink}>
       <View style={styles.pageLinkIcon}>{block.icon ? <AppText style={styles.pageEmoji}>{block.icon}</AppText> : <Icon name="page" size={22} color={theme.color.ink} />}</View>
       <AppText variant="bodyStrong" numberOfLines={2} style={styles.pageLinkTitle}>
         {title}
@@ -270,19 +272,23 @@ function Columns({ block, depth }: { block: Block; depth: number }) {
   );
 }
 
-/** Held down, a block opens its actions (a text block's are in the bar over the keyboard too). */
+/** Held down, a block opens its actions (a text block's are in the bar over the keyboard too); TalkBack finds them on its presses (`useBlockHold`). */
 function HoldForActions({ id, children }: { id: string; children: React.ReactNode }) {
   const { readOnly } = usePageContext();
-  const open = (): void => {
+  const open = useCallback((): void => {
     haptic('pick');
     flushAll();
     openPageSheet({ kind: 'block', block: id });
-  };
+  }, [id]);
   const hold = Gesture.LongPress()
     .minDuration(450)
     .enabled(!readOnly)
     .onStart(() => runOnJS(open)());
-  return <GestureDetector gesture={hold}>{children}</GestureDetector>;
+  return (
+    <BlockHoldContext.Provider value={readOnly ? null : open}>
+      <GestureDetector gesture={hold}>{children}</GestureDetector>
+    </BlockHoldContext.Provider>
+  );
 }
 
 function Content({ block, depth, siblings, index }: { block: Block; depth: number; siblings: readonly string[]; index: number }) {

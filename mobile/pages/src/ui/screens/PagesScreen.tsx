@@ -18,6 +18,7 @@ import { t } from '@unlease/core/i18n';
 import { RICH_KINDS, UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages } from '@unlease/pages/services/blocks';
 import { formatEdited, plural } from '@unlease/core/services/format';
+import { matchRanges } from '@unlease/core/services/search';
 import { searchSummary } from '@unlease/core/services/searchWords';
 import { buildPageDocuments, searchPageDocuments } from '@unlease/pages/services/pageSearch';
 import { PAGES_SETTINGS_PLACES } from '@unlease/pages/services/settingsPlaces';
@@ -69,9 +70,12 @@ function PageMark({ icon }: { icon: string | null }) {
   return <View style={styles.mark}>{icon ? <AppText style={styles.emoji}>{icon}</AppText> : <Icon name="page" size={24} color={theme.color.ink} />}</View>;
 }
 
-/** A page as a row: its mark, its title, then where it sits or what it holds and when it changed. */
-/** Held down, it opens the page's actions, as its row in the drawer's tree does. */
-const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snippet }: { id: string; now: number; recent: boolean; onOpen: (id: string) => void; onActions?: (id: string) => void; snippet?: string }) {
+/**
+ * A page as a row: its mark, its title, then where it sits or what it holds and when it changed.
+ * Held down, it opens the page's actions, as its row in the drawer's tree does. Found by a search,
+ * the words that matched are marked, as everywhere.
+ */
+const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snippet, query }: { id: string; now: number; recent: boolean; onOpen: (id: string) => void; onActions?: (id: string) => void; snippet?: string; query?: string }) {
   const styles = useThemedStyles(makeStyles);
   const page = useLibraryStore(s => s.blocks[id]);
   const glance = useLibraryStore(useShallow(s => pageGlance(s, id)));
@@ -88,17 +92,17 @@ const PageRow = memo(function PageRow({ id, now, recent, onOpen, onActions, snip
       onLongPress={onActions ? () => onActions(id) : undefined}
       style={styles.row}
       accessibilityRole="link"
-      accessibilityLabel={title}
+      accessibilityLabel={[title, line, facts].filter(Boolean).join(', ')}
       accessibilityActions={onActions ? [{ name: 'actions', label: t('More actions') }] : undefined}
       onAccessibilityAction={onActions ? () => onActions(id) : undefined}
     >
       <PageMark icon={page.icon} />
       <View style={styles.rowText}>
-        <AppText variant="bodyStrong" numberOfLines={1}>
+        <AppText variant="bodyStrong" numberOfLines={1} highlight={query ? matchRanges(title, query) : undefined}>
           {title}
         </AppText>
         {line ? (
-          <AppText variant="meta" numberOfLines={1} color={undefined}>
+          <AppText variant="meta" numberOfLines={1} highlight={query ? matchRanges(line, query) : undefined}>
             {line}
           </AppText>
         ) : null}
@@ -197,6 +201,8 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
   );
 
   const openPage = useCallback((id: string) => navigation.navigate('Page', { id }), [navigation]);
+  // A page found opens at the block that matched, as on the web.
+  const openFound = (id: string, block: string | null): void => navigation.navigate('Page', block ? { id, block } : { id });
   const newPage = (parentId: string | null = null): void => {
     const id = createPage({ parentId });
     if (parentId) setExpanded(parentId, true);
@@ -254,7 +260,7 @@ export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {
               </AppText>
             )}
             {results.map(hit => (
-              <PageRow key={hit.pageId} id={hit.pageId} now={now} recent onOpen={openPage} onActions={setActing} snippet={hit.snippet || undefined} />
+              <PageRow key={hit.pageId} id={hit.pageId} now={now} recent onOpen={id => openFound(id, hit.blockId)} onActions={setActing} snippet={hit.snippet || undefined} query={query} />
             ))}
           </View>
         ) : roots.length === 0 ? (

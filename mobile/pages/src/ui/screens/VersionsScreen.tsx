@@ -136,6 +136,8 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
   const revision = useLibraryStore(s => s.revision);
   const [listing, setListing] = useState<Listing>({ state: 'loading' });
   const [opened, setOpened] = useState<Opened | null>(null);
+  /** Asked again after a failure (« Réessayer »). */
+  const [attempt, setAttempt] = useState(0);
   const now = useMinute();
   // Back from a version opened goes to the list; a restore leaves the screen.
   const leaving = useRef(false);
@@ -158,7 +160,12 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
       },
     );
     return () => controller.abort();
-  }, [config, page]);
+  }, [config, page, attempt]);
+
+  const retryListing = (): void => {
+    setListing({ state: 'loading' });
+    setAttempt(n => n + 1);
+  };
 
   const pick = (versionId: number): void => {
     if (!config) return;
@@ -193,7 +200,7 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
   if (!config) body = <EmptyLine text={t('Version history needs your server: connect one in Settings.')} glyph="cloudOff" size="body" style={styles.line} />;
   else if (opened) {
     if (opened.state === 'loading') body = <AppText variant="meta" style={styles.line}>{t('Loading…')}</AppText>;
-    else if (opened.state === 'error') body = <EmptyLine text={opened.message} glyph="error" size="body" style={styles.line} />;
+    else if (opened.state === 'error') body = <EmptyLine text={opened.message} glyph="error" size="body" action={{ label: t('Try again'), onPress: () => pick(opened.id) }} style={styles.line} />;
     else {
       const shown = versionPage(opened.version);
       body = (
@@ -207,8 +214,10 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
           </AppText>
           {outline.length === 0 ? <EmptyLine text={t('This version is empty')} size="body" /> : null}
           {outline.map(row => (
+            // A marked block is one stop, so what its mark says is read with it (a bare view's hint never is).
             <View
               key={row.block.id}
+              accessible={row.mark !== 'same'}
               style={[styles.row, { paddingLeft: row.depth * NEST + 12 }, row.mark === 'gone' ? styles.gone : null]}
               accessibilityHint={row.mark === 'changed' ? t('Changed since') : row.mark === 'gone' ? t('No longer on the page') : undefined}
             >
@@ -234,7 +243,7 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
       );
     }
   } else if (listing.state === 'loading') body = <AppText variant="meta" style={styles.line}>{t('Loading…')}</AppText>;
-  else if (listing.state === 'error') body = <EmptyLine text={listing.message} glyph="error" size="body" style={styles.line} />;
+  else if (listing.state === 'error') body = <EmptyLine text={listing.message} glyph="error" size="body" action={{ label: t('Try again'), onPress: retryListing }} style={styles.line} />;
   else if (listing.versions.length === 0) body = <EmptyLine text={t('No version yet: your server keeps one a few minutes after this page is edited.')} glyph="clock" size="body" style={styles.line} />;
   else {
     body = (
@@ -244,7 +253,7 @@ export function VersionsScreen({ navigation, route }: ScreenProps<'Versions'>) {
         </AppText>
         {versionDays(listing.versions, now).map(day => (
           <View key={day.label}>
-            <AppText variant="section" style={styles.dayHead}>
+            <AppText variant="section" style={styles.dayHead} accessibilityRole="header">
               {day.label}
             </AppText>
             {day.versions.map(summary => (

@@ -142,25 +142,23 @@ describe('Pages, its root', () => {
     if (last) await act(async () => last.unmount());
   });
 
-  it('opens on the first run on a fresh install, Carnet’s connection offered in one tap', async () => {
+  it('opens on the first run on a fresh install, Carnet’s setup offered in one tap', async () => {
     suite.siblings = [{ packageName: 'com.stephenprn.carnet', server: 'https://carnet.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
     expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
     expect(textOf(tree)).toContain('Pages');
-    expect(textOf(tree)).toContain('Carnet est déjà relié à carnet.test sur ce téléphone.');
+    expect(textOf(tree)).toContain('Carnet est déjà configuré sur ce téléphone, relié à carnet.test');
     await act(async () => {
-      pressables(tree, 'Utiliser la connexion de Carnet')[0]!.props.onPress();
+      pressables(tree, 'Utiliser la configuration de Carnet')[0]!.props.onPress();
     });
     await settle();
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
     // No page on the server yet: the import is offered, its Markdown picked or left for later.
     expect(textOf(tree)).toContain('Vous arrivez de Notion ?');
     expect(textOf(tree)).toContain('Choisir un fichier Markdown');
-    await act(async () => {
-      pressableWithText(tree, 'Plus tard').props.onPress();
-    });
-    await settle();
+    // Its look came with the sibling's setup: the import is the last step, and « Commencer » ends it.
+    expect(textOf(tree)).not.toContain('Apparence');
     await act(async () => {
       pressableWithText(tree, 'Commencer').props.onPress();
     });

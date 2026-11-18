@@ -45,6 +45,7 @@ import { KIND_ICONS } from '@carnet/ui/features/links/kindIcon';
 import { LinkRow } from '../links/LinkRow';
 import { NoteRuns } from '@carnet/ui/features/note/noteText';
 import { CollectionTable } from './CollectionTable';
+import { useBlockHold } from './blockHold';
 import { usePageContext } from './PageContext';
 
 /** A link's picture frame on a bookmark: 4:5, as everywhere a link's own picture shows. */
@@ -109,8 +110,10 @@ function glimpse(s: LibraryState, target: BlockTarget): Glimpse {
 function GoneCard({ target }: { target: BlockTarget }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // Nothing to press: its words are one stop, carrying the block's actions (the way to remove it).
+  const hold = useBlockHold();
   return (
-    <Organic outline="frame" style={styles.gone}>
+    <Organic outline="frame" style={styles.gone} accessible {...hold}>
       <Icon name="info" size={20} color={theme.color.inkMuted} />
       <AppText variant="meta">
         {target.type === 'page' ? t('This page no longer exists.') : target.type === 'link' ? t('This link no longer exists.') : target.type === 'event' ? t('This event no longer exists.') : target.type === 'contact' ? t('This contact no longer exists.') : t('This note no longer exists.')}
@@ -161,13 +164,14 @@ function BookmarkMark({ target, seen }: { target: BlockTarget; seen: Glimpse }) 
 function Bookmark({ target }: { target: BlockTarget }) {
   const styles = useThemedStyles(makeStyles);
   const { openTarget } = usePageContext();
+  const hold = useBlockHold();
   const title = useLibraryStore(s => targetTitle(s, target));
   const seen = useLibraryStore(useShallow(s => glimpse(s, target)));
   if (title === null) return <GoneCard target={target} />;
   return (
     <Organic outline="frame" style={styles.sheet}>
       <Grain />
-      <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget(target)} accessibilityRole="link" accessibilityLabel={[title, seen.meta].filter(Boolean).join(', ')} style={styles.bookmark}>
+      <Tappable unstable_pressDelay={listPressDelay} {...hold} onPress={() => openTarget(target)} accessibilityRole="link" accessibilityLabel={[title, seen.meta].filter(Boolean).join(', ')} style={styles.bookmark}>
         <View style={styles.bookmarkMark}>
           <BookmarkMark target={target} seen={seen} />
         </View>
@@ -194,6 +198,7 @@ function NoteEmbed({ id }: { id: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { openTarget } = usePageContext();
+  const hold = useBlockHold();
   const note = useLibraryStore(s => s.notes[id]);
   const items = useLibraryStore(useShallow(s => (s.checksByNote[id] ?? []).flatMap(cid => (s.checks[cid] && !s.checks[cid]!.checked ? [s.checks[cid]!.text] : []))));
   const ticked = useLibraryStore(s => (s.checksByNote[id] ?? []).filter(cid => s.checks[cid]?.checked).length);
@@ -211,7 +216,7 @@ function NoteEmbed({ id }: { id: string }) {
   return (
     <Organic outline="card" style={[styles.sheet, noteBackdrop(theme.mode, note.color, ruled ? null : note.pattern)]}>
       <Grain />
-      <Tappable unstable_pressDelay={listPressDelay} onPress={open} accessibilityLabel={note.title ? t('Open note {title}', { title: shownTitle(note) }) : t('Open note')} style={styles.note}>
+      <Tappable unstable_pressDelay={listPressDelay} {...hold} onPress={open} accessibilityLabel={note.title ? t('Open note {title}', { title: shownTitle(note) }) : t('Open note')} style={styles.note}>
         {photo ? (
           <Organic outline="frame" style={styles.notePhoto}>
             <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -274,6 +279,7 @@ const viewOptions = (): readonly SegmentedOption<CollectionView>[] => [
 function CollectionEmbed({ block, id }: { block: Block; id: string }) {
   const styles = useThemedStyles(makeStyles);
   const { page, readOnly, openTarget } = usePageContext();
+  const hold = useBlockHold();
   const line = useLibraryStore(s => s.notes[id]);
   const { showDone } = block;
   const order = useCallback(
@@ -297,7 +303,7 @@ function CollectionEmbed({ block, id }: { block: Block; id: string }) {
     <Organic outline="card" style={[styles.sheet]}>
       <Grain />
       <View style={styles.collection}>
-        <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'note', id })} accessibilityLabel={t('Open collection {title}', { title: shownTitle(line) })} style={styles.collectionHead}>
+        <Tappable unstable_pressDelay={listPressDelay} {...hold} onPress={() => openTarget({ type: 'note', id })} accessibilityLabel={t('Open collection {title}', { title: shownTitle(line) })} style={styles.collectionHead}>
           <EmblemStone id={id} emblem={collectionEmblem(id, line.emblem)} color={asLineColor(line.color)} size={26} width={44} height={40} />
           <View style={styles.flex}>
             <AppText variant="title" numberOfLines={2}>
@@ -348,6 +354,7 @@ function LinkEmbed({ id }: { id: string }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { openTarget } = usePageContext();
+  const hold = useBlockHold();
   const link = useLibraryStore(s => s.links[id]);
   const blob = useBlobSource(link?.imageIds[0] ?? null);
   if (!link) return null;
@@ -376,7 +383,10 @@ function LinkEmbed({ id }: { id: string }) {
         </Organic>
         <View style={styles.linkText}>
           {origin ? <AppText variant="metaStrong">{origin}</AppText> : null}
-          <AppText variant="title">{title}</AppText>
+          {/* Its buttons say what they do; its title carries the block's actions. */}
+          <AppText variant="title" accessible {...hold}>
+            {title}
+          </AppText>
           {link.summary ? <AppText variant="body">{link.summary}</AppText> : null}
           {facts.length > 0 ? <AppText variant="meta">{facts.join(' · ')}</AppText> : null}
           <View style={styles.linkActions}>
@@ -394,6 +404,7 @@ function LinkEmbed({ id }: { id: string }) {
 function PageEmbed({ id }: { id: string }) {
   const styles = useThemedStyles(makeStyles);
   const { openTarget } = usePageContext();
+  const hold = useBlockHold();
   const page = useLibraryStore(s => s.blocks[id]);
   const seen = useLibraryStore(useShallow(s => glimpse(s, { type: 'page', id })));
   if (!page) return null;
@@ -401,7 +412,7 @@ function PageEmbed({ id }: { id: string }) {
   return (
     <Organic outline="card" style={[styles.sheet]}>
       <Grain />
-      <Tappable unstable_pressDelay={listPressDelay} onPress={() => openTarget({ type: 'page', id })} accessibilityRole="link" accessibilityLabel={t('Open page {title}', { title })} style={styles.pageEmbed}>
+      <Tappable unstable_pressDelay={listPressDelay} {...hold} onPress={() => openTarget({ type: 'page', id })} accessibilityRole="link" accessibilityLabel={t('Open page {title}', { title })} style={styles.pageEmbed}>
         <AppText variant="title">{page.icon ? `${page.icon} ${title}` : title}</AppText>
         <AppText variant="body" numberOfLines={6}>
           {seen.text || t('Empty page')}

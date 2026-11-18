@@ -24,6 +24,7 @@ import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { usePageContext } from './PageContext';
+import { useBlockHold } from './blockHold';
 
 /** The head's 26 high chip reaches a finger's 48. */
 const CHIP_SLOP = { top: 11, bottom: 11, left: 4, right: 4 } as const;
@@ -32,6 +33,7 @@ function CalendarBlockComponent({ block }: { block: Block }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { page, readOnly } = usePageContext();
+  const hold = useBlockHold();
   const agenda = useLibraryStore(s => s.agenda);
   const [picking, setPicking] = useState(false);
   // From today's midnight, so the day's events all show.
@@ -48,7 +50,7 @@ function CalendarBlockComponent({ block }: { block: Block }) {
     <Organic outline="frame" style={styles.frame}>
       <View style={styles.head}>
         <Icon name="calendar" size={20} color={theme.color.ink} />
-        <AppText variant="bodyStrong" style={styles.fill} numberOfLines={1}>
+        <AppText variant="bodyStrong" style={styles.fill} numberOfLines={1} accessible {...hold}>
           {label ? label.name : t('Calendar')}
         </AppText>
         {readOnly ? null : (

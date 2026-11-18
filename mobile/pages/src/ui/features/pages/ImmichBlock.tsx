@@ -28,6 +28,7 @@ import { ImmichPhoto as Photo } from '@shared/ui/features/immich/ImmichPhoto';
 import { ImmichSheet, type ImmichChoice } from './ImmichSheet';
 import { MediaViewer } from './MediaViewer';
 import { usePageContext } from './PageContext';
+import { useBlockHold } from './blockHold';
 
 const GAP = 6;
 const COLUMNS = 3;
@@ -48,6 +49,7 @@ function ImmichBlockComponent({ block }: { block: Block }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { page, readOnly } = usePageContext();
+  const hold = useBlockHold();
   const server = useSettingsStore(selectServer);
   const base = useSettingsStore(selectImmichUrl);
   const picking = usePicking(s => s.block === block.id);
@@ -66,7 +68,7 @@ function ImmichBlockComponent({ block }: { block: Block }) {
   if (empty) {
     return (
       <>
-        <Tappable onPress={readOnly ? undefined : () => pickImmichFor(block.id)} disabled={readOnly} outline="panel" style={styles.empty} accessibilityRole="button">
+        <Tappable {...hold} onPress={readOnly ? undefined : () => pickImmichFor(block.id)} disabled={readOnly} outline="panel" style={styles.empty} accessibilityRole="button">
           <Icon name="image" size={24} color={theme.color.inkMuted} />
           <AppText variant="body" style={[styles.fill, styles.muted]}>
             {readOnly ? t('No photos chosen') : t('Choose photos from Immich')}
@@ -89,7 +91,7 @@ function ImmichBlockComponent({ block }: { block: Block }) {
     <Organic outline="frame" style={styles.frame}>
       <View style={styles.head}>
         <Icon name="image" size={20} color={theme.color.ink} />
-        <AppText variant="bodyStrong" style={styles.fill} numberOfLines={1}>
+        <AppText variant="bodyStrong" style={styles.fill} numberOfLines={1} accessible {...hold}>
           {title}
         </AppText>
         {block.immichAlbumId && album.status === 'ready' ? <AppText variant="meta">{plural(count, 'photo')}</AppText> : null}

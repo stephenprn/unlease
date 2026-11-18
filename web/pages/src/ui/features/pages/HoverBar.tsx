@@ -61,6 +61,8 @@ export function HoverBar() {
       clear('hide');
       clear('show');
       timers.current.show = setTimeout(() => {
+        // Typed over in the meantime: the words were drawn again and this element is gone (its box would read 0, 0).
+        if (!element.isConnected) return;
         const [type, id] = element.dataset.mention?.split(':') ?? [];
         // Every kind this build knows opens from here; a contact or an event only that (no bookmark, no embed).
         const target: BlockTarget | null = isRefType(type) && id && element.dataset.gone === undefined ? { type, id } : null;
@@ -73,11 +75,18 @@ export function HoverBar() {
       clear('show');
       timers.current.hide = setTimeout(() => setHovered(null), HIDE_MS);
     };
+    // Typing moves the words under a pointer left where it was: the bar would stand over what is being written, or where its mention no longer is.
+    const onType = (): void => {
+      clear('show');
+      setHovered(null);
+    };
     root.addEventListener('pointerover', onOver);
     root.addEventListener('pointerout', onOut);
+    root.addEventListener('beforeinput', onType);
     return () => {
       root.removeEventListener('pointerover', onOver);
       root.removeEventListener('pointerout', onOut);
+      root.removeEventListener('beforeinput', onType);
       clear('show');
       clear('hide');
     };

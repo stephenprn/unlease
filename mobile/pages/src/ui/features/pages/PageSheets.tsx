@@ -236,7 +236,7 @@ function InsertSheet({ page, openPage }: { page: string; openPage: (id: string) 
       <SheetScroll contentContainerStyle={styles.list}>
         {sections.map(section => (
           <View key={section}>
-            <AppText variant="section" style={styles.section}>
+            <AppText variant="section" style={styles.section} accessibilityRole="header">
               {t(section)}
             </AppText>
             {COMMANDS.filter(command => command.section === section).map(command => (
@@ -542,7 +542,8 @@ function MoveHost({ page, openPage }: { page: string; openPage: (id: string) => 
         ) : null}
         {pageSheet.visible && !query.trim() ? <PageChoice title={t('At the top level')} icon={null} path={t('Alongside the pages on the home page')} here={current === null} onPress={() => pick(null)} /> : null}
         {all.map(place => choice(place, place.page.id))}
-        {all.length === 0 ? <EmptyLine text={t('No page matches.')} style={styles.empty} /> : null}
+        {/* Nothing typed and nowhere else to go (a page alone at the top): « Au premier niveau » says it all. */}
+        {all.length === 0 && (query.trim() || !pageSheet.visible) ? <EmptyLine text={t('No page matches.')} style={styles.empty} /> : null}
       </SheetScroll>
     </Sheet>
   );
@@ -577,6 +578,7 @@ function LanguageSheet({ page }: { page: string }) {
           <ListRow
             key={language.key}
             title={t(language.name)}
+            accessibilityState={{ selected: language.key === (current || 'plain') }}
             trailing={language.key === (current || 'plain') ? <Icon name="check" size={22} color={theme.color.focus} /> : undefined}
             onPress={() => pick(language.key)}
           />
@@ -626,7 +628,7 @@ const TextSwatches = memo(function TextSwatches({ kind, value, onPick }: { kind:
               <Tappable
                 key={color ?? 'none'}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: chosen }}
+                accessibilityState={{ checked: chosen }}
                 accessibilityLabel={color ? LINE_COLOR_NAMES[color] : kind === 'fg' ? t('Default colour') : t('No highlight')}
                 onPress={() => onPick(color)}
                 hitSlop={4}

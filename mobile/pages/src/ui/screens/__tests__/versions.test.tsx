@@ -6,7 +6,7 @@
 import React from 'react';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
-import { snapshotBlocks } from '@unlease/pages/services/versions';
+import { snapshotBlocks, versionDays } from '@unlease/pages/services/versions';
 import type { PageVersion } from '@unlease/pages/sync/versions';
 import { closeDatabase, openDatabase } from '@shared/data/db/database';
 import { writePreference } from '@shared/data/repositories/stateRepository';
@@ -103,6 +103,27 @@ describe('a page’s version history on the phone', () => {
     expect(useUiStore.getState().snack?.message).toBe('Version restaurée');
     await act(async () => useUiStore.getState().snack!.action!.run());
     expect(useLibraryStore.getState().blocks[task]!.checked).toBe(true);
+  });
+
+  it('says why the versions could not load, and tries again', async () => {
+    const { root, page } = await boot(true);
+    jest.mocked(fetchPageVersions).mockReset();
+    jest.mocked(fetchPageVersions).mockRejectedValueOnce(new Error('Serveur injoignable')).mockResolvedValueOnce({ versions: [{ id: 7, at: Date.now() - 60_000, blocks: 1, change: { added: 1, removed: 0, changed: 0 } }] });
+    await act(async () => {
+      (navigationRef.navigate as (...args: unknown[]) => void)('Versions', { page });
+      jest.advanceTimersByTime(400);
+    });
+    expect(textOf(root)).toContain('Serveur injoignable');
+    await act(async () => {
+      pressable(root, props => props.accessibilityLabel === 'Réessayer' || props.label === 'Réessayer').props.onPress();
+      jest.advanceTimersByTime(400);
+    });
+    expect(fetchPageVersions).toHaveBeenCalledTimes(2);
+    expect(textOf(root)).not.toContain('Serveur injoignable');
+    expect(textOf(root)).toMatch(/1\s+bloc ajouté/);
+    // The days head their versions for TalkBack.
+    const [day] = versionDays([{ id: 7, at: Date.now() - 60_000, blocks: 1, change: { added: 1, removed: 0, changed: 0 } }], Date.now());
+    expect(root.root.findAll(node => node.props.accessibilityRole === 'header' && node.props.children === day!.label).length).toBeGreaterThan(0);
   });
 
   it('says the history needs a server without one', async () => {

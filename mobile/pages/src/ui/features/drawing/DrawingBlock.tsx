@@ -17,6 +17,7 @@ import { AppText, Grain, Icon, Organic, Tappable } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { flushAll } from '../pages/editorStore';
+import { useBlockHold } from '../pages/blockHold';
 import { usePageContext } from '../pages/PageContext';
 import { backgroundColorOf } from '@carnet/ui/features/drawing/DrawingBackgroundSheet';
 import { inkPalette, strokesOf } from '@carnet/ui/features/drawing/drawingModel';
@@ -27,6 +28,7 @@ export function DrawingBlock({ block }: { block: Block }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { page, readOnly } = usePageContext();
+  const hold = useBlockHold();
   const strokes = strokesOf(block.drawing);
   const open = () => {
     // What is typed in the page is saved before the page goes under the drawing.
@@ -37,7 +39,7 @@ export function DrawingBlock({ block }: { block: Block }) {
   if (strokes.length === 0) {
     const words = readOnly ? t('Empty drawing') : t('Tap to draw');
     return (
-      <Tappable onPress={open} disabled={readOnly} ownDisabled outline="panel" style={styles.empty} accessibilityLabel={words}>
+      <Tappable {...hold} onPress={open} disabled={readOnly} ownDisabled outline="panel" style={styles.empty} accessibilityLabel={words}>
         <Icon name="draw" size={24} color={theme.color.inkMuted} />
         <AppText variant="body" color={theme.color.inkMuted}>
           {words}
@@ -56,6 +58,7 @@ export function DrawingBlock({ block }: { block: Block }) {
     <Organic outline="frame" style={[styles.frame, { aspectRatio: 1 / ratio }, painted ? { backgroundColor: backgroundColorOf(theme, background) } : null]}>
       {painted ? <Grain /> : null}
       <Tappable
+        {...hold}
         onPress={open}
         disabled={readOnly}
         ownDisabled
