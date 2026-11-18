@@ -50,6 +50,7 @@ export const FR_SCREENS: Dictionary = {
   'Identity': 'Identité',
   'If you forget the passphrase, this code is the only way back into your papers. Print it or save it somewhere safe and apart from your devices: it is shown this once.': 'Si vous oubliez la phrase secrète, ce code est le seul moyen de retrouver vos papiers. Imprimez-le ou rangez-le en lieu sûr, loin de vos appareils : il n’est montré qu’une fois.',
   'In case of emergency': 'En cas d’urgence',
+  'In this demo, the passphrase is “{passphrase}”.': 'Dans cette démo, la phrase secrète est « {passphrase} ».',
   'Issued by': 'Délivré par',
   'Issued on': 'Délivré le',
   'Its pictures are opened on this device and sent once, through your server, to Claude, which reads its fields. Your server keeps nothing of them; Anthropic’s own policy applies to what it receives. Everything else in your wallet stays sealed.': 'Ses images sont ouvertes sur cet appareil et envoyées une fois, par votre serveur, à Claude, qui en lit les champs. Votre serveur n’en garde rien ; la politique d’Anthropic s’applique à ce qu’il reçoit. Tout le reste de votre portefeuille reste scellé.',

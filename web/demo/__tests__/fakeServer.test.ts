@@ -4,6 +4,10 @@ import type { SyncRecord } from '@unlease/core/sync/record';
 import { collectionsOfTemplate, kindTemplateId, linksOfTemplate, linksReadBefore, templateSignature } from '@unlease/notes/services/templates';
 import { linkFromRecord, linkTemplateFields, linkTemplateFromRecord, noteFromRecord } from '@unlease/notes/sync/entities';
 import { TEMPLATE_TRY_PATH } from '@unlease/notes/sync/templateTry';
+import { createVault, VAULT_TYPE } from '@unlease/wallet/crypto/vault';
+import { WALLET_READ_PATH, WALLET_VAULT_PATH } from '@unlease/wallet/sync/routes';
+
+import { browserCipher } from '@wallet/app/cipher';
 
 import { buildDemoRecords, DEMO_WINE_TEMPLATE } from '../demoData';
 import { DEMO_SERVER, FakeServer } from '../fakeServer';
@@ -134,5 +138,34 @@ describe('the demo’s templates', () => {
     expect(await call(server, TEMPLATE_TRY_PATH, 'POST', { url: 'https://example.org', lang: 'fr', fields: [] })).toEqual({ status: 400, body: { error: 'Invalid template try' } });
     const off = new FakeServer({ reading: false });
     expect((await call(off, TEMPLATE_TRY_PATH, 'POST', { url: 'https://example.org/a', lang: 'fr', fields: VIN })).status).toBe(409);
+  });
+});
+
+describe('the demo’s wallet routes', () => {
+  // A cheap Argon2id: what is checked is the route, not the cost.
+  const cheap = { ops: 1, memKiB: 8 };
+
+  it('keeps the first vault sent, under its own clock, and hands it back to a later one', async () => {
+    const server = new FakeServer({ apps: ['wallet'] });
+    const first = await createVault(browserCipher, 'a first passphrase', 1_000, cheap);
+    const second = await createVault(browserCipher, 'a second passphrase', 2_000, cheap);
+    expect(await call(server, WALLET_VAULT_PATH, 'POST', { fields: first.fields })).toEqual({ status: 200, body: { created: true, fields: first.fields } });
+    expect(await call(server, WALLET_VAULT_PATH, 'POST', { fields: second.fields })).toEqual({ status: 200, body: { created: false, fields: first.fields } });
+    const vault = server.pull(0).records.find(record => record.type === VAULT_TYPE)!;
+    expect(Object.values(vault.clocks).every(clock => clock.endsWith('-demoserver'))).toBe(true);
+    expect((await call(server, WALLET_VAULT_PATH, 'POST', { fields: { ...first.fields, cards: 'nope' } })).status).toBe(400);
+    expect((await call(new FakeServer(), WALLET_VAULT_PATH, 'POST', { fields: first.fields })).status).toBe(404);
+  });
+
+  it('answers « Remplir avec Claude » with made-up fields that say so, and refuses without Claude', async () => {
+    vi.useFakeTimers();
+    const request = { pages: [{ mime: 'image/jpeg', base64: 'AAAA' }], kind: 'passport', lang: 'en' };
+    const read = call(new FakeServer({ apps: ['wallet'] }), WALLET_READ_PATH, 'POST', request);
+    await vi.advanceTimersByTimeAsync(1_600);
+    const { status, body } = await read;
+    expect(status).toBe(200);
+    expect((body as { fields: unknown }).fields).toMatchObject({ kind: 'passport', holder: 'Jordan Ellis', summary: expect.stringContaining('demo') });
+    expect((await call(new FakeServer({ apps: ['wallet'], reading: false }), WALLET_READ_PATH, 'POST', request)).status).toBe(409);
+    vi.useRealTimers();
   });
 });

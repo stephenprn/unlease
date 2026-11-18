@@ -122,7 +122,7 @@ describe('the colours and the ground in Réglages', () => {
 
 describe('each app’s look', () => {
   const shared = (): Record<string, unknown> => JSON.parse(localStorage.getItem(`${getDeviceName()}.settings`) ?? '{}') as Record<string, unknown>;
-  const own = (app: 'notes' | 'pages' | 'calendar' | 'contacts' | 'clock'): Record<string, unknown> | null => JSON.parse(localStorage.getItem(lookKey(app)) ?? 'null') as Record<string, unknown> | null;
+  const own = (app: 'notes' | 'pages' | 'calendar' | 'contacts' | 'clock' | 'wallet'): Record<string, unknown> | null => JSON.parse(localStorage.getItem(lookKey(app)) ?? 'null') as Record<string, unknown> | null;
 
   beforeEach(() => {
     localStorage.clear();

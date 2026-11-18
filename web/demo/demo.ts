@@ -13,6 +13,9 @@
  *    language it had (the browser's the first time), so another app opened from the launcher speaks
  *    the same. Its notes, pages, events and people are in English whatever the language
  *    (`demoData.ts`).
+ *  - Wallet's (`/wallet?demo`) also makes a vault and seals its cards, papers and documents in it
+ *    (`demoWallet.ts`): the cards open at once, as in a browser that keeps them open; the papers ask
+ *    the passphrase, which the unlock field says.
  *
  * It uses its own database and settings, and starts afresh on every load, so
  * it can never touch real notes kept in the same browser.
@@ -20,6 +23,7 @@
 import { isReadyApp } from '@unlease/core/apps';
 
 import { setStorageName } from '@shared/app/env';
+import { appPath } from '@shared/ui/router';
 import { addCheck, createNote } from '@notes/app/store/actions';
 
 import { DEMO_SERVER, FakeServer } from './fakeServer';
@@ -61,7 +65,7 @@ export async function startDemo(mode: string): Promise<() => void> {
   // `&lang=en`: the interface in English; without it, in the language it had.
   const asked = params.get('lang');
   const locale = asked === 'en' || asked === 'fr' ? asked : earlierLocale();
-  const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar,clock').split(',').filter(isReadyApp);
+  const apps = (params.get('apps') ?? 'notes,pages,contacts,calendar,clock,wallet').split(',').filter(isReadyApp);
   const settings =
     mode === 'setup'
       ? { locale }
@@ -81,6 +85,12 @@ export async function startDemo(mode: string): Promise<() => void> {
   const server = new FakeServer({ reading, apps, setupDone: mode !== 'setup' });
   // The whole suite's records on the server too, as a real one holds them: what one app asks of another's (where a person is mentioned) finds them.
   const seed = mode === 'setup' || mode === 'empty' ? [] : buildDemoRecords(Date.now());
+  // Wallet's demo only (Argon2id takes a moment, and no other app shows its records): a vault, its cards and papers.
+  if (/^\/wallet(\/|$)/.test(appPath(location.pathname))) {
+    const wallet = await import('./demoWallet');
+    if (seed.length > 0) seed.push(...(await wallet.buildDemoWallet(Date.now())));
+    else await wallet.forgetDemoWallet();
+  }
   server.push(seed);
   // The holidays the real server fetches from Nager.Date (France's, computed here).
   if (seed.length > 0) server.seedHolidays();

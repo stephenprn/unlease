@@ -19,6 +19,8 @@
  * It runs the apps the setup or the Administration turns on (`/api/health`'s `apps`, `PUT
  * /api/settings { apps }`; an app off answers 404, as the server does), remembers when its setup is
  * done (`setupDone`), and a pull answers only the record types it names (`SyncRequest.types`).
+ * Wallet's vault (`/api/wallet/vault`) is kept as the server keeps it, the first one sent; « Remplir
+ * avec Claude » (`/api/wallet/read`) answers made-up fields that say nothing was read.
  */
 import { foldText } from '@unlease/core/services/search';
 import { MAX_PULL, type SyncResponse } from '@unlease/core/sync/protocol';
@@ -53,6 +55,9 @@ import { createId } from '@unlease/core/services/ids';
 import { keysBetween } from '@unlease/core/services/fractionalIndex';
 import { parseEnabledApps, PAGES_ASK_DEFAULTS, PAGES_REACH_CHARS, BACKUP_KEEP_MAX, DRIVE_FOLDER_DEFAULT, isBackupRecurrence, isClaudeModel, isColdStorage, isPagesReach, isStorageClass, type BackupSettings, type DriveSettings, type PagesAskSettings, type SeerrSettings, type ImmichSettings, type ServerSettings, type CalendarSettings, parseCalendarPatch } from '@unlease/core/sync/settings';
 import { immichRoute } from './fakeImmich';
+import { VAULT_ID, VAULT_TYPE } from '@unlease/wallet/crypto/vault';
+import { vaultFromRecord } from '@unlease/wallet/sync/entities';
+import { parseReadRequest, parseVaultCreate, readReadFields, WALLET_READ_PATH, WALLET_VAULT_PATH, type ReadRequest, type VaultCreateResponse } from '@unlease/wallet/sync/routes';
 
 import { CONTACT_PHOTO_PATH, isContactPhotoRequest } from '@unlease/contacts/sync/photos';
 import { demoImage } from './demoImages';
@@ -232,6 +237,23 @@ const jsonResponse = (value: unknown, status = 200): Response => new Response(JS
 const snapshotName = (time: number): string => `unlease-${new Date(time).toISOString().slice(0, 19).replace(/:/g, '-')}Z.tar.gz`;
 
 const hint = (secret: string): string => `…${secret.slice(-4)}`;
+
+/** What the demo « reads » of a card or a paper: plausible fields for its kind, the summary saying it is made up. */
+function madeUpReading(request: ReadRequest): Record<string, unknown> {
+  const english = request.lang === 'en';
+  const kind = request.kind ?? 'document';
+  const summary = english
+    ? 'This is a demo: nothing was read. On a real server, Claude fills these fields from the pictures.'
+    : 'Ceci est une démo : rien n’a été lu. Sur un vrai serveur, Claude remplit ces champs d’après les images.';
+  const year = new Date().getFullYear();
+  if (kind === 'card' || kind === 'giftCard' || kind === 'emergency') {
+    return { kind, title: english ? 'Corner Shop' : 'Épicerie du coin', issuer: english ? 'Corner Shop' : 'Épicerie du coin', number: '0042 7781 3305', ...(kind === 'giftCard' ? { amount: 20, currency: 'EUR' } : {}), summary };
+  }
+  if (kind === 'document') {
+    return { kind, title: english ? `Home insurance certificate ${year}` : `Attestation d’assurance habitation ${year}`, issuer: english ? 'Example Insurance' : 'Assurances Exemple', docType: 'insurance', docDate: `${year}-01-15`, expiresOn: `${year}-12-31`, summary };
+  }
+  return { kind, holder: 'Jordan Ellis', number: 'D3M0X0001', issuedOn: `${year - 2}-06-01`, expiresOn: `${year + 8}-05-31`, birthDate: '1991-04-12', summary };
+}
 
 export class FakeServer {
   /** Link reading: on, with a key set from the apps, unless the demo asks for it off. */
@@ -1177,6 +1199,28 @@ export class FakeServer {
     return jsonResponse({ places });
   }
 
+  /** `POST /api/wallet/vault`: the first vault sent is kept, under the server's clock; a later one gets it back (`created` false). */
+  private async walletVault(body: unknown): Promise<Response> {
+    const request = parseVaultCreate(body);
+    if (!request) return jsonResponse({ error: 'Invalid vault' }, 400);
+    const key = `${VAULT_TYPE}:${VAULT_ID}`;
+    const created = !this.records.has(key);
+    if (created) this.write(VAULT_TYPE, VAULT_ID, { ...request.fields });
+    const stored = vaultFromRecord(this.records.get(key)?.record);
+    if (!stored) return jsonResponse({ error: 'Invalid vault' }, 500);
+    const answer: VaultCreateResponse = { created, fields: stored };
+    return jsonResponse(answer);
+  }
+
+  /** `POST /api/wallet/read`, after a reading's pause: nothing is read in the demo, so the fields are made up and the summary says so. */
+  private async walletRead(body: unknown): Promise<Response> {
+    const request = parseReadRequest(body);
+    if (!request) return jsonResponse({ error: 'Invalid request' }, 400);
+    if (!this.settings.enabled) return jsonResponse({ error: 'Claude has no key: add one in the Administration.' }, 409);
+    await delay(1_600);
+    return jsonResponse({ fields: readReadFields(madeUpReading(request)) });
+  }
+
   /** An app's route, while the app is on; off, the server's own refusal. */
   private appRoute(app: AppId, run: () => Promise<Response>): Promise<Response> {
     return this.apps.includes(app) ? run() : Promise.resolve(jsonResponse({ error: `${APPS[app].name} n’est pas activé sur ce serveur` }, 404));
@@ -1219,6 +1263,8 @@ export class FakeServer {
     if (url.pathname === '/api/pages/mentions' && method === 'GET') return this.appRoute('pages', async () => this.mentions('pages', url));
     if (/^\/api\/pages\/[^/]+\/versions/.test(url.pathname)) return this.appRoute('pages', async () => pageVersionsRoute(() => this.allRecords(), url, method) ?? new Response('not found', { status: 404 }));
     if (url.pathname === '/api/notes/mentions' && method === 'GET') return this.appRoute('notes', async () => this.mentions('notes', url));
+    if (url.pathname === WALLET_VAULT_PATH && method === 'POST') return this.appRoute('wallet', () => this.walletVault(JSON.parse(String(init?.body ?? '{}'))));
+    if (url.pathname === WALLET_READ_PATH && method === 'POST') return this.appRoute('wallet', () => this.walletRead(JSON.parse(String(init?.body ?? '{}'))));
     if (url.pathname === CONTACT_PHOTO_PATH && method === 'POST') return this.appRoute('contacts', () => this.contactPhoto(JSON.parse(String(init?.body ?? '{}'))));
     const immich = immichRoute(url, method, this.immich.url !== '', (id, blob) => this.uploads.set(id, blob));
     if (immich) {

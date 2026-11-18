@@ -202,7 +202,8 @@ function keyStore<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => I
   });
 }
 
-async function rememberCards(cards: Uint8Array): Promise<void> {
+/** The cards' key kept in this browser (sealed by a browser key that cannot leave it): they open at the next visit. */
+export async function rememberCards(cards: Uint8Array): Promise<void> {
   const wrapper = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, wrapper, cards.slice()));
@@ -249,6 +250,18 @@ async function forgetRememberedCards(): Promise<void> {
     // Nothing kept.
   }
 }
+
+// ── the web demo's passphrase ──────────────────────────────────────────────
+
+let demoPassphrase: string | null = null;
+
+/** The web demo's vault only (`web/demo/demoWallet.ts`): its passphrase, made up and public, said under the unlock field. */
+export const sayDemoPassphrase = (passphrase: string): void => {
+  demoPassphrase = passphrase;
+};
+
+/** The passphrase the unlock field may say: the demo's, else none. */
+export const shownPassphrase = (): string | null => demoPassphrase;
 
 /** Test seam: back to nothing. */
 export function resetVault(): void {

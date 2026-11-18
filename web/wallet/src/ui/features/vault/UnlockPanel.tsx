@@ -12,7 +12,7 @@ import { Icon } from '@shared/ui/components/Icon';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { TextField } from '@shared/ui/components/TextField';
 import { useForm } from '@shared/ui/components/useForm';
-import { unlockWithPassphrase, unlockWithRecovery } from '../../../app/store/vault';
+import { shownPassphrase, unlockWithPassphrase, unlockWithRecovery } from '../../../app/store/vault';
 import styles from '../../wallet.module.css';
 import { NewPassphraseDialog } from './PassphraseDialogs';
 
@@ -21,6 +21,8 @@ export function UnlockPanel({ what, bare = false, onOpened }: { what: string; ba
   const [mode, setMode] = useState<'passphrase' | 'recovery'>('passphrase');
   const [typed, setTyped] = useState('');
   const [renew, setRenew] = useState(false);
+  // Only the web demo's vault has a passphrase anyone may read.
+  const demo = shownPassphrase();
   const form = useForm({ typed: typed.trim() ? null : mode === 'passphrase' ? t('Type the vault’s passphrase.') : t('Type the code from your recovery kit.') });
 
   const open = async (): Promise<void> => {
@@ -65,6 +67,7 @@ export function UnlockPanel({ what, bare = false, onOpened }: { what: string; ba
           value={typed}
           onChange={setTyped}
           field={form.field('typed')}
+          help={mode === 'passphrase' && demo ? t('In this demo, the passphrase is “{passphrase}”.', { passphrase: demo }) : undefined}
         />
         <div className={styles.lockActions}>
           <Button
