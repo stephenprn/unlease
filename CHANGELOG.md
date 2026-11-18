@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-18
+
 ### Added
 
 - A contact's address in Contacts has a **Door code** (the building's or the intercom's code), on Android and on the web: typed under the address, shown on its card with a key, kept through a merge of duplicates. It stays in Unlease: never written to the phone's address book or to a vCard. Update the apps on every device: an older one that edits the address drops the code.
@@ -237,7 +239,8 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/stephenprn/unlease/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/stephenprn/unlease/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/stephenprn/unlease/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/stephenprn/unlease/compare/v0.1.0...v0.1.1
