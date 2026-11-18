@@ -1,9 +1,9 @@
 /**
  * Material's modal navigation drawer, as habits-garden's sheet turned on its side: every app's way
  * to its places. This is the frame every app shares (the sheet, its scrim, the hand pushing it
- * back, Back closing it, the app's brand at its top, the suite's other apps at its foot); the app
- * lists its places in it with `DrawerItem`, `DrawerHeading` and `DrawerDivider` (Carnet's board,
- * collections and labels; Pages' tree of pages). A row closes the drawer before it acts.
+ * back, Back closing it, the app's brand at its top); the app lists its places in it with
+ * `DrawerItem`, `DrawerHeading` and `DrawerDivider` (Carnet's board, collections and labels; Pages'
+ * tree of pages). A row closes the drawer before it acts.
  */
 import React, { createContext, memo, useCallback, useContext, useEffect, useRef } from 'react';
 import { BackHandler, Keyboard, StatusBar, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
@@ -12,14 +12,12 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { APPS, READY_APPS, type AppId } from '@unlease/core/apps';
+import { APPS, type AppId } from '@unlease/core/apps';
 import type { GlyphName } from '@unlease/design/glyphs';
 import { GEOMETRY } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 
-import { useReachableApps } from '../../app/hooks/useAppReachable';
-import { appHome, openInApp } from '../../app/openApp';
 import { BrandMark } from '../icons/BrandMark';
 import { haptic } from '../../platform/haptics';
 import { accelerate, decelerate, duration, FLING_SPEED, listPressDelay, spatialSlow, throwTo } from '../theme/motion';
@@ -185,7 +183,6 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
             {/* It runs down to the screen's edge, the room over the gesture bar inside it. */}
             <EdgeScrollView contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}>
               {children}
-              <SuiteApps app={app} />
             </EdgeScrollView>
           </CloseContext.Provider>
         </Animated.View>
@@ -207,7 +204,7 @@ export interface DrawerItemProps {
   readonly leading?: React.ReactNode;
   /** Before the mark (a branch's twisty in a tree). */
   readonly before?: React.ReactNode;
-  /** At the row's end (a count, the « elsewhere » arrow). */
+  /** At the row's end (a count, a branch's chevron). */
   readonly trailing?: React.ReactNode;
   /** The chosen sheet's wash, when matcha would sit under a pigment (a label's own). */
   readonly wash?: string;
@@ -244,24 +241,6 @@ export const DrawerItem = memo(function DrawerItem({ label, icon = null, selecte
   );
 });
 
-/**
- * The suite's other apps this phone can open (installed, or run by the server, whose web app then
- * opens), each by its mark, under every app's places: every drawer lists them all, the same way.
- */
-const SuiteApps = memo(function SuiteApps({ app }: { app: AppId }) {
-  const others = useReachableApps(READY_APPS.filter(id => id !== app));
-  if (others.length === 0) return null;
-  return (
-    <>
-      <DrawerDivider />
-      <DrawerHeading title={t('Apps')} />
-      {others.map(id => (
-        <DrawerItem key={id} label={APPS[id].name} leading={<BrandMark app={id} size={28} />} onPress={() => void openInApp(id, appHome(id))} trailing={<ElsewhereMark />} />
-      ))}
-    </>
-  );
-});
-
 /** A 40 high heading action reaches 48: the gap above it is empty, the row under it keeps its own touch. */
 const HEADING_SLOP = 8;
 
@@ -287,12 +266,6 @@ export function DrawerHeading({ title, action }: { title: string; action?: { rea
 export function DrawerDivider() {
   const styles = useThemedStyles(makeStyles);
   return <View style={styles.divider} />;
-}
-
-/** The mark at the end of a row that opens another app of the suite (or the web). */
-export function ElsewhereMark() {
-  const theme = useTheme();
-  return <Icon name="external" size={18} color={theme.color.inkMuted} />;
 }
 
 const makeStyles = (theme: Theme) =>

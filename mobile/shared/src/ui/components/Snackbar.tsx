@@ -39,10 +39,11 @@ function SnackbarComponent() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const snack = useUiStore(selectSnack);
+  const clearance = useUiStore(state => state.snackClearance) ?? SNACK_CLEARANCE;
   // While typing, the slip rides on the keyboard (a slip behind it, « Label supprimé · Annuler », would be lost).
   const keyboardTop = useKeyboardTop();
   const { height: windowHeight } = useWindowDimensions();
-  const bottom = keyboardTop !== null ? Math.max(windowHeight - keyboardTop, 0) + 12 : insets.bottom + SNACK_CLEARANCE;
+  const bottom = keyboardTop !== null ? Math.max(windowHeight - keyboardTop, 0) + 12 : insets.bottom + clearance;
 
   useEffect(() => {
     if (!snack) return;

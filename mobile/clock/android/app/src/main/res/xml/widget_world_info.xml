@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Horloges: its times count by themselves (TextClock); drawn again every half hour and at each quarter hour for « Demain » and the daylight. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="3" android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_world"
+    android:previewLayout="@layout/widget_world_preview"
+    android:description="@string/widget_world_description"
+    android:widgetCategory="home_screen" />

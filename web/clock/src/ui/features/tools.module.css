@@ -1,0 +1,918 @@
+/*
+ * Clock's timers, stopwatch and world clocks on the web (the phone's `features/timers`, `stopwatch`,
+ * `world`): the same anatomy, in the alarms' visual world (`clock.module.css`). Every time is in
+ * tabular figures; every colour, radius and duration is the design system's (`var(--…)`).
+ */
+
+.ellipsis {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── a timer that runs ──────────────────────────────────────────────────── */
+
+.runs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.run {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0 16px;
+  background: var(--paper);
+}
+
+/* Ringing: its edge in the accent, so it reads from across the kitchen. */
+.run[data-state='ringing'] {
+  --edge-color: var(--action);
+  --edge-width: 1.5px;
+}
+
+.runHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 6px 0 22px;
+}
+
+.runWords {
+  flex: 1;
+  min-width: 0;
+}
+
+.runMeta {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.run[data-state='ringing'] .runMeta {
+  color: var(--action);
+}
+
+.runTime {
+  margin: 0;
+  padding: 0 22px;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 56px;
+  line-height: 64px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.run[data-state='paused'] .runTime {
+  color: var(--ink-muted);
+}
+
+.run[data-state='ringing'] .runTime {
+  color: var(--action);
+}
+
+/* The track: 6 high on the track's colour, filling in the accent's warmth (the accent at full once it rings). */
+.track {
+  height: 6px;
+  margin: 6px 22px 0;
+  overflow: hidden;
+  border-radius: var(--cut-detail);
+  background: var(--track);
+}
+
+.fill {
+  height: 100%;
+  background: color-mix(in srgb, var(--action) 75%, var(--track));
+  transform-origin: left center;
+  transition: transform 250ms linear;
+}
+
+.run[data-state='ringing'] .fill {
+  background: var(--action);
+}
+
+.run:not([data-state='running']) .fill {
+  transition: transform var(--duration-short) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .run:not([data-state='running']) .fill {
+    transition: none;
+  }
+}
+
+.runActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 0 16px;
+}
+
+.runActions > button {
+  min-width: 112px;
+}
+
+/* A phone-sized window: the two actions share the row, « Réinitialiser » under them. */
+@media (max-width: 479px) {
+  .runActions > button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .runActions > .resetAction {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
+/* ── starting one ───────────────────────────────────────────────────────── */
+
+/* Six lengths, each one click: three by two on a phone, one row where there is room. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 560px) {
+  .chips {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.chip {
+  min-height: 48px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0.1px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  }
+}
+
+.chip:active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper));
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ── a saved timer ──────────────────────────────────────────────────────── */
+
+.savedRow {
+  padding-right: 12px;
+}
+
+.length {
+  min-width: 96px;
+}
+
+.savedRow [data-running] {
+  color: var(--link);
+}
+
+/* The start: the primary's pebble, 52 by 48, the capture pebble a step smaller. */
+.start {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--on-action-container);
+  cursor: pointer;
+  --pebble-fill: var(--action-container);
+}
+
+@media (hover: hover) {
+  .start:hover {
+    --pebble-fill: color-mix(in srgb, var(--on-action-container) 8%, var(--action-container));
+  }
+}
+
+.start:active {
+  --pebble-fill: color-mix(in srgb, var(--on-action-container) 12%, var(--action-container));
+}
+
+.start:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--cut-small);
+}
+
+/* ── the timer's form ───────────────────────────────────────────────────── */
+
+/* Opened, the length takes the focus (the digits typed go to it), drawn without a ring. */
+.lengthBlock {
+  outline: none;
+}
+
+.display {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 4px 0;
+}
+
+.displayGroup {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.displayDigit {
+  color: var(--ink-faint);
+  font-weight: 600;
+  font-size: 48px;
+  line-height: 56px;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.displayUnit {
+  margin-left: 3px;
+  color: var(--ink-faint);
+}
+
+.displayDigit[data-typed] {
+  color: var(--ink);
+}
+
+.displayUnit[data-typed] {
+  color: var(--ink-muted);
+}
+
+.quickRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 560px) {
+  .quickRow {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.quickRow > button {
+  min-height: 40px;
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: var(--paper-high);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 32px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .key:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--paper-high));
+  }
+}
+
+.key:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper-high));
+}
+
+.key:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.eraseKey {
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .eraseKey:not(:disabled):hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.eraseKey:not(:disabled):active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.eraseKey:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+/* ── the stopwatch ──────────────────────────────────────────────────────── */
+
+.watchScreen {
+  align-items: center;
+}
+
+.watchScreen > * {
+  width: 100%;
+  max-width: 520px;
+}
+
+.face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 0 12px;
+}
+
+.figure {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.figureMain {
+  font-size: clamp(44px, 13vw, 64px);
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+}
+
+.figureHundredths {
+  min-width: 1.4em;
+  margin-left: 2px;
+  color: var(--ink-muted);
+  font-size: clamp(22px, 6.5vw, 30px);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+/* Held (paused): the second ink, as a timer paused reads. */
+.figure[data-held] .figureMain {
+  color: var(--ink-muted);
+}
+
+.lapNow {
+  min-height: 22px;
+  margin: 2px 0 0;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.watchActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.watchActions > button {
+  min-height: 56px;
+  font-size: 16px;
+}
+
+.laps {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 4px;
+}
+
+.lap + .lap {
+  border-top: 1px solid var(--hairline);
+}
+
+/* A lap taken slides down out of the time, settling. */
+.lap[data-fresh] {
+  animation: lap-in var(--duration-medium) var(--ease-decelerate) both;
+}
+
+@keyframes lap-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lap[data-fresh] {
+    animation-name: lap-fade;
+  }
+  @keyframes lap-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.lapName {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 4px;
+  color: var(--ink-muted);
+}
+
+/* A lap's length against the longest: a 4 bar on its own line under its name, in the accent, the fastest's and the slowest's in their inks. */
+.lapBar {
+  order: 3;
+  flex: 0 0 90%;
+  height: 4px;
+  border-radius: 2px;
+  --bar: color-mix(in srgb, var(--action) 55%, transparent);
+  background: linear-gradient(90deg, var(--bar) var(--share), transparent var(--share));
+}
+
+.lapBar[data-tag='fastest'] {
+  --bar: var(--focus);
+}
+
+.lapBar[data-tag='slowest'] {
+  --bar: var(--waiting);
+}
+
+/* ── the stopwatch's bezel (`StopwatchDial`) ───────────────────────────── */
+
+.dial {
+  position: relative;
+  width: min(312px, 78vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.dialRing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.dialTick {
+  stroke: var(--edge);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.55;
+  transition: stroke var(--duration-short) var(--ease-standard);
+}
+
+.dialTick[data-major] {
+  stroke: var(--ink-faint);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.dialTick[data-lit] {
+  stroke: var(--action);
+  opacity: 1;
+}
+
+.dialBead {
+  fill: var(--ink-muted);
+  stroke: var(--wall);
+  stroke-width: 1.6;
+}
+
+.dialBead[data-running] {
+  fill: var(--action);
+}
+
+.dialHeart {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lapTag[data-tag='fastest'] {
+  color: var(--focus);
+}
+
+.lapTag[data-tag='slowest'] {
+  color: var(--waiting);
+}
+
+.lapTime {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lapSplit {
+  min-width: 84px;
+  text-align: right;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the world clocks ───────────────────────────────────────────────────── */
+
+.here {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.here > p {
+  margin: 0;
+}
+
+.hereTime {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 64px;
+  line-height: 72px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hereTime[data-shifted] {
+  color: var(--action);
+}
+
+.hereDay {
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.compare {
+  display: flex;
+  flex-direction: column;
+}
+
+.compareHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px;
+}
+
+.compareWords {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The ruler: the hours slid under a fixed needle, its sides fading where hours run on. */
+.ruler {
+  position: relative;
+  height: 56px;
+  overflow: hidden;
+  border-radius: var(--cut-small);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  --fade-left-k: 1;
+  --fade-right-k: 1;
+}
+
+.ruler[data-dragging] {
+  cursor: grabbing;
+}
+
+.ruler:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.rulerTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  height: 100%;
+  transition: transform var(--duration-short) var(--ease-decelerate);
+}
+
+.ruler[data-dragging] .rulerTrack {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rulerTrack {
+    transition: none;
+  }
+}
+
+.rulerHour {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 100%;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.5px;
+  height: 14px;
+  background: var(--edge);
+}
+
+.tick[data-major] {
+  height: 20px;
+  background: var(--ink-muted);
+}
+
+.tick[data-midnight] {
+  width: 2px;
+  height: 24px;
+  background: var(--ink);
+}
+
+.minor {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 7px;
+  background: var(--edge);
+  opacity: 0.6;
+}
+
+.minor[data-half] {
+  height: 10px;
+}
+
+.hourLabel {
+  position: absolute;
+  top: 26px;
+  left: -24px;
+  width: 48px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourLabel[data-midnight] {
+  color: var(--ink);
+}
+
+/* The needle: the primary's deep ink, a dot at its foot. */
+.needle {
+  position: absolute;
+  top: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 30px;
+  background: var(--focus);
+  pointer-events: none;
+}
+
+.knob {
+  position: absolute;
+  top: 28px;
+  left: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--focus);
+  pointer-events: none;
+}
+
+.cityRow {
+  padding-right: 18px;
+}
+
+.cityTime {
+  min-width: 96px;
+}
+
+.cityTime[data-shifted] {
+  color: var(--action);
+}
+
+.sky {
+  flex: none;
+  display: flex;
+  margin-left: auto;
+  color: var(--ink-muted);
+}
+
+.sky[data-sky='dusk'] {
+  color: var(--ink-faint);
+}
+
+/* A city opened. */
+.cityFrame {
+  --frame-width: min(440px, 100vw - 32px);
+}
+
+.cityWhere {
+  margin: 0;
+}
+
+/* The city search: its field over the rows, as the pickers' (Pages' « Déplacer vers… »). */
+.searchFrame {
+  --frame-width: min(520px, 100vw - 32px);
+  /* Its own height, whatever is found: it never jumps as letters are typed. */
+  height: min(600px, 100dvh - 96px);
+}
+
+@media (max-width: 719px) {
+  .searchFrame {
+    height: 88dvh;
+  }
+}
+
+.searchField {
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--cut-field);
+  background: var(--field-veil);
+  -webkit-backdrop-filter: var(--field-frost);
+  backdrop-filter: var(--field-frost);
+  box-shadow: inset 0 0 0 1.5px var(--edge);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.searchField::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.searchField:focus,
+.searchField:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+.cityRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cityPick {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.cityPick > svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.cityPick > svg:last-child {
+  color: var(--focus);
+}
+
+@media (hover: hover) {
+  .cityPick:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.cityPick:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.cityPick:focus-visible {
+  outline-offset: -2px;
+}
+
+.cityPickText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cityPickHint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.searchEmpty {
+  padding: 12px 16px;
+}
+
+/* ── a length as a figure (`LengthFigure`) ─────────────────────────────── */
+
+.figureLength {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  white-space: nowrap;
+  font-size: var(--figure-size, 24px);
+}
+
+.figurePart {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.12em;
+}
+
+.figureValue {
+  font-weight: 600;
+  font-size: 1em;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.figureUnit {
+  font-weight: 500;
+  font-size: max(12px, 0.5em);
+  letter-spacing: 0;
+  color: var(--ink-muted);
+}
+
+/* A city's own daylight, from the sun's side of its card: Safran by day, the accent at dusk, none at night. */
+.cityRow[data-sky='day'],
+.cityRow[data-sky='dusk'] {
+  background-image: radial-gradient(circle at 96% 50%, color-mix(in srgb, var(--sky-light) 18%, transparent) 0%, transparent 62%);
+}
+
+.cityRow[data-sky='day'] {
+  --sky-light: var(--waiting);
+}
+
+.cityRow[data-sky='dusk'] {
+  --sky-light: var(--action);
+}

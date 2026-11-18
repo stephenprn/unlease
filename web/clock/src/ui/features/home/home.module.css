@@ -177,8 +177,19 @@
   color: var(--ink-muted);
 }
 
+/* No alarm: the time's figure left blank in the faint ink, as tall as the time it stands for. */
+.blankTime {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-weight: 600;
+  font-size: 56px;
+  line-height: 62px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
 .none {
-  margin: 8px 0;
   color: var(--ink-muted);
 }
 

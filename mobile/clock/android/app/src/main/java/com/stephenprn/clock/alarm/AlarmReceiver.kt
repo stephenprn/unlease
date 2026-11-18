@@ -108,7 +108,11 @@ class AlarmSystemReceiver : BroadcastReceiver() {
       Intent.ACTION_LOCKED_BOOT_COMPLETED,
       Intent.ACTION_BOOT_COMPLETED,
       Intent.ACTION_MY_PACKAGE_REPLACED,
-      "android.intent.action.QUICKBOOT_POWERON" -> AlarmScheduler.recover(context)
+      "android.intent.action.QUICKBOOT_POWERON" -> {
+        AlarmScheduler.recover(context)
+        // The timers and the stopwatch too: a timer whose end came meanwhile rings now, the rest are armed again.
+        com.stephenprn.clock.tools.TimerEngine.recover(context)
+      }
       else -> AlarmScheduler.arm(context)
     }
     RingEvents.changed(context)

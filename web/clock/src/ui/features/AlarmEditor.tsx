@@ -16,19 +16,18 @@ import { isBlank } from '@unlease/core/services/formChecks';
 import { clockWords, weekdayDay } from '@unlease/calendar/services/eventText';
 import { spanWords } from '@unlease/calendar/services/today';
 import { addDays, instantToDay, instantToWall, readClock } from '@unlease/calendar/services/time';
+import { DAY_PATTERN } from '@unlease/calendar/models/events';
 import { ALARM_LIMITS, normalizeDays, type Alarm } from '@unlease/clock/models/alarm';
 import { linkedOccurrence, offDaysFrom } from '@unlease/clock/services/agenda';
 import { blankDraft, draftChanged, draftOf, type AlarmDraft } from '@unlease/clock/services/editing';
 import { BEFORE_CHOICES, DAYS_CHOICES, DEFAULT_BEFORE, daysChoiceName, daysChoiceOf, daysOfChoice, draftRing, linkedDraft, retimedDraft, ringsInWords } from '@unlease/clock/services/editor';
 import { nextRing, skippedDay } from '@unlease/clock/services/schedule';
 import { alarmClock, beforeWords, forEventWords, setWords } from '@unlease/clock/services/words';
-import type { GlyphName } from '@unlease/design/glyphs';
 
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { showSnack, showUndo } from '@shared/app/store/ui';
 import { useWorkDays } from '@shared/app/store/serverSettings';
 import { Button } from '@shared/ui/components/Button';
-import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { DialogFrame } from '@shared/ui/components/Dialog';
 import { FormMessage } from '@shared/ui/components/FormMessage';
 import { Icon } from '@shared/ui/components/Icon';
@@ -46,6 +45,7 @@ import { useClockStore } from '../../app/store/library';
 import { usePrefsStore } from '../../app/store/prefs';
 import styles from '../clock.module.css';
 import { SoundField } from './SoundField';
+import { ToggleRow } from './ToggleRow';
 
 /** What a new alarm's address may bring: its time (`?time=7h30`) and its label. */
 /** Agenda's « Me réveiller pour cet événement »: the event its address names (`?event=…&occurrence=…&at=…&title=…`), or null. */
@@ -55,25 +55,13 @@ function askedEvent(): { readonly eventId: string; readonly eventStart: string; 
   return eventId ? { eventId, eventStart: params.get('occurrence') ?? '', at: Number(params.get('at')), title: (params.get('title') ?? '').trim().slice(0, ALARM_LIMITS.label) } : null;
 }
 
-function handed(): Partial<Pick<AlarmDraft, 'time' | 'label'>> {
+function handed(): Partial<Pick<AlarmDraft, 'time' | 'label' | 'date'>> {
   const params = new URLSearchParams(getLocation().search);
   const time = readClock(params.get('time') ?? '');
   const label = (params.get('label') ?? '').replace(/\s+/g, ' ').trim().slice(0, ALARM_LIMITS.label);
-  return { ...(time ? { time } : {}), ...(label ? { label } : {}) };
-}
-
-/** A row that is the switch itself: its glyph, its words, the switch at its end. */
-function ToggleRow({ icon, title, meta, on, onChange }: { icon: GlyphName; title: string; meta?: string; on: boolean; onChange: (on: boolean) => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} className={styles.toggle} onClick={() => onChange(!on)}>
-      <Icon name={icon} size={24} />
-      <span className={styles.toggleText}>
-        <span className="t-body">{title}</span>
-        {meta ? <span className="t-meta">{meta}</span> : null}
-      </span>
-      <SwitchMark checked={on} />
-    </button>
-  );
+  // The morning it was asked from (« Régler une alarme » on a morning with none).
+  const date = params.get('date') ?? '';
+  return { ...(time ? { time } : {}), ...(label ? { label } : {}), ...(DAY_PATTERN.test(date) ? { date } : {}) };
 }
 
 interface FormProps {

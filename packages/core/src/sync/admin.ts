@@ -103,6 +103,9 @@ export interface AdminStatus {
     readonly events: number;
     /** Clock's alarms, live ones (absent from a server older than Clock). */
     readonly alarms?: number;
+    /** Clock's saved timers and world clocks (absent from an older server). */
+    readonly timers?: number;
+    readonly worldClocks?: number;
     /** Photos and files the server knows, wherever their bytes are. */
     readonly files: number;
     readonly fileBytes: number;

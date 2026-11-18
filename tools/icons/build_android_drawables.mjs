@@ -5,7 +5,7 @@
  * its widgets' mark (the card and its leaf); Pages' launcher (the sheet and its writing); Contacts'
  * launcher, its birthdays' status bar icon and its widgets' mark (the card and its person); Agenda's
  * launcher, its reminders' status bar icon and its widgets' mark (the page and its days); Clock's
- * launcher and its alarms' status bar icon (the card and its dial).
+ * launcher, its alarms' status bar icon (the card and its dial), its timers' and its stopwatch's.
  *
  * Each app's launcher comes in every palette's primary too (`PALETTES`, design/appearance.ts): the
  * pebble as `markColors` paints it, the card and the themed silhouette the same. Android cannot paint
@@ -277,4 +277,8 @@ launcherPalettes(CLOCK_RES, writeClock, clock);
   const ty = 12 - (BOUNDS.y + BOUNDS.height / 2) * scale;
   writeClock('drawable/ic_stat_clock.xml', vector(24, 24, clock(scale.toFixed(4), tx.toFixed(2), ty.toFixed(2), '  ', '#FFFFFFFF')));
 }
-shortcutIcons(writeClock, { alarm: 'bellPlus', settings: 'settings' });
+// Its timers' and its stopwatch's status bar icons: the hourglass and the stopwatch, white.
+writeClock('drawable/ic_stat_timer.xml', vector(24, 24, glyphPaths('timer', 1, 0, 0, '#FFFFFFFF')));
+writeClock('drawable/ic_stat_stopwatch.xml', vector(24, 24, glyphPaths('stopwatch', 1, 0, 0, '#FFFFFFFF')));
+shortcutIcons(writeClock, { alarm: 'bellPlus', timer: 'timer', stopwatch: 'stopwatch', settings: 'settings' });
+

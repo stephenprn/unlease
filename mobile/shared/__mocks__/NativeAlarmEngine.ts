@@ -1,5 +1,5 @@
 /** Clock's alarm engine under Jest: what Android answers, and what the app asked, in `state`. */
-import type { AlarmHealth, ArmResult, PhoneSound, RingState, Whereabouts } from '../specs/NativeAlarmEngine';
+import type { AlarmHealth, ArmResult, PhoneSound, RingState, ToolsState, Whereabouts } from '../specs/NativeAlarmEngine';
 
 const NONE: RingState = { state: 'none', id: '', at: 0, since: 0, until: 0, snoozes: 0, title: '', label: '' };
 
@@ -11,6 +11,8 @@ export const state = {
   picked: { uri: '', name: '' } as PhoneSound,
   whereabouts: { found: false, lat: 0, lon: 0, at: 0 } as Whereabouts,
   listeners: new Set<(ring: RingState) => void>(),
+  tools: { timers: '[]', stopwatch: '{"startedAt":null,"banked":0,"laps":[]}', now: 0 } as ToolsState,
+  toolListeners: new Set<(tools: ToolsState) => void>(),
 };
 
 export function __reset(): void {
@@ -21,6 +23,14 @@ export function __reset(): void {
   state.picked = { uri: '', name: '' };
   state.whereabouts = { found: false, lat: 0, lon: 0, at: 0 };
   state.listeners.clear();
+  state.tools = { timers: '[]', stopwatch: '{"startedAt":null,"banked":0,"laps":[]}', now: 0 };
+  state.toolListeners.clear();
+}
+
+/** As the engine would: the timers or the stopwatch changed. */
+export function __tools(next: Partial<ToolsState>): void {
+  state.tools = { ...state.tools, ...next };
+  for (const listener of state.toolListeners) listener(state.tools);
 }
 
 /** As the engine would: what rings changed. */
@@ -62,6 +72,23 @@ const NativeAlarmEngine = {
   onRing: (listener: (ring: RingState) => void) => {
     state.listeners.add(listener);
     return { remove: () => state.listeners.delete(listener) };
+  },
+  tools: async (): Promise<ToolsState> => state.tools,
+  startTimer: (run: string): void => {
+    state.calls.push(`startTimer:${run}`);
+  },
+  timerAction: (id: string, action: string): void => {
+    state.calls.push(`timer:${id}:${action}`);
+  },
+  stopRingingTimers: (): void => {
+    state.calls.push('stopRingingTimers');
+  },
+  stopwatchAction: (action: string): void => {
+    state.calls.push(`stopwatch:${action}`);
+  },
+  onTools: (listener: (tools: ToolsState) => void) => {
+    state.toolListeners.add(listener);
+    return { remove: () => state.toolListeners.delete(listener) };
   },
 };
 

@@ -46,4 +46,15 @@ export const FR_WEB: Dictionary = {
   'How an alarm rings (its snooze, its volume, the evening check) is set on each phone, in {app} for Android.': 'La façon dont une alarme sonne (la répétition, le volume, la vérification du soir) se règle sur chaque téléphone, dans {app} pour Android.',
   'A new alarm shows the day’s weather where the phone is.': 'Une nouvelle alarme affiche la météo du jour là où est le téléphone.',
   'A new alarm shows your first events from {app}.': 'Une nouvelle alarme affiche vos premiers événements d’{app}.',
+  // The timers, the stopwatch and the world clocks
+  'A timer started here rings only while this page is open. Saved timers are on your phones too.': 'Un minuteur lancé ici ne sonne que tant que cette page reste ouverte. Les minuteurs enregistrés sont aussi sur vos téléphones.',
+  'Save the ones you start again and again from “New timer”: pasta, tea, eggs… each with its label.': 'Enregistrez depuis « Nouveau minuteur » ceux que vous relancez souvent : pâtes, thé, œufs… chacun avec son libellé.',
+  'Timer not found': 'Minuteur introuvable',
+  'This timer no longer exists.': 'Ce minuteur n’existe plus.',
+  'On the stopwatch': 'Sur le chronomètre',
+  'Start or pause': 'Démarrer ou mettre en pause',
+  'Start the stopwatch': 'Démarrer le chronomètre',
+  'Laps': 'Tours',
+  'Cities': 'Villes',
+  'Add the cities you follow: a friend’s, a trip’s, your office’s. Their time, day or night there, and how far ahead they are.': 'Ajoutez les villes que vous suivez : celle d’un proche, d’un voyage, de votre bureau. Leur heure, le jour ou la nuit là-bas, et l’écart avec ici.',
 };

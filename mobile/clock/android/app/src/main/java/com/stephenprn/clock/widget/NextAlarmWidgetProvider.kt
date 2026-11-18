@@ -69,6 +69,8 @@ class NextAlarmWidgetProvider : AppWidgetProvider() {
   companion object {
     /** Draws every placed widget again (the engine armed, a ring began or ended, new words). Never before the first unlock: the launcher shows none then. */
     fun redrawAll(context: Context) {
+      // The big clock shows the next alarm too.
+      ClockWidgetProvider.redrawAll(context)
       try {
         if (context.getSystemService(UserManager::class.java)?.isUserUnlocked == false) return
         val manager = AppWidgetManager.getInstance(context)
@@ -78,6 +80,15 @@ class NextAlarmWidgetProvider : AppWidgetProvider() {
       } catch (_: Exception) {
         // A widget is never worth an alarm: whatever fails here leaves the engine alone.
       }
+    }
+
+    /** The next alarm as the big clock says it: its id, its time as the app writes it, its name; null with none to ring (or one ringing now). */
+    internal fun upcoming(context: Context): Triple<String, String, String>? {
+      val next = next(context)
+      val alarm = next.alarm ?: return null
+      if (next.state != State.RINGS && next.state != State.SNOOZED) return null
+      val payload = WidgetStore(context).payload()
+      return Triple(alarm.id, clock(context, Civil.wallOf(next.at, TimeZone.getDefault()).second, payload), alarm.title)
     }
 
     fun placed(context: Context): IntArray =

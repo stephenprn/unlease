@@ -455,10 +455,15 @@ function calendarExtras() {
   for (const name of ['plus', 'chevronRight']) glyph(name, 'link', 18);
 }
 
-/** Clock's own: « + » in a head, the morning's day glyph, the clash's alert in Safran. */
+/**
+ * Clock's own: « + » in a head, the morning's day glyph, the clash's alert in Safran; the timers' and
+ * the stopwatch's controls (start, pause, lap, reset; start and pause on the leaf pebble too); the
+ * world clocks' sun and moon; the big clock's bell.
+ */
 function clockExtras() {
-  glyph('plus', 'ink');
-  glyph('today', 'ink_muted');
+  for (const name of ['plus', 'go', 'pause', 'flag', 'restore', 'close']) glyph(name, 'ink');
+  for (const name of ['today', 'sun', 'moon', 'bell', 'timer', 'globe', 'stopwatch']) glyph(name, 'ink_muted');
+  for (const name of ['go', 'pause']) glyph(name, 'on_leaf');
   glyph('alert', 'waiting');
 }
 

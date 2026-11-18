@@ -7,6 +7,7 @@ import { FR_HOME } from './home';
 import { FR_PHONE } from './phone';
 import { FR_RING } from './ring';
 import { FR_SHARED } from './shared';
+import { FR_TOOLS } from './tools';
 import { FR_WEB } from './web';
 
 export const CLOCK_FRENCH: Dictionary = {
@@ -15,4 +16,5 @@ export const CLOCK_FRENCH: Dictionary = {
   ...FR_HOME,
   ...FR_PHONE,
   ...FR_WEB,
+  ...FR_TOOLS,
 };

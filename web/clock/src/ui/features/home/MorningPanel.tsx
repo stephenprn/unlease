@@ -24,7 +24,7 @@ import { Button } from '@shared/ui/components/Button';
 import { Icon } from '@shared/ui/components/Icon';
 import { OutlinedBox } from '@shared/ui/components/Outline';
 import { ringEarlier, skipNext, stopSkipping } from '../../../app/store/actions';
-import { openAlarm } from '../open';
+import { openAlarm, openNewAlarm } from '../open';
 import styles from './home.module.css';
 
 interface Props {
@@ -95,7 +95,19 @@ export const MorningPanel = memo(function MorningPanel({ morning, now, from, mar
             </div>
           </>
         ) : (
-          <p className={`${styles.none} t-title`}>{t('No alarm')}</p>
+          // A morning with an alarm's anatomy: the time's place blank (as the strip's dash says it), then « Pas
+          // d'alarme » and the way to set one, so switching an alarm on moves nothing.
+          <>
+            <span className={styles.blankTime} aria-hidden="true">
+              --:--
+            </span>
+            <div className={styles.nameRow}>
+              <span className={`${styles.grow} ${styles.none} t-body-strong`}>{t('No alarm')}</span>
+              <Button kind="text" small icon="plus" onClick={() => openNewAlarm({ date: morning.day })}>
+                {t('Set an alarm')}
+              </Button>
+            </div>
+          </>
         )}
         {morning.skipped.map(alarm => (
           <div key={alarm.id} className={styles.nameRow} data-skipped={alarm.id}>

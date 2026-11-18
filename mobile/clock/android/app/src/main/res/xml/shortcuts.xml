@@ -20,6 +20,30 @@
             android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
     </shortcut>
     <shortcut
+        android:shortcutId="timer"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_timer"
+        android:shortcutShortLabel="@string/shortcut_timer_short"
+        android:shortcutLongLabel="@string/shortcut_timer_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-clock://timers/new"
+            android:targetPackage="com.stephenprn.clock"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="stopwatch"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_stopwatch"
+        android:shortcutShortLabel="@string/shortcut_stopwatch_short"
+        android:shortcutLongLabel="@string/shortcut_stopwatch_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="unlease-clock://stopwatch"
+            android:targetPackage="com.stephenprn.clock"
+            android:targetClass="com.stephenprn.unlease.launch.ShortcutActivity" />
+    </shortcut>
+    <shortcut
         android:shortcutId="settings"
         android:enabled="true"
         android:icon="@drawable/ic_shortcut_settings"

@@ -65,9 +65,11 @@ export interface FabMenuProps {
   /** False while something else holds the screen's foot (notes being picked): the pebble steps aside. */
   readonly visible?: boolean;
   readonly icon?: GlyphName;
+  /** A bar pinned at the screen's foot (Clock's places), its whole height with the gesture bar's: the pebble floats over it. */
+  readonly above?: number;
 }
 
-function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: FabMenuProps) {
+function FabMenuComponent({ actions, label, visible = true, icon = 'plus', above }: FabMenuProps) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -112,7 +114,7 @@ function FabMenuComponent({ actions, label, visible = true, icon = 'plus' }: Fab
           <Tappable accessibilityLabel={t('Close')} noTint onPress={() => setOpen(false)} style={[styles.fill, { backgroundColor: theme.color.scrim }]} />
         </Animated.View>
       ) : null}
-      <View style={[styles.stack, { bottom: insets.bottom + MARGIN }]} pointerEvents="box-none">
+      <View style={[styles.stack, { bottom: (above ?? insets.bottom) + MARGIN }]} pointerEvents="box-none">
         {open
           ? [...actions].reverse().map((action, at) => {
               const order = actions.length - 1 - at;

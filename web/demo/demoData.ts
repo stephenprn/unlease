@@ -1072,7 +1072,7 @@ export function buildDemoRecords(now: number = Date.now()): SyncRecord[] {
   for (const event of contactChanges(now)) add(event.time, event.changes);
   // Agenda: its labels, events and a calendar subscribed to.
   for (const event of calendarChanges(now)) add(event.time, event.changes);
-  // Clock: a few alarms, one of them rung and switched off.
+  // Clock: a few alarms (one of them rung and switched off), saved timers and cities.
   for (const event of clockChanges(now)) add(event.time, event.changes);
 
   // Clocks at each record's own time (as a Keep import does), so "Modifiée hier" says yesterday.

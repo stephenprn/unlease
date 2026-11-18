@@ -10,9 +10,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Clock's side of the suite's Widgets spec (`mobile/shared/specs/NativeWidgets.ts`). Its one widget,
- * « Prochaine alarme », shows the same morning wherever it is placed: JavaScript hands it over once,
- * through `share`, and every placed one is drawn again. Nothing is pointed, ticked or asked from a
+ * Clock's side of the suite's Widgets spec (`mobile/shared/specs/NativeWidgets.ts`). Its widgets
+ * (« Prochaine alarme », « Minuteurs », « Chronomètre », « Horloges », « Horloge ») show the same
+ * thing wherever they are placed: JavaScript hands one payload over, through `share`, and every placed
+ * one is drawn again. Nothing is pointed, ticked or asked from a
  * quick window here: those answer empty.
  */
 class WidgetsModule(private val reactContext: ReactApplicationContext) : NativeWidgetsSpec(reactContext) {
@@ -20,6 +21,9 @@ class WidgetsModule(private val reactContext: ReactApplicationContext) : NativeW
   override fun placed(promise: Promise) {
     val placed = JSONArray()
     for (id in NextAlarmWidgetProvider.placed(reactContext)) placed.put(JSONObject().put("id", id).put("kind", "alarm").put("target", "alarm"))
+    for ((kind, provider) in listOf("timers" to TimersWidgetProvider::class.java, "stopwatch" to StopwatchWidgetProvider::class.java, "world" to WorldClocksWidgetProvider::class.java, "clock" to ClockWidgetProvider::class.java)) {
+      for (id in ToolWidgets.placed(reactContext, provider)) placed.put(JSONObject().put("id", id).put("kind", kind).put("target", kind))
+    }
     promise.resolve(placed.toString())
   }
 
@@ -29,7 +33,12 @@ class WidgetsModule(private val reactContext: ReactApplicationContext) : NativeW
 
   override fun share(shared: String) {
     applyLanguage(runCatching { JSONObject(shared).optString("locale") }.getOrDefault(""))
-    if (WidgetStore(reactContext).setPayload(shared)) NextAlarmWidgetProvider.redrawAll(reactContext)
+    if (WidgetStore(reactContext).setPayload(shared)) {
+      NextAlarmWidgetProvider.redrawAll(reactContext)
+      TimersWidgetProvider.redrawAll(reactContext)
+      StopwatchWidgetProvider.redrawAll(reactContext)
+      WorldClocksWidgetProvider.redrawAll(reactContext)
+    }
   }
 
   /**

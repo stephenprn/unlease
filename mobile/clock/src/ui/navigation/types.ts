@@ -2,10 +2,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import type { AlarmDraft } from '@unlease/clock/services/editing';
 
+import type { ClockTab } from './ClockTabBar';
+
 export type RootStackParamList = {
   Setup: undefined;
-  /** The alarms, by time of day. */
-  Alarms: undefined;
+  /** Clock's home: one of its four places (the alarms when none is named). */
+  Alarms: { readonly tab?: ClockTab } | undefined;
+  /** « Nouveau minuteur » (no `id`), or a saved timer's form. */
+  Timer: { readonly id?: string } | undefined;
+  /** « Ajouter une ville »: the search over the world's cities. */
+  City: undefined;
   /**
    * « Nouvelle alarme » (no `id`; `handed`: a draft filled in, what another app's « set an alarm »
    * handed or the home's « Ajouter une alarme » for a morning's event (`eventAlarmDraft`);

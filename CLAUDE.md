@@ -8,7 +8,7 @@ Unlease (stop leasing your data to Google, and unleash yourself) is a self-hoste
 | **Pages** | `pages` | Notion | Carnet's notes, collections and links; mentions contacts and events |
 | **Contacts** | `contacts` | Google Contacts | |
 | **Agenda** | `calendar` | Google Calendar | contacts' birthdays, Carnet's reminders, the days written in pages |
-| **Clock** | `clock` | an alarm clock | the weather and Agenda's day as it rings |
+| **Clock** | `clock` | Google's Clock (alarms, timers, stopwatch, world clocks) | the weather and Agenda's day as it rings |
 
 One repository holds everything:
 
@@ -164,6 +164,7 @@ Java 17 for Gradle (`JAVA_HOME` pointing at a JDK 17). Generators run from the r
 ### Clock
 
 - **Alarms ring through the engine, never through Notifee** (`mobile/clock/android/.../alarm`, spec `NativeAlarmEngine.ts`): JavaScript only hands it the plan (`clock/services/engine.ts` through `app/engine.ts`, whenever an alarm or a ringing setting changes); the engine counts each next ring (`Civil.kt`, `AlarmPlan.kt`, mirroring `clock/services/schedule.ts` number for number: change both, and both tests, together), arms it with `setAlarmClock` and answers snooze and stop without JavaScript. Nothing is written to a record when an alarm rings. Notifee carries only Clock's notices (the evening check, the notice before an alarm).
+- **Timers and the stopwatch run in the engine too** (`mobile/clock/android/.../tools`, the same spec): JavaScript asks (`app/store/toolsStore.ts`) and follows `onTools`, never counts or arms anything itself; a running timer and the stopwatch are the device's, never records (only saved timers and world clocks are: `timer`, `worldClock`). A widget's button acts through `ToolReceiver` with the app closed. Their notifications, widgets and window count by themselves (Chronometer, TextClock): never redraw each second.
 
 ### Git
 

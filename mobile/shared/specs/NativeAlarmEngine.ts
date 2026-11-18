@@ -7,7 +7,9 @@
  * stream (looping, its volume rising), vibrates, wakes the screen with the ringing window over the
  * lock screen, and stops on « Arrêter », snoozes on « Répéter », or gives up after a while and says
  * the alarm was missed: all without JavaScript, which only draws the ringing window
- * (`ringWindow`) and hands the engine its alarms again whenever they change.
+ * (`ringWindow`) and hands the engine its alarms again whenever they change. It runs the timers and
+ * the stopwatch the same way (`tools/` in Kotlin): their notifications and widgets count by themselves,
+ * a timer rings at its end, and JavaScript is told of every change (`onTools`).
  */
 import type { CodegenTypes, TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
@@ -70,6 +72,14 @@ export interface Whereabouts {
   at: number;
 }
 
+/** The timers this phone runs and its stopwatch, as the engine keeps them (`TimerRun[]` and `Stopwatch` as JSON, `@unlease/clock/models`). */
+export interface ToolsState {
+  timers: string;
+  stopwatch: string;
+  /** The phone's clock as it read them. */
+  now: number;
+}
+
 export interface Spec extends TurboModule {
   /** Hands the engine every alarm and how this phone rings them (`EnginePlan` as JSON); it arms them again. */
   setPlan(plan: string): Promise<ArmResult>;
@@ -95,6 +105,18 @@ export interface Spec extends TurboModule {
   unlock(): Promise<boolean>;
   /** Fires on every change: it rings, it is snoozed, it stops. */
   readonly onRing: CodegenTypes.EventEmitter<RingState>;
+  /** The timers and the stopwatch now. */
+  tools(): Promise<ToolsState>;
+  /** Starts a timer (`TimerRun` as JSON, its moments counted again from the phone's clock). */
+  startTimer(run: string): void;
+  /** `pause`, `resume`, `add` (+1 min), `reset`, `delete`, or `stop` (a ring answered). */
+  timerAction(id: string, action: string): void;
+  /** Every timer that rings, stopped. */
+  stopRingingTimers(): void;
+  /** `start`, `pause`, `lap`, `reset`. */
+  stopwatchAction(action: string): void;
+  /** Fires on every change of a timer or the stopwatch, wherever it was made (the app, a notification, a widget). */
+  readonly onTools: CodegenTypes.EventEmitter<ToolsState>;
 }
 
 export default TurboModuleRegistry.get<Spec>('AlarmEngine');

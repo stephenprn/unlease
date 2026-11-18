@@ -2,8 +2,9 @@
  * Every change the person makes to their alarms, as the phone makes it (`@unlease/clock/services`
  * says what each writes): each action is one `writeLocal` batch (one clock tick, pending, synced),
  * and those that can be taken back return their undo, which writes the old values with a newer
- * clock. Never mutate alarms another way. The web rings nothing: a phone with Clock rings what is
- * written here once it has synced.
+ * clock. Never mutate alarms another way. The web rings no alarm: a phone with Clock rings what is
+ * written here once it has synced. Saved timers and world clocks the same way (a timer that runs is
+ * this browser's, never a record: `./tools`).
  */
 import { createId } from '@unlease/core/services/ids';
 import { erasedCount } from '@unlease/core/services/erase';
@@ -13,7 +14,11 @@ import type { Alarm } from '@unlease/clock/models/alarm';
 import { editFields, newAlarmFields, ringEarlierWrites, type AlarmDraft } from '@unlease/clock/services/editing';
 import { eraseChanges } from '@unlease/clock/services/erase';
 import { onceDate, skipFields, skippedDay, switchedFields } from '@unlease/clock/services/schedule';
-import { alarmFields } from '@unlease/clock/sync/entities';
+import type { City } from '@unlease/clock/data/cities';
+import { TIMER_LIMITS, type Timer } from '@unlease/clock/models/timer';
+import { WORLD_CLOCK_LIMITS, type WorldClock } from '@unlease/clock/models/worldClock';
+import { cityFields, hasCity, zoneCityName } from '@unlease/clock/services/worldClocks';
+import { alarmFields, timerFields, worldClockFields } from '@unlease/clock/sync/entities';
 
 import { getRecord, writeLocal, type LocalChange } from '@shared/app/store/records';
 import { useClockStore } from './library';
@@ -135,7 +140,92 @@ export function ringEarlier(id: string, day: Day, time: string, now: number = Da
 
 /** « Effacer des données »: the tombstones of the parts chosen, as one batch; how many records went. */
 export function eraseClock(chosen: ReadonlySet<string>, now: number = Date.now()): number {
-  const changes = eraseChanges(useClockStore.getState().alarms, chosen, now);
+  const changes = eraseChanges(useClockStore.getState(), chosen, now);
   if (changes.length > 0) writeLocal(changes, now);
   return erasedCount(changes);
+}
+
+// ── saved timers ────────────────────────────────────────────────────────────
+
+/** A saved timer as its form holds it. */
+export interface TimerDraft {
+  readonly label: string;
+  readonly seconds: number;
+  readonly sound: string;
+  readonly vibrate: boolean;
+}
+
+const cleanTimer = (draft: TimerDraft): TimerDraft => ({
+  label: draft.label.replace(/\s+/g, ' ').trim().slice(0, TIMER_LIMITS.label),
+  seconds: Math.max(1, Math.min(TIMER_LIMITS.seconds, Math.round(draft.seconds))),
+  sound: draft.sound,
+  vibrate: draft.vibrate,
+});
+
+const timerOf = (id: string): Timer | undefined => {
+  const timer = useClockStore.getState().timers[id];
+  return timer && timer.deletedAt === null ? timer : undefined;
+};
+
+/** « Enregistrer » on a new timer: kept for next time, on every device. Returns its id. */
+export function createTimer(draft: TimerDraft, now: number = Date.now()): string {
+  const id = createId(now);
+  writeLocal([{ type: 'timer', id, patch: timerFields({ ...cleanTimer(draft), createdAt: now, deletedAt: null }) }], now);
+  return id;
+}
+
+/** « Enregistrer » on a saved timer: only what changed. */
+export function saveTimer(id: string, draft: TimerDraft, now: number = Date.now()): void {
+  const timer = timerOf(id);
+  if (!timer) return;
+  const clean = cleanTimer(draft);
+  const patch: Fields = {};
+  if (clean.label !== timer.label) patch.label = clean.label;
+  if (clean.seconds !== timer.seconds) patch.seconds = clean.seconds;
+  if (clean.sound !== timer.sound) patch.sound = clean.sound;
+  if (clean.vibrate !== timer.vibrate) patch.vibrate = clean.vibrate;
+  if (Object.keys(patch).length > 0) writeLocal([{ type: 'timer', id, patch }], now);
+}
+
+/** « Supprimer »: its tombstone, taken back by the slip's « Annuler ». A run of it goes on. */
+export function deleteTimer(id: string, now: number = Date.now()): Undo {
+  if (!timerOf(id)) return nothing;
+  const changes: LocalChange[] = [{ type: 'timer', id, patch: { deletedAt: now } }];
+  const undo = undoFor(changes);
+  writeLocal(changes, now);
+  return undo;
+}
+
+// ── world clocks ────────────────────────────────────────────────────────────
+
+const cityOf = (id: string): WorldClock | undefined => {
+  const clock = useClockStore.getState().worldClocks[id];
+  return clock && clock.deletedAt === null ? clock : undefined;
+};
+
+/** A city picked: its clock added, once (a city already there is not added twice). Returns its id. */
+export function addCity(city: City, now: number = Date.now()): string {
+  const live = Object.values(useClockStore.getState().worldClocks).filter(clock => clock.deletedAt === null);
+  const there = hasCity(live, city) ? live.find(clock => clock.zone === city.zone && (clock.name === city.name || clock.name === city.nameFr)) : undefined;
+  if (there) return there.id;
+  const id = createId(now);
+  writeLocal([{ type: 'worldClock', id, patch: worldClockFields(cityFields(city, now)) }], now);
+  return id;
+}
+
+/** « Renommer »: « Maman » rather than « Montréal ». An empty name takes the city's back. */
+export function renameCity(id: string, name: string, now: number = Date.now()): void {
+  const clock = cityOf(id);
+  if (!clock) return;
+  const next = name.replace(/\s+/g, ' ').trim().slice(0, WORLD_CLOCK_LIMITS.name) || zoneCityName(clock.zone);
+  if (next !== clock.name) writeLocal([{ type: 'worldClock', id, patch: { name: next } }], now);
+}
+
+/** « Retirer »: its tombstone, taken back by the slip's « Annuler ». */
+export function removeCity(id: string, now: number = Date.now()): Undo {
+  if (!cityOf(id)) return nothing;
+  const changes: LocalChange[] = [{ type: 'worldClock', id, patch: { deletedAt: now } }];
+  const undo = undoFor(changes);
+  writeLocal(changes, now);
+  return undo;
 }

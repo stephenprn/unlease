@@ -52,22 +52,6 @@ export const alarmForEventPlace = (event: AlarmForEvent): SuitePlace => ({ phone
 /** A new event in Agenda, its form filled from a draft (`unlease-agenda://new?…`, on the web `/agenda/new?…`). */
 export const newEventPlace = (query: string): SuitePlace => ({ phone: `new?${query}`, web: `/agenda/new?${query}` });
 
-/** An app's home: Carnet's board, Pages' pages, the contacts, the calendar. */
-export function appHome(app: AppId): SuitePlace {
-  switch (app) {
-    case 'notes':
-      return notesPlace();
-    case 'pages':
-      return pagePlace();
-    case 'contacts':
-      return contactPlace();
-    case 'calendar':
-      return eventPlace();
-    default:
-      return { phone: '', web: `/${APPS[app as AppId].slug}` };
-  }
-}
-
 /** Whether it opened (in the app, or on the web); a slip says why not otherwise. */
 export async function openInApp(app: AppId, place: SuitePlace): Promise<boolean> {
   try {

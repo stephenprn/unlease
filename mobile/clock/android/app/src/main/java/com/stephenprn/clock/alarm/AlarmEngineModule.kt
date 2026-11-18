@@ -22,6 +22,10 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
+import com.stephenprn.clock.tools.StopwatchEngine
+import com.stephenprn.clock.tools.TimerEngine
+import com.stephenprn.clock.tools.ToolEvents
+import com.stephenprn.clock.tools.ToolsSnapshot
 import com.stephenprn.unlease.specs.NativeAlarmEngineSpec
 import java.util.concurrent.atomic.AtomicReference
 
@@ -29,10 +33,12 @@ import java.util.concurrent.atomic.AtomicReference
 class AlarmEngineModule(private val context: ReactApplicationContext) : NativeAlarmEngineSpec(context), ActivityEventListener {
   private val picking = AtomicReference<Promise?>(null)
   private val listener: (RingSnapshot) -> Unit = { snapshot -> emitOnRing(toMap(snapshot)) }
+  private val toolListener: (ToolsSnapshot) -> Unit = { snapshot -> emitOnTools(toolsMap(snapshot)) }
 
   init {
     context.addActivityEventListener(this)
     RingEvents.add(listener)
+    ToolEvents.add(toolListener)
     // A ring the store holds with no service ringing it (the process died mid-ring): rung again, or said missed.
     AlarmScheduler.checkRing(context)
   }
@@ -40,6 +46,7 @@ class AlarmEngineModule(private val context: ReactApplicationContext) : NativeAl
   override fun invalidate() {
     context.removeActivityEventListener(this)
     RingEvents.remove(listener)
+    ToolEvents.remove(toolListener)
     SoundPreview.stop()
     picking.getAndSet(null)?.resolve(sound("", ""))
     super.invalidate()
@@ -277,6 +284,33 @@ class AlarmEngineModule(private val context: ReactApplicationContext) : NativeAl
         putInt("snoozes", record?.snoozes ?: 0)
         putString("title", record?.alarm?.title ?: "")
         putString("label", record?.alarm?.label ?: "")
+      }
+
+  override fun tools(promise: Promise) {
+    promise.resolve(toolsMap(ToolsSnapshot.read(context)))
+  }
+
+  override fun startTimer(run: String) {
+    TimerEngine.start(context, run)
+  }
+
+  override fun timerAction(id: String, action: String) {
+    TimerEngine.act(context, id, action)
+  }
+
+  override fun stopRingingTimers() {
+    TimerEngine.stopRinging(context)
+  }
+
+  override fun stopwatchAction(action: String) {
+    StopwatchEngine.act(context, action)
+  }
+
+  private fun toolsMap(snapshot: ToolsSnapshot): WritableMap =
+      Arguments.createMap().apply {
+        putString("timers", snapshot.timers)
+        putString("stopwatch", snapshot.stopwatch)
+        putDouble("now", snapshot.now.toDouble())
       }
 
   companion object {

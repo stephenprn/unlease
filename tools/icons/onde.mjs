@@ -2,7 +2,7 @@
  * Onde: Carnet's own icons, drawn here as data on a 24 grid. One even line (GLYPH_STROKE) with round
  * ends; every straight line takes one soft wave, every frame swells a little like a cushion, large
  * circles breathe, dots follow the wave. Letters stay typographic. `build_glyphs.mjs` writes them to
- * packages/design/src/glyphs.ts as a line form (stroked path, filled path) and, for the twelve glyphs a
+ * packages/design/src/glyphs.ts as a line form (stroked path, filled path) and, for the glyphs a
  * control shows selected, a solid form.
  */
 
@@ -309,6 +309,18 @@ const H = 'M3.6 6V18M11.2 6V18M3.6 12H11.2';
 
 export const GLYPH_STROKE = 1.9;
 
+// Clock: the alarm clock's face, hands, bells and feet; the hourglass's two bulbs and its sand; the stopwatch.
+const ALARM_FACE = breathe(12, 13.2, 7.2, 0.14);
+const ALARM_HANDS = 'M12 9.6V13.2C12 13.5 12.1 13.7 12.4 13.9L14.6 15.2';
+const ALARM_BELLS = ['M3.4 7.6C3.9 5.6 5.4 4 7.4 3.4', 'M20.6 7.6C20.1 5.6 18.6 4 16.6 3.4'];
+const ALARM_FEET = [line(7.4, 19.2, 6, 20.8), line(16.6, 19.2, 18, 20.8)];
+const HOURGLASS_TOP = 'M7.2 3.6C7.2 7.4 9.2 9.9 12 12C14.8 9.9 16.8 7.4 16.8 3.6';
+const HOURGLASS_BOTTOM = 'M16.8 20.4C16.8 16.6 14.8 14.1 12 12C9.2 14.1 7.2 16.6 7.2 20.4';
+const HOURGLASS = [HOURGLASS_TOP, HOURGLASS_BOTTOM];
+const HOURGLASS_SAND = 'M9.4 19C10 17.4 10.9 16.6 12 16.4C13.1 16.6 14 17.4 14.6 19Z';
+const STOPWATCH_FACE = breathe(12, 13.6, 7.4, 0.14);
+const STOPWATCH_KNOBS = [line(12, 3.6, 12, 6.2), line(9.8, 3.2, 14.2, 3.2), line(17.6, 6.6, 19.2, 5)];
+const STOPWATCH_HAND = 'M12 13.6L15 10.4';
 export const ICONS = {
   menu: { line: form(MENU) },
   search: { line: form([breathe(10.4, 10.4, 6.4, 0.3), bow(15.3, 15.3, 20.4, 20.4, 0.4)]) },
@@ -500,7 +512,11 @@ export const ICONS = {
   rewind: { line: form([soft([[11.6, 6.2], [11.6, 17.8], [3.4, 12]], { r: 1.1, swell: 0.2 }), soft([[20.6, 6.2], [20.6, 17.8], [12.4, 12]], { r: 1.1, swell: 0.2 })]) },
   bubble: { line: form([soft([[3.2, 4.6], [20.8, 4.6], [20.8, 16.2], [11.6, 16.2], [6.8, 20.2], [7.6, 16.2], [3.2, 16.2]], { r: 0.9, swell: 0.25 }), wave(7.4, 9, 16.6, 9, 0.3), wave(7.4, 12.2, 13.4, 12.2, 0.3)]) },
   puzzle: { line: form('M5.2 8.6H8.4C8.4 6.4 9.4 5 10.6 5C11.8 5 12.8 6.4 12.8 8.6H15.8C16.5 8.6 17 9.1 17 9.8V11.4C19.2 11.4 20.4 12.4 20.4 13.6C20.4 14.8 19.2 15.8 17 15.8V18.4C17 19.1 16.5 19.6 15.8 19.6H5.2C4.5 19.6 4 19.1 4 18.4V9.8C4 9.1 4.5 8.6 5.2 8.6Z') },
-  globe: { line: form([CIRCLE, 'M12 3.4C9.8 5.6 8.6 8.6 8.6 12C8.6 15.4 9.8 18.4 12 20.6C14.2 18.4 15.4 15.4 15.4 12C15.4 8.6 14.2 5.6 12 3.4Z', wave(3.6, 12, 20.4, 12, 0.4)]) },
+  globe: {
+    line: form([CIRCLE, 'M12 3.4C9.8 5.6 8.6 8.6 8.6 12C8.6 15.4 9.8 18.4 12 20.6C14.2 18.4 15.4 15.4 15.4 12C15.4 8.6 14.2 5.6 12 3.4Z', wave(3.6, 12, 20.4, 12, 0.4)]),
+    // Chosen (Clock's « Horloges »): the world filled, its meridian and its equator cut out of it.
+    solid: form(null, [CIRCLE, outline(S('M12 3.4C9.8 5.6 8.6 8.6 8.6 12C8.6 15.4 9.8 18.4 12 20.6C14.2 18.4 15.4 15.4 15.4 12C15.4 8.6 14.2 5.6 12 3.4Z'), 1.7), outline(wave(3.6, 12, 20.4, 12, 0.4), 1.7)]),
+  },
   chevronRight: { line: form(CHEV_RIGHT) },
   chevronDown: { line: form(turn(parse(CHEV_RIGHT), 90)) },
   indent: { line: form(['M3.6 8.8C4.8 9.8 6 10.8 7.2 12C6 13.2 4.8 14.2 3.6 15.2', wave(10.6, 5.6, 20.4, 5.6, 0.45), wave(10.6, 10, 20.4, 10, 0.45), wave(10.6, 14.4, 20.4, 14.4, 0.45), wave(3.6, 18.8, 20.4, 18.8, 0.6)]) },
@@ -645,3 +661,23 @@ export const ICONS = {
 
 /** The twelve glyphs a selected control shows filled (a favourite's star among them). */
 export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pin', 'undo', 'info', 'sparkle', 'page', 'star'];
+  // Clock's four places (its bottom bar): an alarm clock on its feet, an hourglass, a stopwatch; the world is the globe.
+  alarm: {
+    line: form([ALARM_FACE, ALARM_HANDS, ...ALARM_BELLS, ...ALARM_FEET]),
+    solid: form([...ALARM_BELLS, ...ALARM_FEET], [ALARM_FACE, outline(S(ALARM_HANDS), 1.8)]),
+  },
+  timer: {
+    line: form([wave(5.8, 3.4, 18.2, 3.4, 0.3), wave(5.8, 20.6, 18.2, 20.6, 0.3), ...HOURGLASS], HOURGLASS_SAND),
+    solid: form([wave(5.8, 3.4, 18.2, 3.4, 0.3), wave(5.8, 20.6, 18.2, 20.6, 0.3)], [S(HOURGLASS_TOP, 'Z'), S(HOURGLASS_BOTTOM, 'Z')]),
+  },
+  stopwatch: {
+    line: form([STOPWATCH_FACE, ...STOPWATCH_KNOBS, STOPWATCH_HAND], dots([[12, 13.6, 1.2]])),
+    solid: form(STOPWATCH_KNOBS, [STOPWATCH_FACE, outline(S(STOPWATCH_HAND), 1.8)]),
+  },
+  // A timer's and the stopwatch's controls: start, pause, stop, and the stopwatch's lap (a flag on its pole).
+  go: { line: form(soft([[7.6, 4.4], [19.6, 12], [7.6, 19.6]], { r: 1.8, swell: 0.3 })) },
+  pause: { line: form([pillow(6.2, 4.8, 4, 14.4, 2, 0.2), pillow(13.8, 4.8, 4, 14.4, 2, 0.2)]) },
+  stop: { line: form(pillow(5.4, 5.4, 13.2, 13.2, 3.2, 0.45)) },
+  flag: {
+    line: form([wave(5.8, 3.4, 5.8, 21, 0.3), 'M5.8 4.6C8.4 3.4 10.4 3.8 12.4 4.8C14.4 5.8 16.6 6.2 19.2 5.2V13C16.6 14 14.4 13.6 12.4 12.6C10.4 11.6 8.4 11.2 5.8 12.4']),
+  },

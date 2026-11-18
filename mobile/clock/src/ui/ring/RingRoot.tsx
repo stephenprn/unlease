@@ -12,11 +12,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { interpolate, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, interpolate, Keyframe, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@unlease/core/i18n';
-import { clockWords, longDay } from '@unlease/calendar/services/eventText';
+import { clockWords, dayTitle, longDay } from '@unlease/calendar/services/eventText';
 import { instantToDay, instantToWall } from '@unlease/calendar/services/time';
 import type { Occurrence } from '@unlease/calendar/services/occurrences';
 import { dayAhead } from '@unlease/clock/services/morning';
@@ -37,6 +37,15 @@ import { bootstrap } from '@app/bootstrap';
 import { useClockUiStore } from '@app/store/clockUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { keptWeather, refreshWeather } from '@app/weather';
+
+import { Dawn } from './Dawn';
+import { RingBeacon } from './RingBeacon';
+
+/** The window's one entrance: what rings settles in from a little below (600 decelerate), the morning's panel after it. */
+const ARRIVE = new Keyframe({ 0: { opacity: 0, transform: [{ translateY: 18 }] }, 100: { opacity: 1, transform: [{ translateY: 0 }], easing: decelerate } }).duration(600);
+const ARRIVE_LATER = new Keyframe({ 0: { opacity: 0, transform: [{ translateY: 18 }] }, 100: { opacity: 1, transform: [{ translateY: 0 }], easing: decelerate } })
+  .duration(600)
+  .delay(180);
 
 /** The test ring's id (Réglages' « Essayer »): it shows the weather and the day as an alarm would. */
 const TEST_ID = '__test__';
@@ -102,6 +111,7 @@ function RingWindow(): React.ReactElement {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const still = useReducedMotion();
   const now = useNow();
   const ring = useRing();
   const prefs = useClockUiStore(state => state.prefs);
@@ -149,13 +159,12 @@ function RingWindow(): React.ReactElement {
   return (
     <View style={styles.screen}>
       <Ground />
+      <Dawn rising={!snoozed && !stopped} />
       <View style={[styles.content, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
         {/* The head about a third down, the panel under it, the room shared above and below: nothing stranded. */}
         <View style={styles.above} />
-        <View style={styles.head} accessible accessibilityRole="header" accessibilityLabel={[time, label, longDay(today)].filter(Boolean).join(', ')}>
-          <AppText variant="title" color={theme.color.ink} style={styles.date}>
-            {longDay(today)}
-          </AppText>
+        <Animated.View entering={still ? undefined : ARRIVE} style={styles.head} accessible accessibilityRole="header" accessibilityLabel={[time, label, longDay(today)].filter(Boolean).join(', ')}>
+          <RingBeacon glyph="alarm" motion="shake" active={!snoozed && !stopped} />
           <AppText style={styles.time} adjustsFontSizeToFit numberOfLines={1}>
             {time}
           </AppText>
@@ -164,14 +173,18 @@ function RingWindow(): React.ReactElement {
               {label}
             </AppText>
           ) : null}
+          <AppText variant="bodyStrong" color={theme.color.inkMuted} style={styles.date}>
+            {dayTitle(today)}
+          </AppText>
           {ring.snoozes > 0 && !snoozed ? (
             <AppText variant="meta" style={styles.center}>
               {ring.snoozes === 1 ? t('Snoozed once') : t('Snoozed {count} times', { count: ring.snoozes })}
             </AppText>
           ) : null}
-        </View>
+        </Animated.View>
 
         {(morning || ahead) && !snoozed ? (
+          <Animated.View entering={still ? undefined : ARRIVE_LATER} style={styles.panelHost}>
           <Organic outline="panel" style={styles.panel}>
             {/* A small screen at a large font scale: the panel gives way to the time and the actions, and what it holds scrolls, its cut end fading. */}
             <EdgeScrollView capped style={styles.panelScroll} contentContainerStyle={styles.panelContent}>
@@ -180,6 +193,7 @@ function RingWindow(): React.ReactElement {
               {ahead ? <DayList ahead={ahead} now={now} twelveHours={prefs.twelveHours} onViewDay={viewDay} /> : null}
             </EdgeScrollView>
           </Organic>
+          </Animated.View>
         ) : null}
 
         <View style={styles.below} />
@@ -191,7 +205,7 @@ function RingWindow(): React.ReactElement {
             </View>
           ) : stopped ? null : (
             <>
-              <Button kind="tonal" icon="bell" label={t('Snooze · {minutes}', { minutes: minutesWords(prefs.snoozeMinutes) })} onPress={snooze} style={styles.snooze} />
+              <Button kind="tonal" icon="moon" label={t('Snooze · {minutes}', { minutes: minutesWords(prefs.snoozeMinutes) })} onPress={snooze} style={styles.snooze} />
               <SlideToStop />
             </>
           )}
@@ -287,6 +301,7 @@ function SlideToStop(): React.ReactElement {
       Gesture.Pan()
         .activeOffsetX([-8, 8])
         .onBegin(() => {
+          cancelAnimation(x);
           runOnJS(setHeld)(true);
         })
         .onUpdate(event => {
@@ -311,6 +326,13 @@ function SlideToStop(): React.ReactElement {
         }),
     [click, done, passed, reduced, travel, x],
   );
+
+  // Untouched, every few seconds the pebble leans a little toward the end and comes back: the way to go. Reduce Motion: still.
+  useEffect(() => {
+    if (held || reduced) return undefined;
+    x.value = withRepeat(withSequence(withDelay(2200, withTiming(18, { duration: 320, easing: decelerate })), withSpring(0, spatial)), -1, false);
+    return () => cancelAnimation(x);
+  }, [held, reduced, x]);
 
   const pebbleStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const wordsStyle = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [0, travel * 0.5], [1, 0], 'clamp') }));
@@ -348,14 +370,15 @@ function makeStyles(theme: Theme) {
     screen: { flex: 1, backgroundColor: theme.color.wall },
     content: { flex: 1, paddingHorizontal: 24 },
     head: { alignItems: 'center', gap: 4 },
-    date: { textAlign: 'center' },
+    date: { textAlign: 'center', marginTop: 2 },
     // The time is the one thing to read half asleep: as large as the width allows, in tabular figures.
-    time: { fontFamily: fontFamily(theme, 'SemiBold'), fontSize: 96, lineHeight: 108, letterSpacing: -2, color: theme.color.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
+    time: { marginTop: 24, fontFamily: fontFamily(theme, 'SemiBold'), fontSize: 96, lineHeight: 108, letterSpacing: -2, color: theme.color.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
     label: { textAlign: 'center' },
     center: { textAlign: 'center' },
     above: { flexGrow: 2, maxHeight: '16%' },
     below: { flexGrow: 3, minHeight: 24 },
-    panel: { marginTop: 32, flexShrink: 1, backgroundColor: theme.color.paper, borderColor: theme.color.hairline, borderWidth: 1, overflow: 'hidden' },
+    panelHost: { marginTop: 32, flexShrink: 1 },
+    panel: { flexShrink: 1, backgroundColor: theme.color.paper, borderColor: theme.color.hairline, borderWidth: 1, overflow: 'hidden' },
     panelScroll: { flexGrow: 0, flexShrink: 1 },
     panelContent: { paddingHorizontal: 18, paddingVertical: 16 },
     weather: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 48 },

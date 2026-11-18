@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chronomètre: a slab of the ground; the time counting by itself (a Chronometer), the lap under way
+     under it (« Tour 3 » and its own time, counting too); at the end, « Tour » running or
+     « Réinitialiser » paused, then the leaf pebble that starts or pauses it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="10dp">
+
+        <LinearLayout
+            android:id="@+id/sw_open"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/wgen_row_press"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/sw_title"
+                style="@style/WidgetText.MetaStrong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:maxLines="1"
+                android:text="@string/widget_stopwatch_label" />
+
+            <Chronometer
+                android:id="@+id/sw_clock"
+                style="@style/WidgetText.Big"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:maxLines="1" />
+
+            <LinearLayout
+                android:id="@+id/sw_lap_line"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/sw_lap_label"
+                    style="@style/WidgetText.Meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1" />
+
+                <Chronometer
+                    android:id="@+id/sw_lap"
+                    style="@style/WidgetText.Meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFeatureSettings="tnum"
+                    android:importantForAccessibility="no"
+                    android:maxLines="1" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/sw_secondary"
+            style="@style/WidgetIconButton"
+            android:background="@drawable/wgen_press_3"
+            android:src="@drawable/wgen_g_flag" />
+
+        <ImageView
+            android:id="@+id/sw_primary"
+            android:layout_width="52dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/wgen_capture_0"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/wgen_g_go_on_leaf" />
+    </LinearLayout>
+</FrameLayout>

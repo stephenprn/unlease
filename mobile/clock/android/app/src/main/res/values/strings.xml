@@ -29,4 +29,41 @@
     <string name="widget_preview_name">Work</string>
     <string name="widget_preview_event">8:15 · Dentist</string>
     <string name="widget_preview_after">45 min after the alarm</string>
+
+    <!-- Timers, the stopwatch, the world clocks and the big clock: shortcuts and widgets (android/.../widget). Their live words come from the app; these stand in and name them in the picker. -->
+    <string name="shortcut_timer_short">Timer</string>
+    <string name="shortcut_timer_long">New timer</string>
+    <string name="shortcut_stopwatch_short">Stopwatch</string>
+    <string name="shortcut_stopwatch_long">Stopwatch</string>
+    <string name="widget_timers_label">Timers</string>
+    <string name="widget_timers_description">Your saved timers, started in one tap, and those that run, with pause and +1 min.</string>
+    <string name="widget_new_timer">New timer</string>
+    <string name="widget_time_up">Time’s up</string>
+    <string name="widget_add_minute">+1 min</string>
+    <string name="widget_stop">Stop</string>
+    <string name="widget_pause">Pause</string>
+    <string name="widget_resume">Resume</string>
+    <string name="widget_start_timer">Start %1$s</string>
+    <string name="widget_stopwatch_label">Stopwatch</string>
+    <string name="widget_stopwatch_description">The stopwatch, counting with the app closed: start, pause, laps.</string>
+    <string name="widget_start">Start</string>
+    <string name="widget_lap">Lap</string>
+    <string name="widget_lap_number">Lap %1$s</string>
+    <string name="widget_reset">Reset</string>
+    <string name="widget_world_label">World clocks</string>
+    <string name="widget_world_description">The time in the cities you follow, day or night there, and how far ahead.</string>
+    <string name="widget_add_city">Add a city</string>
+    <string name="widget_no_cities">Add the cities you follow in Clock.</string>
+    <string name="widget_yesterday">Yesterday</string>
+    <string name="widget_same_time">Same time</string>
+    <string name="widget_clock_label">Clock</string>
+    <string name="widget_clock_description">The time and the day, large, with your next alarm.</string>
+    <string name="widget_preview_timer_name">Pasta</string>
+    <string name="widget_preview_timer_one">Green tea</string>
+    <string name="widget_preview_timer_two">Eggs</string>
+    <string name="widget_preview_city_one">New York</string>
+    <string name="widget_preview_city_two">Tokyo</string>
+    <string name="widget_preview_meta_one">Today · −6 h</string>
+    <string name="widget_preview_meta_two">Tomorrow · +8 h</string>
+    <string name="widget_preview_next">07:00 · Work</string>
 </resources>

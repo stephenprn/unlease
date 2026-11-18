@@ -8,6 +8,8 @@ import { appScheme } from '@shared/app/variant';
 
 import { AdminScreen } from '../screens/AdminScreen';
 import { AlarmsScreen } from '../screens/AlarmsScreen';
+import { CityScreen } from '../screens/CityScreen';
+import { TimerScreen } from '../screens/TimerScreen';
 import { EditAlarmScreen } from '../screens/EditAlarmScreen';
 import { EraseScreen } from '../screens/EraseScreen';
 import { AppearanceSettingsScreen, SettingsScreen } from '../screens/SettingsScreen';
@@ -19,7 +21,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 /**
  * What another app of the suite, a notice or the system opens here (`openInApp`):
  * `unlease-clock://alarm/<id>` (its editor), `new` (« Nouvelle alarme »), `settings`, `admin` (and
- * `admin/<section>`); nothing after the scheme is the alarms.
+ * `admin/<section>`); `timers`, `stopwatch`, `world` (the home on that place), `timers/new`
+ * (« Nouveau minuteur », over the timers) and `world/new` (« Ajouter une ville », over the world
+ * clocks); nothing after the scheme is the alarms.
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [`${appScheme('clock')}://`],
@@ -34,6 +38,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
     },
   },
   getStateFromPath: (path, options) => {
+    // One of the home's places, and what opens over it.
+    const place = /^\/?(timers|stopwatch|world)(\/new)?\/?(?:[?#].*)?$/.exec(path);
+    if (place) {
+      const tab = place[1] as 'timers' | 'stopwatch' | 'world';
+      const over = place[2] && tab !== 'stopwatch' ? [{ name: tab === 'timers' ? ('Timer' as const) : ('City' as const) }] : [];
+      return { index: over.length, routes: [{ name: 'Alarms' as const, params: { tab } }, ...over] };
+    }
     const alarm = /^\/?alarm\/([^/?#]+)/.exec(path);
     if (alarm) return getStateFromPath(`new?id=${alarm[1]}`, options);
     return getStateFromPath(path, options);
@@ -53,6 +64,8 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen name="Setup" component={SetupScreen} />
       <Stack.Screen name="Alarms" component={AlarmsScreen} />
       <Stack.Screen name="Edit" component={EditAlarmScreen} />
+      <Stack.Screen name="Timer" component={TimerScreen} />
+      <Stack.Screen name="City" component={CityScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={DEEPER} />
       <Stack.Screen name="Appearance" component={AppearanceSettingsScreen} options={DEEPER} />
       <Stack.Screen name="Admin" component={AdminScreen} options={DEEPER} />

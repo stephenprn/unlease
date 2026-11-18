@@ -43,6 +43,38 @@
     <style name="WidgetText.MetaStrong" parent="WidgetText.Meta">
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+    <!-- A widget's head title's plain twin (Signika is set as an image by WidgetType.kt). -->
+    <style name="WidgetText.Title">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">22sp</item>
+    </style>
+    <!-- A timer's, the stopwatch's or a city's time, counting by itself (Chronometer, TextClock): the
+         system font, which a launcher can draw, at the medium weight, in tabular figures. -->
+    <style name="WidgetText.Count">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">26sp</item>
+        <item name="android:lineHeight">30sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+    <!-- The stopwatch's and the big clock's one figure. -->
+    <style name="WidgetText.Big" parent="WidgetText.Count">
+        <item name="android:textSize">44sp</item>
+        <item name="android:lineHeight">50sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+    <!-- A text action (« +1 min », « Arrêter »): deep terracotta, in a 48 target, its tint under the press. -->
+    <style name="WidgetText.Action">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/wgen_link</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">18sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+    </style>
     <!-- An icon button in a head: a 22 glyph in a 48 target, its pebble's tint behind it only under the press. -->
     <style name="WidgetIconButton">
         <item name="android:layout_width">48dp</item>

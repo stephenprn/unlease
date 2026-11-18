@@ -161,7 +161,7 @@ export function claudeUse(app: AppId): string | null {
 
 /** The server holds nothing yet: a new one, or one to bring back from a backup. */
 export function serverEmpty(status: AdminStatus | null): boolean {
-  return status !== null && status.server.notes === 0 && status.server.pages === 0 && status.server.contacts === 0 && status.server.events === 0 && (status.server.alarms ?? 0) === 0 && status.server.files === 0;
+  return status !== null && status.server.notes === 0 && status.server.pages === 0 && status.server.contacts === 0 && status.server.events === 0 && (status.server.alarms ?? 0) === 0 && (status.server.timers ?? 0) === 0 && (status.server.worldClocks ?? 0) === 0 && status.server.files === 0;
 }
 
 /**

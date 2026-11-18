@@ -33,6 +33,9 @@ export interface EngineSettings {
   readonly silenceAfter: number;
   readonly rampSeconds: number;
   readonly volumeKeys: ClockPrefs['volumeKeys'];
+  /** An instant timer's sound and vibration (a widget's start uses them too). */
+  readonly timerSound: string;
+  readonly timerVibrate: boolean;
   /** The words the native side shows on its own (notification actions, a missed alarm), in the app's language. */
   readonly words: EngineWords;
 }
@@ -45,6 +48,27 @@ export interface EngineWords {
   readonly missed: string;
   readonly channelRinging: string;
   readonly channelNotices: string;
+  /** The timers' and the stopwatch's (their notifications, their window), in the app's language. */
+  readonly timer: string;
+  /** An unlabelled timer's name; `{length}` stays for the engine (« Minuteur de {length} »). */
+  readonly timerOf: string;
+  readonly timeUp: string;
+  /** `{count}` stays for the engine. */
+  readonly timersUp: string;
+  readonly addMinute: string;
+  readonly pause: string;
+  readonly resume: string;
+  readonly delete: string;
+  /** `{time}` stays for the engine. */
+  readonly paused: string;
+  readonly stopwatch: string;
+  readonly lap: string;
+  /** `{number}` stays for the engine. */
+  readonly lapNumber: string;
+  readonly reset: string;
+  readonly channelTimers: string;
+  readonly channelTimersRinging: string;
+  readonly channelStopwatch: string;
 }
 
 export interface EnginePlan {
@@ -76,6 +100,15 @@ export function engineAlarms(alarms: Iterable<Alarm>): EngineAlarm[] {
 export function enginePlan(alarms: Iterable<Alarm>, prefs: ClockPrefs, words: EngineWords): EnginePlan {
   return {
     alarms: engineAlarms(alarms),
-    settings: { ringsHere: prefs.ringsHere, snoozeMinutes: prefs.snoozeMinutes, silenceAfter: prefs.silenceAfter, rampSeconds: prefs.rampSeconds, volumeKeys: prefs.volumeKeys, words },
+    settings: {
+      ringsHere: prefs.ringsHere,
+      snoozeMinutes: prefs.snoozeMinutes,
+      silenceAfter: prefs.silenceAfter,
+      rampSeconds: prefs.rampSeconds,
+      volumeKeys: prefs.volumeKeys,
+      timerSound: playableSound(prefs.timerSound),
+      timerVibrate: prefs.timerVibrate,
+      words,
+    },
   };
 }

@@ -11,6 +11,7 @@ import { startEngine } from './engine';
 import { startNotices } from './evening';
 import { loadClockUi } from './store/clockUi';
 import { loadLibrary } from './store/libraryStore';
+import { startTools } from './store/toolsStore';
 import { startWidgets } from './widgets';
 
 export type { BootResult } from '@shared/ui/AppShell';
@@ -30,6 +31,8 @@ export function bootstrap(): BootResult {
     loadClockUi();
     // The alarm engine is handed every alarm and how this phone rings them, now and whenever either changes.
     startEngine();
+    // The timers and the stopwatch as the engine runs them, followed.
+    startTools();
     // The evening check and the notice before an alarm, kept armed as the alarms, the events and the settings change.
     startNotices();
     // « Prochaine alarme » on the home screen is handed each morning's first event, now and whenever it changes.

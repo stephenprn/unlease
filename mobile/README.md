@@ -86,7 +86,7 @@ root.
 - **Components every home uses**: `SearchHeader` and `SyncLine` (the search strip and its sync dot;
   the app says where its things stay without a server), `FabMenu` (the capture pebble floating at
   the foot; with several things to make, the menu of them it opens), `NavDrawer` with `DrawerItem`, `DrawerHeading`, `DrawerDivider` (the drawer's frame and
-  rows; the app lists its places, the frame adds the suite's other apps at its foot), `BrandMark app=…` (each app's mark), `ReadingTrack`,
+  rows; the app lists its places), `BrandMark app=…` (each app's mark), `ReadingTrack`,
   `LineColorPicker`.
 
 ## The library and the sync
@@ -141,8 +141,7 @@ a released one and neither reads the other ([Dev builds](#dev-builds)). A place 
 `unlease-contacts://contact/<id>`; or `eventPlace(id)`: `unlease-agenda://event/<id>`, and
 `newEventPlace(query)`: Agenda's form filled, `unlease-agenda://new?…`; each scheme `-dev` in a dev
 build), else in the web app on the server.
-Every drawer lists, under « Applications », each other app of the suite while it can be opened
-(`NavDrawer`, `useReachableApps`: installed, or run by the server). The dev builds of every app are signed with the same `debug.keystore` (copied in each
+The dev builds of every app are signed with the same `debug.keystore` (copied in each
 app), so they read each other; release builds share the upload key (`keystore.properties`, the same
 in every app). Without it a release build refuses to run, since React Native's debug key is public:
 `./gradlew assembleRelease -PallowDebugSigning` builds one signed with it anyway, for your own phone only

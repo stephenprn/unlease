@@ -30,6 +30,22 @@ export function engineWords(): EngineWords {
     missed: t('Missed alarm'),
     channelRinging: t('Alarms ringing'),
     channelNotices: t('Snoozed and missed alarms'),
+    timer: t('Timer'),
+    timerOf: t('{length} timer', { length: '{length}' }),
+    timeUp: t('Time’s up'),
+    timersUp: t('{count} timers done', { count: '{count}' }),
+    addMinute: t('+1 min'),
+    pause: t('Pause'),
+    resume: t('Resume'),
+    delete: t('Delete'),
+    paused: t('Paused · {time}', { time: '{time}' }),
+    stopwatch: t('Stopwatch'),
+    lap: t('Lap'),
+    lapNumber: t('Lap {number}', { number: '{number}' }),
+    reset: t('Reset'),
+    channelTimers: t('Timers'),
+    channelTimersRinging: t('Timers ringing'),
+    channelStopwatch: t('Stopwatch'),
   };
 }
 

@@ -2,7 +2,7 @@
  * What a person does in Clock. Each gesture is one `writeLocal` batch (one clock, synced), built by
  * the package's editing (`@unlease/clock/services/editing`, the web's too). Setting an alarm, or
  * switching one on, says when it will ring on a slip (« Alarme réglée dans 9 h 12 »), as Google's
- * Clock does; deleting one offers to take it back.
+ * Clock does; deleting one offers to take it back. Saved timers and world clocks the same way.
  */
 import { t } from '@unlease/core/i18n';
 import { erasedCount } from '@unlease/core/services/erase';
@@ -15,13 +15,32 @@ import { editFields, newAlarmFields, ringEarlierWrites, type AlarmDraft } from '
 import { eraseChanges } from '@unlease/clock/services/erase';
 import { skipFields, switchedFields } from '@unlease/clock/services/schedule';
 import { setWords } from '@unlease/clock/services/words';
-import { alarmFields } from '@unlease/clock/sync/entities';
+import { TIMER_LIMITS, type Timer } from '@unlease/clock/models/timer';
+import { WORLD_CLOCK_LIMITS } from '@unlease/clock/models/worldClock';
+import type { City } from '@unlease/clock/data/cities';
+import { cityFields, zoneCityName } from '@unlease/clock/services/worldClocks';
+import { alarmFields, timerFields, worldClockFields } from '@unlease/clock/sync/entities';
 import { showSnack } from '@shared/app/store/uiStore';
 
 import { getRecord, useLibraryStore, writeLocal, type LocalChange } from './libraryStore';
 import { ringingAlarmNow } from '../hooks/useRingingAlarms';
 
 const TYPE = 'alarm';
+
+/** A saved timer as its form holds it. */
+export interface TimerDraft {
+  readonly label: string;
+  readonly seconds: number;
+  readonly sound: string;
+  readonly vibrate: boolean;
+}
+
+const cleanTimer = (draft: TimerDraft): TimerDraft => ({
+  label: draft.label.trim().slice(0, TIMER_LIMITS.label),
+  seconds: Math.max(1, Math.min(TIMER_LIMITS.seconds, Math.round(draft.seconds))),
+  sound: draft.sound,
+  vibrate: draft.vibrate,
+});
 
 const alarmOf = (id: string): Alarm | undefined => {
   const alarm = useLibraryStore.getState().alarms[id];
@@ -119,9 +138,78 @@ export function ringEarlier(alarmId: string, day: Day, time: string, now: number
   );
 }
 
-/** « Effacer des données »: the parts ticked, in one batch; how many alarms went. */
+/** « Effacer des données »: the parts ticked, in one batch; how many records went. */
 export function eraseAlarms(chosen: ReadonlySet<string>, now: number = Date.now()): number {
-  const writes = eraseChanges(useLibraryStore.getState().alarms, chosen, now);
+  const writes = eraseChanges(useLibraryStore.getState(), chosen, now);
   if (writes.length > 0) writeLocal(writes as LocalChange[], now);
   return erasedCount(writes);
+}
+
+// ── saved timers ────────────────────────────────────────────────────────────
+
+const timerOf = (id: string): Timer | undefined => {
+  const timer = useLibraryStore.getState().timers[id];
+  return timer && timer.deletedAt === null ? timer : undefined;
+};
+
+/** « Enregistrer » on a new timer: kept for next time. Returns its id. */
+export function createTimer(draft: TimerDraft, now: number = Date.now()): string {
+  const id = createId(now);
+  writeLocal([{ type: 'timer', id, patch: timerFields({ ...cleanTimer(draft), createdAt: now, deletedAt: null }) }], now);
+  showSnack(t('Timer saved'), undefined, { tone: 'success' });
+  return id;
+}
+
+/** « Enregistrer » on a saved timer: only what changed. */
+export function saveTimer(id: string, draft: TimerDraft, now: number = Date.now()): void {
+  const timer = timerOf(id);
+  if (!timer) return;
+  const clean = cleanTimer(draft);
+  const patch: Fields = {};
+  if (clean.label !== timer.label) patch.label = clean.label;
+  if (clean.seconds !== timer.seconds) patch.seconds = clean.seconds;
+  if (clean.sound !== timer.sound) patch.sound = clean.sound;
+  if (clean.vibrate !== timer.vibrate) patch.vibrate = clean.vibrate;
+  if (Object.keys(patch).length > 0) writeLocal([{ type: 'timer', id, patch }], now);
+}
+
+/** « Supprimer »: gone from every device, « Annuler » on its slip bringing it back. A run of it goes on. */
+export function deleteTimer(id: string, now: number = Date.now()): void {
+  if (!timerOf(id)) return;
+  const changes: LocalChange[] = [{ type: 'timer', id, patch: { deletedAt: now } }];
+  const undo = undoFor(changes);
+  writeLocal(changes, now);
+  showSnack(t('Timer deleted'), { label: t('Undo'), run: undo });
+}
+
+// ── world clocks ────────────────────────────────────────────────────────────
+
+/** A city picked: its clock added (once: a city already there is not added twice). Returns its id. */
+export function addCity(city: City, now: number = Date.now()): string {
+  const state = useLibraryStore.getState();
+  const live = Object.values(state.worldClocks).filter(clock => clock.deletedAt === null);
+  const there = live.find(clock => clock.zone === city.zone && (clock.name === city.name || clock.name === city.nameFr));
+  if (there) return there.id;
+  const id = createId(now);
+  const fields = cityFields(city, now);
+  writeLocal([{ type: 'worldClock', id, patch: worldClockFields(fields) }], now);
+  return id;
+}
+
+/** « Renommer »: « Maman » rather than « Montréal ». An empty name takes the city's back. */
+export function renameCity(id: string, name: string, now: number = Date.now()): void {
+  const clock = useLibraryStore.getState().worldClocks[id];
+  if (!clock || clock.deletedAt !== null) return;
+  const next = name.trim().slice(0, WORLD_CLOCK_LIMITS.name) || zoneCityName(clock.zone);
+  if (next !== clock.name) writeLocal([{ type: 'worldClock', id, patch: { name: next } }], now);
+}
+
+/** « Retirer »: gone from every device, « Annuler » bringing it back. */
+export function removeCity(id: string, now: number = Date.now()): void {
+  const clock = useLibraryStore.getState().worldClocks[id];
+  if (!clock || clock.deletedAt !== null) return;
+  const changes: LocalChange[] = [{ type: 'worldClock', id, patch: { deletedAt: now } }];
+  const undo = undoFor(changes);
+  writeLocal(changes, now);
+  showSnack(t('{city} removed', { city: clock.name }), { label: t('Undo'), run: undo });
 }

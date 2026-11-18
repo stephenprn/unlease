@@ -10,7 +10,7 @@
  *   « Demain » itself, from the phone's date as it draws);
  * - `words`: what the widget says, in the app's language.
  */
-import { t } from '@unlease/core/i18n';
+import { t, tc } from '@unlease/core/i18n';
 import type { Day } from '@unlease/calendar/models/events';
 import { clockWords, longDay, weekdayDay } from '@unlease/calendar/services/eventText';
 import { spanWords } from '@unlease/calendar/services/today';
@@ -20,6 +20,9 @@ import type { ClockPrefs } from '@unlease/clock/models/prefs';
 import { clashWith, dayAhead, firstEvent, type AgendaRecords } from '@unlease/clock/services/morning';
 import { ringAt, ringsOn, wakingOn } from '@unlease/clock/services/schedule';
 import { distanceWords } from '@unlease/clock/services/words';
+import type { Timer } from '@unlease/clock/models/timer';
+import type { WorldClock } from '@unlease/clock/models/worldClock';
+import { lengthWords, quickLengths } from '@unlease/clock/services/timers';
 
 /** The rings a widget may show the morning of: this week's, today's already rung included (a ring under way, a snooze). */
 export const WIDGET_MORNING_DAYS = 8;
@@ -52,6 +55,40 @@ export interface AlarmWidgetPayload {
   };
   readonly days: Readonly<Record<Day, string>>;
   readonly mornings: Readonly<Record<string, WidgetMorning>>;
+  /** What the timers', the stopwatch's, the world clocks' and the big clock's widgets add (`toolsWidgetPayload`). */
+  readonly tools?: ToolsWidgetPayload;
+}
+
+/**
+ * What only the app knows for the other widgets: the saved timers (each a row that starts it with the
+ * app closed), the lengths offered when none is saved, the cities west to east, the words.
+ */
+export interface ToolsWidgetPayload {
+  readonly timers: readonly { readonly id: string; readonly label: string; readonly seconds: number; readonly length: string; readonly sound: string; readonly vibrate: boolean }[];
+  readonly quick: readonly { readonly seconds: number; readonly length: string }[];
+  readonly cities: readonly { readonly zone: string; readonly name: string; readonly lat: number | null; readonly lon: number | null }[];
+  readonly words: Readonly<Record<string, string>>;
+}
+
+export function toolsWidgetPayload(timers: readonly Timer[], recent: readonly number[], cities: readonly WorldClock[]): ToolsWidgetPayload {
+  return {
+    timers: timers.map(timer => ({ id: timer.id, label: timer.label.trim(), seconds: timer.seconds, length: lengthWords(timer.seconds), sound: timer.sound, vibrate: timer.vibrate })),
+    quick: quickLengths(recent).map(seconds => ({ seconds, length: lengthWords(seconds) })),
+    cities: cities.map(clock => ({ zone: clock.zone, name: clock.name, lat: clock.lat, lon: clock.lon })),
+    words: {
+      timers: t('Timers'),
+      newTimer: t('New timer'),
+      startTimer: t('Start {name}', { name: '{name}' }),
+      start: tc('timer', 'Start'),
+      worldClocks: t('World clocks'),
+      addCity: t('Add a city'),
+      noCities: t('Add the cities you follow in Clock.'),
+      today: t('Today'),
+      tomorrow: t('Tomorrow'),
+      yesterday: t('Yesterday'),
+      sameTime: t('Same time'),
+    },
+  };
 }
 
 const capitalize = (value: string): string => value.charAt(0).toLocaleUpperCase() + value.slice(1);

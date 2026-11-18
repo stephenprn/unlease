@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A saved timer (or, none saved, a usual length): its length, its label, the start glyph; the whole
+     row starts it at once. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/saved_row"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/wgen_row_press"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:paddingStart="14dp"
+    android:paddingEnd="2dp">
+
+    <TextView
+        android:id="@+id/saved_length"
+        style="@style/WidgetText.Count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no"
+        android:maxLines="1"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/saved_label"
+        style="@style/WidgetText.Meta"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:importantForAccessibility="no"
+        android:maxLines="1" />
+
+    <ImageView
+        style="@style/WidgetIconButton"
+        android:importantForAccessibility="no"
+        android:src="@drawable/wgen_g_go" />
+</LinearLayout>

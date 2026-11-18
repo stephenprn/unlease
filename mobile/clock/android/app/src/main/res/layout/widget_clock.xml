@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Horloge: a slab of the ground; the time large (a TextClock, in the app's format), the day under it,
+     then the next alarm (the bell, its time and its name) when one rings on this phone. The time opens
+     Clock; the alarm opens it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:id="@+id/clock_open"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/wgen_row_press"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextClock
+            android:id="@+id/clock_time"
+            style="@style/WidgetText.Big"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="56sp" />
+
+        <TextClock
+            android:id="@+id/clock_date"
+            style="@style/WidgetText.MetaStrong"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="EEEE d MMMM"
+            android:format24Hour="EEEE d MMMM"
+            android:maxLines="1"
+            android:textColor="@color/wgen_ink"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:id="@+id/clock_alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/wgen_row_press"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="6dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wgen_g_bell_ink_muted" />
+
+            <TextView
+                android:id="@+id/clock_alarm_text"
+                style="@style/WidgetText.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_preview_next" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

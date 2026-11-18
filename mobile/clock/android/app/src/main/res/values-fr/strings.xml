@@ -24,4 +24,41 @@
     <string name="widget_preview_name">Travail</string>
     <string name="widget_preview_event">08:15 · Dentiste</string>
     <string name="widget_preview_after">45 min après le réveil</string>
+
+    <!-- Minuteurs, chronomètre, horloges et horloge : raccourcis et widgets. -->
+    <string name="shortcut_timer_short">Minuteur</string>
+    <string name="shortcut_timer_long">Nouveau minuteur</string>
+    <string name="shortcut_stopwatch_short">Chronomètre</string>
+    <string name="shortcut_stopwatch_long">Chronomètre</string>
+    <string name="widget_timers_label">Minuteurs</string>
+    <string name="widget_timers_description">Vos minuteurs enregistrés, lancés d’un geste, et ceux qui tournent, avec pause et +1 min.</string>
+    <string name="widget_new_timer">Nouveau minuteur</string>
+    <string name="widget_time_up">Temps écoulé</string>
+    <string name="widget_add_minute">+1 min</string>
+    <string name="widget_stop">Arrêter</string>
+    <string name="widget_pause">Pause</string>
+    <string name="widget_resume">Reprendre</string>
+    <string name="widget_start_timer">Lancer %1$s</string>
+    <string name="widget_stopwatch_label">Chronomètre</string>
+    <string name="widget_stopwatch_description">Le chronomètre, qui tourne l’application fermée : départ, pause, tours.</string>
+    <string name="widget_start">Démarrer</string>
+    <string name="widget_lap">Tour</string>
+    <string name="widget_lap_number">Tour %1$s</string>
+    <string name="widget_reset">Réinitialiser</string>
+    <string name="widget_world_label">Horloges</string>
+    <string name="widget_world_description">L’heure dans les villes que vous suivez, le jour ou la nuit là-bas, et l’écart.</string>
+    <string name="widget_add_city">Ajouter une ville</string>
+    <string name="widget_no_cities">Ajoutez dans Clock les villes que vous suivez.</string>
+    <string name="widget_yesterday">Hier</string>
+    <string name="widget_same_time">Même heure</string>
+    <string name="widget_clock_label">Horloge</string>
+    <string name="widget_clock_description">L’heure et le jour, en grand, avec votre prochaine alarme.</string>
+    <string name="widget_preview_timer_name">Pâtes</string>
+    <string name="widget_preview_timer_one">Thé vert</string>
+    <string name="widget_preview_timer_two">Œufs</string>
+    <string name="widget_preview_city_one">New York</string>
+    <string name="widget_preview_city_two">Tokyo</string>
+    <string name="widget_preview_meta_one">Aujourd’hui · −6 h</string>
+    <string name="widget_preview_meta_two">Demain · +8 h</string>
+    <string name="widget_preview_next">07:00 · Travail</string>
 </resources>

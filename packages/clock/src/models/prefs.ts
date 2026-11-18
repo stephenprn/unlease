@@ -48,6 +48,9 @@ export interface ClockPrefs {
   /** 0 Sunday, 1 Monday, 6 Saturday: the order of the days. */
   readonly weekStart: number;
   readonly twelveHours: boolean;
+  /** An instant timer's sound (a saved one names its own), and whether it vibrates. */
+  readonly timerSound: string;
+  readonly timerVibrate: boolean;
 }
 
 export const SNOOZE_CHOICES = [1, 2, 3, 5, 10, 15, 20, 30] as const;
@@ -73,6 +76,8 @@ export const CLOCK_PREFS_DEFAULTS: ClockPrefs = {
   upcomingMinutes: 60,
   weekStart: 1,
   twelveHours: false,
+  timerSound: 'bell',
+  timerVibrate: true,
 };
 
 const among = <T extends number>(choices: readonly T[], value: unknown, fallback: T): T => (choices as readonly unknown[]).includes(value) ? (value as T) : fallback;
@@ -108,5 +113,7 @@ export function readClockPrefs(value: unknown): ClockPrefs {
     upcomingMinutes: among(UPCOMING_CHOICES, raw.upcomingMinutes, 60),
     weekStart: raw.weekStart === 0 || raw.weekStart === 1 || raw.weekStart === 6 ? raw.weekStart : d.weekStart,
     twelveHours: flag('twelveHours', d.twelveHours),
+    timerSound: typeof raw.timerSound === 'string' && raw.timerSound.length > 0 && raw.timerSound.length <= 600 ? raw.timerSound : d.timerSound,
+    timerVibrate: flag('timerVibrate', d.timerVibrate),
   };
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chronomètre: drawn by StopwatchWidgetProvider whenever the stopwatch changes; its figures count by themselves. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="50dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="3" android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_stopwatch"
+    android:previewLayout="@layout/widget_stopwatch"
+    android:description="@string/widget_stopwatch_description"
+    android:widgetCategory="home_screen" />

@@ -28,7 +28,7 @@ describe('Clock on the server', () => {
   it('counts its live alarms for the Administration', async () => {
     server = createTestServer();
     server.sync.push([alarm('a'), alarm('b', { deletedAt: T0 })]);
-    expect(server.clock.counts!()).toEqual({ alarms: 1 });
+    expect(server.clock.counts!()).toEqual({ alarms: 1, timers: 0, worldClocks: 0 });
     const status = (await (await server.app.request('/api/admin', { headers: AUTH })).json()) as { server: { alarms: number } };
     expect(status.server.alarms).toBe(1);
   });
@@ -87,5 +87,19 @@ describe('Clock on the server', () => {
       ].join('\n'),
     );
     expect(server.clock.markdown!([], { kept: true })).toEqual([]);
+  });
+
+  it('keeps saved timers and world clocks as records, listed in archives after the alarms', () => {
+    server = createTestServer();
+    server.sync.push([
+      rec('timer', 'pasta', { label: 'Pâtes', seconds: 540, sound: 'bell', vibrate: true, createdAt: T0, deletedAt: null }, T0),
+      rec('timer', 'egg', { label: '', seconds: 180, sound: 'chimes', vibrate: false, createdAt: T0, deletedAt: null }, T0),
+      rec('worldClock', 'tokyo', { zone: 'Asia/Tokyo', name: 'Tokyo', country: 'JP', lat: 35.68, lon: 139.69, createdAt: T0, deletedAt: null }, T0),
+      rec('worldClock', 'ny', { zone: 'America/New_York', name: 'Maman', country: 'US', lat: null, lon: null, createdAt: T0, deletedAt: null }, T0),
+    ]);
+    expect(server.records.get('timer', 'pasta')!.fields).toMatchObject({ seconds: 540, label: 'Pâtes' });
+    expect(server.clock.counts!()).toEqual({ alarms: 0, timers: 2, worldClocks: 2 });
+    const [file] = server.clock.markdown!(server.records.all(), { kept: true });
+    expect(file!.text).toBe(['# Clock', '', '## Minuteurs enregistrés', '', '- 3 min (Carillon à vent)', '- 9 min · Pâtes (Réveil à cloche, vibreur)', '', '## Horloges', '', '- Maman (America/New_York)', '- Tokyo (Asia/Tokyo)', ''].join('\n'));
   });
 });

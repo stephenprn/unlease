@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { allCities, type City } from '@unlease/clock/data/cities';
 import { blankDraft } from '@unlease/clock/services/editing';
 import { CLOCK_PREFS_DEFAULTS } from '@unlease/clock/models/prefs';
 import { onceDate, skippedDay } from '@unlease/clock/services/schedule';
@@ -11,11 +12,12 @@ import { freshLibrary } from '@test/library';
 import { getRecord, writeLocal } from '@shared/app/store/records';
 import { clockModule } from '../../module';
 import { useAgendaStore } from '../store/agenda';
-import { createAlarm, deleteAlarm, duplicateAlarm, eraseClock, ringEarlier, saveAlarm, skipNext, stopSkipping, switchAlarm } from '../store/actions';
+import { addCity, createAlarm, createTimer, deleteAlarm, deleteTimer, duplicateAlarm, eraseClock, removeCity, renameCity, ringEarlier, saveAlarm, saveTimer, skipNext, stopSkipping, switchAlarm } from '../store/actions';
 import { useClockStore } from '../store/library';
 
 const state = () => useClockStore.getState();
 const live = () => Object.values(state().alarms).filter(alarm => alarm.deletedAt === null);
+const city = (name: string): City => allCities().find(each => each.name === name)!;
 const draft = (extra: Partial<ReturnType<typeof blankDraft>> = {}) => ({ ...blankDraft(CLOCK_PREFS_DEFAULTS), ...extra });
 
 /** Every field of the record written under one clock: one batch. */
@@ -115,13 +117,53 @@ describe('Clock’s actions', () => {
     expect(clocksOf(copy)).toHaveLength(1);
   });
 
-  it('erases the alarms in one batch, as « Effacer des données » asks', () => {
+  it('erases the parts chosen in one batch, as « Effacer des données » asks', () => {
     createAlarm(draft());
     createAlarm(draft({ days: [1] }));
-    expect(clockModule.erase!.parts()).toEqual([expect.objectContaining({ id: 'alarms', count: 2 })]);
+    createTimer({ label: 'Pasta', seconds: 540, sound: 'bell', vibrate: true });
+    addCity(city('Tokyo'));
+    expect(clockModule.erase!.parts()).toEqual([
+      expect.objectContaining({ id: 'alarms', count: 2 }),
+      expect.objectContaining({ id: 'timers', count: 1 }),
+      expect.objectContaining({ id: 'worldClocks', count: 1 }),
+    ]);
     expect(clockModule.erase!.run(new Set(['alarms']))).toBe(2);
     expect(Object.values(state().alarms).every(alarm => alarm.deletedAt !== null)).toBe(true);
+    expect(Object.values(state().timers).every(timer => timer.deletedAt === null)).toBe(true);
     expect(eraseClock(new Set(['alarms']))).toBe(0);
+    expect(eraseClock(new Set(['timers', 'worldClocks']))).toBe(2);
+    expect(Object.values(state().worldClocks).every(clock => clock.deletedAt !== null)).toBe(true);
+  });
+
+  it('saves a timer whole in one batch, then only what changed, and its delete is taken back', () => {
+    const id = createTimer({ label: '  Green   tea ', seconds: 180, sound: 'chimes', vibrate: true }, Date.now() - 60_000);
+    expect(state().timers[id]).toMatchObject({ label: 'Green tea', seconds: 180, sound: 'chimes', vibrate: true, deletedAt: null });
+    expect(new Set(Object.values(getRecord('timer', id)!.clocks)).size).toBe(1);
+    const before = getRecord('timer', id)!.clocks;
+    saveTimer(id, { label: 'Green tea', seconds: 240, sound: 'chimes', vibrate: true });
+    const after = getRecord('timer', id)!;
+    expect(after.fields.seconds).toBe(240);
+    expect(after.clocks.label).toBe(before.label);
+    const undo = deleteTimer(id);
+    expect(state().timers[id]!.deletedAt).not.toBeNull();
+    undo();
+    expect(state().timers[id]!.deletedAt).toBeNull();
+  });
+
+  it('adds a city once, renames it (its own name back when emptied), and takes its removal back', () => {
+    const tokyo = city('Tokyo');
+    const id = addCity(tokyo);
+    expect(addCity(tokyo)).toBe(id);
+    expect(Object.values(state().worldClocks)).toHaveLength(1);
+    expect(state().worldClocks[id]).toMatchObject({ zone: 'Asia/Tokyo', country: 'JP', deletedAt: null });
+    renameCity(id, ' Office ');
+    expect(state().worldClocks[id]!.name).toBe('Office');
+    renameCity(id, '   ');
+    expect(state().worldClocks[id]!.name).toBe('Tokyo');
+    const undo = removeCity(id);
+    expect(state().worldClocks[id]!.deletedAt).not.toBeNull();
+    undo();
+    expect(state().worldClocks[id]!.deletedAt).toBeNull();
   });
 
   it('holds Agenda’s events, read only, for what an alarm says as it rings', () => {

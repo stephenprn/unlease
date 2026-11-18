@@ -56,6 +56,7 @@
         <package android:name="com.stephenprn.contacts${suiteSuffix}" />
         <package android:name="com.stephenprn.agenda${suiteSuffix}" />
         <package android:name="com.stephenprn.clock${suiteSuffix}" />
+        <package android:name="com.stephenprn.wallet${suiteSuffix}" />
     </queries>
 
     <application
@@ -327,6 +328,69 @@
         <meta-data
           android:name="android.appwidget.provider"
           android:resource="@xml/widget_alarm_info" />
+      </receiver>
+
+      <!-- The timers and the stopwatch (tools/, docs/ARCHITECTURE.md « Clock »). Timers ringing, in a
+           foreground service as the alarms ring (Direct Boot aware: a timer rings before the first unlock
+           too); the timers' and the stopwatch's buttons and a timer's end, the app's own PendingIntents
+           only; a timer's window over the lock screen, opened by its ringing notification. -->
+      <service
+        android:name=".tools.TimerService"
+        android:exported="false"
+        android:directBootAware="true"
+        android:foregroundServiceType="systemExempted|mediaPlayback" />
+      <receiver
+        android:name=".tools.ToolReceiver"
+        android:exported="false"
+        android:directBootAware="true" />
+      <activity
+        android:name=".tools.TimerRingActivity"
+        android:theme="@style/RingTheme"
+        android:exported="false"
+        android:launchMode="singleInstance"
+        android:taskAffinity="${applicationId}.timer"
+        android:excludeFromRecents="true"
+        android:showWhenLocked="true"
+        android:turnScreenOn="true"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|locale|layoutDirection" />
+
+      <!-- The home-screen widgets « Minuteurs », « Chronomètre », « Horloges » and « Horloge » (widget/).
+           Exported because the launcher broadcasts APPWIDGET_UPDATE to them; they take no data from it. -->
+      <receiver
+        android:name=".widget.TimersWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_timers_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_timers_info" />
+      </receiver>
+      <receiver
+        android:name=".widget.StopwatchWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_stopwatch_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_stopwatch_info" />
+      </receiver>
+      <receiver
+        android:name=".widget.WorldClocksWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_world_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_world_info" />
+      </receiver>
+      <receiver
+        android:name=".widget.ClockWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_clock_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_clock_info" />
       </receiver>
 
       <!-- What this app hands its siblings of the suite (server, token, appearance), to them alone. -->

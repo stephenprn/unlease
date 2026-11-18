@@ -20,6 +20,11 @@ export interface UiState {
   readonly servicesCssOpen: boolean;
   /** « Appliquer aux autres »: this app's look, to send to the suite's other apps on this phone. */
   readonly lookShareOpen: boolean;
+  /**
+   * How far over the gesture bar the slip floats, when a screen's foot holds more than the capture
+   * pebble (Clock's bar of places under its pebble); null: the usual (`SNACK_CLEARANCE`).
+   */
+  readonly snackClearance: number | null;
 }
 
 export const useUiStore = create<UiState>(() => ({
@@ -27,7 +32,13 @@ export const useUiStore = create<UiState>(() => ({
   drawerOpen: false,
   servicesCssOpen: false,
   lookShareOpen: false,
+  snackClearance: null,
 }));
+
+/** A screen whose foot is taller than the pebble's says how much room the slip must leave; null gives it back. */
+export function setSnackClearance(clearance: number | null): void {
+  if (useUiStore.getState().snackClearance !== clearance) useUiStore.setState({ snackClearance: clearance });
+}
 
 let snackId = 0;
 

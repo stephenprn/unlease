@@ -51,6 +51,8 @@ interface Props {
   readonly onOpen: (id: string) => void;
   /** « Ajouter une alarme » for the day's first event: the editor, filled from it. */
   readonly onAlarmFor: (occurrence: Occurrence) => void;
+  /** « Régler une alarme » on a morning with none: a new alarm's form, set for that day. */
+  readonly onNew: (day: string) => void;
 }
 
 /** A swipe starts once the finger has gone this far across, and fails once it goes this far up or down first: the home scrolls. */
@@ -72,7 +74,7 @@ const slideFrom = (side: -1 | 0 | 1) =>
     100: { opacity: 1, transform: [{ translateX: 0 }], easing: decelerate },
   }).duration(duration.medium);
 
-function MorningPanelComponent({ morning, now, from, margin, twelveHours, previous, next, onStep, onOpen, onAlarmFor }: Props) {
+function MorningPanelComponent({ morning, now, from, margin, twelveHours, previous, next, onStep, onOpen, onAlarmFor, onNew }: Props) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const reduced = useReducedMotion();
@@ -207,9 +209,19 @@ function MorningPanelComponent({ morning, now, from, margin, twelveHours, previo
                   </View>
                 </>
               ) : (
-                <AppText variant="title" color={theme.color.inkMuted} style={styles.none}>
-                  {t('No alarm')}
-                </AppText>
+                // A morning with an alarm's anatomy: the time's place blank (as the strip's dash says it), then « Pas
+                // d'alarme » and the way to set one, so switching an alarm on moves nothing.
+                <>
+                  <AppText style={[styles.time, styles.blank]} accessibilityElementsHidden importantForAccessibility="no">
+                    --:--
+                  </AppText>
+                  <View style={styles.nameRow}>
+                    <AppText variant="bodyStrong" color={theme.color.inkMuted} style={styles.grow} numberOfLines={1}>
+                      {t('No alarm')}
+                    </AppText>
+                    <Button kind="text" small icon="plus" label={t('Set an alarm')} onPress={() => onNew(morning.day)} />
+                  </View>
+                </>
               )}
               {morning.skipped.map(alarm => (
                 <View key={alarm.id} style={styles.nameRow}>
@@ -286,7 +298,8 @@ function makeStyles(theme: Theme) {
     morning: { gap: 2 },
     time: { fontFamily: fontFamily(theme, 'SemiBold'), fontSize: 56, lineHeight: 62, letterSpacing: -1, color: theme.color.ink, fontVariant: ['tabular-nums'], alignSelf: 'flex-start' },
     past: { color: theme.color.inkMuted },
-    none: { marginVertical: 8 },
+    // No alarm: the time's figure left blank, in the faint ink.
+    blank: { color: theme.color.inkFaint },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40 },
     grow: { flex: 1 },
     rule: { height: 1, backgroundColor: theme.color.hairline, marginVertical: 10 },

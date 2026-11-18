@@ -31,4 +31,5 @@ export const FR_HOME: Dictionary = {
   'An alarm may not ring as it should.': 'Une alarme pourrait ne pas sonner comme prévu.',
   'An alarm may not ring as it should. Check in Settings.': 'Une alarme pourrait ne pas sonner comme prévu. Vérifiez dans les Réglages.',
   'Check': 'Vérifier',
+  'Set an alarm': 'Régler une alarme',
 };
