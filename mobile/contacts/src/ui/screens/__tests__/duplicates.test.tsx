@@ -117,7 +117,7 @@ describe('Contacts, with people already here', () => {
     });
     expect(useLibraryStore.getState().contacts[other]!.mergedInto).toBe(keep);
     await go('Trash');
-    expect(textOf(tree)).toMatch(/Fusionné avec Léa Martin /);
+    expect(textOf(tree)).toMatch(/Fusionné dans Léa Martin /);
     expect(textOf(tree)).not.toContain('Mis à la corbeille');
   });
 

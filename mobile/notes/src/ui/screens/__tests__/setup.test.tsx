@@ -312,7 +312,7 @@ describe('the first run', () => {
     server.notes = 3;
     suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '', theme: 'dark' }];
     const tree = await boot(false);
-    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock', 'com.stephenprn.wallet']);
     expect(textOf(tree)).toContain('Pages est déjà configuré sur ce téléphone, relié à carnet.test');
     await press(tree, 'Utiliser la configuration de Pages');
     await settle();

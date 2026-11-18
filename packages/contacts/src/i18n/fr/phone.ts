@@ -135,7 +135,7 @@ export const FR_PHONE: Dictionary = {
 
   // The bin
   'Moved to the bin {when}': 'Mis à la corbeille {when}',
-  'Merged into {name} {when}': 'Fusionné avec {name} {when}',
+  'Merged into {name} {when}': 'Fusionné dans {name} {when}',
   'Delete forever?': 'Supprimer définitivement ?',
   // The widgets
   'Call {name}': 'Appeler {name}',

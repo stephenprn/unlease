@@ -146,7 +146,7 @@ describe('Pages, its root', () => {
     suite.siblings = [{ packageName: 'com.stephenprn.carnet', server: 'https://carnet.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock', 'com.stephenprn.wallet']);
     expect(textOf(tree)).toContain('Pages');
     expect(textOf(tree)).toContain('Carnet est déjà configuré sur ce téléphone, relié à carnet.test');
     await act(async () => {
@@ -468,17 +468,14 @@ describe('Pages, its root', () => {
     expect(textOf(tree)).toContain('La corbeille est vide');
   });
 
-  it('offers Carnet in the drawer when it is installed, and opens it there', async () => {
+  it('lists only its own places in the drawer, never another app of the suite, even installed', async () => {
     jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
     const tree = await boot({ onboarded: true });
     await act(async () => {
       setDrawerOpen(true);
     });
     await settle();
-    await act(async () => {
-      pressableWithText(tree, 'Carnet').props.onPress();
-    });
-    expect(Linking.openURL).toHaveBeenCalledWith('carnet://');
+    expect(() => pressableWithText(tree, 'Carnet')).toThrow();
     await act(async () => {
       setDrawerOpen(false);
     });

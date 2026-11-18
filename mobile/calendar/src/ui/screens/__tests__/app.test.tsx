@@ -78,7 +78,7 @@ describe('Agenda, its root', () => {
     suite.siblings = [{ packageName: 'com.stephenprn.contacts', server: 'https://suite.test', token: 'jeton', appearance: '', grain: '', locale: '' }];
     const tree = await boot({ onboarded: false });
     expect(navigationRef.getCurrentRoute()?.name).toBe('Setup');
-    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.carnet', 'com.stephenprn.pages', 'com.stephenprn.contacts', 'com.stephenprn.clock', 'com.stephenprn.wallet']);
     await act(async () => {
       pressables(tree, 'Utiliser la configuration de Contacts')[0]!.props.onPress();
     });
