@@ -310,6 +310,12 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
    * next line typed jumps back down. The caret is what must stay in sight: the ScrollView's own move
    * is cancelled before its first frame and the scroller glides, as little as it takes, to show the
    * caret's line clear of the edges (or stays, when it already does).
+   *
+   * That move is not always an animation: a ScrollView that scrolled a moment ago (under 250 ms: the
+   * caret followed as the keyboard rose) jumps at once, and the keyboard changes its height while one
+   * types (React Native tells of each change, and the form's `KeyboardAvoidingView` pads again). So
+   * the scroller is put back where it stood before this resize, before that frame is drawn, and moves
+   * from there only as far as the caret needs: typing never shakes the page.
    */
   private fun followCaretOnResize(list: ViewGroup) {
     val was = scrollerHeight
@@ -319,7 +325,9 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     if (!field.isFocused || !isAncestor(list, field)) return
     if (list is ReactScrollView) {
       list.abortAnimation()
-      val target = caretInSight(list, field, list.scrollY)
+      val from = if (settledScrollY >= 0) settledScrollY else list.scrollY
+      val target = caretInSight(list, field, from)
+      if (list.scrollY != from) list.scrollTo(list.scrollX, from)
       if (target != list.scrollY) list.reactSmoothScrollTo(list.scrollX, target)
       return
     }

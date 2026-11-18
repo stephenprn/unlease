@@ -13,6 +13,7 @@ All notable changes to Unlease are written here: the server and every app share 
 ### Fixed
 
 - Clock's alarm wheels on Android turn under the finger again: an hour or a minute passing no longer jolted the wheel half a row ahead or cut its fling short, and a wheel no longer lets the page scroll once it has turned a long way. AM and PM are two rows a tap chooses.
+- On Android, typing in a form (an alarm's label, a timer's) no longer shakes the page when the keyboard changes its height: the field stays where it was, and the page moves only as far as the cursor needs.
 
 ## [0.3.0] - 2026-11-18
 
