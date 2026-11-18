@@ -77,8 +77,10 @@ export function LineRefine({ view, counts, priced, onChange }: LineRefineProps) 
         label={t('Show as')}
       />
       <span className={styles.refineFill} />
-      <RefineButton icon="eye" value={LINE_FILTER_NAMES[view.filter]} label={t('Links shown: {filter}', { filter: LINE_FILTER_NAMES[view.filter] })} items={filters} active={view.filter !== 'all'} />
-      <RefineButton icon="sort" value={LINE_SORT_NAMES[view.sort]} label={t('Order: {order}', { order: LINE_SORT_NAMES[view.sort] })} items={sorts} active={view.sort !== 'own'} />
+      <div className={styles.refineEnd}>
+        <RefineButton icon="eye" value={LINE_FILTER_NAMES[view.filter]} label={t('Links shown: {filter}', { filter: LINE_FILTER_NAMES[view.filter] })} items={filters} active={view.filter !== 'all'} />
+        <RefineButton icon="sort" value={LINE_SORT_NAMES[view.sort]} label={t('Order: {order}', { order: LINE_SORT_NAMES[view.sort] })} items={sorts} active={view.sort !== 'own'} />
+      </div>
     </div>
   );
 }

@@ -3,24 +3,25 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:clipToOutline="true" android:outlineProvider="bounds" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_panel_paper" android:foreground="@drawable/wgen_panel_edge">
     <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/wgen_grain_panel" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="54dp" android:orientation="horizontal" android:paddingStart="16dp" android:paddingTop="6dp" android:paddingEnd="12dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="54dp" android:orientation="horizontal" android:paddingStart="16dp" android:paddingTop="6dp" android:paddingEnd="6dp">
             <TextView style="@style/WidgetText.Title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/widget_preview_suitcase" />
-            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/wgen_g_edit_ink_muted" />
+            <ImageView android:layout_width="48dp" android:layout_height="48dp" android:padding="13dp" android:scaleType="fitCenter" android:src="@drawable/wgen_g_edit" />
+            <ImageView android:layout_width="48dp" android:layout_height="48dp" android:padding="13dp" android:scaleType="fitCenter" android:src="@drawable/wgen_g_plus" />
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
-            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:scaleType="center" android:src="@drawable/wgen_check_open" />
             <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="@string/widget_preview_passport" />
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
-            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:scaleType="center" android:src="@drawable/wgen_check_open" />
             <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="@string/widget_preview_charger" />
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
-            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box" />
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:scaleType="center" android:src="@drawable/wgen_check_open" />
             <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="@string/widget_preview_swimsuit" />
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:gravity="center_vertical" android:minHeight="48dp" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="10dp">
-            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/wgen_g_box_checked_ink_muted" />
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:scaleType="center" android:src="@drawable/wgen_check_done" />
             <TextView style="@style/WidgetText.Body" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:maxLines="1" android:text="@string/widget_preview_tickets" android:textColor="@color/wgen_ink_muted" />
         </LinearLayout>
     </LinearLayout>

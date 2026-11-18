@@ -20,6 +20,7 @@
     <color name="wgen_ground_bottom">#FF11100F</color>
     <color name="wgen_ground_foot">#FF121110</color>
     <color name="wgen_paper_clear">#0034312E</color>
+    <color name="wgen_ground_bottom_clear">#0011100F</color>
     <color name="wgen_pigment_yellow">#FFE6A447</color>
     <color name="wgen_wash_yellow">#FF47391A</color>
     <color name="wgen_pigment_orange">#FFF3723E</color>

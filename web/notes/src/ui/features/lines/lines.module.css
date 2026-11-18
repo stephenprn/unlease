@@ -512,6 +512,24 @@ textarea.hintInput {
   border: 0;
 }
 
+/* A collection's fourteen cut-outs and its fourteen colours are two full rows of seven on the same columns (an emblem's 50 pebble, a colour's centred in it), never a short last row; a narrow sheet draws them a little smaller. */
+.group > [role='radiogroup'] {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 50px));
+  gap: 4px;
+}
+
+.group > [role='radiogroup'] > [role='radio'] {
+  place-self: center;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.group > [role='radiogroup'] > [data-color] {
+  margin: 4px 0;
+}
+
 .moveRow {
   display: flex;
   align-items: center;
@@ -768,9 +786,20 @@ textarea.hintInput {
   margin-top: 12px;
 }
 
-/* Pushes the order and the filter to the end, and lets them wrap under the layouts on a narrow page. */
+/* Pushes the filter and the order to the end. */
 .refineFill {
   flex: 1 0 0;
+}
+
+/* The filter and the order stay side by side: on a narrow page they go under the layouts together, at the line's end as on the phone, never one on each line. */
+.refineEnd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--row-gap);
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
 }
 
 .refineButton {

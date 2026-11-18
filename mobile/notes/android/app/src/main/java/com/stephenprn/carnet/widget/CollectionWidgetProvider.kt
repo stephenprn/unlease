@@ -54,13 +54,10 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
         setImageViewResource(R.id.row_kind, WidgetRes.kinds[link.optString("kind")] ?: R.drawable.wgen_g_globe_ink_muted)
         val image = link.optString("image").takeIf { it.isNotEmpty() && it != "null" }
         val picture = image?.let { Thumbnails.cached(context, it) }
-        if (picture != null) {
-          setImageViewBitmap(R.id.row_picture, picture)
-          setViewVisibility(R.id.row_picture, View.VISIBLE)
-          setViewVisibility(R.id.row_kind, View.GONE)
-        } else if (image != null) {
-          pictures += image
-        }
+        // Both ways, every row: the launcher reuses a row drawn for another link, picture and all.
+        setViewVisibility(R.id.row_picture, if (picture != null) View.VISIBLE else View.GONE)
+        setViewVisibility(R.id.row_kind, if (picture != null) View.GONE else View.VISIBLE)
+        if (picture != null) setImageViewBitmap(R.id.row_picture, picture) else if (image != null) pictures += image
         setContentDescription(R.id.row_body, listOf(link.optString("title"), link.optString("source")).filter { it.isNotEmpty() }.joinToString(", "))
         WidgetKit.route(context, this, R.id.row_body, "${BuildConfig.APP_SCHEME}://link/${link.optString("id")}")
         WidgetKit.route(context, this, R.id.row_open, link.optString("url"))

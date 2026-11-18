@@ -1,6 +1,6 @@
 /**
  * The first run against a stand-in server: connecting (a refusal said under the field it concerns,
- * or a sibling app's connection in one tap), « Vos applications » on a server still to set up
+ * or a sibling app's setup in one tap, its look with it or chosen next), « Vos applications » on a server still to set up
  * (Carnet locked on, Pages ticked or not and saved at once, the announced ones not tickable), "Votre
  * serveur" (S3 from Scaleway in Paris, the newest snapshot brought back, a row left for later), the
  * appearance (kept as it comes, chosen, or a sibling's), « Commencer » marking the server set up; a
@@ -307,13 +307,46 @@ describe('the first run', () => {
     expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
   });
 
-  it('connects in one tap with the connection of a sibling app on this phone, and starts from its colours', async () => {
+  it('takes a sibling app’s whole setup in one tap: its connection and its look, then straight into the app', async () => {
+    server.settings = { ...UNSET, setup: { done: true } };
+    server.notes = 3;
+    suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '', theme: 'dark' }];
+    const tree = await boot(false);
+    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
+    expect(textOf(tree)).toContain('Pages est déjà configuré sur ce téléphone, relié à carnet.test');
+    await press(tree, 'Utiliser la configuration de Pages');
+    await settle();
+    expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
+    // Its look taken whole, and not asked: Carnet holds notes there, so nothing else is due.
+    expect(useSettingsStore.getState().appearance).toMatchObject(PALETTE_COLORS.sarcelle);
+    expect(useSettingsStore.getState().theme).toBe('dark');
+    expect(useSettingsStore.getState().onboarded).toBe(true);
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
+    // A server set up already is not marked again.
+    expect(puts()).toEqual([]);
+    // And this app tells its siblings in turn, its theme with it.
+    expect(suite.shared).toMatchObject({ server: 'https://carnet.test', token: 'jeton', theme: 'dark' });
+  });
+
+  it('takes a sibling app’s whole setup, by way of the import when the app holds nothing there', async () => {
     server.settings = { ...UNSET, setup: { done: true } };
     suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '' }];
     const tree = await boot(false);
-    expect(suite.asked[0]).toEqual(['com.stephenprn.pages', 'com.stephenprn.agenda', 'com.stephenprn.contacts', 'com.stephenprn.clock']);
-    expect(textOf(tree)).toContain('Pages est déjà relié à carnet.test sur ce téléphone.');
-    await press(tree, 'Utiliser la connexion de Pages');
+    await press(tree, 'Utiliser la configuration de Pages');
+    await settle();
+    // The import is the last step: no appearance after it.
+    expect(textOf(tree)).toContain('Étape 2 sur 2');
+    expect(useSettingsStore.getState().appearance).toMatchObject(PALETTE_COLORS.sarcelle);
+    await press(tree, 'Commencer');
+    expect(useSettingsStore.getState().onboarded).toBe(true);
+    expect(navigationRef.getCurrentRoute()?.name).toBe('Board');
+  });
+
+  it('takes a sibling app’s connection only, and asks the look, started from its colours', async () => {
+    server.settings = { ...UNSET, setup: { done: true } };
+    suite.siblings = [{ packageName: 'com.stephenprn.pages', server: 'https://carnet.test', token: 'jeton', appearance: JSON.stringify({ ...DEFAULT_APPEARANCE, ...PALETTE_COLORS.sarcelle }), grain: '', locale: '' }];
+    const tree = await boot(false);
+    await press(tree, 'L’utiliser, et choisir l’apparence');
     expect(useSettingsStore.getState().server).toEqual({ url: 'https://carnet.test', token: 'jeton' });
     // Nothing typed: the token was the sibling's.
     expect(calls.find(call => call.path === '/api/settings' && call.method === 'GET')).toBeDefined();

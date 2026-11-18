@@ -8,8 +8,8 @@ import com.stephenprn.carnet.R
 
 /** A widget that cannot show its notes: not chosen yet, not handed over yet, or gone. One line and what a tap does. */
 internal object WidgetMessage {
-  private val CHOOSE = mapOf("collection" to R.string.widget_choose_collection, "label" to R.string.widget_choose_label, "note" to R.string.widget_choose_note)
-  private val GONE = mapOf("collection" to R.string.widget_gone_collection, "label" to R.string.widget_gone_label, "note" to R.string.widget_gone_note)
+  private val CHOOSE = mapOf("collection" to R.string.widget_choose_collection, "label" to R.string.widget_choose_label, "note" to R.string.widget_choose_note, "lists" to R.string.widget_choose_label)
+  private val GONE = mapOf("collection" to R.string.widget_gone_collection, "label" to R.string.widget_gone_label, "note" to R.string.widget_gone_note, "lists" to R.string.widget_gone_label)
 
   /** Nothing chosen: a tap opens the picker. */
   fun choose(context: Context, id: Int, kind: String): RemoteViews =

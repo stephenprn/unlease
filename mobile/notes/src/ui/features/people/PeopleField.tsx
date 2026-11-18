@@ -21,7 +21,9 @@ export function PeopleField({ type, id, ids, editable = true }: { type: 'note' |
   if (!any && ids.length === 0) return null;
   return (
     <View style={styles.field}>
-      <AppText variant="metaStrong">{t('People')}</AppText>
+      <AppText variant="metaStrong" style={styles.label}>
+        {t('People')}
+      </AppText>
       <View style={styles.chips}>
         {people.map(person => (
           <PersonChip key={person.contact.id} person={person} />
@@ -48,5 +50,7 @@ export function PeopleField({ type, id, ids, editable = true }: { type: 'note' |
 
 const styles = StyleSheet.create({
   field: { gap: 8 },
+  // A field's name, set in as `TextField`'s is: on a link's page it heads its chips right over « Votre note ».
+  label: { marginLeft: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
 });

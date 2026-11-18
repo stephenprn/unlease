@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An item: the whole row ticks it, its press inside the row's shape. -->
+<!-- An item: the whole row ticks it, its press inside the row's shape. Its box is the app's
+     (design/checkbox), 18 in a 22 slot. Every row sets its box, its ink and its words: the launcher
+     reuses a row drawn for another item. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/check"
     android:layout_width="match_parent"
@@ -18,8 +20,8 @@
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:importantForAccessibility="no"
-        android:scaleType="fitCenter"
-        android:src="@drawable/wgen_g_box" />
+        android:scaleType="center"
+        android:src="@drawable/wgen_check_open" />
 
     <TextView
         android:id="@+id/check_text"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Note: the note's own sheet (paper, or its wash). Its title opens it in the app; a checklist's items
-     tick right here, the done ones gathered at the foot as in the editor. -->
+     tick right here, the done ones gathered at the foot as in the editor, and « + » adds one over the
+     home screen. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:clipToOutline="true"
@@ -22,12 +23,19 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/note_open"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="6dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="6dp">
+
+        <LinearLayout
+            android:id="@+id/note_open"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:background="@drawable/wgen_row_press"
             android:contentDescription="@string/widget_note_open"
             android:gravity="center_vertical"
@@ -35,7 +43,6 @@
             android:orientation="horizontal"
             android:paddingStart="10dp"
             android:paddingTop="6dp"
-            android:paddingEnd="6dp"
             android:paddingBottom="6dp">
 
             <!-- Its title in Signika (WidgetType); the text view is its plain twin. -->
@@ -59,13 +66,27 @@
                     android:maxLines="2" />
             </FrameLayout>
 
+            <!-- The pen, as a lists widget's: the same glyph (22) in the same slot beside « + »; the whole head opens the note. -->
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="8dp"
+                android:layout_width="48dp"
+                android:layout_height="36dp"
                 android:importantForAccessibility="no"
+                android:paddingStart="13dp"
+                android:paddingTop="7dp"
+                android:paddingEnd="13dp"
+                android:paddingBottom="7dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/wgen_g_edit_ink_muted" />
+                android:src="@drawable/wgen_g_edit" />
+        </LinearLayout>
+
+        <!-- A checklist's « + »: items added over the home screen, the app left closed. -->
+        <ImageView
+            android:id="@+id/note_add"
+            style="@style/WidgetIconButton.Head"
+            android:background="@drawable/wgen_press_1"
+            android:contentDescription="@string/widget_note_add"
+            android:src="@drawable/wgen_g_plus"
+            android:visibility="gone" />
         </LinearLayout>
 
         <FrameLayout
@@ -73,6 +94,8 @@
             android:layout_height="0dp"
             android:layout_weight="1">
 
+            <!-- No selector of the list's own: each row presses inside its shape, and a list's selector,
+                 a square under the row, lingered where a ticked item had moved from. -->
             <ListView
                 android:id="@+id/note_list"
                 android:layout_width="match_parent"
@@ -80,6 +103,7 @@
                 android:clipToPadding="true"
                 android:divider="@null"
                 android:dividerHeight="0dp"
+                android:listSelector="@android:color/transparent"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
                 android:paddingBottom="10dp"

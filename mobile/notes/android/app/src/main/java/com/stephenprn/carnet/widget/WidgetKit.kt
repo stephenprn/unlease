@@ -2,6 +2,7 @@ package com.stephenprn.carnet.widget
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.res.ColorStateList
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
@@ -24,10 +25,15 @@ internal object WidgetKit {
     else views.setTextColor(viewId, context.getColor(color))
   }
 
-  /** A sheet worn in a wash: its paper tinted. Older launchers keep the paper. */
+  /**
+   * A sheet worn in a wash: its paper tinted; none, the paper (a widget drawn again, or a list's row
+   * reused, keeps the tint it had otherwise). Older launchers keep the paper.
+   */
   fun wash(views: RemoteViews, viewId: Int, wash: String?) {
-    val color = wash?.let { WidgetRes.washes[it] } ?: return
-    if (Build.VERSION.SDK_INT >= 31) views.setColorStateList(viewId, "setBackgroundTintList", color)
+    if (Build.VERSION.SDK_INT < 31) return
+    val color = wash?.let { WidgetRes.washes[it] }
+    if (color != null) views.setColorStateList(viewId, "setBackgroundTintList", color)
+    else views.setColorStateList(viewId, "setBackgroundTintList", null as ColorStateList?)
   }
 
   /** A collection's emblem lying on its stone, the stone in its wash, turned its own way. */

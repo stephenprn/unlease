@@ -35,15 +35,16 @@ internal object Widgets {
           "collection" to CollectionWidgetProvider::class.java,
           "label" to LabelWidgetProvider::class.java,
           "note" to NoteWidgetProvider::class.java,
+          "lists" to ListsWidgetProvider::class.java,
       )
 
   private val PROVIDERS: List<CarnetWidgetProvider> =
-      listOf(CaptureWidgetProvider(), LinkWidgetProvider(), CollectionWidgetProvider(), LabelWidgetProvider(), NoteWidgetProvider())
+      listOf(CaptureWidgetProvider(), LinkWidgetProvider(), CollectionWidgetProvider(), LabelWidgetProvider(), NoteWidgetProvider(), ListsWidgetProvider())
 
   fun ids(context: Context, provider: Class<out CarnetWidgetProvider>): IntArray =
       AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, provider))
 
-  /** The kind (`collection`, `label`, `note`) of a placed widget, or null when it is not one of those. */
+  /** The kind (`collection`, `label`, `note`, `lists`) of a placed widget, or null when it is not one of those. */
   fun kindOf(context: Context, id: Int): String? {
     val name = AppWidgetManager.getInstance(context).getAppWidgetInfo(id)?.provider?.className ?: return null
     return DATA_KINDS.firstOrNull { it.second.name == name }?.first

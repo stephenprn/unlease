@@ -21,7 +21,7 @@ export function QuickProviders(props: Partial<QuickLaunch>): React.ReactElement 
   }, [boot.ok]);
   if (!boot.ok) return null;
   const launch: QuickLaunch = {
-    mode: props.mode === 'collection' || props.mode === 'label' || props.mode === 'note' ? props.mode : 'link',
+    mode: props.mode === 'collection' || props.mode === 'label' || props.mode === 'note' || props.mode === 'lists' || props.mode === 'item' ? props.mode : 'link',
     widgetId: typeof props.widgetId === 'number' ? props.widgetId : -1,
     target: typeof props.target === 'string' ? props.target : '',
     configuring: props.configuring === true,

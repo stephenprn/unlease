@@ -829,9 +829,11 @@
   isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 8px;
+  /* As the add row: its chevron in the boxes' column, its words on the items'. */
+  gap: 16px;
   min-height: 48px;
-  padding: 0 12px 0 4px;
+  margin-left: 30px;
+  padding: 0 12px 0 6px;
   border: 0;
   border-radius: var(--cut-tab);
   background: transparent;

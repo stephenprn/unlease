@@ -20,7 +20,7 @@ import {
 } from '../store/actions';
 import { loadLibrary, resetLibrary, useLibraryStore } from '../store/libraryStore';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
-import { collectionPayload, labelPayload, notePayload, WIDGET_LIMITS, type CollectionPayload, type LabelPayload, type NotePayload } from '../widgetPayloads';
+import { collectionPayload, labelPayload, listsPayload, listsTarget, notePayload, WIDGET_LIMITS, type CollectionPayload, type LabelPayload, type ListsPayload, type NotePayload } from '../widgetPayloads';
 
 const state = () => useLibraryStore.getState();
 const NOW = 2_000_000;
@@ -143,6 +143,67 @@ describe('note widget', () => {
     const note = createNote({ kind: 'text', title: 'Partie' });
     trashNotes([note]);
     expect(notePayload(state(), note).gone).toBe(true);
+  });
+});
+
+describe('lists widget', () => {
+  it('reads its target as its label, then the note picked', () => {
+    expect(listsTarget('label-1')).toEqual({ label: 'label-1', note: '' });
+    expect(listsTarget('label-1/note-2')).toEqual({ label: 'label-1', note: 'note-2' });
+  });
+
+  it('shows the label’s first note until another is picked, and says what is left to do', () => {
+    const label = createLabel('Tâches');
+    const home = createNote({ kind: 'checklist', title: 'Maison', labelIds: [label], color: 'sky' });
+    const work = createNote({ kind: 'checklist', title: 'Travail', labelIds: [label] });
+    setPinned(work, true);
+    // A collection wearing it is not offered: it has its own widget.
+    setLabels(createLine({ title: 'Lectures' }), [label]);
+    const dishes = addCheck(home, 'Vaisselle');
+    addCheck(home, 'Linge');
+    toggleCheck(dishes);
+    // The label's view: pinned first.
+    const first = listsPayload(state(), label, NOW) as ListsPayload;
+    expect(first.gone).toBe(false);
+    expect(first.id).toBe(label);
+    expect(first.name).toBe('Tâches');
+    expect(first.note?.id).toBe(work);
+    // Its list holds nothing yet: nothing is said of what is left; once all of it is ticked, it says so.
+    expect(first.meta).toBe('Tâches');
+    toggleCheck(addCheck(work, 'Rapport'));
+    expect((listsPayload(state(), label, NOW) as ListsPayload).meta).toBe('Tâches · Tout est coché');
+    // Picked: the whole list, its wash, what is left.
+    const picked = listsPayload(state(), `${label}/${home}`, NOW) as ListsPayload;
+    expect(picked.id).toBe(`${label}/${home}`);
+    expect(picked.note).toMatchObject({ id: home, title: 'Maison', list: true, wash: 'sky' });
+    expect(picked.note?.items.map(item => [item.text, item.checked])).toEqual([
+      ['Vaisselle', true],
+      ['Linge', false],
+    ]);
+    expect(picked.meta).toBe('Tâches · 1\u00A0à faire');
+    // A list still empty says nothing of what is left.
+    const empty = createNote({ kind: 'checklist', title: 'Vide', labelIds: [label] });
+    expect((listsPayload(state(), `${label}/${empty}`, NOW) as ListsPayload).meta).toBe('Tâches');
+  });
+
+  it('falls back to the label’s first note once the one picked leaves it, and to none', () => {
+    const label = createLabel('Projets');
+    const kept = createNote({ kind: 'checklist', title: 'Gardée', labelIds: [label] });
+    const left = createNote({ kind: 'text', title: 'Partie', labelIds: [label] });
+    setLabels(left, []);
+    expect((listsPayload(state(), `${label}/${left}`, NOW) as ListsPayload).note?.id).toBe(kept);
+    trashNotes([kept]);
+    const none = listsPayload(state(), `${label}/${left}`, NOW) as ListsPayload;
+    expect(none.note).toBeNull();
+    // The head then shows the label's name alone.
+    expect(none.meta).toBe('');
+    expect(none.name).toBe('Projets');
+  });
+
+  it('is gone once its label is deleted', () => {
+    const label = createLabel('Éphémère');
+    useLibraryStore.setState(s => ({ labels: { ...s.labels, [label]: { ...s.labels[label]!, deletedAt: 5 } } }));
+    expect(listsPayload(state(), `${label}/x`, NOW)).toEqual({ v: 1, kind: 'lists', id: `${label}/x`, gone: true });
   });
 });
 

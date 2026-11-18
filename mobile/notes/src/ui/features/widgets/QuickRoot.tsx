@@ -1,7 +1,8 @@
 /**
  * The quick window over the home screen (android/.../widget/QuickActivity): one sheet, then the home
- * screen again. The link field, filled from the clipboard when it holds a link; or the picker a widget
- * is pointed with, as it is placed or later from the widget itself. The window is its own scrim.
+ * screen again. The link field, filled from the clipboard when it holds a link; the field a list's
+ * widget adds items with (`item`); or the picker a widget is pointed with, as it is placed or later
+ * from the widget itself (a lists widget's head: which of its label's notes). The window is its own scrim.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
@@ -15,19 +16,22 @@ import { useLibraryStore } from '@app/store/libraryStore';
 import { showSnack } from '@shared/app/store/uiStore';
 import { appScheme } from '@shared/app/variant';
 import { leaveQuick, pointWidget } from '@app/widgets';
+import { listsTarget } from '@app/widgetPayloads';
 import { clearQuickScrim, quickClipboard, type WidgetKind } from '@platform/widgets';
 
 import { SheetScrim, Snackbar, Tappable } from '../../components';
 import { duration } from '@shared/ui/theme/motion';
 import { LinkCaptureSheet, type LinkTarget } from '../capture/CaptureSheet';
 import { MoveSheet } from '../lines/MoveSheet';
+import { AddItemSheet } from './AddItemSheet';
 import { LabelPickerSheet } from './LabelPickerSheet';
+import { ListPickerSheet } from './ListPickerSheet';
 import { NotePickerSheet } from './NotePickerSheet';
 
 export interface QuickLaunch {
-  readonly mode: 'link' | WidgetKind;
+  readonly mode: 'link' | 'item' | WidgetKind;
   readonly widgetId: number;
-  /** The collection a link goes to, or what the widget shows now; '' for none. */
+  /** The collection a link goes to, the list an item goes to, or what the widget shows now; '' for none. */
   readonly target: string;
   /** The widget is being placed: leaving without a choice cancels it. */
   readonly configuring: boolean;
@@ -42,13 +46,14 @@ const TITLES: Record<WidgetKind, { readonly placing: string; readonly changing: 
   collection: { placing: tx('Which collection to show?'), changing: tx('Change collection') },
   label: { placing: tx('Which label to show?'), changing: tx('Show another label') },
   note: { placing: tx('Which note to show?'), changing: tx('Show another note') },
+  lists: { placing: tx('Which label’s lists to show?'), changing: tx('Show another list') },
 };
 
 export function QuickRoot({ launch }: { launch: QuickLaunch }) {
   return (
     <SheetScrim.Provider value={false}>
       <View style={styles.root}>
-        {launch.mode === 'link' ? <QuickLink target={launch.target} /> : <QuickPicker launch={launch} kind={launch.mode} />}
+        {launch.mode === 'link' ? <QuickLink target={launch.target} /> : launch.mode === 'item' ? <QuickItem target={launch.target} /> : <QuickPicker launch={launch} kind={launch.mode} />}
         <Snackbar />
       </View>
     </SheetScrim.Provider>
@@ -110,8 +115,21 @@ function QuickLink({ target }: { target: string }) {
   );
 }
 
+/** « + » on a list's widget: items added one after another, synced while the window is up and as it closes. */
+function QuickItem({ target }: { target: string }) {
+  useAppLifecycle();
+  const [open, setOpen] = useState(true);
+  const dismiss = useCallback(() => {
+    setOpen(false);
+    setTimeout(() => leaveQuick(false), EXIT_MS);
+  }, []);
+  return <AddItemSheet visible={open} noteId={target} onDismiss={dismiss} />;
+}
+
 /** The picker a widget is pointed with: a pick draws it at once, and placing it completes. */
 function QuickPicker({ launch, kind }: { launch: QuickLaunch; kind: WidgetKind }) {
+  // A lists widget's head shows its label's notes; « Show another label » turns it into the label picker.
+  const [labels, setLabels] = useState(false);
   const [open, setOpen] = useState(true);
   const picked = useRef(false);
   const dismiss = useCallback(() => {
@@ -128,6 +146,24 @@ function QuickPicker({ launch, kind }: { launch: QuickLaunch; kind: WidgetKind }
   );
   const current = launch.target || null;
   const title = t(launch.configuring ? TITLES[kind].placing : TITLES[kind].changing);
+  if (kind === 'lists') {
+    const { label, note } = listsTarget(launch.target);
+    // Placed (or pointed again from the launcher): its label, its first note shown until another is picked.
+    if (launch.configuring || !label || labels) {
+      return <LabelPickerSheet visible={open} current={label || null} title={t(TITLES.lists.placing)} onDismiss={dismiss} onPick={pick} />;
+    }
+    return (
+      <ListPickerSheet
+        visible={open}
+        label={label}
+        current={note || null}
+        title={title}
+        onDismiss={dismiss}
+        onPick={id => pick(`${label}/${id}`)}
+        onOtherLabel={() => setLabels(true)}
+      />
+    );
+  }
   if (kind === 'collection') return <MoveSheet visible={open} currentLineId={current} title={title} onDismiss={dismiss} onPick={pick} />;
   if (kind === 'label') return <LabelPickerSheet visible={open} current={current} title={title} onDismiss={dismiss} onPick={pick} />;
   return <NotePickerSheet visible={open} current={current} title={title} onDismiss={dismiss} onPick={pick} />;

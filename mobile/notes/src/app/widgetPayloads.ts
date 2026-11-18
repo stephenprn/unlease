@@ -2,6 +2,7 @@
  * What each home-screen widget draws, as plain data built from the library with the app's own words
  * (`linkRowText`, `plural`, `formatPrice`) and order (`sectionsFor`), so the native widget only lays it
  * out (android/.../widget). A widget shows a first screenful; the rest is a tap away in the app.
+ * A note's whole items go to a note widget and to a lists widget (one of a label's notes at a time).
  */
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { pebbleTurnOf } from '@unlease/design/pebbles';
@@ -31,7 +32,7 @@ export const WIDGET_LIMITS = {
 /** Its collection, label or note is gone (deleted, or in the bin): the widget offers another. */
 export interface GonePayload {
   readonly v: 1;
-  readonly kind: 'collection' | 'label' | 'note';
+  readonly kind: 'collection' | 'label' | 'note' | 'lists';
   readonly id: string;
   readonly gone: true;
 }
@@ -98,13 +99,11 @@ export interface WidgetItem {
   readonly indent: number;
 }
 
-export interface NotePayload {
-  readonly v: 1;
-  readonly kind: 'note';
+/** A note as a widget shows it whole: a checklist's items to tick, or a text note's paragraphs. */
+export interface WidgetNote {
   readonly id: string;
-  readonly gone: false;
   readonly title: string;
-  /** A checklist: its items tick on the widget. */
+  /** A checklist: its items tick on the widget, and « + » adds one. */
   readonly list: boolean;
   readonly wash: string | null;
   /** A text note's paragraphs. */
@@ -113,7 +112,33 @@ export interface NotePayload {
   readonly items: readonly WidgetItem[];
 }
 
-export type WidgetPayload = CollectionPayload | LabelPayload | NotePayload | GonePayload;
+export interface NotePayload extends WidgetNote {
+  readonly v: 1;
+  readonly kind: 'note';
+  readonly gone: false;
+}
+
+/**
+ * Listes d'un label: one of a label's notes at a time, the one picked at its head (a task widget).
+ * Its target is the label, then the note picked: `<label>/<note>` (the label alone until one is).
+ */
+export interface ListsPayload {
+  readonly v: 1;
+  readonly kind: 'lists';
+  /** The widget's target as it was handed, so the native side knows it is this widget's picture. */
+  readonly id: string;
+  readonly gone: false;
+  /** The label: its id, name and pigment (its tag). */
+  readonly label: string;
+  readonly name: string;
+  readonly color: string;
+  /** Under the note's title: the label's name, and what is left to do on a list ('' with no note: the title is the label's name). */
+  readonly meta: string;
+  /** The note shown: the one picked while it still wears the label, else the label's first; null when it has none. */
+  readonly note: WidgetNote | null;
+}
+
+export type WidgetPayload = CollectionPayload | LabelPayload | NotePayload | ListsPayload | GonePayload;
 
 const gone = (kind: GonePayload['kind'], id: string): GonePayload => ({ v: 1, kind, id, gone: true });
 
@@ -209,22 +234,18 @@ export function labelPayload(state: LibraryState, id: string, now: number): Labe
   };
 }
 
-export function notePayload(state: LibraryState, id: string): NotePayload | GonePayload {
-  const note = state.notes[id];
-  if (!isLiveNote(note) || note.kind === 'links') return gone('note', id);
+/** A note whole, as a note widget or a lists widget shows it. */
+function widgetNote(state: LibraryState, note: Note): WidgetNote {
   const list = note.kind === 'checklist';
   const lines = list ? [] : note.kind === 'drawing' ? [t('Drawing')] : bodyText(note).replace(/\s+$/, '').split('\n');
   return {
-    v: 1,
-    kind: 'note',
-    id,
-    gone: false,
+    id: note.id,
     title: note.title.trim(),
     list,
     wash: note.color,
     lines: lines.length === 1 && lines[0] === '' ? [] : lines.slice(0, WIDGET_LIMITS.lines),
     items: list
-      ? checksOf(state, id)
+      ? checksOf(state, note.id)
           .filter(item => item.text.trim())
           .slice(0, WIDGET_LIMITS.items)
           .map(item => ({ id: item.id, text: item.text, checked: item.checked, indent: item.indent }))
@@ -232,8 +253,59 @@ export function notePayload(state: LibraryState, id: string): NotePayload | Gone
   };
 }
 
-export function widgetPayload(kind: 'collection' | 'label' | 'note', target: string, state: LibraryState, now: number): WidgetPayload {
+export function notePayload(state: LibraryState, id: string): NotePayload | GonePayload {
+  const note = state.notes[id];
+  if (!isLiveNote(note) || note.kind === 'links') return gone('note', id);
+  return { v: 1, kind: 'note', gone: false, ...widgetNote(state, note) };
+}
+
+/** A lists widget's target: its label, and the note picked in it ('' until one is). */
+export function listsTarget(target: string): { readonly label: string; readonly note: string } {
+  const at = target.indexOf('/');
+  return at < 0 ? { label: target, note: '' } : { label: target.slice(0, at), note: target.slice(at + 1) };
+}
+
+/** The notes a lists widget offers for a label: those its view on the board shows (pinned first, the archive and the bin left out), collections aside. */
+export function listsOf(state: LibraryState, labelId: string, now: number): string[] {
+  return sectionsFor(`label:${labelId}`, state.noteOrder, state.notes, now)
+    .sections.flatMap(section => section.ids)
+    .filter(id => {
+      const note = state.notes[id];
+      return isLiveNote(note) && note.kind !== 'links';
+    });
+}
+
+export function listsPayload(state: LibraryState, target: string, now: number): ListsPayload | GonePayload {
+  const { label: labelId, note: picked } = listsTarget(target);
+  const label = state.labels[labelId];
+  if (!label || label.deletedAt !== null) return gone('lists', target);
+  const ids = listsOf(state, labelId, now);
+  // The note picked while it still wears the label, else the label's first.
+  const shown = ids.includes(picked) ? picked : ids[0];
+  const note = shown ? state.notes[shown] : undefined;
+  // Short, beside the head's buttons: « 3 à faire », « Tout est coché », nothing for a list still empty.
+  let left = '';
+  if (note?.kind === 'checklist') {
+    const items = checksOf(state, note.id).filter(item => item.text.trim());
+    const open = items.filter(item => !item.checked).length;
+    left = open > 0 ? plural(open, 'to do', 'to do [many]') : items.length > 0 ? t('All ticked') : '';
+  }
+  return {
+    v: 1,
+    kind: 'lists',
+    id: target,
+    gone: false,
+    label: labelId,
+    name: label.name,
+    color: label.color,
+    meta: note ? [label.name, left].filter(Boolean).join(' · ') : '',
+    note: note ? widgetNote(state, note) : null,
+  };
+}
+
+export function widgetPayload(kind: 'collection' | 'label' | 'note' | 'lists', target: string, state: LibraryState, now: number): WidgetPayload {
   if (kind === 'collection') return collectionPayload(state, target);
   if (kind === 'label') return labelPayload(state, target, now);
+  if (kind === 'lists') return listsPayload(state, target, now);
   return notePayload(state, target);
 }

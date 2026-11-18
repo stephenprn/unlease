@@ -60,7 +60,12 @@ internal object WidgetWords {
       text(R.id.w_label_empty, R.string.widget_label_empty),
       text(R.id.w_label_create, R.string.widget_label_create),
     ),
-    R.layout.widget_note to listOf(said(R.id.note_open, R.string.widget_note_open)),
+    R.layout.widget_note to listOf(said(R.id.note_open, R.string.widget_note_open), said(R.id.note_add, R.string.widget_note_add)),
+    R.layout.widget_lists to listOf(
+      said(R.id.lists_pick, R.string.widget_lists_pick),
+      said(R.id.lists_open, R.string.widget_note_open),
+      said(R.id.lists_add, R.string.widget_note_add),
+    ),
   )
 
   fun write(context: Context, views: RemoteViews, layout: Int) {

@@ -22,6 +22,11 @@
   min-width: 0;
 }
 
+/* The head's action (a button's 42) overhangs the head's 40 line rather than heightening it: the title stays where it is in the other views. */
+.viewHead > button {
+  margin-block: -1px;
+}
+
 .notice {
   padding: 0 4px 12px;
 }

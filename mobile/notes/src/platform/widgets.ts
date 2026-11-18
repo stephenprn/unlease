@@ -4,13 +4,13 @@
  */
 import NativeWidgets from '../../../shared/specs/NativeWidgets';
 
-/** The widgets that show notes. */
-export type WidgetKind = 'collection' | 'label' | 'note';
+/** The widgets that show notes (`lists`: one of a label's notes at a time). */
+export type WidgetKind = 'collection' | 'label' | 'note' | 'lists';
 
 export interface PlacedWidget {
   readonly id: number;
   readonly kind: WidgetKind;
-  /** The collection, label or note it shows; '' until chosen. */
+  /** The collection, label or note it shows (a lists widget's: `<label>/<note>`); '' until chosen. */
   readonly target: string;
 }
 
@@ -19,7 +19,7 @@ export interface WidgetTick {
   readonly checked: boolean;
 }
 
-const KINDS: readonly string[] = ['collection', 'label', 'note'];
+const KINDS: readonly string[] = ['collection', 'label', 'note', 'lists'];
 
 export function widgetsAvailable(): boolean {
   return NativeWidgets !== null;

@@ -53,8 +53,9 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
         setViewVisibility(R.id.card_title, if (title.isEmpty()) View.GONE else View.VISIBLE)
         setTextViewText(R.id.card_body, body)
         setViewVisibility(R.id.card_body, if (body.isEmpty()) View.GONE else View.VISIBLE)
-        // A title over words: the body starts a little below it, as on a card of the board.
-        if (title.isNotEmpty() && body.isNotEmpty()) setViewPadding(R.id.card_body, 0, dp(context, 2), 0, 0)
+        // A title over words: the body starts a little below it, as on a card of the board. Every card
+        // sets its paddings and its wash: the launcher reuses a card drawn for another note.
+        setViewPadding(R.id.card_body, 0, if (title.isNotEmpty() && body.isNotEmpty()) dp(context, 2) else 0, 0, 0)
         setTextViewText(R.id.card_more, more)
         setViewVisibility(R.id.card_more, if (more.isEmpty()) View.GONE else View.VISIBLE)
         removeAllViews(R.id.card_items)
@@ -69,7 +70,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
               },
           )
         }
-        if (items != null && items.length() > 0 && title.isNotEmpty()) setViewPadding(R.id.card_items, 0, dp(context, 4), 0, 0)
+        setViewPadding(R.id.card_items, 0, if (items != null && items.length() > 0 && title.isNotEmpty()) dp(context, 4) else 0, 0, 0)
         WidgetKit.wash(this, R.id.card, note.optString("wash").takeIf { it.isNotEmpty() && it != "null" })
         setContentDescription(R.id.card, title.ifEmpty { body.take(80) })
         // A collection opens on its own page, never as a note (JavaScript says which).

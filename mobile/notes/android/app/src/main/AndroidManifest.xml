@@ -313,6 +313,18 @@
           android:resource="@xml/widget_note_info" />
       </receiver>
 
+      <receiver
+        android:name=".widget.ListsWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_lists_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_lists_info" />
+      </receiver>
+
       <!-- A tick on a note widget: only our own PendingIntents reach it. -->
       <receiver android:name=".widget.WidgetTickReceiver" android:exported="false" />
 

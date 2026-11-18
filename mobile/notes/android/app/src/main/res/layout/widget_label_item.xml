@@ -13,7 +13,7 @@
         android:layout_height="18dp"
         android:importantForAccessibility="no"
         android:scaleType="fitCenter"
-        android:src="@drawable/wgen_g_box" />
+        android:src="@drawable/wgen_check_open" />
 
     <TextView
         android:id="@+id/item_text"

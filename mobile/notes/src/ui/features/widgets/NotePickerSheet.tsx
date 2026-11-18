@@ -38,7 +38,7 @@ function summary(note: Note, state: LibraryState): { readonly title: string; rea
     const items = (state.checksByNote[note.id] ?? []).map(id => state.checks[id]).filter(item => !!item && item.text.trim());
     const open = items.filter(item => !item!.checked);
     const title = note.title.trim() || open[0]?.text || items[0]?.text || t('Untitled list');
-    return { title, detail: open.length > 0 ? plural(open.length, 'item to do', 'items to do') : t('All ticked') };
+    return { title, detail: open.length > 0 ? plural(open.length, 'item to do', 'items to do') : items.length > 0 ? t('All ticked') : t('Empty list') };
   }
   const lines = bodyText(note).split('\n').map(line => line.trim()).filter(Boolean);
   if (note.title.trim()) return { title: note.title.trim(), detail: lines[0] ?? '' };
@@ -80,7 +80,8 @@ export function NotePickerSheet({ visible, current, title, onDismiss, onPick }: 
   );
 }
 
-const NoteRow = memo(function NoteRowView({ id, current, onPress }: { id: string; current: boolean; onPress: () => void }) {
+/** A note offered by a picker: its kind's glyph, its title (or first words) over what follows, ✓ when it is the one shown. */
+export const NoteRow = memo(function NoteRowView({ id, current, onPress }: { id: string; current: boolean; onPress: () => void }) {
   const theme = useTheme();
   const note = useLibraryStore(s => s.notes[id]);
   const checks = useLibraryStore(s => s.checksByNote[id]);

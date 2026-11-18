@@ -63,6 +63,20 @@ export const FR_PHONE_FEATURES: Dictionary = {
   'Show another label': 'Afficher un autre label',
   'Which note to show?': 'Quelle note afficher ?',
   'Show another note': 'Afficher une autre note',
+  // A lists widget: one of a label's notes at a time, picked at its head
+  'Which label’s lists to show?': 'Les listes de quel label afficher ?',
+  'Show another list': 'Afficher une autre liste',
+  'No notes with this label yet: name the first list.': 'Aucune note avec ce label pour l’instant : nommez la première liste.',
+  'New list’s title': 'Titre de la nouvelle liste',
+  // « + » on a list's widget, over the home screen
+  'Add to {list}': 'Ajouter à {list}',
+  'Add to this list': 'Ajouter à cette liste',
+  'New item': 'Nouvel élément',
+  'This list is no longer here.': 'Cette liste n’est plus là.',
+  // Under a lists widget's title: « 3 à faire »
+  'to do': 'à faire',
+  'to do [many]': 'à faire',
+  'Empty list': 'Liste vide',
   'Links kept: Claude is filing them': 'Liens gardés : Claude les range',
   'Link kept: Claude is filing it': 'Lien gardé : Claude le range',
   'Add to {collection}': 'Ajouter à {collection}',
