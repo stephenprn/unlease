@@ -197,6 +197,11 @@ export function setPagePrivate(id: string, kept: boolean): void {
   writeLocal([{ type: 'block', id, patch: { private: kept } }]);
 }
 
+/** Behind the suite's lock, with what is under it: its title shows, its blocks only once the lock is open (`isLockedPage`). */
+export function setPageLocked(id: string, locked: boolean): void {
+  writeLocal([{ type: 'block', id, patch: { locked } }]);
+}
+
 /**
  * A past version of a page, back (`restorePlan`): one step of the page's undo, and an Undo for its
  * slip that writes back what the restore overwrote. No change when the page already reads as it.

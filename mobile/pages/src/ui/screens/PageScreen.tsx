@@ -16,21 +16,23 @@ import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE, type BlockTarget } from '@unlease/pages/models/blocks';
 import { ancestorPages, isInBin } from '@unlease/pages/services/blocks';
-import { isPrivatePage } from '@unlease/pages/services/pagesAsk';
+import { isPrivatePage, lockingPage } from '@unlease/pages/services/pagesAsk';
 import { formatEdited, plural } from '@unlease/core/services/format';
 import { PAGES_TEXT_LIMITS } from '@unlease/pages/sync/types';
 import { pageEdited } from '@app/hooks/usePages';
 import { closePagesAsk, openPagesAsk, usePagesAskSettings } from '@app/pagesAsk';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { canRedo, canUndo, redoPage, undoPage } from '@app/store/pageHistory';
-import { createPage, duplicateBlocks, insertBlock, renamePage, restorePage, setPagePrivate, splitTitle, trashPage } from '@app/store/pages';
+import { createPage, duplicateBlocks, insertBlock, renamePage, restorePage, setPageLocked, setPagePrivate, splitTitle, trashPage } from '@app/store/pages';
 import { expandAll, rememberPage, requestTitleFocus, takeTitleFocus } from '@app/store/pagesUi';
+import { closeLock, lockState, useLockOpen, useSecureWhile } from '@shared/app/lock';
 import { showSnack } from '@shared/app/store/uiStore';
 import { contactPlace, eventPlace, notesPlace, openInApp } from '@shared/app/openApp';
 import { useMinute } from '@shared/app/hooks/useMinute';
 
 import { AppText, Button, EdgeScrollView, EmptyState, Ground, Icon, IconButton, Menu, Organic, Tappable } from '@shared/ui/components';
 import { useGrowingInput } from '@shared/ui/components/useGrowingInput';
+import { LockPanel, LockPasswordSheet } from '@shared/ui/features/lock';
 import { useKeyboardTop } from '@shared/ui/components/useKeyboardVisible';
 import { BlockBar } from '../features/pages/BlockBar';
 import { blockTop, drawnBlock, flashBlock, openTogglesAbove } from '../features/pages/blockJump';
@@ -270,6 +272,13 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const ask = usePagesAskSettings() !== null;
   const kept = useLibraryStore(s => isPrivatePage(s.blocks, id));
+  // Behind the lock (its own, or a page's above it): shut, its head shows and its blocks wait under the lock.
+  const locker = useLibraryStore(s => lockingPage(s.blocks, id));
+  const lockOpen = useLockOpen();
+  const shut = locker !== null && !lockOpen;
+  const [choosing, setChoosing] = useState(false);
+  // Open, what it holds stays out of screenshots and the recent apps' thumbnails.
+  useSecureWhile(locker !== null && lockOpen);
   // The keyboard's overlap, known even when it was up before this page opened (a sub-page made while typing).
   const keyboardTop = useKeyboardTop();
   const frame = useRef<React.ComponentRef<typeof View>>(null);
@@ -441,6 +450,39 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
   // The breadcrumb's folded pages: those between the first and the parent, nearest the first at the top.
   const above = ancestorPages(useLibraryStore.getState().blocks, id);
   const foldedItems = above.slice(1, -1).map(page => ({ label: page.icon ? `${page.icon} ${page.text.trim() || t(UNTITLED_PAGE)}` : page.text.trim() || t(UNTITLED_PAGE), icon: 'page' as const, onPress: () => openPage(page.id) }));
+  const protect = (): void => {
+    flushAll();
+    setPageLocked(id, true);
+    showSnack(t('Page protected: it opens with the password'), undefined, { tone: 'success' });
+  };
+  const lockItems =
+    locker === null
+      ? [{ label: t('Protect with a password'), icon: 'lock' as const, onPress: () => (lockState().check ? protect() : setChoosing(true)) }]
+      : locker === id && lockOpen
+        ? [
+            {
+              label: t('Remove the protection'),
+              icon: 'unlock' as const,
+              onPress: () => {
+                setPageLocked(id, false);
+                showSnack(t('This page no longer asks for the password'), undefined, { tone: 'success' });
+              },
+            },
+          ]
+        : [];
+  const toBin = {
+    label: t('Move to bin'),
+    icon: 'trash' as const,
+    danger: true,
+    onPress: () => {
+      flushAll();
+      const undo = trashPage(id);
+      navigation.goBack();
+      showSnack(t('Page moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
+    },
+  };
+  // Behind the shut lock, only what its title allows: a move, its protection, the bin.
+  const shutItems = [{ label: t('Move to…'), icon: 'transfer' as const, onPress: () => openPageSheet({ kind: 'movePage', page: id }) }, ...lockItems, toBin];
   const menuItems = [
     ...(ask && !kept ? [{ label: t('Ask Claude'), icon: 'sparkle' as const, onPress: () => openPagesAsk(id) }] : []),
     {
@@ -493,17 +535,8 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
               },
         ]
       : []),
-    {
-      label: t('Move to bin'),
-      icon: 'trash' as const,
-      danger: true,
-      onPress: () => {
-        flushAll();
-        const undo = trashPage(id);
-        navigation.goBack();
-        showSnack(t('Page moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
-      },
-    },
+    ...lockItems,
+    toBin,
   ];
 
   return (
@@ -516,10 +549,13 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
             <AppText variant="title" numberOfLines={1} style={[styles.barTitle, { opacity: titleUnder ? 1 : 0 }]} accessibilityElementsHidden={!titleUnder}>
               {icon ? `${icon} ${title}` : title}
             </AppText>
-            {binned ? null : (
+            {binned ? null : shut ? (
+              <IconButton icon="more" label={t('More actions')} shape={0} onPress={() => setMenu(true)} />
+            ) : (
               <>
                 <IconButton icon="undo" label={t('Undo')} shape={1} disabled={!canUndo(id)} onPress={() => step('undo')} />
                 <IconButton icon="undo" label={t('Redo')} shape={2} disabled={!canRedo(id)} onPress={() => step('redo')} style={styles.mirrored} />
+                {locker !== null ? <IconButton icon="lock" label={t('Lock')} shape={3} onPress={closeLock} /> : null}
                 {ask && !kept ? (
                   <IconButton
                     icon="sparkle"
@@ -548,10 +584,10 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
               <Edited id={id} />
             </View>
             {icon ? (
-              <Tappable accessibilityLabel={t('Change the icon')} disabled={binned} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} pebble={1} style={styles.icon}>
+              <Tappable accessibilityLabel={t('Change the icon')} disabled={binned || shut} ownDisabled onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} pebble={1} style={styles.icon}>
                 <AppText style={styles.iconGlyph}>{icon}</AppText>
               </Tappable>
-            ) : binned ? null : (
+            ) : binned || shut ? null : (
               <Tappable onPress={() => openPageSheet({ kind: 'emoji', block: id, allowNone: true })} hitSlop={{ top: 4, bottom: 4 }} style={styles.addIcon} accessibilityRole="button">
                 <Icon name="smiley" size={18} color={theme.color.inkMuted} />
                 <AppText variant="label" color={theme.color.inkMuted}>
@@ -564,43 +600,52 @@ export function PageScreen({ navigation, route }: ScreenProps<'Page'>) {
                 titleBottom.current = event.nativeEvent.layout.y + event.nativeEvent.layout.height - 8;
               }}
             >
-              <TitleField id={id} readOnly={binned} onFocusChange={setTitleFocused} />
+              <TitleField id={id} readOnly={binned || shut} onFocusChange={setTitleFocused} />
             </View>
-            <View style={styles.blocks}>
-              <LayoutAnimationConfig skipEntering>
-                <BlockList parentId={id} depth={0} />
-              </LayoutAnimationConfig>
-            </View>
-            {empty && !binned ? (
-              <Tappable noTint onPress={writeAtEnd} style={styles.hint} accessibilityLabel={t('Write at the end of the page')}>
-                <AppText variant="body" color={theme.color.inkFaint}>
-                  {titleFocused ? t('Enter to write the page') : t('Tap here to write. The + in the bar adds a heading, a list, a table, a picture…')}
-                </AppText>
-              </Tappable>
-            ) : null}
-            {/* While it holds nothing: the templates it may start from, under the hint (or the empty paragraph being written). */}
-            {blank && !binned ? <PageTemplates page={id} /> : null}
-            {/* Under the last block, a press writes there; while the hint says so, a screen reader hears it once. */}
-            <Tappable
-              noTint
-              disabled={binned}
-              ownDisabled
-              onPress={writeAtEnd}
-              style={styles.end}
-              accessibilityLabel={t('Write at the end of the page')}
-              accessibilityElementsHidden={empty && !binned}
-              importantForAccessibility={empty && !binned ? 'no-hide-descendants' : 'auto'}
-            />
-            {/* The events that mention the page, in Agenda. */}
-            <EventsMentioning type="page" id={id} />
+            {shut ? (
+              <View style={styles.shut}>
+                <LockPanel ghosts="page" what={locker === id ? t('This page is protected: it opens with the password.') : t('A page above this one is protected: it opens with the password.')} />
+              </View>
+            ) : (
+              <>
+                <View style={styles.blocks}>
+                  <LayoutAnimationConfig skipEntering>
+                    <BlockList parentId={id} depth={0} />
+                  </LayoutAnimationConfig>
+                </View>
+                {empty && !binned ? (
+                  <Tappable noTint onPress={writeAtEnd} style={styles.hint} accessibilityLabel={t('Write at the end of the page')}>
+                    <AppText variant="body" color={theme.color.inkFaint}>
+                      {titleFocused ? t('Enter to write the page') : t('Tap here to write. The + in the bar adds a heading, a list, a table, a picture…')}
+                    </AppText>
+                  </Tappable>
+                ) : null}
+                {/* While it holds nothing: the templates it may start from, under the hint (or the empty paragraph being written). */}
+                {blank && !binned ? <PageTemplates page={id} /> : null}
+                {/* Under the last block, a press writes there; while the hint says so, a screen reader hears it once. */}
+                <Tappable
+                  noTint
+                  disabled={binned}
+                  ownDisabled
+                  onPress={writeAtEnd}
+                  style={styles.end}
+                  accessibilityLabel={t('Write at the end of the page')}
+                  accessibilityElementsHidden={empty && !binned}
+                  importantForAccessibility={empty && !binned ? 'no-hide-descendants' : 'auto'}
+                />
+                {/* The events that mention the page, in Agenda. */}
+                <EventsMentioning type="page" id={id} />
+              </>
+            )}
           </EdgeScrollView>
-          {editing ? <BlockBar /> : null}
+          {editing && !shut ? <BlockBar /> : null}
         </View>
         <PageSheets page={id} openPage={openPage} />
         <TableSheetHost />
         <MediaHost />
       </PageContext.Provider>
-      <Menu visible={menu} items={menuItems} onDismiss={() => setMenu(false)} />
+      <Menu visible={menu} items={shut ? shutItems : menuItems} onDismiss={() => setMenu(false)} />
+      <LockPasswordSheet visible={choosing} reason={t('Choose the password that will protect this page.')} onDismiss={() => setChoosing(false)} onSaved={() => setPageLocked(id, true)} />
       <Menu visible={folding} items={foldedItems} onDismiss={() => setFolding(false)} />
       <PageAskSheet pageId={id} onCite={openAt} />
       <DeletePageDialog id={deleting} onClose={() => setDeleting(null)} onDeleted={() => navigation.goBack()} />
@@ -634,4 +679,6 @@ const makeStyles = (theme: Theme) =>
     blocks: { gap: 0 },
     end: { minHeight: 160 },
     hint: { paddingTop: 4, paddingBottom: 4 },
+    // The lock in the page's column: its panel 4 in from the blocks' edges (its own 12 less the column's).
+    shut: { marginHorizontal: -8, paddingTop: 4 },
   });

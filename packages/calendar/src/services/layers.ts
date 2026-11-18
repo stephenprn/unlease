@@ -7,6 +7,7 @@ import type { Contact } from '@unlease/contacts/models/contacts';
 import { readBirthday } from '@unlease/contacts/services/birthdays';
 import { contactName } from '@unlease/contacts/services/names';
 import type { Note } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { bodyText } from '@unlease/notes/services/noteBody';
 import type { Day } from '../models/events';
 import { daysInMonth, dayKey, instantToDay } from './time';
@@ -51,11 +52,11 @@ export interface ReminderItem {
   readonly kind: Note['kind'];
 }
 
-/** Carnet's notes with a reminder in [fromAt, toAt): neither in the bin nor gone. */
+/** Carnet's notes with a reminder in [fromAt, toAt): neither in the bin, gone, nor behind the lock (its protected section shows nowhere else). */
 export function remindersIn(notes: Iterable<Note>, fromAt: number, toAt: number): ReminderItem[] {
   const out: ReminderItem[] = [];
   for (const note of notes) {
-    if (note.reminderAt === null || note.deletedAt !== null || note.trashedAt !== null) continue;
+    if (note.reminderAt === null || note.deletedAt !== null || note.trashedAt !== null || isLockedNote(note)) continue;
     if (note.reminderAt < fromAt || note.reminderAt >= toAt) continue;
     const title = note.title.trim() || bodyText(note).split('\n').find(line => line.trim())?.trim() || '';
     out.push({ key: `reminder:${note.id}`, noteId: note.id, title, at: note.reminderAt, day: instantToDay(note.reminderAt), kind: note.kind });

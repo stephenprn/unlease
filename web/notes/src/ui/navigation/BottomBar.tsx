@@ -14,15 +14,16 @@ import { newChecklist, newDrawing, newNote, newPhotoNote } from '../commands';
 import { Icon } from '@shared/ui/components/Icon';
 import { IconButton } from '@shared/ui/components/IconButton';
 import { usePresence } from '@shared/ui/components/presence';
+import { useLockOpen } from '@shared/app/lock';
 import type { Arrival, Route } from '@shared/ui/router';
 import styles from '@shared/ui/navigation/shell.module.css';
 
 /** Its slide away (`--duration-short`), and a little longer for the fallback that lets it go. */
 const BAR_EXIT_MS = 200;
 
-/** The board views the phone gives its capture bar (its `showCapture`). */
-function showsCapture(route: Route): boolean {
-  return route.name === 'board' && (route.view === 'notes' || route.view === 'reminders' || route.view.startsWith('label:'));
+/** The board views the phone gives its capture bar (its `showCapture`): the protected section's once its lock is open. */
+function showsCapture(route: Route, lockOpen: boolean): boolean {
+  return route.name === 'board' && (route.view === 'notes' || route.view === 'reminders' || route.view.startsWith('label:') || (route.view === 'protected' && lockOpen));
 }
 
 /** Mounted with its page (keyed by it): `enter` is how that page came. */
@@ -30,7 +31,8 @@ export function BottomBar({ route, enter = null }: { route: Route; enter?: Arriv
   const input = useRef<HTMLInputElement>(null);
   // While notes are picked the actions are the selection's, as on the phone.
   const selecting = useBoardStore(s => s.selection.size > 0);
-  const { present, closing, done } = usePresence(showsCapture(route) && !selecting, BAR_EXIT_MS);
+  const lockOpen = useLockOpen();
+  const { present, closing, done } = usePresence(showsCapture(route, lockOpen) && !selecting, BAR_EXIT_MS);
   // It comes with its page once; back after a selection, it rises on its own.
   const [arrival, setArrival] = useState(enter);
   if (arrival && !present) setArrival(null);

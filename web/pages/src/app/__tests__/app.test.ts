@@ -9,7 +9,7 @@ import { ownsPath } from '@shared/ui/router';
 /** Pages' web app: its own places, its records and Carnet's (which it shows), Carnet's places in Carnet's web app. */
 describe('Pages’ web app', () => {
   it('pulls its records, Carnet’s and Contacts’, which its embeds and mentions show', () => {
-    expect(syncedTypes()).toEqual(['attachment', 'block', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'note']);
+    expect(syncedTypes()).toEqual(['attachment', 'block', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'lock', 'note']);
   });
 
   it('keeps its own database and keys, beside the device’s settings every app shares', () => {

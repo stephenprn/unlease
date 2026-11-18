@@ -169,6 +169,8 @@ describe('« Aujourd’hui »', () => {
       note('Il y a longtemps', at(`${addDays(TODAY, -30)}T09:00`)),
       note('Rangée', at(`${addDays(TODAY, -1)}T09:00`), { archived: true }),
       note('Jetée', at(`${addDays(TODAY, -1)}T09:00`), { trashedAt: 5 }),
+      // Behind the lock: Carnet's protected section shows nowhere else.
+      note('Protégée', at(`${addDays(TODAY, -1)}T10:00`), { locked: true }),
       note('Faite', null),
       note('Ce matin', at(`${TODAY}T08:00`)),
     ];

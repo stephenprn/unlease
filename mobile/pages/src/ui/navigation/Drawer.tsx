@@ -7,7 +7,7 @@
  * (`NavDrawer`).
  */
 import React, { memo, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { SHAPES } from '@unlease/design/shapes';
@@ -80,10 +80,20 @@ const PageBranch = memo(function PageBranch({ id, depth, current, onPage, onActi
         // In line with every row at the top of the tree, a sub-page further in; a branch's chevron at the end.
         style={[depth > 0 ? { paddingLeft: 16 + depth * TREE_STEP } : null, children.length > 0 ? styles.withFold : null]}
         trailing={
-          children.length > 0 ? (
-            <Tappable accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={expanded ? t('Collapse {title}', { title }) : t('Expand {title}', { title })} hitSlop={TWISTY_SLOP} onPress={() => setExpanded(id, !expanded)} style={styles.twisty}>
-              <Fold open={expanded} color={selected ? theme.color.onActionContainer : theme.color.inkMuted} />
-            </Tappable>
+          page.locked || children.length > 0 ? (
+            <>
+              {/* Behind the lock: its title shows, a small lock after it in the second ink. */}
+              {page.locked ? (
+                <View style={children.length > 0 ? styles.lockBeforeFold : styles.lock} accessibilityLabel={t('Protected by a password')}>
+                  <Icon name="lock" size={16} color={selected ? theme.color.onActionContainer : theme.color.inkMuted} />
+                </View>
+              ) : null}
+              {children.length > 0 ? (
+                <Tappable accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={expanded ? t('Collapse {title}', { title }) : t('Expand {title}', { title })} hitSlop={TWISTY_SLOP} onPress={() => setExpanded(id, !expanded)} style={styles.twisty}>
+                  <Fold open={expanded} color={selected ? theme.color.onActionContainer : theme.color.inkMuted} />
+                </Tappable>
+              ) : null}
+            </>
           ) : null
         }
         leading={page.icon ? <AppText style={styles.pageEmoji}>{page.icon}</AppText> : <Icon name="page" size={22} color={selected ? theme.color.onActionContainer : theme.color.ink} solid={selected} />}
@@ -118,6 +128,8 @@ const makeStyles = () =>
     // The chevron's target reaches the row's end, its glyph where the rows' other ends sit.
     withFold: { paddingRight: 4 },
     pageEmoji: { fontSize: 18, lineHeight: 24 },
+    lock: { marginLeft: 8 },
+    lockBeforeFold: { marginLeft: 8, marginRight: -4 },
   });
 
 export const Drawer = memo(DrawerComponent);

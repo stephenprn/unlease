@@ -5,6 +5,7 @@ import { loadSettings } from '@shared/app/store/settingsStore';
 import { startBackgroundSync } from '@shared/app/sync/syncManager';
 import { startLauncherIcon } from '@shared/app/launcherIcon';
 import { startSuiteLink } from '@shared/app/suiteLink';
+import { startLock } from '@shared/app/lock';
 import { databaseDirectory } from '@shared/platform/storage';
 
 import { ensureInbox } from './store/actions';
@@ -44,6 +45,8 @@ export function bootstrap(): BootResult {
     startWidgets();
     // Its collections in the share sheet's first row, kept to those links were last filed into.
     startShareShortcuts();
+    // The protected section's lock: whether the fingerprint is kept here, and shutting again as the app leaves.
+    startLock();
     // Sync with the app closed: after its files' uploads, which say what is left to send.
     startBackgroundSync();
     booted = true;

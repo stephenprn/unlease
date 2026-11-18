@@ -11,7 +11,9 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { useShallow } from 'zustand/react/shallow';
 
 import { collectionEmblem } from '@unlease/notes/models/collections';
+import { APPS } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
+import { isLockedPage } from '@unlease/pages/services/pagesAsk';
 import { RICH_KINDS, UNTITLED_PAGE, type Block, type BlockTarget, type CollectionView } from '@unlease/pages/models/blocks';
 import { asLineColor, isLineColor, isNoteGradient } from '@unlease/design/colors';
 import { shownHint, shownTitle } from '@unlease/notes/models/entities';
@@ -27,7 +29,7 @@ import { dateWords } from '@unlease/core/services/dates';
 import { lineLinkIds } from '@notes/app/hooks/useLines';
 import { useLibraryStore, type LibraryState } from '@notes/app/store/library';
 import { useMinute } from '@shared/app/hooks/useMinute';
-import { mentionLabel, targetTitle } from '../../../app/hooks/usePages';
+import { inProtectedSection, mentionLabel, targetTitle } from '../../../app/hooks/usePages';
 import { useBlobUrl } from '@shared/app/media/images';
 import { saveTypedText } from '@notes/app/store/actions';
 import { type PagesLibrary, pagesLibrary, usePagesLibrary } from '../../../app/store/blocks';
@@ -83,6 +85,8 @@ interface Glimpse {
 
 function glimpse(s: PagesLibrary, target: BlockTarget): Glimpse {
   const none: Glimpse = { text: '', meta: '', picture: null, pictureUrl: null };
+  // Carnet's protected section: its name only, never a word of it.
+  if (inProtectedSection(s, target)) return { ...none, meta: target.type === 'link' ? t('Link') : t('Note') };
   switch (target.type) {
     case 'note': {
       const note = s.notes[target.id];
@@ -105,6 +109,8 @@ function glimpse(s: PagesLibrary, target: BlockTarget): Glimpse {
       return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Link'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
     }
     case 'page': {
+      // Behind the lock: its title alone.
+      if (isLockedPage(s.blocks, target.id)) return { ...none, meta: t('Page') };
       let text = '';
       for (const id of s.blocksByParent[target.id] ?? []) {
         const block = s.blocks[id];
@@ -178,6 +184,16 @@ function Bookmark({ target }: { target: BlockTarget }) {
         </span>
       </a>
     </OutlineLift>
+  );
+}
+
+/** A note or a link of Carnet's protected section, embedded before it went there: it says so, and shows nothing of it. */
+function ProtectedCard() {
+  return (
+    <div className={styles.goneCard} data-outline="frame">
+      <Icon name="lock" size={20} />
+      <span className="t-meta">{t('This note is protected: it opens in {app} with the password.', { app: APPS.notes.name })}</span>
+    </div>
   );
 }
 
@@ -380,6 +396,7 @@ function LinkEmbed({ id }: { id: string }) {
 function PageEmbed({ id }: { id: string }) {
   const page = usePagesLibrary(s => s.blocks[id]);
   const seen = usePagesLibrary(useShallow(s => glimpse(s, { type: 'page', id })));
+  const locked = usePagesLibrary(s => isLockedPage(s.blocks, id));
   if (!page) return null;
   return (
     <OutlineLift lift="card" raise>
@@ -388,17 +405,21 @@ function PageEmbed({ id }: { id: string }) {
           {page.icon ? `${page.icon} ` : ''}
           {page.text.trim() || t(UNTITLED_PAGE)}
         </span>
-        <span className="t-body">{seen.text || t('Empty page')}</span>
+        <span className="t-body">{locked ? t('Protected by a password') : seen.text || t('Empty page')}</span>
       </a>
     </OutlineLift>
   );
 }
 
 function Embed({ block, target }: { block: Block; target: BlockTarget }) {
-  const kind = usePagesLibrary(s => (targetTitle(s, target) === null ? 'gone' : target.type === 'note' && s.notes[target.id]?.kind === 'links' ? 'collection' : target.type));
+  const kind = usePagesLibrary(s =>
+    targetTitle(s, target) === null ? 'gone' : inProtectedSection(s, target) ? 'protected' : target.type === 'note' && s.notes[target.id]?.kind === 'links' ? 'collection' : target.type,
+  );
   switch (kind) {
     case 'gone':
       return <GoneCard target={target} />;
+    case 'protected':
+      return <ProtectedCard />;
     case 'collection':
       return <CollectionEmbed block={block} id={target.id} />;
     case 'note':

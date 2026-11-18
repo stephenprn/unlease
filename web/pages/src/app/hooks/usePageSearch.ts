@@ -10,25 +10,26 @@ import { ancestorPages } from '@unlease/pages/services/blocks';
 import { buildPageDocuments, searchPageDocuments, type PageSearchDocument, type PageSearchHit } from '@unlease/pages/services/pageSearch';
 
 import { useContactsStore } from '@contacts/app/store/library';
+import { useLockOpen } from '@shared/app/lock';
 import { useEventsStore } from '@notes/app/events/store';
 import { useLibraryStore } from '@notes/app/store/library';
 import { useBlocksStore, type BlocksState, type PagesLibrary } from '../store/blocks';
 import { targetTitle } from './usePages';
 
-let cached: { readonly blocks: BlocksState['blocks']; readonly notes: PagesLibrary['notes']; readonly links: PagesLibrary['links']; readonly contacts: PagesLibrary['contacts']; readonly events: PagesLibrary['events']; readonly documents: PageSearchDocument[] } | null = null;
+let cached: { readonly blocks: BlocksState['blocks']; readonly notes: PagesLibrary['notes']; readonly links: PagesLibrary['links']; readonly contacts: PagesLibrary['contacts']; readonly events: PagesLibrary['events']; readonly lockOpen: boolean; readonly documents: PageSearchDocument[] } | null = null;
 
-/** Built again only when a block, or a note, a link, a contact or an event a mention names, changed. */
-function pageDocuments(state: PagesLibrary): PageSearchDocument[] {
-  if (cached && cached.blocks === state.blocks && cached.notes === state.notes && cached.links === state.links && cached.contacts === state.contacts && cached.events === state.events) return cached.documents;
-  const documents = buildPageDocuments(state.blocks, state.blocksByParent, target => targetTitle(state, target) ?? '');
-  cached = { blocks: state.blocks, notes: state.notes, links: state.links, contacts: state.contacts, events: state.events, documents };
+/** Built again only when a block, or a note, a link, a contact or an event a mention names, changed, or the lock opened or shut (a protected page's words count only while it is open). */
+function pageDocuments(state: PagesLibrary, lockOpen: boolean): PageSearchDocument[] {
+  if (cached && cached.blocks === state.blocks && cached.notes === state.notes && cached.links === state.links && cached.contacts === state.contacts && cached.events === state.events && cached.lockOpen === lockOpen) return cached.documents;
+  const documents = buildPageDocuments(state.blocks, state.blocksByParent, target => targetTitle(state, target) ?? '', lockOpen);
+  cached = { blocks: state.blocks, notes: state.notes, links: state.links, contacts: state.contacts, events: state.events, lockOpen, documents };
   return documents;
 }
 
-/** Pages matching `query`, best first, each with the block that matched and a few words around it. */
-export function searchPages(state: PagesLibrary, query: string): PageSearchHit[] {
+/** Pages matching `query`, best first, each with the block that matched and a few words around it; a protected page by its title alone while the lock is shut. */
+export function searchPages(state: PagesLibrary, query: string, lockOpen: boolean): PageSearchHit[] {
   if (!query.trim()) return [];
-  return searchPageDocuments(pageDocuments(state), query);
+  return searchPageDocuments(pageDocuments(state, lockOpen), query);
 }
 
 export function usePageSearch(query: string): readonly PageSearchHit[] {
@@ -37,7 +38,8 @@ export function usePageSearch(query: string): readonly PageSearchHit[] {
   const notes = useLibraryStore();
   const contacts = useContactsStore(s => s.contacts);
   const events = useEventsStore(s => s.events);
-  return useMemo(() => searchPages({ ...notes, ...pages, contacts, events }, query), [notes, pages, contacts, events, query]);
+  const lockOpen = useLockOpen();
+  return useMemo(() => searchPages({ ...notes, ...pages, contacts, events }, query, lockOpen), [notes, pages, contacts, events, query, lockOpen]);
 }
 
 /** Where a page sits: the titles of the pages above it, joined as a breadcrumb ("Voyages › Lisbonne"), or "" at the top. */

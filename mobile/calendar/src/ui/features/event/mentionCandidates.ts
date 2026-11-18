@@ -15,6 +15,7 @@ import { whenLine } from '@unlease/calendar/services/eventText';
 import { findOccurrence, upcoming } from '@unlease/calendar/services/occurrences';
 import { contactName, workLine } from '@unlease/contacts/services/names';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { ancestorPages, isInBin } from '@unlease/pages/services/blocks';
 import type { LibraryState } from '@app/store/libraryStore';
 
@@ -77,7 +78,7 @@ export function mentionSections(state: LibraryState, except: string | null, now:
       return { target: { type: 'page', id: block.id }, title: block.text.trim() || t('Untitled'), also: path, boost: recency(block.editedAt, now), icon: 'page', ...(block.icon ? { emoji: block.icon } : {}), detail: () => path };
     });
   const kept = Object.values(carnet.notes)
-    .filter(note => note.deletedAt === null && note.trashedAt === null && shownTitle(note).trim())
+    .filter(note => note.deletedAt === null && note.trashedAt === null && shownOutsideLock(note) && shownTitle(note).trim())
     .sort((a, b) => b.editedAt - a.editedAt);
   const notes: MentionCandidate[] = kept
     .filter(note => note.kind !== 'links')
@@ -86,7 +87,7 @@ export function mentionSections(state: LibraryState, except: string | null, now:
     .filter(note => note.kind === 'links')
     .map(note => ({ target: { type: 'note', id: note.id }, title: shownTitle(note).trim(), boost: recency(note.editedAt, now), icon: 'collections', detail: () => plural((carnet.linksByNote[note.id] ?? []).length, 'link') }));
   const links: MentionCandidate[] = Object.values(carnet.links)
-    .filter(link => link.deletedAt === null)
+    .filter(link => link.deletedAt === null && shownOutsideLock(carnet.notes[link.noteId]))
     .sort((a, b) => b.createdAt - a.createdAt)
     .map(link => ({ target: { type: 'link', id: link.id }, title: link.title.trim() || prettyUrl(link.url), also: link.url, boost: recency(link.createdAt, now) / 2, icon: 'link', detail: () => link.siteName || displayHost(link.url) }));
   return [

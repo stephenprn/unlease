@@ -1,0 +1,185 @@
+/* The suite's lock (`LockedPlace`, `LockPasswordDialog`): what waits behind it, frosted, and the lock on it. */
+
+/* ── the frost: what the lock keeps, its shapes under the field's veil ──── */
+
+.frost {
+  position: relative;
+  display: grid;
+  border-radius: var(--cut-panel);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* The ghosts and the veil share one cell: the frost is as tall as the taller, so the panel is never cut. */
+.ghosts,
+.veil {
+  grid-area: 1 / 1;
+}
+
+.ghosts {
+  align-self: start;
+  filter: blur(1.5px);
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+  /* What lies furthest from the lock fades out, so the frost has no bottom edge of its own. */
+  mask-image: linear-gradient(to bottom, #000 40%, transparent);
+}
+
+/* Notes: a wall of paper cards, each as tall as some content would make it. */
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.wallColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ghostCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 14px;
+  border-radius: var(--cut-card);
+  background: var(--paper);
+  /* Its edge and lift, as a card's: paper on the ground reads by them. */
+  box-shadow:
+    inset 0 0 0 1px var(--hairline),
+    var(--lift-card);
+}
+
+/* A page: a heading, then paragraphs of lines in the column's measure. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  padding: 8px 0 24px;
+}
+
+.ghostBand,
+.ghostLine {
+  display: block;
+  border-radius: var(--cut-detail);
+}
+
+.ghostBand {
+  height: 14px;
+  background: var(--ink-faint);
+  opacity: 0.55;
+}
+
+.ghostLine {
+  height: 8px;
+  background: var(--ink-faint);
+  opacity: 0.3;
+}
+
+.page .ghostBand {
+  height: 22px;
+  margin-bottom: 8px;
+  background: var(--hairline);
+}
+
+.page .ghostLine {
+  height: 10px;
+}
+
+.paragraphGap {
+  height: 10px;
+}
+
+.veil {
+  display: grid;
+  place-items: center;
+  align-content: start;
+  padding: 40px var(--screen-side) 24px;
+  background: var(--field-veil);
+  backdrop-filter: var(--field-frost);
+  -webkit-backdrop-filter: var(--field-frost);
+}
+
+/* ── the lock ─────────────────────────────────────────────────────────── */
+
+.panel {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 22px 18px;
+  background: var(--paper);
+}
+
+.bare {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pebble {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 48px;
+  color: var(--on-action-container);
+  --pebble-fill: var(--action-container);
+}
+
+.words {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ── choosing the password ────────────────────────────────────────────── */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lead {
+  margin: 0;
+}
+
+/* What the lock does and does not do: said once, plainly, on the well. */
+.honest {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--cut-small);
+  background: var(--paper-high);
+  color: var(--ink-muted);
+}
+
+.honest > svg {
+  flex: none;
+  margin-top: 2px;
+}

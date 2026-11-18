@@ -10,9 +10,11 @@ import { t, tc } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { collectionsWithLinks } from '@unlease/notes/services/sorting';
 import { INBOX_ID } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { useLockState } from '@shared/app/lock';
 
 import { clearSelection, selectSelection, useBoardStore } from '../../app/store/board';
-import { deleteForever, restoreNotes, setArchived, setLabelOn, setPinned, trashNotes } from '../../app/store/actions';
+import { deleteForever, restoreNotes, setArchived, setLabelOn, setLocked, setPinned, trashNotes } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
 import { askDeleteLines, openCapture } from '../../app/store/notesUi';
 import { setLayout, useLayout } from '../../app/store/prefs';
@@ -108,6 +110,11 @@ function SelectionBar({ route, closing, onGone, onDeleteForever }: SelectionBarP
   const selected = [...selection].filter(id => notes[id]);
   const inTrash = route.name === 'board' && route.view === 'trash';
   const inArchive = route.name === 'board' && route.view === 'archive';
+  const inProtected = route.name === 'board' && route.view === 'protected';
+  // Into the protected section while it is on; out of it from it (« Non classé » never goes).
+  const sectionOn = useLockState().section;
+  const allLocked = selected.length > 0 && selected.every(id => isLockedNote(notes[id]));
+  const canProtect = inProtected ? allLocked : sectionOn && selected.some(id => id !== INBOX_ID && !isLockedNote(notes[id]));
   const allPinned = selected.length > 0 && (live.size > 0 ? livePinned : held.allPinned);
   const done = (undo: () => void, message: string) => {
     clearSelection();
@@ -150,16 +157,29 @@ function SelectionBar({ route, closing, onGone, onDeleteForever }: SelectionBarP
           />
           <BulkFinish ids={selected} shape={0} />
           <BulkLabels ids={selected} />
-          <IconButton
-            icon={inArchive ? 'unarchive' : 'archive'}
-            label={inArchive ? t('Unarchive') : t('Archive')}
-            shape={2}
-            shortcut="E"
-            onClick={() => {
-              const undos = selected.map(id => setArchived(id, !inArchive));
-              done(() => undos.forEach(undo => undo()), inArchive ? (count > 1 ? t('Notes unarchived') : t('Note unarchived')) : count > 1 ? t('Notes archived') : t('Note archived'));
-            }}
-          />
+          {inProtected ? null : (
+            <IconButton
+              icon={inArchive ? 'unarchive' : 'archive'}
+              label={inArchive ? t('Unarchive') : t('Archive')}
+              shape={2}
+              shortcut="E"
+              onClick={() => {
+                const undos = selected.map(id => setArchived(id, !inArchive));
+                done(() => undos.forEach(undo => undo()), inArchive ? (count > 1 ? t('Notes unarchived') : t('Note unarchived')) : count > 1 ? t('Notes archived') : t('Note archived'));
+              }}
+            />
+          )}
+          {canProtect ? (
+            <IconButton
+              icon={inProtected ? 'unlock' : 'lock'}
+              label={inProtected ? t('Stop protecting') : t('Protect')}
+              shape={1}
+              onClick={() => {
+                const undo = setLocked(selected, !inProtected);
+                done(undo, inProtected ? (count > 1 ? t('Notes back among your notes') : t('Note back among your notes')) : count > 1 ? t('Notes protected') : t('Note protected'));
+              }}
+            />
+          ) : null}
           <IconButton
             icon="trash"
             label={t('Delete')}

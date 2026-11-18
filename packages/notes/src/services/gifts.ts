@@ -6,13 +6,14 @@
  */
 import { foldText } from '@unlease/core/services/search';
 import type { LinkItem, Note } from '../models/entities';
+import { shownOutsideLock } from './lock';
 
 /** The names the gift collection goes by, folded: the server finds a collection made by hand by them too. */
 export const GIFT_COLLECTION_NAMES: ReadonlySet<string> = new Set(['cadeaux', 'cadeau', 'idees cadeaux', 'idees de cadeaux', 'gifts', 'gift', 'gift ideas', 'presents']);
 
-/** A live collection named as the gift collection is. */
+/** A live collection named as the gift collection is, outside the protected section (its ideas show in Agenda and Contacts). */
 export function isGiftCollection(note: Note): boolean {
-  return note.kind === 'links' && note.deletedAt === null && note.trashedAt === null && GIFT_COLLECTION_NAMES.has(foldText(note.title.trim()));
+  return note.kind === 'links' && note.deletedAt === null && note.trashedAt === null && shownOutsideLock(note) && GIFT_COLLECTION_NAMES.has(foldText(note.title.trim()));
 }
 
 export interface GiftPerson {

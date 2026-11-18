@@ -61,17 +61,29 @@ export function useTrashedPages(): string[] {
   return useMemo(() => split(joined), [joined]);
 }
 
-/** A note's, a collection's, a link's or a page's name as a mention shows it; null when it is gone. */
+/** Whether a target is in Carnet's protected section (a note there, or a link of a collection there): named « Note protégée », never shown. */
+export function inProtectedSection(s: Pick<LibraryState, 'notes' | 'links'>, target: BlockTarget): boolean {
+  if (target.type === 'note') return s.notes[target.id]?.locked === true;
+  if (target.type === 'link') {
+    const link = s.links[target.id];
+    return !!link && s.notes[link.noteId]?.locked === true;
+  }
+  return false;
+}
+
+/** A note's, a collection's, a link's or a page's name as a mention shows it; null when it is gone. A note in Carnet's protected section is « Note protégée ». */
 export function targetTitle(s: LibraryState, target: BlockTarget): string | null {
   switch (target.type) {
     case 'note': {
       const note = s.notes[target.id];
       if (!note || note.deletedAt !== null) return null;
+      if (note.locked === true) return t('Protected note');
       return shownTitle(note).trim() || bodyText(note).trim().split('\n')[0]?.slice(0, 80) || (note.kind === 'drawing' ? t('Drawing') : t('Untitled note'));
     }
     case 'link': {
       const link = s.links[target.id];
       if (!link || link.deletedAt !== null) return null;
+      if (s.notes[link.noteId]?.locked === true) return t('Protected link');
       return link.title || slugTitle(link.url) || prettyUrl(link.url);
     }
     case 'page': {

@@ -6,6 +6,7 @@
  */
 import { CAPTION_KINDS, RICH_KINDS, type Block, type BlockKind, type BlockTarget } from '../models/blocks';
 import { isInBin, type BlockMap, type ChildIndex } from './blocks';
+import { isLockedPage } from './pagesAsk';
 import { dateWords } from '@unlease/core/services/dates';
 import { markupToPlain } from '@unlease/core/services/richText';
 import { foldText, queryTerms, scoreTerms } from '@unlease/core/services/search';
@@ -96,12 +97,12 @@ export function pageContent(page: Block, blocks: BlockMap, children: ChildIndex,
   return { parts, editedAt };
 }
 
-/** Every live page as a search document, in no particular order. */
-export function buildPageDocuments(blocks: BlockMap, children: ChildIndex, label: (target: BlockTarget) => string): PageSearchDocument[] {
+/** Every live page as a search document, in no particular order. A page behind the lock is found by its title alone while the lock is shut (`lockOpen`). */
+export function buildPageDocuments(blocks: BlockMap, children: ChildIndex, label: (target: BlockTarget) => string, lockOpen = false): PageSearchDocument[] {
   const documents: PageSearchDocument[] = [];
   for (const page of Object.values(blocks)) {
     if (page.kind !== 'page' || page.deletedAt !== null || isInBin(blocks, page.id)) continue;
-    const content = pageContent(page, blocks, children, label);
+    const content = lockOpen || !isLockedPage(blocks, page.id) ? pageContent(page, blocks, children, label) : { parts: [], editedAt: page.editedAt };
     const parts: PagePart[] = content.parts.map(part => ({ blockId: part.blockId, text: part.text, folded: foldText(part.text) }));
     documents.push({ pageId: page.id, title: foldText(page.text), rest: parts.map(part => part.folded).join('\n'), parts, editedAt: content.editedAt });
   }

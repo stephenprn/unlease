@@ -33,6 +33,8 @@ import { TEXT_LIMITS } from '@unlease/notes/sync/types';
 import { cutNotice, formatEdited, formatReminder } from '@unlease/core/services/format';
 import { bodyText } from '@unlease/notes/services/noteBody';
 import { canBecomeCollection, listConvertedMessage } from '@unlease/notes/services/listToCollection';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { useLockState } from '@shared/app/lock';
 
 import { EventsMentioning } from '../events/EventsMentioning';
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -47,6 +49,7 @@ import {
   isEmptyNote,
   restoreNotes,
   setArchived,
+  setLocked,
   setColor,
   setPattern,
   setLabels,
@@ -145,6 +148,7 @@ function noticeCut(event: ClipboardEvent<HTMLTextAreaElement>, limit: number, wh
 
 export function NoteEditor({ id, closing = false, onClose }: { id: string; closing?: boolean; onClose: () => void }) {
   const live = useLibraryStore(s => s.notes[id]);
+  const lockSection = useLockState().section;
   // Editing an item of the list or adding a photo changes the note too.
   const editedAt = useLibraryStore(s => {
     const current = s.notes[id];
@@ -476,10 +480,23 @@ export function NoteEditor({ id, closing = false, onClose }: { id: string; closi
     },
   };
   const remove: MenuItem = { label: t('Delete'), icon: 'trash', danger: true, shortcut: '#', separatorBefore: true, onSelect: trash };
+  // Into the protected section while it is on, or back among the others from it: the note leaves the place it was opened on.
+  const locked = isLockedNote(note);
+  const protect: MenuItem = {
+    label: locked ? t('Stop protecting') : t('Protect'),
+    icon: locked ? 'unlock' : 'lock',
+    onSelect: () => {
+      close();
+      if (isEmptyNote(id)) return;
+      part();
+      showUndo(locked ? t('Note back among your notes') : t('Note protected'), setLocked([id], !locked));
+    },
+  };
+  const protects = locked || lockSection;
   // The phone's order everywhere (its « Partager », « Dupliquer », « Transformer en collection », « Supprimer »); a drawing has no
   // words to copy. On a phone-sized window the checkboxes are added with the rest, under "Ajouter"; wider, where nothing else adds
   // them, they come before « Supprimer ».
-  const menuItems: MenuItem[] = note.kind === 'drawing' ? [duplicate, remove] : narrow ? [copyText, duplicate, toCollection, remove] : [copyText, duplicate, checkboxes, toCollection, remove];
+  const menuItems: MenuItem[] = [...(note.kind === 'drawing' ? [duplicate] : narrow ? [copyText, duplicate, toCollection] : [copyText, duplicate, checkboxes, toCollection]), ...(protects ? [protect] : []), remove];
 
   const pin = (
     <IconButton

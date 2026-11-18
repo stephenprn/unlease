@@ -1,13 +1,15 @@
 /**
  * What an event's description mentions, named and placed: a contact (the one kept after a merge),
  * a note or a collection and a link of Carnet's, a page of Pages', another event; each from the
- * records this web app holds (`main.tsx`'s reads). A mention nobody names reads as gone.
+ * records this web app holds (`main.tsx`'s reads). A mention nobody names reads as gone; one behind
+ * Carnet's lock (its protected section, or a link in a collection there) reads as « Note protégée ».
  */
 import { t } from '@unlease/core/i18n';
 import type { Ref } from '@unlease/core/refs';
 import { resolveContact } from '@unlease/contacts/services/duplicates';
 import { contactName } from '@unlease/contacts/services/names';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 
 import { useContactsStore } from '@contacts/app/store/library';
 import { useLibraryStore } from '@notes/app/store/library';
@@ -24,11 +26,14 @@ export function nameOf(target: Ref): string | null {
     }
     case 'note': {
       const note = useLibraryStore.getState().notes[target.id];
-      return note && note.deletedAt === null ? shownTitle(note).trim() || t('Untitled note') : null;
+      if (!note || note.deletedAt !== null) return null;
+      return isLockedNote(note) ? t('Protected note') : shownTitle(note).trim() || t('Untitled note');
     }
     case 'link': {
-      const link = useLibraryStore.getState().links[target.id];
-      return link && link.deletedAt === null ? link.title.trim() || link.url : null;
+      const { links, notes } = useLibraryStore.getState();
+      const link = links[target.id];
+      if (!link || link.deletedAt !== null) return null;
+      return isLockedNote(notes[link.noteId]) ? t('Protected note') : link.title.trim() || link.url;
     }
     case 'page': {
       const title = pageTitle(target.id);

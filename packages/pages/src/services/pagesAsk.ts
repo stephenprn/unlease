@@ -56,17 +56,35 @@ const EMBED_LINKS = 40;
 
 const live = (block: Block | undefined): block is Block => !!block && block.deletedAt === null;
 
-/** Whether a page is kept away from Claude: it, or a page above it, is private. */
+/** Whether a page is kept away from Claude: it, or a page above it, is private or behind the lock. */
 export function isPrivatePage(blocks: BlockMap, pageId: string): boolean {
   let id: string | null = pageId;
   for (let depth = 0; id && depth < MAX_DEPTH; depth += 1) {
     const block: Block | undefined = blocks[id];
     if (!block) return false;
-    if (block.kind === 'page' && block.private) return true;
+    if (block.kind === 'page' && (block.private || block.locked === true)) return true;
     id = block.parentId;
   }
   return false;
 }
+
+/**
+ * The page whose lock keeps this one shut: itself, or the nearest page above it that is locked; null
+ * when nothing above it is. Its sub-pages are behind its lock too, as a folder's files.
+ */
+export function lockingPage(blocks: BlockMap, pageId: string): string | null {
+  let id: string | null = pageId;
+  for (let depth = 0; id && depth < MAX_DEPTH; depth += 1) {
+    const block: Block | undefined = blocks[id];
+    if (!block) return null;
+    if (block.kind === 'page' && block.locked === true) return block.id;
+    id = block.parentId;
+  }
+  return null;
+}
+
+/** Whether a page is behind the lock: it, or a page above it, is locked. */
+export const isLockedPage = (blocks: BlockMap, pageId: string): boolean => lockingPage(blocks, pageId) !== null;
 
 /** A page's title as the conversation shows it. */
 export const askTitle = (page: Block | undefined): string => page?.text.trim() || t(UNTITLED_PAGE);
@@ -92,7 +110,8 @@ const clip = (text: string, limit: number): string => (text.length > limit ? `${
 /** A note embedded in a page: its title, then its text or its list. */
 function noteWords(library: AskLibrary, id: string): string {
   const note = library.notes[id];
-  if (!note || note.deletedAt !== null) return '';
+  // A note in Carnet's protected section is never read out.
+  if (!note || note.deletedAt !== null || note.locked === true) return '';
   if (note.kind === 'links') {
     const titles = (library.linksByNote[id] ?? []).flatMap(linkId => {
       const link = library.links[linkId];
@@ -114,7 +133,7 @@ function noteWords(library: AskLibrary, id: string): string {
 /** A link pointed at or embedded: what its reading kept, and the person's own note on it. */
 function linkWords(library: AskLibrary, id: string): string {
   const link = library.links[id];
-  if (!link || link.deletedAt !== null) return '';
+  if (!link || link.deletedAt !== null || library.notes[link.noteId]?.locked === true) return '';
   const facts = link.attributes.slice(0, 6).map(fact => `${fact.label}: ${fact.value}`);
   const lines = [`Link "${linkTitle(link)}" (${link.url})`, link.summary.trim(), ...facts, link.comment.trim() ? `Their note: ${link.comment.trim()}` : ''];
   return clip(lines.filter(Boolean).join('\n'), EMBED_CHARS);
@@ -208,8 +227,8 @@ export function askBlocks(library: AskLibrary, pageId: string, label: (target: B
         return;
       }
       if (block.kind === 'page') {
-        // A private sub-page is not even named.
-        if (!block.private) pieces.push({ id: block.id, text: blockWords(library, block, siblings, index, depth, label) });
+        // A private or protected sub-page is not even named.
+        if (!block.private && block.locked !== true) pieces.push({ id: block.id, text: blockWords(library, block, siblings, index, depth, label) });
         return;
       }
       const text = blockWords(library, block, siblings, index, depth, label).slice(0, PAGES_ASK_LIMITS.block);

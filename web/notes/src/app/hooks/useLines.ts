@@ -1,10 +1,12 @@
 /**
  * The URL lists ("lines"), in network order: the owner's lines by position,
  * "Non classé" last, because it is where things go when nothing else fits.
+ * A protected collection is never one of them (`notes/services/lock`): it shows in the section only.
  */
 import { useMemo } from 'react';
 
 import { INBOX_ID, type Note } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 
 import { useLibraryStore, type LibraryState } from '../store/library';
 
@@ -14,7 +16,7 @@ const selectOrder = (s: LibraryState) => s.noteOrder;
 export function linesOf(order: readonly string[], notes: LibraryState['notes']): Note[] {
   const lines = order
     .map(id => notes[id])
-    .filter((n): n is Note => !!n && n.kind === 'links' && n.deletedAt === null && n.trashedAt === null);
+    .filter((n): n is Note => !!n && n.kind === 'links' && n.deletedAt === null && n.trashedAt === null && !isLockedNote(n));
   const inbox = lines.filter(n => n.id === INBOX_ID);
   return [...lines.filter(n => n.id !== INBOX_ID), ...inbox];
 }

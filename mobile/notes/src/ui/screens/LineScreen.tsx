@@ -23,8 +23,11 @@ import { collectionTemplate, linksReadBefore } from '@unlease/notes/services/tem
 import { extractUrls } from '@unlease/core/services/url';
 import { INBOX_ID, INBOX_SHOWN_TITLE, shownHint, shownTitle, type LinkItem } from '@unlease/notes/models/entities';
 import { useLines } from '@app/hooks/useLines';
-import { addLinks, moveLink, readLinks, restoreNotes, setPinned, trashLines, trashNotes } from '@app/store/actions';
+import { addLinks, moveLink, readLinks, restoreNotes, setLocked, setPinned, trashLines, trashNotes } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useLockOpen, useLockState, useSecureWhile } from '@shared/app/lock';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { LockedNote } from '../features/lock/LockedNote';
 import { selectLineView, setLineView, useLineViewStore } from '@app/store/lineViewStore';
 import { selectModel, useSettingsStore } from '@shared/app/store/settingsStore';
 import { useServerFeature } from '@shared/app/hooks/useServerFeature';
@@ -174,6 +177,12 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
   // The gallery's tile, its picture 12 in from the screen's edge as the add strip is, 12 from its neighbour's.
   const tileWidth = (screen - 2 * TILE_INSET) / 2;
 
+  // A protected collection: shut, the lock in its place; open, no capture of the screen while it shows.
+  const lockOpen = useLockOpen();
+  const section = useLockState().section;
+  const guarded = isLockedNote(line);
+  useSecureWhile(guarded && lockOpen);
+
   if (!line || line.deletedAt !== null) {
     // Gone while open (deleted on another device): a way back, never a blank screen.
     return (
@@ -184,6 +193,8 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
       </View>
     );
   }
+
+  if (guarded && !lockOpen) return <LockedNote onBack={() => navigation.goBack()} />;
 
   const inbox = id === INBOX_ID;
   // Opened from the bin, it reads as it is and takes nothing until it is restored (the note's way).
@@ -435,6 +446,20 @@ export function LineScreen({ navigation, route }: ScreenProps<'Line'>) {
               showSnack(line.pinned ? t('Removed from the board') : t('Pinned to the board'), { label: t('Undo'), run: undo }, { tone: 'success' });
             },
           },
+          // Into the protected section or out of it, while Réglages has it on; « Non classé » never leaves the board.
+          ...(inbox || !(section || guarded)
+            ? []
+            : [
+                {
+                  label: guarded ? t('Stop protecting') : t('Protect'),
+                  icon: guarded ? ('unlock' as const) : ('lock' as const),
+                  onPress: () => {
+                    const undo = setLocked([id], !guarded);
+                    navigation.goBack();
+                    showSnack(guarded ? t('Collection back among your notes') : t('Collection protected'), { label: t('Undo'), run: undo }, { tone: 'success' });
+                  },
+                },
+              ]),
           ...(inbox
             ? []
             : [

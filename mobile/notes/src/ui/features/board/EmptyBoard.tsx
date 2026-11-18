@@ -10,7 +10,7 @@ import type { BoardView } from '@app/hooks/useBoard';
 
 import { EdgeScrollView, EmptyState } from '../../components';
 
-type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'label';
+type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'protected' | 'label';
 
 const COPY: Record<Kind, { title: string; body: string }> = {
   notes: {
@@ -20,10 +20,11 @@ const COPY: Record<Kind, { title: string; body: string }> = {
   reminders: { title: tx('No reminders'), body: tx('The + button, at the bottom, creates a note and asks you when to remind you.') },
   archive: { title: tx('Nothing in the archive'), body: tx('Archive a note to take it off the board without deleting it.') },
   trash: { title: tx('The bin is empty'), body: tx('Deleted notes stay here for {days} days, in case you change your mind.') },
+  protected: { title: tx('No protected notes'), body: tx('Protect a note from its menu: it then shows only here, behind the password.') },
   label: { title: tx('No notes with this label'), body: tx('Add this label to a note from its tag, at the bottom of the note, or create one here.') },
 };
 
-const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', label: 'label' };
+const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', protected: 'archive', label: 'label' };
 
 /** `refreshControl`: the wall's pull to sync (`usePullToSync`), here too. */
 function EmptyBoardComponent({ view, header, bottomSpace, refreshControl }: { view: BoardView; header?: React.ReactNode; bottomSpace: number; refreshControl?: React.ReactElement<RefreshControlProps> }) {

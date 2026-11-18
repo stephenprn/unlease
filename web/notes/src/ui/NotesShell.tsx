@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 
 import { t, tc } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { spotKey } from '@unlease/core/services/spotlight';
 
 import { useLibraryStore, type LibraryState } from '../app/store/library';
@@ -22,6 +23,7 @@ import { NewLineDialog } from './features/lines/LineDialogs';
 import { KitchenTimers } from './features/links/KitchenTimers';
 import { LinkPanel } from './features/links/LinkPanel';
 import { NoteEditor } from './features/note/NoteEditor';
+import { ProtectedNote, ProtectedPage, useShutNote } from './features/lock/ProtectedNote';
 import { pathForView, paths } from './routes';
 import { BoardScreen } from './screens/BoardScreen';
 import { LabelsScreen } from './screens/LabelsScreen';
@@ -38,7 +40,7 @@ export function NotesScreen({ route }: { route: Route }) {
     case 'board':
       return <BoardScreen view={route.view} />;
     case 'line':
-      return <LineScreen key={route.id} id={route.id} />;
+      return <LinePlace key={route.id} id={route.id} />;
     case 'lines':
       return <LinesScreen />;
     case 'labels':
@@ -49,6 +51,12 @@ export function NotesScreen({ route }: { route: Route }) {
     default:
       return null;
   }
+}
+
+/** A collection, or the lock in its place while it is protected and the lock shut. */
+function LinePlace({ id }: { id: string }) {
+  const shut = useShutNote(id);
+  return shut ? <ProtectedPage what={t('This note is protected: it opens with the password.')} /> : <LineScreen id={id} />;
 }
 
 /**
@@ -66,19 +74,24 @@ function FactsPlace({ route }: { route: Extract<Route, { name: 'templates' | 'te
   return route.name === 'templates' ? <FactsScreen /> : <FactsEditScreen key={route.id} part={route.id} />;
 }
 
+/** A protected note's title never names the tab (nor the browser's history), the lock open or not. */
 function titleFor(state: LibraryState, route: Route, overlay: Route): string | null {
-  if (overlay.name === 'note') return state.notes[overlay.id]?.title.trim() || t('Note');
-  if (overlay.name === 'link') return state.links[overlay.id]?.title || t('Link');
+  if (overlay.name === 'note') return isLockedNote(state.notes[overlay.id]) ? t('Protected note') : state.notes[overlay.id]?.title.trim() || t('Note');
+  if (overlay.name === 'link') {
+    const link = state.links[overlay.id];
+    return link && isLockedNote(state.notes[link.noteId]) ? t('Protected note') : link?.title || t('Link');
+  }
   switch (route.name) {
     case 'board':
       if (route.view === 'reminders') return t('Reminders');
       if (route.view === 'archive') return tc('place', 'Archive');
       if (route.view === 'trash') return t('Bin');
+      if (route.view === 'protected') return t('Protected');
       if (route.view.startsWith('label:')) return state.labels[route.view.slice(6)]?.name ?? tc('notes', 'Label');
       return null;
     case 'line': {
       const line = state.notes[route.id];
-      return line ? shownTitle(line) : t('Collection');
+      return line ? (isLockedNote(line) ? t('Protected note') : shownTitle(line)) : t('Collection');
     }
     case 'lines':
       return t('Collections');
@@ -150,10 +163,15 @@ function GlobalNewLine() {
 export function NotesOverlays({ route, pagePath }: { route: Route; pagePath: string }) {
   const note = useLeaving(route.name === 'note' ? route.id : null, OVERLAY_EXIT_MS);
   const link = useLeaving(route.name === 'link' ? route.id : null, OVERLAY_EXIT_MS);
+  // A protected note, or a link of a protected collection, behind the lock: the lock in its place.
+  const linkLine = useLibraryStore(state => (link.value !== null ? state.links[link.value]?.noteId : undefined));
+  const noteShut = useShutNote(note.value);
+  const linkShut = useShutNote(linkLine);
+  const close = () => goBack(pagePath);
   return (
     <>
-      {note.value !== null ? <NoteEditor key={note.value} id={note.value} closing={note.leaving} onClose={() => goBack(pagePath)} /> : null}
-      {link.value !== null ? <LinkPanel key={link.value} id={link.value} closing={link.leaving} onClose={() => goBack(pagePath)} /> : null}
+      {note.value !== null ? noteShut ? <ProtectedNote key={note.value} closing={note.leaving} onClose={close} /> : <NoteEditor key={note.value} id={note.value} closing={note.leaving} onClose={close} /> : null}
+      {link.value !== null ? linkShut ? <ProtectedNote key={link.value} closing={link.leaving} onClose={close} /> : <LinkPanel key={link.value} id={link.value} closing={link.leaving} onClose={close} /> : null}
       <CaptureDialog />
       <GlobalNewLine />
       <GlobalDeleteLines />

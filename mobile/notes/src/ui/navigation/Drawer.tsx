@@ -1,6 +1,6 @@
 /**
  * Carnet's drawer, in the suite's frame (`NavDrawer`): every place in the app (the board, reminders,
- * collections and labels each by name as on the web's navigation (`navOrder`), the archive), the bin, the settings and the Administration at the foot, and
+ * collections and labels each by name as on the web's navigation (`navOrder`), the archive, the protected section while it is on), the bin, the settings and the Administration at the foot, and
  * the suite's other apps under them (`NavDrawer`).
  */
 import React, { memo, useMemo } from 'react';
@@ -13,6 +13,7 @@ import { collectionsByName, labelsByName } from '@unlease/notes/services/navOrde
 import type { BoardView } from '@app/hooks/useBoard';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useLockState } from '@shared/app/lock';
 
 import { AppText, Emblem, LabelTag } from '../components';
 import { DrawerDivider, DrawerHeading, DrawerItem, NavDrawer } from '@shared/ui/components/NavDrawer';
@@ -56,6 +57,8 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
   const labelOrder = useLibraryStore(s => s.labelOrder);
   const labelMap = useLibraryStore(s => s.labels);
   const labels = useMemo(() => labelsByName(labelOrder, labelMap), [labelOrder, labelMap]);
+  // The protected section, while Réglages has it on (on every device).
+  const section = useLockState().section;
 
   return (
     <NavDrawer open={open} app="notes" onClose={onClose}>
@@ -83,6 +86,7 @@ function DrawerComponent({ open, current, onClose, onView, onLine, onLines, onNe
       {labels.length === 0 ? <DrawerItem label={t('Create a label')} icon="tag" onPress={onLabels} /> : null}
       <DrawerDivider />
       <DrawerItem label={tc('place', 'Archive')} icon="archive" selected={current === 'archive'} onPress={() => onView('archive')} />
+      {section ? <DrawerItem label={t('Protected')} icon="lock" selected={current === 'protected'} onPress={() => onView('protected')} /> : null}
       <DrawerDivider />
       <DrawerItem label={t('Bin')} icon="trash" selected={current === 'trash'} onPress={() => onView('trash')} />
       <DrawerItem label={t('Settings')} icon="settings" selected={current === 'settings'} onPress={onSettings} />

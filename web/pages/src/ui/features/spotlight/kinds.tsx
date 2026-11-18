@@ -17,6 +17,7 @@ import { Marked } from '@shared/ui/features/spotlight/Preview';
 import styles from '@shared/ui/features/spotlight/spotlight.module.css';
 import { navigate } from '@shared/ui/router';
 import type { SpotKind } from '@shared/modules';
+import { isLockOpen } from '@shared/app/lock';
 import { targetTitle } from '../../../app/hooks/usePages';
 import { pagePath } from '../../../app/hooks/usePageSearch';
 import { pagesLibrary, useBlocksStore, type PagesLibrary } from '../../../app/store/blocks';
@@ -24,14 +25,16 @@ import { paths } from '../../routes';
 
 const FILE_ICONS: Partial<Record<BlockKind, GlyphName>> = { image: 'image', video: 'video', pdf: 'pdf', file: 'file', bookmark: 'bookmark', embed: 'embed' };
 
-let cached: { readonly blocks: PagesLibrary['blocks']; readonly notes: PagesLibrary['notes']; readonly links: PagesLibrary['links']; readonly contacts: PagesLibrary['contacts']; readonly events: PagesLibrary['events']; readonly docs: readonly SearchDoc<SpotMeta>[] } | null = null;
+let cached: { readonly blocks: PagesLibrary['blocks']; readonly notes: PagesLibrary['notes']; readonly links: PagesLibrary['links']; readonly contacts: PagesLibrary['contacts']; readonly events: PagesLibrary['events']; readonly lockOpen: boolean; readonly docs: readonly SearchDoc<SpotMeta>[] } | null = null;
 
 /** Every live page, built again only when a block, or a note, a link or a contact a mention names, changed. */
 function docs(): readonly SearchDoc<SpotMeta>[] {
   const library = pagesLibrary();
-  if (cached && cached.blocks === library.blocks && cached.notes === library.notes && cached.links === library.links && cached.contacts === library.contacts && cached.events === library.events) return cached.docs;
-  const made = pagesSpotlightDocs(library, target => targetTitle(library, target) ?? '');
-  cached = { blocks: library.blocks, notes: library.notes, links: library.links, contacts: library.contacts, events: library.events, docs: made };
+  // A protected page's words count only while the lock is open.
+  const lockOpen = isLockOpen();
+  if (cached && cached.blocks === library.blocks && cached.notes === library.notes && cached.links === library.links && cached.contacts === library.contacts && cached.events === library.events && cached.lockOpen === lockOpen) return cached.docs;
+  const made = pagesSpotlightDocs(library, target => targetTitle(library, target) ?? '', lockOpen);
+  cached = { blocks: library.blocks, notes: library.notes, links: library.links, contacts: library.contacts, events: library.events, lockOpen, docs: made };
   return made;
 }
 

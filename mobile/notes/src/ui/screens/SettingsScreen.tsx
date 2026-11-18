@@ -1,5 +1,5 @@
 /**
- * Carnet's Réglages, in every app's order: Carnet's own first (the board's layout, then what keeps the
+ * Carnet's Réglages, in every app's order: Carnet's own first (the board's layout, the protected section, then what keeps the
  * reminders from ringing on time, only while something does), « Apparence » (one row opening its own
  * page: the theme, the paper's grain, the colours and the ground), the language, the data (the Keep
  * import first, « Effacer des données » last), and the way to the Administration last (the server,
@@ -27,6 +27,7 @@ import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHeal
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
+import { ProtectedRows } from '../features/lock/ProtectedRows';
 import type { ScreenProps } from '../navigation/types';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -64,6 +65,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
               />
             </View>
           </View>
+          {/* The protected section: on every device, its password and, here, the fingerprint. */}
+          <ProtectedRows />
         </Section>
         {/* Only while something keeps the reminders from ringing on the minute: else nothing to say. */}
         <BackgroundSyncSection />

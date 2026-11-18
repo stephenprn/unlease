@@ -79,10 +79,12 @@ android {
 
     namespace "com.stephenprn.pages"
     // The suite's shared Kotlin and resources (mobile/shared/android: the organic view, haptics,
-    // connectivity, media, the clipboard, SuiteLink), compiled into every app of the suite.
+    // connectivity, media, the clipboard, SuiteLink), compiled into every app of the suite; and the
+    // suite's lock (src/lock), into the apps that lock something.
     sourceSets {
         main {
             java.srcDirs += "${rootDir}/../../shared/android/src/main/java"
+            java.srcDirs += "${rootDir}/../../shared/android/src/lock/java"
             res.srcDirs += "${rootDir}/../../shared/android/src/main/res"
         }
     }
@@ -118,6 +120,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    // The suite's lock behind the fingerprint (src/lock): Wallet's version.
+    implementation("androidx.biometric:biometric:1.1.0")
     // Sync with the app closed (mobile/shared/android, backgroundsync); the other apps' version.
     implementation("androidx.work:work-runtime:2.8.0")
 

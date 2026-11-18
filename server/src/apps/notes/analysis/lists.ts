@@ -8,6 +8,7 @@ import { INBOX_ID, INBOX_TITLE } from '@unlease/notes/models/entities';
 import type { TemplateField } from '@unlease/notes/models/templates';
 import { comparePositions } from '@unlease/core/services/fractionalIndex';
 import { foldText } from '@unlease/core/services/search';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { sortTargets } from '@unlease/notes/services/sorting';
 import { collectionTemplate, titleNamesKind, type Templates } from '@unlease/notes/services/templates';
 import { linkFromRecord, noteFromRecord } from '@unlease/notes/sync/entities';
@@ -26,12 +27,12 @@ export interface RoutingList {
 
 const EXAMPLES_PER_LIST = 5;
 
-/** Every live URL list (not deleted, not in the bin), the inbox always included; with `templates`, each list's own template's fields. */
+/** Every live URL list (not deleted, not in the bin, not behind the lock), the inbox always included; with `templates`, each list's own template's fields. */
 export function routingLists(records: RecordStore, templates?: Templates): RoutingList[] {
   const notes = records
     .ofType('note')
     .map(noteFromRecord)
-    .filter(note => note.kind === 'links' && note.deletedAt === null && note.trashedAt === null)
+    .filter(note => note.kind === 'links' && note.deletedAt === null && note.trashedAt === null && shownOutsideLock(note))
     .sort(comparePositions);
   if (!notes.some(note => note.id === INBOX_ID)) notes.push(noteFromRecord({ type: 'note', id: INBOX_ID, fields: { kind: 'links', title: INBOX_TITLE }, clocks: {} }));
   const byId = new Map(notes.map(note => [note.id, note]));

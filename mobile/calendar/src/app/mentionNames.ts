@@ -1,10 +1,13 @@
 /**
  * What a mention in an event's description reads as (`{@contact=…}`, `{@page=…}`, `{@note=…}`,
  * `{@link=…}`, `{@event=…}`): the name now of what it points at, from the records this phone holds
- * (Agenda syncs Carnet's, Contacts' and Pages' to show them); null once gone.
+ * (Agenda syncs Carnet's, Contacts' and Pages' to show them); null once gone. One behind Carnet's lock
+ * (its protected section, or a link in a collection there) reads as « Note protégée ».
  */
+import { t } from '@unlease/core/i18n';
 import type { Ref } from '@unlease/core/refs';
 import { shownTitle } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { resolveContact } from '@unlease/contacts/services/duplicates';
 import { contactName } from '@unlease/contacts/services/names';
 
@@ -18,11 +21,13 @@ export function nameOf(state: LibraryState, target: Ref): string | null {
     }
     case 'note': {
       const note = state.carnet.notes[target.id];
-      return note && note.deletedAt === null ? shownTitle(note).trim() || note.body.split('\n')[0]?.trim() || '…' : null;
+      if (!note || note.deletedAt !== null) return null;
+      return isLockedNote(note) ? t('Protected note') : shownTitle(note).trim() || note.body.split('\n')[0]?.trim() || '…';
     }
     case 'link': {
       const link = state.carnet.links[target.id];
-      return link && link.deletedAt === null ? link.title.trim() || link.url : null;
+      if (!link || link.deletedAt !== null) return null;
+      return isLockedNote(state.carnet.notes[link.noteId]) ? t('Protected note') : link.title.trim() || link.url;
     }
     case 'page': {
       const page = state.blocks[target.id];

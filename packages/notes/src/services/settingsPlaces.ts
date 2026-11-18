@@ -1,6 +1,6 @@
 /**
  * Carnet's places a search finds (`core/services/settingsSearch`), beside every app's: in Réglages
- * its own section, first (« Carnet »: the board's layout; the reminders, the web's row: the phone
+ * its own section, first (« Carnet »: the board's layout, the protected section; the reminders, the web's row: the phone
  * rings them), cleaning the links saved and the Keep import (« Importer », the first row of
  * « Données », opening its wizard); in the Administration, Seerr, and « Ce que Claude relève » in
  * Claude's section.
@@ -22,6 +22,7 @@ const KEEP_WORDS = ['keep', 'google keep', 'takeout', 'import'];
 export const NOTES_SETTINGS_PLACES: readonly SettingsPlace<GlyphName>[] = [
   { id: 'notes-layout', app: 'notes', area: 'settings', section: NOTES_SETTINGS_SECTION, title: tx('Board layout'), within: APP_NAME, glyph: 'grid', words: ['tableau', 'mur', 'liste', 'colonnes', 'grille', 'board', 'layout', 'wall', 'list', 'columns', 'grid'] },
   { id: 'notes-reminders', app: 'notes', area: 'settings', section: NOTES_SETTINGS_SECTION, title: tx('Reminders'), within: APP_NAME, glyph: 'bell', words: ['notifications', 'alarmes', 'sonner', 'reminders', 'alarms', 'ring'], only: 'web' },
+  { id: 'notes-protected', app: 'notes', area: 'settings', section: NOTES_SETTINGS_SECTION, title: tx('Protected section'), within: APP_NAME, glyph: 'lock', words: ['protege', 'protegee', 'proteger', 'verrou', 'verrouiller', 'mot de passe', 'secret', 'cache', 'empreinte', 'protected', 'lock', 'password', 'private', 'hidden', 'fingerprint'] },
   { id: 'notes-clean-links', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.data, title: tx('Clean saved links'), within: tx('Data'), glyph: 'broom', words: ['suivi', 'pistage', 'utm', 'fbclid', 'tracking', 'clean', 'links'] },
   // The import's wizard, its own page on the web and its own screen on the phone.
   { id: 'notes-keep', app: 'notes', area: 'settings', section: SETTINGS_SECTIONS.import, title: tx('Import from Google Keep'), within: null, glyph: 'download', words: KEEP_WORDS },

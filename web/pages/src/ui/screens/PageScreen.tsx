@@ -8,13 +8,14 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { isInBin } from '@unlease/pages/services/blocks';
-import { isPrivatePage } from '@unlease/pages/services/pagesAsk';
+import { isPrivatePage, lockingPage } from '@unlease/pages/services/pagesAsk';
 
 import { closePagesAsk, openPagesAsk, usePagesAskSettings, usePagesAskStore } from '../../app/pagesAsk';
 import { useBlocksStore } from '../../app/store/blocks';
 import { WithPageAsk } from '../features/pages/AskPanel';
 import { PageMenu } from '../features/pages/PageMenu';
 import { PageView } from '../features/pages/PageView';
+import { closeLock, useLockOpen } from '@shared/app/lock';
 import { APP_HEADER_ID } from '@shared/ui/navigation/Header';
 import { PageHead, PageHeadSlot } from '@shared/ui/navigation/PageHead';
 import { NotFound } from '@shared/ui/screens/NotFound';
@@ -51,6 +52,8 @@ export function PageScreen({ id }: { id: string }) {
   const ask = usePagesAskSettings() !== null;
   const kept = useBlocksStore(s => isPrivatePage(s.blocks, id));
   const asking = usePagesAskStore(s => s.open === id);
+  const locked = useBlocksStore(s => lockingPage(s.blocks, id) !== null);
+  const lockOpen = useLockOpen();
   if (!exists) return <NotFound what={t('This page no longer exists.')} />;
   // A page in the bin keeps its banner's actions only.
   const withMenu = slot !== null && !binned;
@@ -60,7 +63,13 @@ export function PageScreen({ id }: { id: string }) {
         <PageHead
           title={title}
           titleShown={titleUnder}
-          extra={withMenu && ask && !kept ? { icon: 'sparkle', label: t('Ask Claude'), pressed: asking, onClick: () => (asking ? closePagesAsk() : openPagesAsk(id)) } : undefined}
+          extra={
+            withMenu && locked && lockOpen
+              ? { icon: 'lock', label: t('Lock'), onClick: closeLock }
+              : withMenu && ask && !kept
+                ? { icon: 'sparkle', label: t('Ask Claude'), pressed: asking, onClick: () => (asking ? closePagesAsk() : openPagesAsk(id)) }
+                : undefined
+          }
           action={withMenu ? { icon: 'more', label: t('More actions'), onClick: () => setMenu(true), menu: { anchor: more, open: menu } } : undefined}
         />
       ) : null}

@@ -4,6 +4,7 @@
  * is safe; renaming or removing one is a migration on every device.
  */
 import { LOCALES } from '@unlease/core/i18n';
+import { isLockCheck, LOCK_CHECK_CHARS } from '@unlease/core/services/lock';
 import {
   bool,
   defineRecordTypes,
@@ -85,11 +86,13 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       templateId: nullableId,
       /** The people of Contacts it is about (`contact` ids), written only once one is picked. */
       contactIds: ids(PEOPLE_MAX),
+      /** In the protected section (`services/lock`): shown nowhere else, and there only once the suite's lock is open. */
+      locked: bool,
       createdAt: time,
       deletedAt: nullableTime,
     },
     merged: { title: typed(TEXT_LIMITS.note.title), body: typed(TEXT_LIMITS.note.body), drawing: strokes(TEXT_LIMITS.note.drawing) },
-    defaults: { pattern: null, emblem: null, reminderAt: null, hint: '', contactIds: [], templateId: null },
+    defaults: { pattern: null, emblem: null, reminderAt: null, hint: '', contactIds: [], templateId: null, locked: false },
     seeded: [INBOX_ID],
   },
   check: {
@@ -171,6 +174,24 @@ export const NOTES_RECORD_TYPES = defineRecordTypes({
       createdAt: time,
       deletedAt: nullableTime,
     },
+  },
+  /**
+   * The suite's lock (`core/services/lock`), one record (id `lock`, each field whole): the check of the
+   * one password that opens Carnet's protected notes and Pages' protected pages, and whether Carnet
+   * shows its protected section. Carnet's, since every app that locks something syncs Carnet's types.
+   */
+  // Core's `LOCK_TYPE`, written out: a computed key would widen every type's name to `string` where a batch's types are inferred.
+  lock: {
+    app: 'notes',
+    fields: {
+      /** The password's check (`LockCheck` as JSON); '' while none is set. */
+      check: signed(isLockCheck, `lockCheck:${LOCK_CHECK_CHARS}`),
+      /** When the password was last set: a phone's fingerprint stands for the password set then. */
+      setAt: time,
+      /** Carnet's protected section shows in the navigation on every device. */
+      section: bool,
+    },
+    defaults: { check: '', setAt: 0, section: false },
   },
   attachment: {
     app: 'notes',

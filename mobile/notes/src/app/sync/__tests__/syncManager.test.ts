@@ -114,12 +114,12 @@ describe('the record types this app syncs', () => {
     createNote({ kind: 'text', title: 'types' });
     await flushNow();
     // Carnet's own, Contacts' and Agenda's (the people and the events its notes mention, `APPS.notes.reads`).
-    expect(requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'note']);
+    expect(requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'lock', 'note']);
     // Not one of Pages'.
     expect(requests[0]!.types).not.toContain('block');
     expect(requests[0]!.since).toBe(0);
     // Kept with its list from now on: the next exchange goes on from there.
-    expect(readSyncState('cursorTypes')).toBe('attachment,calendarEvent,calendarFeed,calendarLabel,check,contact,contactLabel,label,link,linkTemplate,note');
+    expect(readSyncState('cursorTypes')).toBe('attachment,calendarEvent,calendarFeed,calendarLabel,check,contact,contactLabel,label,link,linkTemplate,lock,note');
     createNote({ kind: 'text', title: 'encore' });
     await flushNow();
     expect(requests[1]!.since).toBe(50);

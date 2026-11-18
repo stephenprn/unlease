@@ -159,7 +159,7 @@ describe('the sync loop', () => {
     // Carnet's web app: Carnet's types, Contacts' and Agenda's (its notes name the people and the events they mention), never Pages'.
     startSync();
     await vi.waitFor(() => expect(server.requests.length).toBeGreaterThan(0));
-    expect(server.requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'note']);
+    expect(server.requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'lock', 'note']);
     await vi.waitFor(() => expect(useSyncStore.getState().phase).toBe('synced'));
     server.write('note', 'from-server', { kind: 'text', title: 'Du serveur', position: 'a0', createdAt: 1, deletedAt: null });
     await vi.waitFor(() => expect(readCursor()).toBeGreaterThan(0));
@@ -170,9 +170,9 @@ describe('the sync loop', () => {
     server.requests.length = 0;
     startSync();
     await vi.waitFor(() => expect(server.requests.length).toBeGreaterThan(0));
-    expect(server.requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'note']);
+    expect(server.requests[0]!.types).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'lock', 'note']);
     expect(server.requests[0]!.since).toBeGreaterThan(0);
-    expect(readSyncedTypes()).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'note']);
+    expect(readSyncedTypes()).toEqual(['attachment', 'calendarEvent', 'calendarFeed', 'calendarLabel', 'check', 'contact', 'contactLabel', 'label', 'link', 'linkTemplate', 'lock', 'note']);
   });
 
   it('pushes, then holds a long-poll, and pushes a local edit after the debounce', async () => {

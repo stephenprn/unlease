@@ -17,7 +17,9 @@ import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { useBoardSections, useSearch, type BoardView } from '@app/hooks/useBoard';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { pickInto } from '@app/media';
-import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setPinned, trashLines, trashNotes, addCheck } from '@app/store/actions';
+import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setLocked, setPinned, trashLines, trashNotes, addCheck } from '@app/store/actions';
+import { closeLock, useFingerprintOn, useLockOpen, useSecureWhile } from '@shared/app/lock';
+import { LockPanel } from '@shared/ui/features/lock';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
@@ -26,7 +28,7 @@ import { haptic } from '@shared/platform/haptics';
 import { readClipboard } from '@shared/platform/clipboard';
 import { extractUrls } from '@unlease/core/services/url';
 
-import { AppText, Button, Dialog, EmptyState, FAB_CLEARANCE, FabMenu, Ground, IconButton, usePullToSync } from '../components';
+import { AppText, Button, Dialog, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, IconButton, usePullToSync } from '../components';
 import { BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
 import { SelectionBar } from '../features/board/SelectionBar';
 import { BulkLabelsSheet } from '../features/board/BulkLabelsSheet';
@@ -53,6 +55,7 @@ function viewTitle(view: BoardView, labelName: string | undefined): string | nul
   if (view === 'reminders') return t('Reminders');
   if (view === 'archive') return tc('place', 'Archive');
   if (view === 'trash') return t('Bin');
+  if (view === 'protected') return t('Protected');
   if (view.startsWith('label:')) return labelName ?? tc('notes', 'Label');
   return null;
 }
@@ -89,7 +92,12 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const metrics = useWallMetrics(columns);
   const now = useMinute();
   const { sections, total } = useBoardSections(view, now);
-  const results = useSearch(query, view === 'trash');
+  // The protected section: its notes only once the lock is open, and nothing captured of the screen meanwhile.
+  const lockOpen = useLockOpen();
+  const fingerprint = useFingerprintOn();
+  const shut = view === 'protected' && !lockOpen;
+  useSecureWhile(view === 'protected' && lockOpen);
+  const results = useSearch(query, view === 'trash' ? 'bin' : view === 'protected' ? 'protected' : 'live');
   const searching = query.trim().length > 0;
   // Back ends a search, then the narrowed board (a label, Rappels, Archives, Corbeille: back to the notes, as Contacts'
   // and Agenda's lists go back to all), before it leaves the app; only while the board is the screen shown, so it
@@ -106,7 +114,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
       return () => subscription.remove();
     }, [searching, narrowed, navigation]),
   );
-  const showCapture = view === 'notes' || view === 'reminders' || view.startsWith('label:');
+  const showCapture = view === 'notes' || view === 'reminders' || view.startsWith('label:') || (view === 'protected' && lockOpen);
 
   const shown = useMemo(
     () => (searching ? [{ key: 'results', title: null, ids: results }] : sections),
@@ -143,18 +151,20 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   );
 
   const labelIds = view.startsWith('label:') ? [view.slice(6)] : [];
+  // What a new note is born with here: the label shown, or the protected section's lock.
+  const born = { labelIds, ...(view === 'protected' ? { locked: true } : {}) };
   // From Rappels, a new note opens on its reminder sheet, keyboard closed so it stays in view.
   const open = (id: string, focus: 'body' | 'check') =>
     navigation.navigate('Note', view === 'reminders' ? { id, reminder: true } : { id, focus });
-  const newNote = () => open(createNote({ kind: 'text', labelIds }), 'body');
+  const newNote = () => open(createNote({ kind: 'text', ...born }), 'body');
   const newChecklist = () => {
-    const id = createNote({ kind: 'checklist', labelIds });
+    const id = createNote({ kind: 'checklist', ...born });
     addCheck(id, '');
     open(id, 'check');
   };
-  const newDrawing = () => navigation.navigate('Note', { id: createNote({ kind: 'drawing', labelIds }) });
+  const newDrawing = () => navigation.navigate('Note', { id: createNote({ kind: 'drawing', ...born }) });
   const newPhotoNote = async (source: 'gallery' | 'camera') => {
-    const id = createNote({ kind: 'text', labelIds });
+    const id = createNote({ kind: 'text', ...born });
     const outcome = await pickInto(id, source);
     if (outcome.status === 'ok') {
       open(id, 'body');
@@ -183,7 +193,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     if (capture === 'link') newLink();
     if (capture === 'search') setSearchFocus(n => n + 1);
     // As from Rappels: the note opens on its reminder sheet.
-    if (capture === 'reminder') navigation.navigate('Note', { id: createNote({ kind: 'text', labelIds }), reminder: true });
+    if (capture === 'reminder') navigation.navigate('Note', { id: createNote({ kind: 'text', ...born }), reminder: true });
     // The actions are recreated each render; only the param should trigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capture]);
@@ -195,9 +205,14 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     setColorOpen(false);
   }, []);
   const selectionInk = theme.color.onActionContainer;
+  // The lock shut (by hand, or the app away a minute): what was picked in the section is let go.
+  useEffect(() => {
+    if (shut) clearSelection();
+  }, [shut, clearSelection]);
 
   // Keep's swipe: off the board into the archive, or out of the archive; the snackbar undoes it.
-  const swipeable = selection.size === 0 && !searching && view !== 'trash';
+  // Not in the protected section: an archived note there stays there, so the swipe would seem to do nothing.
+  const swipeable = selection.size === 0 && !searching && view !== 'trash' && view !== 'protected';
   const onSwipe = useCallback((id: string) => {
     // By the note itself: Rappels shows archived notes too, and one of those comes out of the archive.
     const archive = !useLibraryStore.getState().notes[id]?.archived;
@@ -263,6 +278,19 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
             // Small beside the title, so the title stands where every view's does.
             <Button kind="text" small icon="broom" label={t('Empty the bin')} onPress={() => setConfirmEmpty(true)} />
           ) : null}
+          {view === 'protected' && lockOpen ? (
+            <Button
+              kind="text"
+              small
+              icon="lock"
+              label={t('Lock')}
+              onPress={() => {
+                clearSelection();
+                setQuery('');
+                closeLock();
+              }}
+            />
+          ) : null}
         </View>
       ) : null}
       {/* Said once, under the title, while the bin holds something: empty, its empty state says how long notes stay. */}
@@ -305,7 +333,13 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         onServer={() => navigation.navigate('Admin', { section: 'server' })}
       />
 
-      {total === 0 && !searching ? (
+      {shut ? (
+        // Shut: the lock over the shapes of what it keeps, in place of the wall.
+        <EdgeScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
+          {intro}
+          <LockPanel ghosts="notes" what={fingerprint ? t('Your protected notes open with your fingerprint or the password.') : t('Your protected notes open with the password.')} />
+        </EdgeScrollView>
+      ) : total === 0 && !searching ? (
         <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshControl={pullToSync} />
       ) : (
         <Wall
@@ -336,7 +370,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
         ]}
       />
 
-      {selection.size > 0 ? (
+      {selection.size > 0 && !shut ? (
         <SelectionBar count={selection.size} onClose={clearSelection}>
           {view === 'trash' ? (
             <>
@@ -358,17 +392,28 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
               />
               <IconButton icon="palette" label={onlyCollections(selected) ? t('Colour') : t('Colour and paper')} color={selectionInk} shape={0} onPress={() => setColorOpen(true)} />
               <IconButton icon="tag" label={tc('notes', 'Labels')} color={selectionInk} shape={3} onPress={() => setLabelsOpen(true)} />
-              <IconButton
-                icon={view === 'archive' ? 'unarchive' : 'archive'}
-                label={view === 'archive' ? t('Unarchive') : t('Archive')}
-                color={selectionInk}
-                shape={2}
-                onPress={() => {
-                  const undos = selected.map(id => setArchived(id, view !== 'archive'));
-                  clearSelection();
-                  showSnack(view === 'archive' ? byCount(t('Note unarchived'), t('Notes unarchived')) : byCount(t('Note archived'), t('Notes archived')), { label: t('Undo'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
-                }}
-              />
+              {view === 'protected' ? (
+                // In the section, archiving moves nothing: what it offers instead is the way out.
+                <IconButton
+                  icon="unlock"
+                  label={t('Stop protecting')}
+                  color={selectionInk}
+                  shape={2}
+                  onPress={() => bulk(() => setLocked(selected, false), byCount(t('Note back among your notes'), t('Notes back among your notes')))}
+                />
+              ) : (
+                <IconButton
+                  icon={view === 'archive' ? 'unarchive' : 'archive'}
+                  label={view === 'archive' ? t('Unarchive') : t('Archive')}
+                  color={selectionInk}
+                  shape={2}
+                  onPress={() => {
+                    const undos = selected.map(id => setArchived(id, view !== 'archive'));
+                    clearSelection();
+                    showSnack(view === 'archive' ? byCount(t('Note unarchived'), t('Notes unarchived')) : byCount(t('Note archived'), t('Notes archived')), { label: t('Undo'), run: () => undos.forEach(u => u()) }, { tone: 'success' });
+                  }}
+                />
+              )}
               <IconButton icon="trash" label={t('Delete')} color={selectionInk} shape={0} onPress={trashSelected} />
             </>
           )}

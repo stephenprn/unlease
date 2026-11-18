@@ -11,11 +11,15 @@ import { t } from '@unlease/core/i18n';
 import { searchDocuments, type SearchDocument } from '@unlease/core/services/search';
 import type { Note } from '@unlease/notes/models/entities';
 
+import { useLockOpen } from '@shared/app/lock';
+
 import { useLibraryStore, type LibraryState } from '../store/library';
 import { buildDocument } from '@unlease/notes/services/noteSearch';
+import { isLockedNote, shownNow } from '@unlease/notes/services/lock';
 import { mentionsVersion } from '@unlease/notes/services/noteMentions';
 
-export type BoardView = 'notes' | 'reminders' | 'archive' | 'trash' | `label:${string}`;
+/** `protected`: the protected section (`notes/services/lock`), its notes shown only there and only with the lock open. */
+export type BoardView = 'notes' | 'reminders' | 'archive' | 'trash' | 'protected' | `label:${string}`;
 
 export interface BoardSection {
   readonly key: string;
@@ -34,21 +38,31 @@ const selectOrder = (s: LibraryState) => s.noteOrder;
 
 const isLive = (note: Note | undefined): note is Note => !!note && note.deletedAt === null;
 
-export function sectionsFor(view: BoardView, order: readonly string[], notes: LibraryState['notes'], now: number): BoardSections {
-  const live = order.map(id => notes[id]).filter(isLive);
+/** `open`: the lock is open, so the bin shows the protected notes binned too. */
+export function sectionsFor(view: BoardView, order: readonly string[], notes: LibraryState['notes'], now: number, open = false): BoardSections {
+  const all = order.map(id => notes[id]).filter(isLive);
   const result = (groups: { key: string; title: string | null; ids: string[] }[]): BoardSections => {
     const sections = groups.filter(group => group.ids.length > 0);
     return { sections, total: sections.reduce((n, s) => n + s.ids.length, 0) };
   };
 
+  if (view === 'protected') {
+    // Archived ones too: the section is their only place.
+    const kept = open ? all.filter(note => isLockedNote(note) && note.trashedAt === null) : [];
+    return result([
+      { key: 'pinned', title: t('Pinned'), ids: kept.filter(n => n.pinned).map(n => n.id) },
+      { key: 'others', title: kept.some(n => n.pinned) ? t('Others') : null, ids: kept.filter(n => !n.pinned).map(n => n.id) },
+    ]);
+  }
   if (view === 'trash') {
-    const ids = live
-      .filter(note => note.trashedAt !== null)
+    const ids = all
+      .filter(note => shownNow(note, open) && note.trashedAt !== null)
       .sort((a, b) => (b.trashedAt ?? 0) - (a.trashedAt ?? 0))
       .map(note => note.id);
     return result([{ key: 'trash', title: null, ids }]);
   }
-  const notTrashed = live.filter(note => note.trashedAt === null);
+  // Every other view leaves the protected notes out, the lock open or not.
+  const notTrashed = all.filter(note => note.trashedAt === null && !isLockedNote(note));
   if (view === 'archive') {
     return result([{ key: 'archive', title: null, ids: notTrashed.filter(n => n.archived).map(n => n.id) }]);
   }
@@ -72,23 +86,33 @@ export function sectionsFor(view: BoardView, order: readonly string[], notes: Li
 export function useBoardSections(view: BoardView, now: number): BoardSections {
   const notes = useLibraryStore(selectNotes);
   const order = useLibraryStore(selectOrder);
+  const open = useLockOpen();
   // `now` is floored to the minute by the caller, so the reminders split moves
   // at most once a minute instead of on every render.
-  return useMemo(() => sectionsFor(view, order, notes, now), [view, order, notes, now]);
+  return useMemo(() => sectionsFor(view, order, notes, now, open), [view, order, notes, now, open]);
 }
 
-/** The search's documents, for the live notes and for the bin's, each kept until the library changes. */
-const cached: Record<'live' | 'bin', { revision: number; names: number; documents: SearchDocument[] }> = { live: { revision: -1, names: -1, documents: [] }, bin: { revision: -1, names: -1, documents: [] } };
+/** Where a search looks: the live notes, the bin, or the protected section (its own search, the lock open). */
+export type SearchScope = 'live' | 'bin' | 'protected';
 
-function documents(state: LibraryState, bin: boolean): SearchDocument[] {
-  const cache = cached[bin ? 'bin' : 'live'];
+/** The search's documents, per scope, each kept until the library changes. */
+const cached: Record<SearchScope, { revision: number; names: number; documents: SearchDocument[] }> = {
+  live: { revision: -1, names: -1, documents: [] },
+  bin: { revision: -1, names: -1, documents: [] },
+  protected: { revision: -1, names: -1, documents: [] },
+};
+
+function documents(state: LibraryState, scope: SearchScope): SearchDocument[] {
+  const cache = cached[scope];
+  const bin = scope === 'bin';
   // The people a note names are found by their names now: a contact renamed starts the documents over too.
   if (state.revision === cache.revision && mentionsVersion() === cache.names) return cache.documents;
   const docs: SearchDocument[] = [];
   for (const id of state.noteOrder) {
     const note = state.notes[id];
-    // In the bin a search finds what is in the bin, and only that: its actions erase for good.
-    if (!note || note.deletedAt !== null || (note.trashedAt !== null) !== bin) continue;
+    // In the bin a search finds what is in the bin, and only that: its actions erase for good. A
+    // protected note is found by the section's own search only.
+    if (!note || note.deletedAt !== null || (note.trashedAt !== null) !== bin || isLockedNote(note) !== (scope === 'protected')) continue;
     const checks = (state.checksByNote[id] ?? []).map(cid => state.checks[cid]!).filter(Boolean);
     const links = (state.linksByNote[id] ?? []).map(lid => state.links[lid]!).filter(Boolean);
     const labels = note.labelIds.map(lid => state.labels[lid]!).filter(Boolean);
@@ -100,14 +124,16 @@ function documents(state: LibraryState, bin: boolean): SearchDocument[] {
   return docs;
 }
 
-/** Note ids matching `query`, best first: the live notes, or with `bin` those in the bin. */
-export function searchNotes(state: LibraryState, query: string, bin = false): string[] {
+/** Note ids matching `query`, best first: the live notes, those in the bin, or the protected ones. */
+export function searchNotes(state: LibraryState, query: string, scope: SearchScope = 'live'): string[] {
   if (!query.trim()) return [];
-  return searchDocuments(documents(state, bin), query).map(hit => hit.noteId);
+  return searchDocuments(documents(state, scope), query).map(hit => hit.noteId);
 }
 
-export function useSearch(query: string, bin = false): readonly string[] {
+/** The protected section's search finds nothing while the lock is shut. */
+export function useSearch(query: string, scope: SearchScope = 'live'): readonly string[] {
   // The whole library: any change re-runs the search (documents are cached per revision).
   const library = useLibraryStore();
-  return useMemo(() => searchNotes(library, query, bin), [library, query, bin]);
+  const open = useLockOpen();
+  return useMemo(() => (scope === 'protected' && !open ? [] : searchNotes(library, query, scope)), [library, query, scope, open]);
 }

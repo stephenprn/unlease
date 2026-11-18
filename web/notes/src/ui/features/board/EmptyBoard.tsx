@@ -14,7 +14,7 @@ import type { BoardView } from '../../../app/hooks/useBoard';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 
-type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'label';
+type Kind = 'notes' | 'reminders' | 'archive' | 'trash' | 'protected' | 'label';
 
 const COPY: Record<Kind, { title: string; body: string }> = {
   notes: {
@@ -31,6 +31,7 @@ const COPY: Record<Kind, { title: string; body: string }> = {
     body: tx('Deleted notes stay here for {days} days, in case you change your mind.'),
   },
   label: { title: tx('No notes with this label'), body: tx('Add this label to a note from the editor, or create one here.') },
+  protected: { title: tx('No protected notes'), body: tx('Protect a note from its menu: it then shows only here, behind the password.') },
 };
 
 /** On a phone the capture buttons are at the bottom and there is no keyboard: the phone's words. */
@@ -42,7 +43,7 @@ const NARROW_COPY: Partial<Record<Kind, { title: string; body: string }>> = {
   reminders: { title: tx('No reminders'), body: tx('The + button, at the bottom, creates a note and asks you when to remind you.') },
 };
 
-const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', label: 'label' };
+const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', protected: 'archive', label: 'label' };
 
 /** Under a keyboard, the keys that fill the board. */
 const NOTE_KEYS = [

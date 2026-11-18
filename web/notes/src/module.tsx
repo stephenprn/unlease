@@ -15,6 +15,8 @@ import { openCapture } from './app/store/notesUi';
 import { MOD_KEY, type AppModule, type ShortcutGroup, type SpotLabel } from '@shared/modules';
 import { NOTES_ADMIN_SECTIONS } from './admin';
 import { notesData } from './data';
+import { followLock } from '@shared/app/lock';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { handleCaptureRoute } from './ui/captureRoute';
 import { classifyClipboard, newChecklist, newDrawing, newNote, newTitledNote } from './ui/commands';
 import { KeepWizard } from './ui/features/importing/KeepWizard';
@@ -77,14 +79,18 @@ export const notesModule: AppModule = {
   id: 'notes',
   data: notesData,
   home: HOME,
-  start: handleCaptureRoute,
+  start: () => {
+    // The protected section's lock shuts itself (hidden a minute, idle five, the page left).
+    followLock();
+    handleCaptureRoute();
+  },
 
   routes: { names: NOTES_ROUTES, parse: parseNotesRoute },
   Screen: NotesScreen,
   pageUnder: notesPageUnder,
   pathOf: notesPathOf,
   isHome: route => route.name === 'board',
-  backTo: route => (route.name === 'line' ? paths.lines : route.name === 'template' ? (route.id.startsWith('kind-') ? paths.templates : paths.line(route.id)) : route.name === 'templates' ? adminPath('reading') : HOME),
+  backTo: route => (route.name === 'line' ? (isLockedNote(useLibraryStore.getState().notes[route.id]) ? paths.protected : paths.lines) : route.name === 'template' ? (route.id.startsWith('kind-') ? paths.templates : paths.line(route.id)) : route.name === 'templates' ? adminPath('reading') : HOME),
   overHead: route => route.name === 'line',
   useTitle: useNotesTitle,
   stillThere: notesStillThere,

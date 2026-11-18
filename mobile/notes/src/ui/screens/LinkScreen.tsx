@@ -21,6 +21,9 @@ import { t, tc } from '@unlease/core/i18n';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { deleteLink, moveLink, reanalyzeLink, saveTypedText, setLinkDone } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useLockOpen, useSecureWhile } from '@shared/app/lock';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { LockedNote } from '../features/lock/LockedNote';
 import { useShallow } from 'zustand/react/shallow';
 import { selectCanRead, selectServer, useSettingsStore } from '@shared/app/store/settingsStore';
 import { useServerFeature } from '@shared/app/hooks/useServerFeature';
@@ -116,6 +119,12 @@ export function LinkScreen({ navigation, route }: ScreenProps<'Link'>) {
       save();
     };
   }, [saveComment]);
+
+  // A link of a protected collection: shut, the lock in its place; open, no capture of the screen while it shows.
+  const lockOpen = useLockOpen();
+  const guarded = isLockedNote(line);
+  useSecureWhile(guarded && lockOpen);
+  if (guarded && !lockOpen) return <LockedNote onBack={() => navigation.goBack()} />;
 
   if (!link || link.deletedAt !== null) {
     // Deleted on another device, or a widget's link gone: the page says so (the web's words).

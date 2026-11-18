@@ -23,4 +23,15 @@ export const FR_SHARED: Dictionary = {
   'No language matches.': 'Aucun langage ne correspond.',
   // A link's or an embed's address that cannot be read (both clients)
   'That isn’t an address: type for example example.org or https://example.org/page.': 'Ce n’est pas une adresse : tapez par exemple example.org ou https://example.org/page.',
+  // Protected pages, and Carnet's protected notes shown here (both clients)
+  'A page above this one is protected: it opens with the password.': 'Une page au-dessus de celle-ci est protégée : elle s’ouvre avec le mot de passe.',
+  'Choose the password that will protect this page.': 'Choisissez le mot de passe qui protégera cette page.',
+  'Page protected: it opens with the password': 'Page protégée : elle s’ouvre avec le mot de passe',
+  'Protect with a password': 'Protéger par mot de passe',
+  'Protected by a password': 'Protégée par mot de passe',
+  'Protected link': 'Lien protégé',
+  'Remove the protection': 'Retirer la protection',
+  'This note is protected: it opens in {app} with the password.': 'Cette note est protégée : elle s’ouvre dans {app} avec le mot de passe.',
+  'This page is protected: it opens with the password.': 'Cette page est protégée : elle s’ouvre avec le mot de passe.',
+  'This page no longer asks for the password': 'Cette page ne demande plus le mot de passe',
 };

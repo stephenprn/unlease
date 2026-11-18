@@ -25,10 +25,12 @@ export function currentPage(): string {
   return `${here.path}${here.search}`;
 }
 
-/** The label of the board view on screen, so a note made there wears it. */
-function currentLabelIds(): string[] {
+/** What a note made on the board view on screen takes from it: a label's view its label, the protected section its place there. */
+function currentPlace(): { readonly labelIds: string[]; readonly locked?: true } {
   const route = parseRoute(new URL(currentPage(), location.origin).pathname);
-  return route.name === 'board' && route.view.startsWith('label:') ? [route.view.slice(6)] : [];
+  if (route.name !== 'board') return { labelIds: [] };
+  if (route.view === 'protected') return { labelIds: [], locked: true };
+  return { labelIds: route.view.startsWith('label:') ? [route.view.slice(6)] : [] };
 }
 
 export function openNote(id: string): void {
@@ -42,7 +44,7 @@ export function openLink(id: string): void {
 }
 
 function openNewNote(title: string): string {
-  const id = createNote({ kind: 'text', title, labelIds: currentLabelIds() });
+  const id = createNote({ kind: 'text', title, ...currentPlace() });
   setEditorFocus('body');
   navigate(paths.note(id), { background: currentPage() });
   return id;
@@ -58,7 +60,7 @@ export function newTitledNote(title: string): string {
 }
 
 export function newChecklist(): string {
-  const id = createNote({ kind: 'checklist', labelIds: currentLabelIds() });
+  const id = createNote({ kind: 'checklist', ...currentPlace() });
   addCheck(id, '');
   setEditorFocus('check');
   navigate(paths.note(id), { background: currentPage() });
@@ -67,14 +69,14 @@ export function newChecklist(): string {
 
 /** A drawing note, opened on its empty sheet. */
 export function newDrawing(): string {
-  const id = createNote({ kind: 'drawing', labelIds: currentLabelIds() });
+  const id = createNote({ kind: 'drawing', ...currentPlace() });
   navigate(paths.note(id), { background: currentPage() });
   return id;
 }
 
 /** A note made of photos: dropped, picked or pasted on the board. */
 export async function newPhotoNote(files: readonly File[]): Promise<void> {
-  const id = createNote({ kind: 'text', labelIds: currentLabelIds() });
+  const id = createNote({ kind: 'text', ...currentPlace() });
   const outcome = await attachFiles(id, files);
   if (outcome.added === 0) {
     deleteForever([id]);

@@ -11,6 +11,7 @@ import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import type { Note } from '@unlease/notes/models/entities';
 import { bodyText } from '@unlease/notes/services/noteBody';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { useSearch } from '@app/hooks/useBoard';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
@@ -30,7 +31,8 @@ export interface NotePickerSheetProps {
   readonly onPick: (noteId: string) => void;
 }
 
-const pickable = (note: Note | undefined): note is Note => !!note && note.deletedAt === null && note.trashedAt === null && note.kind !== 'links';
+/** A note a widget may hold: never a protected one (a home screen shows it to anyone). */
+const pickable = (note: Note | undefined): note is Note => !!note && note.deletedAt === null && note.trashedAt === null && note.kind !== 'links' && shownOutsideLock(note);
 
 /** A row's two lines: its title (or its first words), then what follows or how much is left to do. */
 function summary(note: Note, state: LibraryState): { readonly title: string; readonly detail: string } {

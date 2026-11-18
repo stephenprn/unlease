@@ -14,6 +14,7 @@ import { emblemShape } from '@unlease/design/emblems';
 import { LINES } from '@unlease/design/palette';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import { INBOX_ID, shownTitle, type Note } from '@unlease/notes/models/entities';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { onLauncherIconSwitch } from '@shared/app/launcherIcon';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
 import { appScheme } from '@shared/app/variant';
@@ -53,11 +54,11 @@ export function sharedCollections(library: Library, count: number = SHARED_COLLE
     .map(entry => entry.line);
 }
 
-/** The live collection a share's shortcut names, or null (none, or since deleted: the share is filed as any). */
+/** The live collection a share's shortcut names, or null (none, since deleted or protected: the share is filed as any). */
 export function collectionOfShortcut(shortcutId: string | undefined, library: Pick<LibraryState, 'notes'> = useLibraryStore.getState()): string | null {
   if (!shortcutId?.startsWith(PREFIX)) return null;
   const line = library.notes[shortcutId.slice(PREFIX.length)];
-  return line && line.kind === 'links' && line.deletedAt === null && line.trashedAt === null && line.id !== INBOX_ID ? line.id : null;
+  return line && line.kind === 'links' && line.deletedAt === null && line.trashedAt === null && line.id !== INBOX_ID && shownOutsideLock(line) ? line.id : null;
 }
 
 /** A collection as its shortcut: its title, what opening it from the launcher opens, its emblem in its pigment on its wash (by day: the pictures are static). */

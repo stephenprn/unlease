@@ -29,11 +29,15 @@ import {
   setLabels,
   setPattern,
   setPeople,
+  setLocked,
   setPinned,
   setReminder,
   trashNotes,
 } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
+import { useLockOpen, useLockState, useSecureWhile } from '@shared/app/lock';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { LockedNote } from '../features/lock/LockedNote';
 import { noteEditedAt } from '@unlease/notes/sync/entities';
 import { showSnack } from '@shared/app/store/uiStore';
 import { onBeforePause } from '@shared/app/sync/syncManager';
@@ -194,6 +198,12 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     [flushTitle, flushBody, id],
   );
 
+  // A protected note: shut, the lock in its place; open, no capture of the screen while it shows.
+  const lockOpen = useLockOpen();
+  const section = useLockState().section;
+  const guarded = isLockedNote(note);
+  useSecureWhile(guarded && lockOpen);
+
   if (!note || note.deletedAt !== null) {
     if (leaving) return <View style={styles.screen} />;
     return (
@@ -204,6 +214,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
       </View>
     );
   }
+
+  if (guarded && !lockOpen) return <LockedNote onBack={() => navigation.goBack()} />;
 
   // Dots and grids lie still over the sheet; ruled papers (lines, Seyès) scroll with the text they rule, from the sheet's top to its foot.
   // A drawing has no lines of text to rule: every paper lies still over its sheet.
@@ -236,6 +248,18 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
     const undo = trashNotes([id]);
     back();
     showSnack(t('Note moved to the bin'), { label: t('Undo'), run: undo }, { tone: 'success' });
+  };
+
+  /** Into the protected section, or out of it: the note leaves the screen it was found on, as archiving does. */
+  const protect = () => {
+    if (discarding()) {
+      back();
+      return;
+    }
+    const locking = !guarded;
+    const undo = setLocked([id], locking);
+    back();
+    showSnack(locking ? t('Note protected') : t('Note back among your notes'), { label: t('Undo'), run: undo }, { tone: 'success' });
   };
 
   const archive = () => {
@@ -485,6 +509,8 @@ export function NoteScreen({ navigation, route }: ScreenProps<'Note'>) {
             ...(note.kind === 'text' || note.kind === 'checklist'
               ? [{ label: t('Turn into a collection'), icon: 'collections' as const, disabled: !(convertible || (note.kind === 'text' && body.text.trim().length > 0)), onPress: toCollection }]
               : []),
+            // The protected section, while Réglages has it on; « Non classé » never leaves the board.
+            ...(editable && (section || guarded) ? [guarded ? { label: t('Stop protecting'), icon: 'unlock' as const, onPress: protect } : { label: t('Protect'), icon: 'lock' as const, onPress: protect }] : []),
             { label: t('Delete'), icon: 'trash', onPress: trash, danger: true },
           ]}
         />

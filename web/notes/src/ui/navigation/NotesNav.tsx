@@ -1,7 +1,8 @@
 /**
  * Carnet's navigation (Keep's side): the notes and the reminders, the collections by their
  * cut-outs, the labels by their tags, each section folding shut on its title, each by name
- * (`navOrder`: « Non classé » last); at the foot, the archive and the bin. Drawn in the shell's
+ * (`navOrder`: « Non classé » last); at the foot, the archive, the protected section (while it is on)
+ * and the bin. Drawn in the shell's
  * frame (`NavList`).
  */
 import { memo, useMemo, type ReactNode } from 'react';
@@ -20,6 +21,7 @@ import { Emblem } from '@shared/ui/components/Emblem';
 import { LabelTag } from '@shared/ui/components/LabelMark';
 import { NavAction, NavFold, NavGlyph, NavRow, navStyles as styles } from '@shared/ui/navigation/NavParts';
 import { Link, type Route } from '@shared/ui/router';
+import { useLockState } from '@shared/app/lock';
 import { pathForView, paths } from '../routes';
 
 function isCurrent(route: Route, path: string): boolean {
@@ -141,8 +143,9 @@ export function NotesNav({ route, onNavigate }: NavProps) {
   );
 }
 
-/** The archive and the bin, at the navigation's foot. */
+/** The archive, the protected section while it is on, and the bin, at the navigation's foot. */
 export function NotesNavFoot({ route, onNavigate }: NavProps) {
+  const section = useLockState().section;
   const go = (): void => {
     resetBoard();
     onNavigate();
@@ -150,6 +153,7 @@ export function NotesNavFoot({ route, onNavigate }: NavProps) {
   return (
     <>
       <NavRow to={pathForView('archive')} label={tc('place', 'Archive')} leading={<NavGlyph name="archive" />} current={isCurrent(route, pathForView('archive'))} onNavigate={go} />
+      {section ? <NavRow to={paths.protected} label={t('Protected')} leading={<NavGlyph name="lock" />} current={isCurrent(route, paths.protected)} onNavigate={go} /> : null}
       <NavRow to={paths.trash} label={t('Bin')} leading={<NavGlyph name="trash" />} current={isCurrent(route, paths.trash)} onNavigate={go} />
     </>
   );

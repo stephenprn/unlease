@@ -98,6 +98,8 @@ export const PAGES_RECORD_TYPES = defineRecordTypes({
       immichAssetIds: ids(IMMICH_BLOCK_ASSETS),
       ratio,
       private: bool,
+      /** A page behind the suite's lock (`core/services/lock`): its title shows, its blocks only once the lock is open. */
+      locked: bool,
       trashedAt: nullableTime,
       createdAt: time,
       deletedAt: nullableTime,

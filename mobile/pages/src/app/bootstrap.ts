@@ -4,6 +4,7 @@ import { openDatabase } from '@shared/data/db/database';
 import { loadSettings } from '@shared/app/store/settingsStore';
 import { startBackgroundSync } from '@shared/app/sync/syncManager';
 import { startLauncherIcon } from '@shared/app/launcherIcon';
+import { startLock } from '@shared/app/lock';
 import { startSuiteLink } from '@shared/app/suiteLink';
 import { databaseDirectory } from '@shared/platform/storage';
 
@@ -29,6 +30,8 @@ export function bootstrap(): BootResult {
     // The people Carnet's notes mention, named from Contacts' records where a page embeds a note.
     startMentionNames();
     loadPagesUi();
+    // Protected pages: whether this phone keeps the fingerprint, and the lock shutting itself a minute after the app leaves.
+    startLock();
     startPageUploads();
     // The suite's other apps on this phone read this one's connection and appearance.
     startSuiteLink();

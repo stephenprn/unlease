@@ -64,7 +64,8 @@ export function searchTargets(s: LibraryState, query: string, options: { readonl
   }
   for (const id of s.noteOrder) {
     const note = s.notes[id];
-    if (!note || note.trashedAt !== null) continue;
+    // A note in Carnet's protected section is never offered.
+    if (!note || note.trashedAt !== null || note.locked === true) continue;
     const section: TargetSection = note.kind === 'links' ? 'Collections' : 'Notes';
     if (!sections.includes(section)) continue;
     const title = targetTitle(s, { type: 'note', id }) ?? '';
@@ -75,7 +76,7 @@ export function searchTargets(s: LibraryState, query: string, options: { readonl
   }
   if (sections.includes('Links')) {
     for (const link of Object.values(s.links)) {
-      if (link.deletedAt !== null) continue;
+      if (link.deletedAt !== null || s.notes[link.noteId]?.locked === true) continue;
       found.push({ target: { type: 'link', id: link.id }, title: link.title || prettyUrl(link.url), detail: link.siteName || displayHost(link.url), section: 'Links', edited: link.analyzedAt ?? link.createdAt });
     }
   }

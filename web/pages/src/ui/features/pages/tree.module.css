@@ -195,6 +195,14 @@
   position: relative;
 }
 
+/* A page behind the lock: its title shows, a small lock after it in the second ink. */
+.locked {
+  flex: none;
+  display: inline-flex;
+  margin-left: 4px;
+  color: var(--ink-muted);
+}
+
 .emoji {
   font-size: 17px;
   line-height: 22px;
@@ -244,6 +252,17 @@
 .row:is(:hover, :has(:focus-visible), [data-menu]) .actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* The lock steps back under the buttons with the title's end (under a finger the buttons sit after it). */
+@media (hover: hover) {
+  .locked {
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+
+  .row:is(:hover, :has(:focus-visible), [data-menu]) .locked {
+    opacity: 0;
+  }
 }
 
 /* The title's end steps back under the buttons: it fades out where they show. */

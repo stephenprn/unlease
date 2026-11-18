@@ -5,18 +5,25 @@ import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
 import { selectOnboarded, useSettingsStore } from '@shared/app/store/settingsStore';
 import { AppShell } from '@shared/ui/AppShell';
 import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
+import { FingerprintOffer } from '@shared/ui/features/lock';
 import { linking, RootNavigator } from '@ui/navigation/RootNavigator';
 import { navigate, navigationRef } from '@ui/navigation/navigationRef';
 
 import { bootstrap } from '../bootstrap';
 import { listenForShares } from '../intake';
 
-/** Above every screen: the sync follows the app in and out of the foreground; text shared to the app becomes a page, opened. */
+/** Above every screen: the sync follows the app in and out of the foreground; text shared to the app becomes a page, opened; the lock's fingerprint offer. */
 function Overlays(): React.ReactElement {
   useAppLifecycle();
   const onboarded = useSettingsStore(selectOnboarded);
   useEffect(() => (onboarded ? listenForShares(id => navigate('Page', { id })) : undefined), [onboarded]);
-  return <ServicesCssSheet />;
+  return (
+    <>
+      <ServicesCssSheet />
+      {/* Once the password opened a protected page: the fingerprint next time? */}
+      <FingerprintOffer />
+    </>
+  );
 }
 
 export function AppProviders(): React.ReactElement {

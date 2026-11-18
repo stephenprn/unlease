@@ -13,7 +13,9 @@ import { parseCoverageRequest } from '@unlease/notes/sync/coverage';
 import { parseOfferRequest } from '@unlease/notes/sync/offers';
 import { parseRecipeRequest } from '@unlease/notes/sync/recipe';
 import { parseSeerrRequest } from '@unlease/notes/sync/seerr';
-import { parseSortRequest } from '@unlease/notes/sync/sorting';
+import { isLockedNote } from '@unlease/notes/services/lock';
+import { noteFromRecord } from '@unlease/notes/sync/entities';
+import { parseSortRequest, type SortRequest } from '@unlease/notes/sync/sorting';
 import { parseTemplateTryRequest, TEMPLATE_TRY_PATH } from '@unlease/notes/sync/templateTry';
 import { parseRatingsRequest, parseRecapRequest } from '@unlease/notes/sync/works';
 import { GIFTS_PATH, parseGiftLinkRequest } from '@unlease/core/sync/gifts';
@@ -36,6 +38,21 @@ const JSON_LIMIT = 1 * MB;
 const SORT_DEADLINE_MS = 90_000;
 
 const tooLarge = (c: Context) => c.json({ error: 'body too large' }, 413);
+
+/**
+ * A sorting request without the collections behind the lock (Carnet's protected section): Claude never
+ * files a link into one, whatever an older client sent. The collection a review starts from stays: it
+ * was opened to be reviewed. Null when no target is left.
+ */
+export function outsideLock(request: SortRequest, records: RecordStore): SortRequest | null {
+  const targets = request.targets.filter(target => {
+    if (target.id === request.from) return true;
+    const record = records.get('note', target.id);
+    return !record || !isLockedNote(noteFromRecord(record));
+  });
+  if (targets.length === request.targets.length) return request;
+  return targets.length === 0 ? null : { ...request, targets };
+}
 
 export interface NotesServices {
   readonly sorter: LinkSorter;
@@ -77,7 +94,8 @@ export function notesRoutes(app: Hono<Env>, services: NotesServices): void {
     } catch {
       return c.json({ error: 'Invalid request' }, 400);
     }
-    const request = parseSortRequest(body);
+    const parsed = parseSortRequest(body);
+    const request = parsed ? outsideLock(parsed, services.records) : null;
     if (!request) return c.json({ error: 'Invalid sorting request' }, 400);
     const outcome = await services.sorter.sort(request, AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(SORT_DEADLINE_MS)]));
     if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);

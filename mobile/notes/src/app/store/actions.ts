@@ -101,6 +101,8 @@ export interface NewNote {
   readonly id?: string;
   /** A collection's own facts (`linkTemplate`), written in the same batch. */
   readonly templateId?: string;
+  /** Made in the protected section: protected from birth. */
+  readonly locked?: boolean;
 }
 
 /** A new note's record, first on the board. */
@@ -122,6 +124,7 @@ function newNote(init: NewNote, now: number): LocalChange {
       code: init.code ?? '',
       ...(init.emblem !== undefined ? { emblem: init.emblem } : {}),
       ...(init.templateId !== undefined ? { templateId: init.templateId } : {}),
+      ...(init.locked ? { locked: true } : {}),
       hint: init.hint ?? '',
       createdAt: now,
       deletedAt: null,
@@ -254,6 +257,18 @@ export function trashNotes(ids: readonly string[], now: number = Date.now()): Un
   return writeWithUndo(
     ids.filter(id => id !== INBOX_ID).map(id => ({ type: 'note' as const, id, patch: { trashedAt: now, pinned: false } })),
   );
+}
+
+/**
+ * Into the protected section (`locked`), or back among the others: one batch, one undo. « Non classé »
+ * is where unsorted links land and never leaves the board.
+ */
+export function setLocked(ids: readonly string[], locked: boolean): Undo {
+  const kept = ids.filter(id => id !== INBOX_ID);
+  // Written by hand: a note never protected holds no `locked`, and the generic undo would write null, which the field refuses.
+  const before = kept.map(id => ({ type: 'note' as const, id, patch: { locked: getRecord('note', id)?.fields.locked === true } }));
+  write(kept.map(id => ({ type: 'note' as const, id, patch: { locked } })));
+  return () => write(before);
 }
 
 export function restoreNotes(ids: readonly string[]): Undo {
@@ -855,7 +870,9 @@ export function convertToCollection(noteId: string, now: number = Date.now()): C
   if (!note) return { status: 'empty' };
   const done = listToCollection(note, state(), { position: topPosition(), reading: readingEnabled(), now });
   if (done.status !== 'ok') return done;
-  write(done.changes, now);
+  // A protected note's collection stays in the section with it.
+  const changes = note.locked ? done.changes.map(change => (change.type === 'note' && change.id === done.collectionId ? { ...change, patch: { ...change.patch, locked: true } } : change)) : done.changes;
+  write(changes as LocalChange[], now);
   return { status: 'ok', collectionId: done.collectionId, title: done.title, links: done.links, undo: () => write(undoListToCollection(note, done, Date.now())) };
 }
 

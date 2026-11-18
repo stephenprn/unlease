@@ -9,11 +9,14 @@ import { addPagesFrench } from '@unlease/pages/i18n';
 import { contactsData } from '@contacts/data';
 import { eventsData } from '@notes/app/events/store';
 import { notesData } from '@notes/data';
+import { followLock } from '@shared/app/lock';
 import { startApp } from '@shared/start';
 
 import { pagesModule } from './module';
 
 addPagesFrench();
+// Protected pages: the lock shuts itself again (hidden a minute, five minutes idle, the page left).
+followLock();
 void startApp(pagesModule, {
   reads: [notesData, contactsData, eventsData],
   // Dead code outside the dev server and the demo build: the demo is never in the server's build.

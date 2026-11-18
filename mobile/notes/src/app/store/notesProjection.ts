@@ -11,6 +11,8 @@ import type { SyncRecord } from '@unlease/core/sync/record';
 import type { Attachment, CheckItem, Label, LinkItem, Note } from '@unlease/notes/models/entities';
 import type { LinkTemplate } from '@unlease/notes/models/templates';
 import { attachmentFromRecord, checkFromRecord, labelFromRecord, linkFromRecord, linkTemplateFromRecord, noteFromRecord } from '@unlease/notes/sync/entities';
+import { LOCK_TYPE } from '@unlease/core/services/lock';
+import { receiveLock } from '@shared/app/lock';
 import type { LibraryBase, LibraryProjection } from '@shared/app/store/library';
 
 export interface NotesState extends LibraryBase {
@@ -124,6 +126,10 @@ export function notesProjection(): LibraryProjection<NotesState> {
           if (after) touched[record.type].add(after);
           break;
         }
+        // The suite's lock: the shell's store keeps it (`@shared/app/lock`), for Carnet and Pages alike.
+        case LOCK_TYPE:
+          receiveLock(record.fields);
+          break;
         // Another app's records (Pages' blocks kept from before the split): not Carnet's to show.
         default:
           break;

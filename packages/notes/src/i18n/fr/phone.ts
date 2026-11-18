@@ -248,4 +248,10 @@ export const FR_PHONE: Dictionary = {
   'Kept as a note': 'Note gardée telle quelle',
   '{note} as a collection': '{note} en collection',
   'Photos: {done} of {total}': 'Photos : {done} sur {total}',
+  // The protected section (`ui/features/lock`).
+  'Collection protected': 'Collection protégée',
+  'Collection back among your notes': 'Collection revenue parmi vos notes',
+  'Choose the password that keeps your protected notes.': 'Choisissez le mot de passe qui gardera vos notes protégées.',
+  'On this phone, instead of the password.': 'Sur ce téléphone, à la place du mot de passe.',
+  'Unlock the protected section with the password first.': 'Ouvrez d’abord la section protégée avec le mot de passe.',
 };

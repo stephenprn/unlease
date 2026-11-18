@@ -42,6 +42,8 @@ export interface Note {
   readonly templateId?: string | null;
   /** The people of Contacts it is about or for (a gift's, a call's), as they were picked; none for most notes. */
   readonly contactIds: readonly string[];
+  /** In the protected section: shown nowhere else, and there only while the suite's lock is open (`services/lock`). Absent: not. */
+  readonly locked?: boolean;
   readonly createdAt: number;
   readonly deletedAt: number | null;
   /** The newest field clock's time. */

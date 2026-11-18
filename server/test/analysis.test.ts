@@ -207,6 +207,18 @@ describe('filing quick-input links', () => {
     expect(text).toContain('{"id":"films","title":"Films"}');
   });
 
+  it('never shows Claude a collection behind the lock, nor files into one', async () => {
+    pushLists();
+    server.sync.push([rec('note', 'films', { locked: true }, T0 - 900)]);
+    const claude = new FakeClaude().reply(claudeMessage({ ...shopAnswer, listId: 'films' }));
+    const { queue } = analysisOf(server, { fetcher: new FakeFetcher(shopRoutes), claude });
+    server.sync.push([pendingLink('l1', SHOP, T0 - 800, { autoFile: true })]);
+    await queue.idle();
+
+    expect(claude.userText()).not.toContain('"id":"films"');
+    expect(linkFields(server, 'l1')).toMatchObject({ status: 'ready', noteId: INBOX_ID });
+  });
+
   it('falls back to the inbox when nothing fits or Claude names a list that does not exist', async () => {
     pushLists();
     const claude = new FakeClaude().reply(claudeMessage({ ...shopAnswer, listId: null }), claudeMessage({ ...filmAnswer, listId: 'cinema-imaginaire' }));

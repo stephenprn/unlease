@@ -14,6 +14,7 @@ import { APP_NAME } from '@unlease/notes/brand';
 import { t } from '@unlease/core/i18n';
 import { shownTitle, type Note } from '@unlease/notes/models/entities';
 import { bodyText } from '@unlease/notes/services/noteBody';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { loadScheduledReminders, removeScheduledReminder, saveScheduledReminder } from '@data/repositories/reminderRepository';
 import { arm, canScheduleExact, disarm, ensurePermission, initialEvent, onForegroundEvent, ringNow, type ReminderEvent } from '@platform/notifications';
 import { mustArmAgain, planAlarms, rememberMode, type AlarmEntry } from '@shared/app/alarms';
@@ -31,6 +32,8 @@ const BOOK = 'notes';
 export const REFRESH_MINUTES = 60;
 
 function preview(note: Note): { title: string; body: string } {
+  // A protected note rings without a word of itself: on the lock screen, anyone may read it.
+  if (isLockedNote(note)) return { title: t('Protected note'), body: '' };
   const text = bodyText(note);
   const firstLine = text.split('\n').find(line => line.trim()) ?? '';
   return {

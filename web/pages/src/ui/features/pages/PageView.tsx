@@ -50,7 +50,9 @@ import { EditorMenus } from './Menus';
 import { PageContext } from './PageContext';
 import { PageMenu } from './PageMenu';
 import { PageTemplates } from './PageTemplates';
-import { isPrivatePage } from '@unlease/pages/services/pagesAsk';
+import { isPrivatePage, lockingPage } from '@unlease/pages/services/pagesAsk';
+import { closeLock, useLockOpen } from '@shared/app/lock';
+import { LockedPlace } from '@shared/ui/features/lock/LockedPlace';
 import { closePagesAsk, openPagesAsk, usePagesAskSettings, usePagesAskStore } from '../../../app/pagesAsk';
 import styles from './pages.module.css';
 import { pasteFiles } from './pasting';
@@ -187,20 +189,23 @@ const Edited = memo(function Edited({ id }: { id: string }) {
 
 /** Over the head: where the page sits, when it last changed, and its menu (the phone's top bar holds that under 720px). */
 function PageBar({ id, menu }: { id: string; menu: boolean }) {
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
   const more = useRef<HTMLButtonElement>(null);
   const kept = useBlocksStore(s => isPrivatePage(s.blocks, id));
   const ask = usePagesAskSettings() !== null && !kept;
   const asking = usePagesAskStore(s => s.open === id);
+  const locked = useBlocksStore(s => lockingPage(s.blocks, id) !== null);
+  const open = useLockOpen();
   return (
     <div className={styles.pageBar}>
       <Breadcrumb id={id} />
       <Edited id={id} />
       {menu ? (
         <>
+          {locked && open ? <IconButton icon="lock" label={t('Lock')} className={styles.pageAsk} onClick={closeLock} /> : null}
           {ask ? <IconButton icon="sparkle" label={t('Ask Claude')} className={styles.pageAsk} pressed={asking} onClick={() => (asking ? closePagesAsk() : openPagesAsk(id))} /> : null}
-          <IconButton ref={more} icon="more" label={t('More actions')} className={styles.pageMore} hasPopup="menu" expanded={open} onClick={() => setOpen(true)} />
-          <PageMenu id={id} open={open} anchor={more} onDismiss={() => setOpen(false)} />
+          <IconButton ref={more} icon="more" label={t('More actions')} className={styles.pageMore} hasPopup="menu" expanded={opened} onClick={() => setOpen(true)} />
+          <PageMenu id={id} open={opened} anchor={more} onDismiss={() => setOpen(false)} />
         </>
       ) : null}
     </div>
@@ -364,6 +369,30 @@ function Tail({ page, readOnly }: { page: string; readOnly: boolean }) {
         else focusBlock(insertBlock(page, page, ids.length, { kind: 'text', text: '' }), 'start');
       }}
     />
+  );
+}
+
+/**
+ * A page behind the shut lock: where it sits and its head (read only), then, in place of its blocks,
+ * their shapes frosted under the lock. Nothing of what it holds is drawn, copied or offered.
+ */
+function ShutPage({ page, own, menu, binned }: { page: Block; own: boolean; menu: boolean; binned: boolean }) {
+  return (
+    <PageContext.Provider value={{ page: page.id, readOnly: true }}>
+      <article className={styles.page} aria-label={page.text.trim() || t(UNTITLED_PAGE)}>
+        {binned ? <BinBanner id={page.id} /> : null}
+        <PageBar id={page.id} menu={menu && !binned} />
+        <div className={styles.editor}>
+          <header className={styles.head}>
+            {page.icon ? <EmojiButton value={page.icon} label={t('Change page icon')} disabled onChange={() => undefined} className={styles.pageIcon} /> : null}
+            <PageTitle page={page} readOnly />
+          </header>
+          <div className={styles.shut}>
+            <LockedPlace ghosts="page" what={own ? t('This page is protected: it opens with the password.') : t('A page above this one is protected: it opens with the password.')} />
+          </div>
+        </div>
+      </article>
+    </PageContext.Provider>
   );
 }
 
@@ -537,6 +566,9 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
   const [dropping, setDropping] = useState(false);
   const article = useRef<HTMLElement>(null);
   const drawn = page?.kind === 'page' && page.deletedAt === null;
+  // Behind the shut lock (its own, or a page's above it): its head shows, its blocks wait.
+  const locker = useBlocksStore(s => lockingPage(s.blocks, id));
+  const lockOpen = useLockOpen();
 
   useEffect(() => {
     openEditor(id);
@@ -561,6 +593,7 @@ export function PageView({ id, menu = true }: { id: string; menu?: boolean }) {
   useEffect(() => (drawn && !binned && article.current ? selectWithBox(article.current) : undefined), [drawn, binned]);
 
   if (!page || page.deletedAt !== null || page.kind !== 'page') return null;
+  if (locker !== null && !lockOpen) return <ShutPage page={page} own={locker === id} menu={menu} binned={binned} />;
   const readOnly = binned;
 
   const selectedIds = (): string[] => {

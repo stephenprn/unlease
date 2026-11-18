@@ -9,6 +9,7 @@ import { showSnack } from '@shared/app/store/uiStore';
 import { t, tc } from '@unlease/core/i18n';
 import { labelNameTaken } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 
 import { EmptyState, Ground, LabelEditRow, LabelsList, NewLabelStrip, Sheet, SHEET_INSET, TopBar } from '../components';
 import { LineColorPicker } from '@shared/ui/components/LineColorPicker';
@@ -70,7 +71,7 @@ export function LabelsScreen({ navigation }: ScreenProps<'Labels'>) {
 function LabelRow({ id, onColor, onOpen }: { id: string; onColor: () => void; onOpen: () => void }) {
   const label = useLibraryStore(s => s.labels[id]);
   // The notes wearing it, out of the bin, as the web counts them: a press shows them.
-  const uses = useLibraryStore(s => s.noteOrder.filter(nid => s.notes[nid]?.labelIds.includes(id) && s.notes[nid]?.trashedAt === null).length);
+  const uses = useLibraryStore(s => s.noteOrder.filter(nid => s.notes[nid]?.labelIds.includes(id) && s.notes[nid]?.trashedAt === null && shownOutsideLock(s.notes[nid])).length);
   if (!label) return null;
   return (
     <LabelEditRow

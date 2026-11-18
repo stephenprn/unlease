@@ -6,6 +6,7 @@
 import type { BlockKind, BlockTarget } from '../models/blocks';
 import { containingPage, isInBin, type BlockMap, type ChildIndex } from './blocks';
 import { pageContent } from './pageSearch';
+import { isLockedPage } from './pagesAsk';
 import { spotKey, type SpotMeta } from '@unlease/core/services/spotlight';
 import type { PartRole, SearchDoc, SearchPart } from '@unlease/core/services/searchIndex';
 
@@ -26,12 +27,12 @@ function blockRole(kind: BlockKind): PartRole {
   return HEADINGS.has(kind) ? 'heading' : POINTERS.has(kind) ? 'meta' : 'body';
 }
 
-/** Every live page as a document; `label` names what a mention or a bookmark points at. */
-export function pagesSpotlightDocs(library: PagesSpotLibrary, label: (target: BlockTarget) => string): SearchDoc<SpotMeta>[] {
+/** Every live page as a document; `label` names what a mention or a bookmark points at. A page behind the lock is its title alone while the lock is shut (`lockOpen`). */
+export function pagesSpotlightDocs(library: PagesSpotLibrary, label: (target: BlockTarget) => string, lockOpen = false): SearchDoc<SpotMeta>[] {
   const docs: SearchDoc<SpotMeta>[] = [];
   for (const page of Object.values(library.blocks)) {
     if (page.kind !== 'page' || page.deletedAt !== null || isInBin(library.blocks, page.id)) continue;
-    const content = pageContent(page, library.blocks, library.blocksByParent, label);
+    const content = lockOpen || !isLockedPage(library.blocks, page.id) ? pageContent(page, library.blocks, library.blocksByParent, label) : { parts: [], editedAt: page.editedAt };
     const parts = content.parts.map((part): SearchPart => ({ text: part.text, role: blockRole(part.kind), ref: part.blockId }));
     docs.push({
       key: spotKey('page', page.id),

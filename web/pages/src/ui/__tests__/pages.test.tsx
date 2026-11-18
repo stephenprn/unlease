@@ -2,13 +2,19 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createSHA256, pbkdf2 } from 'hash-wasm';
+
+import { fromBase64Url, toBase64Url } from '@unlease/core/services/bytes';
+import { LOCK_ID, LOCK_TYPE, makeLockCheck } from '@unlease/core/services/lock';
 import { blocksFromText } from '@unlease/pages/services/pageText';
 
 import { freshLibrary } from '@test/library';
 import { addLink, createLine, createNote, setLinkDone, updateLink } from '@notes/app/store/actions';
 import { pagesLibrary } from '../../app/store/blocks';
+import { closeLock, isLockOpen } from '@shared/app/lock';
+import { writeLocal } from '@shared/app/store/records';
 import { useUiStore } from '@shared/app/store/ui';
-import { createPage, insertBlock, insertDrafts, insertTable, movePages, setCell, setCollectionView, trashPage } from '../../app/store/pages';
+import { createPage, insertBlock, insertDrafts, insertTable, movePages, setCell, setCollectionView, setPageLocked, trashPage } from '../../app/store/pages';
 import { setExpanded, setToggleOpen, usePagesUiStore } from '../../app/store/pagesUi';
 import { BLOCKS_TYPE, htmlToDrafts, pageMarkdown, readBlocks, writeBlocks } from '../features/pages/clipboard';
 import { selectBlocks } from '../features/pages/editorStore';
@@ -61,13 +67,47 @@ describe('a page', () => {
     expect(screen.queryByRole('button', { name: 'Plus d’actions' })).toBeNull();
   });
 
+  it('behind the lock, shows its title and none of its blocks until the password opens it', async () => {
+    const user = userEvent.setup();
+    const { page } = travelPage();
+    const under = createPage({ title: 'Billets', parentId: page });
+    insertBlock(under, under, 0, { kind: 'text', text: 'Siège 12A' });
+    // A cheap check (the real one costs a second), read back by the app's own PBKDF2.
+    const check = await makeLockCheck(
+      {
+        random: length => new Uint8Array(length).fill(7),
+        pbkdf2: async (secret, salt, iterations) =>
+          toBase64Url(await pbkdf2({ password: secret, salt: fromBase64Url(salt)!, iterations, hashLength: 32, hashFunction: createSHA256(), outputType: 'binary' })),
+      },
+      'ouvre-toi',
+      1000,
+    );
+    writeLocal([{ type: LOCK_TYPE, id: LOCK_ID, patch: { check, setAt: 1 } }]);
+    setPageLocked(page, true);
+    closeLock();
+    const { unmount } = render(<PageView id={under} />);
+    expect(screen.getByRole('textbox', { name: 'Titre de la page' })).toHaveTextContent('Billets');
+    expect(screen.queryByText('Siège 12A')).toBeNull();
+    expect(screen.getByText('Une page au-dessus de celle-ci est protégée : elle s’ouvre avec le mot de passe.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Mot de passe'), 'ouvre-moi');
+    await user.click(screen.getByRole('button', { name: 'Déverrouiller' }));
+    expect(await screen.findByText('Ce mot de passe n’ouvre pas le verrou.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Mot de passe'));
+    await user.type(screen.getByLabelText('Mot de passe'), 'ouvre-toi');
+    await user.click(screen.getByRole('button', { name: 'Déverrouiller' }));
+    await waitFor(() => expect(screen.getByText('Siège 12A')).toBeInTheDocument());
+    expect(isLockOpen()).toBe(true);
+    unmount();
+    closeLock();
+  });
+
   it('says when it last changed and has its own menu: a copy, the bin', async () => {
     const user = userEvent.setup();
     const { page } = travelPage();
     render(<PageView id={page} />);
     expect(screen.getByText(/^Modifiée à \d\d:\d\d$/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Plus d’actions' }));
-    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ajouter une sous-page', 'Déplacer vers…', 'Dupliquer', 'Copier le lien', 'Exporter en Markdown', 'Historique des versions', 'Mettre à la corbeille']);
+    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ajouter une sous-page', 'Déplacer vers…', 'Dupliquer', 'Copier le lien', 'Exporter en Markdown', 'Historique des versions', 'Protéger par mot de passe', 'Mettre à la corbeille']);
     await user.click(screen.getByRole('menuitem', { name: 'Dupliquer' }));
     expect(Object.values(state().blocks).filter(block => block.kind === 'page').map(block => block.text)).toContain('Voyage (copie)');
     await user.click(screen.getByRole('button', { name: 'Plus d’actions' }));

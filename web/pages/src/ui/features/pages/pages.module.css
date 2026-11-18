@@ -291,6 +291,11 @@
   display: flow-root;
 }
 
+/* A page behind the shut lock: its blocks' shapes, frosted, under the lock, in the column's measure. */
+.shut {
+  margin-top: 4px;
+}
+
 .block {
   position: relative;
   /* The gutter lines up with the first line of the block's text. */

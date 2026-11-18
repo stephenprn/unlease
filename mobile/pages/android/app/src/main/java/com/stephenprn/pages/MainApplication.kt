@@ -17,6 +17,7 @@ import com.stephenprn.unlease.launcher.LauncherIconPackage
 import com.stephenprn.unlease.media.MediaPackage
 import com.stephenprn.unlease.organic.OrganicPackage
 import com.stephenprn.unlease.suitelink.SuiteLinkPackage
+import com.stephenprn.unlease.lock.SuiteLockPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -36,6 +37,7 @@ class MainApplication : Application(), ReactApplication {
           add(OrganicPackage())
           add(ClipboardPackage())
           add(SuiteLinkPackage())
+          add(SuiteLockPackage())
           add(LauncherIconPackage())
           // Pages' own: text shared to it becomes a page.
           add(IntakePackage())

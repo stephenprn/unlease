@@ -1,4 +1,4 @@
-/** App-wide overlays and what feeds them: shares, reminder notifications, the sync lifecycle, the kitchen timers' rings. */
+/** App-wide overlays and what feeds them: shares, reminder notifications, the sync lifecycle, the kitchen timers' rings, the lock's fingerprint offer. */
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { INBOX_ID } from '@unlease/notes/models/entities';
@@ -13,6 +13,7 @@ import { onShare, takePendingShare, type Share } from '@platform/intake';
 
 import { navigate, navigationRef } from '../../navigation/navigationRef';
 import { ServicesCssSheet } from '@shared/ui/features/appearance/ServicesCssSheet';
+import { FingerprintOffer } from '@shared/ui/features/lock';
 import { KitchenAlarms } from '../links/KitchenTimers';
 import { CaptureSheet } from './CaptureSheet';
 import { TransferPanel } from './TransferPanel';
@@ -64,6 +65,8 @@ export function Overlays(): React.ReactElement {
       <CaptureSheet />
       <ServicesCssSheet />
       <KitchenAlarms />
+      {/* Once the password opened the protected section: the fingerprint, next time? */}
+      <FingerprintOffer />
     </>
   );
 }

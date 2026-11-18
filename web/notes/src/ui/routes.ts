@@ -1,7 +1,7 @@
 /**
  * Carnet's places, all under `/notes`: the board and its views, a note over the board it was opened
  * from, a collection, a link over its collection, the lists of collections and labels, « Ce que Claude
- * relève » (`/notes/facts`), a collection's facts (`/notes/facts/<collection>`) and a kind's usual facts
+ * relève » (`/notes/facts`), the protected section (`/notes/protected`), a collection's facts (`/notes/facts/<collection>`) and a kind's usual facts
  * (`/notes/facts/kind-recipe`), and the capture links of the installed app (`/notes/capture/note`, its
  * shortcuts and share target). The old `/notes/templates` addresses read as the same places.
  */
@@ -38,6 +38,7 @@ export function parseNotesRoute(path: string): Route | null {
   if (rest === '/reminders') return { name: 'board', view: 'reminders' };
   if (rest === '/archive') return { name: 'board', view: 'archive' };
   if (rest === '/trash') return { name: 'board', view: 'trash' };
+  if (rest === '/protected') return { name: 'board', view: 'protected' };
   if (rest === '/lines') return { name: 'lines' };
   if (rest === '/labels') return { name: 'labels' };
   if (rest === '/facts' || rest === '/templates') return { name: 'templates' };
@@ -66,6 +67,7 @@ export function pathForView(view: BoardView): string {
   if (view === 'reminders') return `${HOME}/reminders`;
   if (view === 'archive') return `${HOME}/archive`;
   if (view === 'trash') return `${HOME}/trash`;
+  if (view === 'protected') return `${HOME}/protected`;
   return `${HOME}/label/${encodeURIComponent(view.slice(6))}`;
 }
 
@@ -82,4 +84,6 @@ export const paths = {
   /** A collection's facts (its id), or a kind's usual facts (`kind-<kind>`). */
   template: (part: string): string => `${HOME}/facts/${encodeURIComponent(part)}`,
   trash: `${HOME}/trash`,
+  /** The protected section (`notes/services/lock`). */
+  protected: `${HOME}/protected`,
 } as const;

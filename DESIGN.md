@@ -967,6 +967,15 @@ The same in every app, on both clients.
 - **Empty:** the `trash` collage, « La corbeille est vide », « … y restent {days} jours, le temps de changer d’avis. ».
 - A binned record says so on its own page, in a panel with « Restaurer ». Réglages › Données' « Vider la corbeille » (`trash`) gives the count, or « La corbeille est vide. » with nothing to press.
 
+### The Lock
+Carnet's protected section and Pages' protected pages, the same on both clients (web `LockedPlace`, phone `LockPanel`; `core/services/lock`).
+- **Shut:** what it keeps shows as shapes only, a wall of paper cards (notes) or a page's heading and lines (a page): frosted under the field's veil on the web, fading down the screen on the phone. Over them, the lock: a panel (panel radius, Raised), the `lock` glyph on the action container's pebble (52 by 48), « Verrouillé » in title, what it keeps in meta, the password (`secret`: hidden with its eye, never offered to a password manager), « Mot de passe oublié ? » (text, small) and « Déverrouiller » (filled, `unlock`). Forgotten: the server's token (`key`, « Continuer »), then a new password. Inside a dialog (a note opened by its address) the panel is bare: the dialog's own title.
+- **Phone:** where the fingerprint is kept it is asked on arrival, « Déverrouiller avec l'empreinte » (filled) leads and « Déverrouiller » turns tonal. Opened, the panel fades (250, decelerate; Remove animations: cut). While a protected place shows open, no screenshot nor recents thumbnail.
+- **Choosing the password:** a dialog (the sheet on the phone): why it is asked, the password twice (6 characters at least), and once, on the well with `info`, what it does and does not do: it hides, it does not encrypt.
+- **Open:** « Verrouiller » (`lock`) in the place's head or top bar shuts it at once.
+- **Carnet:** « Protégées » (`lock`, solid when chosen) between Archives and Corbeille, only while Réglages' « Section protégée » is on; « Protéger » and « Ne plus protéger » in a note's menu and the selection bar (in the section, it takes Archiver's place), each with a slip and « Annuler ».
+- **Pages:** a protected page keeps its top bar, breadcrumb, emoji and title; the lock takes the blocks' place. Its tree row ends in a 16 `lock` glyph in muted ink.
+
 ### The Administration
 - **Home:** a row per section, 64 high, list-row inset: glyph (22) on a 40 tile of the primary's wash (small radius), title in body strong over its state (an 8 dot, then a meta line), a chevron. Section ids are addresses, the same on both clients.
 - **Removing a section's setting** (« Supprimer la clé », « Retirer le stockage S3 », « Désactiver Seafile », « Délier Seerr »): a small danger text button in the status row, never beside « Enregistrer »; under the status words on the phone and phone-sized windows.

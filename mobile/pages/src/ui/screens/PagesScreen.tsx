@@ -17,6 +17,7 @@ import { APP_WORDS } from '@unlease/core/appWords';
 import { t } from '@unlease/core/i18n';
 import { RICH_KINDS, UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages } from '@unlease/pages/services/blocks';
+import { isLockedPage } from '@unlease/pages/services/pagesAsk';
 import { formatEdited, plural } from '@unlease/core/services/format';
 import { matchRanges } from '@unlease/core/services/search';
 import { searchSummary } from '@unlease/core/services/searchWords';
@@ -29,6 +30,7 @@ import { childPagesOf, livePageIds, mentionLabel, pageEdited, useChildPages, use
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 import { createPage, duplicateBlocks, trashPage } from '@app/store/pages';
 import { requestTitleFocus, setExpanded } from '@app/store/pagesUi';
+import { useLockOpen } from '@shared/app/lock';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
 
 import { AppText, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, Icon, ListRow, SearchHeader, Sheet, SyncLine, Tappable, useArrivals, usePullToSync } from '@shared/ui/components';
@@ -49,6 +51,8 @@ const RECENT = 4;
 /** A page's first words (its own content's, a sub-page's are its own) and the pages above it. */
 function pageGlance(s: LibraryState, id: string): { readonly preview: string; readonly path: string } {
   let preview = '';
+  // Behind the lock: none of its words, whether the lock is open or not (the home is glanced at).
+  const locked = isLockedPage(s.blocks, id);
   const walk = (parent: string, depth: number): void => {
     for (const childId of s.blocksByParent[parent] ?? []) {
       const block = s.blocks[childId];
@@ -57,7 +61,8 @@ function pageGlance(s: LibraryState, id: string): { readonly preview: string; re
       if (!preview) walk(childId, depth + 1);
     }
   };
-  walk(id, 0);
+  if (locked) preview = t('Protected by a password');
+  else walk(id, 0);
   const path = ancestorPages(s.blocks, id)
     .map(page => page.text.trim() || t(UNTITLED_PAGE))
     .join(' › ');
@@ -154,14 +159,16 @@ function PageActionsSheet({ id, onDismiss, onOpen, onNewPage }: { id: string | n
 /** The pages a query finds, the best first, with the words that matched. */
 function usePageResults(query: string) {
   const revision = useLibraryStore(s => s.revision);
+  // A protected page's words count only while the lock is open; shut, its title alone.
+  const lockOpen = useLockOpen();
   return useMemo(() => {
     const wanted = query.trim();
     if (!wanted) return [];
     const { blocks, blocksByParent } = useLibraryStore.getState();
-    return searchPageDocuments(buildPageDocuments(blocks, blocksByParent, mentionLabel), wanted);
+    return searchPageDocuments(buildPageDocuments(blocks, blocksByParent, mentionLabel, lockOpen), wanted);
     // The revision stands for every change of the library.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, revision]);
+  }, [query, revision, lockOpen]);
 }
 
 export function PagesScreen({ navigation, route }: ScreenProps<'Pages'>) {

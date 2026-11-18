@@ -14,7 +14,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { noteBackdrop, patternBackdrop } from '@unlease/design/backgrounds';
 import { collectionEmblem } from '@unlease/notes/models/collections';
 import type { GlyphName } from '@unlease/design/glyphs';
+import { APPS } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
+import { isLockedPage } from '@unlease/pages/services/pagesAsk';
 import { RICH_KINDS, UNTITLED_PAGE, type Block, type BlockTarget, type CollectionView } from '@unlease/pages/models/blocks';
 import { asLineColor, isRuledPattern } from '@unlease/design/colors';
 import { shownHint, shownTitle } from '@unlease/notes/models/entities';
@@ -28,7 +30,7 @@ import { MAX_DRAWING_RATIO } from '@unlease/notes/services/wall';
 import { dateWords } from '@unlease/core/services/dates';
 import { useBlobSource, type ImageSource } from '@shared/app/hooks/useImageSource';
 import { eventWhen } from '@carnet/ui/features/events/findEvents';
-import { mentionLabel, targetTitle } from '@app/hooks/usePages';
+import { inProtectedSection, mentionLabel, targetTitle } from '@app/hooks/usePages';
 import { setLinkDone } from '@app/store/actions';
 import { setCollectionView } from '@app/store/pages';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
@@ -67,6 +69,8 @@ interface Glimpse {
 /** The first words of what a note, a collection, a link or a page holds. */
 function glimpse(s: LibraryState, target: BlockTarget): Glimpse {
   const none: Glimpse = { text: '', meta: '', picture: null, pictureUrl: null };
+  // Carnet's protected section: its name only, never a word of it.
+  if (inProtectedSection(s, target)) return { ...none, meta: target.type === 'link' ? t('Link') : t('Note') };
   switch (target.type) {
     case 'note': {
       const note = s.notes[target.id];
@@ -89,6 +93,8 @@ function glimpse(s: LibraryState, target: BlockTarget): Glimpse {
       return { text: link.summary || prettyUrl(link.url), meta: [source, link.price !== null ? formatPrice(link.price, link.currency) : null].filter(Boolean).join(' · ') || t('Link'), picture: link.imageIds[0] ?? null, pictureUrl: link.imageUrl };
     }
     case 'page': {
+      // Behind the lock: its title alone.
+      if (isLockedPage(s.blocks, target.id)) return { ...none, meta: t('Page') };
       let text = '';
       for (const id of s.blocksByParent[target.id] ?? []) {
         const block = s.blocks[id];
@@ -118,6 +124,19 @@ function GoneCard({ target }: { target: BlockTarget }) {
       <AppText variant="meta">
         {target.type === 'page' ? t('This page no longer exists.') : target.type === 'link' ? t('This link no longer exists.') : target.type === 'event' ? t('This event no longer exists.') : target.type === 'contact' ? t('This contact no longer exists.') : t('This note no longer exists.')}
       </AppText>
+    </Organic>
+  );
+}
+
+/** A note or a link of Carnet's protected section, embedded before it went there: it says so, and shows nothing of it. */
+function ProtectedCard() {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  const hold = useBlockHold();
+  return (
+    <Organic outline="frame" style={styles.gone} accessible {...hold}>
+      <Icon name="lock" size={20} color={theme.color.inkMuted} />
+      <AppText variant="meta">{t('This note is protected: it opens in {app} with the password.', { app: APPS.notes.name })}</AppText>
     </Organic>
   );
 }
@@ -407,6 +426,7 @@ function PageEmbed({ id }: { id: string }) {
   const hold = useBlockHold();
   const page = useLibraryStore(s => s.blocks[id]);
   const seen = useLibraryStore(useShallow(s => glimpse(s, { type: 'page', id })));
+  const locked = useLibraryStore(s => isLockedPage(s.blocks, id));
   if (!page) return null;
   const title = page.text.trim() || t(UNTITLED_PAGE);
   return (
@@ -415,7 +435,7 @@ function PageEmbed({ id }: { id: string }) {
       <Tappable unstable_pressDelay={listPressDelay} {...hold} onPress={() => openTarget({ type: 'page', id })} accessibilityRole="link" accessibilityLabel={t('Open page {title}', { title })} style={styles.pageEmbed}>
         <AppText variant="title">{page.icon ? `${page.icon} ${title}` : title}</AppText>
         <AppText variant="body" numberOfLines={6}>
-          {seen.text || t('Empty page')}
+          {locked ? t('Protected by a password') : seen.text || t('Empty page')}
         </AppText>
       </Tappable>
     </Organic>
@@ -423,10 +443,14 @@ function PageEmbed({ id }: { id: string }) {
 }
 
 function Embed({ block, target }: { block: Block; target: BlockTarget }) {
-  const kind = useLibraryStore(s => (targetTitle(s, target) === null ? 'gone' : target.type === 'note' && s.notes[target.id]?.kind === 'links' ? 'collection' : target.type));
+  const kind = useLibraryStore(s =>
+    targetTitle(s, target) === null ? 'gone' : inProtectedSection(s, target) ? 'protected' : target.type === 'note' && s.notes[target.id]?.kind === 'links' ? 'collection' : target.type,
+  );
   switch (kind) {
     case 'gone':
       return <GoneCard target={target} />;
+    case 'protected':
+      return <ProtectedCard />;
     case 'collection':
       return <CollectionEmbed block={block} id={target.id} />;
     case 'note':

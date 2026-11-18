@@ -72,6 +72,9 @@ export interface LocalChange {
 export interface LibraryEngine {
   /** The app this library is, and so the record types it syncs (`syncedTypes`). */
   readonly app: AppId;
+  getRecord(type: string, id: string): SyncRecord | undefined;
+  /** One user action: every field of the batch shares one fresh clock. */
+  writeLocal(changes: readonly LocalChange[], now?: number): void;
   deviceNode(): string;
   deviceTime(): number;
   onLocalWrite(listener: () => void): () => void;
@@ -85,9 +88,6 @@ export interface LibraryEngine {
 export interface Library<S extends LibraryBase> extends LibraryEngine {
   readonly useStore: UseBoundStore<StoreApi<S>>;
   load(now?: number): void;
-  getRecord(type: string, id: string): SyncRecord | undefined;
-  /** One user action: every field of the batch shares one fresh clock. */
-  writeLocal(changes: readonly LocalChange[], now?: number): void;
   /** Saves what an editor holds for a typed field, merged with an edit that landed meanwhile (`since`: what it last saved or showed). Returns the text now stored. */
   saveTypedField(type: string, id: string, field: string, since: string | null, typed: string): string;
   /** An import's records: merged like remote ones (own clocks), then marked pending. */

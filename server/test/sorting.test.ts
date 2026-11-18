@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { INBOX_ID } from '@unlease/notes/models/entities';
 import type { SortLink, SortRequest, SortTarget } from '@unlease/notes/sync/sorting';
-import { AUTH, claudeMessage, createTestServer, type TestServer } from './helpers';
+import { AUTH, claudeMessage, createTestServer, listNote, T0, type TestServer } from './helpers';
 
 const mode: SortTarget = { id: 'mode', title: 'Mode', hint: 'Vêtements, chaussures et accessoires', examples: ['Jupe plissée'] };
 const films: SortTarget = { id: 'films', title: 'Films', hint: '', examples: [] };
@@ -119,6 +119,25 @@ describe('POST /api/sort, filing', () => {
     const cost = (3000 * 4 + 500 * 20 + 1500 * 0.2) / 1e6;
     expect(usage.monthToDate).toEqual({ analyses: 0, inputTokens: 4500, outputTokens: 500, costUsd: Number(cost.toFixed(4)) });
     expect(server.db.prepare('SELECT task, link_id, ok FROM analyses').all()).toEqual([{ task: 'sort', link_id: '', ok: 1 }]);
+  });
+});
+
+describe('POST /api/sort, the lock', () => {
+  it('never offers Claude a collection behind the lock, whatever the client sent', async () => {
+    server.sync.push([listNote('films', 'Films', T0, { locked: true })]);
+    server.claude.reply(claudeMessage({ moves: [{ link: 1, to: 1 }, { link: 2, to: 2 }] }));
+    const { status, body } = await postSort(fileRequest);
+
+    expect(status).toBe(200);
+    // Only « Mode » was numbered: a move to 2 is a number Claude was never given.
+    expect(body).toEqual({ moves: [{ link: 'l1', to: 'mode' }] });
+    expect(server.claude.userText()).not.toContain('Films');
+  });
+
+  it('refuses a request whose every target is behind the lock', async () => {
+    server.sync.push([listNote('mode', 'Mode', T0, { locked: true }), listNote('films', 'Films', T0, { locked: true })]);
+    expect((await postSort(fileRequest)).status).toBe(400);
+    expect(server.claude.requests).toHaveLength(0);
   });
 });
 

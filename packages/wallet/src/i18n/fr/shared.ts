@@ -79,7 +79,6 @@ export const FR_SHARED: Dictionary = {
   'Vault': 'Coffre',
   'At the till': 'À la caisse',
   'Lock papers again': 'Reverrouiller les papiers',
-  'Unlock with your fingerprint': 'Déverrouiller avec l’empreinte',
   'Change the passphrase': 'Changer la phrase secrète',
   'Recovery kit': 'Kit de secours',
   'Keep cards open in this browser': 'Garder les cartes ouvertes dans ce navigateur',

@@ -180,6 +180,11 @@ export interface Block {
   readonly immichAssetIds: readonly string[];
   /** A page kept away from Claude: neither it nor its sub-pages are ever sent with a question. */
   readonly private: boolean;
+  /**
+   * A page behind the suite's lock: its title shows (the tree, a mention, a breadcrumb), its blocks and
+   * those of its sub-pages only once the lock is open; never sent to Claude (`isPrivatePage`). Absent: not.
+   */
+  readonly locked?: boolean;
   /** A page in the bin (everything under it goes with it). */
   readonly trashedAt: number | null;
   readonly createdAt: number;
@@ -233,6 +238,7 @@ export const BLOCK_FIELD_DEFAULTS: Readonly<Record<string, unknown>> = {
   immichAssetIds: [],
   ratio: 1,
   private: false,
+  locked: false,
   trashedAt: null,
   deletedAt: null,
 };

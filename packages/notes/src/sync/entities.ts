@@ -57,13 +57,14 @@ export function noteFromRecord(record: SyncRecord): Note {
     modules: Array.isArray(f.modules) ? f.modules.filter((key): key is string => typeof key === 'string') : null,
     templateId: typeof f.templateId === 'string' && f.templateId ? f.templateId : null,
     contactIds: asStrings(f.contactIds),
+    locked: asBool(f.locked),
     createdAt: asTime(f.createdAt),
     deletedAt: asNullableTime(f.deletedAt),
     editedAt: editedAt(record),
   };
 }
 
-/** `emblem`, `pattern`, `modules`, `templateId`, `rich`, `drawing` and `contactIds` are written only when given: fields most notes never set. */
+/** `emblem`, `pattern`, `modules`, `templateId`, `rich`, `drawing`, `contactIds` and `locked` are written only when given: fields most notes never set. */
 export function noteFields(
   note: Omit<Note, 'id' | 'editedAt' | 'emblem' | 'pattern' | 'modules' | 'templateId' | 'rich' | 'drawing' | 'contactIds'> & {
     readonly emblem?: string | null;
@@ -94,6 +95,7 @@ export function noteFields(
     ...(note.modules !== undefined && note.modules !== null ? { modules: [...note.modules] } : {}),
     ...(note.templateId ? { templateId: note.templateId } : {}),
     ...(note.contactIds && note.contactIds.length > 0 ? { contactIds: [...note.contactIds] } : {}),
+    ...(note.locked ? { locked: true } : {}),
     hint: note.hint,
     createdAt: note.createdAt,
     deletedAt: note.deletedAt,

@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import { shownTitle } from '@unlease/notes/models/entities';
 import { TEXT_LIMITS } from '@unlease/notes/sync/types';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { addCheck } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
 
@@ -27,8 +28,9 @@ export function AddItemSheet({ visible, noteId, onDismiss }: AddItemSheetProps) 
   const checks = useLibraryStore(s => s.checks);
   const [text, setText] = useState('');
   const [added, setAdded] = useState<readonly string[]>([]);
-  const live = !!note && note.deletedAt === null && note.trashedAt === null && note.kind === 'checklist';
-  const name = note ? shownTitle(note).trim() : '';
+  // A list protected since the widget was made takes nothing from the home screen: it says it is gone.
+  const live = !!note && note.deletedAt === null && note.trashedAt === null && note.kind === 'checklist' && shownOutsideLock(note);
+  const name = note && live ? shownTitle(note).trim() : '';
 
   const add = () => {
     const typed = text.trim();

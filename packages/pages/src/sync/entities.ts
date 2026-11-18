@@ -99,6 +99,7 @@ export function blockFromRecord(record: SyncRecord): Block {
     immichAssetIds: Array.isArray(f.immichAssetIds) ? f.immichAssetIds.filter((entry): entry is string => typeof entry === 'string' && entry !== '') : [],
     ratio: typeof f.ratio === 'number' && Number.isFinite(f.ratio) && f.ratio > 0 ? f.ratio : 1,
     private: asBool(f.private),
+    locked: asBool(f.locked),
     trashedAt: asNullableTime(f.trashedAt),
     createdAt: asTime(f.createdAt),
     deletedAt: asNullableTime(f.deletedAt),

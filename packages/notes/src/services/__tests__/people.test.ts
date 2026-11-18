@@ -50,5 +50,7 @@ describe('the people a note or a link names', () => {
     };
     expect(giftIdeasFor(notes, links, { ids: ['lea', 'merged'], name: 'Léa Martin' }).map(found => found.id)).toEqual(['b', 'a', 'c']);
     expect(giftIdeasFor({ mode: notes.mode }, links, { ids: ['lea'], name: 'Léa' })).toEqual([]);
+    // Behind the lock, the collection's ideas show nowhere else.
+    expect(giftIdeasFor({ ...notes, gifts: { ...notes.gifts, locked: true } }, links, { ids: ['lea'], name: 'Léa' })).toEqual([]);
   });
 });

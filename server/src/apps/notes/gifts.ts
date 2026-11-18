@@ -2,7 +2,7 @@
  * Gift ideas (`POST /api/notes/gifts`, `core/sync/gifts`): Contacts keeps a product's link for
  * someone in Carnet's « Cadeaux » collection. The collection is the one this server made for it
  * (its id kept in `meta`), else a live collection named so in either language (made by hand), else a
- * new one at the top of the board. The link's people (`contactIds`) name the contact it is for; an
+ * new one at the top of the board; never one behind the lock (Carnet's protected section). The link's people (`contactIds`) name the contact it is for; an
  * address the collection holds already gains them. A new one is added at its top, filed by the
  * person, read by Claude as any saved link (a reading of the same address elsewhere copied, when it
  * was read with the same template as « Cadeaux » reads with). An
@@ -17,6 +17,7 @@ import { asLineColor, nextLineColor } from '@unlease/design/colors';
 import { collectionEmblem, nextEmblem } from '@unlease/notes/models/collections';
 import { INBOX_ID, type LinkItem, type Note } from '@unlease/notes/models/entities';
 import { GIFT_COLLECTION_NAMES } from '@unlease/notes/services/gifts';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { planLinks, savedAddresses } from '@unlease/notes/services/savedLinks';
 import { linkFields, linkFromRecord, noteFields, noteFromRecord } from '@unlease/notes/sync/entities';
 import { PEOPLE_MAX } from '@unlease/notes/sync/types';
@@ -52,7 +53,7 @@ export class GiftMaker {
     for (const record of records.ofType('note')) notes[record.id] = noteFromRecord(record);
     const links: Record<string, LinkItem> = {};
     for (const record of records.ofType('link')) links[record.id] = linkFromRecord(record);
-    const isLive = (note: Note | undefined): note is Note => !!note && note.kind === 'links' && note.deletedAt === null && note.trashedAt === null;
+    const isLive = (note: Note | undefined): note is Note => !!note && note.kind === 'links' && note.deletedAt === null && note.trashedAt === null && shownOutsideLock(note);
 
     const edits: ServerEdit[] = [];
     const remembered = readMeta(db, META_KEY);

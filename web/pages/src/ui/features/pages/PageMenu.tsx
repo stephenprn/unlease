@@ -1,20 +1,23 @@
 /**
  * A page's own menu, « Plus d’actions » in its head (in the phone's top bar under 720px): Claude
  * when the Administration offers it, a sub-page, a move to another page, a copy, its address, its
- * Markdown, its past versions, keeping it away from Claude, and the bin, last.
+ * Markdown, its past versions, keeping it away from Claude, its password, and the bin, last. Behind
+ * the shut lock, only what its title allows: a move, its address, its protection, the bin.
  */
 import { useState, type RefObject } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages, containingPage, isWithin } from '@unlease/pages/services/blocks';
-import { isPrivatePage } from '@unlease/pages/services/pagesAsk';
+import { isPrivatePage, lockingPage } from '@unlease/pages/services/pagesAsk';
 
 import { useBlocksStore } from '../../../app/store/blocks';
-import { duplicateBlocks, movePage, setPagePrivate } from '../../../app/store/pages';
+import { duplicateBlocks, movePage, setPageLocked, setPagePrivate } from '../../../app/store/pages';
 import { openPagesAsk, usePagesAskSettings } from '../../../app/pagesAsk';
 import { expandAll } from '../../../app/store/pagesUi';
+import { lockState, useLockOpen } from '@shared/app/lock';
 import { showError, showSnack } from '@shared/app/store/ui';
+import { LockPasswordDialog } from '@shared/ui/features/lock/LockPasswordDialog';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { browserPath, navigate } from '@shared/ui/router';
 import { paths } from '../../routes';
@@ -75,7 +78,39 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
   // Kept away by itself (its own switch), or by a page above it (nothing to switch here).
   const own = useBlocksStore(s => s.blocks[id]?.private === true);
   const kept = useBlocksStore(s => isPrivatePage(s.blocks, id));
-  const items: MenuItem[] = [
+  // Behind the lock by itself (its own switch), or by a page above it (nothing to switch here).
+  const locker = useBlocksStore(s => lockingPage(s.blocks, id));
+  const lockOpen = useLockOpen();
+  const shut = locker !== null && !lockOpen;
+  const [choosing, setChoosing] = useState(false);
+  const protect = (): void => {
+    flushAll();
+    setPageLocked(id, true);
+    showSnack(t('Page protected: it opens with the password'), undefined, { tone: 'success' });
+  };
+  const lockItems: MenuItem[] =
+    locker === null
+      ? [{ label: t('Protect with a password'), icon: 'lock', onSelect: () => (lockState().check ? protect() : setChoosing(true)) }]
+      : locker === id && lockOpen
+        ? [
+            {
+              label: t('Remove the protection'),
+              icon: 'unlock',
+              onSelect: () => {
+                setPageLocked(id, false);
+                showSnack(t('This page no longer asks for the password'), undefined, { tone: 'success' });
+              },
+            },
+          ]
+        : [];
+  const items: MenuItem[] = shut
+    ? [
+        { label: t('Move to…'), icon: 'transfer', onSelect: () => setMoving(true) },
+        { label: t('Copy link'), icon: 'link', onSelect: () => copyLink(id) },
+        ...lockItems,
+        { label: t('Move to bin'), icon: 'trash', danger: true, separatorBefore: true, onSelect: () => trashWithUndo(id) },
+      ]
+    : [
     ...(ask && !kept ? [{ label: t('Ask Claude'), icon: 'sparkle' as const, onSelect: () => openPagesAsk(id) }] : []),
     {
       label: t('Add a sub-page'),
@@ -121,6 +156,7 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
               },
         ]
       : []),
+    ...lockItems,
     {
       label: t('Move to bin'),
       icon: 'trash',
@@ -135,7 +171,8 @@ export function PageMenu({ id, open, anchor, onDismiss }: { id: string; open: bo
   return (
     <>
       <Menu open={open} anchor={anchor} onDismiss={onDismiss} items={items} label={t('Page actions')} />
-      <VersionHistory key={historyKey} id={id} open={history} onDismiss={() => setHistory(false)} />
+      <VersionHistory key={historyKey} id={id} open={history && !shut} onDismiss={() => setHistory(false)} />
+      <LockPasswordDialog open={choosing} reason={t('Choose the password that will protect this page.')} onClose={() => setChoosing(false)} onSaved={() => setPageLocked(id, true)} />
       <MovePageDialog
         open={moving}
         current={parent}

@@ -33,6 +33,9 @@ import { listToCollection, undoListToCollection } from '@unlease/notes/services/
 import { erasedCount } from '@unlease/core/services/erase';
 import { eraseChanges } from '@unlease/notes/services/erase';
 
+import { shownNow } from '@unlease/notes/services/lock';
+import { isLockOpen } from '@shared/app/lock';
+
 import { checkSiblings } from './editing';
 import { getRecord, mergeRemote, writeLocal, type LocalChange } from '@shared/app/store/records';
 import { write } from './writes';
@@ -125,6 +128,8 @@ export interface NewNote {
   readonly id?: string;
   /** A collection's own facts (`linkTemplate`), written in the same batch. */
   readonly templateId?: string;
+  /** Made in the protected section: born there (`notes/services/lock`). */
+  readonly locked?: boolean;
 }
 
 /** A new note's record, first on the board. */
@@ -147,6 +152,7 @@ function newNote(init: NewNote, now: number): LocalChange {
       ...(init.emblem !== undefined ? { emblem: init.emblem } : {}),
       ...(init.templateId !== undefined ? { templateId: init.templateId } : {}),
       hint: init.hint ?? '',
+      ...(init.locked ? { locked: true } : {}),
       createdAt: now,
       deletedAt: null,
     }),
@@ -293,10 +299,23 @@ export function deleteForever(ids: readonly string[], now: number = Date.now()):
   write(changes, now);
 }
 
-/** The notes in the bin. */
+/** The notes in the bin, as it shows them: the protected ones only while the lock is open. */
 export function trashedNoteIds(): string[] {
   const { noteOrder, notes } = state();
-  return noteOrder.filter(id => notes[id]?.trashedAt !== null);
+  const open = isLockOpen();
+  return noteOrder.filter(id => notes[id] !== undefined && notes[id]!.trashedAt !== null && shownNow(notes[id], open));
+}
+
+/**
+ * Notes into the protected section, or back among the others (`notes/services/lock`): one batch, one
+ * undo. « Non classé » stays where every link can land.
+ */
+export function setLocked(ids: readonly string[], locked: boolean): Undo {
+  const { notes } = state();
+  const changes = ids
+    .filter(id => id !== INBOX_ID && notes[id] && (notes[id]!.locked === true) !== locked)
+    .map(id => ({ type: 'note' as const, id, patch: { locked } }));
+  return changes.length > 0 ? writeWithUndo(changes) : () => {};
 }
 
 export function emptyTrash(now: number = Date.now()): number {

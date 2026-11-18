@@ -11,6 +11,7 @@ import { t } from '@unlease/core/i18n';
 import { INBOX_SHOWN_TITLE, INBOX_ID, shownTitle, type CheckItem, type Note } from '@unlease/notes/models/entities';
 import { formatPrice, plural } from '@unlease/core/services/format';
 import { linkRowText } from '@unlease/notes/services/linkRow';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 import { bodyText } from '@unlease/notes/services/noteBody';
 
 import { sectionsFor } from './hooks/useBoard';
@@ -142,7 +143,8 @@ export type WidgetPayload = CollectionPayload | LabelPayload | NotePayload | Lis
 
 const gone = (kind: GonePayload['kind'], id: string): GonePayload => ({ v: 1, kind, id, gone: true });
 
-const isLiveNote = (note: Note | undefined): note is Note => !!note && note.deletedAt === null && note.trashedAt === null;
+/** A note a widget may show: live, and never a protected one (a home screen shows it to anyone; pinned before it was protected, it shows as gone). */
+const isLiveNote = (note: Note | undefined): note is Note => !!note && note.deletedAt === null && note.trashedAt === null && shownOutsideLock(note);
 
 function checksOf(state: LibraryState, noteId: string): CheckItem[] {
   return (state.checksByNote[noteId] ?? []).flatMap(id => {

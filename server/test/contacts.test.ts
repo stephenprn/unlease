@@ -113,12 +113,16 @@ describe('what Contacts asks the other apps', () => {
       rec('link', 'book', { noteId: 'gifts', url: 'https://example.org/livre', status: 'skipped', title: '', contactIds: ['dup'], position: 'a0', createdAt: OLD, deletedAt: null }, OLD + 1),
       rec('note', 'binned', { kind: 'links', title: 'Vieux', body: '', labelIds: [], pinned: false, archived: false, trashedAt: OLD, position: 'a3', createdAt: OLD, deletedAt: null }, OLD),
       rec('link', 'lost', { noteId: 'binned', url: 'https://example.org/vieux', status: 'skipped', title: 'Vieux', contactIds: ['lea'], position: 'a0', createdAt: OLD, deletedAt: null }, OLD),
+      // Behind the lock (Carnet's protected section): neither the note nor the collection's links show.
+      rec('note', 'secret', { kind: 'text', title: 'Secret', body: '', labelIds: [], contactIds: ['lea'], locked: true, pinned: false, archived: false, trashedAt: null, position: 'a4', createdAt: OLD, deletedAt: null }, OLD + 3),
+      rec('note', 'hidden', { kind: 'links', title: 'Caché', body: '', labelIds: [], locked: true, pinned: false, archived: false, trashedAt: null, position: 'a5', createdAt: OLD, deletedAt: null }, OLD),
+      rec('link', 'kept', { noteId: 'hidden', url: 'https://example.org/cache', status: 'skipped', title: 'Caché', contactIds: ['lea'], position: 'a0', createdAt: OLD, deletedAt: null }, OLD + 3),
     ]);
     const pages = await get('/api/pages/mentions?type=contact&ids=lea,dup');
     expect(pages.status).toBe(200);
     expect(((await pages.json()) as { places: unknown[] }).places).toEqual([{ app: 'pages', type: 'page', id: 'day', title: 'Jour 1', within: 'Voyage', icon: null, editedAt: OLD }]);
     const notes = (await (await get('/api/notes/mentions?type=contact&ids=lea,dup')).json()) as { places: { id: string; type: string; title: string; within: string; linked?: boolean }[] };
-    // Mentioned in its words, or named among its people (a note about them, a gift idea): the most recent first, the bin left out.
+    // Mentioned in its words, or named among its people (a note about them, a gift idea): the most recent first, the bin and the lock left out.
     expect(notes.places.map(place => [place.type, place.id, place.title, place.within, place.linked ?? false])).toEqual([
       ['note', 'call', 'Rappeler', '', true],
       ['link', 'book', 'example.org/livre', 'Cadeaux', true],
@@ -164,5 +168,13 @@ describe('what Contacts asks the other apps', () => {
     server.sync.push([rec('note', 'mine', { kind: 'links', title: 'Gifts', body: '', labelIds: [], pinned: false, archived: false, trashedAt: null, position: 'a0', createdAt: OLD, deletedAt: null }, OLD)]);
     const made = (await (await gift({ url: 'https://example.org/a', forName: 'Léa', lang: 'fr' })).json()) as { collectionId: string; created: boolean };
     expect(made).toMatchObject({ collectionId: 'mine', created: false });
+  });
+
+  it('never keeps a gift idea in a collection behind the lock', async () => {
+    server = createTestServer();
+    server.sync.push([rec('note', 'mine', { kind: 'links', title: 'Cadeaux', body: '', labelIds: [], locked: true, pinned: false, archived: false, trashedAt: null, position: 'a0', createdAt: OLD, deletedAt: null }, OLD)]);
+    const made = (await (await gift({ url: 'https://example.org/a', forName: 'Léa', lang: 'fr' })).json()) as { collectionId: string; created: boolean };
+    expect(made.collectionId).not.toBe('mine');
+    expect(made.created).toBe(true);
   });
 });

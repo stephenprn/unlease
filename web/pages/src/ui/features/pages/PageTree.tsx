@@ -368,6 +368,12 @@ const TreeRow = memo(function TreeRow({ id, depth, current, tabStop, onNavigate 
             <PageIcon icon={page.icon} />
           </span>
           <span className={styles.title}>{title}</span>
+          {page.locked ? (
+            <span className={styles.locked}>
+              <Icon name="lock" size={16} />
+              <span className="sr-only">{t('Protected by a password')}</span>
+            </span>
+          ) : null}
         </a>
         <span className={styles.actions}>
           <button ref={more} type="button" className={styles.action} tabIndex={-1} {...pebbleUnder(0)} aria-label={t('More actions for {title}', { title })} aria-haspopup="menu" aria-expanded={menu !== null} data-tip={t('More actions')} onClick={openMenu}>

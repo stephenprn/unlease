@@ -11,6 +11,7 @@ import { isBlank } from '@unlease/core/services/formChecks';
 import { fieldInput } from '@unlease/design/fields';
 import { labelNameTaken } from '@unlease/notes/models/entities';
 import { plural } from '@unlease/core/services/format';
+import { shownOutsideLock } from '@unlease/notes/services/lock';
 
 import { createLabel, deleteLabel, updateLabel } from '../../app/store/actions';
 import { useLibraryStore } from '../../app/store/library';
@@ -36,7 +37,7 @@ import { useListMotion } from '@shared/ui/useListMotion';
 const LabelRow = memo(function LabelRow({ id }: { id: string }) {
   const label = useLibraryStore(s => s.labels[id]);
   const labels = useLibraryStore(s => s.labels);
-  const uses = useLibraryStore(s => s.noteOrder.filter(nid => s.notes[nid]?.labelIds.includes(id) && s.notes[nid]?.trashedAt === null).length);
+  const uses = useLibraryStore(s => s.noteOrder.filter(nid => s.notes[nid]?.labelIds.includes(id) && s.notes[nid]?.trashedAt === null && shownOutsideLock(s.notes[nid])).length);
   const [draft, setDraft] = useState<string | null>(null);
   // A rename refused once says why under the row, until the name is free (or Escape gives the old one back).
   const [refused, setRefused] = useState(false);

@@ -313,9 +313,9 @@ describe('media and code', () => {
 describe('page search', () => {
   const column: TableColumn = { id: 'c1', name: 'Poste', type: 'text' };
 
-  function library() {
+  function library(locked = false, lockOpen = false) {
     const list = [
-      block('lisbonne', 'page', null, { text: 'Voyage à Lisbonne', editedAt: 5 }),
+      block('lisbonne', 'page', null, { text: 'Voyage à Lisbonne', editedAt: 5, locked }),
       block('intro', 'text', 'lisbonne', { text: 'Hôtel près du quartier de l’Alfama.', editedAt: 9 }),
       block('budget', 'table', 'lisbonne', { columns: [column] }),
       block('row1', 'row', 'budget', { cells: { c1: 'Dîner fado' } }),
@@ -329,8 +329,16 @@ describe('page search', () => {
     const blocks = Object.fromEntries(list.map(entry => [entry.id, entry]));
     const children: Record<string, string[]> = {};
     for (const entry of list) (children[entry.parentId ?? ROOT] ??= []).push(entry.id);
-    return buildPageDocuments(blocks, children as ChildIndex, () => '');
+    return buildPageDocuments(blocks, children as ChildIndex, () => '', lockOpen);
   }
+
+  it('finds a protected page and its sub-pages by their titles alone while the lock is shut', () => {
+    const shut = library(true);
+    expect(searchPageDocuments(shut, 'alfama')).toEqual([]);
+    expect(searchPageDocuments(shut, 'restaurants').map(hit => hit.pageId)).toEqual(['sub']);
+    expect(searchPageDocuments(shut, 'lisbonne')[0]).toMatchObject({ pageId: 'lisbonne', blockId: null, snippet: '' });
+    expect(searchPageDocuments(library(true, true), 'alfama').map(hit => hit.pageId)).toEqual(['lisbonne', 'sub']);
+  });
 
   it('finds a page by the words of its blocks, tables and toggles included, accents folded', () => {
     const docs = library();

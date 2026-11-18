@@ -13,6 +13,7 @@ import { searchSummary } from '@unlease/core/services/searchWords';
 import { APP_WORDS } from '@unlease/core/appWords';
 import { RICH_KINDS, UNTITLED_PAGE } from '@unlease/pages/models/blocks';
 import { ancestorPages } from '@unlease/pages/services/blocks';
+import { isLockedPage } from '@unlease/pages/services/pagesAsk';
 import { formatEdited, plural } from '@unlease/core/services/format';
 import { markupToPlain } from '@unlease/core/services/richText';
 import { dateWords } from '@unlease/core/services/dates';
@@ -47,8 +48,10 @@ const RECENT = { few: 3, many: 6, phone: 4 } as const;
 const MANY_PAGES = 8;
 
 /** A page's first words (its own content's, a sub-page's are its own) and the pages above it. */
-function pageGlance(s: BlocksState, id: string): { readonly preview: string; readonly path: string } {
+function pageGlance(s: BlocksState, id: string): { readonly preview: string; readonly path: string; readonly locked: boolean } {
   let preview = '';
+  // Behind the lock: none of its words, whether the lock is open or not (the home is glanced at).
+  const locked = isLockedPage(s.blocks, id);
   const walk = (parent: string, depth: number): void => {
     for (const childId of s.blocksByParent[parent] ?? []) {
       const block = s.blocks[childId];
@@ -57,11 +60,11 @@ function pageGlance(s: BlocksState, id: string): { readonly preview: string; rea
       if (!preview) walk(childId, depth + 1);
     }
   };
-  walk(id, 0);
+  if (!locked) walk(id, 0);
   const path = ancestorPages(s.blocks, id)
     .map(page => page.text.trim() || t(UNTITLED_PAGE))
     .join(' › ');
-  return { preview, path };
+  return { preview, path, locked };
 }
 
 const PageMark = memo(function PageMark({ icon, size }: { icon: string | null; size: number }) {
@@ -82,7 +85,7 @@ const RecentTile = memo(function RecentTile({ id, now }: { id: string; now: numb
             <PageMark icon={page.icon} size={36} />
           </span>
           <span className={`${lineStyles.tileName} t-body-strong`}>{title}</span>
-          <span className={`${lineStyles.tileHint} t-meta`}>{shown.preview || t('Empty page')}</span>
+          <span className={`${lineStyles.tileHint} t-meta`}>{shown.locked ? t('Protected by a password') : shown.preview || t('Empty page')}</span>
           <span className={styles.tileFoot}>
             {shown.path ? <span className={`${styles.tilePath} t-meta`}>{shown.path}</span> : null}
             <span className="t-meta">{formatEdited(edited, now)}</span>

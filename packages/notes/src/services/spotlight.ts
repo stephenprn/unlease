@@ -12,6 +12,7 @@ import { spotKey, type SpotMeta } from '@unlease/core/services/spotlight';
 import type { SearchDoc, SearchPart } from '@unlease/core/services/searchIndex';
 import { siteDomain, slugTitle } from '@unlease/core/services/url';
 import { bodyText } from './noteBody';
+import { isLockedNote } from './lock';
 
 export const NOTES_SPOT_TYPES = ['note', 'collection', 'link'] as const;
 
@@ -99,12 +100,12 @@ function linkDoc(link: LinkItem, collection: Note): SearchDoc<SpotMeta> {
   return { key: spotKey('link', link.id), title: linkTitle(link), parts, editedAt, meta: { type: 'link', id: link.id, labelIds: [], archived: collection.archived, within: collection.id } };
 }
 
-/** Every live note, collection and link as a document. */
+/** Every live note, collection and link as a document; never a protected one (`services/lock`), nor a link of a protected collection. */
 export function notesSpotlightDocs(library: NotesSpotLibrary): SearchDoc<SpotMeta>[] {
   const docs: SearchDoc<SpotMeta>[] = [];
   for (const id of library.noteOrder) {
     const note = library.notes[id];
-    if (!note || note.deletedAt !== null || note.trashedAt !== null) continue;
+    if (!note || note.deletedAt !== null || note.trashedAt !== null || isLockedNote(note)) continue;
     if (note.kind !== 'links') {
       docs.push(noteDoc(library, note));
       continue;

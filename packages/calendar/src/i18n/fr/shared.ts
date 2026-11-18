@@ -234,7 +234,6 @@ export const FR_SHARED: Dictionary = {
   'This calendar asks for a login: the one of the account that holds it.': 'Cet agenda demande un identifiant : celui du compte qui le tient.',
   'Change the login of {name}': 'Changer l’identifiant de {name}',
   'Login': 'Identifiant',
-  'Password': 'Mot de passe',
   'Kept by your server alone, never on your devices. If your account offers them, prefer an app password.': 'Gardé par votre serveur seul, jamais sur vos appareils. Si votre compte en propose, préférez un mot de passe d’application.',
   'This login no longer opens this calendar.': 'Cet identifiant n’ouvre plus cet agenda.',
   'Login saved: the server is reading the calendar again.': 'Identifiant enregistré : le serveur relit l’agenda.',

@@ -1,7 +1,8 @@
 /**
  * The board: every view of the notes (all notes, reminders, a label, the
- * archive, the bin) is the same wall over a different selection, as on the
- * phone. Search replaces the wall with its results, best first, matches marked,
+ * archive, the bin, the protected section) is the same wall over a different
+ * selection, as on the phone; the protected section shows its lock while it is
+ * shut. Search replaces the wall with its results, best first, matches marked,
  * the other apps' results (Pages') first. Its bin holds the notes; the pages
  * have a bin of their own.
  */
@@ -14,6 +15,8 @@ import { plural } from '@unlease/core/services/format';
 import { TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
 
 import { useBoardSections, useSearch, type BoardView } from '../../app/hooks/useBoard';
+import { closeLock, useLockOpen } from '@shared/app/lock';
+import { LockedPlace } from '@shared/ui/features/lock/LockedPlace';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { emptyTrash } from '../../app/store/actions';
 import { addToSelection, selectSelection, toggleSelected, useBoardStore } from '../../app/store/board';
@@ -40,6 +43,7 @@ function viewTitle(view: BoardView, labelName: string | undefined): string {
   if (view === 'reminders') return t('Reminders');
   if (view === 'archive') return tc('place', 'Archive');
   if (view === 'trash') return t('Bin');
+  if (view === 'protected') return t('Protected');
   if (view.startsWith('label:')) return labelName ?? tc('notes', 'Label');
   return t('Notes');
 }
@@ -51,8 +55,11 @@ export function BoardScreen({ view }: { view: BoardView }) {
   const label = useLibraryStore(s => (view.startsWith('label:') ? s.labels[view.slice(6)] : undefined));
   const now = useMinute();
   const { sections, total } = useBoardSections(view, now);
-  const results = useSearch(query, view === 'trash');
-  const searching = query.trim().length > 0;
+  const results = useSearch(query, view === 'trash' ? 'bin' : view === 'protected' ? 'protected' : 'live');
+  const lockOpen = useLockOpen();
+  // The protected section, the lock shut: the lock over the shapes of what it keeps, and nothing else.
+  const shut = view === 'protected' && !lockOpen;
+  const searching = query.trim().length > 0 && !(view === 'protected' && !lockOpen);
   const found = results.length;
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const inBin = total;
@@ -62,7 +69,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
   const narrow = useMedia(NARROW);
   const shown = useMemo(() => (searching ? [{ key: 'results', title: null, ids: results }] : sections), [searching, results, sections]);
   const title = viewTitle(view, label?.name);
-  const showComposer = !searching && (view === 'notes' || view === 'reminders' || view.startsWith('label:'));
+  const showComposer = !searching && (view === 'notes' || view === 'reminders' || view.startsWith('label:') || (view === 'protected' && lockOpen));
   const summary = searching ? searchSummary(query, found, view === 'notes' ? settingsFound(query) : 0) : '';
 
   const onSelect = useCallback((id: string, event: MouseEvent, order: readonly string[]) => {
@@ -101,6 +108,11 @@ export function BoardScreen({ view }: { view: BoardView }) {
               {t('Empty the bin')}
             </Button>
           ) : null}
+          {view === 'protected' && lockOpen ? (
+            <Button kind="text" icon="lock" onClick={closeLock}>
+              {t('Lock')}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {/* The docked navigation lists the collections; without it, they head the board, scrolling with it. */}
@@ -118,7 +130,9 @@ export function BoardScreen({ view }: { view: BoardView }) {
         </h1>
       ) : null}
       {searching && found === 0 ? <EmptyState scene="search" title={summary} text={APP_WORDS.notes.searchHint} /> : null}
-      {inBin === 0 && !searching ? (
+      {shut ? (
+        <LockedPlace ghosts="notes" what={t('Your protected notes open with the password.')} />
+      ) : inBin === 0 && !searching ? (
         <EmptyBoard view={view} />
       ) : shown.some(section => section.ids.length > 0) ? (
         <Wall sections={shown} layout={layout} query={searching ? query : ''} selection={selection} now={now} onOpen={onOpen} onSelect={onSelect} />
