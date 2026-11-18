@@ -7,7 +7,7 @@
 import { APPS } from '@unlease/core/apps';
 import { APP_WORDS } from '@unlease/core/appWords';
 import { MARK_COLORS, ROLES } from '@unlease/design/palette';
-import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE } from '@unlease/design/mark';
+import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE, MARK_WALLET } from '@unlease/design/mark';
 
 import { webPath, type WebApp } from './paths.ts';
 
@@ -24,7 +24,7 @@ export function webAppTagline(app: WebApp): string {
 }
 
 /** Each app's shape on its pebble. */
-const SHAPES: Readonly<Record<WebApp, string>> = { notes: MARK_CARD, pages: MARK_PAGE, contacts: MARK_CONTACT, calendar: MARK_CALENDAR, clock: MARK_CLOCK };
+const SHAPES: Readonly<Record<WebApp, string>> = { notes: MARK_CARD, pages: MARK_PAGE, contacts: MARK_CONTACT, calendar: MARK_CALENDAR, clock: MARK_CLOCK, wallet: MARK_WALLET };
 
 /** The app's shape, what it holds cut out, on the 100 grid of the visible tile, placed by `transform`. */
 function drawing(app: WebApp, transform: string): string {
@@ -73,6 +73,8 @@ const EXTRAS: Readonly<Record<WebApp, Record<string, unknown>>> = {
   calendar: { shortcuts: [{ name: 'Créer un événement', url: 'new' }] },
   // A new alarm from the installed app's shortcut (`/clock/new`).
   clock: { shortcuts: [{ name: 'Créer une alarme', url: 'new' }] },
+  // The cards at the till, from the installed app's shortcut (`/wallet`).
+  wallet: { shortcuts: [{ name: 'Cartes', url: '.' }] },
 };
 
 /**

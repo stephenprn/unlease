@@ -6,6 +6,10 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Added
 
+- **Wallet, a new app: your loyalty cards, identity papers and important documents, encrypted on your devices.** On Android and on the web. **Breaking:** update the server before installing it; turn it on in the Administration's « Applications ».
+  - **End-to-end encrypted:** a vault passphrase (with a printable recovery kit) seals every card and paper on the device before it leaves it; your server, Seafile (`Wallet/<id>.bin`) and the S3 backups only hold sealed bytes. On Android the cards open at once (their key kept by the phone's Keystore) and the papers with your fingerprint or screen lock, lock again when the app leaves the screen, and are hidden from screenshots and the recent apps; in a browser the passphrase opens them for a visit, locking again when the tab is hidden or idle. `tools/wallet/open.mjs` opens a backup with the recovery kit, without the apps.
+  - **Cards at the till:** loyalty cards, gift cards (with their balance) and an emergency card, as tiles of their own colour, the most used first; opened, the barcode shows black on white with the screen brightened (13 formats, checked as you type), the number under it.
+  - **Papers and documents:** identity card, passport, driving licence, health insurance card, residence permit, both sides; documents filed by type (taxes, bills, housing, health…), with how long France asks to keep each one, and those you may now throw away. « Fill in with Claude » reads a paper's fields on your say, keeping nothing; « Copy to send » makes a watermarked PDF (« Copie destinée à … »), as France's Filigrane Facile does.
 - **Clock has timers, a stopwatch and world clocks**, beside its alarms, on Android and on the web, reached from a bar at the foot of the phone app (the navigation on the web). **Breaking:** update the server before the apps: saved timers and world clocks are new kinds of records, which an older server refuses.
   - **Timers:** start one in a tap from the usual lengths (and those you started lately), or type any length on a keypad, as on a microwave; give it a label if you like. It runs once and is gone, or « Save » keeps it with its label (« Pasta », « Green tea »), its sound and its vibration among your saved timers, on every phone and on the web. Several run at once, each with pause, +1 min and reset; on Android a timer counts in its notification and rings on time with the app closed, over the lock screen, with « +1 min » and « Stop » (a volume key stops it too); in the browser it rings while the page is open.
   - **Stopwatch:** hundredths, laps with the fastest and slowest named; on Android it keeps counting with the app closed, in its notification with Pause and Lap.
@@ -21,12 +25,13 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
+- The web apps' security policy lets WebAssembly compile (`'wasm-unsafe-eval'`), for Wallet's Argon2id; it still refuses any string run as JavaScript.
+- Clock's drawer on Android keeps Settings and the Administration: its places are the bar at the foot.
+- On Android, the drawer no longer lists the suite's other apps under « Apps »: open them from the phone's launcher (a mention or a link into another app still opens it).
 - A new event in Agenda gets a reminder 30 minutes before it instead of 10, time to leave for its place. A device still on the old 10 minutes it never chose moves to 30; another choice in Settings stays as it is.
 - When a second app of the suite is set up on Android while another is already connected, its welcome offers « Use Carnet's setup », which takes that app's connection and its look (theme, colours and background) and skips the appearance step, and, under it, « Use it, and choose the look », which takes the connection and asks the look, as before.
 - Carnet's widgets draw checkboxes as the app does (a rounded box, filled with the tick cut out once done).
 - Agenda's widgets show a sample of what they hold in the launcher's widget picker (Planning, Month, My day, Next event) instead of an empty frame, and the Planning and My day widgets fade out at their foot where the list goes on, as Carnet's do, rather than cutting a line in half.
-- Clock's drawer on Android keeps Settings and the Administration: its places are the bar at the foot.
-- On Android, the drawer no longer lists the suite's other apps under « Apps »: open them from the phone's launcher (a mention or a link into another app still opens it).
 - Carnet's Note widget draws its pen as the lists widget does, in the same ink and place beside « + ».
 - On Android, the first run no longer shows the warning about Android's Data Saver or a restricted battery over its steps: it comes once the app is set up. The import offered during the first run names its step in one line, as on the web, instead of a second row of steps.
 - Agenda's labels page on the web works like Carnet's and Contacts': rename a label where it is written, change its colour from its tag, and open its events from their count.

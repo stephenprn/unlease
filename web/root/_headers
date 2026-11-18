@@ -1,12 +1,14 @@
-# Cloudflare Pages response headers, for the whole site (every app, under /notes/, /pages/, /contacts/, /agenda/ and /clock/).
+# Cloudflare Pages response headers, for the whole site (every app, under /notes/, /pages/, /contacts/, /agenda/, /clock/ and /wallet/).
 # The API host is chosen in the app's settings, so connect-src allows any
 # https origin, never a plain-http or local one (the dev server sends no
 # policy, and a server serving the apps is 'self'); images come from the
 # server as blob: URLs, or from the pages a link points to (https:). A page's
 # videos play from blob: URLs or their https address, its PDFs show in a
 # blob: frame, and its videos by address in their site's own player.
+# WebAssembly may compile ('wasm-unsafe-eval': Wallet's Argon2id), never a
+# string as JavaScript.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data: https:; media-src 'self' blob: https:; frame-src blob: https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com; font-src 'self'; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data: https:; media-src 'self' blob: https:; frame-src blob: https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com; font-src 'self'; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer
@@ -44,6 +46,12 @@
 /clock/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
+/wallet/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/wallet/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Each app's worker holds its whole path, `/notes` as well as `/notes/…`.
 /notes/sw.js
   Service-Worker-Allowed: /notes
@@ -59,3 +67,6 @@
 
 /clock/sw.js
   Service-Worker-Allowed: /clock
+
+/wallet/sw.js
+  Service-Worker-Allowed: /wallet

@@ -14,15 +14,16 @@ import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 /** Each package's dictionary (a file, or a folder of parts). */
-const DICTIONARIES = { core: 'packages/core/src/i18n/fr', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr', contacts: 'packages/contacts/src/i18n/fr', calendar: 'packages/calendar/src/i18n/fr', pages: 'packages/pages/src/i18n/fr', clock: 'packages/clock/src/i18n/fr' };
+const DICTIONARIES = { core: 'packages/core/src/i18n/fr', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr', contacts: 'packages/contacts/src/i18n/fr', calendar: 'packages/calendar/src/i18n/fr', pages: 'packages/pages/src/i18n/fr', clock: 'packages/clock/src/i18n/fr', wallet: 'packages/wallet/src/i18n/fr' };
 /** Where `--move` puts a sentence it moves into a package's dictionary. */
-const HOMES = { core: 'packages/core/src/i18n/fr/shell.ts', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr/shared.ts', contacts: 'packages/contacts/src/i18n/fr/shared.ts', calendar: 'packages/calendar/src/i18n/fr/shared.ts', pages: 'packages/pages/src/i18n/fr/shared.ts', clock: 'packages/clock/src/i18n/fr/shared.ts' };
+const HOMES = { core: 'packages/core/src/i18n/fr/shell.ts', design: 'packages/design/src/i18n/fr.ts', notes: 'packages/notes/src/i18n/fr/shared.ts', contacts: 'packages/contacts/src/i18n/fr/shared.ts', calendar: 'packages/calendar/src/i18n/fr/shared.ts', pages: 'packages/pages/src/i18n/fr/shared.ts', clock: 'packages/clock/src/i18n/fr/shared.ts', wallet: 'packages/wallet/src/i18n/fr/shared.ts' };
 /**
  * What each tree translates, and the dictionaries it may count on. The shell (the web apps'
  * shared shell, the phones' shared code) serves every app, so it counts on no app's dictionary; Agenda
  * shows contacts' birthdays and Carnet's reminders, so it counts on Carnet's and Contacts'; Pages
  * shows Carnet's collections and mentions contacts and events, so it counts on theirs and Agenda's;
- * Clock shows Agenda's events as an alarm rings, so it counts on Agenda's and what Agenda counts on.
+ * Clock shows Agenda's events as an alarm rings, so it counts on Agenda's and what Agenda counts on;
+ * Wallet names contacts and writes Agenda's days, so it counts on the same.
  */
 const GROUPS = [
   { sources: ['packages/core/src'], uses: ['core'] },
@@ -33,6 +34,7 @@ const GROUPS = [
   { sources: ['packages/calendar/src', 'mobile/calendar/src', 'web/calendar/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar'] },
   { sources: ['packages/pages/src', 'mobile/pages/src', 'web/pages/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar', 'pages'] },
   { sources: ['packages/clock/src', 'mobile/clock/src', 'web/clock/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar', 'clock'] },
+  { sources: ['packages/wallet/src', 'mobile/wallet/src', 'web/wallet/src'], uses: ['core', 'design', 'notes', 'contacts', 'calendar', 'wallet'] },
 ];
 const SOURCES = GROUPS.flatMap(group => group.sources);
 const SKIP = /(__tests__|node_modules|\/i18n\/fr\/|\/i18n\/fr\.ts$|\.d\.ts$|emojiCatalogue)/;

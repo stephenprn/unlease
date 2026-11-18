@@ -2,9 +2,9 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
-import Svg, { G, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
-import { COLLAGE_LAY, COLLAGE_SIZE, collageEntrances, pieceBox, SCENES, type CollagePiece, type CollageScene } from '@unlease/design/collage';
+import { cardHeight, cardShapes, COLLAGE_LAY, COLLAGE_SIZE, collageEntrances, pieceBox, SCENES, type CollagePaint, type CollagePiece, type CollageScene } from '@unlease/design/collage';
 import { emblemShape } from '@unlease/design/emblems';
 
 import { decelerate } from '../theme/motion';
@@ -15,6 +15,22 @@ const LINE_WIDTHS = [0.62, 0.74, 0.5, 0.66];
 
 function Piece({ piece, theme }: { piece: CollagePiece; theme: Theme }) {
   const c = theme.color;
+  if (piece.kind === 'card') {
+    const line = theme.line[piece.ink];
+    const paint: Readonly<Record<CollagePaint, string>> = { paper: c.paper, outline: c.outline, ink: c.ink, inkMuted: c.inkMuted, fill: line.fill, tint: line.tint, on: line.on };
+    const height = cardHeight(piece);
+    return (
+      <G transform={`rotate(${piece.rotate} ${piece.x + piece.width / 2} ${piece.y + height / 2})`}>
+        {cardShapes(piece).map((shape, i) =>
+          shape.kind === 'rect' ? (
+            <Rect key={i} x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} fill={shape.fill ? paint[shape.fill] : 'none'} stroke={shape.stroke ? paint[shape.stroke] : undefined} strokeWidth={shape.strokeWidth} />
+          ) : (
+            <Circle key={i} cx={shape.cx} cy={shape.cy} r={shape.r} fill={shape.fill ? paint[shape.fill] : 'none'} stroke={shape.stroke ? paint[shape.stroke] : undefined} strokeWidth={shape.strokeWidth} />
+          ),
+        )}
+      </G>
+    );
+  }
   if (piece.kind === 'sheet') {
     const { x, y, width, height, rotate, lines, check } = piece;
     const indent = check ? 16 : 0;

@@ -52,6 +52,7 @@ const PAGES_RES = resolve('mobile/pages/android/app/src/main/res');
 const CONTACTS_RES = resolve('mobile/contacts/android/app/src/main/res');
 const CALENDAR_RES = resolve('mobile/calendar/android/app/src/main/res');
 const CLOCK_RES = resolve('mobile/clock/android/app/src/main/res');
+const WALLET_RES = resolve('mobile/wallet/android/app/src/main/res');
 
 const markSource = readFileSync('packages/design/src/mark.ts', 'utf8');
 const markPath = name => new RegExp(`${name} =\\s*'([^']+)'`).exec(markSource)[1];
@@ -62,6 +63,7 @@ const PAGE = markPath('MARK_PAGE');
 const CONTACT = markPath('MARK_CONTACT');
 const CALENDAR = markPath('MARK_CALENDAR');
 const CLOCK = markPath('MARK_CLOCK');
+const WALLET = markPath('MARK_WALLET');
 const BOUNDS = markBox('MARK_BOUNDS');
 
 const paletteSource = readFileSync('packages/design/src/palette.ts', 'utf8');
@@ -95,6 +97,7 @@ const page = shapeOf(PAGE);
 const contact = shapeOf(CONTACT);
 const calendar = shapeOf(CALENDAR);
 const clock = shapeOf(CLOCK);
+const wallet = shapeOf(WALLET);
 const vector = (dp, viewport, body) =>
   `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="${dp}dp" android:height="${dp}dp" android:viewportWidth="${viewport}" android:viewportHeight="${viewport}">\n${body}</vector>\n`;
 
@@ -282,3 +285,8 @@ writeClock('drawable/ic_stat_timer.xml', vector(24, 24, glyphPaths('timer', 1, 0
 writeClock('drawable/ic_stat_stopwatch.xml', vector(24, 24, glyphPaths('stopwatch', 1, 0, 0, '#FFFFFFFF')));
 shortcutIcons(writeClock, { alarm: 'bellPlus', timer: 'timer', stopwatch: 'stopwatch', settings: 'settings' });
 
+// Wallet: its launcher (a card slid out of its pocket), and its shortcuts (the cards at the till, the search).
+const writeWallet = writeIn(WALLET_RES);
+launcher(writeWallet, wallet);
+launcherPalettes(WALLET_RES, writeWallet, wallet);
+shortcutIcons(writeWallet, { cards: 'card', search: 'search' });

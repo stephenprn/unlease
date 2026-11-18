@@ -32,7 +32,7 @@ const TOKENS_ID = 'virtual:unlease/tokens.css';
 const TOKENS_RESOLVED = '/__unlease-tokens.css';
 
 /** Every app with a web app of its own, in the suite's order. */
-export const WEB_APPS: readonly WebApp[] = ['notes', 'pages', 'contacts', 'calendar', 'clock'];
+export const WEB_APPS: readonly WebApp[] = ['notes', 'pages', 'contacts', 'calendar', 'clock', 'wallet'];
 
 let generated: Promise<Generated> | null = null;
 

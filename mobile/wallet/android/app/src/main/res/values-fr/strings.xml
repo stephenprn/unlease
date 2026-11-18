@@ -1,0 +1,10 @@
+<resources>
+    <!-- French, for a phone or an app in French (English is values/). -->
+    <string name="app_name">Wallet</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_cards_short">Cartes</string>
+    <string name="shortcut_cards_long">Vos cartes à la caisse</string>
+    <string name="shortcut_search_short">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher dans le portefeuille</string>
+</resources>

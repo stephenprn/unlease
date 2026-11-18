@@ -53,6 +53,7 @@ describe('the first run', () => {
       ['calendar', false, false, false],
       ['contacts', false, false, false],
       ['clock', false, false, false],
+      ['wallet', false, false, false],
     ]);
     expect(toggleSetupApp(['notes', 'pages'], 'notes', 'pages')).toEqual(['pages']);
     expect(toggleSetupApp(['pages'], 'notes', 'pages')).toEqual(['notes', 'pages']);

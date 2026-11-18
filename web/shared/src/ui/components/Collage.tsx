@@ -1,14 +1,31 @@
 /** An empty state's picture: cut-outs pinned around a note (`design/collage`), drawn as the phone draws it, laid down piece by piece as it appears. */
 import { memo, type CSSProperties } from 'react';
 
-import { COLLAGE_LAY, COLLAGE_SIZE, collageEntrances, pieceBox, SCENES, type CollagePiece, type CollageScene, type PieceEntrance } from '@unlease/design/collage';
+import { cardHeight, cardShapes, COLLAGE_LAY, COLLAGE_SIZE, collageEntrances, pieceBox, SCENES, type CollagePaint, type CollagePiece, type CollageScene, type PieceEntrance } from '@unlease/design/collage';
 import { emblemShape } from '@unlease/design/emblems';
 
 import styles from './collage.module.css';
 
 const LINE_WIDTHS = [0.62, 0.74, 0.5, 0.66];
 
+/** A card's paints, as the theme's custom properties (`data-line` gives the pigment's). */
+const PAINT: Readonly<Record<CollagePaint, string>> = { paper: 'var(--paper)', outline: 'var(--outline)', ink: 'var(--ink)', inkMuted: 'var(--ink-muted)', fill: 'var(--fill)', tint: 'var(--tint)', on: 'var(--on)' };
+
 function Piece({ piece }: { piece: CollagePiece }) {
+  if (piece.kind === 'card') {
+    const height = cardHeight(piece);
+    return (
+      <g transform={`rotate(${piece.rotate} ${piece.x + piece.width / 2} ${piece.y + height / 2})`} data-line={piece.ink}>
+        {cardShapes(piece).map((shape, i) =>
+          shape.kind === 'rect' ? (
+            <rect key={i} x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} fill={shape.fill ? PAINT[shape.fill] : 'none'} stroke={shape.stroke ? PAINT[shape.stroke] : undefined} strokeWidth={shape.strokeWidth} />
+          ) : (
+            <circle key={i} cx={shape.cx} cy={shape.cy} r={shape.r} fill={shape.fill ? PAINT[shape.fill] : 'none'} stroke={shape.stroke ? PAINT[shape.stroke] : undefined} strokeWidth={shape.strokeWidth} />
+          ),
+        )}
+      </g>
+    );
+  }
   if (piece.kind === 'sheet') {
     const { x, y, width, height, rotate, lines, check } = piece;
     const indent = check ? 16 : 0;

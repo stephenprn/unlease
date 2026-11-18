@@ -24,6 +24,7 @@ import type { PagesApp } from '../src/apps/pages';
 import type { ContactsApp } from '../src/apps/contacts';
 import type { CalendarApp } from '../src/apps/calendar';
 import type { ClockApp } from '../src/apps/clock';
+import type { WalletApp } from '../src/apps/wallet';
 import { createApps, PUSH_REPAIRS, PUSH_RULES } from '../src/apps/registry';
 import { AppRunner } from '../src/apps/runner';
 import type { ServerApp } from '../src/apps/types';
@@ -69,6 +70,7 @@ export interface TestServer {
   readonly contacts: ContactsApp;
   readonly calendar: CalendarApp;
   readonly clock: ClockApp;
+  readonly wallet: WalletApp;
   readonly apps: readonly ServerApp[];
   /** Which apps run: not started (tests drive the link reading through `analysisOf`) unless a test starts it. */
   readonly runner: AppRunner;
@@ -136,7 +138,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
   settings.settleSetup(!records.holdsNothing());
   // The apps, as main.ts makes them, with Claude, the pages they read and Seerr stood in for; Carnet's link reading is `analysisOf`'s.
   const suite = createApps({ db, sync, records, blobs, settings, claudeEffort: 'low', analysisConcurrency: 2, claude: provider, fetcher, seerrFetch, immichFetch, now, ...(options.pushFetch ? { pushFetch: options.pushFetch } : {}), ...(options.placesFetch ? { placesFetch: options.placesFetch, placesUrl: 'https://photon.example.org' } : {}) });
-  const { apps, notes, pages, contacts, calendar, clock, usage } = suite;
+  const { apps, notes, pages, contacts, calendar, clock, wallet, usage } = suite;
   const runner = new AppRunner(apps, settings, sync);
   const drive = new DriveSync({ db, records, blobs, settings, apps, fetcher: seafile.fetch, now });
   blobs.useRemote(drive);
@@ -169,6 +171,7 @@ export function createTestServer(options: TestServerOptions = {}): TestServer {
     contacts,
     calendar,
     clock,
+    wallet,
     apps,
     runner,
     claude,

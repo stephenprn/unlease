@@ -17,11 +17,13 @@ import type { Context, MiddlewareHandler } from 'hono';
 /**
  * As `web/root/_headers` (a test keeps them alike): the API may be another origin (chosen in the
  * app), so `connect-src` allows any https one, but no plain-http or local one: the apps served here
- * reach their API as 'self', and Vite's dev server sends no policy.
+ * reach their API as 'self', and Vite's dev server sends no policy. `script-src` lets WebAssembly
+ * compile (`'wasm-unsafe-eval'`: Wallet's Argon2id, as Bitwarden's web vault does), never a string run
+ * as JavaScript.
  */
 export const HEADERS: Readonly<Record<string, string>> = {
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data: https:; media-src 'self' blob: https:; frame-src blob: https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com; font-src 'self'; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data: https:; media-src 'self' blob: https:; frame-src blob: https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com; font-src 'self'; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'no-referrer',
@@ -52,15 +54,15 @@ const TYPES: Readonly<Record<string, string>> = {
 };
 
 /** The apps with a web app of their own, in the suite's order (their ids, as `appsOn` names them). */
-export const WEB_APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock'] as const;
+export const WEB_APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock', 'wallet'] as const;
 
 type WebApp = (typeof WEB_APPS)[number];
 
 /** Each one's folder in the build and path on the server: its id, but Agenda's `agenda` (as the web build's `WEB_PATHS`). */
-const PATHS: Readonly<Record<WebApp, string>> = { notes: 'notes', pages: 'pages', contacts: 'contacts', calendar: 'agenda', clock: 'clock' };
+const PATHS: Readonly<Record<WebApp, string>> = { notes: 'notes', pages: 'pages', contacts: 'contacts', calendar: 'agenda', clock: 'clock', wallet: 'wallet' };
 
 /** Their names change with their content (Vite's hashes, the fonts' versions). */
-const IMMUTABLE = /^\/(?:notes|pages|contacts|agenda|clock)\/(?:assets|fonts)\//;
+const IMMUTABLE = /^\/(?:notes|pages|contacts|agenda|clock|wallet)\/(?:assets|fonts)\//;
 
 /** The site's root holds one file: the worker that retires the single app's (`web/root/sw.js`). */
 const ROOT_FILES: ReadonlySet<string> = new Set(['/sw.js']);

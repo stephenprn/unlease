@@ -8,11 +8,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { AppId } from '@unlease/core/apps';
 import { markColors } from '@unlease/design/appearance';
-import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE, MARK_VIEWBOX } from '@unlease/design/mark';
+import { MARK_CALENDAR, MARK_CARD, MARK_CLOCK, MARK_CONTACT, MARK_PAGE, MARK_PEBBLE, MARK_VIEWBOX, MARK_WALLET } from '@unlease/design/mark';
 import { useSettingsStore } from '@shared/app/store/settingsStore';
 
 /** Each app's shape on the pebble; an app without its own yet wears Carnet's card. */
-const SHAPES: Partial<Record<AppId, string>> = { notes: MARK_CARD, pages: MARK_PAGE, calendar: MARK_CALENDAR, contacts: MARK_CONTACT, clock: MARK_CLOCK };
+const SHAPES: Partial<Record<AppId, string>> = { notes: MARK_CARD, pages: MARK_PAGE, calendar: MARK_CALENDAR, contacts: MARK_CONTACT, clock: MARK_CLOCK, wallet: MARK_WALLET };
 
 function BrandMarkComponent({ app = 'notes', size = 32 }: { app?: AppId; size?: number }) {
   const { tile, card } = markColors(useSettingsStore(state => state.appearance.primary));

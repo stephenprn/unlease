@@ -1,0 +1,684 @@
+/*
+ * Wallet's web app: its three places (cards, identity papers, documents), the vault's frost, a card
+ * at the till, a paper's view and the forms. Every colour, radius and duration is the design system's
+ * (`var(--…)`); a card's colour is its pigment's wash (`data-line`, `--tint`).
+ */
+
+.screen {
+  max-width: 920px;
+  padding: var(--screen-top) var(--screen-side) var(--screen-foot);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionTitle {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+}
+
+/* ── tiles: a card, a paper, as the thing itself (ID-1, 85.6 × 54) ───────── */
+
+.tiles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 14px;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  aspect-ratio: 85.6 / 54;
+  padding: 14px 14px 12px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: var(--tint, var(--paper));
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+.paperTile {
+  --tint: var(--paper);
+}
+
+/* A paper's foot: whose it is, then how long it is valid, each on its line. */
+.paperTile .tileFoot {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.paperTile .tileFoot > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* A paper's kind on a stone of its colour (`data-line`). */
+.tileStone {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 36px;
+  margin: -4px -4px 0 0;
+  color: var(--text);
+  --pebble-fill: var(--tint);
+}
+
+@media (hover: hover) {
+  .tile:hover {
+    background: color-mix(in srgb, var(--ink) 4%, var(--tint, var(--paper)));
+  }
+}
+
+.tile:active {
+  background: color-mix(in srgb, var(--ink) 9%, var(--tint, var(--paper)));
+}
+
+.tile:focus-visible {
+  outline-offset: 3px;
+}
+
+.tileHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tileTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tileGlyph {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.tileFoot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink-muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.soon {
+  color: var(--waiting);
+  font-weight: 600;
+}
+
+.expired {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.star {
+  color: var(--ink);
+}
+
+/* ── the frost: a locked tier, its tiles under the field's veil ───────────── */
+
+.frost {
+  position: relative;
+  display: grid;
+  border-radius: var(--cut-panel);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* The ghosts and the veil share one cell: the frost is as tall as the taller, so the panel is never cut. */
+.frostTiles,
+.frostVeil {
+  grid-area: 1 / 1;
+}
+
+.frostTiles {
+  align-self: start;
+  filter: blur(6px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+
+.frostGhost {
+  aspect-ratio: 85.6 / 54;
+  border-radius: var(--cut-tab);
+  background: var(--paper);
+}
+
+.frostVeil {
+  display: grid;
+  place-items: center;
+  padding: 24px var(--screen-side);
+  background: var(--field-veil);
+  backdrop-filter: var(--field-frost);
+  -webkit-backdrop-filter: var(--field-frost);
+  transition:
+    opacity var(--duration-medium) var(--ease-decelerate),
+    backdrop-filter var(--duration-medium) var(--ease-decelerate);
+}
+
+.frost[data-thawing] .frostVeil {
+  opacity: 0;
+  backdrop-filter: blur(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frostVeil {
+    transition: none;
+  }
+}
+
+.lockPanel {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 22px 18px;
+  background: var(--paper);
+}
+
+.lockHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lockPebble {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 48px;
+  color: var(--on-action-container);
+  --pebble-fill: var(--action-container);
+}
+
+.lockWords {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.lockActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ── the vault's first run ─────────────────────────────────────────────── */
+
+.intro {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--paper);
+}
+
+.introList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.introRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.introRow > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-muted);
+}
+
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-muted);
+}
+
+.strengthTrack {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.strengthFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--waiting);
+  transform-origin: left;
+  transition: transform var(--duration-medium) var(--ease-decelerate);
+}
+
+.strengthFill[data-level='good'] {
+  background: var(--ok);
+}
+
+/* ── the recovery kit ─────────────────────────────────────────────────── */
+
+.kitCode {
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--cut-small);
+  background: var(--paper-high);
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.kitQr {
+  display: block;
+  width: 168px;
+  height: 168px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: var(--cut-small);
+  background: #ffffff;
+}
+
+.kitQr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── an item open ─────────────────────────────────────────────────────── */
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* The till: black bars on white, in both themes, as a scanner reads them. */
+.till {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 18px 18px;
+  border-radius: var(--cut-panel);
+  background: #ffffff;
+  color: #1a1817;
+}
+
+/* An identity paper's head: the thing itself, in its kind's wash (`data-line`). */
+.paperHead {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--cut-panel);
+  background: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.paperHeadTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.paperStone {
+  flex: none;
+  width: 56px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fill);
+  color: var(--on);
+}
+
+.paperHeadWords {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paperHeadWords p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.paperKind {
+  color: var(--text);
+}
+
+.paperNumber {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.625rem;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+
+.paperValid {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.barcode {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  justify-content: center;
+}
+
+.barcode svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+}
+
+.barcode[data-square] svg {
+  width: min(260px, 70vw);
+  max-height: none;
+}
+
+.tillNumber {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.tillNone {
+  margin: 0;
+  color: #5c564f;
+  text-align: center;
+}
+
+.faces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.face {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.faceImage {
+  display: block;
+  width: 100%;
+  border-radius: var(--cut-small);
+  background: var(--paper-high);
+  object-fit: contain;
+  aspect-ratio: 85.6 / 54;
+}
+
+.faceImage[data-page] {
+  aspect-ratio: auto;
+}
+
+.faceLabel {
+  color: var(--ink-muted);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) 1fr;
+  column-gap: 20px;
+  row-gap: 10px;
+}
+
+.facts dt {
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The vault's three actions, side by side at their own width (wrapping on a narrow window), under its toggles. */
+.vaultActions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footStart {
+  margin-right: auto;
+}
+
+/* ── the documents ────────────────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  }
+}
+
+.rowGlyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 40px;
+  color: var(--text);
+  --pebble-fill: var(--tint);
+}
+
+.rowWords {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowTitle,
+.rowMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  color: var(--ink-muted);
+}
+
+.rowEnd {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+/* ── the forms ────────────────────────────────────────────────────────── */
+
+/* Through the frame's own width, never `width`: a percentage there sizes the panel from its content first. */
+.editor {
+  --frame-width: min(640px, 100vw - 32px);
+}
+
+@media (max-width: 719px) {
+  .editor {
+    --frame-width: auto;
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fileThumb {
+  position: relative;
+  width: 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fileThumb img,
+.filePdf {
+  display: block;
+  width: 112px;
+  height: 72px;
+  border-radius: var(--cut-small);
+  background: var(--paper-high);
+  object-fit: cover;
+}
+
+.filePdf {
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+}
+
+.fileRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.consent {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.hidden {
+  display: none;
+}

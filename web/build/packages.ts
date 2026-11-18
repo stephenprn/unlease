@@ -1,7 +1,7 @@
 /**
  * The names the code imports by, as tsconfig.app.json has them: the shared packages at the repository
  * root, and the web's own areas: the shell every app shares (`@shared/*`), each app (`@notes/*`,
- * `@pages/*`, `@contacts/*`, `@calendar/*`, `@clock/*`), the demo (`@demo/*`) and the tests' helpers (`@test/*`).
+ * `@pages/*`, `@contacts/*`, `@calendar/*`, `@clock/*`, `@wallet/*`), the demo (`@demo/*`) and the tests' helpers (`@test/*`).
  */
 import { fileURLToPath } from 'node:url';
 
@@ -9,7 +9,7 @@ export const PACKAGES = fileURLToPath(new URL('../../packages', import.meta.url)
 
 const WEB = fileURLToPath(new URL('..', import.meta.url));
 
-export const packageAliases = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages', 'clock'].map(name => ({ find: `@unlease/${name}`, replacement: `${PACKAGES}/${name}/src` }));
+export const packageAliases = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages', 'clock', 'wallet'].map(name => ({ find: `@unlease/${name}`, replacement: `${PACKAGES}/${name}/src` }));
 
 export const appAliases = [
   { find: /^@shared\//, replacement: `${WEB}shared/src/` },
@@ -18,6 +18,7 @@ export const appAliases = [
   { find: /^@contacts\//, replacement: `${WEB}contacts/src/` },
   { find: /^@calendar\//, replacement: `${WEB}calendar/src/` },
   { find: /^@clock\//, replacement: `${WEB}clock/src/` },
+  { find: /^@wallet\//, replacement: `${WEB}wallet/src/` },
   { find: /^@demo\//, replacement: `${WEB}demo/` },
   { find: /^@test\//, replacement: `${WEB}shared/test/` },
 ];

@@ -176,13 +176,15 @@ describe('each app’s look', () => {
       ['Agenda', 'true'],
       ['Contacts', 'true'],
       ['Clock', 'true'],
+      ['Wallet', 'true'],
     ]);
     await user.click(within(dialog).getByRole('checkbox', { name: 'Agenda' }));
     await user.click(within(dialog).getByRole('button', { name: 'Appliquer' }));
     expect(own('pages')).toMatchObject({ theme: 'dark' });
     expect(own('contacts')).toMatchObject({ theme: 'dark' });
     expect(own('clock')).toMatchObject({ theme: 'dark' });
+    expect(own('wallet')).toMatchObject({ theme: 'dark' });
     expect(own('calendar')).toBeNull();
-    expect(useUiStore.getState().snack).toMatchObject({ message: 'Pages, Contacts et Clock prendront cette apparence à leur prochaine ouverture.', tone: 'success' });
+    expect(useUiStore.getState().snack).toMatchObject({ message: 'Pages, Contacts, Clock et Wallet prendront cette apparence à leur prochaine ouverture.', tone: 'success' });
   });
 });

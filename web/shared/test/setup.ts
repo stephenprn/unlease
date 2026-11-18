@@ -13,6 +13,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, vi } from 'vitest';
 
 import { addClockFrench } from '@unlease/clock/i18n';
+import { addWalletFrench } from '@unlease/wallet/i18n';
 import { addPagesFrench } from '@unlease/pages/i18n';
 
 import { installApp } from '../src/modules';
@@ -20,6 +21,7 @@ import { installApp } from '../src/modules';
 // Every app's English (Pages' brings Carnet's): a sentence is the same in either app's tests.
 addPagesFrench();
 addClockFrench();
+addWalletFrench();
 // The app loads once the test file has set its mocks (`vi.mock`), so it takes the mocked modules too.
 beforeAll(async () => {
   if (import.meta.env.UNLEASE_TEST_APP === 'calendar') {
@@ -28,6 +30,9 @@ beforeAll(async () => {
   } else if (import.meta.env.UNLEASE_TEST_APP === 'clock') {
     const [{ clockModule }, { agendaData }] = await Promise.all([import('@clock/module'), import('@clock/app/store/agenda')]);
     installApp(clockModule, [agendaData]);
+  } else if (import.meta.env.UNLEASE_TEST_APP === 'wallet') {
+    const [{ walletModule }, { contactsData }] = await Promise.all([import('@wallet/module'), import('@contacts/data')]);
+    installApp(walletModule, [contactsData]);
   } else if (import.meta.env.UNLEASE_TEST_APP === 'contacts') {
     const { contactsModule } = await import('@contacts/module');
     installApp(contactsModule);

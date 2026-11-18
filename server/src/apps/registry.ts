@@ -30,10 +30,11 @@ import { createCalendarApp, CALENDAR_PUSH_RULES, type CalendarApp } from './cale
 import { createContactsApp, CONTACTS_PUSH_RULES, type ContactsApp } from './contacts';
 import { createPagesApp, PAGES_PUSH_REPAIRS, PAGES_PUSH_RULES, type PagesApp } from './pages';
 import { createClockApp, type ClockApp } from './clock';
+import { createWalletApp, WALLET_PUSH_RULES, type WalletApp } from './wallet';
 import type { Env, ServerApp } from './types';
 
 /** Every app's rules for what a push brings, given to the sync before any app is made: they hold whatever is on. */
-export const PUSH_RULES: readonly PushRule[] = [...NOTES_PUSH_RULES, ...PAGES_PUSH_RULES, ...CALENDAR_PUSH_RULES, ...CONTACTS_PUSH_RULES];
+export const PUSH_RULES: readonly PushRule[] = [...NOTES_PUSH_RULES, ...PAGES_PUSH_RULES, ...CALENDAR_PUSH_RULES, ...CONTACTS_PUSH_RULES, ...WALLET_PUSH_RULES];
 
 /** Every app's repairs of a whole push (`PushRepair`), given to the sync with the rules. */
 export const PUSH_REPAIRS: readonly PushRepair[] = [...PAGES_PUSH_REPAIRS];
@@ -70,6 +71,7 @@ export interface Suite {
   readonly contacts: ContactsApp;
   readonly calendar: CalendarApp;
   readonly clock: ClockApp;
+  readonly wallet: WalletApp;
   /** What Claude has cost, month by month, every app's calls together. */
   readonly usage: UsageStore;
   /** Routes the apps share, served whatever is on: Claude's spending, the places found as they are typed, Immich. */
@@ -92,15 +94,17 @@ export function createApps(deps: AppDeps): Suite {
   const contacts = createContactsApp({ db, sync, blobs, fetcher });
   const calendar = createCalendarApp({ db, sync, records, settings, usage, claude: () => claude.current(), fetcher, now, ...(deps.pushFetch ? { pushFetch: deps.pushFetch } : {}) });
   const clock = createClockApp({ db, fetcher, now });
+  const wallet = createWalletApp({ sync, records, usage, claude: () => claude.current(), now });
   const seerrFetch = deps.seerrFetch;
   const places = new PlaceFinder(deps.placesUrl ?? null, now, deps.placesFetch ?? fetch);
   return {
-    apps: [notes, pages, calendar, contacts, clock],
+    apps: [notes, pages, calendar, contacts, clock, wallet],
     notes,
     pages,
     contacts,
     calendar,
     clock,
+    wallet,
     usage,
     routes: app => {
       usageRoute(app, { usage, settings, now });

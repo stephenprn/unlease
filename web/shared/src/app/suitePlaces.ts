@@ -10,7 +10,7 @@ import { isRefType, type RefType } from '@unlease/core/refs';
 const part = encodeURIComponent;
 
 /** Each app's home on the web: its id, but Agenda's `/agenda` (as the build's `WEB_PATHS`). */
-const WEB_HOMES: Readonly<Record<AppId, string>> = { notes: '/notes', pages: '/pages', contacts: '/contacts', calendar: '/agenda', clock: '/clock' };
+const WEB_HOMES: Readonly<Record<AppId, string>> = { notes: '/notes', pages: '/pages', contacts: '/contacts', calendar: '/agenda', clock: '/clock', wallet: '/wallet' };
 
 /** An app's home on the web (`/agenda` for Agenda, whose id is `calendar`). */
 export const appHome = (app: AppId): string => WEB_HOMES[app];

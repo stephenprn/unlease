@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const WEB = fileURLToPath(new URL('..', import.meta.url));
 /** Each app's folder, and the path its build lands under (Agenda's addresses are `/agenda/…`). */
-const APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock'];
+const APPS = ['notes', 'pages', 'contacts', 'calendar', 'clock', 'wallet'];
 /** Vite's own command, run by this Node (no `npx`, no shell). */
 const VITE = join(dirname(createRequire(import.meta.url).resolve('vite/package.json')), 'bin', 'vite.js');
 
@@ -48,7 +48,7 @@ if (demo) {
   writeFileSync(
     `${out}404.html`,
     page(
-      `var b=${JSON.stringify(base)},p=location.pathname,r=p.slice(b.length),m=/^(pages|contacts|agenda|clock)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
+      `var b=${JSON.stringify(base)},p=location.pathname,r=p.slice(b.length),m=/^(pages|contacts|agenda|clock|wallet)(\\/|$)/.exec(r),a=m?m[1]:'notes';` +
         `if(p.indexOf(b)===0&&p!==b+a+'/'&&p!==b+a)location.replace(b+a+'/?to='+encodeURIComponent('/'+r+location.search)+location.hash);` +
         `else document.getElementById('lost').hidden=false;`,
       `<p id="lost" hidden>Page introuvable · Page not found. <a href="${base}">Unlease</a></p>\n`,

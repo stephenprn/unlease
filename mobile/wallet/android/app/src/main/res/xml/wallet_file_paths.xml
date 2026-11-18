@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wallet's paths, the suite's (mobile/shared xml/file_paths) and one more: the camera's photo before it is sealed, and
+     a file opened for viewing (a PDF handed to the phone's viewer, read-only, for that viewer alone). -->
+<paths>
+    <files-path name="photos" path="photos/" />
+    <cache-path name="opened" path="wallet-open/" />
+</paths>

@@ -1,8 +1,8 @@
 /**
- * The web apps, one config: Carnet (`notes/`), Pages (`pages/`), Contacts (`contacts/`), Agenda (`calendar/`, served at `/agenda/`) and Clock (`clock/`), each its
+ * The web apps, one config: Carnet (`notes/`), Pages (`pages/`), Contacts (`contacts/`), Agenda (`calendar/`, served at `/agenda/`), Clock (`clock/`) and Wallet (`wallet/`), each its
  * own page, build, manifest and service worker, on the shell they share (`shared/`).
  *
- *  - `vite` (dev): every app on one server, at `/notes/`, `/pages/`, `/contacts/`, `/agenda/`, `/clock/`, as the server serves them;
+ *  - `vite` (dev): every app on one server, at `/notes/`, `/pages/`, `/contacts/`, `/agenda/`, `/clock/`, `/wallet/`, as the server serves them;
  *  - `UNLEASE_APP=<app> vite build`: one app, from its folder, into `dist/<app>/`, under `/<app>/`
  *    (`scripts/build.mjs` builds each, and the demo with `--demo`); `UNLEASE_BASE` is the path the
  *    whole is served under (`/unlease/` for the demo on GitHub Pages), `/` by default;
@@ -37,7 +37,7 @@ const TEST_SETUP = ['shared/test/setup.ts'];
 
 export default defineConfig(({ command, mode }) => {
   const app = command === 'build' ? builtApp() : null;
-  if (command === 'build' && !app) throw new Error('Build one app at a time (UNLEASE_APP=notes|pages|contacts|calendar|clock), or all with `npm run build`.');
+  if (command === 'build' && !app) throw new Error('Build one app at a time (UNLEASE_APP=notes|pages|contacts|calendar|clock|wallet), or all with `npm run build`.');
   const base = suiteBase();
   return {
     root: app ? `${web}${app}` : web,

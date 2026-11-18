@@ -21,7 +21,8 @@
       "@unlease/contacts/*": ["../packages/contacts/src/*"],
       "@unlease/calendar/*": ["../packages/calendar/src/*"],
       "@unlease/pages/*": ["../packages/pages/src/*"],
-      "@unlease/clock/*": ["../packages/clock/src/*"]
+      "@unlease/clock/*": ["../packages/clock/src/*"],
+      "@unlease/wallet/*": ["../packages/wallet/src/*"]
     }
   },
   "include": ["vite.config.ts", "build"]

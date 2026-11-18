@@ -63,6 +63,7 @@
         <package android:name="com.stephenprn.contacts${suiteSuffix}" />
         <!-- Clock: its « Voir la journée » opens Agenda; Agenda reads its connection when installed second. -->
         <package android:name="com.stephenprn.clock${suiteSuffix}" />
+        <package android:name="com.stephenprn.wallet${suiteSuffix}" />
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
     </queries>

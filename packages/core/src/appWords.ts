@@ -73,6 +73,16 @@ export const APP_WORDS: Record<AppId, AppWords> = {
     languageNote: tx('The app’s screens, the days and what the alarms say as they ring.'),
     phoneOffNote: tx('Its alarms don’t ring on this phone while it is off.'),
   }),
+  wallet: localized({
+    tagline: tx('Cards and papers'),
+    description: tx('Your loyalty cards at the till in a tap, your identity papers and important documents scanned and encrypted on your devices, with a reminder before they expire.'),
+    replaces: tx('Replaces Google Wallet'),
+    search: tx('Search your wallet'),
+    searchHint: tx('Search a card, a paper or a document by its name, its issuer, its number or the words read on it.'),
+    language: tx('Interface language'),
+    languageNote: tx('The app’s screens, the dates and the reminders.'),
+    phoneOffNote: tx('Its reminders before a paper expires don’t ring on this phone while it is off.'),
+  }),
 };
 
 /**

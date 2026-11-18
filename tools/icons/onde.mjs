@@ -150,7 +150,10 @@ function arc(cx, cy, r, a0, a1) {
   return new Path(cmds);
 }
 
-/** A polygon or polyline whose corners are rounded by `r` (quarter-ish fillets), straight or bowed edges. */
+/**
+ * A polygon or polyline whose corners are rounded by `r` (quarter-ish fillets), straight or bowed edges.
+ * A point may carry its own radius as a third number ([x, y, r]): a frame's round corners beside sharp teeth.
+ */
 function soft(points, { closed = true, r = 1.2, swell = 0 } = {}) {
   const n = points.length;
   const at = i => points[(i + n) % n];
@@ -158,7 +161,7 @@ function soft(points, { closed = true, r = 1.2, swell = 0 } = {}) {
   const corner = i => {
     const p = at(i), a = at(i - 1), b = at(i + 1);
     const la = Math.hypot(a[0] - p[0], a[1] - p[1]), lb = Math.hypot(b[0] - p[0], b[1] - p[1]);
-    const ra = Math.min(r, la / 2.2), rb = Math.min(r, lb / 2.2);
+    const rp = p[2] ?? r, ra = Math.min(rp, la / 2.2), rb = Math.min(rp, lb / 2.2);
     const s = [p[0] + ((a[0] - p[0]) * ra) / la, p[1] + ((a[1] - p[1]) * ra) / la];
     const e = [p[0] + ((b[0] - p[0]) * rb) / lb, p[1] + ((b[1] - p[1]) * rb) / lb];
     return { s, e, p };
@@ -180,7 +183,7 @@ function soft(points, { closed = true, r = 1.2, swell = 0 } = {}) {
     }
     cmds.push(['Z']);
   } else {
-    cmds.push(['M', ...points[0]]);
+    cmds.push(['M', points[0][0], points[0][1]]);
     let from = points[0];
     for (let i = 1; i < n - 1; i++) {
       const c = corner(i);
@@ -188,7 +191,7 @@ function soft(points, { closed = true, r = 1.2, swell = 0 } = {}) {
       cmds.push(['C', c.s[0] + (c.p[0] - c.s[0]) * 0.55, c.s[1] + (c.p[1] - c.s[1]) * 0.55, c.e[0] + (c.p[0] - c.e[0]) * 0.55, c.e[1] + (c.p[1] - c.e[1]) * 0.55, ...c.e]);
       from = c.e;
     }
-    cmds.push(edge(from, points[n - 1]));
+    cmds.push(edge(from, points[n - 1].slice(0, 2)));
   }
   return new Path(cmds);
 }
@@ -306,9 +309,6 @@ const ARCHIVE_BOX = 'M5.2 9.2C5 12.2 5 15 5.3 17.6C5.5 19 6.5 19.9 7.9 20C10.6 2
 const TRASH_BIN = 'M6 6.9C6.2 10.8 6.5 14.6 7 18.3C7.2 19.5 8.1 20.4 9.3 20.4H14.7C15.9 20.4 16.8 19.5 17 18.3C17.5 14.6 17.8 10.8 18 6.9';
 const TRASH_HANDLE = 'M9.4 6.4V5C9.4 4.1 10.1 3.4 11 3.4H13C13.9 3.4 14.6 4.1 14.6 5V6.4';
 const H = 'M3.6 6V18M11.2 6V18M3.6 12H11.2';
-
-export const GLYPH_STROKE = 1.9;
-
 // Clock: the alarm clock's face, hands, bells and feet; the hourglass's two bulbs and its sand; the stopwatch.
 const ALARM_FACE = breathe(12, 13.2, 7.2, 0.14);
 const ALARM_HANDS = 'M12 9.6V13.2C12 13.5 12.1 13.7 12.4 13.9L14.6 15.2';
@@ -321,6 +321,50 @@ const HOURGLASS_SAND = 'M9.4 19C10 17.4 10.9 16.6 12 16.4C13.1 16.6 14 17.4 14.6
 const STOPWATCH_FACE = breathe(12, 13.6, 7.4, 0.14);
 const STOPWATCH_KNOBS = [line(12, 3.6, 12, 6.2), line(9.8, 3.2, 14.2, 3.2), line(17.6, 6.6, 19.2, 5)];
 const STOPWATCH_HAND = 'M12 13.6L15 10.4';
+// Wallet: a card and its band; an identity card's portrait and lines; a passport's cover; a padlock.
+const CARD = pillow(2.8, 5.2, 18.4, 13.6, 2.8, 0.4);
+const CARD_BAND = wave(3, 9.8, 21, 9.8, 0.35);
+const CARD_NUMBER = wave(6.4, 14.8, 11.4, 14.8, 0.3);
+const ID_CARD = pillow(2.6, 4.8, 18.8, 14.4, 2.8, 0.4);
+const ID_HEAD = [8.4, 9.9, 2];
+const ID_SHOULDERS = 'M5.4 16.2C5.6 14.4 6.8 13.4 8.4 13.4C10 13.4 11.2 14.4 11.4 16.2';
+const ID_LINES = [wave(14, 10.2, 18.2, 10.2, 0.3), wave(14, 14.2, 17, 14.2, 0.3)];
+const PASSPORT = pillow(4.8, 2.8, 14.4, 18.4, 2.6, 0.4);
+const PASSPORT_GLOBE = [12, 9.8, 4];
+/** The globe's equator, a chord inside its ring. */
+const PASSPORT_EQUATOR = line(8.6, 9.8, 15.4, 9.8);
+const PASSPORT_LINE = wave(9, 17, 15, 17, 0.2);
+const LOCK_BODY = pillow(4.6, 10.4, 14.8, 10.4, 3, 0.4);
+const LOCK_KEYHOLE = [12, 15.6, 1.45];
+/**
+ * The card filled, cut in two along its band `gap` wide: its top above the band, its body under it
+ * (pillow's own corners and swollen sides, the cut following the band's wave).
+ */
+function cardSolid(gap = 2) {
+  const { cmds } = CARD, x = 2.8, w = 18.4, y1 = 9.8 - gap / 2, y2 = 9.8 + gap / 2;
+  const top = [cmds[0], cmds[1], cmds[2], ['L', x + w, y1], ...wave(x + w, y1, x, y1, 0.35).cmds.slice(1), ['L', cmds[7][5], cmds[7][6]], cmds[8], ['Z']];
+  const body = [['M', x + w, y2], ['L', cmds[3][5], cmds[3][6]], cmds[4], cmds[5], cmds[6], ['L', x, y2], ...wave(x, y2, x + w, y2, 0.35).cmds.slice(1), ['Z']];
+  return new Path([...top, ...body]);
+}
+/** A globe's two halves inside its ring, `gap` apart along the equator: filled again inside a ring cut out. */
+function globeHalves(cx, cy, r, gap) {
+  const d = (Math.asin(gap / r) * 180) / Math.PI;
+  return [S(arc(cx, cy, r, 180 + d, 360 - d), 'Z'), S(arc(cx, cy, r, d, 180 - d), 'Z')];
+}
+/** A lightning bolt (bills, utilities) and the camera's flash, upright on its left side. */
+const BOLT = soft([[13.8, 2.6], [4.6, 13.6], [11.4, 13.6], [10.2, 21.4], [19.4, 10.4], [12.6, 10.4]], { r: 1, swell: 0.15 });
+const FLASH = soft([[7.6, 2.8], [16.8, 2.8], [13.4, 9.6], [17.4, 9.6], [10.4, 21.2], [10.6, 13.4], [7.6, 13.4]], { r: 1, swell: 0.15 });
+/** Two coins face on, the back one showing round the front one's edge with a gap. */
+function coins() {
+  const front = [9.2, 9.2, 5.6], back = [14.8, 14.8, 5.6], clear = 5.6 + 1.9 + 1.1;
+  const d = Math.hypot(back[0] - front[0], back[1] - front[1]);
+  const theta = (Math.acos((d * d + back[2] * back[2] - clear * clear) / (2 * d * back[2])) * 180) / Math.PI;
+  const toward = (Math.atan2(front[1] - back[1], front[0] - back[0]) * 180) / Math.PI;
+  return [circle(...front), arc(...back, toward + theta, toward + 360 - theta), line(9.2, 7, 9.2, 11.4)];
+}
+
+export const GLYPH_STROKE = 1.9;
+
 export const ICONS = {
   menu: { line: form(MENU) },
   search: { line: form([breathe(10.4, 10.4, 6.4, 0.3), bow(15.3, 15.3, 20.4, 20.4, 0.4)]) },
@@ -657,10 +701,6 @@ export const ICONS = {
   keyboard: {
     line: form([pillow(2.6, 5.6, 18.8, 12.8, 3, 0.4), wave(8.4, 15.2, 15.6, 15.2, 0.3)], dots([[6.6, 9.4, 1.15], [9.8, 9.4, 1.15], [13, 9.4, 1.15], [16.2, 9.4, 1.15], [6.6, 12.4, 1.15], [17.4, 12.4, 1.15]])),
   },
-};
-
-/** The twelve glyphs a selected control shows filled (a favourite's star among them). */
-export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pin', 'undo', 'info', 'sparkle', 'page', 'star'];
   // Clock's four places (its bottom bar): an alarm clock on its feet, an hourglass, a stopwatch; the world is the globe.
   alarm: {
     line: form([ALARM_FACE, ALARM_HANDS, ...ALARM_BELLS, ...ALARM_FEET]),
@@ -681,3 +721,96 @@ export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pi
   flag: {
     line: form([wave(5.8, 3.4, 5.8, 21, 0.3), 'M5.8 4.6C8.4 3.4 10.4 3.8 12.4 4.8C14.4 5.8 16.6 6.2 19.2 5.2V13C16.6 14 14.4 13.6 12.4 12.6C10.4 11.6 8.4 11.2 5.8 12.4']),
   },
+  // Wallet's cards and papers (its two places: a card, an identity card), and what it keeps them with.
+  card: {
+    line: form([CARD, CARD_BAND, CARD_NUMBER]),
+    // Chosen: the card filled, its band and its number cut out of it.
+    solid: form(null, [cardSolid(), outline(CARD_NUMBER, 1.7)]),
+  },
+  idCard: {
+    line: form([ID_CARD, ID_SHOULDERS, ...ID_LINES], dots([ID_HEAD])),
+    solid: form(null, [ID_CARD, circle(...ID_HEAD), outline(parse(ID_SHOULDERS), 1.7), ...ID_LINES.map(l => outline(l, 1.7))]),
+  },
+  passport: {
+    line: form([PASSPORT, circle(...PASSPORT_GLOBE), PASSPORT_EQUATOR, PASSPORT_LINE]),
+    solid: form(null, [PASSPORT, circle(12, 9.8, 4.85), ...globeHalves(12, 9.8, 3.15, 0.75), outline(PASSPORT_LINE, 1.7)]),
+  },
+  // Bars of two widths, each a solid bar with round ends (a pause's bars, thinner).
+  barcode: {
+    line: form(null, [[3.4, 1.9], [6.8, 3.2], [11.6, 1.9], [14.9, 1.9], [18.4, 2.6]].map(([x, w]) => pillow(x, 5, w, 14, w / 2, 0.15))),
+  },
+  // A document scanner: the frame's four corners, the scanning line across.
+  scan: {
+    line: form([
+      'M3.6 8.6V6.2C3.6 4.8 4.8 3.6 6.2 3.6H8.6',
+      'M15.4 3.6H17.8C19.2 3.6 20.4 4.8 20.4 6.2V8.6',
+      'M20.4 15.4V17.8C20.4 19.2 19.2 20.4 17.8 20.4H15.4',
+      'M8.6 20.4H6.2C4.8 20.4 3.6 19.2 3.6 17.8V15.4',
+      wave(6.6, 12, 17.4, 12, 0.3),
+    ]),
+  },
+  lock: {
+    line: form([LOCK_BODY, 'M8 10.4V7.8C8 5.6 9.8 3.8 12 3.8C14.2 3.8 16 5.6 16 7.8V10.4'], dots([LOCK_KEYHOLE])),
+    solid: form('M8 10.4V7.8C8 5.6 9.8 3.8 12 3.8C14.2 3.8 16 5.6 16 7.8V10.4', [LOCK_BODY, circle(12, 15.6, 1.6)]),
+  },
+  unlock: { line: form([LOCK_BODY, 'M8 10.4V7.8C8 5.6 9.8 3.8 12 3.8C13.9 3.8 15.4 5 15.9 6.6'], dots([LOCK_KEYHOLE])) },
+  // A fingerprint: three ridges over its core, their ends falling short of one another.
+  fingerprint: {
+    line: form([
+      'M9.4 20.4V12C9.4 10.6 10.6 9.4 12 9.4C13.4 9.4 14.6 10.6 14.6 12V15.6',
+      'M6.4 17.4V12C6.4 8.9 8.9 6.4 12 6.4C15.1 6.4 17.6 8.9 17.6 12V19.4',
+      'M3.6 14V12C3.6 7.4 7.4 3.6 12 3.6C16.6 3.6 20.4 7.4 20.4 12V14.6',
+      line(12, 13, 12, 18.4),
+    ]),
+  },
+  // Taxes: a public building, its pediment over three columns and its step.
+  landmark: { line: form([soft([[12, 3], [20.8, 8.4], [3.2, 8.4]], { r: 1.2, swell: 0.2 }), line(6.6, 11.6, 6.6, 16.8), line(12, 11.6, 12, 16.8), line(17.4, 11.6, 17.4, 16.8), wave(3.4, 20, 20.6, 20, 0.5)]) },
+  briefcase: { line: form([pillow(3, 7.4, 18, 12.8, 3, 0.4), 'M8.8 7.4V5.8C8.8 4.9 9.5 4.2 10.4 4.2H13.6C14.5 4.2 15.2 4.9 15.2 5.8V7.4', wave(3.2, 12.8, 20.8, 12.8, 0.35)]) },
+  coins: { line: form(coins()) },
+  shield: { line: form('M12 2.8C14.4 4.4 17 5.2 19.6 5.2C20 12.4 17.4 18 12 21.2C6.6 18 4 12.4 4.4 5.2C7 5.2 9.6 4.4 12 2.8Z') },
+  home: { line: form([soft([[12, 3], [20.6, 10], [20.6, 20.4, 2.4], [3.4, 20.4, 2.4], [3.4, 10]], { r: 1.6, swell: 0.3 }), 'M9.8 20.4V15.8C9.8 15 10.4 14.4 11.2 14.4H12.8C13.6 14.4 14.2 15 14.2 15.8V20.4']) },
+  bolt: { line: form(BOLT) },
+  heartPulse: {
+    line: form([
+      'M12 20.4C12 20.4 3 15 3 8.8C3 6 5.2 3.8 7.8 3.8C9.6 3.8 11.2 4.8 12 6.4C12.8 4.8 14.4 3.8 16.2 3.8C18.8 3.8 21 6 21 8.8C21 15 12 20.4 12 20.4Z',
+      soft([[3.4, 12], [8.4, 12], [10, 9.4], [12.6, 14.8], [14.4, 12], [20.6, 12]], { closed: false, r: 0.7 }),
+    ]),
+  },
+  // A car from the front: its roof and windscreen, the body, the lamps and the wheels under it.
+  car: {
+    line: form([pillow(3, 10.4, 18, 7.6, 2.6, 0.35), 'M5.4 10.4L7.2 6.6C7.6 5.7 8.4 5.2 9.4 5.2H14.6C15.6 5.2 16.4 5.7 16.8 6.6L18.6 10.4', line(6.4, 18.2, 6.4, 20.4), line(17.6, 18.2, 17.6, 20.4)], dots([[7.2, 14.2, 1.25], [16.8, 14.2, 1.25]])),
+  },
+  // A till receipt: torn into teeth at its foot, three lines printed on it.
+  receipt: {
+    line: form([
+      soft([[5, 3, 2.2], [19, 3, 2.2], [19, 20.8, 0.5], [16.67, 19.4, 0.6], [14.33, 20.8, 0.6], [12, 19.4, 0.6], [9.67, 20.8, 0.6], [7.33, 19.4, 0.6], [5, 20.8, 0.5]], { swell: 0.25 }),
+      wave(8.4, 7.8, 15.6, 7.8, 0.35),
+      wave(8.4, 11.4, 15.6, 11.4, 0.35),
+      wave(8.4, 15, 12.6, 15, 0.3),
+    ]),
+  },
+  graduation: {
+    line: form([soft([[12, 4.4], [21.6, 9.2], [12, 14], [2.4, 9.2]], { r: 1.1, swell: 0.15 }), 'M6.4 11.6V15.4C6.4 17 9 18.6 12 18.6C15 18.6 17.6 17 17.6 15.4V11.6', wave(21, 9.6, 21, 15.6, 0.25)]),
+  },
+  gift: {
+    line: form([
+      pillow(3, 7.6, 18, 4, 1.6, 0.2),
+      'M4.8 11.6V18.2C4.8 19.4 5.8 20.4 7 20.4H17C18.2 20.4 19.2 19.4 19.2 18.2V11.6',
+      wave(12, 7.6, 12, 20.4, 0.25),
+      'M12 7.6C11.2 5.2 9.6 3.6 8.2 3.8C6.8 4 6.6 5.8 7.6 6.8C8.2 7.3 9.4 7.6 12 7.6C14.6 7.6 15.8 7.3 16.4 6.8C17.4 5.8 17.2 4 15.8 3.8C14.4 3.6 12.8 5.2 12 7.6',
+    ]),
+  },
+  // The emergency card: a cross with round arms.
+  medical: {
+    line: form(soft([[9, 3.4, 2], [15, 3.4, 2], [15, 9, 1], [20.6, 9, 2], [20.6, 15, 2], [15, 15, 1], [15, 20.6, 2], [9, 20.6, 2], [9, 15, 1], [3.4, 15, 2], [3.4, 9, 2], [9, 9, 1]], { swell: 0.15 })),
+  },
+  // A scan's filters and tools: black and white (a circle half filled), crop, a page turned a quarter, the flash.
+  contrast: { line: form(CIRCLE, S(arc(12, 12, 8.6, -90, 90), 'Z')) },
+  crop: { line: form([soft([[6.4, 2.8], [6.4, 17.6], [21.2, 17.6]], { closed: false, r: 2.4, swell: -0.2 }), soft([[17.6, 21.2], [17.6, 6.4], [2.8, 6.4]], { closed: false, r: 2.4, swell: -0.2 })]) },
+  rotate: { line: form(flipX(Path.of('M3.8 9.8C5 6.4 8.4 4.4 12.2 4.6C16.6 4.8 20 8.4 20 12.6C20 16.8 16.6 20.2 12.4 20.2C9.6 20.2 7.2 18.8 5.8 16.6', 'M8.4 9.9C6.8 9.9 5.4 9.8 3.8 9.8C3.8 8.2 3.7 6.8 3.7 5.2'))) },
+  flash: { line: form(FLASH) },
+  flashOff: { line: form([FLASH, SLASH]) },
+};
+
+/** The glyphs a selected control shows filled (a favourite's star among them; Clock's four places). */
+export const SOLID = ['note', 'bell', 'tag', 'archive', 'trash', 'settings', 'pin', 'undo', 'info', 'sparkle', 'page', 'star', 'alarm', 'timer', 'stopwatch', 'globe', 'card', 'idCard', 'passport', 'lock'];

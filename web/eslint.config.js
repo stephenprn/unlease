@@ -34,8 +34,8 @@ const NO_DB = { group: ['**/app/db/*', '**/app/db'], message: 'ui goes through a
 
 /** The shell knows no app: an app brings itself through its module (`shared/src/modules`). */
 const NO_APPS = [
-  { group: ['@notes/*', '@pages/*', '@contacts/*', '@calendar/*', '@clock/*', '@demo/*'], message: 'The shell imports no app: the app brings it through its module (shared/src/modules).' },
-  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/contacts/*', '@unlease/calendar/*', '@unlease/clock/*'], message: 'The shell imports no app\'s package: only core and design.' },
+  { group: ['@notes/*', '@pages/*', '@contacts/*', '@calendar/*', '@clock/*', '@wallet/*', '@demo/*'], message: 'The shell imports no app: the app brings it through its module (shared/src/modules).' },
+  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/contacts/*', '@unlease/calendar/*', '@unlease/clock/*', '@unlease/wallet/*'], message: 'The shell imports no app\'s package: only core and design.' },
 ];
 
 /** Carnet knows nothing of Pages, but the one route it calls (« Garder une copie »). */
@@ -72,6 +72,16 @@ const CLOCK_READS = [
 /** No app imports Clock's web app: nothing of it is another app's to show. */
 const NO_CLOCK = [{ group: ['@clock/*'], message: 'No app imports Clock\'s web app.' }];
 
+/** Wallet reads Contacts' and Agenda's packages (the people papers concern, the days it writes), never another app's web app; no app imports Wallet: its records open only in it. */
+const WALLET_READS = [
+  { group: ['@notes/*', '@pages/*', '@calendar/*', '@clock/*', '@demo/*'], message: 'Wallet imports no other app\'s web app but Contacts\' records (@contacts/data: the people papers concern).' },
+  { group: ['@unlease/notes/*', '@unlease/pages/*', '@unlease/clock/*'], message: 'Wallet imports no other app\'s package but Contacts\' and Agenda\'s.' },
+];
+const NO_WALLET = [
+  { group: ['@wallet/*'], message: 'No app imports Wallet\'s web app: its records open only in it.' },
+  { group: ['@unlease/wallet/*'], message: 'No other app reads Wallet\'s package: its records are sealed.' },
+];
+
 /** Tests draw the whole suite (the shell with its apps): the areas' rules are for the code itself. */
 const TESTS = ['**/__tests__/**'];
 
@@ -83,7 +93,7 @@ export default defineConfig(
   { files: ['public/sw.js', 'root/sw.js'], languageOptions: { globals: globals.serviceworker } },
   tseslint.configs.recommended,
   {
-    files: ['shared/**/*.{ts,tsx}', 'notes/src/**/*.{ts,tsx}', 'pages/src/**/*.{ts,tsx}', 'contacts/src/**/*.{ts,tsx}', 'calendar/src/**/*.{ts,tsx}', 'clock/src/**/*.{ts,tsx}', 'demo/**/*.{ts,tsx}'],
+    files: ['shared/**/*.{ts,tsx}', 'notes/src/**/*.{ts,tsx}', 'pages/src/**/*.{ts,tsx}', 'contacts/src/**/*.{ts,tsx}', 'calendar/src/**/*.{ts,tsx}', 'clock/src/**/*.{ts,tsx}', 'wallet/src/**/*.{ts,tsx}', 'demo/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest']],
     languageOptions: { globals: globals.browser },
     rules: {
@@ -98,16 +108,18 @@ export default defineConfig(
   // Later entries win for the same file: each area's whole set, its ui's with the database's rule.
   restricted(NO_APPS, ['shared/src/**/*.{ts,tsx}']),
   restricted([...NO_APPS, NO_DB], ['shared/src/ui/**/*.{ts,tsx}']),
-  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK], ['notes/src/**/*.{ts,tsx}']),
-  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['notes/src/ui/**/*.{ts,tsx}']),
-  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK], ['contacts/src/**/*.{ts,tsx}']),
-  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['contacts/src/ui/**/*.{ts,tsx}']),
-  restricted([...NO_CALENDAR, ...NO_CLOCK], ['pages/src/**/*.{ts,tsx}']),
-  restricted([...NO_CALENDAR, ...NO_CLOCK, NO_DB], ['pages/src/ui/**/*.{ts,tsx}']),
-  restricted([...CALENDAR_READS, ...NO_CLOCK], ['calendar/src/**/*.{ts,tsx}']),
-  restricted([...CALENDAR_READS, ...NO_CLOCK, NO_DB], ['calendar/src/ui/**/*.{ts,tsx}']),
-  restricted(CLOCK_READS, ['clock/src/**/*.{ts,tsx}']),
-  restricted([...CLOCK_READS, NO_DB], ['clock/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET], ['notes/src/**/*.{ts,tsx}']),
+  restricted([...NO_PAGES, ...NO_CONTACTS, ...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET, NO_DB], ['notes/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET], ['contacts/src/**/*.{ts,tsx}']),
+  restricted([...NO_OTHER_APPS, ...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET, NO_DB], ['contacts/src/ui/**/*.{ts,tsx}']),
+  restricted([...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET], ['pages/src/**/*.{ts,tsx}']),
+  restricted([...NO_CALENDAR, ...NO_CLOCK, ...NO_WALLET, NO_DB], ['pages/src/ui/**/*.{ts,tsx}']),
+  restricted([...CALENDAR_READS, ...NO_CLOCK, ...NO_WALLET], ['calendar/src/**/*.{ts,tsx}']),
+  restricted([...CALENDAR_READS, ...NO_CLOCK, ...NO_WALLET, NO_DB], ['calendar/src/ui/**/*.{ts,tsx}']),
+  restricted([...CLOCK_READS, ...NO_WALLET], ['clock/src/**/*.{ts,tsx}']),
+  restricted([...CLOCK_READS, ...NO_WALLET, NO_DB], ['clock/src/ui/**/*.{ts,tsx}']),
+  restricted(WALLET_READS, ['wallet/src/**/*.{ts,tsx}']),
+  restricted([...WALLET_READS, NO_DB], ['wallet/src/ui/**/*.{ts,tsx}']),
   {
     files: ['**/__tests__/**', 'shared/test/**'],
     rules: { 'no-restricted-syntax': 'off' },

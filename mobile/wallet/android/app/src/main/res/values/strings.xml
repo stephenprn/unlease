@@ -1,0 +1,10 @@
+<resources>
+    <!-- APPS.wallet.name (packages/core/src/apps.ts). -->
+    <string name="app_name">Wallet</string>
+
+    <!-- The launcher's shortcuts, a long press on the app's icon (res/xml/shortcuts.xml): short, then whole. -->
+    <string name="shortcut_cards_short">Cards</string>
+    <string name="shortcut_cards_long">Your cards at the till</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search your wallet</string>
+</resources>

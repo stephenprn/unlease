@@ -11,7 +11,7 @@ const SHARED = path.resolve(__dirname, '..');
 const REPOSITORY = path.resolve(SHARED, '../..');
 const PACKAGES = path.join(REPOSITORY, 'packages');
 /** The suite's packages an app may import, in their order (`core <- design <- notes, contacts <- calendar <- pages`). */
-const PACKAGE_NAMES = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages', 'clock'];
+const PACKAGE_NAMES = ['core', 'design', 'notes', 'contacts', 'calendar', 'pages', 'clock', 'wallet'];
 
 /** Babel's module-resolver aliases, relative to the app (`root: ['./']`). */
 function babelAliases(appDir) {

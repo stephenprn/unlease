@@ -3,9 +3,10 @@
  * The packages compile into the phone, the web and the server, so they import no third-party
  * module, no platform and no framework, and they keep their order:
  * core <- design <- each app's package, in the order their reads give (notes, contacts <- calendar
- * <- pages, clock: Agenda shows contacts' birthdays and Carnet's reminders; Pages shows Carnet's
+ * <- pages, clock, wallet: Agenda shows contacts' birthdays and Carnet's reminders; Pages shows Carnet's
  * collections, notes and links, and mentions contacts and events; Clock shows Agenda's events as an
- * alarm rings; Carnet and Contacts import no other app's package, Pages and Clock not each other's). A new app's package slots in after those it reads; an app below names what it
+ * alarm rings; Wallet names contacts and writes Agenda's days; Carnet and Contacts import no other
+ * app's package, Pages, Clock and Wallet not each other's). A new app's package slots in after those it reads; an app below names what it
  * mentions of one above through what its program hands it (`notes/services/noteMentions`).
  */
 import js from '@eslint/js';
@@ -46,16 +47,17 @@ export default defineConfig(
       'no-irregular-whitespace': ['error', { skipStrings: true, skipTemplates: true }],
     },
   },
-  { files: ['packages/core/src/**/*.ts'], rules: { 'no-restricted-imports': layer('design', 'notes', 'contacts', 'calendar', 'pages', 'clock') } },
-  { files: ['packages/design/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'contacts', 'calendar', 'pages', 'clock') } },
-  { files: ['packages/notes/src/**/*.ts'], rules: { 'no-restricted-imports': layer('contacts', 'calendar', 'pages', 'clock') } },
-  { files: ['packages/contacts/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'calendar', 'pages', 'clock') } },
-  { files: ['packages/calendar/src/**/*.ts'], rules: { 'no-restricted-imports': layer('pages', 'clock') } },
-  { files: ['packages/pages/src/**/*.ts'], rules: { 'no-restricted-imports': layer('clock') } },
-  { files: ['packages/clock/src/**/*.ts'], rules: { 'no-restricted-imports': layer('pages') } },
+  { files: ['packages/core/src/**/*.ts'], rules: { 'no-restricted-imports': layer('design', 'notes', 'contacts', 'calendar', 'pages', 'clock', 'wallet') } },
+  { files: ['packages/design/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'contacts', 'calendar', 'pages', 'clock', 'wallet') } },
+  { files: ['packages/notes/src/**/*.ts'], rules: { 'no-restricted-imports': layer('contacts', 'calendar', 'pages', 'clock', 'wallet') } },
+  { files: ['packages/contacts/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'calendar', 'pages', 'clock', 'wallet') } },
+  { files: ['packages/calendar/src/**/*.ts'], rules: { 'no-restricted-imports': layer('pages', 'clock', 'wallet') } },
+  { files: ['packages/pages/src/**/*.ts'], rules: { 'no-restricted-imports': layer('clock', 'wallet') } },
+  { files: ['packages/clock/src/**/*.ts'], rules: { 'no-restricted-imports': layer('pages', 'wallet') } },
+  { files: ['packages/wallet/src/**/*.ts'], rules: { 'no-restricted-imports': layer('notes', 'pages', 'clock') } },
   {
     // Where the names are written out, once.
-    files: ['packages/core/src/apps.ts', 'packages/core/src/appWords.ts', 'packages/notes/src/brand.ts', 'packages/contacts/src/brand.ts', 'packages/calendar/src/brand.ts', 'packages/pages/src/brand.ts', 'packages/clock/src/brand.ts'],
+    files: ['packages/core/src/apps.ts', 'packages/core/src/appWords.ts', 'packages/notes/src/brand.ts', 'packages/contacts/src/brand.ts', 'packages/calendar/src/brand.ts', 'packages/pages/src/brand.ts', 'packages/clock/src/brand.ts', 'packages/wallet/src/brand.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
   {

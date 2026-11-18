@@ -30,6 +30,7 @@
         <package android:name="com.stephenprn.contacts${suiteSuffix}" />
         <package android:name="com.stephenprn.agenda${suiteSuffix}" />
         <package android:name="com.stephenprn.clock${suiteSuffix}" />
+        <package android:name="com.stephenprn.wallet${suiteSuffix}" />
     </queries>
 
     <application

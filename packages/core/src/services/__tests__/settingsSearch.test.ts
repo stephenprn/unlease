@@ -6,12 +6,13 @@ import { CONTACTS_SETTINGS_PLACES } from '@unlease/contacts/services/settingsPla
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { PAGES_SETTINGS_PLACES } from '@unlease/pages/services/settingsPlaces';
 import { CLOCK_SETTINGS_PLACES } from '@unlease/clock/services/settingsPlaces';
+import { WALLET_SETTINGS_PLACES } from '@unlease/wallet/services/settingsPlaces';
 
 import { APP_IDS, APPS, type AppId } from '../../apps';
 import { setLocale } from '../../i18n';
 import { findSettings, placesFor, settingsPageOf, settingsWhere, SETTINGS_SECTIONS, SHARED_SETTINGS_PLACES, type SettingsClient, type SettingsPlace } from '../settingsSearch';
 
-const OWN: Readonly<Record<AppId, readonly SettingsPlace[]>> = { notes: NOTES_SETTINGS_PLACES, pages: PAGES_SETTINGS_PLACES, contacts: CONTACTS_SETTINGS_PLACES, calendar: CALENDAR_SETTINGS_PLACES, clock: CLOCK_SETTINGS_PLACES };
+const OWN: Readonly<Record<AppId, readonly SettingsPlace[]>> = { notes: NOTES_SETTINGS_PLACES, pages: PAGES_SETTINGS_PLACES, contacts: CONTACTS_SETTINGS_PLACES, calendar: CALENDAR_SETTINGS_PLACES, clock: CLOCK_SETTINGS_PLACES, wallet: WALLET_SETTINGS_PLACES };
 
 /** The ids a query finds, best first, in an app on a client. */
 const found = (query: string, app: AppId = 'notes', client: SettingsClient = 'phone'): string[] => findSettings(placesFor(app, client, OWN[app]), query).map(place => place.id);
