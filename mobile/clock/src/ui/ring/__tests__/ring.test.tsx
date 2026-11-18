@@ -75,4 +75,33 @@ describe('the ringing window', () => {
     await act(async () => __ring({ state: 'snoozed', id: 'x', until: new Date(2026, 10, 17, 7, 40).getTime(), title: 'Travail', label: 'Travail' }));
     expect(textOf(tree)).toContain('Répétée jusqu’à 07:40');
   });
+
+  it('keeps « Toute la journée » whole in the time column and counts the events past four', async () => {
+    const base = { description: '', place: '', timeZone: '', rrule: '', exdates: [], recurringId: null, originalStart: '', reminders: [], labelIds: [], contactIds: [], files: [], feedId: null, uid: '', url: '', color: null, dayOff: false, trashedAt: null, createdAt: 1, deletedAt: null };
+    const event = (id: string, title: string, start: string, end: string) => ({ type: 'calendarEvent', id, patch: eventFields({ ...base, title, start, end } as Omit<CalendarEvent, 'id' | 'editedAt'>) });
+    await act(async () => {
+      writeLocal([
+        event('trip', 'Salon à Lyon', '2026-11-17', '2026-11-18'),
+        event('a', 'Train', '2026-11-17T08:15', '2026-11-17T08:45'),
+        event('b', 'Réunion', '2026-11-17T11:00', '2026-11-17T12:00'),
+        event('c', 'Déjeuner', '2026-11-17T12:30', '2026-11-17T13:30'),
+        event('d', 'Appel', '2026-11-17T16:00', '2026-11-17T16:30'),
+      ]);
+    });
+    const text = textOf(tree);
+    expect(text).toContain('Salon à Lyon');
+    // The all-day row, its words on two lines rather than cut; four rows, then what is left counted.
+    const allDay = tree.root.find(node => node.props.children === 'Toute la journée' && typeof node.props.numberOfLines === 'number');
+    expect(allDay.props.numberOfLines).toBe(2);
+    expect(text).toContain('+ 2 autres');
+  });
+
+  it('shows no weather when the alarm asks for none, and the day alone', async () => {
+    await act(async () => __ring({ state: 'ringing', id: 'none', at: Date.now(), since: Date.now(), title: '', label: '' }));
+    const text = textOf(tree);
+    // Not an alarm of this phone's: no weather, no day, but the time and the actions.
+    expect(text).not.toContain('6° · Pluie');
+    expect(text).not.toContain('Dentiste');
+    expect(text).toContain('Répéter · 10 minutes');
+  });
 });

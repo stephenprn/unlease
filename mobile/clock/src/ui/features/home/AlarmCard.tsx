@@ -1,12 +1,14 @@
 /**
  * An alarm in the home's list: one paper card, its time at 34 in Signika (the second ink while it is
  * off), its name over its days, a skipped morning in Safran, its switch at the end. A press opens its
- * editor; the switch turns it on or off (a one-time alarm switched on takes its next day).
+ * editor; the switch turns it on or off (a one-time alarm switched on takes its next day). Found by
+ * a search, the words that found it are marked in its name.
  */
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
+import { matchRanges } from '@unlease/core/services/search';
 import { weekdayDay } from '@unlease/calendar/services/eventText';
 import type { Alarm } from '@unlease/clock/models/alarm';
 import { isOn, skippedDay } from '@unlease/clock/services/schedule';
@@ -23,10 +25,12 @@ interface Props {
   readonly now: number;
   readonly twelveHours: boolean;
   readonly weekStart: number;
+  /** What a search holds: its matches marked in the name ('' outside a search). */
+  readonly query?: string;
   readonly onOpen: (id: string) => void;
 }
 
-function AlarmCardComponent({ alarm, now, twelveHours, weekStart, onOpen }: Props) {
+function AlarmCardComponent({ alarm, now, twelveHours, weekStart, query = '', onOpen }: Props) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const id = alarm.id;
@@ -38,11 +42,11 @@ function AlarmCardComponent({ alarm, now, twelveHours, weekStart, onOpen }: Prop
   const name = alarm.label.trim();
   return (
     <Organic outline="card" style={styles.card}>
-      <Tappable outline="card" onPress={() => onOpen(id)} accessibilityRole="button" accessibilityHint={t('Opens the alarm')} accessibilityLabel={[time, name, days, on ? '' : t('Off')].filter(Boolean).join(', ')} style={styles.row}>
+      <Tappable outline="card" onPress={() => onOpen(id)} accessibilityRole="button" accessibilityHint={t('Opens the alarm')} accessibilityLabel={[time, name, days, skipped ? t('Skipped {day}', { day: weekdayDay(skipped) }) : '', on ? '' : t('Off')].filter(Boolean).join(', ')} style={styles.row}>
         <AppText style={[styles.time, !on && styles.off]}>{time}</AppText>
         <View style={styles.words}>
           {name ? (
-            <AppText variant="bodyStrong" color={on ? theme.color.ink : theme.color.inkMuted} numberOfLines={1}>
+            <AppText variant="bodyStrong" color={on ? theme.color.ink : theme.color.inkMuted} numberOfLines={1} highlight={query ? matchRanges(name, query) : undefined}>
               {name}
             </AppText>
           ) : null}

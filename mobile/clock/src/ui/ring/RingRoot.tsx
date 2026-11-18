@@ -24,7 +24,7 @@ import { dayWords, nowWords, WEATHER_GLYPHS, weatherAt, weatherKind } from '@unl
 import { minutesWords } from '@unlease/clock/services/words';
 import { dayPlace, openInApp } from '@shared/app/openApp';
 import { haptic } from '@shared/platform/haptics';
-import { AppText, Button, Ground, Icon, Organic } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, Ground, Icon, Organic } from '@shared/ui/components';
 import { decelerate, duration, FLING_SPEED, spatial } from '@shared/ui/theme/motion';
 import { ThemeProvider, useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -44,6 +44,8 @@ const TEST_ID = '__test__';
 const RING_WEATHER_MS = 4000;
 /** The day's events shown before « + n autres ». */
 const SHOWN_EVENTS = 4;
+/** The events' time column, at the font's own scale. */
+const WHEN_WIDTH = 76;
 /** How far the pebble must go to stop the alarm. */
 const STOP_SHARE = 0.72;
 const TRACK_HEIGHT = 72;
@@ -171,9 +173,12 @@ function RingWindow(): React.ReactElement {
 
         {(morning || ahead) && !snoozed ? (
           <Organic outline="panel" style={styles.panel}>
-            {morning ? <WeatherRow morning={morning} /> : null}
-            {morning && ahead ? <View style={styles.rule} /> : null}
-            {ahead ? <DayList ahead={ahead} now={now} twelveHours={prefs.twelveHours} onViewDay={viewDay} /> : null}
+            {/* A small screen at a large font scale: the panel gives way to the time and the actions, and what it holds scrolls, its cut end fading. */}
+            <EdgeScrollView capped style={styles.panelScroll} contentContainerStyle={styles.panelContent}>
+              {morning ? <WeatherRow morning={morning} /> : null}
+              {morning && ahead ? <View style={styles.rule} /> : null}
+              {ahead ? <DayList ahead={ahead} now={now} twelveHours={prefs.twelveHours} onViewDay={viewDay} /> : null}
+            </EdgeScrollView>
           </Organic>
         ) : null}
 
@@ -216,10 +221,13 @@ function WeatherRow({ morning }: { readonly morning: NonNullable<ReturnType<type
 function DayList({ ahead, now, twelveHours, onViewDay }: { readonly ahead: NonNullable<ReturnType<typeof dayAhead>>; readonly now: number; readonly twelveHours: boolean; readonly onViewDay: () => void }): React.ReactElement {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
+  // The time column grows with the font, so « 10:30 AM » stays whole at a large scale.
+  const { fontScale } = useWindowDimensions();
+  const whenWidth = WHEN_WIDTH * Math.max(1, fontScale);
   const coming = ahead.timed.filter(item => item.endAt > now);
-  const rows: { readonly key: string; readonly when: string; readonly title: string; readonly now: boolean }[] = [
-    ...ahead.allDay.map(item => ({ key: item.key, when: t('All day'), title: titleOf(item), now: false })),
-    ...coming.map(item => ({ key: item.key, when: clockWords(instantToWall(item.startAt, '').slice(11, 16), twelveHours), title: titleOf(item), now: item.startAt <= now })),
+  const rows: { readonly key: string; readonly when: string; readonly title: string; readonly now: boolean; readonly allDay: boolean }[] = [
+    ...ahead.allDay.map(item => ({ key: item.key, when: t('All day'), title: titleOf(item), now: false, allDay: true })),
+    ...coming.map(item => ({ key: item.key, when: clockWords(instantToWall(item.startAt, '').slice(11, 16), twelveHours), title: titleOf(item), now: item.startAt <= now, allDay: false })),
   ];
   const shown = rows.slice(0, SHOWN_EVENTS);
   const more = rows.length - shown.length;
@@ -233,7 +241,8 @@ function DayList({ ahead, now, twelveHours, onViewDay }: { readonly ahead: NonNu
       ) : (
         shown.map(row => (
           <View key={row.key} style={styles.event}>
-            <AppText variant={row.now ? 'bodyStrong' : 'body'} color={theme.color.inkMuted} style={styles.when} numberOfLines={1}>
+            {/* « Toute la journée » takes two lines in the column rather than being cut. */}
+            <AppText variant={row.now ? 'bodyStrong' : 'body'} color={theme.color.inkMuted} style={[styles.when, { width: whenWidth }]} numberOfLines={row.allDay ? 2 : 1}>
               {row.when}
             </AppText>
             <AppText variant={row.now ? 'bodyStrong' : 'body'} style={styles.grow} numberOfLines={1}>
@@ -243,7 +252,7 @@ function DayList({ ahead, now, twelveHours, onViewDay }: { readonly ahead: NonNu
         ))
       )}
       <View style={styles.dayFoot}>
-        <AppText variant="meta">{more > 0 ? t('And {count} more', { count: more }) : ''}</AppText>
+        <AppText variant="meta">{more === 1 ? t('+ 1 more') : more > 1 ? t('+ {count} more', { count: more }) : ''}</AppText>
         <Button kind="text" label={t('View the day')} onPress={onViewDay} small />
       </View>
     </View>
@@ -346,13 +355,15 @@ function makeStyles(theme: Theme) {
     center: { textAlign: 'center' },
     above: { flexGrow: 2, maxHeight: '16%' },
     below: { flexGrow: 3, minHeight: 24 },
-    panel: { marginTop: 32, flexShrink: 1, backgroundColor: theme.color.paper, borderColor: theme.color.hairline, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 16 },
+    panel: { marginTop: 32, flexShrink: 1, backgroundColor: theme.color.paper, borderColor: theme.color.hairline, borderWidth: 1, overflow: 'hidden' },
+    panelScroll: { flexGrow: 0, flexShrink: 1 },
+    panelContent: { paddingHorizontal: 18, paddingVertical: 16 },
     weather: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 48 },
     grow: { flex: 1 },
     rule: { height: 1, backgroundColor: theme.color.hairline, marginVertical: 14 },
     day: { gap: 8 },
     event: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 28 },
-    when: { width: 76, fontVariant: ['tabular-nums'] },
+    when: { fontVariant: ['tabular-nums'] },
     dayFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
     actions: { gap: 14 },
     // One large tap, the whole width in the thumb's reach.

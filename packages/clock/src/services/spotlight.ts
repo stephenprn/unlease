@@ -4,6 +4,7 @@
  * « 730 ») and its days as meta, so « 7h30 », « train » or « week-end » find it. Rebuilt in the
  * interface's language (its days are words).
  */
+import { foldText } from '@unlease/core/services/search';
 import { spotKey, type SpotMeta } from '@unlease/core/services/spotlight';
 import type { SearchDoc, SearchPart } from '@unlease/core/services/searchIndex';
 import type { Alarm } from '../models/alarm';
@@ -18,6 +19,13 @@ export function timeSpellings(time: string): string {
   const twelve = hour % 12 === 0 ? 12 : hour % 12;
   const half = hour < 12 ? 'am' : 'pm';
   return [time, `${hour}:${minute}`, `${hour}h${minute}`, `${hour}${minute}`, time.replace(':', ''), `${twelve}:${minute}${half}`, `${twelve}${half}`].join(' ');
+}
+
+/** Whether an alarm answers a home's search (both clients): its label, or its time as typed (« 7h30 », « 730 »). */
+export function alarmAnswers(alarm: Pick<Alarm, 'label' | 'time'>, query: string): boolean {
+  const folded = foldText(query.trim());
+  if (!folded) return true;
+  return foldText(`${alarm.label} ${timeSpellings(alarm.time)}`).includes(folded);
 }
 
 export function clockSpotlightDocs(alarms: Iterable<Alarm>, now: number, weekStart: number): SearchDoc<SpotMeta>[] {

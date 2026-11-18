@@ -315,6 +315,20 @@
         </intent-filter>
       </receiver>
 
+      <!-- The home-screen widget « Prochaine alarme » (widget/, docs/ARCHITECTURE.md). Exported because the
+           launcher broadcasts APPWIDGET_UPDATE to it; it takes no data from it. -->
+      <receiver
+        android:name=".widget.NextAlarmWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_alarm_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_alarm_info" />
+      </receiver>
+
       <!-- What this app hands its siblings of the suite (server, token, appearance), to them alone. -->
       <provider
         android:name="com.stephenprn.unlease.suitelink.SuiteProvider"

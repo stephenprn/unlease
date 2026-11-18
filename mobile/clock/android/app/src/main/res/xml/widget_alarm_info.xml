@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawn from the alarm engine's plan (the next ring, a snooze, a ring under way) and what JavaScript
+     hands over (each morning's first event, the words); drawn again whenever the engine arms, and
+     every half hour so « Demain » becomes « Aujourd’hui » after midnight. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="3" android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_alarm_small"
+    android:previewLayout="@layout/widget_alarm_preview"
+    android:description="@string/widget_alarm_description"
+    android:widgetCategory="home_screen" />

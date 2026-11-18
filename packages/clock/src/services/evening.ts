@@ -53,7 +53,7 @@ export function checkOn(input: EveningInput, evening: Day): EveningCheck | null 
   const live = [...input.alarms].filter(alarm => alarm.deletedAt === null);
   const waking = wakingOn(live, day, zone);
   if (!waking) return null;
-  const clash = clashWith(dayAhead(input.agenda, day), waking.at, prefs.marginMinutes);
+  const clash = clashWith(dayAhead(input.agenda, day), waking.at, prefs.marginMinutes, zone);
   if (!clash) return null;
   const at = ringAt(evening, prefs.eveningAt, zone);
   const earlier = earlierTime(clash, prefs.marginMinutes, zone);

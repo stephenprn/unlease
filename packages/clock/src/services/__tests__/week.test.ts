@@ -54,6 +54,16 @@ describe('the week of mornings', () => {
     expect(late.waking?.alarm.id).toBe('weekdays');
   });
 
+  it('finds no clash with the day’s events once its morning ring is skipped and an evening one is left', () => {
+    const work = alarm('work', { skipDay: '2026-11-18' });
+    const evening = alarm('evening', { time: '22:30', days: [3] });
+    const standup = event('Standup', '2026-11-18T09:30', '2026-11-18T09:45');
+    const wednesday = weekOfMornings({ alarms: [work, evening], agenda: { events: [standup], feeds: [] }, now, margin: 30 })[2]!;
+    expect(wednesday.skipped.map(item => item.id)).toEqual(['work']);
+    expect(wednesday.wakeup?.alarm.id).toBe('evening');
+    expect(wednesday.clash).toBeNull();
+  });
+
   it('opens on the next alarm’s morning, else today', () => {
     expect(chosenMorning(week, alarms, now)).toBe('2026-11-17');
     expect(chosenMorning(week, [], now)).toBe('2026-11-16');

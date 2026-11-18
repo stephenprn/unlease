@@ -25,7 +25,7 @@ import { instantToDay, instantToWall } from '@unlease/calendar/services/time';
 import { earlierTime } from '@unlease/clock/services/morning';
 import { nextRing } from '@unlease/clock/services/schedule';
 import { stillToRing, type Morning } from '@unlease/clock/services/week';
-import { alarmClock, alarmName, offDayWords, ringDayWords, untilWords } from '@unlease/clock/services/words';
+import { alarmClock, alarmName, distanceWords, offDayWords, ringDayWords, untilWords } from '@unlease/clock/services/words';
 import { useAppReachable } from '@shared/app/hooks/useAppReachable';
 import { dayPlace, openInApp } from '@shared/app/openApp';
 import { haptic } from '@shared/platform/haptics';
@@ -71,12 +71,6 @@ const slideFrom = (side: -1 | 0 | 1) =>
     0: { opacity: 0, transform: [{ translateX: side * 16 }] },
     100: { opacity: 1, transform: [{ translateX: 0 }], easing: decelerate },
   }).duration(duration.medium);
-
-/** « 15 min après le réveil », « À l’heure du réveil », « 30 min avant le réveil ». */
-function distanceWords(minutes: number): string {
-  if (minutes === 0) return t('As the alarm rings');
-  return minutes > 0 ? t('{span} after the alarm', { span: spanWords(minutes) }) : t('{span} before the alarm', { span: spanWords(-minutes) });
-}
 
 function MorningPanelComponent({ morning, now, from, margin, twelveHours, previous, next, onStep, onOpen, onAlarmFor }: Props) {
   const styles = useThemedStyles(makeStyles);
@@ -195,7 +189,13 @@ function MorningPanelComponent({ morning, now, from, margin, twelveHours, previo
             <Animated.View key={morning.day} entering={enter} style={styles.morning}>
               {waking ? (
                 <>
-                  <AppText style={[styles.time, !toCome && styles.past]} accessibilityLabel={t('Alarm at {time}', { time: alarmClock(waking.alarm.time, twelveHours) })} onPress={() => onOpen(waking.alarm.id)}>
+                  <AppText
+                    style={[styles.time, !toCome && styles.past]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('Alarm at {time}', { time: alarmClock(waking.alarm.time, twelveHours) })}
+                    accessibilityHint={t('Opens the alarm')}
+                    onPress={() => onOpen(waking.alarm.id)}
+                  >
                     {alarmClock(waking.alarm.time, twelveHours)}
                   </AppText>
                   <View style={styles.nameRow}>
@@ -213,7 +213,7 @@ function MorningPanelComponent({ morning, now, from, margin, twelveHours, previo
               )}
               {morning.skipped.map(alarm => (
                 <View key={alarm.id} style={styles.nameRow}>
-                  <AppText variant="meta" color={theme.color.waiting} style={styles.grow} numberOfLines={1}>
+                  <AppText variant="meta" color={theme.color.waiting} style={styles.grow} numberOfLines={2}>
                     {t('{alarm} at {time} skipped this morning', { alarm: alarmName(alarm), time: alarmClock(alarm.time, twelveHours) })}
                   </AppText>
                   <Button kind="text" small label={t('Ring after all')} onPress={() => unskip(alarm.id)} />
@@ -249,7 +249,8 @@ function MorningPanelComponent({ morning, now, from, margin, twelveHours, previo
                     </>
                   ) : (
                     <AppText variant="body" color={theme.color.inkMuted}>
-                      {morning.later ? t('Nothing in your calendar after this alarm.') : t('Nothing in your calendar that day.')}
+                      {/* Today with everything over: the strip's dot says the day held something, so the line says none is left. */}
+                      {morning.later ? t('Nothing in your calendar after this alarm.') : morning.day === today && morning.events > 0 ? t('Nothing left in your calendar today.') : t('Nothing in your calendar that day.')}
                     </AppText>
                   )}
                 </View>

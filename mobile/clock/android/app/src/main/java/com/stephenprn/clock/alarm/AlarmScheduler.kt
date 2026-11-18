@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.stephenprn.clock.MainActivity
+import com.stephenprn.clock.widget.NextAlarmWidgetProvider
 import java.util.TimeZone
 import kotlin.math.max
 
@@ -61,6 +62,8 @@ internal object AlarmScheduler {
     var inexact = false
     for ((key, at) in wanted) inexact = set(context, alarms, key, at) || inexact
     store.setArmed(wanted.keys, inexact)
+    // « Prochaine alarme » follows what is armed: a new plan, a ring gone by, a snooze, a new clock or zone.
+    NextAlarmWidgetProvider.redrawAll(context)
     return ArmOutcome(wanted.size, wanted.values.minOrNull() ?: 0L, inexact)
   }
 

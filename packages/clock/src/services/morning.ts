@@ -49,15 +49,22 @@ export interface Clash {
   readonly minutes: number;
 }
 
+/** From this hour a ring is no morning's: what starts before it is not what it wakes the person for. */
+const MORNING_ENDS = 12;
+
 /**
  * The first event of the alarm's day that starts less than `margin` minutes after it rings, or before
- * it; null when the morning leaves room. An event begun the day before is not one to get up for.
+ * it; null when the morning leaves room. An event begun the day before is not one to get up for, nor
+ * one before a ring of the afternoon or evening (a wind-down alarm, what rings once the morning's is
+ * skipped): moving that ring to the morning would make no sense. `zone` is the phone's (its clock).
  */
-export function clashWith(ahead: DayAhead, ringAt: number, margin: number): Clash | null {
+export function clashWith(ahead: DayAhead, ringAt: number, margin: number, zone = ''): Clash | null {
   const first = ahead.timed[0];
   if (!first) return null;
   const minutes = Math.round((first.startAt - ringAt) / 60_000);
-  return minutes < margin ? { occurrence: first, minutes } : null;
+  if (minutes >= margin) return null;
+  if (minutes < 0 && Number(instantToWall(ringAt, zone).slice(11, 13)) >= MORNING_ENDS) return null;
+  return { occurrence: first, minutes };
 }
 
 /**

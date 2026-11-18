@@ -268,6 +268,7 @@
 
 /* ── the alarms under it ────────────────────────────────────────────────── */
 
+/* The section's head on the suite's column: 4 in from the cards' edge, as every list's head. */
 .section {
-  margin: 12px 10px 0;
+  margin: 12px 4px 0;
 }

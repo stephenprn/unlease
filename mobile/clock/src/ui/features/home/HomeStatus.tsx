@@ -12,8 +12,9 @@ import { AppState, StyleSheet, View } from 'react-native';
 import { t } from '@unlease/core/i18n';
 import { clockWords } from '@unlease/calendar/services/eventText';
 import { instantToWall } from '@unlease/calendar/services/time';
+import { withAlpha } from '@unlease/design/color';
 import { SHAPES } from '@unlease/design/shapes';
-import { AppText, Button, Icon, Organic, Tappable } from '@shared/ui/components';
+import { AppText, Icon, Organic, Tappable } from '@shared/ui/components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -60,6 +61,19 @@ function useTrouble(): boolean {
   return trouble;
 }
 
+/** An action on the charcoal slip, as the slip's own (`Snackbar`): a chip edged in its ink, its label in the slip's matcha. */
+function SlipAction({ label, onPress }: { readonly label: string; readonly onPress: () => void }): React.ReactElement {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  return (
+    <Tappable onDark hitSlop={4} accessibilityLabel={label} onPress={onPress} style={styles.action}>
+      <AppText variant="label" color={theme.color.slipAction}>
+        {label}
+      </AppText>
+    </Tappable>
+  );
+}
+
 export function HomeStatus({ twelveHours, onFix }: { readonly twelveHours: boolean; readonly onFix: () => void }): React.ReactElement | null {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
@@ -72,7 +86,8 @@ export function HomeStatus({ twelveHours, onFix }: { readonly twelveHours: boole
       <Organic shape={SHAPES.slip} style={styles.slip} accessibilityLiveRegion="polite">
         <Icon name="bell" size={20} color={theme.color.onSlipMuted} />
         <View style={styles.grow}>
-          <AppText variant="bodyStrong" color={theme.color.onSlip} numberOfLines={1}>
+          {/* Whole, as the slip's words are: at a large font scale beside two actions, on two lines. */}
+          <AppText variant="bodyStrong" color={theme.color.onSlip}>
             {ring.state === 'ringing' ? t('An alarm is ringing') : t('Snoozed until {time}', { time: until })}
           </AppText>
           {ring.title ? (
@@ -81,8 +96,8 @@ export function HomeStatus({ twelveHours, onFix }: { readonly twelveHours: boole
             </AppText>
           ) : null}
         </View>
-        {ring.state === 'ringing' ? <Button kind="text" small label={t('Snooze')} onPress={snooze} /> : null}
-        <Button kind="text" small label={t('Stop')} onPress={onStop} />
+        {ring.state === 'ringing' ? <SlipAction label={t('Snooze')} onPress={snooze} /> : null}
+        <SlipAction label={t('Stop')} onPress={onStop} />
       </Organic>
     );
   }
@@ -102,8 +117,10 @@ export function HomeStatus({ twelveHours, onFix }: { readonly twelveHours: boole
 
 function makeStyles(theme: Theme) {
   return StyleSheet.create({
-    slip: { marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16, paddingRight: 6, minHeight: 56, backgroundColor: theme.color.slip, boxShadow: theme.lift.float },
+    slip: { marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16, paddingRight: 6, minHeight: 52, backgroundColor: theme.color.slip, boxShadow: theme.lift.float },
     grow: { flex: 1 },
+    // The slip's action chip: 40 high, 6 from the slip's edges, its target 48 with the slop.
+    action: { minHeight: 40, marginVertical: 6, paddingHorizontal: 14, justifyContent: 'center', ...corners(SHAPES.chip), borderWidth: 1, borderColor: withAlpha(theme.color.onSlip, 0.22) },
     trouble: { marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, minHeight: 48, ...corners(SHAPES.tab) },
   });
 }

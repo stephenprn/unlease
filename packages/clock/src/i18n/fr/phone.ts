@@ -5,9 +5,11 @@ export const FR_PHONE: Dictionary = {
   // The alarms
   'The + button below sets one. Each alarm rings on every phone of yours, unless told not to.': 'Le bouton + en bas en règle une. Chaque alarme sonne sur tous vos téléphones, sauf ceux qui ne doivent pas sonner.',
   'It won’t ring on {day}': 'Elle ne sonnera pas le {day}',
+  'No server: your alarms stay on this phone.': 'Pas de serveur : les alarmes restent sur ce téléphone.',
 
   // The editor
   'Hours': 'Heures',
+  'Quick choices': 'Choix rapides',
   'Morning or afternoon': 'Matin ou après-midi',
   'Shown as it rings, such as “Train to Lyon”.': 'Affiché quand elle sonne, comme « Train pour Lyon ».',
   'Silent and without vibration, it only shows on the screen.': 'Silencieuse et sans vibreur, elle ne fait que s’afficher.',
@@ -65,4 +67,8 @@ export const FR_PHONE: Dictionary = {
   'Between your alarm and the first event.': 'Entre votre réveil et le premier événement.',
 
   '{app} · your alarms, at home': '{app} · vos alarmes, chez vous',
+  // The home-screen widget « Prochaine alarme » (mobile/clock/src/app/widgetPayloads.ts).
+  'Alarms don’t ring on this phone': 'Les alarmes ne sonnent pas sur ce téléphone',
+  'Ringing': 'Sonne',
+  'Not on this phone': 'Pas sur ce téléphone',
 };

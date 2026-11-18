@@ -8,9 +8,12 @@ import { backgroundSyncTask } from '@shared/app/sync/backgroundTask';
 import { bootstrap } from './bootstrap';
 import { syncEngine } from './engine';
 import { reconcileNotices } from './evening';
+import { publishWidgets } from './widgets';
 
 export const runSyncTask = backgroundSyncTask(bootstrap, async () => {
   await syncEngine();
   // At once, not on the app's timer: Android may freeze this process before it fires.
   await reconcileNotices();
+  // What another device wrote reaches « Prochaine alarme » too (a new day's morning, an event moved).
+  await publishWidgets();
 });

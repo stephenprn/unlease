@@ -29,13 +29,14 @@ interface Props {
 export const WeekStrip = memo(function WeekStrip({ week, chosen, today, now, twelveHours, onChoose }: Props) {
   const strip = useRef<HTMLDivElement>(null);
   const move = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
-    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-    if (!step) return;
-    const next = week[index + step];
+    // ← and → a day at a time; Home and End to the week's ends, as every row of tabs.
+    const target = event.key === 'ArrowRight' ? index + 1 : event.key === 'ArrowLeft' ? index - 1 : event.key === 'Home' ? 0 : event.key === 'End' ? week.length - 1 : null;
+    if (target === null) return;
+    const next = week[target];
     if (!next) return;
     event.preventDefault();
     onChoose(next.day);
-    strip.current?.querySelectorAll('button')[index + step]?.focus();
+    strip.current?.querySelectorAll('button')[target]?.focus();
   };
   return (
     <div ref={strip} className={styles.strip} role="tablist" aria-label={t('The week’s mornings')}>

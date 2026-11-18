@@ -149,6 +149,8 @@ function Wheel({ values, value, format, label, loop, width, onChange }: WheelPro
         contentOffset={{ x: 0, y: (first + at) * ROW }}
         contentContainerStyle={styles.wheelContent}
         onMomentumScrollEnd={event => recentre(event.nativeEvent.contentOffset.y)}
+        // TalkBack meets the wheel as one adjustable control, never its hundred rows (most of them off screen).
+        importantForAccessibility="no-hide-descendants"
       >
         {rows.map((row, index) => (
           <WheelRow key={index} index={index} offset={offset} text={format(row)} onPress={goTo} />

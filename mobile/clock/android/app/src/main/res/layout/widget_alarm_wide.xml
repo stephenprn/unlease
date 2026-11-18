@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prochaine alarme, one row high: a slab of the ground; the time in Signika (Safran when the
+     morning's first event comes too soon), then the day and the alarm's name over that event (or why
+     it is too close, in Safran). A tap opens the alarm. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:id="@+id/alarm_open"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/wgen_row_press"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/alarm_time_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/alarm_time"
+                style="@style/WidgetText.Time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:maxLines="1" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/alarm_day"
+                style="@style/WidgetText.RowTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:importantForAccessibility="no"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/alarm_after"
+                style="@style/WidgetText.Meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:importantForAccessibility="no"
+                android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

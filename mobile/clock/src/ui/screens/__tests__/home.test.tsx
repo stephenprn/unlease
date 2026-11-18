@@ -11,11 +11,12 @@ import { act, type ReactTestInstance, type ReactTestRenderer } from 'react-test-
 
 import { eventFields } from '@unlease/calendar/sync/entities';
 import type { CalendarEvent } from '@unlease/calendar/models/events';
-import { createAlarm } from '@app/store/actions';
+import { HOLIDAYS_FEED_ID } from '@unlease/calendar/models/events';
+import { createAlarm, skipNext } from '@app/store/actions';
 import { useLibraryStore, writeLocal } from '@app/store/libraryStore';
 import { navigationRef } from '@ui/navigation/navigationRef';
 
-import { __reset as resetEngine } from '../../../../../shared/__mocks__/NativeAlarmEngine';
+import { __reset as resetEngine, __ring } from '../../../../../shared/__mocks__/NativeAlarmEngine';
 import { felt } from '../../../../../shared/__mocks__/NativeHaptics';
 import { __reset as resetNotifee } from '../../../../__mocks__/@notifee/react-native';
 import { boot, fakeFetch, inputs, press, pressableWithText, pressables, settle, textOf, unmountAll } from './harness';
@@ -189,5 +190,123 @@ describe('Clock, the home', () => {
   it('says there is no alarm yet', async () => {
     const tree = await boot({ onboarded: true });
     expect(textOf(tree)).toContain('Aucune alarme');
+  });
+
+  it('marks a clash on its column, read out by TalkBack, and keeps the panel’s row', async () => {
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        createAlarm(DRAFT, Date.now());
+        addEvent('standup', 'Point d’équipe', '2026-11-17T07:45', '2026-11-17T08:00');
+      },
+    });
+    const tuesday = column(tree, /^Mardi 17\snovembre/);
+    expect(tuesday.props.accessibilityLabel).toContain('Un événement trop tôt après le réveil');
+    expect(tuesday.props.accessibilityRole).toBe('tab');
+    // The alert glyph in the dot's place, the time at 600.
+    expect(tuesday.findAll(node => node.props.name === 'alert').length).toBeGreaterThan(0);
+    const time = tuesday.find(node => node.props.adjustsFontSizeToFit === true && typeof node.props.children === 'string');
+    expect(JSON.stringify(time.props.style)).toContain('SemiBold');
+    // The panel's row: the reason, and the way to ring earlier.
+    expect(pressableWithText(tree, 'Sonner à 07:15')).toBeTruthy();
+    // Another day has none.
+    expect(column(tree, /^Mercredi 18\snovembre/).props.accessibilityLabel).not.toContain('trop tôt');
+  });
+
+  it('says a holiday or a day off keeps an alarm quiet, on the panel and its column', async () => {
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        createAlarm({ ...DRAFT, offDays: true }, Date.now());
+        addEvent('armistice', 'Armistice', '2026-11-18', '2026-11-19', { feedId: HOLIDAYS_FEED_ID });
+        addEvent('leave', 'Congé', '2026-11-19', '2026-11-20', { dayOff: true });
+      },
+    });
+    const wednesday = column(tree, /^Mercredi 18\snovembre/);
+    expect(wednesday.props.accessibilityLabel).toContain('Pas d’alarme');
+    expect(wednesday.props.accessibilityLabel).toContain('Armistice');
+    await press(wednesday);
+    await settle();
+    expect(textOf(tree)).toContain('Travail de 07:30 ne sonne pas : Armistice');
+    await press(column(tree, /^Jeudi 19\snovembre/));
+    await settle();
+    expect(textOf(tree)).toContain('Travail de 07:30 ne sonne pas : Congé');
+    // Friday rings as usual.
+    await press(column(tree, /^Vendredi 20\snovembre/));
+    await settle();
+    expect(textOf(tree)).not.toContain('ne sonne pas');
+    expect(column(tree, /^Vendredi 20\snovembre/).props.accessibilityLabel).toContain('Alarme à 07:30');
+  });
+
+  it('says a skipped morning in Safran, and rings after all in one tap', async () => {
+    let id = '';
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        id = createAlarm(DRAFT, Date.now());
+      },
+    });
+    await act(async () => skipNext(id));
+    await settle();
+    expect(column(tree, /^Mardi 17\snovembre/).props.accessibilityLabel).toContain('Ignorée');
+    await press(column(tree, /^Mardi 17\snovembre/));
+    await settle();
+    expect(textOf(tree)).toContain('Travail de 07:30 ignorée ce matin');
+    await press(pressableWithText(tree, 'Sonner quand même'));
+    await settle();
+    expect(liveAlarms()[0]?.skipDay).toBeNull();
+    expect(textOf(tree)).not.toContain('ignorée ce matin');
+  });
+
+  it('searches the alarms by label or time, with the settings the words name, and says when nothing answers', async () => {
+    const tree = await boot({
+      onboarded: true,
+      prepare: () => {
+        createAlarm(DRAFT, Date.now());
+        createAlarm({ ...DRAFT, time: '09:00', label: 'Piscine', days: [6] }, Date.now());
+      },
+    });
+    const search = inputs(tree, 'Rechercher')[0]!;
+    expect(search.props.placeholder).toBe('Rechercher dans vos alarmes');
+    await act(async () => search.props.onChangeText('pisc'));
+    await settle();
+    let text = textOf(tree);
+    expect(text).toMatch(/1\srésultat/);
+    // Its name with the words found marked in peach.
+    expect(tree.root.findAll(node => node.props.children === 'Piscine' && Array.isArray(node.props.highlight) && node.props.highlight.length === 1)).not.toHaveLength(0);
+    expect(text).not.toContain('Travail');
+    // The week steps aside while searching.
+    expect(tree.root.findAll(node => node.props.accessibilityLabel === 'Les matins de la semaine')).toHaveLength(0);
+    await act(async () => search.props.onChangeText('7h30'));
+    await settle();
+    text = textOf(tree);
+    expect(text).toContain('Travail');
+    expect(text).not.toContain('Piscine');
+    // A setting the words name comes first; Réglages opens on its section.
+    await act(async () => search.props.onChangeText('météo'));
+    await settle();
+    text = textOf(tree);
+    expect(text).toContain('Réglages › Au réveil');
+    expect(text).toContain('Rien d’autre pour « météo »');
+    await act(async () => search.props.onChangeText('zzz'));
+    await settle();
+    text = textOf(tree);
+    expect(text).toContain('Aucun résultat pour « zzz »');
+    expect(text).toContain('Cherchez le libellé d’une alarme ou son heure.');
+    // Back (the strip's) ends the search, and the week comes back.
+    await press(pressables(tree, 'Fermer la recherche')[0]!);
+    await settle();
+    expect(tree.root.findAll(node => node.props.accessibilityLabel === 'Les matins de la semaine').length).toBeGreaterThan(0);
+  });
+
+  it('answers an alarm ringing from the home’s slip, its actions in the slip’s own chips', async () => {
+    const tree = await boot({ onboarded: true, prepare: () => createAlarm(DRAFT, Date.now()) });
+    await act(async () => __ring({ state: 'ringing', id: 'x', at: Date.now(), since: Date.now(), title: 'Travail', label: 'Travail' }));
+    await settle();
+    expect(textOf(tree)).toContain('Une alarme sonne');
+    const snooze = pressables(tree, 'Répéter')[0]!;
+    const stop = pressables(tree, 'Arrêter')[0]!;
+    expect(snooze.props.onDark).toBe(true);
+    expect(stop.props.onDark).toBe(true);
   });
 });

@@ -97,7 +97,7 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  padding: 0 10px;
+  padding: 0 4px;
   color: var(--ink-muted);
   text-wrap: pretty;
 }

@@ -82,7 +82,7 @@ export function weekOfMornings({ alarms, agenda, now, margin, zone = '' }: WeekI
       allDay: ahead.allDay,
       events: ahead.timed.length,
       // Only while the wake-up is still to come: a clash this morning once it rang is history.
-      clash: wakeup && wakeup.at > now ? clashWith(ahead, wakeup.at, margin) : null,
+      clash: wakeup && wakeup.at > now ? clashWith(ahead, wakeup.at, margin, zone) : null,
     };
   });
 }

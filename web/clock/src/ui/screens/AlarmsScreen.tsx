@@ -3,15 +3,19 @@
  * top (`WeekStrip`), the chosen morning opened below (`MorningPanel`: the time, how long until then, the
  * day's first event from Agenda, a clash and its fix), then the alarms by time of day, each its time,
  * its days and its label, its switch at its end, a press opening its form. It opens on the next
- * alarm's morning. The header's search narrows the alarms by label or time (the week steps aside).
+ * alarm's morning. The header's search narrows the alarms by label or time (the week steps aside): as
+ * in every app, the settings the words name first, the count over what is found, and nothing found is
+ * the search's empty place, saying what it looks through.
  * Under them, where they ring: on the phones with Clock for Android, never in the browser. With none,
  * the empty place says what goes here and how to make one (C).
  */
 import { memo, useMemo, useState } from 'react';
 
 import { APPS } from '@unlease/core/apps';
+import { APP_WORDS } from '@unlease/core/appWords';
 import { t } from '@unlease/core/i18n';
 import { foldText } from '@unlease/core/services/search';
+import { searchSummary } from '@unlease/core/services/searchWords';
 import type { Alarm } from '@unlease/clock/models/alarm';
 import { isOn } from '@unlease/clock/services/schedule';
 import { timeSpellings } from '@unlease/clock/services/spotlight';
@@ -24,10 +28,11 @@ import { useQuery } from '@shared/app/store/search';
 import { showSnack } from '@shared/app/store/ui';
 import { Button } from '@shared/ui/components/Button';
 import { Switch } from '@shared/ui/components/Checkbox';
-import { EmptyLine } from '@shared/ui/components/EmptyLine';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { Icon } from '@shared/ui/components/Icon';
 import { OutlinedBox } from '@shared/ui/components/Outline';
+import { settingsFound, SettingsMatches } from '@shared/ui/features/settings/SettingsMatches';
+import screens from '@shared/ui/screens/screens.module.css';
 import { useLiveAlarms } from '../../app/hooks/useAlarms';
 import { switchAlarm } from '../../app/store/actions';
 import { useAgendaStore } from '../../app/store/agenda';
@@ -123,20 +128,29 @@ export function AlarmsScreen() {
       </div>
     );
   }
+  const list = (
+    <ul className={styles.list} aria-label={t('Alarms')}>
+      {shown.map(alarm => (
+        <AlarmRow key={alarm.id} alarm={alarm} now={now} twelveHours={twelveHours} weekStart={weekStart} />
+      ))}
+    </ul>
+  );
+  if (searching) {
+    const summary = searchSummary(query, shown.length, settingsFound(query));
+    return (
+      <div className={styles.screen}>
+        <SettingsMatches query={query} />
+        <div aria-live="polite">{shown.length > 0 ? <h1 className={`${screens.resultCount} t-meta`}>{summary}</h1> : <EmptyState scene="search" as="h1" title={summary} text={APP_WORDS.clock.searchHint} />}</div>
+        {shown.length > 0 ? list : null}
+      </div>
+    );
+  }
   return (
     <div className={styles.screen}>
       <h1 className="sr-only">{t('Alarms')}</h1>
       {week_}
-      {searching ? null : <h2 className={`${home.section} t-section`}>{t('Alarms')}</h2>}
-      {shown.length === 0 ? (
-        <EmptyLine glyph="search" text={t('No alarm with “{query}”.', { query: query.trim() })} replayKey={query} />
-      ) : (
-        <ul className={styles.list} aria-label={t('Alarms')}>
-          {shown.map(alarm => (
-            <AlarmRow key={alarm.id} alarm={alarm} now={now} twelveHours={twelveHours} weekStart={weekStart} />
-          ))}
-        </ul>
-      )}
+      <h2 className={`${home.section} t-section`}>{t('Alarms')}</h2>
+      {list}
       {where}
     </div>
   );

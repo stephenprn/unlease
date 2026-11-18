@@ -64,7 +64,7 @@ export function SoundSheet({ visible, sound, onSound, onDismiss, title }: SoundS
                 onPress={() => choose(each.key)}
                 trailing={tick(sound === each.key)}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: sound === each.key }}
+                accessibilityState={{ checked: sound === each.key }}
               />
             ))}
           </View>
@@ -79,7 +79,7 @@ export function SoundSheet({ visible, sound, onSound, onDismiss, title }: SoundS
           onPress={() => later(fromPhone())}
           trailing={tick(phone)}
           accessibilityRole="radio"
-          accessibilityState={{ selected: phone }}
+          accessibilityState={{ checked: phone }}
         />
         <ListRow
           icon="bellOff"
@@ -87,7 +87,7 @@ export function SoundSheet({ visible, sound, onSound, onDismiss, title }: SoundS
           onPress={() => choose(SILENT)}
           trailing={tick(sound === SILENT)}
           accessibilityRole="radio"
-          accessibilityState={{ selected: sound === SILENT }}
+          accessibilityState={{ checked: sound === SILENT }}
         />
       </SheetScroll>
       <FormFoot>

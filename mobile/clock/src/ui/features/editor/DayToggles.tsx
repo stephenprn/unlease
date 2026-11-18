@@ -31,14 +31,14 @@ function DayTogglesComponent({ days, weekStart, workDays, onDays }: DayTogglesPr
   return (
     <View style={styles.days}>
       <WeekdayToggles days={days} weekStart={weekStart} onChange={onDays} label={t('Days')} />
-      <View style={styles.choices}>
+      <View style={styles.choices} accessibilityRole="radiogroup" accessibilityLabel={t('Quick choices')}>
         {DAYS_CHOICES.map(choice => {
           const on = chosen === choice;
           return (
             <Tappable
               key={choice}
               accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
+              accessibilityState={{ checked: on }}
               accessibilityLabel={daysChoiceName(choice, workDays)}
               onPress={() => onDays([...daysOfChoice(choice, workDays)])}
               style={[styles.chip, on ? styles.chipOn : null]}

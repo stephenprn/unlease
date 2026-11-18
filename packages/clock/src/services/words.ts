@@ -66,6 +66,12 @@ export function setWords(alarm: Pick<Alarm, 'time' | 'days' | 'date' | 'enabled'
   return t('Alarm set for {day} at {time}', { day: ringDayWords(ring.day, instantToDay(now, zone)).toLocaleLowerCase(), time: alarm.time });
 }
 
+/** How far the morning's first event stands from the alarm: « 15 min après le réveil », « À l’heure du réveil », « 10 min avant le réveil ». */
+export function distanceWords(minutes: number): string {
+  if (minutes === 0) return t('As the alarm rings');
+  return minutes > 0 ? t('{span} after the alarm', { span: spanWords(minutes) }) : t('{span} before the alarm', { span: spanWords(-minutes) });
+}
+
 /** An alarm's name where a sentence needs one: its label, else « Alarme ». */
 export const alarmName = (alarm: Pick<Alarm, 'label'>): string => alarm.label.trim() || t('Alarm');
 

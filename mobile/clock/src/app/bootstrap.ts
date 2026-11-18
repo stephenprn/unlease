@@ -11,6 +11,7 @@ import { startEngine } from './engine';
 import { startNotices } from './evening';
 import { loadClockUi } from './store/clockUi';
 import { loadLibrary } from './store/libraryStore';
+import { startWidgets } from './widgets';
 
 export type { BootResult } from '@shared/ui/AppShell';
 import type { BootResult } from '@shared/ui/AppShell';
@@ -31,6 +32,8 @@ export function bootstrap(): BootResult {
     startEngine();
     // The evening check and the notice before an alarm, kept armed as the alarms, the events and the settings change.
     startNotices();
+    // « Prochaine alarme » on the home screen is handed each morning's first event, now and whenever it changes.
+    startWidgets();
     // The suite's other apps on this phone read this one's connection and appearance.
     startSuiteLink();
     // The launcher's icon in this app's primary, switched once the app has left the screen.

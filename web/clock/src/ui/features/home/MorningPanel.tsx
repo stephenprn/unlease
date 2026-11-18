@@ -6,7 +6,7 @@
  * before the alarm), a row in Safran with « Sonner à 7:00 ». A morning chosen slides in from the side
  * of its day (250, decelerate); with less motion asked, it fades.
  */
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 
 import { t } from '@unlease/core/i18n';
 import { clockWords } from '@unlease/calendar/services/eventText';
@@ -42,7 +42,21 @@ function distanceWords(minutes: number): string {
   return minutes > 0 ? t('{span} after the alarm', { span: spanWords(minutes) }) : t('{span} before the alarm', { span: spanWords(-minutes) });
 }
 
+/**
+ * The button pressed leaves as the morning changes (« Ignorer cette fois » becomes « Sonner quand
+ * même », « Sonner à 07:20 » goes once the alarm moves): the keyboard's focus goes to what took its
+ * place (`selector`), else the time, never back to the window's start.
+ */
+function refocus(panel: HTMLElement | null, selector: string): void {
+  requestAnimationFrame(() => {
+    const focused = document.activeElement;
+    if (!panel || (focused && focused !== document.body && focused.isConnected)) return;
+    (panel.querySelector<HTMLElement>(selector) ?? panel.querySelector<HTMLElement>('button'))?.focus({ preventScroll: true });
+  });
+}
+
 export const MorningPanel = memo(function MorningPanel({ morning, now, from, margin, twelveHours }: Props) {
+  const box = useRef<HTMLDivElement>(null);
   const today = instantToDay(now);
   const waking = morning.waking;
   const toCome = stillToRing(morning, now);
@@ -57,17 +71,24 @@ export const MorningPanel = memo(function MorningPanel({ morning, now, from, mar
 
   return (
     <OutlinedBox kind="panel" lift="card" className={`${styles.panel} paper`}>
-      <div key={morning.day} className={styles.morning} data-from={from > 0 ? 'after' : from < 0 ? 'before' : undefined} aria-live="polite">
+      <div ref={box} key={morning.day} className={styles.morning} data-from={from > 0 ? 'after' : from < 0 ? 'before' : undefined} aria-live="polite">
         <p className={`${styles.head} t-meta`}>{head}</p>
         {waking ? (
           <>
             <button type="button" className={styles.bigTime} data-past={toCome ? undefined : ''} onClick={() => openAlarm(waking.alarm.id)} aria-label={t('Edit the alarm at {time}', { time: alarmClock(waking.alarm.time, twelveHours) })}>
               {alarmClock(waking.alarm.time, twelveHours)}
             </button>
-            <div className={styles.nameRow}>
+            <div className={styles.nameRow} data-skip-row="">
               <span className={`${styles.grow} t-body-strong`}>{waking.alarm.label.trim() ? alarmName(waking.alarm) : ''}</span>
               {skippable ? (
-                <Button kind="text" small onClick={() => skipNext(waking.alarm.id)}>
+                <Button
+                  kind="text"
+                  small
+                  onClick={() => {
+                    skipNext(waking.alarm.id);
+                    refocus(box.current, `[data-skipped="${waking.alarm.id}"] button`);
+                  }}
+                >
                   {t('Skip this time')}
                 </Button>
               ) : null}
@@ -77,9 +98,16 @@ export const MorningPanel = memo(function MorningPanel({ morning, now, from, mar
           <p className={`${styles.none} t-title`}>{t('No alarm')}</p>
         )}
         {morning.skipped.map(alarm => (
-          <div key={alarm.id} className={styles.nameRow}>
+          <div key={alarm.id} className={styles.nameRow} data-skipped={alarm.id}>
             <span className={`${styles.grow} ${styles.skipped} t-meta`}>{t('{alarm} at {time} skipped this morning', { alarm: alarmName(alarm), time: alarmClock(alarm.time, twelveHours) })}</span>
-            <Button kind="text" small onClick={() => stopSkipping(alarm.id)}>
+            <Button
+              kind="text"
+              small
+              onClick={() => {
+                stopSkipping(alarm.id);
+                refocus(box.current, '[data-skip-row] button');
+              }}
+            >
               {t('Ring after all')}
             </Button>
           </div>
@@ -107,7 +135,7 @@ export const MorningPanel = memo(function MorningPanel({ morning, now, from, mar
                 <p className="t-meta">{t('All day')}</p>
               </>
             ) : (
-              <p className={`${styles.quiet} t-body`}>{morning.later ? t('Nothing in your calendar after this alarm.') : t('Nothing in your calendar that day.')}</p>
+              <p className={`${styles.quiet} t-body`}>{morning.later ? t('Nothing in your calendar after this alarm.') : morning.day === today && morning.events > 0 ? t('Nothing left in your calendar today.') : t('Nothing in your calendar that day.')}</p>
             )}
           </div>
           {agendaRuns ? (
@@ -122,7 +150,13 @@ export const MorningPanel = memo(function MorningPanel({ morning, now, from, mar
             <Icon name="alert" size={20} />
             <p className={`${styles.grow} t-meta`}>{morning.clash.minutes < 0 ? t('It starts before your alarm.') : t('Less than {span} to get ready.', { span: spanWords(margin) })}</p>
             {canFix ? (
-              <Button kind="tonal" onClick={() => ringEarlier(morning.wakeup!.alarm.id, fix!.day, fix!.time)}>
+              <Button
+                kind="tonal"
+                onClick={() => {
+                  ringEarlier(morning.wakeup!.alarm.id, fix!.day, fix!.time);
+                  refocus(box.current, 'button');
+                }}
+              >
                 {t('Ring at {time}', { time: clockWords(fix!.time, twelveHours) })}
               </Button>
             ) : null}

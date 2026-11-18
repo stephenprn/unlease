@@ -15,4 +15,40 @@
         <item name="android:windowShowWallpaper">false</item>
     </style>
 
+    <!-- The home-screen widget (android/.../widget): the system font for what a launcher draws as text, Signika set by the app (WidgetType.kt). -->
+    <style name="WidgetText">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/wgen_ink</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineHeight">21sp</item>
+    </style>
+    <!-- The time's plain twin (and the picker's preview): Signika's 44 at the system font's medium. -->
+    <style name="WidgetText.Time">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">44sp</item>
+        <item name="android:lineHeight">48sp</item>
+        <item name="android:letterSpacing">-0.017</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+    <style name="WidgetText.RowTitle">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:lineHeight">20sp</item>
+    </style>
+    <style name="WidgetText.Meta">
+        <item name="android:textColor">@color/wgen_ink_muted</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineHeight">18sp</item>
+    </style>
+    <style name="WidgetText.MetaStrong" parent="WidgetText.Meta">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    <!-- An icon button in a head: a 22 glyph in a 48 target, its pebble's tint behind it only under the press. -->
+    <style name="WidgetIconButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:padding">13dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
 </resources>

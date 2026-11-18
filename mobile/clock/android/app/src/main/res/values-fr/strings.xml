@@ -6,4 +6,22 @@
     <string name="shortcut_alarm_long">Nouvelle alarme</string>
     <string name="shortcut_settings_short">Réglages</string>
     <string name="shortcut_settings_long">Réglages de Clock</string>
+
+    <!-- Le widget « Prochaine alarme ». -->
+    <string name="widget_alarm_label">Prochaine alarme</string>
+    <string name="widget_alarm_description">Quand sonne votre prochaine alarme, et le premier événement de cette matinée.</string>
+    <string name="widget_today">Aujourd’hui</string>
+    <string name="widget_tomorrow">Demain</string>
+    <string name="widget_no_alarm">Pas d’alarme</string>
+    <string name="widget_not_here">Les alarmes ne sonnent pas sur ce téléphone</string>
+    <string name="widget_off_here">Pas sur ce téléphone</string>
+    <string name="widget_snoozed">Répétée jusqu’à %1$s</string>
+    <string name="widget_ringing">Sonne</string>
+    <string name="widget_new_alarm">Nouvelle alarme</string>
+    <string name="widget_open_alarm">Ouvrir l’alarme</string>
+    <string name="widget_preview_day">Demain</string>
+    <string name="widget_preview_time">07:00</string>
+    <string name="widget_preview_name">Travail</string>
+    <string name="widget_preview_event">08:15 · Dentiste</string>
+    <string name="widget_preview_after">45 min après le réveil</string>
 </resources>

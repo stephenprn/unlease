@@ -73,6 +73,8 @@ describe('Clock, the alarm editor', () => {
     const tree = await boot({ onboarded: true });
     await go('Edit');
     await press(pressableWithText(tree, 'En semaine'));
+    // A radio among the quick choices: TalkBack hears it checked.
+    expect(pressableWithText(tree, 'En semaine').props).toMatchObject({ accessibilityRole: 'radio', accessibilityState: { checked: true } });
     // Saturday too.
     await press(tree.root.find(node => node.props.accessibilityLabel === 'samedi' && typeof node.props.onPress === 'function'));
     await press(pressableWithText(tree, 'Enregistrer'));
@@ -98,6 +100,7 @@ describe('Clock, the alarm editor', () => {
     await press(pressableWithText(tree, 'Son'));
     await press(pressableWithText(tree, 'Réveil à cloche'));
     expect(engine.calls).toContain('preview:bell');
+    expect(pressableWithText(tree, 'Réveil à cloche').props.accessibilityState).toMatchObject({ checked: true });
     await press(pressableWithText(tree, 'OK'));
     await settle();
     expect(engine.calls[engine.calls.length - 1]).toBe('stopPreview');
@@ -148,6 +151,7 @@ describe('Clock, the alarm editor', () => {
     // No days for it: it rings once, for the event.
     expect(textOf(tree)).not.toContain('En semaine');
     await press(pressableWithText(tree, '1 h 30'));
+    expect(pressableWithText(tree, '1 h 30').props.accessibilityState).toMatchObject({ checked: true });
     await press(pressableWithText(tree, 'Enregistrer'));
     await settle();
     expect(liveAlarms()[0]).toMatchObject({ time: '06:15', days: [], date: '2026-11-17', label: 'Train pour Lyon', eventId: '0199c1a0-0000-7000-8000-000000000001', before: 90, enabled: true });

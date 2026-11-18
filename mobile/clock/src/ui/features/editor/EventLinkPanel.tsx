@@ -50,7 +50,7 @@ function EventLinkPanelComponent({ title, when, before, onBefore, onUnlink }: Pr
             <Tappable
               key={minutes}
               accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
+              accessibilityState={{ checked: on }}
               accessibilityLabel={t('Rings {span} before', { span: spanWords(minutes) })}
               onPress={() => onBefore(minutes)}
               style={[styles.chip, on ? styles.chipOn : null]}

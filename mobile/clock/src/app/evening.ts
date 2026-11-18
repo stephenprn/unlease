@@ -35,6 +35,7 @@ import { ringingAlarmNow, ringingAlarmsNow } from './hooks/useRingingAlarms';
 import { useClockUiStore } from './store/clockUi';
 import { useLibraryStore } from './store/libraryStore';
 import { refreshWeather } from './weather';
+import { publishWidgets } from './widgets';
 
 const EVENING_CHANNEL = 'clock.evening';
 const UPCOMING_CHANNEL = 'clock.upcoming';
@@ -280,4 +281,6 @@ export async function runRemindersTask(): Promise<void> {
   await syncEngine().catch(() => undefined);
   await refreshWeather().catch(() => undefined);
   await reconcileNotices();
+  // Every hour: « Prochaine alarme » keeps a week of mornings ahead, the new day's included.
+  await publishWidgets();
 }

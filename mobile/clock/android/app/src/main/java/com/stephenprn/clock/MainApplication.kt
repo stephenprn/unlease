@@ -26,6 +26,8 @@ import com.stephenprn.unlease.media.MediaPackage
 import com.stephenprn.unlease.organic.OrganicPackage
 import com.stephenprn.unlease.reminders.RemindersPackage
 import com.stephenprn.unlease.suitelink.SuiteLinkPackage
+import com.stephenprn.clock.widget.WidgetsPackage
+import com.stephenprn.unlease.overlays.OverlaysPackage
 import com.stephenprn.unlease.textfields.TextFieldsPackage
 
 class MainApplication : Application(), ReactApplication {
@@ -40,6 +42,7 @@ class MainApplication : Application(), ReactApplication {
           add(MediaPackage())
           add(HapticsPackage())
           add(TextFieldsPackage())
+          add(OverlaysPackage())
           add(ConnectivityPackage())
           add(BackgroundSyncPackage())
           add(OrganicPackage())
@@ -52,6 +55,8 @@ class MainApplication : Application(), ReactApplication {
           // Clock's own (this app's Kotlin): the alarm engine, another app's « set an alarm ».
           add(AlarmEnginePackage())
           add(IntakePackage())
+          // Its home-screen widget « Prochaine alarme » (widget/): JavaScript hands it each morning's words.
+          add(WidgetsPackage())
         },
       // A JavaScript error while an alarm rings (its window runs here too) must not take the sound
       // with it: said in the log, the ringing service goes on; any other time, React Native's own way.

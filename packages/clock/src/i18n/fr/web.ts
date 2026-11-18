@@ -10,7 +10,6 @@ export const FR_WEB: Dictionary = {
   'Edit the alarm at {time}': 'Modifier l’alarme de {time}',
   'Your alarms ring on your phones with {app} for Android, never in this browser.': 'Vos alarmes sonnent sur vos téléphones avec {app} pour Android, jamais dans ce navigateur.',
   'Set one here: it rings on every phone with {app}.': 'Réglez-en une ici : elle sonnera sur chaque téléphone qui a {app}.',
-  'No alarm with “{query}”.': 'Aucune alarme avec « {query} ».',
 
   // An alarm's form
   'Edit alarm': 'Modifier l’alarme',

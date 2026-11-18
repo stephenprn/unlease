@@ -37,7 +37,8 @@ export function EveningHour({ at, twelveHours, onChange }: { at: string; twelveH
   const end = (glyph: 'minus' | 'plus', label: string, next: number, turn: number) => {
     const off = next < 0 || next > 23;
     return (
-      <Tappable accessibilityLabel={label} accessibilityState={{ disabled: off }} disabled={off} ownDisabled onPress={() => onChange(clockOfHour(next))} pebble={turn} style={styles.end}>
+      // 44 on its pebble, as the segmented choice's; the track's inset makes up the 48 target.
+      <Tappable accessibilityLabel={label} accessibilityState={{ disabled: off }} disabled={off} ownDisabled hitSlop={INSET} onPress={() => onChange(clockOfHour(next))} pebble={turn} style={styles.end}>
         <Icon name={glyph} size={20} color={off ? theme.color.inkMuted : theme.color.ink} />
       </Tappable>
     );

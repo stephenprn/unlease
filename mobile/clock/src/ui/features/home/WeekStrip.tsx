@@ -42,6 +42,9 @@ function Column({ morning, chosen, today, gone, twelveHours, onChoose }: { reado
   const label = [
     longDay(morning.day),
     time ? t('Alarm at {time}', { time }) : t('No alarm'),
+    // What keeps an alarm quiet that morning is said too: the column alone shows a dash.
+    morning.offDay ? morning.offDay.reason || t('a day off') : '',
+    morning.skipped.length > 0 ? t('Skipped') : '',
     morning.clash ? t('An event too soon after the alarm') : morning.events > 0 ? plural(morning.events, 'event') : '',
   ]
     .filter(Boolean)
@@ -50,7 +53,8 @@ function Column({ morning, chosen, today, gone, twelveHours, onChoose }: { reado
     <Tappable
       onPress={() => onChoose(morning.day)}
       style={[styles.column, chosen && styles.chosen]}
-      accessibilityRole="button"
+      // A tab of the week's tablist: TalkBack says « onglet, 3 sur 7, sélectionné ».
+      accessibilityRole="tab"
       accessibilityState={{ selected: chosen }}
       accessibilityLabel={label}
     >

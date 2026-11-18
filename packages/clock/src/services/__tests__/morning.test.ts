@@ -92,6 +92,15 @@ describe('the day after an alarm', () => {
     expect(clashWith(dayAhead({ events: [], feeds }, '2026-11-17'), local('2026-11-17T07:30'), 30)).toBeNull();
   });
 
+  it('finds no event before a ring of the afternoon or evening: that ring never meant to wake for it', () => {
+    const ahead = dayAhead({ events, feeds }, '2026-11-17');
+    expect(clashWith(ahead, local('2026-11-17T22:30'), 30)).toBeNull();
+    expect(clashWith(ahead, local('2026-11-17T12:00'), 30)).toBeNull();
+    expect(clashWith(ahead, local('2026-11-17T11:59'), 30)).toMatchObject({ minutes: -254 });
+    // What starts soon after it still is one.
+    expect(clashWith(dayAhead({ events: [event('show', '2026-11-17T22:40', '2026-11-17T23:30')], feeds }, '2026-11-17'), local('2026-11-17T22:30'), 30)).toMatchObject({ minutes: 10 });
+  });
+
   it('leaves out a calendar hidden on every device', () => {
     const hidden: CalendarFeed = { id: 'work', hidden: true, deletedAt: null } as CalendarFeed;
     const ahead = dayAhead({ events: [event('feed', '2026-11-17T07:40', '2026-11-17T08:00', { feedId: 'work' })], feeds: [hidden] }, '2026-11-17');

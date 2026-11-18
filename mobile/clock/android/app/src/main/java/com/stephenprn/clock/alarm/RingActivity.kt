@@ -10,6 +10,7 @@ import android.view.WindowManager
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+import com.stephenprn.clock.widget.NextAlarmWidgetProvider
 import java.util.concurrent.CopyOnWriteArraySet
 
 /** What rings now, as the app and the ringing window read it (`RingState` in the spec). */
@@ -40,6 +41,8 @@ internal object RingEvents {
   }
 
   fun changed(context: Context) {
+    // « Prochaine alarme » says what rings now, or what was snoozed.
+    NextAlarmWidgetProvider.redrawAll(context.applicationContext)
     if (listeners.isEmpty()) return
     val snapshot = RingSnapshot.read(context.applicationContext)
     main.post { for (listener in listeners) listener(snapshot) }

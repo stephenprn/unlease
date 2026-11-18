@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prochaine alarme, one cell: the time in Signika (Safran when the morning's first event comes too
+     soon) over the day it rings, centred on a slab of the ground. A tap opens the alarm. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
+    android:outlineProvider="bounds"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/wgen_panel_ground"
+    android:foreground="@drawable/wgen_panel_edge">
+
+    <LinearLayout
+        android:id="@+id/alarm_open"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/wgen_row_press"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/alarm_time_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/alarm_time"
+                style="@style/WidgetText.Time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:maxLines="1"
+                android:textSize="24sp"
+                android:lineHeight="28sp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/alarm_day"
+            style="@style/WidgetText.MetaStrong"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:importantForAccessibility="no"
+            android:maxLines="1" />
+    </LinearLayout>
+</FrameLayout>

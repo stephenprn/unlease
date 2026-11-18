@@ -2,7 +2,7 @@
 import { setLocale } from '@unlease/core/i18n';
 import { buildIndex, parseQuery, search } from '@unlease/core/services/searchIndex';
 import type { Alarm } from '../../models/alarm';
-import { clockSpotlightDocs, timeSpellings } from '../spotlight';
+import { alarmAnswers, clockSpotlightDocs, timeSpellings } from '../spotlight';
 
 function alarm(extra: Partial<Alarm> = {}): Alarm {
   return {
@@ -50,5 +50,14 @@ describe('alarms in the spotlight', () => {
     expect(found('lyon')).toEqual(['train']);
     expect(found('6h15')).toEqual(['train']);
     expect(found('7:30')).toEqual(['work']);
+  });
+
+  it('finds an alarm on a home by its label or its time as typed', () => {
+    const alarm = { label: 'Train pour Lyon', time: '07:30' };
+    expect(alarmAnswers(alarm, '')).toBe(true);
+    expect(alarmAnswers(alarm, 'lyon')).toBe(true);
+    expect(alarmAnswers(alarm, '7h30')).toBe(true);
+    expect(alarmAnswers(alarm, '730')).toBe(true);
+    expect(alarmAnswers(alarm, '8h')).toBe(false);
   });
 });
