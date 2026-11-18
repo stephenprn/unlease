@@ -15,12 +15,13 @@ import { contactName } from '@unlease/contacts/services/names';
 import { BARCODE_FORMATS, barcodeProblem, guessFormat, isBarcodeFormat, type BarcodeFormat } from '@unlease/wallet/models/barcode';
 import { DOCUMENT_TYPES, type DocumentType } from '@unlease/wallet/models/documentTypes';
 import { EMPTY_DETAILS, IDENTITY_KINDS, ITEM_LIMITS, tierOfKind, type FileRole, type ItemDetails, type ItemKind, type WalletFile, type WalletItem } from '@unlease/wallet/models/item';
+import { readGoogleWalletLink, type GoogleWalletCard } from '@unlease/wallet/services/googleWallet';
 import { barcodeProblemWords, documentTypeName, formatName, kindName } from '@unlease/wallet/services/words';
 
 import { useContactsStore } from '@contacts/app/store/library';
 import { removeStoredFile } from '@shared/app/media/files';
 import { useServerFeature } from '@shared/app/store/serverSettings';
-import { showError, showSnack, showUndo } from '@shared/app/store/ui';
+import { showError, showSnack, showUndo, showWarning } from '@shared/app/store/ui';
 import { LabelColorPicker } from '@contacts/ui/features/LabelColorPicker';
 import { Button } from '@shared/ui/components/Button';
 import { DialogFrame } from '@shared/ui/components/Dialog';
@@ -184,6 +185,15 @@ function EditorForm({ kind: startKind, item, closing, under, onClose }: FormProp
   const cards = tierOfKind(kind) === 'cards';
   const identity = !cards && kind !== 'document';
   const set = (patch: Partial<Draft>): void => setDraft(current => ({ ...current, ...patch }));
+  // A Google Wallet link pasted into the number fills the card: its number, and its name and barcode when the link carries them.
+  const takeGoogle = (card: GoogleWalletCard): void => {
+    if (!item && card.kind !== kind) setKind(card.kind);
+    const title = draft.title.trim() || card.title;
+    setDraft(current => ({ ...current, title, number: card.number || current.number, format: card.barcode?.format ?? (card.number ? guessFormat(card.number) : current.format) }));
+    if (!card.number) showWarning(t('This Google Wallet link holds no card number: type it from the card.'));
+    else if (!title) showSnack(t('Number taken from Google Wallet. Name the shop, and check the barcode’s type against the card.'), undefined, { tone: 'success' });
+    else showSnack(t('Card filled from Google Wallet. Check the barcode against the card.'), undefined, { tone: 'success' });
+  };
   const initial = useMemo(() => draftOf(startKind, item), [startKind, item]);
   const dirty = kind !== startKind || JSON.stringify(initial) !== JSON.stringify(draft);
   const unsaved = useUnsaved(dirty && !closing, { page: under });
@@ -371,7 +381,21 @@ function EditorForm({ kind: startKind, item, closing, under, onClose }: FormProp
         {cards && kind !== 'emergency' ? (
           <>
             <div className={styles.pair}>
-              <TextField label={t('Card number')} inputMode="text" spellCheck={false} value={draft.number} onChange={number => set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format })} field={form.field('number')} optional help={t('Type it as written under the barcode, or add the card’s picture.')} />
+              <TextField
+                label={t('Card number')}
+                inputMode="text"
+                spellCheck={false}
+                value={draft.number}
+                onChange={number => {
+                  // A Google Wallet link pasted here fills the card instead.
+                  const google = readGoogleWalletLink(number);
+                  if (google) takeGoogle(google);
+                  else set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format });
+                }}
+                field={form.field('number')}
+                optional
+                help={t('Type it as written under the barcode, add the card’s picture, or paste a Google Wallet link.')}
+              />
               <SelectField label={t('Barcode')} value={draft.format} options={[...BARCODE_FORMATS.map(format => ({ value: format, label: formatName(format) })), { value: 'none' as const, label: t('No barcode') }]} onChange={format => set({ format })} />
             </div>
             <fieldset className={styles.fields}>

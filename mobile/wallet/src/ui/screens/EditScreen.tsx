@@ -3,7 +3,9 @@
  * barcode format and colour; a gift card's balance; a paper's type (changed in place: an identity card
  * found to be a residence permit), holder, number, dates and whom it concerns; a document's type, issuer, date, end and how long to keep it. Its two sides (or its pages)
  * come from the camera, the photos or a PDF, sealed as they come in. Days are typed as written on the
- * paper (« 12/03/2031 »). Leaving with changes asks first.
+ * paper (« 12/03/2031 »). A card can be filled from a Google Wallet link, pasted from the clipboard
+ * or into its number (`services/googleWallet`): the number, and the name and barcode when the link
+ * carries them. Leaving with changes asks first.
  */
 import React, { useMemo, useState } from 'react';
 import { Image, KeyboardAvoidingView, StyleSheet, View } from 'react-native';
@@ -16,6 +18,7 @@ import { BARCODE_FORMATS, barcodeProblem, guessFormat, type BarcodeFormat } from
 import { DOCUMENT_TYPES, type DocumentType } from '@unlease/wallet/models/documentTypes';
 import { EMPTY_DETAILS, IDENTITY_KINDS, ITEM_LIMITS, tierOfKind, type FileRole, type ItemDetails, type ItemKind, type WalletFile, type WalletItem } from '@unlease/wallet/models/item';
 import { readDay, typedDay } from '@unlease/wallet/services/days';
+import { readGoogleWalletLink, type GoogleWalletCard } from '@unlease/wallet/services/googleWallet';
 import { barcodeProblemWords, documentTypeGlyph, documentTypeName, formatName, kindName, KIND_GLYPHS } from '@unlease/wallet/services/words';
 import { addItem, deleteItem, itemKey, prepareItem, updateItem } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
@@ -23,6 +26,7 @@ import { useVaultStatus } from '@app/store/vault';
 import { pickForItem, type PickSource } from '@app/pick';
 import { dropPicked } from '@app/files';
 import { showSnack } from '@shared/app/store/uiStore';
+import { readClipboard } from '@shared/platform/clipboard';
 import { AppText, Button, EdgeScrollView, FormFoot, Ground, Icon, IconButton, LineColorPicker, ListRow, Organic, PickerField, Sheet, SheetScroll, Tappable, TextField, TopBar, useUnsaved } from '@shared/ui/components';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -189,6 +193,22 @@ function EditForm({ kind: startKind, item, onDone }: { kind: ItemKind; item: Wal
   };
   const shown = (name: keyof typeof problems): string | null => (sent ? problems[name] : null);
 
+  // A card from Google Wallet: what its link gives, over what is typed only where it says something.
+  const takeGoogle = (card: GoogleWalletCard): void => {
+    if (!item && card.kind !== kind) setKind(card.kind);
+    const number = card.number || draft.number;
+    const title = draft.title.trim() || card.title;
+    setDraft(current => ({ ...current, title, number, format: card.barcode?.format ?? (card.number ? guessFormat(card.number) : current.format) }));
+    if (!card.number) showSnack(t('This Google Wallet link holds no card number: type it from the card.'), undefined, { tone: 'warning' });
+    else if (!title) showSnack(t('Number taken from Google Wallet. Name the shop, and check the barcode’s type against the card.'), undefined, { tone: 'success' });
+    else showSnack(t('Card filled from Google Wallet. Check the barcode against the card.'), undefined, { tone: 'success' });
+  };
+  const pasteGoogle = async (): Promise<void> => {
+    const card = readGoogleWalletLink(await readClipboard());
+    if (card) takeGoogle(card);
+    else showSnack(t('No Google Wallet link copied. In Google Wallet, open the card, share it, then copy the link.'), undefined, { tone: 'warning' });
+  };
+
   const keyOf = (): Uint8Array | null => (prepared ? prepared.key : item ? itemKey(item.id) : null);
 
   const take = async (source: PickSource): Promise<void> => {
@@ -254,6 +274,7 @@ function EditForm({ kind: startKind, item, onDone }: { kind: ItemKind; item: Wal
       <TopBar title={item ? t('Edit {name}', { name: item.title || kindName(kind) }) : kindName(kind)} onBack={unsaved.guard(cancel)} closes />
       <KeyboardAvoidingView behavior="padding" style={styles.fill}>
         <EdgeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {!item && (kind === 'card' || kind === 'giftCard') ? <Button kind="tonal" icon="link" label={t('Paste a Google Wallet link')} onPress={() => void pasteGoogle()} style={styles.paste} /> : null}
           {sides.length > 0 ? (
             <View style={styles.files}>
               {draft.files.map((file, index) => (
@@ -305,12 +326,17 @@ function EditForm({ kind: startKind, item, onDone }: { kind: ItemKind; item: Wal
               <TextField
                 label={t('Card number')}
                 value={draft.number}
-                onChangeText={number => set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format })}
+                onChangeText={number => {
+                  // A Google Wallet link pasted here fills the card instead.
+                  const google = readGoogleWalletLink(number);
+                  if (google) takeGoogle(google);
+                  else set({ number, format: draft.format === 'code128' && number.trim() ? guessFormat(number.trim()) : draft.format });
+                }}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 error={shown('number')}
                 optional
-                help={t('Type it as written under the barcode, or add the card’s picture.')}
+                help={t('Type it as written under the barcode, add the card’s picture, or paste a Google Wallet link.')}
               />
               <PickerField label={t('Barcode')} value={draft.format === 'none' ? t('No barcode') : formatName(draft.format)} icon="barcode" onPress={() => setSheet('format')} />
               <View style={styles.colour}>
@@ -458,6 +484,7 @@ function makeStyles(theme: Theme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
     fill: { flex: 1 },
+    paste: { alignSelf: 'flex-start' },
     content: { padding: 16, paddingBottom: 32, gap: 14 },
     files: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     thumb: { width: 104, gap: 4 },
