@@ -155,3 +155,19 @@ describe('planImport', () => {
     setLocale('fr');
   });
 });
+
+describe('door codes', () => {
+  const address = { id: 'a', kind: 'home', label: '', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', region: '', country: 'France' };
+
+  it('takes an address with a door code, or one an older client wrote without it, and refuses one too long', () => {
+    expect(isValidField('contact', 'addresses', [{ ...address, doorCode: '4B12A' }])).toBe(true);
+    expect(isValidField('contact', 'addresses', [address])).toBe(true);
+    expect(isValidField('contact', 'addresses', [{ ...address, doorCode: 'x'.repeat(61) }])).toBe(false);
+    expect(isValidField('contact', 'addresses', [{ ...address, doorCode: 1234 }])).toBe(false);
+  });
+
+  it('reads an address without one as an empty code', () => {
+    const contact = contactFromRecord({ type: 'contact', id: 'c', fields: { addresses: [address] }, clocks: {} } as never);
+    expect(contact.addresses[0]!.doorCode).toBe('');
+  });
+});

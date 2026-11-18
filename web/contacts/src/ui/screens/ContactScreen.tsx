@@ -181,6 +181,13 @@ function PlaceCard({ address, index }: { address: AddressEntry; index: number })
             </span>
           ))}
         </address>
+        {address.doorCode.trim() ? (
+          <p className={styles.doorCode}>
+            <Icon name="key" size={16} className={styles.doorCodeGlyph} />
+            <span className={`${styles.detailMeta} t-meta`}>{t('Door code')}</span>
+            <span className={`${styles.doorCodeValue} t-body-strong`}>{address.doorCode.trim()}</span>
+          </p>
+        ) : null}
         <span className={`${styles.detailMeta} t-meta`}>{placeKindName(address)}</span>
       </div>
       <div className={styles.placeTools}>

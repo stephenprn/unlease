@@ -36,7 +36,9 @@ const address = (value: unknown): boolean =>
   part(value.postalCode) &&
   part(value.city) &&
   part(value.region) &&
-  part(value.country);
+  part(value.country) &&
+  // Added later: an address an older client wrote has none.
+  (value.doorCode === undefined || str(CONTACT_LIMITS.doorCode)(value.doorCode));
 
 /** A list of entries, each with its own id, bounded. */
 const entries =

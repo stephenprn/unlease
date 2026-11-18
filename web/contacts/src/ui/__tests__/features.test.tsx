@@ -109,7 +109,7 @@ describe('duplicates', () => {
 describe('a contact’s page', () => {
   it('opens an address in Google Maps or OpenStreetMap, picked where it is shown', async () => {
     const user = userEvent.setup();
-    const id = person('Léa Martin', { addresses: [{ id: 'a1', kind: 'home', label: '', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', region: '', country: 'France' }] });
+    const id = person('Léa Martin', { addresses: [{ id: 'a1', kind: 'home', label: '', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', region: '', country: 'France', doorCode: '' }] });
     open(`/contacts/contact/${id}`);
     render(<App />);
     expect(screen.getByRole('link', { name: 'Google Maps' }).getAttribute('href')).toBe('https://www.google.com/maps/search/?api=1&query=12%20rue%20des%20Lilas%2C%2069003%20Lyon%2C%20France');

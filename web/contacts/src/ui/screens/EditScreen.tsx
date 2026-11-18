@@ -14,6 +14,7 @@
  */
 import { useEffect, useEffectEvent, useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 
+import { SUITE_NAME } from '@unlease/core/apps';
 import { t, tc, tx } from '@unlease/core/i18n';
 import type { GlyphName } from '@unlease/design/glyphs';
 import type { Place } from '@unlease/core/sync/places';
@@ -371,13 +372,23 @@ function ContactForm({ id, initial: given, initialNote, title }: { id: string | 
               value={rest}
               multiline={rest.includes('\n')}
               onChange={value => setStreet(address, first, value)}
-              placeholder={t('Building, floor, door code…')}
+              placeholder={t('Building, floor, flat…')}
               maxLength={CONTACT_LIMITS.addressLine}
             />
             {part(address, 'postalCode', t('Postcode'))}
             {part(address, 'city', t('City'))}
             {part(address, 'region', t('Region'))}
             {part(address, 'country', t('Country'))}
+            <TextField
+              kind="doorCode"
+              className={styles.addressWide}
+              label={t('Door code')}
+              value={address.doorCode}
+              onChange={doorCode => set({ addresses: replaced(draft.addresses, address.id, { doorCode }) })}
+              placeholder={t('The building’s or the intercom’s code')}
+              help={t('Shown with the address, for the day you go there. It stays in {suite}: never in the phone’s address book.', { suite: SUITE_NAME })}
+              maxLength={CONTACT_LIMITS.doorCode}
+            />
           </div>
         );
       })}

@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 
 import { SHAPES } from '@unlease/design/shapes';
+import { SUITE_NAME } from '@unlease/core/apps';
 import { t, tc } from '@unlease/core/i18n';
 import { createId } from '@unlease/core/services/ids';
 import { settleDate, typeDate } from '@unlease/core/services/dateTyping';
@@ -53,7 +54,7 @@ const EMPTY_DRAFT: ContactDraft = { firstName: '', lastName: '', company: '', jo
 // As the web's form: the first row of a kind is the usual one (a mobile, a home), the next ones the other (home, work).
 const newPhone = (number = '', kind = 'mobile'): PhoneEntry => ({ id: createId(), number, kind, label: '' });
 const newEmail = (kind = 'home'): EmailEntry => ({ id: createId(), address: '', kind, label: '' });
-const newAddress = (kind = 'home'): AddressEntry => ({ id: createId(), kind, label: '', street: '', postalCode: '', city: '', region: '', country: '' });
+const newAddress = (kind = 'home'): AddressEntry => ({ id: createId(), kind, label: '', street: '', postalCode: '', city: '', region: '', country: '', doorCode: '' });
 
 /** Which kinds a row offers, and their names. */
 type KindTarget = { readonly list: 'phones' | 'emails' | 'addresses'; readonly id: string };
@@ -214,7 +215,7 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
     'jobTitle',
     ...draft.phones.map(entry => `phone:${entry.id}`),
     ...draft.emails.map(entry => `email:${entry.id}`),
-    ...draft.addresses.flatMap(entry => ['street', 'rest', 'postalCode', 'city', 'region', 'country'].map(part => `${part}:${entry.id}`)),
+    ...draft.addresses.flatMap(entry => ['street', 'rest', 'postalCode', 'city', 'region', 'country', 'doorCode'].map(part => `${part}:${entry.id}`)),
     'birthday',
     'note',
   ];
@@ -403,7 +404,7 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     const first = entry.street.split('\n')[0] ?? '';
                     updateEntry('addresses', entry.id, { street: value ? `${first}\n${value}` : first });
                   }}
-                  placeholder={t('Building, floor, door code…')}
+                  placeholder={t('Building, floor, flat…')}
                   multiline={entry.street.split('\n').length > 2}
                   maxLength={CONTACT_LIMITS.addressLine}
                 />
@@ -423,6 +424,16 @@ export function EditContactScreen({ navigation, route }: ScreenProps<'Edit'>) {
                     <TextField kind="country" field={form.field(`country:${entry.id}`)} label={t('Country')} value={entry.country} onChangeText={value => updateEntry('addresses', entry.id, { country: value })} maxLength={CONTACT_LIMITS.addressPart} />
                   </View>
                 </View>
+                <TextField
+                  kind="doorCode"
+                  field={form.field(`doorCode:${entry.id}`)}
+                  label={t('Door code')}
+                  value={entry.doorCode}
+                  onChangeText={value => updateEntry('addresses', entry.id, { doorCode: value })}
+                  placeholder={t('The building’s or the intercom’s code')}
+                  help={t('Shown with the address, for the day you go there. It stays in {suite}: never in the phone’s address book.', { suite: SUITE_NAME })}
+                  maxLength={CONTACT_LIMITS.doorCode}
+                />
               </View>
             ))}
             {draft.addresses.length < CONTACT_LIMITS.addresses ? <Button label={t('Add address')} icon="plus" kind="text" onPress={() => {

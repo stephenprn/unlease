@@ -731,6 +731,27 @@ h3.letter::before {
   color: var(--ink-muted);
 }
 
+/* The building's code, under the address: a key, its name, the code itself set apart to be read at the door. */
+.doorCode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  margin: 4px 0 0;
+}
+
+.doorCodeGlyph {
+  flex: none;
+  align-self: center;
+  color: var(--ink-muted);
+}
+
+.doorCodeValue {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
 .placeTools {
   display: flex;
   flex-wrap: wrap;

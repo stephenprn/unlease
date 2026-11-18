@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { fieldInput, roomLeft, type FieldKind } from '../fields';
 
-const KINDS: readonly FieldKind[] = ['text', 'prose', 'person', 'organization', 'email', 'tel', 'url', 'street', 'postalCode', 'city', 'region', 'country', 'number', 'decimal', 'time', 'search', 'code', 'secret', 'serverAddress', 'serverToken'];
+const KINDS: readonly FieldKind[] = ['text', 'prose', 'person', 'organization', 'email', 'tel', 'url', 'street', 'postalCode', 'city', 'region', 'country', 'doorCode', 'number', 'decimal', 'time', 'search', 'code', 'secret', 'serverAddress', 'serverToken'];
 
 describe('fields', () => {
   it('offers autofill only for the person’s own server', () => {

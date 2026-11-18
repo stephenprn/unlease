@@ -33,6 +33,7 @@ const asAddress = (raw: Record<string, unknown>): AddressEntry => ({
   city: asString(raw.city),
   region: asString(raw.region),
   country: asString(raw.country),
+  doorCode: asString(raw.doorCode),
 });
 
 export function contactFromRecord(record: SyncRecord): Contact {

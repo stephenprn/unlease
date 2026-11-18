@@ -24,6 +24,17 @@ describe('duplicates', () => {
     expect(groups[0]!.reasons).toEqual(['name', 'phone']);
   });
 
+  it('keeps a door code through a merge: the one kept takes it when only the other knew it', () => {
+    const home = { id: 'a', kind: 'home', label: '', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', region: '', country: 'France', doorCode: '' };
+    const kept = person({ id: 'k', firstName: 'Paul', lastName: 'Martin', addresses: [home] });
+    const other = person({ id: 'o', firstName: 'Paul', lastName: 'Martin', addresses: [{ ...home, id: 'b', street: '12, rue des Lilas', doorCode: ' 4B12A ' }, { ...home, id: 'c', street: '3 place Bellecour', postalCode: '69002', doorCode: '1789' }] });
+    const patch = mergeContacts(kept, [kept, other], { now: 9, newId: ids() }).find(write => write.id === 'k')!.patch;
+    expect((patch.addresses as { street: string; doorCode: string }[]).map(address => [address.street, address.doorCode])).toEqual([
+      ['12 rue des Lilas', '4B12A'],
+      ['3 place Bellecour', '1789'],
+    ]);
+  });
+
   it('never joins two countries’ numbers that end alike', () => {
     const jose = person({ id: 'jose', firstName: 'José', lastName: 'García', phones: [{ id: 'j', number: '+34 612 345 678', kind: 'mobile', label: '' }] });
     expect(findDuplicates([lea, jose], 'FR')).toEqual([]);

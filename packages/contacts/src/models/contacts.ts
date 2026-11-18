@@ -47,6 +47,8 @@ export interface AddressEntry {
   readonly city: string;
   readonly region: string;
   readonly country: string;
+  /** The building's door or intercom code(s), as typed (« 4B12A », « Portail 1234, porte B56 »); empty for none. Kept on this server only: never written to the phone's address book nor to a vCard. */
+  readonly doorCode: string;
 }
 
 export interface Contact {
@@ -118,6 +120,7 @@ export const CONTACT_LIMITS = {
   addresses: 10,
   addressLine: 500,
   addressPart: 120,
+  doorCode: 60,
   entryLabel: 40,
   labels: 50,
   labelName: 60,

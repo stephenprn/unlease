@@ -27,7 +27,7 @@ export interface ContactDraft {
 
 export const newPhone = (kind = 'mobile'): PhoneEntry => ({ id: createId(), number: '', kind, label: '' });
 export const newEmail = (kind = 'home'): EmailEntry => ({ id: createId(), address: '', kind, label: '' });
-export const newAddress = (kind = 'home'): AddressEntry => ({ id: createId(), kind, label: '', street: '', postalCode: '', city: '', region: '', country: '' });
+export const newAddress = (kind = 'home'): AddressEntry => ({ id: createId(), kind, label: '', street: '', postalCode: '', city: '', region: '', country: '', doorCode: '' });
 
 /** A new contact's form: a name typed in the spotlight split into first and last, a row of each kind ready to fill. */
 export function emptyDraft(name = '', labelIds: readonly string[] = []): ContactDraft {

@@ -28,7 +28,8 @@ export interface ImportedEntry {
   readonly label: string;
 }
 
-export type ImportedAddress = Omit<AddressEntry, 'id'>;
+/** An address as a source holds it: only another contact merged in says a door code (Unlease's own). */
+export type ImportedAddress = Omit<AddressEntry, 'id' | 'doorCode'> & { readonly doorCode?: string };
 
 /** A photo to take: its bytes (a vCard's, the phone's) or an address the server fetches (Google's). */
 export type ImportedPhoto = { readonly kind: 'data'; readonly mime: string; readonly base64: string } | { readonly kind: 'url'; readonly url: string } | { readonly kind: 'file'; readonly uri: string; readonly mime: string };
@@ -201,7 +202,7 @@ const nameKey = (contact: Pick<Contact, 'firstName' | 'lastName'>): string => fo
 const cut = (value: string, max: number): string => value.trim().slice(0, max);
 
 /** The same address, however it was typed. */
-function sameAddress(a: Omit<AddressEntry, 'id' | 'kind' | 'label'>, b: Omit<AddressEntry, 'id' | 'kind' | 'label'>): boolean {
+function sameAddress(a: Pick<AddressEntry, 'street' | 'postalCode' | 'city'>, b: Pick<AddressEntry, 'street' | 'postalCode' | 'city'>): boolean {
   const key = (address: typeof a): string => foldText([address.street, address.postalCode, address.city].join(' ').replace(/[\s,.]+/g, ' ').trim());
   return key(a) === key(b);
 }
@@ -272,7 +273,13 @@ export function fill(into: Draft, from: ImportedContact, labelIds: readonly stri
   }
   for (const address of from.addresses) {
     if (into.addresses.length >= CONTACT_LIMITS.addresses || isEmptyAddress(address)) continue;
-    if (into.addresses.some(entry => sameAddress(entry, address))) continue;
+    const same = into.addresses.findIndex(entry => sameAddress(entry, address));
+    if (same >= 0) {
+      // The same address: its door code, when only the one merged in knows it.
+      const known = into.addresses[same]!;
+      if (!known.doorCode.trim() && address.doorCode?.trim()) into.addresses[same] = { ...known, doorCode: cut(address.doorCode.trim(), CONTACT_LIMITS.doorCode) };
+      continue;
+    }
     into.addresses.push({
       id: newId(),
       kind: address.kind,
@@ -282,6 +289,7 @@ export function fill(into: Draft, from: ImportedContact, labelIds: readonly stri
       city: cut(address.city, CONTACT_LIMITS.addressPart),
       region: cut(address.region, CONTACT_LIMITS.addressPart),
       country: cut(address.country, CONTACT_LIMITS.addressPart),
+      doorCode: cut(address.doorCode?.trim() ?? '', CONTACT_LIMITS.doorCode),
     });
   }
   for (const id of labelIds) if (!into.labelIds.includes(id) && into.labelIds.length < CONTACT_LIMITS.labels) into.labelIds.push(id);

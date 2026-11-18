@@ -29,6 +29,8 @@ export type FieldKind =
   | 'city'
   | 'region'
   | 'country'
+  /** A building's door or intercom code (« 4B12A », « #1234 »): letters as capitals, never corrected or suggested. */
+  | 'doorCode'
   /** A count: digits alone. */
   | 'number'
   /** An amount: digits and a decimal mark. */
@@ -114,6 +116,7 @@ const SPECS: Record<FieldKind, Spec> = {
   city: { keyboard: KEYBOARDS.words, capitals: 'words', corrected: false },
   region: { keyboard: KEYBOARDS.words, capitals: 'words', corrected: false },
   country: { keyboard: KEYBOARDS.words, capitals: 'words', corrected: false },
+  doorCode: { keyboard: KEYBOARDS.machine, capitals: 'characters', corrected: false },
   number: { keyboard: KEYBOARDS.digits, capitals: 'none', corrected: false },
   decimal: { keyboard: KEYBOARDS.amount, capitals: 'none', corrected: false },
   time: { keyboard: KEYBOARDS.words, capitals: 'none', corrected: false },

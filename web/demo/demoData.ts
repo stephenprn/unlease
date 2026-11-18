@@ -834,7 +834,7 @@ interface ContactSeed {
   readonly job?: string;
   readonly phones?: readonly (readonly [string, string])[];
   readonly emails?: readonly (readonly [string, string])[];
-  readonly address?: { readonly kind: string; readonly street: string; readonly postalCode: string; readonly city: string; readonly country: string };
+  readonly address?: { readonly kind: string; readonly street: string; readonly postalCode: string; readonly city: string; readonly country: string; readonly doorCode?: string };
   /** `YYYY-MM-DD`, `--MM-DD`, or days from today (a birthday soon, its year given). */
   readonly birthday?: string | { readonly inDays: number; readonly year: number | null };
   readonly labels?: readonly string[];
@@ -847,7 +847,7 @@ interface ContactSeed {
 
 const CONTACTS: readonly ContactSeed[] = [
   { id: 'demo-contact-lea', first: 'Léa', last: 'Martin', phones: [['06 12 34 56 78', 'mobile']], emails: [['lea.martin@example.org', 'home']], birthday: { inDays: 3, year: 1991 }, labels: ['demo-clabel-famille'], favorite: true, photo: 'demo-portrait-1', note: 'Allergic to nuts. Prefers calls in the evening.', ago: 40 * DAY },
-  { id: 'demo-contact-paul', first: 'Paul', last: 'Martin', phones: [['06 98 76 54 32', 'mobile'], ['04 78 12 34 56', 'home']], address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France' }, birthday: '1962-11-28', labels: ['demo-clabel-famille'], favorite: true, ago: 40 * DAY },
+  { id: 'demo-contact-paul', first: 'Paul', last: 'Martin', phones: [['06 98 76 54 32', 'mobile'], ['04 78 12 34 56', 'home']], address: { kind: 'home', street: '12 rue des Lilas', postalCode: '69003', city: 'Lyon', country: 'France', doorCode: '4B12A' }, birthday: '1962-11-28', labels: ['demo-clabel-famille'], favorite: true, ago: 40 * DAY },
   { id: 'demo-contact-camille', first: 'Camille', last: 'Durand', company: 'Northside Atelier', job: 'Architect', phones: [['07 11 22 33 44', 'mobile'], ['01 23 45 67 89', 'work']], emails: [['camille@atelier-nord.example', 'work']], address: { kind: 'work', street: '8 quai de la Gare', postalCode: '75013', city: 'Paris', country: 'France' }, labels: ['demo-clabel-travail'], favorite: true, photo: 'demo-portrait2-1', ago: 30 * DAY },
   { id: 'demo-contact-noah', first: 'Noah', last: 'Bernard', phones: [['06 55 44 33 22', 'mobile']], emails: [['noah.b@example.org', 'home']], birthday: { inDays: 12, year: 1994 }, labels: ['demo-clabel-escalade'], favorite: true, ago: 25 * DAY },
   { id: 'demo-contact-ines', first: 'Inès', last: 'Lefèvre', company: '3rd district town hall', job: 'Project officer', phones: [['04 72 00 11 22', 'work']], emails: [['ines.lefevre@example.org', 'work']], labels: ['demo-clabel-travail'], ago: 20 * DAY },
@@ -902,7 +902,7 @@ function contactChanges(now: number): { readonly time: number; readonly changes:
             jobTitle: seed.job ?? '',
             phones: (seed.phones ?? []).map(([number, kind], index) => ({ id: `${seed.id}-p${index}`, number, kind, label: '' })),
             emails: (seed.emails ?? []).map(([address, kind], index) => ({ id: `${seed.id}-e${index}`, address, kind, label: '' })),
-            addresses: seed.address ? [{ id: `${seed.id}-a0`, label: '', region: '', ...seed.address }] : [],
+            addresses: seed.address ? [{ id: `${seed.id}-a0`, label: '', region: '', doorCode: '', ...seed.address }] : [],
             birthday: birthdayOf(seed, now),
             note: seed.note ?? '',
             labelIds: [...(seed.labels ?? [])],

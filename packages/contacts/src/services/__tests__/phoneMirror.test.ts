@@ -23,8 +23,8 @@ describe('mirroredContacts', () => {
           ],
           emails: [{ id: 'e1', address: 'lea@example.org', kind: 'main', label: '' }],
           addresses: [
-            { id: 'a1', kind: 'home', label: '', street: '1 rue de la Paix', postalCode: '75002', city: 'Paris', region: '', country: 'France' },
-            { id: 'a2', kind: 'work', label: '', street: ' ', postalCode: '', city: '', region: '', country: '' },
+            { id: 'a1', kind: 'home', label: '', street: '1 rue de la Paix', postalCode: '75002', city: 'Paris', region: '', country: 'France', doorCode: '' },
+            { id: 'a2', kind: 'work', label: '', street: ' ', postalCode: '', city: '', region: '', country: '', doorCode: '' },
           ],
           birthday: '--03-12',
           favorite: true,

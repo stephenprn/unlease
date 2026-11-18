@@ -22,7 +22,10 @@ export const FR_SHARED: Dictionary = {
   'Seen together': 'Vus ensemble',
   'About': 'À propos',
   'Address line 2': 'Complément',
-  'Building, floor, door code…': 'Bâtiment, étage, code…',
+  'Building, floor, flat…': 'Bâtiment, étage, appartement…',
+  'Door code': 'Code d’entrée',
+  'The building’s or the intercom’s code': 'Le code de l’immeuble ou de l’interphone',
+  'Shown with the address, for the day you go there. It stays in {suite}: never in the phone’s address book.': 'Affiché avec l’adresse, pour le jour où vous y allez. Il reste dans {suite} : jamais dans les contacts du téléphone.',
   'A number and a street, a place, a town…': 'Un numéro et une rue, un lieu, une ville…',
   'Picking a suggested address fills in the postcode, the town and the country.': 'Choisir une adresse proposée remplit le code postal, la ville et le pays.',
   // Where a person is mentioned: a note or a link naming them among its people (both clients' `MentionedIn`)

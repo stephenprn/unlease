@@ -165,6 +165,16 @@ function PlaceCard({ address }: { address: AddressEntry }) {
               {line}
             </AppText>
           ))}
+          {address.doorCode.trim() ? (
+            // The building's code, to be read at the door: a key, its name, the code set apart.
+            <View style={styles.doorCode}>
+              <Icon name="key" size={16} color={theme.color.inkMuted} />
+              <AppText variant="meta">{t('Door code')}</AppText>
+              <AppText variant="bodyStrong" style={styles.doorCodeValue}>
+                {address.doorCode.trim()}
+              </AppText>
+            </View>
+          ) : null}
           <AppText variant="meta" style={styles.placeKind}>
             {placeKindName(address)}
           </AppText>
@@ -481,6 +491,8 @@ const makeStyles = (theme: Theme) =>
     planFrame: { width: 96, height: 88, overflow: 'hidden', backgroundColor: theme.color.paperHigh },
     placeText: { flex: 1, paddingTop: 2 },
     placeKind: { marginTop: 2 },
+    doorCode: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, marginTop: 4 },
+    doorCodeValue: { flexShrink: 1, letterSpacing: 0.5, fontVariant: ['tabular-nums'] },
     placeTools: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
     none: { paddingHorizontal: 24 },
   });

@@ -22,7 +22,7 @@ export interface HandedContact {
   readonly jobTitle: string;
   readonly phones: readonly Omit<PhoneEntry, 'id'>[];
   readonly emails: readonly Omit<EmailEntry, 'id'>[];
-  readonly addresses: readonly Omit<AddressEntry, 'id'>[];
+  readonly addresses: readonly Omit<AddressEntry, 'id' | 'doorCode'>[];
   /** `1990-03-12` or `--03-12`; null for none. */
   readonly birthday: string | null;
   readonly note: string;
@@ -130,7 +130,7 @@ export function handedContact(extras: unknown): HandedContact {
   for (const row of rowsOf(EMAIL)) addEmail(row.data1, row.data2, row.data3);
 
   // An address handed whole is its street, as Google's export's « Formatted » one; a row's parts keep their places.
-  const addresses: Omit<AddressEntry, 'id'>[] = [];
+  const addresses: Omit<AddressEntry, 'id' | 'doorCode'>[] = [];
   const part = (value: unknown): string => text(value, CONTACT_LIMITS.addressPart);
   const postal = text(given.postal, CONTACT_LIMITS.addressLine);
   if (postal) addresses.push({ ...kindOf(given.postal_type, '', placeKind, 'home'), street: postal, postalCode: '', city: '', region: '', country: '' });
@@ -171,7 +171,7 @@ export function handedDraft(handed: HandedContact, newId: () => string): Pick<Co
     jobTitle: handed.jobTitle,
     phones: handed.phones.length > 0 ? handed.phones.map(phone => ({ id: newId(), ...phone })) : [{ id: newId(), number: '', kind: 'mobile', label: '' }],
     emails: handed.emails.length > 0 ? handed.emails.map(email => ({ id: newId(), ...email })) : [{ id: newId(), address: '', kind: 'home', label: '' }],
-    addresses: handed.addresses.map(address => ({ id: newId(), ...address })),
+    addresses: handed.addresses.map(address => ({ id: newId(), ...address, doorCode: '' })),
     birthday: handed.birthday,
   };
 }
