@@ -21,6 +21,7 @@ import type { Theme } from '@shared/ui/theme/theme';
 import { fontFamily } from '@shared/ui/theme/typography';
 
 import { CityCard } from './CityCard';
+import { DayWave } from './DayWave';
 import { TimeRuler } from './TimeRuler';
 
 interface Props {
@@ -56,6 +57,8 @@ export function WorldTab({ bottom, active, onOpen }: Props) {
         </AppText>
       </View>
 
+      <DayWave clocks={list} at={at} width={width} twelveHours={prefs.twelveHours} active={active} />
+
       <View style={styles.compare}>
         {/* Slid: how far from now, and the way back; at rest, nothing: the ruler says what it is. */}
         <View style={styles.compareHead}>
@@ -89,7 +92,7 @@ function makeStyles(theme: Theme) {
     content: { paddingTop: 4 },
     here: { alignItems: 'center', paddingTop: 12, paddingHorizontal: 16 },
     time: { fontFamily: fontFamily(theme, 'SemiBold'), fontSize: 72, lineHeight: 80, letterSpacing: -1.5, color: theme.color.ink, fontVariant: ['tabular-nums'] },
-    compare: { marginTop: 8, marginBottom: 8 },
+    compare: { marginBottom: 8 },
     compareHead: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingHorizontal: 28, gap: 8 },
     compareWords: { flex: 1, fontVariant: ['tabular-nums'] },
     list: { paddingHorizontal: 12, gap: 8, marginTop: 8 },

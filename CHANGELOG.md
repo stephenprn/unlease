@@ -14,6 +14,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
+- Clock's stopwatch, world clocks and ringing screens get their own hand-drawn look, on Android and on the web, in grainy, risograph-like gradients: the stopwatch is a wavy ring whose crests run while it counts, with the minute laid over it as a Safran-to-terracotta brush stroke; the world clocks show one wave of the day with every city riding it at its hour (who is up, who sleeps), and each city's card its own small wave; on Android an alarm rises with a paper-cut sun coming out of a choppy sea as the volume rises, a timer's water sloshes as its hourglass turns, and the echoes around what rings are wavy rings.
 - Carnet's cards say when a note goes on past what they show, on Android and on the web: a cut text shows its next line dissolving at the card's foot (no longer a lone « … »), a drawing taller than its card fades at its foot, and a list with more than six items to do counts the rest (« 3 autres éléments »).
 
 ### Fixed

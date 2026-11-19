@@ -9,12 +9,15 @@ import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import type { WorldClock } from '@unlease/clock/models/worldClock';
-import { cityMeta, clockIn, clockSentence, daylight } from '@unlease/clock/services/worldClocks';
-import { AppText, Icon, Organic, Tappable } from '@shared/ui/components';
+import { cityMeta, clockIn, clockSentence, daylight, wallIn } from '@unlease/clock/services/worldClocks';
+import { dayShare } from '@unlease/design/waves';
+import { AppText, Organic, Tappable } from '@shared/ui/components';
 import { withAlpha } from '@unlease/design/color';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { fontFamily } from '@shared/ui/theme/typography';
+
+import { MiniDayWave } from './DayWave';
 
 interface Props {
   readonly clock: WorldClock;
@@ -51,7 +54,7 @@ function CityCardComponent({ clock, at, shifted, twelveHours, onOpen }: Props) {
             {cityMeta(clock.zone, at)}
           </AppText>
         </View>
-        <Icon name={sky === 'night' ? 'moon' : 'sun'} size={22} color={sky === 'night' ? theme.color.inkMuted : theme.color.ink} />
+        <MiniDayWave share={dayShare(wallIn(clock.zone, at))} light={sky} />
       </Tappable>
     </Organic>
   );

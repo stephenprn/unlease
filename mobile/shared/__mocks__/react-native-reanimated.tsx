@@ -45,6 +45,9 @@ export const useAnimatedProps = <T,>(factory: () => T): T => factory();
 
 export const useDerivedValue = <T,>(factory: () => T): { value: T } => ({ value: factory() });
 
+/** A frame callback that never runs: tests see the first frame only (Clock's tide, its stopwatch). */
+export const useFrameCallback = (): { setActive: (active: boolean) => void; isActive: boolean; callbackId: number } => ({ setActive: () => {}, isActive: false, callbackId: 0 });
+
 /** A reaction reads what it watches after each render and reacts, the value before it first null, as on the UI thread. */
 export function useAnimatedReaction<T>(prepare: () => T, react: (value: T, before: T | null) => void): void {
   const before = React.useRef<T | null>(null);

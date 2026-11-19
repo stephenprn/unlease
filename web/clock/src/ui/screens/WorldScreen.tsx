@@ -1,6 +1,6 @@
 /**
  * « Horloges » on the web (the phone's `WorldTab`): here first, large (the time, the day and this
- * device's city), then the ruler that compares the hours (`TimeRuler`): slid, every card below shows
+ * device's city), the day's wave every city rides (`DayWave`), then the ruler that compares the hours (`TimeRuler`): slid, every card below shows
  * its city's time at that moment, the time here turns to the accent and « Maintenant » brings it back;
  * then a card per city, west to east as a day travels (`CityCard`), each opening its dialog (rename,
  * remove). « Ajouter une ville » (the header, the pebble) opens the search. No city yet, the place
@@ -23,6 +23,7 @@ import { openCitySearch } from '../features/open';
 import tools from '../features/tools.module.css';
 import { CityCard } from '../features/world/CityCard';
 import { CityDialog } from '../features/world/CityDialog';
+import { DayWave } from '../features/world/DayWave';
 import { TimeRuler } from '../features/world/TimeRuler';
 
 export function WorldScreen() {
@@ -47,6 +48,8 @@ export function WorldScreen() {
         </p>
         <p className={`${tools.hereDay} t-body-strong`}>{`${dayTitle(wall.slice(0, 10))} · ${here}`}</p>
       </div>
+
+      <DayWave clocks={list} at={at} twelveHours={twelveHours} />
 
       <div className={tools.compare}>
         <div className={tools.compareHead}>

@@ -38,7 +38,7 @@ import { useClockUiStore } from '@app/store/clockUi';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { keptWeather, refreshWeather } from '@app/weather';
 
-import { Dawn } from './Dawn';
+import { Tide } from './Tide';
 import { RingBeacon } from './RingBeacon';
 
 /** The window's one entrance: what rings settles in from a little below (600 decelerate), the morning's panel after it. */
@@ -159,7 +159,7 @@ function RingWindow(): React.ReactElement {
   return (
     <View style={styles.screen}>
       <Ground />
-      <Dawn rising={!snoozed && !stopped} />
+      <Tide kind="dawn" active={!snoozed && !stopped} />
       <View style={[styles.content, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
         {/* The head about a third down, the panel under it, the room shared above and below: nothing stranded. */}
         <View style={styles.above} />

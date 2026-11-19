@@ -82,7 +82,7 @@ export function StopwatchTab({ bottom, active }: Props) {
     <View style={styles.fill}>
       {/* No lap yet: the figure alone, at the screen's heart; laps push it to the top. */}
       <View style={[styles.face, rows.length === 0 && styles.alone]} accessible accessibilityRole="timer" accessibilityLabel={reset ? t('Stopwatch at zero') : stopwatchSentence(total)}>
-        <StopwatchDial size={dial} elapsed={total} running={running}>
+        <StopwatchDial size={dial} watch={watch} active={active}>
         <View style={[styles.figure, { maxWidth: dial - 64 }]}>
           <AppText style={[styles.main, !running && !reset && styles.held]} numberOfLines={1} adjustsFontSizeToFit>
             {main}

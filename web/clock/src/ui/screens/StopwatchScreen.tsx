@@ -75,7 +75,7 @@ export function StopwatchScreen() {
     <div className={`${styles.screen} ${tools.watchScreen}`}>
       <h1 className="sr-only">{t('Stopwatch')}</h1>
       <div className={tools.face} role="timer" aria-label={reset ? t('Stopwatch at zero') : stopwatchSentence(total)}>
-        <StopwatchDial elapsed={total} running={running}>
+        <StopwatchDial watch={watch} now={now}>
         <p className={tools.figure} aria-hidden="true" data-held={(!running && !reset) || undefined}>
           <span className={tools.figureMain}>{main}</span>
           <span className={tools.figureHundredths}>{`${getLocale() === 'fr' ? ',' : '.'}${hundredths}`}</span>

@@ -3,7 +3,7 @@
  * turning the screen on, as a timer ends). What it serves: someone across the kitchen, hands full. So
  * the night theme on the night ground like the alarm's window, the hourglass and « Temps écoulé », the
  * timer's name, the time since its end counting up at 96 in the accent, and two large buttons in the
- * thumb's reach (the hourglass turning over on the accent's pebble, its echoes rippling out, `RingBeacon`; a warm light at the foot, `Dawn`): « +1 min » (tonal) and « Arrêter » (filled, 72 high: a timer is stopped at once, no
+ * thumb's reach (the hourglass turning over on the accent's pebble, its wavy echoes rippling out, `RingBeacon`; the water at its foot sloshing as it turns, `Tide`): « +1 min » (tonal) and « Arrêter » (filled, 72 high: a timer is stopped at once, no
  * slide to guard it, unlike an alarm a sleepy hand might stop). Several ringing: each named, « Tout
  * arrêter ». The sound and the notification are the engine's: this window draws and answers, and
  * closes once nothing rings, wherever that was done.
@@ -27,7 +27,7 @@ import { onTools, readTools, stopRingingTimers, timerAction, type ToolsState } f
 import { bootstrap } from '@app/bootstrap';
 import { useTick } from '@app/hooks/useTick';
 
-import { Dawn } from './Dawn';
+import { Tide } from './Tide';
 import { RingBeacon } from './RingBeacon';
 
 /** What rings settles in from a little below (600 decelerate), once. */
@@ -89,8 +89,8 @@ function TimerWindow(): React.ReactElement {
   return (
     <View style={styles.screen}>
       <Ground />
-      {/* A warm light at the foot, steady: the timer's window is the alarm's, without its dawn. */}
-      <Dawn rising={false} />
+      {/* The water at the foot sloshing as the hourglass turns: the timer's window is the alarm's, without its dawn. */}
+      <Tide kind="slosh" active={ringing.length > 0} />
       <View style={[styles.content, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.above} />
         <Animated.View entering={still ? undefined : ARRIVE} style={styles.head} accessible accessibilityRole="header" accessibilityLabel={[t('Time’s up'), ...names].join(', ')}>

@@ -17,6 +17,12 @@ darkens or lightens a little, so the ground's two tones read as one grainy gradi
 is in the file (it is laid at full opacity, as one more background layer over the ground's
 gradient, in both themes), at its own size so no scaling blurs it.
 
+And writes mobile/shared/assets/textures/riso-grain.png and web/public/riso-grain.png: Clock's
+illustrations' ink tooth (`design/waves.ts`, the ringing windows' sun and sea, the stopwatch's
+brush, the day's wave), a 256 px tile laid over a shape's flat ink as a riso print's is: the paper
+showing through in pale specks and clumps, a few darker ones, its density drifting in soft patches as
+an uneven inking does.
+
 Seeded, so a rerun gives the same files.
 
     python3 tools/textures/build_grain.py
@@ -156,6 +162,48 @@ def ground_grain_rows():
     return rows
 
 
+def riso_grain():
+    return png(SIZE, SIZE, riso_grain_rows())
+
+
+def riso_grain_rows():
+    import math
+    rnd = random.Random(SEED + 1)
+    # Soft patches of heavier and lighter inking, wrapped so the tile repeats without a seam.
+    waves = [(rnd.randint(1, 3), rnd.randint(1, 3), rnd.random() * math.tau, rnd.random() * math.tau) for _ in range(4)]
+
+    def patch(x, y):
+        total = sum(math.sin(math.tau * fx * x / SIZE + px) * math.sin(math.tau * fy * y / SIZE + py) for fx, fy, px, py in waves)
+        return 0.5 + total / 8
+
+    alpha = [[0] * SIZE for _ in range(SIZE)]
+    light = [[True] * SIZE for _ in range(SIZE)]
+    for y in range(SIZE):
+        for x in range(SIZE):
+            density = 0.07 + 0.2 * patch(x, y)
+            roll = rnd.random()
+            if roll < density:
+                alpha[y][x] = rnd.randint(70, 170)
+            elif roll < density + 0.04:
+                alpha[y][x] = rnd.randint(50, 110)
+                light[y][x] = False
+    # Clumps where the ink skipped: small pale blots, wrapped.
+    for _ in range(260):
+        cx, cy = rnd.randrange(SIZE), rnd.randrange(SIZE)
+        for _ in range(rnd.randint(3, 9)):
+            x, y = (cx + rnd.randint(-2, 2)) % SIZE, (cy + rnd.randint(-2, 2)) % SIZE
+            alpha[y][x] = max(alpha[y][x], rnd.randint(110, 190))
+            light[y][x] = True
+    rows = []
+    for y in range(SIZE):
+        row = []
+        for x in range(SIZE):
+            tone = 255 if light[y][x] else 0
+            row += [tone, tone, tone, alpha[y][x]]
+        rows.append(row)
+    return rows
+
+
 def write(paths, data):
     for path in paths:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -169,3 +217,4 @@ if __name__ == '__main__':
     write(('web/public/ground-grain.png',), ground_grain())
     widget_tiles()
     widget_ground_tile()
+    write(('mobile/shared/assets/textures/riso-grain.png', 'web/public/riso-grain.png'), riso_grain())

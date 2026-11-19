@@ -507,23 +507,42 @@
   overflow: visible;
 }
 
-.dialTick {
+.dialDot {
+  fill: var(--ink-faint);
+}
+
+/* The ring drawn by a hand: its line, and a second pass not quite over it. */
+.dialTrack {
+  fill: none;
   stroke: var(--edge);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  opacity: 0.55;
-  transition: stroke var(--duration-short) var(--ease-standard);
+  stroke-width: 1.6;
+  stroke-opacity: 0.85;
 }
 
-.dialTick[data-major] {
-  stroke: var(--ink-faint);
-  stroke-width: 2;
-  opacity: 1;
+.dialSketch {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 0.8;
+  stroke-opacity: 0.45;
 }
 
-.dialTick[data-lit] {
-  stroke: var(--action);
-  opacity: 1;
+/* The inks of Clock's illustrations, for their gradients' stops. */
+.inkWaiting {
+  stop-color: var(--waiting);
+}
+
+.inkAction {
+  stop-color: var(--action);
+}
+
+.glowAction {
+  stop-color: var(--action);
+  stop-opacity: 0.16;
+}
+
+.glowNone {
+  stop-color: var(--action);
+  stop-opacity: 0;
 }
 
 .dialBead {
@@ -747,16 +766,6 @@
   color: var(--action);
 }
 
-.sky {
-  flex: none;
-  display: flex;
-  margin-left: auto;
-  color: var(--ink-muted);
-}
-
-.sky[data-sky='dusk'] {
-  color: var(--ink-faint);
-}
 
 /* A city opened. */
 .cityFrame {
@@ -915,4 +924,139 @@
 
 .cityRow[data-sky='dusk'] {
   --sky-light: var(--action);
+}
+
+/* ── the world clocks' day wave (`DayWave`) ──────────────────────────────── */
+
+.dayWave {
+  position: relative;
+  height: 176px;
+  margin: 4px 0 0;
+}
+
+.dayWave svg {
+  display: block;
+  overflow: visible;
+}
+
+.dayInkTop {
+  stop-color: var(--waiting);
+  stop-opacity: 0.55;
+}
+
+.dayInkMiddle {
+  stop-color: var(--action);
+  stop-opacity: 0.22;
+}
+
+.dayInkBottom {
+  stop-color: var(--action);
+  stop-opacity: 0.04;
+}
+
+.dayNight {
+  fill: color-mix(in srgb, var(--ink-muted) 10%, transparent);
+}
+
+.dayHorizon {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.dayLine {
+  fill: var(--waiting);
+}
+
+.dayNightLine {
+  fill: var(--ink-faint);
+}
+
+.dayMark {
+  stroke: var(--wall);
+  stroke-width: 2.5;
+  fill: var(--paper);
+}
+
+.dayMark[data-sky='day'],
+.miniMark[data-sky='day'] {
+  fill: var(--waiting);
+}
+
+.dayMark[data-sky='dusk'],
+.dayMark[data-here],
+.miniMark[data-sky='dusk'] {
+  fill: var(--action);
+}
+
+.dayMark[data-sky='night']:not([data-here]) {
+  stroke: var(--ink-muted);
+  stroke-width: 2;
+}
+
+/* Here: a ring rippling out of its mark. */
+.dayRipple {
+  fill: none;
+  stroke: var(--action);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dayRipple 2600ms var(--ease-decelerate, ease-out) infinite;
+}
+
+@keyframes dayRipple {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dayRipple {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.dayHour,
+.dayName {
+  position: absolute;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.dayHour {
+  width: 60px;
+  top: 156px;
+  color: var(--ink-faint);
+}
+
+.dayName {
+  color: var(--ink-muted);
+}
+
+.dayName[data-here] {
+  color: var(--action);
+}
+
+.miniWave {
+  flex: none;
+  margin-left: auto;
+}
+
+.miniMark {
+  fill: var(--paper);
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+
+.miniMark[data-sky='night'] {
+  stroke: var(--ink-muted);
+  stroke-width: 1.5;
 }
