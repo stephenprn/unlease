@@ -103,14 +103,21 @@
                 android:listSelector="@android:color/transparent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="true"
+                android:clipToPadding="false"
                 android:divider="@android:color/transparent"
                 android:dividerHeight="8dp"
                 android:paddingStart="8dp"
                 android:paddingTop="2dp"
                 android:paddingEnd="8dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="16dp"
                 android:scrollbars="none" />
+
+            <!-- The list's foot fades into the ground at the slab's edge: the cards run under it, so one cut there reads as more below; once scrolled to the end the foot's padding keeps the last one clear of it. -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/wgen_fade_ground" />
 
             <LinearLayout
                 android:id="@+id/label_static"

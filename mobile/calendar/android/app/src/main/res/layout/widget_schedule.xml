@@ -84,16 +84,15 @@
                 android:dividerHeight="0dp"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
-                android:paddingBottom="10dp"
-                android:clipToPadding="true"
+                android:paddingBottom="16dp"
+                android:clipToPadding="false"
                 android:scrollbars="none" />
 
-            <!-- The list's foot fades into the ground, where its padding starts: a row cut there reads as more below. -->
+            <!-- The list's foot fades into the ground, at the slab's edge: the rows run under it, so a row cut there reads as more below; once scrolled to the end the foot's padding keeps the last one clear of it. -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="20dp"
+                android:layout_height="16dp"
                 android:layout_gravity="bottom"
-                android:layout_marginBottom="10dp"
                 android:background="@drawable/wgen_fade_ground" />
 
             <LinearLayout

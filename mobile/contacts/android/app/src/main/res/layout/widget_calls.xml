@@ -76,7 +76,7 @@
                 android:id="@+id/calls_grid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="true"
+                android:clipToPadding="false"
                 android:columnWidth="76dp"
                 android:gravity="center"
                 android:horizontalSpacing="0dp"
@@ -84,10 +84,17 @@
                 android:paddingStart="8dp"
                 android:paddingTop="2dp"
                 android:paddingEnd="8dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="16dp"
                 android:scrollbars="none"
                 android:stretchMode="spacingWidthUniform"
                 android:verticalSpacing="2dp" />
+
+            <!-- The list's foot fades into the ground at the slab's edge: the people run under it, so one cut there reads as more below; once scrolled to the end the foot's padding keeps the last one clear of it. -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/wgen_fade_ground" />
 
             <LinearLayout
                 android:id="@+id/calls_static"

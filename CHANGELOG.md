@@ -13,6 +13,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Fixed
 
+- Android widgets: a list that runs past the bottom of a widget (Planning, Ma journée, a note, Listes d'un label, a collection, Notes d'un label, Appels rapides) now runs to its edge under its fade, instead of stopping short over a band of empty background.
 - Clock's alarm wheels on Android turn under the finger again: an hour or a minute passing no longer jolted the wheel half a row ahead or cut its fling short, and a wheel no longer lets the page scroll once it has turned a long way. AM and PM are two rows a tap chooses.
 - On Android, typing in a form (an alarm's label, a timer's) no longer shakes the page when the keyboard changes its height: the field stays where it was, and the page moves only as far as the cursor needs.
 - Wallet on Android: the keyboard no longer covers « Passphrase again » as the vault is made (or the passphrase as it is unlocked), and a card's form scrolls its last fields above the keyboard.

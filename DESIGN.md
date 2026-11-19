@@ -1375,7 +1375,7 @@ Carnet's six (Actions rapides, Classer un lien, Collection, Notes d'un label, Li
 - **Slab:** the ground at the panel radius (22) with a hairline: its two tones under its film grain. The one-row Actions rapides is a 56 strip of the ground's foot at the bar radius (15).
 - **Sheets:** what lies on a slab sits 8 in, concentric: a note card at 14 on paper or its wash, the paper speckle as its own layer (a wash tints the paper, never the grain). Note and Listes d'un label are the note's own sheet at the panel radius.
 - **Field strips** (Classer un lien 56 high, the tall Actions rapides' search 52): the field colour, bar radius, outline edge.
-- **A capped list** fades over its last 20, where its foot padding starts, into what it lies on (`wgen_fade_paper`, tinted by a wash; `wgen_fade_ground` on a slab).
+- **A capped list** runs to the sheet's edge and fades over its last 16 into what it lies on (`wgen_fade_paper`, tinted by a wash; `wgen_fade_ground` on a slab): its rows, cards or people pass under the fade, never stop short of the edge over bare ground; its foot padding (16) keeps the last one clear of the fade once scrolled to the end.
 
 **Type**
 - Titles (600 16/22) and field hints (400 16/23) are Signika set by the app as tinted images (`WidgetType.kt`), each with a plain twin in the system font (when it cannot be drawn, and in previews).
