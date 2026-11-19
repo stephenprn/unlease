@@ -1,11 +1,13 @@
 /**
  * What this browser keeps of Carnet's own, in localStorage beside the shell's settings and never
- * synced: how the board lays out, and Seerr's address as the server last gave it. Whether Claude
+ * synced: how the board lays out, the row under its search bar, and Seerr's address as the server last gave it. Whether Claude
  * reads links is the suite's (`useServerFeature('claude')`, the device's settings), so a link saved
  * offline is marked right away (the phone's `reading`). Every access is guarded: blocked storage
  * only means nothing is remembered.
  */
 import { create } from 'zustand';
+
+import { asBoardRow, DEFAULT_BOARD_ROW, type BoardRow } from '@unlease/notes/services/boardFilter';
 
 import { getStorageName } from '@shared/app/env';
 import { useServerSettingsStore } from '@shared/app/store/serverSettings';
@@ -15,11 +17,13 @@ export type BoardLayout = 'wall' | 'list';
 
 export interface NotesPrefs {
   readonly layout: BoardLayout;
+  /** The one row under the search bar: the collections, the labels or the filters. */
+  readonly boardRow: BoardRow;
   /** Seerr's address as the server last gave it ('' when not linked): its module shows on films and series. */
   readonly seerr: string;
 }
 
-const DEFAULTS: NotesPrefs = { layout: 'wall', seerr: '' };
+const DEFAULTS: NotesPrefs = { layout: 'wall', boardRow: DEFAULT_BOARD_ROW, seerr: '' };
 
 export const usePrefsStore = create<NotesPrefs>(() => DEFAULTS);
 
@@ -36,6 +40,7 @@ export function loadPrefs(): void {
   usePrefsStore.setState(
     {
       layout: stored.layout === 'list' ? 'list' : 'wall',
+      boardRow: asBoardRow(stored.boardRow),
       seerr: typeof stored.seerr === 'string' ? stored.seerr : '',
     },
     true,
@@ -52,11 +57,13 @@ function save(patch: Partial<NotesPrefs>): void {
 }
 
 export const setLayout = (layout: BoardLayout): void => save({ layout });
+export const setBoardRow = (boardRow: BoardRow): void => save({ boardRow });
 /** Whether the server reads links, as heard (null: not known); the suite's, every app's (`setServerFeatures`). */
 export const setReading = (reading: boolean | null): void => setServerFeatures({ claude: reading });
 export const setSeerrUrl = (seerr: string): void => save({ seerr });
 
 export const useLayout = (): BoardLayout => usePrefsStore(s => s.layout);
+export const useBoardRow = (): BoardRow => usePrefsStore(s => s.boardRow);
 
 /**
  * Links get read: a server is connected and has not said it lacks a key (unknown counts as yes, so a

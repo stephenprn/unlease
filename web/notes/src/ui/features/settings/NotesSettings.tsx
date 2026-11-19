@@ -1,6 +1,6 @@
 /**
  * Carnet's part of the Réglages, in DESIGN's order as on the phone: its own section first (« Carnet »:
- * how the board lays out, where the reminders ring, the protected section and its password), then
+ * how the board lays out and the row under its search bar, where the reminders ring, the protected section and its password), then
  * cleaning the links already saved (a row of « Données »). The Keep import is the shell's « Importer »
  * row (`importer`, `KeepWizard`).
  */
@@ -15,7 +15,8 @@ import { NOTES_SETTINGS_SECTION } from '@unlease/notes/services/settingsPlaces';
 
 import { cleanSavedLinks, trackedLinkIds } from '../../../app/store/actions';
 import { useLibraryStore } from '../../../app/store/library';
-import { setLayout, useLayout } from '../../../app/store/prefs';
+import { setBoardRow, setLayout, useBoardRow, useLayout } from '../../../app/store/prefs';
+import { BOARD_ROW_HINTS, BOARD_ROW_NAMES, BOARD_ROWS } from '@unlease/notes/services/boardFilter';
 import { showUndo } from '@shared/app/store/ui';
 import { isLockOpen, openLock, setLockSection, useLockState } from '@shared/app/lock';
 import { Button } from '@shared/ui/components/Button';
@@ -47,6 +48,33 @@ function BoardLayout() {
           { value: 'list', label: t('List'), icon: 'rows' },
         ]}
       />
+    </div>
+  );
+}
+
+/** The one row under the search bar (the collections, the labels or the filters), under the layout. */
+function BoardRowChoice() {
+  const row = useBoardRow();
+  const labelId = useId();
+  // Choices with a line each (the storage class's): what « Filtres » holds needs saying.
+  return (
+    <div className={styles.block}>
+      <p className="t-meta-strong" id={labelId}>
+        {t('Under the search bar')}
+      </p>
+      <div role="radiogroup" aria-labelledby={labelId} className={styles.choices}>
+        {BOARD_ROWS.map(each => (
+          <button key={each} type="button" role="radio" aria-checked={row === each} className={styles.choice} onClick={() => setBoardRow(each)}>
+            <span className={styles.choiceMark} aria-hidden="true">
+              {row === each ? <Icon name="check" size={20} /> : null}
+            </span>
+            <span className={styles.rowText}>
+              <span className="t-body">{t(BOARD_ROW_NAMES[each])}</span>
+              <span className="t-meta">{t(BOARD_ROW_HINTS[each])}</span>
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -155,6 +183,7 @@ function NotesSection() {
   return (
     <Section title={APP_NAME} id={NOTES_SETTINGS_SECTION}>
       <BoardLayout />
+      <BoardRowChoice />
       <div className={styles.row}>
         <Icon name="bell" size={24} />
         <span className={styles.rowText}>

@@ -1,5 +1,5 @@
 /**
- * The board's filters, right over the wall they narrow: « Toutes », « Cette semaine », « À faire »,
+ * The board's filters, the row under the search bar when Réglages chose them: « Toutes », « Cette semaine », « À faire »,
  * « Listes », each with its count, a radio group of chips (the import's, `FilterChip`). The row runs
  * sideways when the window is narrow, fading at the side it continues past. While notes are picked
  * it rests, faded and out of reach, as the collection chips do.

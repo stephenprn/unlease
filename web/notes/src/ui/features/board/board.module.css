@@ -715,14 +715,14 @@
   padding-inline-start: 24px;
 }
 
-/* The board's filters, right over the wall: edge to edge, scrolling sideways under the board's margins as the collection chips do. */
+/* The board's filters, the row under the search bar when Réglages chose them: edge to edge, scrolling sideways under the board's margins as the collection chips do. */
 .filters {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  margin: 0 -24px 4px;
-  padding: 4px 24px 8px;
+  margin: 0 -24px;
+  padding: 6px 24px 10px;
   overflow-x: auto;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -737,7 +737,7 @@
   opacity: 0.4;
 }
 
-/* Under the composer, the composer's own 20 below it is room enough. */
-.composer + .filters {
-  margin-top: -8px;
+/* A label's chip: its tag is smaller than a stone, so the chip's own 14 before it, as a plain chip's. */
+.labelTab {
+  padding-left: 14px;
 }

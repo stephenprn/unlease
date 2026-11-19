@@ -23,7 +23,7 @@ import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setLo
 import { closeLock, useFingerprintOn, useLockOpen, useLockState, useSecureWhile } from '@shared/app/lock';
 import { LockPanel } from '@shared/ui/features/lock';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
+import { selectBoardRow, selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
 import { selectDrawerOpen, setDrawerOpen, showSnack, useUiStore } from '@shared/app/store/uiStore';
 import { openCapture } from '@app/store/captureStore';
 import { haptic } from '@shared/platform/haptics';
@@ -31,7 +31,7 @@ import { readClipboard } from '@shared/platform/clipboard';
 import { extractUrls } from '@unlease/core/services/url';
 
 import { AppText, Button, Dialog, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, IconButton, usePullToSync } from '../components';
-import { BoardFilters, BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
+import { BoardFilters, BoardHeader, LabelChips, LineChips, SyncLine } from '../features/board/BoardHeader';
 import { SelectionBar } from '../features/board/SelectionBar';
 import { BulkLabelsSheet } from '../features/board/BulkLabelsSheet';
 import { BulkColorSheet, onlyCollections } from '../features/board/BulkColorSheet';
@@ -93,8 +93,11 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const columns = layout === 'wall' ? 2 : 1;
   const metrics = useWallMetrics(columns);
   const now = useMinute();
-  // The notes' board narrowed by its filter, for as long as the app runs (Back puts « Toutes » back).
-  const [filter, setFilter] = useState<BoardFilter>('all');
+  // One row under the search strip, Réglages' choice; the notes' board narrowed by its filter only
+  // while the filters are that row, for as long as the app runs (Back puts « Toutes » back).
+  const boardRow = useLayoutStore(selectBoardRow);
+  const [chosenFilter, setFilter] = useState<BoardFilter>('all');
+  const filter: BoardFilter = boardRow === 'filters' ? chosenFilter : 'all';
   const { sections, total, counts } = useBoardSections(view, now, filter);
   const filtered = counts !== null && filter !== 'all';
   // The protected section: its notes only once the lock is open, and nothing captured of the screen meanwhile.
@@ -271,13 +274,15 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   };
   const openLine = useCallback((id: string) => navigation.navigate('Line', { id }), [navigation]);
   const newLine = useCallback(() => setNewLineOpen(true), []);
+  const openLabel = useCallback((id: string) => navigation.setParams({ view: `label:${id}` }), [navigation]);
 
   // The head of the wall, scrolling with it: only the search strip stays pinned.
   const intro = (
     <View>
       <SyncLine />
-      {view === 'notes' && !searching ? <LineChips onOpenLine={openLine} onNewLine={newLine} selecting={selection.size > 0} /> : null}
-      {counts && counts.all > 0 && !searching ? <BoardFilters filter={filter} counts={counts} onFilter={setFilter} selecting={selection.size > 0} /> : null}
+      {view === 'notes' && !searching && boardRow === 'collections' ? <LineChips onOpenLine={openLine} onNewLine={newLine} selecting={selection.size > 0} /> : null}
+      {view === 'notes' && !searching && boardRow === 'labels' ? <LabelChips onOpenLabel={openLabel} selecting={selection.size > 0} /> : null}
+      {counts && counts.all > 0 && !searching && boardRow === 'filters' ? <BoardFilters filter={filter} counts={counts} onFilter={setFilter} selecting={selection.size > 0} /> : null}
       {title && !searching ? (
         <View style={styles.viewTitle}>
           {/* A long label's name wraps rather than pushing what follows it off the screen. */}

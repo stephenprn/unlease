@@ -22,7 +22,7 @@ import { emptyTrash } from '../../app/store/actions';
 import { addToSelection, selectFilter, selectSelection, setBoardFilter, toggleSelected, useBoardStore } from '../../app/store/board';
 import { useQuery } from '@shared/app/store/search';
 import { useLibraryStore } from '../../app/store/library';
-import { useLayout } from '../../app/store/prefs';
+import { useBoardRow, useLayout } from '../../app/store/prefs';
 import { showSnack } from '@shared/app/store/ui';
 import { newChecklist, newDrawing, newNote, newPhotoNote, openNote } from '../commands';
 import { Button } from '@shared/ui/components/Button';
@@ -32,6 +32,7 @@ import { LabelTag } from '@shared/ui/components/LabelMark';
 import styles from '../features/board/board.module.css';
 import { BoardFilters } from '../features/board/BoardFilters';
 import { CollectionChips } from '../features/board/CollectionChips';
+import { LabelChips } from '../features/board/LabelChips';
 import { Composer } from '../features/board/Composer';
 import { EmptyBoard } from '../features/board/EmptyBoard';
 import { Wall } from '../features/board/Wall';
@@ -55,7 +56,10 @@ export function BoardScreen({ view }: { view: BoardView }) {
   const layout = useLayout();
   const label = useLibraryStore(s => (view.startsWith('label:') ? s.labels[view.slice(6)] : undefined));
   const now = useMinute();
-  const filter = useBoardStore(selectFilter);
+  // One row under the search bar, Réglages' choice; the filter narrows the board only while it is that row.
+  const boardRow = useBoardRow();
+  const chosenFilter = useBoardStore(selectFilter);
+  const filter = boardRow === 'filters' ? chosenFilter : 'all';
   const { sections, total, counts } = useBoardSections(view, now, filter);
   const filtered = counts !== null && filter !== 'all';
   const results = useSearch(query, view === 'trash' ? 'bin' : view === 'protected' ? 'protected' : 'live');
@@ -118,12 +122,14 @@ export function BoardScreen({ view }: { view: BoardView }) {
           ) : null}
         </div>
       ) : null}
-      {/* The docked navigation lists the collections; without it, they head the board, scrolling with it. */}
-      {view === 'notes' && !searching && !docked ? <CollectionChips resting={selection.size > 0} /> : null}
+      {/* The docked navigation lists the collections and the labels; without it, the one Réglages chose heads the board, scrolling with it. */}
+      {view === 'notes' && !searching && !docked && boardRow === 'collections' ? <CollectionChips resting={selection.size > 0} /> : null}
+      {view === 'notes' && !searching && !docked && boardRow === 'labels' ? <LabelChips resting={selection.size > 0} /> : null}
+      {/* The filters narrow the wall: they show docked too, the navigation having nothing of theirs. */}
+      {counts && counts.all > 0 && !searching && boardRow === 'filters' ? <BoardFilters filter={filter} counts={counts} resting={selection.size > 0} /> : null}
       {/* How long things stay, while it holds something (empty, its empty state says it). */}
       {view === 'trash' && !searching && inBin > 0 ? <p className={`${styles.notice} t-meta`}>{t('Notes in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       {showComposer ? <Composer onNote={newNote} onChecklist={newChecklist} onDrawing={newDrawing} onPhotos={files => void newPhotoNote(files)} /> : null}
-      {counts && counts.all > 0 && !searching ? <BoardFilters filter={filter} counts={counts} resting={selection.size > 0} /> : null}
       {/* As on the phone: the settings the words name, above the notes, in the search of every note (a view's searches its own). */}
       {searching && view === 'notes' ? <SettingsMatches query={query} /> : null}
       {searching ? (

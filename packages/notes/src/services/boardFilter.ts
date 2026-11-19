@@ -1,11 +1,40 @@
 /**
- * The board's filters, a row of chips over the notes' wall (Keep's tabs): every note, those written
- * this week, those with something left to do, the lists. They narrow the notes' own board only,
- * never a label, Rappels, the archive or a search, and keep its order and its « Épinglées ».
+ * The row under the search strip, one the person picks in Réglages (`BoardRow`): the collections
+ * (the default), the labels, or the board's filters.
+ *
+ * The filters (Keep's tabs): every note, those written this week, those with something left to do,
+ * the lists. They narrow the notes' own board only, never a label, Rappels, the archive or a search,
+ * and keep its order and its « Épinglées ». Another row chosen, the board shows every note.
  */
 import { tx } from '@unlease/core/i18n';
 
 import type { CheckItem, Note } from '../models/entities';
+
+/** What the row under the search strip holds: one of them, never two, so the board's top stays calm. */
+export const BOARD_ROWS = ['collections', 'labels', 'filters'] as const;
+
+export type BoardRow = (typeof BOARD_ROWS)[number];
+
+export const DEFAULT_BOARD_ROW: BoardRow = 'collections';
+
+/** Each row's name in Réglages' choice, translated where shown. */
+export const BOARD_ROW_NAMES: Readonly<Record<BoardRow, string>> = {
+  collections: tx('Collections'),
+  labels: tx('Labels [notes]'),
+  filters: tx('Filters'),
+};
+
+/** What each row holds, under its name in Réglages. */
+export const BOARD_ROW_HINTS: Readonly<Record<BoardRow, string>> = {
+  collections: tx('Your collections of links, to open one.'),
+  labels: tx('Your labels, to see the notes that wear one.'),
+  filters: tx('All, This week, To do and Lists, to narrow the board.'),
+};
+
+/** A stored row read back: anything this version does not know is the default. */
+export function asBoardRow(value: unknown): BoardRow {
+  return (BOARD_ROWS as readonly unknown[]).includes(value) ? (value as BoardRow) : DEFAULT_BOARD_ROW;
+}
 
 export const BOARD_FILTERS = ['all', 'week', 'todo', 'lists'] as const;
 
