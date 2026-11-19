@@ -26,9 +26,12 @@ export interface GoogleWalletCard {
   readonly program: string;
 }
 
-/** A Google Wallet link in a text (a share's words around it, a paste), or null. */
+/**
+ * A Google Wallet link in a text (a share's words around it, a paste), or null. Its address in any
+ * case: a field that asks the keyboard for capitals (a card's number) may have raised a letter of it.
+ */
 export function findGoogleWalletLink(text: string): string | null {
-  const match = /https?:\/\/pay\.google\.com\/gp\/v\/save\/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*)/.exec(text);
+  const match = /https?:\/\/pay\.google\.com\/gp\/v\/save\/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*)/i.exec(text);
   return match ? match[0] : null;
 }
 

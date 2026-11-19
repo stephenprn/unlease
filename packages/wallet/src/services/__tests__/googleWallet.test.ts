@@ -14,6 +14,8 @@ describe('Google Wallet links', () => {
   it('finds the link among the words a share brings', () => {
     expect(findGoogleWalletLink(`Ma carte de fidélité ${SHARED} via Google Wallet`)).toBe(SHARED);
     expect(findGoogleWalletLink('https://example.org/gp/v/save/abc.def.ghi')).toBeNull();
+    // A keyboard asked for capitals raised a letter of the address.
+    expect(readGoogleWalletLink(SHARED.replace('/gp/v/', '/gp/V/'))?.number).toBe('0123456789');
   });
 
   it('reads a pass shared from the Wallet app: its number from its id, its class as a hint', () => {
