@@ -35,7 +35,7 @@ const LAP_SWELL = 10;
 /** Radians the crests run per millisecond: one crest's travel in about 1.3 s. */
 const RUN_SPEED = (Math.PI * 2) / WAVES / 1300;
 /** Room outside the ring for its swell, its stroke and the dots. */
-const MARGIN = 22;
+const MARGIN = 24;
 const BEAD = 7;
 /** The hand that drew this dial (and its second pass over the line). */
 const SEED = 1.3;
@@ -111,7 +111,7 @@ function StopwatchDialComponent({ size, watch, active, children }: Props) {
     () =>
       Array.from({ length: 12 }, (_, index) => {
         const angle = (index / 12) * Math.PI * 2;
-        const at = organicRadius({ cx: 0, cy: 0, radius: radius + RUN_SWELL + 13, amplitude: 0, waves: WAVES, phase: 0, seed: SEED }, angle) + 1.6 * Math.sin(index * 2.7 + SEED);
+        const at = organicRadius({ cx: 0, cy: 0, radius: radius + RUN_SWELL + 10, amplitude: 0, waves: WAVES, phase: 0, seed: SEED }, angle) + 1.6 * Math.sin(index * 2.7 + SEED);
         return { key: index, x: centre + at * Math.sin(angle), y: centre - at * Math.cos(angle), r: index === 0 ? 3 : 1.6 + 0.5 * Math.abs(Math.sin(index * 1.9)) };
       }),
     [centre, radius],
