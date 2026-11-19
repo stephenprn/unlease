@@ -9,7 +9,7 @@
  * sheet's own corners. A place may wear a small dot (something under way there): what counts is
  * never out of sight. TalkBack hears a tab list.
  */
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,9 +64,19 @@ function TabBarComponent<T extends string>({ places, chosen, onChoose }: Props<T
   const slot = places.length > 0 ? width / places.length : 0;
   const sheet = Math.min(MAX_SHEET, Math.max(0, slot - SIDE * 2));
   const at = useSharedValue(index);
-  useEffect(() => {
-    at.value = still ? index : withTiming(index, { duration: duration.medium, easing: standard });
-  }, [index, at, still]);
+  // Where the wash is going. It leaves the moment a place is pressed, on the UI thread, before the
+  // place chosen is drawn: however long that takes, the bar answers the finger at once.
+  const heading = useRef(index);
+  const slideTo = useCallback(
+    (to: number) => {
+      if (heading.current === to) return;
+      heading.current = to;
+      at.value = still ? to : withTiming(to, { duration: duration.medium, easing: standard });
+    },
+    [at, still],
+  );
+  // Chosen from elsewhere too (a ringing timer, a link): the same slide.
+  useEffect(() => slideTo(index), [index, slideTo]);
   // The inks change hands as the sheet passes the middle of its way, not before it has left.
   const [drawn, setDrawn] = useState(index);
   useEffect(() => {
@@ -90,7 +100,10 @@ function TabBarComponent<T extends string>({ places, chosen, onChoose }: Props<T
         return (
           <View key={place.key} style={styles.slot}>
             <Tappable
-              onPress={() => onChoose(place.key)}
+              onPress={() => {
+                slideTo(at);
+                onChoose(place.key);
+              }}
               style={[styles.place, sheet > 0 ? { width: sheet } : null]}
               accessibilityRole="tab"
               accessibilityState={{ selected: at === index }}

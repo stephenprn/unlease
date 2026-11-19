@@ -28,10 +28,12 @@ import { SavedTimerCard } from './SavedTimerCard';
 
 interface Props {
   readonly bottom: number;
+  /** The place shown: hidden, its time stands still. */
+  readonly active: boolean;
   readonly onOpen: (id: string) => void;
 }
 
-export function TimersTab({ bottom, onOpen }: Props) {
+export function TimersTab({ bottom, active, onOpen }: Props) {
   const styles = useThemedStyles(makeStyles);
   const prefs = useClockUiStore(selectPrefs);
   const stored = useToolsStore(state => state.runs);
@@ -39,7 +41,7 @@ export function TimersTab({ bottom, onOpen }: Props) {
   const timers = useLibraryStore(state => state.timers);
   const order = useLibraryStore(state => state.timerOrder);
   const counting = stored.some(run => run.state !== 'paused');
-  const now = useTick(1000, counting);
+  const now = useTick(1000, counting && active);
   // Ringing first (it asks for an answer), then by when each started.
   const runs = useMemo(() => stored.map(run => shownRun(run, now)).sort((a, b) => Number(b.state === 'ringing') - Number(a.state === 'ringing') || a.startedAt - b.startedAt), [stored, now]);
   const saved = useMemo(() => order.map(id => timers[id]).filter((timer): timer is Timer => timer !== undefined), [order, timers]);

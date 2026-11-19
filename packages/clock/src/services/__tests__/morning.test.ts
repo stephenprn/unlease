@@ -7,7 +7,7 @@ import { CLOCK_PREFS_DEFAULTS, readClockPrefs } from '../../models/prefs';
 import { blankDraft, draftChanged, editFields, newAlarmFields, ringEarlierWrites } from '../editing';
 import { engineAlarms } from '../engine';
 import { checkOn, eveningChecks, eveningWords, eveningWorthRinging } from '../evening';
-import { clashWith, dayAhead, earlierTime, firstEvent } from '../morning';
+import { clashWith, dayAhead, daysAhead, earlierTime, firstEvent } from '../morning';
 
 const local = (wall: string): number => wallToInstant(wall, '');
 const plain = (text: string): string => text.replace(/\u00a0/g, ' ');
@@ -99,6 +99,21 @@ describe('the day after an alarm', () => {
     expect(clashWith(ahead, local('2026-11-17T11:59'), 30)).toMatchObject({ minutes: -254 });
     // What starts soon after it still is one.
     expect(clashWith(dayAhead({ events: [event('show', '2026-11-17T22:40', '2026-11-17T23:30')], feeds }, '2026-11-17'), local('2026-11-17T22:30'), 30)).toMatchObject({ minutes: 10 });
+  });
+
+  it('reads several days at once as it reads each, an event years away or in another zone kept in its place', () => {
+    const more = [
+      ...events,
+      event('old', '2019-03-02T09:00', '2019-03-02T10:00'),
+      event('later', '2031-03-02', '2031-03-03'),
+      event('weekly', '2026-01-06T08:00', '2026-01-06T08:30', { rrule: 'FREQ=WEEKLY' }),
+      // Tokyo's morning of the 18th is the evening of the 17th here.
+      event('tokyo', '2026-11-18T06:00', '2026-11-18T07:00', { timeZone: 'Asia/Tokyo' }),
+    ];
+    const days = daysAhead({ events: more, feeds }, '2026-11-16', 4);
+    expect(days.map(item => item.day)).toEqual(['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19']);
+    days.forEach(item => expect(item).toEqual(dayAhead({ events: more, feeds }, item.day)));
+    expect(days[1]!.timed.map(item => item.event.id)).toEqual(['standup', 'weekly', 'dentist', 'tokyo']);
   });
 
   it('leaves out a calendar hidden on every device', () => {

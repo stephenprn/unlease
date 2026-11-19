@@ -7,7 +7,7 @@
  */
 import type { CalendarEvent, CalendarFeed, Day } from '@unlease/calendar/models/events';
 import { hiddenFeedIds, occurrencesIn, type Occurrence } from '@unlease/calendar/services/occurrences';
-import { addDays, instantToWall } from '@unlease/calendar/services/time';
+import { addDays, dayToInstant, instantToWall } from '@unlease/calendar/services/time';
 import { ringAt } from './schedule';
 
 /** Agenda's records, as a program holds them. */
@@ -26,16 +26,32 @@ export interface DayAhead {
 
 /** A day's events on this phone. */
 export function dayAhead(records: AgendaRecords, day: Day): DayAhead {
+  return daysAhead(records, day, 1)[0]!;
+}
+
+/**
+ * Several days' events from `from`, each as `dayAhead` reads it, from one reading of the calendar:
+ * the week of mornings asks for seven, and a calendar of years is read once, not seven times.
+ */
+export function daysAhead(records: AgendaRecords, from: Day, count: number): DayAhead[] {
   const hiddenFeeds = hiddenFeedIds(records.feeds);
-  const occurrences = occurrencesIn(records.events, day, addDays(day, 1), { hiddenFeeds });
-  const allDay: Occurrence[] = [];
-  const timed: Occurrence[] = [];
-  for (const item of occurrences) {
-    if (!item.allDay && item.firstDay === day) timed.push(item);
-    else allDay.push(item);
-  }
-  timed.sort((a, b) => a.startAt - b.startAt || a.key.localeCompare(b.key));
-  return { day, allDay, timed };
+  const occurrences = occurrencesIn(records.events, from, addDays(from, count), { hiddenFeeds });
+  return Array.from({ length: count }, (_, index) => {
+    const day = addDays(from, index);
+    const fromAt = dayToInstant(day);
+    const toAt = dayToInstant(addDays(day, 1));
+    const allDay: Occurrence[] = [];
+    const timed: Occurrence[] = [];
+    for (const item of occurrences) {
+      // The day's own window, as `occurrencesIn` counts one (an instant event on its day too).
+      const touches = (item.startAt < toAt && item.endAt > fromAt) || (item.startAt === item.endAt && item.startAt >= fromAt && item.startAt < toAt);
+      if (!touches) continue;
+      if (!item.allDay && item.firstDay === day) timed.push(item);
+      else allDay.push(item);
+    }
+    timed.sort((a, b) => a.startAt - b.startAt || a.key.localeCompare(b.key));
+    return { day, allDay, timed };
+  });
 }
 
 /** The day's first timed event, or what is left of the day after an instant (the ringing screen, once the morning is under way). */

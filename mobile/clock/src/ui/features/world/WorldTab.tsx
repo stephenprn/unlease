@@ -25,17 +25,19 @@ import { TimeRuler } from './TimeRuler';
 
 interface Props {
   readonly bottom: number;
+  /** The place shown: hidden, its time stands still. */
+  readonly active: boolean;
   /** A city pressed: its sheet opens over the whole screen (the home's), never under its bar. */
   readonly onOpen: (id: string) => void;
 }
 
-export function WorldTab({ bottom, onOpen }: Props) {
+export function WorldTab({ bottom, active, onOpen }: Props) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const prefs = useClockUiStore(selectPrefs);
   const clocks = useLibraryStore(state => state.worldClocks);
-  const now = useTick(60_000, true);
+  const now = useTick(60_000, active);
   const [shift, setShift] = useState(0);
   const at = shiftedMoment(now, shift);
   const list = useMemo(() => liveWorldClocks(clocks, now), [clocks, now]);

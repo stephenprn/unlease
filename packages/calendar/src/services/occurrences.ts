@@ -84,11 +84,16 @@ export function occurrencesIn(events: Iterable<CalendarEvent>, from: Day, to: Da
   const shown = (event: CalendarEvent): boolean =>
     isLive(event) && !(event.feedId && filter.hiddenFeeds?.has(event.feedId)) && (!filter.labelId || event.labelIds.includes(filter.labelId));
   const overlaps = (item: Occurrence): boolean => (item.startAt < toAt && item.endAt > fromAt) || (item.startAt === item.endAt && item.startAt >= fromAt && item.startAt < toAt);
+  // An event whose days lie well outside the window is left before its instants are counted (each one
+  // asks the platform's zones): two days either way cover any zone. A calendar of years stays cheap.
+  const lowDay = addDays(from, -2);
+  const highDay = addDays(to, 2);
+  const far = (event: CalendarEvent): boolean => event.end.slice(0, 10) < lowDay || event.start.slice(0, 10) > highDay;
   const out: Occurrence[] = [];
   for (const event of series.values()) {
     const own = exceptions.get(event.id) ?? [];
     if (!event.rrule) {
-      if (shown(event)) {
+      if (!far(event) && shown(event)) {
         const item = make(event, event.id, event.start, false, event.start, event.end);
         if (overlaps(item)) out.push(item);
       }
@@ -96,7 +101,7 @@ export function occurrencesIn(events: Iterable<CalendarEvent>, from: Day, to: Da
     }
     const rule = parseRule(event.rrule);
     if (!rule) {
-      if (shown(event)) {
+      if (!far(event) && shown(event)) {
         const item = make(event, event.id, event.start, false, event.start, event.end);
         if (overlaps(item)) out.push(item);
       }
@@ -119,7 +124,7 @@ export function occurrencesIn(events: Iterable<CalendarEvent>, from: Day, to: Da
     // An exception shows as long as its series lives, wherever it moved.
     if (event.trashedAt !== null) continue;
     for (const exception of own) {
-      if (!shown(exception)) continue;
+      if (far(exception) || !shown(exception)) continue;
       const item = make(exception, event.id, exception.originalStart || exception.start, true, exception.start, exception.end);
       if (overlaps(item)) out.push(item);
     }

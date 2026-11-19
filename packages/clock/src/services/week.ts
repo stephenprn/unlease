@@ -9,7 +9,7 @@ import type { Occurrence } from '@unlease/calendar/services/occurrences';
 import { addDays, instantToDay, weekdayOf } from '@unlease/calendar/services/time';
 import type { Alarm } from '../models/alarm';
 import { isDayOff } from './agenda';
-import { clashWith, dayAhead, firstEvent, type AgendaRecords, type Clash } from './morning';
+import { clashWith, daysAhead, firstEvent, type AgendaRecords, type Clash, type DayAhead } from './morning';
 import { nextOf, quietOn, ringAt, ringsOn, wakingOn } from './schedule';
 
 /** The first alarm still to ring on a day after `now`, with its instant. */
@@ -54,15 +54,24 @@ export interface WeekInput {
   /** The time one needs between the alarm and the first event (`ClockPrefs.marginMinutes`). */
   readonly margin: number;
   readonly zone?: string;
+  /**
+   * The week's days from Agenda, read once (`weekAhead`) and kept while the calendar and the day stay:
+   * the minute that passes only counts the alarms again. Read here when not given (or not from today).
+   */
+  readonly days?: readonly DayAhead[];
 }
 
+/** The seven days from today's day, as the week of mornings reads them from Agenda. */
+export const weekAhead = (agenda: AgendaRecords, today: Day): DayAhead[] => daysAhead(agenda, today, WEEK_DAYS);
+
 /** Seven mornings from today. A ring of today already gone by still names what woke the person. */
-export function weekOfMornings({ alarms, agenda, now, margin, zone = '' }: WeekInput): Morning[] {
+export function weekOfMornings({ alarms, agenda, now, margin, zone = '', days }: WeekInput): Morning[] {
   const live = [...alarms].filter(alarm => alarm.deletedAt === null);
   const today = instantToDay(now, zone);
+  const aheads = days && days[0]?.day === today && days.length >= WEEK_DAYS ? days : weekAhead(agenda, today);
   return Array.from({ length: WEEK_DAYS }, (_, index) => {
     const day = addDays(today, index);
-    const ahead = dayAhead(agenda, day);
+    const ahead = aheads[index]!;
     // What rings next that day, while something still will (today, after the morning's ring: the evening's); else the day's first.
     const wakeup = wakingOn(live, day, zone);
     const waking = nextOnDay(live, day, now, zone) ?? wakeup;

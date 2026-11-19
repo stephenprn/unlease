@@ -59,15 +59,17 @@ function LapLine({ row, total, longest }: { readonly row: LapRow; readonly total
 
 interface Props {
   readonly bottom: number;
+  /** The place shown: hidden, nothing redraws (the engine counts on). */
+  readonly active: boolean;
 }
 
-export function StopwatchTab({ bottom }: Props) {
+export function StopwatchTab({ bottom, active }: Props) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const watch = useToolsStore(state => state.stopwatch);
   const running = isRunning(watch);
   const reset = isReset(watch);
-  const now = useFrameTime(running);
+  const now = useFrameTime(running && active);
   const total = elapsed(watch, now);
   const [main, hundredths] = stopwatchParts(total);
   const rows = useMemo(() => lapRows(watch), [watch]);

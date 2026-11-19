@@ -20,7 +20,7 @@ import type { Alarm } from '@unlease/clock/models/alarm';
 import { isOn } from '@unlease/clock/services/schedule';
 import { timeSpellings } from '@unlease/clock/services/spotlight';
 import { alarmClock, alarmName, daysWords, setWords } from '@unlease/clock/services/words';
-import { chosenMorning, weekOfMornings } from '@unlease/clock/services/week';
+import { chosenMorning, weekAhead, weekOfMornings } from '@unlease/clock/services/week';
 import { instantToDay } from '@unlease/calendar/services/time';
 
 import { useMinute } from '@shared/app/hooks/useMinute';
@@ -93,7 +93,11 @@ export function AlarmsScreen() {
   const shown = alarms.filter(alarm => answers(alarm, query));
   const searching = query.trim() !== '';
 
-  const week = useMemo(() => weekOfMornings({ alarms, agenda: { events: Object.values(events), feeds: Object.values(feeds) }, now, margin }), [alarms, events, feeds, now, margin]);
+  // The week's calendar is read once a day (or as Agenda changes), not at every minute.
+  const today = instantToDay(now);
+  const agenda = useMemo(() => ({ events: Object.values(events), feeds: Object.values(feeds) }), [events, feeds]);
+  const days = useMemo(() => weekAhead(agenda, today), [agenda, today]);
+  const week = useMemo(() => weekOfMornings({ alarms, agenda, days, now, margin }), [alarms, agenda, days, now, margin]);
   const opening = useMemo(() => chosenMorning(week, alarms, now), [week, alarms, now]);
   const [picked, setPicked] = useState<{ readonly day: string; readonly from: -1 | 0 | 1 } | null>(null);
   // A morning picked stays while it is in the week; else the next alarm's. It slides in from its side.
@@ -110,7 +114,7 @@ export function AlarmsScreen() {
   );
   const week_ = searching ? null : (
     <>
-      <WeekStrip week={week} chosen={chosen} today={instantToDay(now)} now={now} twelveHours={twelveHours} onChoose={choose} />
+      <WeekStrip week={week} chosen={chosen} today={today} now={now} twelveHours={twelveHours} onChoose={choose} />
       <MorningPanel morning={morning} now={now} from={from} margin={margin} twelveHours={twelveHours} />
     </>
   );

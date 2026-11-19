@@ -14,7 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_WORDS } from '@unlease/core/appWords';
@@ -27,14 +27,14 @@ import { eventAlarmDraft } from '@unlease/clock/services/eventAlarm';
 import { byTime } from '@unlease/clock/services/schedule';
 import { CLOCK_SETTINGS_PLACES } from '@unlease/clock/services/settingsPlaces';
 import { alarmAnswers } from '@unlease/clock/services/spotlight';
-import { chosenMorning, weekOfMornings } from '@unlease/clock/services/week';
+import { chosenMorning, weekAhead, weekOfMornings } from '@unlease/clock/services/week';
 import { selectPrefs, useClockUiStore } from '@app/store/clockUi';
 import { useRingingAlarms } from '@app/hooks/useRingingAlarms';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { refreshTools, useToolsStore } from '@app/store/toolsStore';
 import { isRunning } from '@unlease/clock/models/stopwatch';
 import { useAppLifecycle } from '@shared/app/hooks/useAppLifecycle';
-import { decelerate, duration } from '@shared/ui/theme/motion';
+import { accelerate, decelerate, duration } from '@shared/ui/theme/motion';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { selectDrawerOpen, setDrawerOpen, setSnackClearance, useUiStore } from '@shared/app/store/uiStore';
 import { AppText, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, SearchHeader, SyncLine } from '@shared/ui/components';
@@ -57,8 +57,8 @@ import type { ScreenProps } from '../navigation/types';
 
 type HomeNavigation = ScreenProps<'Alarms'>['navigation'];
 
-/** The alarms' place: the search strip, the week of mornings, the morning, the alarms. */
-function AlarmsTab({ navigation, bottom }: { readonly navigation: HomeNavigation; readonly bottom: number }) {
+/** The alarms' place: the search strip, the week of mornings, the morning, the alarms. `active` while it is the place shown. */
+function AlarmsTab({ navigation, bottom, active }: { readonly navigation: HomeNavigation; readonly bottom: number; readonly active: boolean }) {
   const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const searching = query.trim().length > 0;
@@ -70,7 +70,11 @@ function AlarmsTab({ navigation, bottom }: { readonly navigation: HomeNavigation
   const feeds = useLibraryStore(state => state.feeds);
 
   const live = useMemo(() => Object.values(alarms).filter(alarm => alarm.deletedAt === null).sort(byTime), [alarms]);
-  const week = useMemo(() => weekOfMornings({ alarms: live, agenda: { events: Object.values(events), feeds: Object.values(feeds) }, now, margin: prefs.marginMinutes }), [live, events, feeds, now, prefs.marginMinutes]);
+  // The week's calendar is read once a day (or as Agenda changes), not at every minute: a long calendar stays cheap.
+  const today = instantToDay(now);
+  const agenda = useMemo(() => ({ events: Object.values(events), feeds: Object.values(feeds) }), [events, feeds]);
+  const days = useMemo(() => weekAhead(agenda, today), [agenda, today]);
+  const week = useMemo(() => weekOfMornings({ alarms: live, agenda, days, now, margin: prefs.marginMinutes }), [live, agenda, days, now, prefs.marginMinutes]);
   const opening = useMemo(() => chosenMorning(week, live, now), [week, live, now]);
   const [picked, setPicked] = useState<{ readonly day: string; readonly from: -1 | 0 | 1 } | null>(null);
   // A morning picked stays while it is in the week; else the next alarm's. It slides in from its side.
@@ -105,16 +109,16 @@ function AlarmsTab({ navigation, bottom }: { readonly navigation: HomeNavigation
     if (screen === 'Erase') navigation.navigate('Erase');
     else if (screen !== 'Import') navigation.navigate(screen, place.section ? { section: place.section } : undefined);
   };
-  // Back ends a search before it leaves the app.
+  // Back ends a search before it leaves the app (only while the alarms are the place shown).
   useFocusEffect(
     useCallback(() => {
-      if (!searching) return undefined;
+      if (!searching || !active) return undefined;
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
         setQuery('');
         return true;
       });
       return () => subscription.remove();
-    }, [searching]),
+    }, [searching, active]),
   );
   const found = useMemo(() => (searching ? live.filter(alarm => alarmAnswers(alarm, query)) : live), [live, query, searching]);
   const settingsCount = searching ? settingsFound(query, CLOCK_SETTINGS_PLACES) : 0;
@@ -156,7 +160,7 @@ function AlarmsTab({ navigation, bottom }: { readonly navigation: HomeNavigation
           </>
         ) : (
           <>
-            <WeekStrip week={week} chosen={chosen} today={instantToDay(now)} now={now} twelveHours={prefs.twelveHours} onChoose={choose} />
+            <WeekStrip week={week} chosen={chosen} today={today} now={now} twelveHours={prefs.twelveHours} onChoose={choose} />
             <View style={styles.gap} />
             <MorningPanel morning={morning} now={now} from={from} margin={prefs.marginMinutes} twelveHours={prefs.twelveHours} previous={index > 0} next={index < week.length - 1} onStep={step} onOpen={open} onAlarmFor={alarmFor} onNew={day => navigation.navigate('Edit', { handed: { ...blankDraft(prefs), date: day } })} />
             {live.length === 0 ? (
@@ -176,8 +180,30 @@ function AlarmsTab({ navigation, bottom }: { readonly navigation: HomeNavigation
   );
 }
 
-/** Each place's fade through (Material's): the old one gone, the new one settling in (150 decelerate). */
-const PLACE_IN = FadeIn.duration(duration.short).easing(decelerate);
+/**
+ * A place of the home, kept once it has been shown: coming back to it draws nothing again (the week of
+ * mornings is not counted anew, nothing flashes). The place left fades out (90, accelerate) as the one
+ * chosen fades through from 0.98 just behind it (150, decelerate): Material's fade through. A place
+ * hidden takes no touch and TalkBack never reaches it. Reduce Motion: a cut.
+ */
+function Place({ shown, still, children }: { readonly shown: boolean; readonly still: boolean; readonly children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
+  const fade = useSharedValue(shown ? 1 : 0);
+  useEffect(() => {
+    if (still) fade.value = shown ? 1 : 0;
+    else fade.value = shown ? withDelay(PLACE_OVERLAP, withTiming(1, { duration: duration.short, easing: decelerate })) : withTiming(0, { duration: PLACE_OUT, easing: accelerate });
+  }, [shown, still, fade]);
+  const style = useAnimatedStyle(() => ({ opacity: fade.value, transform: [{ scale: 0.98 + 0.02 * fade.value }] }));
+  return (
+    <Animated.View style={[styles.place, style]} pointerEvents={shown ? 'box-none' : 'none'} accessibilityElementsHidden={!shown} importantForAccessibility={shown ? 'auto' : 'no-hide-descendants'}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/** The place left goes in 90; the one chosen starts 70 after it, so the two never read as one muddle. */
+const PLACE_OUT = 90;
+const PLACE_OVERLAP = 70;
 
 /**
  * Clock's home: its four places under one bar at the foot (`ClockTabBar`): the alarms (the week of
@@ -198,6 +224,9 @@ export function AlarmsScreen({ navigation, route }: ScreenProps<'Alarms'>) {
   const choose = useCallback((next: ClockTab) => navigation.setParams({ tab: next }), [navigation]);
   const clocks = useLibraryStore(state => state.worldClocks);
   const [city, setCity] = useState<string | null>(null);
+  // The places shown once stay (`Place`); the others wait until they are first chosen.
+  const seen = useRef(new Set<ClockTab>());
+  seen.current.add(tab);
 
   // A timer starting to ring brings its place forward.
   const ringing = runs.filter(run => run.state === 'ringing').map(run => run.id).join(',');
@@ -238,16 +267,31 @@ export function AlarmsScreen({ navigation, route }: ScreenProps<'Alarms'>) {
   return (
     <View style={styles.screen}>
       <Ground />
-      <Animated.View key={tab} entering={still ? undefined : PLACE_IN} style={styles.place}>
-        {tab === 'alarms' ? (
-          <AlarmsTab navigation={navigation} bottom={bottom} />
-        ) : (
-          <>
-            <TabHead title={tabName(tab)} onMenu={() => setDrawerOpen(true)} />
-            {tab === 'timers' ? <TimersTab bottom={bottom} onOpen={id => navigation.navigate('Timer', { id })} /> : tab === 'stopwatch' ? <StopwatchTab bottom={0} /> : <WorldTab bottom={bottom} onOpen={setCity} />}
-          </>
-        )}
-      </Animated.View>
+      <View style={styles.places}>
+      {seen.current.has('alarms') ? (
+        <Place shown={tab === 'alarms'} still={still}>
+          <AlarmsTab navigation={navigation} bottom={bottom} active={tab === 'alarms'} />
+        </Place>
+      ) : null}
+      {seen.current.has('timers') ? (
+        <Place shown={tab === 'timers'} still={still}>
+          <TabHead title={tabName('timers')} onMenu={() => setDrawerOpen(true)} />
+          <TimersTab bottom={bottom} active={tab === 'timers'} onOpen={id => navigation.navigate('Timer', { id })} />
+        </Place>
+      ) : null}
+      {seen.current.has('stopwatch') ? (
+        <Place shown={tab === 'stopwatch'} still={still}>
+          <TabHead title={tabName('stopwatch')} onMenu={() => setDrawerOpen(true)} />
+          <StopwatchTab bottom={0} active={tab === 'stopwatch'} />
+        </Place>
+      ) : null}
+      {seen.current.has('world') ? (
+        <Place shown={tab === 'world'} still={still}>
+          <TabHead title={tabName('world')} onMenu={() => setDrawerOpen(true)} />
+          <WorldTab bottom={bottom} active={tab === 'world'} onOpen={setCity} />
+        </Place>
+      ) : null}
+      </View>
       <ClockTabBar tab={tab} marks={marks} onTab={choose} />
       <FabMenu actions={fab} visible={fab.length > 0} above={bottom} />
       <Drawer open={drawerOpen} current={null} onClose={() => setDrawerOpen(false)} onPlace={goPlace} />
@@ -260,7 +304,9 @@ export function AlarmsScreen({ navigation, route }: ScreenProps<'Alarms'>) {
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.color.wall },
-    place: { flex: 1 },
+    // Every place fills the room over the bar, one shown at a time.
+    places: { flex: 1 },
+    place: { ...StyleSheet.absoluteFill },
     content: { paddingTop: 4 },
     gap: { height: 12 },
     section: { marginTop: 24, marginBottom: 8, marginHorizontal: 28 },
