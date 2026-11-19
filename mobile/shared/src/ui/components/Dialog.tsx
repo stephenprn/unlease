@@ -1,5 +1,9 @@
-/** Only for decisions that cannot be undone; anything undoable is a snackbar instead. */
-import React, { memo, useEffect } from 'react';
+/**
+ * Only for decisions that cannot be undone; anything undoable is a snackbar instead. A dialog that
+ * holds a field (a password asked before confirming) stands centred in what the keyboard leaves of
+ * the screen, its buttons above it: the app draws under the keyboard (edge to edge), nothing resizes.
+ */
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, Keyframe } from 'react-native-reanimated';
 
@@ -13,7 +17,7 @@ import { Button } from './Button';
 import { Grain } from './Grain';
 import { AnimatedOrganic, Organic } from './Organic';
 import { Tappable } from './Tappable';
-import { OverlayFocus, useOverlayKeyboard } from './useKeyboardVisible';
+import { OverlayFocus, useKeyboardTop, useOverlayKeyboard } from './useKeyboardVisible';
 import { useModalLayer } from './useModalLayer';
 
 /** The scrim dims, the card settles in from a touch smaller; it leaves faster than it came, both together. */
@@ -44,6 +48,20 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
   const overlay = useOverlayKeyboard(visible);
   // Open, it is all TalkBack reaches (with the slip).
   const layer = useModalLayer(visible);
+  // Where the host ends in the window: the keyboard's overlap with it is the room kept under the card.
+  const heard = useKeyboardTop();
+  const keyboardTop = overlay.aside ? null : heard;
+  const [hostBottom, setHostBottom] = useState<number | null>(null);
+  const host = useRef<React.ComponentRef<typeof View> | null>(null);
+  const measure = useCallback(() => host.current?.measureInWindow((_x, y, _width, height) => setHostBottom(y + height)), []);
+  const lift = keyboardTop !== null && hostBottom !== null ? Math.max(0, hostBottom - keyboardTop) : 0;
+  const attach = useCallback(
+    (node: React.ComponentRef<typeof View> | null) => {
+      host.current = node;
+      (layer as React.RefObject<React.ComponentRef<typeof View> | null>).current = node;
+    },
+    [layer],
+  );
   useEffect(() => {
     if (!visible) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -54,7 +72,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
   }, [visible, onCancel]);
   // The host stays, empty and untouchable (and unflattened, so what leaves keeps its place above the page), so the dialog's own exit can play.
   return (
-    <View ref={layer} style={styles.host} pointerEvents="box-none" collapsable={false}>
+    <View ref={attach} onLayout={measure} style={[styles.host, lift > 0 ? { paddingBottom: lift } : null]} pointerEvents="box-none" collapsable={false}>
       {visible ? (
         <Animated.View entering={SCRIM_IN} exiting={SCRIM_OUT} style={StyleSheet.absoluteFill}>
           <Tappable accessibilityLabel={t('Cancel')} onPress={onCancel} style={styles.scrim} noTint />

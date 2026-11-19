@@ -18,6 +18,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - Wallet on Android: the keyboard no longer covers « Passphrase again » as the vault is made (or the passphrase as it is unlocked), and a card's form scrolls its last fields above the keyboard.
 - The « Annuler » and « Enregistrer » of Wallet's card form on Android stand above the gesture bar instead of under it.
 - Wallet on Android no longer raises its fingerprint prompt over another app when you leave it with its papers open: it asks when you come back.
+- On Android, a confirmation that asks for a password (turning off Carnet's protected section) rises above the keyboard: its buttons were hidden under it.
 
 ## [0.3.0] - 2026-11-18
 
