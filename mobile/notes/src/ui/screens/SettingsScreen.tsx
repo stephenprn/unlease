@@ -27,7 +27,7 @@ import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHeal
 import { Section } from '@shared/ui/features/settings/Section';
 import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
-import { ProtectedRows } from '../features/lock/ProtectedRows';
+import { useProtectedSection } from '../features/lock/ProtectedSection';
 import type { ScreenProps } from '../navigation/types';
 import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -39,6 +39,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const tracked = useLibraryStore(s => trackedLinkIds(s.links).length);
   // What « Vider la corbeille » would erase (`emptyTrash`).
   const binned = useLibraryStore(s => s.noteOrder.filter(id => s.notes[id]?.deletedAt === null && s.notes[id]!.trashedAt !== null).length);
+
+  // Its rows in Carnet's section, the sheets they open at the screen's root (the section clips).
+  const protectedSection = useProtectedSection();
 
   return (
     <View style={styles.screen}>
@@ -66,7 +69,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             </View>
           </View>
           {/* The protected section: on every device, its password and, here, the fingerprint. */}
-          <ProtectedRows />
+          {protectedSection.rows}
         </Section>
         {/* Only while something keeps the reminders from ringing on the minute: else nothing to say. */}
         <BackgroundSyncSection />
@@ -126,6 +129,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           showSnack(t('{deleted} forever', { deleted: plural(notes, 'note deleted', 'notes deleted') }), undefined, { tone: 'success' });
         }}
       />
+      {protectedSection.overlays}
     </View>
   );
 }

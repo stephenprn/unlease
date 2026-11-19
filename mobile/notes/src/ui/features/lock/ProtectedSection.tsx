@@ -4,6 +4,11 @@
  * Turned on with no password yet, the password is chosen first. Turned off while it holds notes, the
  * lock must be open (its password is asked in the confirmation), and the notes go back among the
  * others in the same batch as the switch.
+ *
+ * The rows stand in Réglages' section; the sheets and the dialog they open are drawn in place (never
+ * a native Modal), so they go at the screen's root, out of the section that clips its rows:
+ * `const protectedSection = useProtectedSection()`, then `{protectedSection.rows}` in the section and
+ * `{protectedSection.overlays}` last in the screen.
  */
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -27,7 +32,14 @@ const lockedIds = (): string[] => {
   });
 };
 
-export function ProtectedRows() {
+export interface ProtectedSection {
+  /** The switch and the rows under it, for the settings' section. */
+  readonly rows: React.ReactNode;
+  /** The password's sheets and the confirmation, for the screen's root. */
+  readonly overlays: React.ReactNode;
+}
+
+export function useProtectedSection(): ProtectedSection {
   const { check, section } = useLockState();
   const fingerprint = useFingerprintOn();
   const [choosing, setChoosing] = useState(false);
@@ -74,7 +86,7 @@ export function ProtectedRows() {
     showSnack(ids.length > 1 ? t('Notes back among your notes') : t('Note back among your notes'), undefined, { tone: 'success' });
   };
 
-  return (
+  const rows = (
     <>
       <SwitchRow title={t('Protected section')} supporting={t('Notes kept behind a password, out of the board, search and widgets.')} value={section} onChange={turn} />
       {check ? <ListRow icon="key" title={t('Change the password')} onPress={() => setChanging(true)} /> : null}
@@ -97,7 +109,11 @@ export function ProtectedRows() {
           }}
         />
       ) : null}
+    </>
+  );
 
+  const overlays = (
+    <>
       <LockPasswordSheet
         visible={choosing}
         reason={t('Choose the password that keeps your protected notes.')}
@@ -134,6 +150,8 @@ export function ProtectedRows() {
       </Dialog>
     </>
   );
+
+  return { rows, overlays };
 }
 
 const styles = StyleSheet.create({
