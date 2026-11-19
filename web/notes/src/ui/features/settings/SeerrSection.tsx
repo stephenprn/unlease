@@ -96,15 +96,16 @@ export function SeerrSection({ server, seerr }: { server: ServerConfig; seerr: S
           revealLabels={{ show: t('Show the key'), hide: t('Hide the key') }}
         />
         <FormMessage form={form} />
+        {/* The form's own action first, as on every page; dropping the key (Seerr then only searched) after it. */}
         <div className={styles.buttons}>
+          <Button type="submit" icon="server" busy={form.busy} disabled={unchanged || (busy !== null && busy !== 'save')}>
+            {t('Test and save')}
+          </Button>
           {on && seerr.keyHint ? (
             <Button kind="text" busy={busy === 'key'} disabled={busy !== null} onClick={() => void save({ seerr: { apiKey: '' } }, 'key', t('Key removed: Seerr is only searched.'))}>
               {t('Remove the key')}
             </Button>
           ) : null}
-          <Button type="submit" icon="server" busy={form.busy} disabled={unchanged || (busy !== null && busy !== 'save')}>
-            {t('Test and save')}
-          </Button>
         </div>
       </form>
 

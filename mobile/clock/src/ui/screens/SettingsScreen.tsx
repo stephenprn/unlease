@@ -63,7 +63,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         <AlarmHealthSection wanted={prefs.ringsHere} />
 
         <Section title={t('Alarms')} anchor={CLOCK_SETTINGS_SECTION}>
-          <SwitchRow title={t('Ring on this phone')} supporting={t('Off on a tablet or a second phone: your alarms ring on your other phones.')} value={prefs.ringsHere} onChange={ringsHere => setPrefs({ ringsHere })} />
+          <SwitchRow icon="alarm" title={t('Ring on this phone')} supporting={t('Off on a tablet or a second phone: your alarms ring on your other phones.')} value={prefs.ringsHere} onChange={ringsHere => setPrefs({ ringsHere })} />
           <View style={styles.fields}>
             <PickerField label={t('Snooze length')} value={minutesWords(prefs.snoozeMinutes)} onPress={() => setChoosing('snooze')} />
             <PickerField label={t('Stop ringing after')} value={minutesWords(prefs.silenceAfter)} onPress={() => setChoosing('silence')} help={t('Left ringing, an alarm stops and says it was missed.')} />
@@ -72,7 +72,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             <PickerField label={t('A new alarm’s sound')} value={soundName(prefs.defaultSound)} onPress={() => setChoosing('sound')} />
             <PickerField label={t('Notice before an alarm')} value={upcomingWords(prefs.upcomingMinutes)} onPress={() => setChoosing('upcoming')} help={t('A quiet notification before it rings, to skip it.')} />
           </View>
-          <SwitchRow title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
+          <SwitchRow icon="clock" title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
           <View style={styles.fields}>
             <View style={styles.field}>
               <AppText variant="metaStrong" style={styles.fieldWords}>
@@ -94,13 +94,14 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         </Section>
 
         <Section title={t('As it rings')} anchor={RINGING_SETTINGS_SECTION}>
-          <SwitchRow title={t('Weather')} supporting={t('A new alarm shows the weather as it rings.')} value={prefs.weatherDefault} onChange={weatherDefault => setPrefs({ weatherDefault })} />
+          <SwitchRow icon="sun" title={t('Weather')} supporting={t('A new alarm shows the weather as it rings.')} value={prefs.weatherDefault} onChange={weatherDefault => setPrefs({ weatherDefault })} />
           <WeatherWhereFields />
-          <SwitchRow title={t('The day’s events')} supporting={t('A new alarm shows the day’s first events from your calendar as it rings.')} value={prefs.agendaDefault} onChange={agendaDefault => setPrefs({ agendaDefault })} />
+          <SwitchRow icon="today" title={t('The day’s events')} supporting={t('A new alarm shows the day’s first events from your calendar as it rings.')} value={prefs.agendaDefault} onChange={agendaDefault => setPrefs({ agendaDefault })} />
         </Section>
 
         <Section title={t('The evening before')} anchor={EVENING_SETTINGS_SECTION}>
           <SwitchRow
+            icon="moon"
             title={t('Evening check')}
             supporting={t('A word the evening before when tomorrow’s first event comes too soon after your alarm, with a way to ring earlier.')}
             value={prefs.eveningCheck}

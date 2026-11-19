@@ -86,7 +86,7 @@ export function ThemeSection() {
           />
         </View>
       </View>
-      <SwitchRow title={t('Paper grain')} supporting={t('A fine paper texture on notes, cards and panels.')} value={grain} onChange={setGrain} />
+      <SwitchRow icon="note" title={t('Paper grain')} supporting={t('A fine paper texture on notes, cards and panels.')} value={grain} onChange={setGrain} />
     </Section>
   );
 }

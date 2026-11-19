@@ -7,7 +7,7 @@
  */
 import { APP_IDS, APPS, type AppId } from '@unlease/core/apps';
 import { t } from '@unlease/core/i18n';
-import { appsLine, backupLine, claudeLine, driveLine, immichLine, serverLine, SERVER_ONLY_SECTIONS, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
+import { appsLine, backupLine, CLAUDE_INFO, claudeLine, driveLine, immichLine, serverLine, SERVER_ONLY_SECTIONS, SHARED_ADMIN_SECTIONS, SHARED_ADMIN_TITLES, type SharedAdminSection, type StatusLine } from '@unlease/core/services/admin';
 import type { AdminStatus } from '@unlease/core/sync/admin';
 import type { ServerSettings } from '@unlease/core/sync/settings';
 import type { GlyphName } from '@unlease/design/glyphs';
@@ -56,7 +56,7 @@ export interface AdminGroup {
 
 const SHARED_GLYPHS: Record<SharedAdminSection, GlyphName> = { apps: 'apps', server: 'server', reading: 'sparkle', backup: 'cloud', drive: 'file', immich: 'image' };
 
-const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO, immich: IMMICH_INFO };
+const SHARED_INFO: Partial<Record<SharedAdminSection, string>> = { apps: APPS_INFO, server: SERVER_INFO, reading: CLAUDE_INFO, backup: BACKUP_INFO, drive: DRIVE_INFO, immich: IMMICH_INFO };
 
 const SHARED_LINES: Record<SharedAdminSection, (facts: AdminFacts) => StatusLine | null> = {
   // With a server, nothing is said of its apps or of Claude before its settings are read (never « Aucune clé » while they load).

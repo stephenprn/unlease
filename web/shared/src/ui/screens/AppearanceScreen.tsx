@@ -10,6 +10,7 @@ import { SETTINGS_SECTIONS } from '@unlease/core/services/settingsSearch';
 
 import { selectGrain, selectThemePreference, setGrain, setTheme, useSettingsStore } from '../../app/store/settings';
 import { SwitchMark } from '../components/Checkbox';
+import { Icon } from '../components/Icon';
 import { Segmented } from '../components/Segmented';
 import { ColorsSection, GroundSection } from '../features/appearance/AppearanceSections';
 import { useLookShareHint } from '../features/appearance/LookShareDialog';
@@ -48,6 +49,7 @@ export function AppearanceScreen() {
         </div>
         {/* What it is, said: the sheets' own grain (`--grain`), not the ground's (« Grain sur le fond », under Fond). */}
         <button type="button" role="switch" aria-checked={grain} className={styles.row} onClick={() => setGrain(!grain)}>
+          <Icon name="note" size={24} />
           <span className={styles.rowText}>
             <span className="t-body">{t('Paper grain')}</span>
             <span className="t-meta">{t('A fine paper texture on notes, cards and panels.')}</span>

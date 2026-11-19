@@ -22,6 +22,7 @@ import { pickBackupArchive } from '@shared/platform/media';
 
 import { AppText, Button, EmptyLine, FormMessage, Icon, ListRow, Segmented, TextField, useForm } from '../../components';
 import { useTheme } from '../../theme/ThemeProvider';
+import { GroupHead } from '../settings/GroupHead';
 import type { AdminOverlays, RestoreTarget } from './overlays';
 import { StatusRow } from './StatusRow';
 
@@ -207,6 +208,7 @@ export function BackupSection({
         ) : null}
       </StatusRow>
 
+      {setup ? null : <GroupHead title={t('Connection')} />}
       <View style={styles.fields}>
         <TextField label={t('Service address')} kind="url" value={value('endpoint')} onChangeText={editEndpoint} field={connection.field('endpoint')} help={t('Your provider’s S3 address, like {example} for Scaleway in Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
         <TextField label={t('Region')} kind="code" value={value('region')} onChangeText={editRegion} field={connection.field('region')} help={t('The one in the service’s address, like {example}.', { example: 'fr-par' })} />
@@ -258,6 +260,7 @@ export function BackupSection({
         {/* In the setup, how often and how many once the bucket is set (the server then backs up every day). */}
         {setup && !backup.configured ? null : (
           <>
+            {setup ? null : <GroupHead title={t('Schedule')} inFields />}
             <AppText variant="metaStrong">{t('Frequency')}</AppText>
             <Segmented<BackupRecurrence>
               label={t('Backup frequency')}
@@ -292,6 +295,7 @@ export function BackupSection({
         )}
       </View>
 
+      {setup ? null : <GroupHead title={t('Backups')} />}
       {backup.configured && !setup ? (
         <ListRow icon="upload" title={t('Back up now')} supporting={running ? t('Backing up…') : undefined} onPress={running || busy === 'run' ? undefined : () => runNow()} />
       ) : null}

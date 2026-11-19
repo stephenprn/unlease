@@ -3,8 +3,8 @@
  * app's own sections first, the ones used most (Carnet's board and reminders, Agenda's calendar,
  * Contacts' order); then « Apparence », one row saying the look now and opening its own page (the
  * theme, the paper's grain, the colours and the ground: `AppearanceScreen`); the language and the
- * languages a search by word understands; the data (the app's rows, Carnet's links cleaned; every
- * app's bin, the keyboard shortcuts), then what is done once (the Keep import); last, the way to the
+ * languages a search by word understands; the keyboard's shortcuts (where a keyboard is at hand); the data (the app's rows, Carnet's links
+ * cleaned; every app's bin), then what is done once (the Keep import); last, the way to the
  * Administration (the server and what it does for every app). Each section is a sheet of paper
  * pinned to the wall.
  */
@@ -83,6 +83,7 @@ export function SettingsScreen() {
   useRecordsRevision();
   const binned = app.binCount?.() ?? null;
   const adminId = useId();
+  const keysId = useId();
   // `#language`, `#import` from a search; `#colors` (the look's, from before its page) goes on there.
   useSectionLanding(null);
 
@@ -117,6 +118,19 @@ export function SettingsScreen() {
         })}
       </Section>
 
+      {/* The keyboard's shortcuts, a row of their own (they are not data): only where a mouse or a trackpad says a keyboard is at hand. */}
+      <Section labelledBy={keysId} className={styles.keysSection}>
+        <button type="button" className={styles.row} onClick={() => setShortcutsOpen(true)}>
+          <Icon name="keyboard" size={24} />
+          <span className={styles.rowText}>
+            <span id={keysId} className="t-body">
+              {t('Keyboard shortcuts')}
+            </span>
+            <span className="t-meta">{t('Press ? anywhere to show them.')}</span>
+          </span>
+        </button>
+      </Section>
+
       <Section title={t('Data')} id={SETTINGS_SECTIONS.data}>
         {/* Imports first, wearing `download`; the app's exports and cleanings after. */}
         {app.importer ? (
@@ -148,14 +162,6 @@ export function SettingsScreen() {
             </span>
           </button>
         ) : null}
-        {/* Only where there is a keyboard to press them: a mouse or a trackpad says so. */}
-        <button type="button" className={`${styles.row} ${styles.keysRow}`} onClick={() => setShortcutsOpen(true)}>
-          <Icon name="info" size={24} />
-          <span className={styles.rowText}>
-            <span className="t-body">{t('Keyboard shortcuts')}</span>
-            <span className="t-meta">{t('Press ? anywhere to show them.')}</span>
-          </span>
-        </button>
         {/* Last, and in danger ink: its own page asks what goes, the token and the word. */}
         {app.erase ? (
           <button type="button" className={styles.row} onClick={() => navigate(paths.erase)}>

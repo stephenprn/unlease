@@ -13,11 +13,11 @@ import styles from './settings.module.css';
  * (`labelledBy`) and carries its "how it works", so no second title repeats it. A sheet whose title
  * would repeat what is written just above or inside it keeps it for screen readers alone (`label`).
  */
-export function Section({ title, info, children, id, labelledBy, label }: { title?: string; info?: string; children: ReactNode; id?: string; labelledBy?: string; label?: string }) {
+export function Section({ title, info, children, id, labelledBy, label, className }: { title?: string; info?: string; children: ReactNode; id?: string; labelledBy?: string; label?: string; className?: string }) {
   const titleId = useId();
   const bubble = useInfoBubble();
   return (
-    <section className={styles.section} aria-labelledby={title ? titleId : labelledBy} aria-label={title || labelledBy ? undefined : label} id={id}>
+    <section className={className ? `${styles.section} ${className}` : styles.section} aria-labelledby={title ? titleId : labelledBy} aria-label={title || labelledBy ? undefined : label} id={id}>
       {title ? (
         <div className={styles.sectionHead}>
           <h2 id={titleId} className={`${styles.sectionTitle} t-section`}>

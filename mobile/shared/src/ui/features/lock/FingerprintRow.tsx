@@ -20,6 +20,7 @@ export function FingerprintRow({ openFirst }: { readonly openFirst: string }) {
   if (!check || !(fingerprint || fingerprintReady())) return null;
   return (
     <SwitchRow
+      icon="fingerprint"
       title={t('Unlock with your fingerprint')}
       supporting={t('On this phone, instead of the password.')}
       value={fingerprint}

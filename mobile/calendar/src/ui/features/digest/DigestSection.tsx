@@ -27,11 +27,11 @@ export function DigestSection() {
   };
   return (
     <Section title={t('Morning summary')}>
-      <SwitchRow title={t('Morning summary')} supporting={t('Your day in one notification each morning: events, birthdays, reminders and pages.')} value={prefs.digest} onChange={turn} />
+      <SwitchRow icon="today" title={t('Morning summary')} supporting={t('Your day in one notification each morning: events, birthdays, reminders and pages.')} value={prefs.digest} onChange={turn} />
       {prefs.digest ? (
         <>
           <ListRow icon="clock" title={t('At')} supporting={clockWords(prefs.digestAt, prefs.twelveHours)} onPress={() => setPicking(true)} />
-          <SwitchRow title={t('Even on days with nothing')} supporting={t('Says so when the day holds nothing.')} value={prefs.digestEmpty} onChange={digestEmpty => setPrefs({ digestEmpty })} />
+          <SwitchRow icon="calendar" title={t('Even on days with nothing')} supporting={t('Says so when the day holds nothing.')} value={prefs.digestEmpty} onChange={digestEmpty => setPrefs({ digestEmpty })} />
         </>
       ) : null}
       <Sheet visible={picking} onDismiss={() => setPicking(false)} title={t('Morning summary')}>

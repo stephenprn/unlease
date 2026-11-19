@@ -12,7 +12,6 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import type { LockAfter } from '@unlease/wallet/models/prefs';
 import { TILL_SETTINGS_SECTION, VAULT_SETTINGS_SECTION } from '@unlease/wallet/services/settingsPlaces';
 
-import { Button } from '@shared/ui/components/Button';
 import { SwitchMark } from '@shared/ui/components/Checkbox';
 import { Icon } from '@shared/ui/components/Icon';
 import { Segmented } from '@shared/ui/components/Segmented';
@@ -22,7 +21,6 @@ import type { SettingsSection } from '@shared/modules';
 import { setPrefs, usePrefsStore } from '../../../app/store/prefs';
 import { lockVault, rememberedHere, setRememberCards, useVaultStatus } from '../../../app/store/vault';
 import { NewKitDialog, NewPassphraseDialog } from '../vault/PassphraseDialogs';
-import styles from '../../wallet.module.css';
 
 function Toggle({ on, onChange, title, meta, icon, disabled }: { on: boolean; onChange: (on: boolean) => void; title: string; meta: string; icon: GlyphName; disabled?: boolean }) {
   return (
@@ -33,6 +31,19 @@ function Toggle({ on, onChange, title, meta, icon, disabled }: { on: boolean; on
         <span className="t-meta">{meta}</span>
       </span>
       <SwitchMark checked={on} />
+    </button>
+  );
+}
+
+/** An action among the settings: its glyph and its name, as a row; read as it is, quieter, while it cannot be done. */
+function ActionRow({ icon, title, meta, disabled, onClick }: { icon: GlyphName; title: string; meta?: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={settings.row} aria-disabled={disabled || undefined} onClick={disabled ? undefined : onClick}>
+      <Icon name={icon} size={24} />
+      <span className={settings.rowText}>
+        <span className="t-body">{title}</span>
+        {meta ? <span className="t-meta">{meta}</span> : null}
+      </span>
     </button>
   );
 }
@@ -57,7 +68,7 @@ function VaultSection() {
             { value: '300', label: t('After 5 minutes') },
           ]}
         />
-        <p className={`${settings.help} t-meta`}>{t('Once the tab is hidden; and after five minutes without a key or a click, whatever this says.')}</p>
+        <p className="t-meta">{t('Once the tab is hidden; and after five minutes without a key or a click, whatever this says.')}</p>
       </div>
       <Toggle
         on={remember}
@@ -70,17 +81,10 @@ function VaultSection() {
           void setRememberCards(on);
         }}
       />
-      <div className={`${settings.block} ${styles.vaultActions}`}>
-        <Button kind="tonal" icon="lock" disabled={!open} onClick={lockVault}>
-          {t('Lock now')}
-        </Button>
-        <Button kind="tonal" icon="key" disabled={!open} onClick={() => setDialog('passphrase')}>
-          {t('Change the passphrase')}
-        </Button>
-        <Button kind="tonal" icon="shield" disabled={!open} onClick={() => setDialog('kit')}>
-          {t('New recovery kit')}
-        </Button>
-      </div>
+      {/* The vault's actions, rows as every setting is (Carnet's « Changer le mot de passe »): quiet while it is shut. */}
+      <ActionRow icon="lock" title={t('Lock now')} meta={!open ? t('Your papers are locked.') : remember ? t('Your papers lock; your cards stay open.') : undefined} disabled={!open} onClick={lockVault} />
+      <ActionRow icon="key" title={t('Change the passphrase')} disabled={!open} onClick={() => setDialog('passphrase')} />
+      <ActionRow icon="shield" title={t('New recovery kit')} disabled={!open} onClick={() => setDialog('kit')} />
       {!open && status !== 'none' ? <p className={`${settings.help} t-meta`}>{t('Unlock the vault to change its passphrase or make a new recovery kit.')}</p> : null}
       <p className={`${settings.help} t-meta`}>{t('On a phone, {app} opens your papers with your fingerprint, and hides them from screenshots and the recent apps.', { app: APPS.wallet.name })}</p>
       <NewPassphraseDialog open={dialog === 'passphrase'} onClose={() => setDialog(null)} />

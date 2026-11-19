@@ -109,9 +109,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
             />
           </View>
           {/* The web's words; its stored name is older than the working days (it hid Saturday and Sunday). */}
-          <SwitchRow title={t('Working days only')} supporting={workingDaysMeta(workDays)} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
-          <SwitchRow title={t('Week numbers')} supporting={t('The week’s ISO number, left of its days.')} value={prefs.weekNumbers} onChange={weekNumbers => setPrefs({ weekNumbers })} />
-          <SwitchRow title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
+          <SwitchRow icon="calendar" title={t('Working days only')} supporting={workingDaysMeta(workDays)} value={prefs.hideWeekends} onChange={hideWeekends => setPrefs({ hideWeekends })} />
+          <SwitchRow icon="numbered" title={t('Week numbers')} supporting={t('The week’s ISO number, left of its days.')} value={prefs.weekNumbers} onChange={weekNumbers => setPrefs({ weekNumbers })} />
+          <SwitchRow icon="clock" title={t('12-hour clock')} supporting={t('2 PM rather than 14:00.')} value={prefs.twelveHours} onChange={twelveHours => setPrefs({ twelveHours })} />
           <View style={styles.fields}>
             <PickerField label={t('A new event’s length')} icon="clock" value={lengthWords(prefs.eventLength)} onPress={() => setLengthOpen(true)} />
           </View>
@@ -134,6 +134,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
 
         <Section title={t('On this phone')}>
           <PhoneMirrorRows
+            icon="phone"
             mirror={calendarMirror}
             title={t('Copy to the phone’s calendar')}
             supporting={t('Your events show in the phone’s own calendar, read-only, under an account of their own: the Clock, Maps and your other apps see them. Your other accounts are never touched, and reminders still ring from here only.')}

@@ -14,6 +14,9 @@ import { CLAUDE_MODEL_NAMES, type BackupRecurrence, type BackupSettings, type Dr
 import { formatClock, formatDay, formatRelative, formatUsd, plural, formatBytes, weekdayNames } from './format';
 
 /** The sections every app shares, in the Administration's order. Their ids are addresses (`/admin/server`, the phone's `Admin` screen's `section`): never rename one. */
+/** The Claude page's introduction, both clients' (every other page has its own, from its section). */
+export const CLAUDE_INFO = tx('Claude, Anthropic’s AI, reads and answers in your apps with your own API key. Your server keeps the key, sends Claude only what each question or link needs, and stops it for the month once your budget is spent.');
+
 export const SHARED_ADMIN_SECTIONS = ['apps', 'server', 'reading', 'backup', 'drive', 'immich'] as const;
 export type SharedAdminSection = (typeof SHARED_ADMIN_SECTIONS)[number];
 

@@ -502,12 +502,6 @@
 }
 
 /* The vault's three actions, side by side at their own width (wrapping on a narrow window), under its toggles. */
-.vaultActions {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .footStart {
   margin-right: auto;
 }

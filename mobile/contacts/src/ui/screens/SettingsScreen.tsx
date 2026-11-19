@@ -107,6 +107,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         </Section>
         <Section title={t('On this phone')}>
           <PhoneMirrorRows
+            icon="phone"
             mirror={contactsMirror}
             title={t('Copy to the phone’s contacts')}
             supporting={t('Your contacts show in the phone’s own address book, read-only, under an account of their own: the dialer, Messages and WhatsApp name who calls or writes. Your other accounts are never touched.')}

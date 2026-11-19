@@ -67,7 +67,7 @@ export function BirthdayNotices() {
   const settings = useContactsUiStore(selectBirthdays);
   return (
     <>
-      <SwitchRow title={tc('contact', 'Birthday notifications')} supporting={t('A notification on the day, on this phone.')} value={settings.enabled} onChange={on => later(turnBirthdaysOn(on))} />
+      <SwitchRow icon="cake" title={tc('contact', 'Birthday notifications')} supporting={t('A notification on the day, on this phone.')} value={settings.enabled} onChange={on => later(turnBirthdaysOn(on))} />
       {settings.enabled ? (
         <View style={staticStyles.fields}>
           <Segmented

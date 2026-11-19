@@ -240,6 +240,7 @@ export function GroundSection() {
         </section>
       </div>
       <button type="button" role="switch" aria-checked={appearance.grain} className={settings.row} onClick={() => setAppearance({ ...appearance, grain: !appearance.grain })}>
+        <Icon name="image" size={24} />
         <span className={settings.rowText}>
           <span className="t-body">{t('Grain on the background')}</span>
           <span className="t-meta">{t('The film grain over the screen’s background.')}</span>

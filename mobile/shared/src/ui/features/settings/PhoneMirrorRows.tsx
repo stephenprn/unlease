@@ -7,6 +7,7 @@
 import React from 'react';
 
 import { t } from '@unlease/core/i18n';
+import type { GlyphName } from '@unlease/design/glyphs';
 import type { PhoneMirror } from '@shared/app/phoneMirror';
 import { openMirrorSettings } from '@shared/platform/phoneMirror';
 
@@ -17,14 +18,16 @@ export interface PhoneMirrorRowsProps {
   readonly mirror: PhoneMirror;
   readonly title: string;
   readonly supporting: string;
+  /** The switch's glyph (the app's kind of record: a person, a day). */
+  readonly icon: GlyphName;
 }
 
-export function PhoneMirrorRows({ mirror, title, supporting }: PhoneMirrorRowsProps): React.ReactElement | null {
+export function PhoneMirrorRows({ mirror, title, supporting, icon }: PhoneMirrorRowsProps): React.ReactElement | null {
   const { status, failed } = mirror.useStatus();
   if (status === 'unavailable') return null;
   return (
     <>
-      <SwitchRow title={title} supporting={supporting} value={status !== 'off'} onChange={on => void mirror.turn(on).catch(() => undefined)} />
+      <SwitchRow icon={icon} title={title} supporting={supporting} value={status !== 'off'} onChange={on => void mirror.turn(on).catch(() => undefined)} />
       {status === 'denied' ? (
         <ListRow icon="alert" title={t('Permission refused')} supporting={t('Android refused access: tap here, then under “Permissions”, allow it.')} onPress={openMirrorSettings} />
       ) : null}

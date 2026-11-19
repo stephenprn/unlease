@@ -31,6 +31,7 @@ import { useForm } from '../../components/useForm';
 import { RestoreDialog } from './RestoreDialog';
 import { StatusRow } from './Section';
 import controls from '../../components/controls.module.css';
+import { GroupHead } from './GroupHead';
 import styles from './settings.module.css';
 import { useBackups, type Admin } from './useAdmin';
 
@@ -207,6 +208,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
         ) : null}
       </StatusRow>
 
+      {setup ? null : <GroupHead title={t('Connection')} />}
       <form className={styles.block} onSubmit={connection.onSubmit(saveConnection)} noValidate>
         <div className={styles.fields}>
           <TextField label={t('Service address')} kind="url" value={value('endpoint')} onChange={setEndpoint} field={connection.field('endpoint')} help={t('Your provider’s S3 address, like {example} for Scaleway in Paris.', { example: 'https://s3.fr-par.scw.cloud' })} />
@@ -258,6 +260,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
       {/* In the setup, how often and how many once the bucket is set (the server then backs up every day). */}
       {setup && !backup.configured ? null : (
         <>
+          {setup ? null : <GroupHead title={t('Schedule')} />}
           <div className={styles.block}>
             <p className={`${controls.fieldLabel} t-meta-strong`}>{t('Frequency')}</p>
             <Segmented<BackupRecurrence>
@@ -292,6 +295,7 @@ export function BackupSection({ server, backup, admin, setup = false }: { server
 
       {setup ? null : (
         <>
+          <GroupHead title={t('Backups')} />
           {backup.configured ? (
             <button type="button" className={styles.row} disabled={busy !== null || status?.backup.running === true} onClick={() => void runNow()}>
               <Icon name="upload" size={24} />

@@ -188,7 +188,7 @@ export function GroundSection({ onEditColor, onEditGradient }: { onEditColor: ()
         </SwatchGroup>
       </View>
       {/* Said for what it is beside the paper's own grain (« Apparence »'s first panel), in the web's words. */}
-      <SwitchRow title={t('Grain on the background')} supporting={t('The film grain over the screen’s background.')} value={appearance.grain} onChange={grain => setAppearance({ ...useSettingsStore.getState().appearance, grain })} />
+      <SwitchRow icon="image" title={t('Grain on the background')} supporting={t('The film grain over the screen’s background.')} value={appearance.grain} onChange={grain => setAppearance({ ...useSettingsStore.getState().appearance, grain })} />
       <View style={styles.foot}>
         <LookShareButton />
         <View style={styles.servicesOpen}>

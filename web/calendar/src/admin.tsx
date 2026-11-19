@@ -110,43 +110,46 @@ function HolidaysSection({ server, settings }: { server: ServerConfig; settings:
   // What the server holds now, as the other sections say it: the field below may propose this browser's country.
   const line = holidaysLine(settings);
   return (
-    <div className={settingsStyles.block}>
+    <>
+      {/* The status on the panel's own column, as every section's; the form under it. */}
       <StatusRow tone={line.tone} title={line.title} meta={line.meta} />
-      <div className={controls.field}>
-        {/* Seen, not read: the days' group says its name itself. */}
-        <span className={`${controls.fieldLabel} t-meta-strong`} aria-hidden="true">
-          {t('Days you work')}
-        </span>
-        {/* A working week reads from Monday, whatever day the calendar starts on. */}
-        <WeekdayToggles days={days} weekStart={1} label={t('Days you work')} disabled={busy} onChange={setDays} />
-        <p className={`${controls.help} ${controls.fieldNoteAlone} t-meta`}>{t('Agenda can leave the other days out of its week, and Clock’s “Workdays” rings on them; for every device.')}</p>
-      </div>
-      <SelectField
-        label={t('Country')}
-        value={chosen || NONE}
-        disabled={busy}
-        onChange={code => {
-          setChosen(code === NONE ? '' : code);
-          setChosenRegion(null);
-        }}
-        options={[{ value: NONE, label: t('None') }, ...options.map(each => ({ value: each.code, label: each.name }))]}
-      />
-      {chosen && regions.length > 0 ? (
+      <div className={settingsStyles.block}>
+        <div className={controls.field}>
+          {/* Seen, not read: the days' group says its name itself. */}
+          <span className={`${controls.fieldLabel} t-meta-strong`} aria-hidden="true">
+            {t('Days you work')}
+          </span>
+          {/* A working week reads from Monday, whatever day the calendar starts on. */}
+          <WeekdayToggles days={days} weekStart={1} label={t('Days you work')} disabled={busy} onChange={setDays} />
+          <p className={`${controls.help} ${controls.fieldNoteAlone} t-meta`}>{t('Agenda can leave the other days out of its week, and Clock’s “Workdays” rings on them; for every device.')}</p>
+        </div>
         <SelectField
-          label={t('Region')}
-          value={pickedRegion ?? NONE}
+          label={t('Country')}
+          value={chosen || NONE}
           disabled={busy}
-          onChange={each => setChosenRegion(each === NONE ? null : each)}
-          options={[{ value: NONE, label: t('The whole country’s days') }, ...regions.map(each => ({ value: each, label: each }))]}
-          help={t('Some regions have extra public holidays: choose yours to see them too.')}
+          onChange={code => {
+            setChosen(code === NONE ? '' : code);
+            setChosenRegion(null);
+          }}
+          options={[{ value: NONE, label: t('None') }, ...options.map(each => ({ value: each.code, label: each.name }))]}
         />
-      ) : null}
-      <div className={styles.formFoot} style={{ justifyContent: 'flex-start' }}>
-        <Button icon="check" busy={busy} disabled={!holidaysChanged && !daysChanged} onClick={() => void apply()}>
-          {t('Save')}
-        </Button>
+        {chosen && regions.length > 0 ? (
+          <SelectField
+            label={t('Region')}
+            value={pickedRegion ?? NONE}
+            disabled={busy}
+            onChange={each => setChosenRegion(each === NONE ? null : each)}
+            options={[{ value: NONE, label: t('The whole country’s days') }, ...regions.map(each => ({ value: each, label: each }))]}
+            help={t('Some regions have extra public holidays: choose yours to see them too.')}
+          />
+        ) : null}
+        <div className={styles.formFoot} style={{ justifyContent: 'flex-start' }}>
+          <Button icon="check" busy={busy} disabled={!holidaysChanged && !daysChanged} onClick={() => void apply()}>
+            {t('Save')}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

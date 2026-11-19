@@ -189,6 +189,11 @@
   gap: 14px;
 }
 
+/* A field alone in the pair (Immich's, Seerr's address) takes the whole width, as the field under it does. */
+.fields > :only-child {
+  grid-column: 1 / -1;
+}
+
 .buttons {
   display: flex;
   flex-wrap: wrap;
@@ -238,16 +243,6 @@ button.row {
   border-radius: var(--row-outer);
 }
 
-@media not ((hover: hover) and (pointer: fine)) {
-  .card > .row:has(+ .keysRow:nth-last-child(1 of :not(svg, [hidden]))) {
-    border-radius: var(--cut-tab) var(--cut-tab) var(--row-outer) var(--row-outer);
-  }
-
-  .card > .row:first-child:has(+ .keysRow:nth-last-child(1 of :not(svg, [hidden]))) {
-    border-radius: var(--row-outer);
-  }
-}
-
 @media (hover: hover) {
   button.row:hover {
     background: color-mix(in srgb, var(--ink) 6%, transparent);
@@ -259,13 +254,9 @@ button.row:active {
 }
 
 /* The keyboard's shortcuts, offered only where a mouse or a trackpad says a keyboard is at hand. */
-.keysRow {
-  display: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .keysRow {
-    display: flex;
+@media not ((hover: hover) and (pointer: fine)) {
+  .keysSection {
+    display: none;
   }
 }
 
@@ -833,4 +824,16 @@ button.row:disabled:active {
   height: 5px;
   border-radius: 50%;
   background: currentColor;
+}
+
+/*
+ * A group inside a long panel (S3's connection, its schedule, its backups): a hairline across the
+ * panel, then the group's name in the section titles' ink and size, on the fields' column. Android
+ * clusters a panel's settings this way: a heading always comes with its divider.
+ */
+.groupHead {
+  margin: 10px 0 0;
+  padding: 18px 20px 2px;
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-muted);
 }

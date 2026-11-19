@@ -87,7 +87,7 @@ export function useProtectedSection(): ProtectedSection {
 
   const rows = (
     <>
-      <SwitchRow title={t('Protected section')} supporting={t('Notes kept behind a password, out of the board, search and widgets.')} value={section} onChange={turn} />
+      <SwitchRow icon="lock" title={t('Protected section')} supporting={t('Notes kept behind a password, out of the board, search and widgets.')} value={section} onChange={turn} />
       {check ? <ListRow icon="key" title={t('Change the password')} onPress={() => setChanging(true)} /> : null}
       <FingerprintRow openFirst={t('Unlock the protected section with the password first.')} />
     </>
