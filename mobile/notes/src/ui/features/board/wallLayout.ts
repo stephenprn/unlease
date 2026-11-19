@@ -55,6 +55,7 @@ export function shapeOf(state: LibraryState, id: string): CardShape | null {
     paragraphs: noteCardParagraphs(note),
     drawing: noteDrawingRatio(note),
     openChecks: Math.min(MAX_CHECK_ROWS, written),
+    hasMoreChecks: written > MAX_CHECK_ROWS,
     hasCheckedSummary: checks.length > open,
     hasPhoto: note.kind !== 'links' && (state.attachmentsByNote[id]?.length ?? 0) > 0,
     hasThumbs: note.kind === 'links' && links.some(lid => (state.links[lid]?.imageIds.length ?? 0) > 0 && !state.links[lid]?.done),

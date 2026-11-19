@@ -39,6 +39,8 @@ export interface CardShape {
   readonly drawing: number | null;
   /** Open items with something written in them: an empty one is left off the card. */
   readonly openChecks: number;
+  /** A "N autres éléments" line under the open checks: more are written than the card shows (`MAX_CHECK_ROWS`). */
+  readonly hasMoreChecks: boolean;
   /** A "+ N cochés" line under the open checks. */
   readonly hasCheckedSummary: boolean;
   readonly hasPhoto: boolean;
@@ -53,6 +55,8 @@ export interface CardLayout {
   readonly title: number;
   /** Lines a text note's body is cut to. */
   readonly body: number;
+  /** The body goes on past those lines: the card shows the next one dissolving into its foot (`cutFadeHeight`). */
+  readonly bodyCut: boolean;
 }
 
 export const MAX_CHECK_ROWS = 6;
@@ -101,6 +105,20 @@ export function drawingCardHeight(metrics: WallMetrics, ratio: number): number {
   return Math.round(metrics.columnWidth * Math.min(ratio, MAX_DRAWING_RATIO));
 }
 
+/** Whether a card shows only the top of a drawing: its foot then dissolves into the paper, as a cut text does. */
+export function drawingCut(ratio: number): boolean {
+  return ratio > MAX_DRAWING_RATIO;
+}
+
+/**
+ * The box a cut body is drawn in: its lines and the card's foot padding under them, where the next
+ * line shows its top and dissolves (the eased fade over its last `EDGE_FADE`), so the card says its
+ * text goes on without giving up a line it counted, and keeps its height.
+ */
+export function cutFadeHeight(metrics: WallMetrics, lines: number): number {
+  return lines * metrics.lineHeight + metrics.padding;
+}
+
 export function thumbSize(metrics: WallMetrics): number {
   return Math.min(MAX_THUMB, Math.floor((cardInnerWidth(metrics) - (THUMBS_PER_STRIP - 1) * COLLECTION_CARD.thumbGap) / THUMBS_PER_STRIP));
 }
@@ -122,24 +140,27 @@ export function layoutCard(shape: CardShape, metrics: WallMetrics): CardLayout {
     height += padding + Math.max(c.stoneHeight, title * lineHeight) + c.summaryGap;
     if (shape.hasThumbs) height += thumbSize(metrics) + c.stripGap;
     height += metrics.metaLine + padding;
-    return { height: Math.ceil(height), title, body: 0 };
+    return { height: Math.ceil(height), title, body: 0, bodyCut: false };
   }
 
   if (shape.hasPhoto) height += photoHeight(metrics);
   if (shape.drawing !== null) height += drawingCardHeight(metrics, shape.drawing);
   const title = Math.min(MAX_TITLE_LINES, wrapLines(shape.title, inner, fontSize, 'bold'));
   let text = title * lineHeight;
-  if (shape.kind === 'checklist') text += (Math.min(MAX_CHECK_ROWS, shape.openChecks) + (shape.hasCheckedSummary ? 1 : 0)) * metrics.checkRow;
+  if (shape.kind === 'checklist') text += (Math.min(MAX_CHECK_ROWS, shape.openChecks) + (shape.hasMoreChecks ? 1 : 0) + (shape.hasCheckedSummary ? 1 : 0)) * metrics.checkRow;
   let body = 0;
+  let bodyCut = false;
   if (shape.kind === 'text' && shape.body) {
     const room = Math.floor((metrics.maxHeight - height - padding * 2 - text) / lineHeight);
-    const lines = shape.paragraphs ? wrapRunLines(shape.paragraphs, inner, fontSize, MAX_BODY_LINES) : wrapLines(shape.body, inner, fontSize, 'regular', MAX_BODY_LINES);
-    body = Math.max(0, Math.min(room, lines));
+    // One line past the most a card shows, to know whether the body goes on.
+    const lines = shape.paragraphs ? wrapRunLines(shape.paragraphs, inner, fontSize, MAX_BODY_LINES + 1) : wrapLines(shape.body, inner, fontSize, 'regular', MAX_BODY_LINES + 1);
+    body = Math.max(0, Math.min(room, MAX_BODY_LINES, lines));
+    bodyCut = body > 0 && lines > body;
     text += body * lineHeight;
   }
   // A photo or a drawing alone needs no paper under it; a note with nothing written keeps one line of room.
   if (text > 0 || !(shape.hasPhoto || shape.drawing !== null)) height += padding * 2 + Math.max(text, lineHeight);
-  return { height: Math.ceil(height), title, body };
+  return { height: Math.ceil(height), title, body, bodyCut };
 }
 
 export interface Placement {

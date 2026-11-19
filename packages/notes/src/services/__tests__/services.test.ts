@@ -4,7 +4,7 @@ import { cleanSiteName, linkRowText } from '../linkRow';
 import { formatDay, formatEdited, formatPrice, formatRelative, formatReminder, plural, totalPrice } from '@unlease/core/services/format';
 import { foldText, matchRanges, searchDocuments } from '@unlease/core/services/search';
 import { textWidth, wrapLines } from '@unlease/design/textWrap';
-import { footerShowsLabelNames, layoutCard, MAX_THUMB, packWall, thumbSize, type CardShape, type WallMetrics } from '../wall';
+import { cutFadeHeight, footerShowsLabelNames, layoutCard, MAX_THUMB, packWall, thumbSize, type CardShape, type WallMetrics } from '../wall';
 import { createId } from '@unlease/core/services/ids';
 import type { Note } from '../../models/entities';
 import { nextLineColor } from '@unlease/design/colors';
@@ -231,7 +231,7 @@ describe('search', () => {
 describe('the wall', () => {
   const metrics: WallMetrics = { columnWidth: 186, gap: 8, padding: 14, border: 1, fontSize: 15, lineHeight: 21, checkRow: 24, metaLine: 18, footer: 40, maxHeight: 384 };
   const shape = (over: Partial<CardShape>): CardShape => ({
-    id: 'x', kind: 'text', title: '', body: '', paragraphs: null, drawing: null, openChecks: 0, hasCheckedSummary: false, hasPhoto: false, hasThumbs: false, hasFooter: false, ...over,
+    id: 'x', kind: 'text', title: '', body: '', paragraphs: null, drawing: null, openChecks: 0, hasMoreChecks: false, hasCheckedSummary: false, hasPhoto: false, hasThumbs: false, hasFooter: false, ...over,
   });
 
   it('wraps on Signika widths: at spaces, after hyphens, a word too long cut where it overflows', () => {
@@ -245,7 +245,7 @@ describe('the wall', () => {
 
   it('sizes a card to exactly what it shows', () => {
     // Its edge, its padding and one line: no paper left under a short note.
-    expect(layoutCard(shape({ title: 'Court' }), metrics)).toEqual({ height: 51, title: 1, body: 0 });
+    expect(layoutCard(shape({ title: 'Court' }), metrics)).toEqual({ height: 51, title: 1, body: 0, bodyCut: false });
     expect(layoutCard(shape({ title: 'Court', hasFooter: true }), metrics).height).toBe(91);
     expect(layoutCard(shape({ kind: 'checklist', title: 'Courses', openChecks: 3, hasCheckedSummary: true }), metrics).height).toBe(147);
     expect(layoutCard(shape({ hasPhoto: true }), metrics).height).toBe(2 + Math.round(186 * 0.62));
@@ -256,7 +256,23 @@ describe('the wall', () => {
   it('stops a long body at the ceiling, in whole lines', () => {
     const card = layoutCard(shape({ title: 'Titre', body: 'mot '.repeat(800).trim() }), metrics);
     expect(card.height).toBeLessThanOrEqual(metrics.maxHeight);
-    expect(card).toEqual({ height: 2 + 28 + 21 + 15 * 21, title: 1, body: 15 });
+    expect(card).toEqual({ height: 2 + 28 + 21 + 15 * 21, title: 1, body: 15, bodyCut: true });
+  });
+
+  it('says when a body goes on past its lines, never for one that fits', () => {
+    expect(layoutCard(shape({ title: 'Titre', body: 'Deux\nlignes' }), metrics)).toMatchObject({ body: 2, bodyCut: false });
+    // Sixteen lines exactly fill a card with room for more; one more is cut.
+    const tall = { ...metrics, maxHeight: 1000 };
+    expect(layoutCard(shape({ body: Array.from({ length: 16 }, () => 'l').join('\n') }), tall)).toMatchObject({ body: 16, bodyCut: false });
+    expect(layoutCard(shape({ body: Array.from({ length: 17 }, () => 'l').join('\n') }), tall)).toMatchObject({ body: 16, bodyCut: true });
+    // The cut line shows in the foot padding: the card keeps its height.
+    expect(cutFadeHeight(metrics, 15)).toBe(15 * 21 + 14);
+  });
+
+  it('gives a checklist with more items than it shows a line saying so', () => {
+    const full = layoutCard(shape({ kind: 'checklist', title: 'Courses', openChecks: 6 }), metrics).height;
+    expect(layoutCard(shape({ kind: 'checklist', title: 'Courses', openChecks: 6, hasMoreChecks: true }), metrics).height).toBe(full + 24);
+    expect(layoutCard(shape({ kind: 'checklist', title: 'Courses', openChecks: 6, hasMoreChecks: true, hasCheckedSummary: true }), metrics).height).toBe(full + 48);
   });
 
   it('keeps a wide collection card’s pictures as thumbnails, and a narrow footer’s labels as tags', () => {

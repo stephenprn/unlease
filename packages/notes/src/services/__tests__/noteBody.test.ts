@@ -123,7 +123,7 @@ describe('formatting a body by offsets', () => {
 
 describe('a formatted card', () => {
   const metrics: WallMetrics = { columnWidth: 186, gap: 8, padding: 14, border: 1, fontSize: 15, lineHeight: 21, checkRow: 24, metaLine: 18, footer: 40, maxHeight: 384 };
-  const shape = (over: Partial<CardShape>): CardShape => ({ id: 'x', kind: 'text', title: '', body: '', paragraphs: null, drawing: null, openChecks: 0, hasCheckedSummary: false, hasPhoto: false, hasThumbs: false, hasFooter: false, ...over });
+  const shape = (over: Partial<CardShape>): CardShape => ({ id: 'x', kind: 'text', title: '', body: '', paragraphs: null, drawing: null, openChecks: 0, hasMoreChecks: false, hasCheckedSummary: false, hasPhoto: false, hasThumbs: false, hasFooter: false, ...over });
 
   it('wraps runs as plain text wraps, bold ones on bold widths', () => {
     const text = 'Le meilleur croissant de Belleville, et le pain aussi';

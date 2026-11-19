@@ -16,7 +16,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { shownTitle } from '@unlease/notes/models/entities';
-import { cardBody, cardInnerWidth, COLLECTION_CARD, drawingCardHeight, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
+import { cardBody, cardInnerWidth, COLLECTION_CARD, cutFadeHeight, drawingCardHeight, drawingCut, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { bodyText, noteCardLines } from '@unlease/notes/services/noteBody';
 import { mentionsVersion } from '@unlease/notes/services/noteMentions';
@@ -25,7 +25,7 @@ import { matchRanges } from '@unlease/core/services/search';
 import { useBlobSource } from '@shared/app/hooks/useImageSource';
 import { useLibraryStore, type LibraryState } from '@app/store/libraryStore';
 
-import { AnimatedOrganic, AppText, CheckMark, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
+import { AnimatedOrganic, AppText, CheckMark, CutFade, EmblemStone, Grain, Icon, LabelMark, LabelTag, Organic, Tappable } from '../../components';
 import { accelerate, decelerate, duration, listPressDelay, standard } from '@shared/ui/theme/motion';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -77,7 +77,7 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
     useShallow(s => {
       const shape = shapeOf(s, id);
       const layout = shape ? layoutCard(shape, metrics) : null;
-      return { title: layout?.title ?? 0, body: layout?.body ?? 0, footer: shape?.hasFooter ?? false };
+      return { title: layout?.title ?? 0, body: layout?.body ?? 0, cut: layout?.bodyCut ?? false, footer: shape?.hasFooter ?? false };
     }),
   );
   // Read out with the card (TalkBack reads its label alone), so a footer showing only the tags loses no name.
@@ -108,6 +108,7 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
   const photo = !collection && hasPhoto ? photoHeight(metrics) : 0;
   const drawing = noteDrawingRatio(note);
   const drawn = drawing !== null ? drawingCardHeight(metrics, drawing) : 0;
+  const shownLines = lines.cut ? lines.body + 1 : lines.body;
   const backdrop = collection
     ? noteBackdrop(theme.mode, null, null)
     : noteBackdrop(theme.mode, note.color, note.pattern, cardRule(metrics, photo + drawn + metrics.padding, note.kind === 'checklist', !!title));
@@ -127,7 +128,12 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
           accessibilityState={{ selected }}
         >
           {!collection ? <CardPhoto noteId={id} width={width} height={photo} /> : null}
-          {drawing !== null ? <DrawingPreview data={note.drawing} width={width} height={drawn} /> : null}
+          {drawing !== null ? (
+            // A drawing taller than the card shows its top, its foot dissolving into the paper.
+            <CutFade cut={drawingCut(drawing)} style={{ width, height: drawn }}>
+              <DrawingPreview data={note.drawing} width={width} height={drawn} />
+            </CutFade>
+          ) : null}
           <View style={styles.content}>
             {collection ? (
               <LineHeader noteId={id} title={title} lines={lines.title} query={query} />
@@ -136,12 +142,17 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
                 {title}
               </AppText>
             ) : null}
-            {lines.body > 0 && formatted && formatted.length > 0 ? (
-              <CardNoteText lines={formatted} cut={lines.body} query={query} width={cardInnerWidth(metrics)} size={metrics.fontSize} names={mentionsVersion()} />
-            ) : lines.body > 0 && body ? (
-              <AppText variant="cardBody" numberOfLines={lines.body} textBreakStrategy="simple" highlight={matchRanges(body, query)}>
-                {body}
-              </AppText>
+            {lines.body > 0 && ((formatted && formatted.length > 0) || body) ? (
+              // A body that goes on shows one line more, its top dissolving into the card's foot.
+              <CutFade cut={lines.cut} style={lines.cut ? [styles.cutBody, { height: cutFadeHeight(metrics, lines.body) }] : undefined}>
+                {formatted && formatted.length > 0 ? (
+                  <CardNoteText lines={formatted} cut={shownLines} query={query} width={cardInnerWidth(metrics)} size={metrics.fontSize} names={mentionsVersion()} />
+                ) : (
+                  <AppText variant="cardBody" numberOfLines={shownLines} textBreakStrategy="simple" highlight={matchRanges(body, query)}>
+                    {body}
+                  </AppText>
+                )}
+              </CutFade>
             ) : null}
             {note.kind === 'checklist' ? <CardChecklist noteId={id} row={metrics.checkRow} query={query} /> : null}
             {collection ? <LineSummary noteId={id} metrics={metrics} /> : null}
@@ -187,18 +198,21 @@ const CardPhoto = memo(function CardPhotoView({ noteId, width, height }: { noteI
 /** `row` is the wall's own row height, so the list takes exactly the room it was given; a search's words lie on peach in its items too, as on the web. */
 const CardChecklist = memo(function CardChecklistView({ noteId, row, query }: { noteId: string; row: number; query: string }) {
   const theme = useTheme();
-  const { open, checked } = useLibraryStore(
+  const { open, more, checked } = useLibraryStore(
     useShallow(s => {
       const ids = s.checksByNote[noteId] ?? [];
       const openTexts: string[] = [];
+      let hidden = 0;
       let done = 0;
       for (const cid of ids) {
         const item = s.checks[cid];
         if (!item) continue;
         if (item.checked) done += 1;
-        else if (item.text.trim() && openTexts.length < MAX_CHECK_ROWS) openTexts.push(item.text);
+        else if (!item.text.trim()) continue;
+        else if (openTexts.length < MAX_CHECK_ROWS) openTexts.push(item.text);
+        else hidden += 1;
       }
-      return { open: openTexts.join('\u0000'), checked: done };
+      return { open: openTexts.join('\u0000'), more: hidden, checked: done };
     }),
   );
   const rows = open ? open.split('\u0000') : [];
@@ -214,6 +228,14 @@ const CardChecklist = memo(function CardChecklistView({ noteId, row, query }: { 
           </AppText>
         </View>
       ))}
+      {/* The items past those the card shows, counted on the items' own column. */}
+      {more > 0 ? (
+        <View style={[checklistStyles.row, checklistStyles.more, { height: row }]}>
+          <AppText variant="meta" numberOfLines={1}>
+            {plural(more, 'more item', 'more items')}
+          </AppText>
+        </View>
+      ) : null}
       {checked > 0 ? (
         <View style={[checklistStyles.row, { height: row }]}>
           <Icon name="check" size={16} color={theme.color.inkMuted} />
@@ -308,6 +330,8 @@ const makeStyles = (theme: Theme) =>
     clip: { flex: 1, overflow: 'hidden', borderWidth: 1, borderColor: theme.color.hairline },
     press: { flex: 1 },
     content: { flex: 1, paddingHorizontal: 14, paddingTop: 14, overflow: 'hidden' },
+    // Its lines and the foot padding under them, where the next one dissolves (`cutFadeHeight`).
+    cutBody: { overflow: 'hidden' },
     ring: { borderWidth: 2.5, borderColor: theme.color.focus },
     // A matcha pebble pinned over the corner, ringed in the ground so it reads off the sheet.
     tick: { position: 'absolute', top: -8, right: -8, width: 26, height: 26, backgroundColor: theme.color.leaf, borderWidth: 2, borderColor: theme.color.wall, alignItems: 'center', justifyContent: 'center' },
@@ -318,6 +342,8 @@ const checklistStyles = StyleSheet.create({
   /** The open box drawn small in the glyph's 16, so the words keep the place the wall sized them for. */
   box: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1 },
+  /** On the items' words: past the box's 16 and the row's gap. */
+  more: { paddingLeft: 24 },
 });
 
 // core's COLLECTION_CARD: the wall sized the card to these.

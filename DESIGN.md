@@ -754,7 +754,7 @@ Material 3's curves and one set of durations on both clients (`mobile/shared/src
 - **Paper never moves the words:** ruled papers (lines, Seyès: `isRuledPattern`) run the whole editor sheet in step with the text and scroll with it; a text note's title ends on the body's rules and one line is skipped before the text on every paper; a checklist's ticked group sits flush under the others.
 - **Selected:** a 2.5px matcha ring over the sheet and a 26 leaf-matcha tick pebble half outside the top-right corner, ringed 2px in the ground. Ring fades in (150), tick settles from half its size (250, decelerate); a long press clicks.
 - **Footer:** 40, only with labels or a reminder: outlined reminder chips (small radius, 24 high), labels as a pigment tag and their name in meta, the tags alone on a narrow card (`footerShowsLabelNames`).
-- **Height:** the content's, computed (see Layout); a checklist shows its written open items only, up to 6.
+- **Height:** the content's, computed (see Layout); a checklist shows its written open items only, up to 6, then « N autres éléments » in meta on the items' column when more are written, above « N éléments cochés ».
 - **Collection card:** thumbnails cropped to pebbles, wells until loaded.
 - **Swipe:** sideways to the archive, turning up to 3°, over the other cards, fading as it goes. Threshold 38% of its width, with a click; past it or flung it is thrown off with the hand's speed and the wall closes ranks, else it springs back.
 - **Picking (web):** the select pebble shows on hover, keyboard focus and while picking (hidden, it takes no tap); on touch a 500 hold picks, the press tint after 100.
@@ -938,6 +938,7 @@ A bar marks where content goes under it; a fade only says content continues. Bot
 - **Fade:** the eased 24 dissolve (cosine ease-in-out, nine stops, as strong as the content beyond, full at 24), only:
   - on sideways scrollers (chip rows, strips, carousels, a table's sides), at the overflowing side, while it overflows;
   - on a vertical scroller capped inside a card, panel, menu or popover with no bar at that edge, where it is cut.
+  - at the foot of a card's text that goes on, and of a drawing taller than its card: the card keeps its height and its lines; the next line shows in the foot padding and dissolves there (`cutFadeHeight`; web `data-scroll-fade`, phone `CutFade`). Never an ellipsis alone for a cut body.
 - **Never a fade** under a bar, where content leaves the screen (page foot, status bar, keyboard, gesture bar), or on a field or code well.
 - **Phone:** use the edge scrollers (`EdgeScrollView`, `EdgeFlatList`, `EdgeSectionList`, `ScrollEdges`, `SheetScroll`, `SheetFlatList`, `RevealScrollView`, Réglages' scroll), never a plain vertical `ScrollView`/`FlatList`: they tell the head above (`TopBar`, `SearchHeader`, a sheet's or dialog's head) how far content has gone under it.
 - **Web** (`components/scrollEdges.ts`): the page's scroll draws the header's line (`usePageEdges`) and a stuck form foot's (`useStuckFootEdge`); an inner scroller draws its bar's line from `--edge-above-k` / `--edge-below-k`; fades are opt-in; tables use `useHiddenSides`.

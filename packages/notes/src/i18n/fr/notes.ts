@@ -102,6 +102,8 @@ export const FR_NOTES: Dictionary = {
   'already done [many]': 'déjà faits',
   'ticked item': 'élément coché',
   'ticked items': 'éléments cochés',
+  'more item': 'autre élément',
+  'more items': 'autres éléments',
   'item to do': 'élément à faire',
   'items to do': 'éléments à faire',
   'other': 'autre',

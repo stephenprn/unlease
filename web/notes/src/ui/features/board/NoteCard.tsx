@@ -22,7 +22,7 @@ import { pebbleTurn } from '@unlease/design/pebbles';
 import { t } from '@unlease/core/i18n';
 import { asLineColor, isLineColor, isNoteGradient, isRuledPattern, type NotePattern } from '@unlease/design/colors';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
-import { cardBody, COLLECTION_CARD, drawingCardHeight, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
+import { cardBody, COLLECTION_CARD, cutFadeHeight, drawingCardHeight, drawingCut, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { bodyText, linesText, noteCardLines } from '@unlease/notes/services/noteBody';
 import { matchRanges } from '@unlease/core/services/search';
@@ -75,7 +75,7 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
     useShallow(s => {
       const shape = shapeOf(s, id);
       const layout = shape ? layoutCard(shape, metrics) : null;
-      return { title: layout?.title ?? 0, body: layout?.body ?? 0, footer: shape?.hasFooter ?? false };
+      return { title: layout?.title ?? 0, body: layout?.body ?? 0, cut: layout?.bodyCut ?? false, footer: shape?.hasFooter ?? false };
     }),
   );
   const gestures = useCardGestures({
@@ -95,6 +95,10 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
   const label = title || bodyText(note).trim().slice(0, 80) || (isLine ? t('Collection') : note.kind === 'drawing' ? t('Drawing') : t('Untitled note'));
   const drawing = noteDrawingRatio(note);
   const href = isLine ? paths.line(id) : paths.note(id);
+  // A body that goes on shows one line more, its top dissolving into the card's foot; one that fits is cut to its lines.
+  const bodyBox: CSSProperties = lines.cut
+    ? ({ WebkitLineClamp: lines.body + 1, height: cutFadeHeight(metrics, lines.body), '--fade-below-k': 1 } as CSSProperties)
+    : { WebkitLineClamp: lines.body };
   // The card's outline, the same for every card: the sheet is clipped to it, the card lifts it.
   const d = outlineD('card', width, height);
   const style: CSSProperties = { left, top, width, height };
@@ -130,7 +134,12 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
         {!isLine && note.pattern ? <CardPaper pattern={note.pattern} top={(hasPhoto ? photoHeight(metrics) : 0) + metrics.padding} checklist={note.kind === 'checklist'} titled={!!title} metrics={metrics} /> : null}
         <a className={styles.hit} href={browserPath(href)} onClick={onClick} aria-label={label} data-card-link={id} />
         {!isLine ? <CardPhoto noteId={id} height={photoHeight(metrics)} /> : null}
-        {drawing !== null ? <DrawingPreview data={note.drawing} height={drawingCardHeight(metrics, drawing)} /> : null}
+        {drawing !== null ? (
+          // A drawing taller than the card shows its top, its foot dissolving into the paper.
+          <div className={styles.drawing} data-scroll-fade={drawingCut(drawing) ? 'y' : undefined}>
+            <DrawingPreview data={note.drawing} height={drawingCardHeight(metrics, drawing)} />
+          </div>
+        ) : null}
         <div className={isLine ? `${styles.content} ${styles.lineContent}` : styles.content}>
           {isLine ? (
             <LineHead noteId={id} query={query} lines={lines.title} />
@@ -140,11 +149,11 @@ function NoteCardComponent({ id, left, top, width, height, metrics, query, selec
             </h3>
           ) : null}
           {lines.body > 0 && formatted && formatted.length > 0 ? (
-            <p className={`${styles.body} t-card-body`} style={{ WebkitLineClamp: lines.body }}>
+            <p className={`${styles.body} t-card-body`} style={bodyBox} data-scroll-fade={lines.cut ? 'y' : undefined}>
               <CardLines lines={formatted} ranges={query.trim() ? matchRanges(linesText(formatted), query) : undefined} />
             </p>
           ) : lines.body > 0 && body ? (
-            <p className={`${styles.body} t-card-body`} style={{ WebkitLineClamp: lines.body }}>
+            <p className={`${styles.body} t-card-body`} style={bodyBox} data-scroll-fade={lines.cut ? 'y' : undefined}>
               <Highlight text={body} query={query} />
             </p>
           ) : null}
@@ -202,18 +211,21 @@ const CardPhoto = memo(function CardPhoto({ noteId, height }: { noteId: string; 
 });
 
 const CardChecklist = memo(function CardChecklist({ noteId, query }: { noteId: string; query: string }) {
-  const { open, checked } = useLibraryStore(
+  const { open, more, checked } = useLibraryStore(
     useShallow(s => {
       const ids = s.checksByNote[noteId] ?? [];
       const texts: string[] = [];
+      let hidden = 0;
       let done = 0;
       for (const cid of ids) {
         const item = s.checks[cid];
         if (!item) continue;
         if (item.checked) done += 1;
-        else if (item.text.trim() && texts.length < MAX_CHECK_ROWS) texts.push(item.text);
+        else if (!item.text.trim()) continue;
+        else if (texts.length < MAX_CHECK_ROWS) texts.push(item.text);
+        else hidden += 1;
       }
-      return { open: texts.join('\u0000'), checked: done };
+      return { open: texts.join('\u0000'), more: hidden, checked: done };
     }),
   );
   const rows = open ? open.split('\u0000') : [];
@@ -227,6 +239,12 @@ const CardChecklist = memo(function CardChecklist({ noteId, query }: { noteId: s
           </span>
         </li>
       ))}
+      {/* The items past those the card shows, counted on the items' own column. */}
+      {more > 0 ? (
+        <li className={`${styles.checkRow} ${styles.moreRow}`}>
+          <span className="t-meta">{plural(more, 'more item', 'more items')}</span>
+        </li>
+      ) : null}
       {checked > 0 ? (
         <li className={styles.checkRow}>
           <Icon name="check" size={16} />

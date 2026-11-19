@@ -703,3 +703,14 @@
     display: none;
   }
 }
+
+/* A drawing taller than its card: its top, the foot dissolving into the paper (`drawingCut`). */
+.drawing {
+  flex: none;
+  --fade-below-k: 1;
+}
+
+/* The items past those the card shows: counted on the items' own column, past the box's 16 and its gap. */
+.moreRow {
+  padding-inline-start: 24px;
+}

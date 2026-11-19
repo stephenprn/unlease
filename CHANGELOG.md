@@ -11,6 +11,10 @@ All notable changes to Unlease are written here: the server and every app share 
   - **Pages' protected pages:** « Protéger par mot de passe » in a page's menu. The page and its sub-pages keep their titles in the tree, but opening one asks the password; their words stay out of search, previews and questions to Claude.
 - Wallet fills a card from a **Google Wallet link**, on Android and on the web: in Google Wallet, open the card, share it and copy the link, then « Coller un lien Google Wallet » in a new card on Android, or paste the link into « Numéro de carte » anywhere. The link is read on your device, Google is never asked: it gives the card's number (and its name and barcode when the shop's link carries them); name the shop and check the barcode against the card.
 
+### Changed
+
+- Carnet's cards say when a note goes on past what they show, on Android and on the web: a cut text shows its next line dissolving at the card's foot (no longer a lone « … »), a drawing taller than its card fades at its foot, and a list with more than six items to do counts the rest (« 3 autres éléments »).
+
 ### Fixed
 
 - Android widgets: a list that runs past the bottom of a widget (Planning, Ma journée, a note, Listes d'un label, a collection, Notes d'un label, Appels rapides) now runs to its edge under its fade, instead of stopping short over a band of empty background.

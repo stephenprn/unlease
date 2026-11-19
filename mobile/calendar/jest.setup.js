@@ -31,6 +31,7 @@ jest.mock('../shared/specs/NativeReminders', () => require('../shared/__mocks__/
 jest.mock('../shared/specs/NativeIntake', () => require('../shared/__mocks__/NativeIntake'));
 jest.mock('../shared/specs/OrganicViewNativeComponent', () => require('../shared/__mocks__/OrganicViewNativeComponent'));
 jest.mock('../shared/specs/ScrollEdgesViewNativeComponent', () => require('../shared/__mocks__/ScrollEdgesViewNativeComponent'));
+jest.mock('../shared/specs/CutFadeViewNativeComponent', () => require('../shared/__mocks__/CutFadeViewNativeComponent'));
 
 jest.mock('react-native-screens', () => {
   const actual = jest.requireActual('react-native-screens');
