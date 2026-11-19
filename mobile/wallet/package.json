@@ -1,6 +1,6 @@
 {
   "name": "@unlease/wallet-mobile",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Wallet for Android: the loyalty cards, identity papers and documents of Unlease, sealed on the phone and opened by the fingerprint, in React Native.",
   "license": "MIT",
   "repository": {

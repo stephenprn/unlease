@@ -1,6 +1,6 @@
 {
   "name": "@unlease/clock-mobile",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Clock for Android: the alarm clock of Unlease (alarms that ring on time, the weather and the day ahead as they ring, the evening check against Agenda), in React Native.",
   "license": "MIT",
   "repository": {

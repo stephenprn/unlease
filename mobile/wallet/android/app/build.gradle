@@ -90,8 +90,8 @@ android {
         applicationId "com.stephenprn.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30099
-        versionName "0.3.0"
+        versionCode 40099
+        versionName "0.4.0"
     }
     signingConfigs {
         debug {

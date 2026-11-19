@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-19
+
 ### Added
 
 - **A password lock for what you keep out of sight**, one password for the suite, set once, asked on every device (offline too), on Android and on the web. It hides, it does not encrypt: what it guards syncs, is backed up and stays readable by your server as before, and the apps show it only once the password is typed; it keeps your notes and pages from whoever holds your phone or your browser. Forgotten, your server's token (`UNLEASE_TOKEN`) lets you choose another. On Android, once typed, your fingerprint or screen lock opens it; nothing it guards shows in screenshots or the recent apps. It locks again a minute after the app leaves the screen, or the tab is hidden, after five idle minutes in a browser, and from « Verrouiller ». **Breaking:** update the server before the apps: the lock and the fields below are new, and an older server drops them.
@@ -271,7 +273,8 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/stephenprn/unlease/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/stephenprn/unlease/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/stephenprn/unlease/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/stephenprn/unlease/compare/v0.1.1...v0.1.2
