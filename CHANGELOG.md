@@ -18,6 +18,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Fixed
 
+- Agenda: the web addresses in an event's description can be opened, on Android and on the web (an imported or subscribed event's links among them): each is underlined in the link's colour, and a tap or a click opens it in the browser.
 - Réglages and the Administration, in every app on Android and on the web, follow one layout: every setting's row has its icon (Carnet's « Section protégée » and « Déverrouiller avec l'empreinte », Agenda's, Contacts', Clock's and the Appearance page's switches had none on Android), Wallet's vault actions are rows as Carnet's « Changer le mot de passe » is, « Raccourcis clavier » leaves « Données » for a row of its own, the S3 page is grouped (« Connexion », « Planification », « Sauvegardes »), the Claude page says what Claude does before its settings, and Agenda's week, Immich's and Seerr's pages line up with the others.
 - Android widgets: a list that runs past the bottom of a widget (Planning, Ma journée, a note, Listes d'un label, a collection, Notes d'un label, Appels rapides) now runs to its edge under its fade, instead of stopping short over a band of empty background.
 - Android widgets: emoji in a title you wrote (a collection, a note, a label, an event, a contacts' label) show in their own colours instead of as a one-colour silhouette.

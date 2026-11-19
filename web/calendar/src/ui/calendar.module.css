@@ -1131,6 +1131,20 @@
 .description {
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* An address in a description: the link's ink, underlined, so it reads as one to open. */
+.link {
+  color: var(--link);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  border-radius: var(--cut-detail);
+}
+
+.link:hover {
+  text-decoration-thickness: 2px;
 }
 
 .mention {
