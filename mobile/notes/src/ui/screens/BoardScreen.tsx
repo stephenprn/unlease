@@ -13,12 +13,13 @@ import { plural } from '@unlease/core/services/format';
 import { searchSummary } from '@unlease/core/services/searchWords';
 import { collectionsWithLinks } from '@unlease/notes/services/sorting';
 import { INBOX_ID, INBOX_SHOWN_TITLE, TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
+import { isLockedNote } from '@unlease/notes/services/lock';
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { useBoardSections, useSearch, type BoardView } from '@app/hooks/useBoard';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { pickInto } from '@app/media';
 import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setLocked, setPinned, trashLines, trashNotes, addCheck } from '@app/store/actions';
-import { closeLock, useFingerprintOn, useLockOpen, useSecureWhile } from '@shared/app/lock';
+import { closeLock, useFingerprintOn, useLockOpen, useLockState, useSecureWhile } from '@shared/app/lock';
 import { LockPanel } from '@shared/ui/features/lock';
 import { useLibraryStore } from '@app/store/libraryStore';
 import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
@@ -220,6 +221,9 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     showSnack(archive ? t('Note archived') : t('Note unarchived'), { label: t('Undo'), run: undo }, { tone: 'success' });
   }, []);
   const allPinned = selected.every(id => useLibraryStore.getState().notes[id]?.pinned);
+  // With the protected section on, a selection holding a note outside it can go in (« Non classé » never does), as on the web.
+  const sectionOn = useLockState().section;
+  const canProtect = sectionOn && view !== 'protected' && selected.some(id => id !== INBOX_ID && !isLockedNote(useLibraryStore.getState().notes[id]));
   /** "Note …" for one, "Notes …" for several. */
   const byCount = (one: string, several: string) => (selected.length > 1 ? several : one);
   const bulk = (run: () => () => void, message: string) => {
@@ -414,6 +418,15 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
                   }}
                 />
               )}
+              {canProtect ? (
+                <IconButton
+                  icon="lock"
+                  label={t('Protect')}
+                  color={selectionInk}
+                  shape={3}
+                  onPress={() => bulk(() => setLocked(selected, true), byCount(t('Note protected'), t('Notes protected')))}
+                />
+              ) : null}
               <IconButton icon="trash" label={t('Delete')} color={selectionInk} shape={0} onPress={trashSelected} />
             </>
           )}
