@@ -17,6 +17,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - On Android, typing in a form (an alarm's label, a timer's) no longer shakes the page when the keyboard changes its height: the field stays where it was, and the page moves only as far as the cursor needs.
 - Wallet on Android: the keyboard no longer covers « Passphrase again » as the vault is made (or the passphrase as it is unlocked), and a card's form scrolls its last fields above the keyboard.
 - The « Annuler » and « Enregistrer » of Wallet's card form on Android stand above the gesture bar instead of under it.
+- Wallet on Android no longer raises its fingerprint prompt over another app when you leave it with its papers open: it asks when you come back.
 
 ## [0.3.0] - 2026-11-18
 

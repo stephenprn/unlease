@@ -5,7 +5,7 @@
  * Reduce Motion: cut).
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeOut, useReducedMotion } from 'react-native-reanimated';
 
@@ -56,14 +56,24 @@ export function LockPanel({ subject }: { subject: LockedSubject }) {
     if (outcome === 'invalidated') showSnack(t('A new fingerprint was added to this phone: unlock with the passphrase once.'), undefined, { tone: 'warning' });
   }, []);
 
-  // Coming to a locked place: the fingerprint at once, where it is kept.
+  // Coming to a locked place: the fingerprint at once, where it is kept. Only with the app in front:
+  // the papers lock as it leaves the screen, and this panel, drawn again then, would raise Android's
+  // prompt over the app the person went to. It asks once the app is back instead.
   useFocusEffect(
     useCallback(() => {
-      if (fingerprint && !cards && !asked.current) {
+      if (!fingerprint || cards) return undefined;
+      const ask = (): void => {
+        if (asked.current || AppState.currentState !== 'active') return;
         asked.current = true;
         void byFingerprint();
-      }
+      };
+      ask();
+      const subscription = AppState.addEventListener('change', state => {
+        if (state === 'active') ask();
+        else asked.current = false;
+      });
       return () => {
+        subscription.remove();
         asked.current = false;
       };
     }, [fingerprint, cards, byFingerprint]),
