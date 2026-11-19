@@ -16,12 +16,12 @@ import { KEEP_WIZARD_WORDS } from '@unlease/notes/services/keepImport';
 import { plural } from '@unlease/core/services/format';
 import { cleanSavedLinks, emptyTrash, trackedLinkIds } from '@app/store/actions';
 import { useLibraryStore } from '@app/store/libraryStore';
-import { selectBoardRow, selectLayout, setBoardRow, setLayout, useLayoutStore } from '@app/store/layoutStore';
-import { BOARD_ROW_HINTS, BOARD_ROW_NAMES, BOARD_ROWS } from '@unlease/notes/services/boardFilter';
+import { selectLayout, setLayout, useLayoutStore } from '@app/store/layoutStore';
+import { BoardRowField, BoardRowSheet } from '../features/board/BoardRowChoice';
 import { showSnack } from '@shared/app/store/uiStore';
 import { makerBatterySettings } from '@platform/notifications';
 
-import { AppText, Dialog, Ground, Icon, ListRow, Segmented, TopBar } from '../components';
+import { AppText, Dialog, Ground, ListRow, Segmented, TopBar } from '../components';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
 import { ReminderHealthSection } from '@shared/ui/features/settings/ReminderHealthSection';
@@ -30,14 +30,13 @@ import { SettingsScroll } from '@shared/ui/features/settings/SettingsScroll';
 import { AppearanceScreen } from '@shared/ui/screens/AppearanceScreen';
 import { useProtectedSection } from '../features/lock/ProtectedSection';
 import type { ScreenProps } from '../navigation/types';
-import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
+import { useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 
 export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
   const layout = useLayoutStore(selectLayout);
-  const boardRow = useLayoutStore(selectBoardRow);
+  const [rowOpen, setRowOpen] = useState(false);
   const [confirmTrash, setConfirmTrash] = useState(false);
   const tracked = useLibraryStore(s => trackedLinkIds(s.links).length);
   // What « Vider la corbeille » would erase (`emptyTrash`).
@@ -70,25 +69,8 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
                 ]}
               />
             </View>
-            {/* One row under the search strip, never two: the collections, the labels or the filters, each said in a line (the storage class's choices). */}
-            <View style={styles.field}>
-              <AppText variant="metaStrong" style={styles.fieldLabel}>
-                {t('Under the search bar')}
-              </AppText>
-              <View accessibilityRole="radiogroup" accessibilityLabel={t('Under the search bar')}>
-                {BOARD_ROWS.map(row => (
-                  <ListRow
-                    key={row}
-                    title={t(BOARD_ROW_NAMES[row])}
-                    supporting={t(BOARD_ROW_HINTS[row])}
-                    leading={<View style={styles.mark}>{boardRow === row ? <Icon name="check" size={22} color={theme.color.focus} /> : null}</View>}
-                    onPress={() => setBoardRow(row)}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: boardRow === row }}
-                  />
-                ))}
-              </View>
-            </View>
+            {/* One row under the search strip, never two: its name and what it holds; its choices in a sheet. */}
+            <BoardRowField onOpen={() => setRowOpen(true)} />
           </View>
           {/* The protected section: on every device, its password and, here, the fingerprint. */}
           {protectedSection.rows}
@@ -152,6 +134,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
         }}
       />
       {protectedSection.overlays}
+      <BoardRowSheet visible={rowOpen} onClose={() => setRowOpen(false)} />
     </View>
   );
 }
@@ -168,8 +151,6 @@ const makeStyles = (theme: Theme) =>
     // As the shared sections' fields (Langue, Apparence's theme).
     fields: { gap: 14, paddingHorizontal: 16, paddingVertical: 12 },
     field: { gap: 6 },
-    // The check's place before a choice's name, empty when not chosen (the storage class's).
-    mark: { width: 24, alignItems: 'center' },
     fieldLabel: { marginLeft: 4 },
     about: { textAlign: 'center' },
   });

@@ -1,0 +1,146 @@
+/*
+ * Réglages' « Sous la barre de recherche »: its choices in a popover (the sheet under 720px), each a
+ * miniature of the board's top beside its name and line, the current one ticked.
+ */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap, 2px);
+  width: min(420px, 100%);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--cut-tab);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .option:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.words {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hint {
+  color: var(--ink-muted);
+}
+
+.mark {
+  flex: none;
+  display: inline-flex;
+  width: 22px;
+  color: var(--focus);
+}
+
+/* The board's top at about a third of its size: the ground, the search strip, the row, two cards' tops. */
+.mini {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
+  height: 64px;
+  padding: 6px;
+  overflow: hidden;
+  border-radius: calc(var(--cut-frame, 12px) * 0.36);
+  background: var(--ground-paint);
+  box-shadow: inset 0 0 0 1px var(--outline);
+}
+
+.strip {
+  flex: none;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--outline);
+}
+
+.chips {
+  flex: none;
+  display: flex;
+  gap: 3px;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 10px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 0.75px var(--hairline);
+}
+
+.filter {
+  justify-content: center;
+  width: 18px;
+}
+
+.filter[data-chosen] {
+  background: var(--action-container);
+  box-shadow: none;
+}
+
+.stone {
+  width: 6px;
+  height: 6px;
+  background: var(--fill);
+}
+
+.bar {
+  display: block;
+  height: 2.5px;
+  border-radius: 1px;
+  background: var(--ink-muted);
+}
+
+.filter[data-chosen] .bar {
+  background: var(--on-action-container);
+}
+
+.cards {
+  display: flex;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  height: 28px;
+  padding: 4px 4px 0;
+  border-radius: 7px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 0.75px var(--hairline);
+}
+
+.card .bar:first-child {
+  background: var(--ink);
+}
