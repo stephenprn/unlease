@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A capped list's last row, clear: what it shows last scrolls up out of the fade at the sheet's foot (DESIGN.md › Home-screen Widgets). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="16dp"
+    android:importantForAccessibility="no" />

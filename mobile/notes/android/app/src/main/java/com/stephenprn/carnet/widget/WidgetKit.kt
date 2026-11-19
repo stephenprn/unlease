@@ -47,12 +47,17 @@ internal object WidgetKit {
   /** Stable ids for a list's rows, from the records' own. */
   fun key(id: String): Long = id.hashCode().toLong() and 0xffffffffL
 
-  /** Hands `rows` to the list `listId` (its taps on `template`), or, before Android 12, the first ones to `stillId`. */
+  /**
+   * Hands `rows` to the list `listId` (its taps on `template`, `viewTypes` the row layouts they use), then a
+   * clear foot, so what it shows last scrolls up out of the fade at the sheet's foot; before Android 12,
+   * the first ones to `stillId`.
+   */
   fun list(views: RemoteViews, listId: Int, stillId: Int, emptyId: Int, rows: List<Pair<Long, RemoteViews>>, viewTypes: Int, template: PendingIntent) {
     views.setViewVisibility(emptyId, if (rows.isEmpty()) View.VISIBLE else View.GONE)
     if (Build.VERSION.SDK_INT >= 31) {
-      val items = RemoteViews.RemoteCollectionItems.Builder().setHasStableIds(true).setViewTypeCount(viewTypes)
+      val items = RemoteViews.RemoteCollectionItems.Builder().setHasStableIds(true).setViewTypeCount(viewTypes + 1)
       for ((key, row) in rows) items.addItem(key, row)
+      if (rows.isNotEmpty()) items.addItem(key("foot"), RemoteViews(views.`package`, R.layout.widget_list_foot))
       views.setRemoteAdapter(listId, items.build())
       views.setPendingIntentTemplate(listId, template)
       views.setViewVisibility(listId, if (rows.isEmpty()) View.GONE else View.VISIBLE)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
+import com.stephenprn.agenda.R
 import java.time.LocalDate
 
 /** What every widget draws with: tints by day and at night, today on this phone, and a list of rows. */
@@ -13,10 +14,10 @@ internal object WidgetKit {
   private const val STILL_ROWS = 8
 
   /**
-   * The row layouts a list may hold at once (a day's heading, an item, a quiet line, the now line):
-   * Android refuses a list holding more layouts than its count, and keeps the count across draws.
+   * The row layouts a list may hold at once (a day's heading, an item, a quiet line, the now line, the
+   * clear foot): Android refuses a list holding more layouts than its count, and keeps the count across draws.
    */
-  private const val ROW_KINDS = 4
+  private const val ROW_KINDS = 5
 
   /** Tints an image with a colour resource, as the launcher shows it: by day or at night. */
   fun tint(context: Context, views: RemoteViews, viewId: Int, color: Int) {
@@ -72,6 +73,8 @@ internal object WidgetKit {
     if (Build.VERSION.SDK_INT >= 31) {
       val items = RemoteViews.RemoteCollectionItems.Builder().setHasStableIds(true).setViewTypeCount(ROW_KINDS)
       for ((key, row) in rows) items.addItem(key, row)
+      // A clear last row: what the list shows last scrolls up out of the fade at the slab's foot.
+      if (rows.isNotEmpty()) items.addItem(key("foot"), RemoteViews(views.`package`, R.layout.widget_list_foot))
       views.setRemoteAdapter(listId, items.build())
       views.setPendingIntentTemplate(listId, template)
       views.setViewVisibility(listId, if (rows.isEmpty()) View.GONE else View.VISIBLE)

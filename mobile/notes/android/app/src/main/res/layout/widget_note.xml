@@ -108,20 +108,20 @@
                 android:id="@+id/note_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="false"
+                android:clipToPadding="true"
                 android:divider="@null"
                 android:dividerHeight="0dp"
                 android:listSelector="@android:color/transparent"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
-                android:paddingBottom="16dp"
+                android:paddingBottom="6dp"
                 android:scrollbars="none" />
 
-            <!-- The list's foot fades into the note's paper (or its wash) at the sheet's edge: the rows run under it; once scrolled to the end the foot's padding keeps the last one clear of it. -->
+            <!-- The list's foot fades into the note's paper (or its wash) at the sheet's edge, cut to its corners: the list stops 6 above the edge, where the fade is whole and the corner's curve has come in less than anything it holds, so a row cut there reads as more below; its last row, a clear foot (widget_list_foot), keeps the last one clear of the fade once scrolled to the end. -->
             <FrameLayout
                 android:id="@+id/note_fade"
                 android:layout_width="match_parent"
-                android:layout_height="16dp"
+                android:layout_height="22dp"
                 android:layout_gravity="bottom"
                 android:background="@drawable/wgen_fade_paper" />
 

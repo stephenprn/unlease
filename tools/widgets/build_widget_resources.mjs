@@ -324,6 +324,40 @@ function groundSheet(name, radius) {
   drawable(name, `<layer-list ${ANDROID}>\n${items.join('\n')}\n</layer-list>\n`);
 }
 
+/** How tall a capped list's fade is, and the foot at its bottom where it is whole: a list is cut there, inside the corner's curve. */
+const FADE = 22;
+const FADE_FOOT = 6;
+
+/**
+ * A capped list's fade at a sheet's foot, cut to the sheet's own bottom corners so it never paints past
+ * the curve: whole over the foot (the list stops there, where the curve has come in less than anything
+ * a list holds), then clear over the rest. `color` and `clear` are the colour it fades into, and that
+ * colour at no opacity.
+ */
+function fadeSheet(name, radius, color, clear) {
+  const { reach, fill } = corner(radius);
+  // The top-left corner's fill, turned to a bottom corner of a box `FADE` high (what rises past its top is cut).
+  const turned = flipX =>
+    fill.replace(/(-?[\d.]+),(-?[\d.]+)/g, (_, x, y) => `${round(flipX ? reach - Number(x) : Number(x))},${round(FADE - Number(y))}`);
+  const gradient =
+    `<aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="0" android:startY="${FADE}" android:endX="0" android:endY="0">` +
+    `<item android:offset="0" android:color="@color/${PREFIX}${color}"/><item android:offset="${round(FADE_FOOT / FADE)}" android:color="@color/${PREFIX}${color}"/>` +
+    `<item android:offset="1" android:color="@color/${PREFIX}${clear}"/></gradient></aapt:attr>`;
+  const items = [['bl', false], ['br', true]].map(([key, flipX]) => {
+    drawable(
+      `${name}_${key}`,
+      `<vector ${ANDROID} xmlns:aapt="http://schemas.android.com/aapt" android:width="${dp(reach)}" android:height="${dp(FADE)}" android:viewportWidth="${round(reach)}" android:viewportHeight="${FADE}">\n` +
+        `  <path android:pathData="${turned(flipX)}">\n    ${gradient}\n  </path>\n</vector>\n`,
+    );
+    return `  <item android:gravity="bottom|${key === 'bl' ? 'left' : 'right'}" android:width="${dp(reach)}" android:height="${dp(FADE)}" android:drawable="@drawable/${PREFIX}${name}_${key}"/>`;
+  });
+  items.push(
+    `  <item android:gravity="bottom" android:height="${dp(FADE_FOOT)}" android:left="${dp(reach)}" android:right="${dp(reach)}">${solid(color)}</item>`,
+    `  <item android:gravity="bottom" android:height="${dp(FADE - FADE_FOOT)}" android:bottom="${dp(FADE_FOOT)}" android:left="${dp(reach)}" android:right="${dp(reach)}"><shape android:shape="rectangle"><gradient android:angle="90" android:startColor="@color/${PREFIX}${color}" android:endColor="@color/${PREFIX}${clear}"/></shape></item>`,
+  );
+  drawable(name, `<layer-list ${ANDROID}>\n${items.join('\n')}\n</layer-list>\n`);
+}
+
 /** A flat sheet in `color` under the grain at `grain`'s strength. */
 function grainedSheet(name, radius, color, grain) {
   const { reach, fill } = corner(radius);
@@ -602,9 +636,9 @@ function generate(app) {
   groundSheet('panel_ground', PANEL);
   grainedSheet('bar_ground', BAR, 'ground_foot', 'grain_ground');
   // A note's list fades out at its foot, so a row cut there reads as more below, not a glitch; a wash tints it.
-  drawable('fade_paper', `<shape ${ANDROID} android:shape="rectangle"><gradient android:angle="90" android:startColor="@color/${PREFIX}paper" android:endColor="@color/${PREFIX}paper_clear"/></shape>\n`);
-  // The same at the foot of a slab of the ground (Agenda's lists), into the ground's foot tone.
-  drawable('fade_ground', `<shape ${ANDROID} android:shape="rectangle"><gradient android:angle="90" android:startColor="@color/${PREFIX}ground_bottom" android:endColor="@color/${PREFIX}ground_bottom_clear"/></shape>\n`);
+  fadeSheet('fade_paper', PANEL, 'paper', 'paper_clear');
+  // The same at the foot of a slab of the ground (Agenda's lists, a collection, a label, the favourites), into the ground's foot tone.
+  fadeSheet('fade_ground', PANEL, 'ground_bottom', 'ground_bottom_clear');
   // Paper sheets keep their grain apart, so a wash can tint the paper and not the grain.
   grainLayer('grain_panel', PANEL, 'grain_sheet');
   grainLayer('grain_card', CARD, 'grain_sheet');
