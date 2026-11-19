@@ -5,11 +5,11 @@
  * tooth over every shape and every glow (`riso-grain.png`, `tools/textures/build_grain.py`), fading
  * out with the light, the paper showing through.
  *
- * - **Dawn** (the alarm's): a sun cut by hand rising out of a choppy sea, Safran at its top melting
+ * - **Dawn** (the alarm's): a sun cut by hand rising out of a choppy sea and climbing high above it, Safran at its top melting
  *   into the accent, its Safran under-print showing a little apart, its far side shaded, a grainy halo
  *   round it. Three bands of water drift across one another at their own paces, each lit at its crest
- *   and darkening as it deepens, each crest printed again a little above itself in Safran; over the first forty seconds, as the volume rises, the sun comes up to
- *   stand half out of the sea, the water rising with it. Answered, the sea calms and holds.
+ *   and darkening as it deepens, each crest printed again a little above itself in Safran; over the first forty seconds, as the volume rises, the sun comes up out of
+ *   the sea and climbs well above it, its halo brightening, the water rising with it. Answered, the sea calms and holds.
  * - **Slosh** (the timer's): no sun, the water tipped one way and the other as a glass carried across
  *   a kitchen, in time with the hourglass turning over above it (`RingBeacon`).
  *
@@ -90,7 +90,7 @@ function TideComponent({ kind, active }: Props) {
   useEffect(() => {
     if (still) return;
     pace.value = withTiming(active ? 1 : 0.3, { duration: 1200, easing: standard });
-    if (kind === 'dawn') rise.value = active ? withTiming(1, { duration: RISE_MS * (1 - rise.value), easing: Easing.out(Easing.cubic) }) : withTiming(rise.value, { duration: 0 });
+    if (kind === 'dawn') rise.value = active ? withTiming(1, { duration: RISE_MS * (1 - rise.value), easing: Easing.out(Easing.quad) }) : withTiming(rise.value, { duration: 0 });
   }, [active, still, kind, pace, rise]);
 
   const band0 = useBandProps(bands[0]!, 0, clock, pace, rise, kind, width, height);
@@ -169,17 +169,21 @@ function RisoSun({ width, height, rise, clock }: { readonly width: number; reado
   const radius = width * 0.3;
   const size = Math.ceil(radius * 4.4);
   const c = size / 2;
-  // From just under the sea line to half out of it, behind the water (the panel and the buttons stand over it).
-  const from = height * 0.86 + radius * 1.05;
-  const to = height * 0.8;
+  // Out of the water from the first moment, climbing high above the sea as the volume rises: the
+  // morning seen coming up, between the panel and the buttons (which stand over it).
+  const from = height * 0.8 + radius * 1.2;
+  const to = height * 0.74 - radius * 0.15;
   const carried = useAnimatedStyle(() => ({ transform: [{ translateY: from + (to - from) * rise.value - c }] }));
+  // Its halo brightening as it climbs.
+  const brightening = useAnimatedStyle(() => ({ opacity: 0.35 + 0.65 * rise.value }));
   const edge = useAnimatedProps(() => ({ d: organicRing({ cx: c, cy: c, radius, amplitude: 2.2, waves: 6, phase: clock.value * 0.00035, seed: 2.6 }, 64) }));
   const under = useAnimatedProps(() => ({ d: organicRing({ cx: c + MISREGISTER.x, cy: c + MISREGISTER.y, radius: radius + 1, amplitude: 2.6, waves: 6, phase: clock.value * 0.0003 + 0.8, seed: 4.1 }, 64) }));
   const halo = radius * 2.1;
 
   return (
     <Animated.View style={[styles.sun, { left: width / 2 - c, width: size, height: size }, carried]}>
-      {/* The halo: a gradient, its grain fading with it. */}
+      {/* The halo: a gradient, its grain fading with it, brightening as the sun climbs. */}
+      <Animated.View style={[StyleSheet.absoluteFill, brightening]}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Defs>
           <RadialGradient id="haloGlow" cx="50%" cy="50%" r="50%">
@@ -199,6 +203,7 @@ function RisoSun({ width, height, rise, clock }: { readonly width: number; reado
         <Circle cx={c} cy={c} r={halo} fill="url(#haloGlow)" />
         <Circle cx={c} cy={c} r={halo} fill="url(#haloTooth)" opacity={0.75} mask="url(#haloMask)" />
       </Svg>
+      </Animated.View>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="sunInk" x1="0.3" y1="0" x2="0.6" y2="1">
