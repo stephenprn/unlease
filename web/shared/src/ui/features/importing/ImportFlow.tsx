@@ -29,6 +29,7 @@ import type { GlyphName } from '@unlease/design/glyphs';
 import { Button } from '../../components/Button';
 import { Checkbox, SwitchMark } from '../../components/Checkbox';
 import { EmptyLine } from '../../components/EmptyLine';
+import { FilterChip } from '../../components/FilterChip';
 import { Icon } from '../../components/Icon';
 import { OutlineEdge, OutlinedBox, useOutline } from '../../components/Outline';
 import { StepTrail } from '../../components/StepTrail';
@@ -288,15 +289,6 @@ export function ImportPreview({ entries, choice, extra, label }: ImportPreviewPr
         </div>
       ) : null}
     </ImportSheet>
-  );
-}
-
-function FilterChip({ checked, label, count, onClick }: { checked: boolean; label: string; count: number; onClick: () => void }) {
-  return (
-    <button type="button" role="radio" aria-checked={checked} className={`${styles.filter} t-label`} onClick={onClick}>
-      <span>{label}</span>
-      <span className={`${styles.filterCount} tabular`}>{count}</span>
-    </button>
   );
 }
 

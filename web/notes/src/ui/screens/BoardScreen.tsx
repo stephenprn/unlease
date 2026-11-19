@@ -19,7 +19,7 @@ import { closeLock, useLockOpen } from '@shared/app/lock';
 import { LockedPlace } from '@shared/ui/features/lock/LockedPlace';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { emptyTrash } from '../../app/store/actions';
-import { addToSelection, selectSelection, toggleSelected, useBoardStore } from '../../app/store/board';
+import { addToSelection, selectFilter, selectSelection, setBoardFilter, toggleSelected, useBoardStore } from '../../app/store/board';
 import { useQuery } from '@shared/app/store/search';
 import { useLibraryStore } from '../../app/store/library';
 import { useLayout } from '../../app/store/prefs';
@@ -30,6 +30,7 @@ import { Confirm } from '@shared/ui/components/Dialog';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { LabelTag } from '@shared/ui/components/LabelMark';
 import styles from '../features/board/board.module.css';
+import { BoardFilters } from '../features/board/BoardFilters';
 import { CollectionChips } from '../features/board/CollectionChips';
 import { Composer } from '../features/board/Composer';
 import { EmptyBoard } from '../features/board/EmptyBoard';
@@ -54,7 +55,9 @@ export function BoardScreen({ view }: { view: BoardView }) {
   const layout = useLayout();
   const label = useLibraryStore(s => (view.startsWith('label:') ? s.labels[view.slice(6)] : undefined));
   const now = useMinute();
-  const { sections, total } = useBoardSections(view, now);
+  const filter = useBoardStore(selectFilter);
+  const { sections, total, counts } = useBoardSections(view, now, filter);
+  const filtered = counts !== null && filter !== 'all';
   const results = useSearch(query, view === 'trash' ? 'bin' : view === 'protected' ? 'protected' : 'live');
   const lockOpen = useLockOpen();
   // The protected section, the lock shut: the lock over the shapes of what it keeps, and nothing else.
@@ -120,6 +123,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
       {/* How long things stay, while it holds something (empty, its empty state says it). */}
       {view === 'trash' && !searching && inBin > 0 ? <p className={`${styles.notice} t-meta`}>{t('Notes in the bin are deleted after {days} days.', { days: TRASH_RETENTION_DAYS })}</p> : null}
       {showComposer ? <Composer onNote={newNote} onChecklist={newChecklist} onDrawing={newDrawing} onPhotos={files => void newPhotoNote(files)} /> : null}
+      {counts && counts.all > 0 && !searching ? <BoardFilters filter={filter} counts={counts} resting={selection.size > 0} /> : null}
       {/* As on the phone: the settings the words name, above the notes, in the search of every note (a view's searches its own). */}
       {searching && view === 'notes' ? <SettingsMatches query={query} /> : null}
       {searching ? (
@@ -133,7 +137,7 @@ export function BoardScreen({ view }: { view: BoardView }) {
       {shut ? (
         <LockedPlace ghosts="notes" what={t('Your protected notes open with the password.')} />
       ) : inBin === 0 && !searching ? (
-        <EmptyBoard view={view} />
+        <EmptyBoard view={view} filter={filtered ? filter : 'all'} onShowAll={() => setBoardFilter('all')} />
       ) : shown.some(section => section.ids.length > 0) ? (
         <Wall sections={shown} layout={layout} query={searching ? query : ''} selection={selection} now={now} onOpen={onOpen} onSelect={onSelect} />
       ) : null}

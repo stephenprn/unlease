@@ -615,7 +615,7 @@ Per device, never synced (`Appearance`, `design/appearance.ts`), resolved for ea
 
 **First viewport (both clients).**
 - A field-coloured search strip (menu, layout toggle, sync dot), 54 high, 8 below the inset: the only chrome pinned at the top. The matcha selection bar replaces it in place.
-- Under it, scrolling with the wall: the collection chips, ending in a dashed "+ Collection"; then "Épinglées" and "Autres".
+- Under it, scrolling with the wall: the collection chips, ending in a dashed "+ Collection"; then the board's filters (`FilterChip`s, a radio group: « Toutes », « Cette semaine », « À faire », « Listes », each with its count, the chosen on the primary's wash; on the web under the composer); then "Épinglées" and "Autres". A filter keeps the board's order and sections; one that keeps nothing is the board's `EmptyState` with « Afficher toutes les notes ». The filter lasts while the app runs; on the phone Back puts « Toutes » back first. Only on the notes' own board, never a label, Rappels, the archive or a search.
 - The phone has no bar at its foot: the capture pebble floats over the wall, and the snackbar clears it.
 - From 720px the web's board opens on a composer strip ("Créer une note…"), a small capture pebble at its left. From 1100px the docked navigation lists the collections, so the board shows no chips.
 

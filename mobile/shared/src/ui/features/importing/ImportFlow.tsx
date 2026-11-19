@@ -35,7 +35,7 @@ import { mix } from '@unlease/design/palette';
 import { SHAPES } from '@unlease/design/shapes';
 import type { GlyphName } from '@unlease/design/glyphs';
 
-import { AppText, Button, Checkbox, EdgeScrollView, EmptyLine, footEdge, Icon, ListRow, Organic, Tappable, TextField } from '../../components';
+import { AppText, Button, Checkbox, EdgeScrollView, EmptyLine, FilterChip, footEdge, Icon, ListRow, Organic, TextField } from '../../components';
 import { useKeyboardVisible } from '../../components/useKeyboardVisible';
 import { SwitchRow } from '../appearance/SwitchRow';
 import { Section } from '../settings/Section';
@@ -268,21 +268,6 @@ export function ImportPreview({ entries, choice, extra }: ImportPreviewProps) {
   );
 }
 
-function FilterChip({ checked, label, count, onPress }: { checked: boolean; label: string; count: number; onPress: () => void }) {
-  const styles = useThemedStyles(makeStyles);
-  const theme = useTheme();
-  return (
-    <Tappable accessibilityRole="radio" accessibilityState={{ checked }} accessibilityLabel={`${label}, ${count}`} onPress={onPress} style={[styles.chip, checked ? { backgroundColor: theme.color.actionContainer, borderColor: theme.color.actionContainer } : null]}>
-      <AppText variant="label" color={checked ? theme.color.onActionContainer : theme.color.ink}>
-        {label}
-      </AppText>
-      <AppText variant="label" color={checked ? theme.color.onActionContainer : theme.color.inkMuted}>
-        {String(count)}
-      </AppText>
-    </Tappable>
-  );
-}
-
 function PreviewItem({ entry, choice, extra, first }: { entry: PreviewEntry; choice?: PreviewChoice; extra?: (entry: PreviewEntry) => React.ReactNode; first: boolean }) {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
@@ -439,7 +424,6 @@ const makeStyles = (theme: Theme) =>
     // A count, not a choice: a small round well, never matcha, never a pebble; centred on its step's first line (23).
     stepNumber: { width: 24, height: 24, ...corners(SHAPES.dot), alignItems: 'center', justifyContent: 'center' },
     filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
-    chip: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40, paddingHorizontal: 14, borderWidth: 1, borderColor: theme.color.hairline, backgroundColor: theme.color.paper, ...corners(SHAPES.chip) },
     search: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
     item: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginHorizontal: 6, paddingHorizontal: 10, paddingVertical: 12 },
     // The box's target overhangs the 24 slot, so its words start where the glyphs' rows do.

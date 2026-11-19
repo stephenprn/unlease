@@ -1,0 +1,37 @@
+/* A filter among a few, a chip: its name and how many it keeps, the one chosen on the primary's wash. */
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--cut-chip);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chip[aria-checked='true'] {
+  border-color: transparent;
+  background: var(--action-container);
+  color: var(--on-action-container);
+}
+
+@media (hover: hover) {
+  .chip[aria-checked='false']:hover {
+    background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  }
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.count {
+  color: inherit;
+  opacity: 0.72;
+}

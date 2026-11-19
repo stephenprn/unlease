@@ -8,8 +8,9 @@
 import { useMemo } from 'react';
 
 import { t } from '@unlease/core/i18n';
+import { BOARD_FILTERS, keptByFilter, type BoardFilter } from '@unlease/notes/services/boardFilter';
 import { searchDocuments, type SearchDocument } from '@unlease/core/services/search';
-import type { Note } from '@unlease/notes/models/entities';
+import type { CheckItem, Note } from '@unlease/notes/models/entities';
 
 import { useLockOpen } from '@shared/app/lock';
 
@@ -39,7 +40,7 @@ const selectOrder = (s: LibraryState) => s.noteOrder;
 const isLive = (note: Note | undefined): note is Note => !!note && note.deletedAt === null;
 
 /** `open`: the lock is open, so the bin shows the protected notes binned too. */
-export function sectionsFor(view: BoardView, order: readonly string[], notes: LibraryState['notes'], now: number, open = false): BoardSections {
+export function sectionsFor(view: BoardView, order: readonly string[], notes: LibraryState['notes'], now: number, open = false, kept: ReadonlySet<string> | null = null): BoardSections {
   const all = order.map(id => notes[id]).filter(isLive);
   const result = (groups: { key: string; title: string | null; ids: string[] }[]): BoardSections => {
     const sections = groups.filter(group => group.ids.length > 0);
@@ -76,20 +77,60 @@ export function sectionsFor(view: BoardView, order: readonly string[], notes: Li
   const active = notTrashed.filter(n => !n.archived);
   const onBoard = view.startsWith('label:')
     ? active.filter(n => n.labelIds.includes(view.slice(6)))
-    : active.filter(n => n.kind !== 'links' || n.pinned);
+    : active.filter(n => (n.kind !== 'links' || n.pinned) && (kept === null || kept.has(n.id)));
   return result([
     { key: 'pinned', title: t('Pinned'), ids: onBoard.filter(n => n.pinned).map(n => n.id) },
     { key: 'others', title: onBoard.some(n => n.pinned) ? t('Others') : null, ids: onBoard.filter(n => !n.pinned).map(n => n.id) },
   ]);
 }
 
-export function useBoardSections(view: BoardView, now: number): BoardSections {
+/** The notes' board, narrowed by its filter: its chips' counts too (null in any other view). */
+export interface FilteredBoard extends BoardSections {
+  readonly counts: Readonly<Record<BoardFilter, number>> | null;
+}
+
+const itemsOf = (s: LibraryState, id: string): CheckItem[] => (s.checksByNote[id] ?? []).flatMap(cid => (s.checks[cid] ? [s.checks[cid]!] : []));
+
+/**
+ * The notes each filter keeps, as one string (its ids, filter by filter): an equal string draws
+ * nothing again, so an item ticked or typed elsewhere leaves the board as it is unless a filter changes.
+ */
+function keptKey(s: LibraryState, now: number): string {
+  const kept: Record<string, string[]> = {};
+  for (const filter of BOARD_FILTERS) if (filter !== 'all') kept[filter] = [];
+  for (const id of s.noteOrder) {
+    const note = s.notes[id];
+    if (!note || note.deletedAt !== null || note.trashedAt !== null || note.archived) continue;
+    const items = note.kind === 'checklist' ? itemsOf(s, id) : [];
+    for (const filter of Object.keys(kept)) if (keptByFilter(filter as BoardFilter, note, items, now)) kept[filter]!.push(id);
+  }
+  return Object.keys(kept)
+    .map(filter => `${filter}:${kept[filter]!.join(',')}`)
+    .join('|');
+}
+
+export function useBoardSections(view: BoardView, now: number, filter: BoardFilter = 'all'): FilteredBoard {
   const notes = useLibraryStore(selectNotes);
   const order = useLibraryStore(selectOrder);
   const open = useLockOpen();
-  // `now` is floored to the minute by the caller, so the reminders split moves
-  // at most once a minute instead of on every render.
-  return useMemo(() => sectionsFor(view, order, notes, now, open), [view, order, notes, now, open]);
+  const filtering = view === 'notes';
+  const keys = useLibraryStore(s => (filtering ? keptKey(s, now) : ''));
+  // `now` is floored to the minute by the caller, so the reminders split and the week move at most
+  // once a minute instead of on every render.
+  return useMemo(() => {
+    const board = sectionsFor(view, order, notes, now, open);
+    if (!filtering) return { ...board, counts: null };
+    const sets = new Map<string, ReadonlySet<string>>(
+      keys.split('|').map(part => {
+        const [name, ids] = part.split(':');
+        return [name!, new Set(ids ? ids.split(',') : [])];
+      }),
+    );
+    const shown = board.sections.flatMap(section => section.ids);
+    const counts = Object.fromEntries(BOARD_FILTERS.map(each => [each, each === 'all' ? board.total : shown.filter(id => sets.get(each)?.has(id)).length])) as Record<BoardFilter, number>;
+    const narrowed = filter === 'all' ? board : sectionsFor(view, order, notes, now, open, sets.get(filter) ?? new Set());
+    return { ...narrowed, counts };
+  }, [view, order, notes, now, open, filtering, keys, filter]);
 }
 
 /** Where a search looks: the live notes, the bin, or the protected section (its own search, the lock open). */

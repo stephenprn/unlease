@@ -10,7 +10,10 @@ import { TRASH_RETENTION_DAYS } from '@unlease/notes/models/entities';
 import type { CollageScene } from '@unlease/design/collage';
 import { t, tx } from '@unlease/core/i18n';
 
+import type { BoardFilter } from '@unlease/notes/services/boardFilter';
+
 import type { BoardView } from '../../../app/hooks/useBoard';
+import { Button } from '@shared/ui/components/Button';
 import { EmptyState } from '@shared/ui/components/EmptyState';
 import { NARROW, useMedia } from '@shared/ui/useMedia';
 
@@ -43,6 +46,13 @@ const NARROW_COPY: Partial<Record<Kind, { title: string; body: string }>> = {
   reminders: { title: tx('No reminders'), body: tx('The + button, at the bottom, creates a note and asks you when to remind you.') },
 };
 
+/** A filter that keeps nothing of a board that holds notes: what it would show, and the way back to all of them (the phone's). */
+const FILTER_COPY: Record<Exclude<BoardFilter, 'all'>, { title: string; body: string; scene: CollageScene }> = {
+  week: { title: tx('Nothing written this week'), body: tx('The notes and lists you write or change show here for seven days.'), scene: 'notes' },
+  todo: { title: tx('Nothing left to do'), body: tx('Lists with items left to tick, and notes with a reminder coming up or missed this week, show here.'), scene: 'reminders' },
+  lists: { title: tx('No lists'), body: tx('The lists you make show here.'), scene: 'notes' },
+};
+
 const SCENE: Record<Kind, CollageScene> = { notes: 'notes', reminders: 'reminders', archive: 'archive', trash: 'trash', protected: 'archive', label: 'label' };
 
 /** Under a keyboard, the keys that fill the board. */
@@ -53,8 +63,19 @@ const NOTE_KEYS = [
   { key: '?', label: tx('shortcuts') },
 ] as const;
 
-function EmptyBoardComponent({ view }: { view: BoardView }) {
+/** `filter`: the notes' filter, when it keeps nothing of notes there are. */
+function EmptyBoardComponent({ view, filter = 'all', onShowAll }: { view: BoardView; filter?: BoardFilter; onShowAll?: () => void }) {
   const narrow = useMedia(NARROW);
+  if (filter !== 'all') {
+    const copy = FILTER_COPY[filter];
+    return (
+      <EmptyState scene={copy.scene} title={t(copy.title)} text={t(copy.body)}>
+        <Button kind="tonal" onClick={onShowAll}>
+          {t('Show all notes')}
+        </Button>
+      </EmptyState>
+    );
+  }
   const kind: Kind = view.startsWith('label:') ? 'label' : (view as Kind);
   const copy = (narrow ? NARROW_COPY[kind] : undefined) ?? COPY[kind];
   return <EmptyState scene={SCENE[kind]} title={t(copy.title)} text={t(copy.body, { app: APP_NAME, days: TRASH_RETENTION_DAYS })} keys={view === 'notes' && !narrow ? NOTE_KEYS.map(item => ({ ...item, label: t(item.label) })) : undefined} />;

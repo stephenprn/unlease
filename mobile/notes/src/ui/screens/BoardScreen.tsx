@@ -16,6 +16,7 @@ import { INBOX_ID, INBOX_SHOWN_TITLE, TRASH_RETENTION_DAYS } from '@unlease/note
 import { isLockedNote } from '@unlease/notes/services/lock';
 import { NOTES_SETTINGS_PLACES } from '@unlease/notes/services/settingsPlaces';
 import { useBoardSections, useSearch, type BoardView } from '@app/hooks/useBoard';
+import type { BoardFilter } from '@unlease/notes/services/boardFilter';
 import { useMinute } from '@shared/app/hooks/useMinute';
 import { pickInto } from '@app/media';
 import { createNote, deleteForever, emptyTrash, restoreNotes, setArchived, setLocked, setPinned, trashLines, trashNotes, addCheck } from '@app/store/actions';
@@ -30,7 +31,7 @@ import { readClipboard } from '@shared/platform/clipboard';
 import { extractUrls } from '@unlease/core/services/url';
 
 import { AppText, Button, Dialog, EdgeScrollView, EmptyState, FAB_CLEARANCE, FabMenu, Ground, IconButton, usePullToSync } from '../components';
-import { BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
+import { BoardFilters, BoardHeader, LineChips, SyncLine } from '../features/board/BoardHeader';
 import { SelectionBar } from '../features/board/SelectionBar';
 import { BulkLabelsSheet } from '../features/board/BulkLabelsSheet';
 import { BulkColorSheet, onlyCollections } from '../features/board/BulkColorSheet';
@@ -92,7 +93,10 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   const columns = layout === 'wall' ? 2 : 1;
   const metrics = useWallMetrics(columns);
   const now = useMinute();
-  const { sections, total } = useBoardSections(view, now);
+  // The notes' board narrowed by its filter, for as long as the app runs (Back puts « Toutes » back).
+  const [filter, setFilter] = useState<BoardFilter>('all');
+  const { sections, total, counts } = useBoardSections(view, now, filter);
+  const filtered = counts !== null && filter !== 'all';
   // The protected section: its notes only once the lock is open, and nothing captured of the screen meanwhile.
   const lockOpen = useLockOpen();
   const fingerprint = useFingerprintOn();
@@ -103,17 +107,18 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
   // Back ends a search, then the narrowed board (a label, Rappels, Archives, Corbeille: back to the notes, as Contacts'
   // and Agenda's lists go back to all), before it leaves the app; only while the board is the screen shown, so it
   // never takes a note's Back. What is open over it (a sheet, a menu, the drawer, a selection) closes first, on its own.
-  const narrowed = view !== 'notes';
+  const narrowed = view !== 'notes' || filtered;
   useFocusEffect(
     useCallback(() => {
       if (!searching && !narrowed) return undefined;
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
         if (searching) setQuery('');
-        else navigation.setParams({ view: 'notes', label: undefined });
+        else if (view !== 'notes') navigation.setParams({ view: 'notes', label: undefined });
+        else setFilter('all');
         return true;
       });
       return () => subscription.remove();
-    }, [searching, narrowed, navigation]),
+    }, [searching, narrowed, navigation, view]),
   );
   const showCapture = view === 'notes' || view === 'reminders' || view.startsWith('label:') || (view === 'protected' && lockOpen);
 
@@ -272,6 +277,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
     <View>
       <SyncLine />
       {view === 'notes' && !searching ? <LineChips onOpenLine={openLine} onNewLine={newLine} selecting={selection.size > 0} /> : null}
+      {counts && counts.all > 0 && !searching ? <BoardFilters filter={filter} counts={counts} onFilter={setFilter} selecting={selection.size > 0} /> : null}
       {title && !searching ? (
         <View style={styles.viewTitle}>
           {/* A long label's name wraps rather than pushing what follows it off the screen. */}
@@ -344,7 +350,7 @@ export function BoardScreen({ navigation, route }: ScreenProps<'Board'>) {
           <LockPanel ghosts="notes" what={fingerprint ? t('Your protected notes open with your fingerprint or the password.') : t('Your protected notes open with the password.')} />
         </EdgeScrollView>
       ) : total === 0 && !searching ? (
-        <EmptyBoard view={view} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshControl={pullToSync} />
+        <EmptyBoard view={view} filter={filtered ? filter : 'all'} onShowAll={() => setFilter('all')} header={intro} bottomSpace={showCapture ? FAB_CLEARANCE + insets.bottom : insets.bottom} refreshControl={pullToSync} />
       ) : (
         <Wall
           sections={shown}

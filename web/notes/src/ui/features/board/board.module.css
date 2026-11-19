@@ -714,3 +714,30 @@
 .moreRow {
   padding-inline-start: 24px;
 }
+
+/* The board's filters, right over the wall: edge to edge, scrolling sideways under the board's margins as the collection chips do. */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 -24px 4px;
+  padding: 4px 24px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filters[data-resting] {
+  opacity: 0.4;
+}
+
+/* Under the composer, the composer's own 20 below it is room enough. */
+.composer + .filters {
+  margin-top: -8px;
+}

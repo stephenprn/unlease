@@ -1,8 +1,9 @@
 /**
  * The top of the board: the suite's search strip (`SearchHeader`, pinned), and under it, at the
  * head of the wall and scrolling away with it, the sync line, then a chip per collection (its
- * emblem, name and count) ending in a dashed "+ Collection". While notes are picked the selection
- * bar lies over the strip and the chips rest: nothing moves.
+ * emblem, name and count) ending in a dashed "+ Collection", then the board's filters (« Toutes »,
+ * « Cette semaine », « À faire », « Listes », each with its count). While notes are picked the
+ * selection bar lies over the strip and the chips rest: nothing moves.
  */
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,10 +15,11 @@ import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { plural } from '@unlease/core/services/format';
 import { INBOX_ID, shownTitle } from '@unlease/notes/models/entities';
+import { BOARD_FILTER_NAMES, BOARD_FILTERS, type BoardFilter } from '@unlease/notes/services/boardFilter';
 import { useLines } from '@app/hooks/useLines';
 import { useLibraryStore } from '@app/store/libraryStore';
 
-import { AppText, EdgeScrollView, EmblemStone, Icon, Organic, Tappable } from '../../components';
+import { AppText, EdgeScrollView, EmblemStone, FilterChip, Icon, Organic, Tappable } from '../../components';
 import { corners } from '@shared/ui/theme/shape';
 import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
@@ -75,11 +77,36 @@ const LineChip = memo(function LineChipView({ id, onPress }: { id: string; onPre
   );
 });
 
+export interface BoardFiltersProps {
+  readonly filter: BoardFilter;
+  readonly counts: Readonly<Record<BoardFilter, number>>;
+  readonly onFilter: (filter: BoardFilter) => void;
+  readonly selecting: boolean;
+}
+
+/** The board's filters, right over the wall they narrow: a radio group of chips, scrolling sideways when the screen is narrow. */
+function BoardFiltersComponent({ filter, counts, onFilter, selecting }: BoardFiltersProps) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View pointerEvents={selecting ? 'none' : 'auto'} style={selecting ? styles.resting : null}>
+      <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} accessibilityRole="radiogroup">
+        {BOARD_FILTERS.map(each => (
+          <FilterChip key={each} checked={filter === each} label={t(BOARD_FILTER_NAMES[each])} count={counts[each]} onPress={() => onFilter(each)} />
+        ))}
+      </EdgeScrollView>
+    </View>
+  );
+}
+
+export const BoardFilters = memo(BoardFiltersComponent);
+
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     // 12 under the strip with the header's own 6, as when the chips were pinned.
     lines: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 6, gap: 8, alignItems: 'center' },
     resting: { opacity: 0.4 },
+    // Under the collections' 6, 6 more: the two rows read apart; the wall's own top room follows.
+    filters: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 2, gap: 8, alignItems: 'center' },
     // It clips its press to its own shape.
     chip: { ...corners(SHAPES.chip), backgroundColor: `rgba(${parseHex(theme.color.paper).join(', ')}, 0.82)`, borderWidth: 1, borderColor: theme.color.hairline, maxWidth: 230, overflow: 'hidden' },
     // 42 inside the chip's own 1 edge: 44 in all, as tall as the dashed « + Collection » beside it (its edge drawn on its 44).

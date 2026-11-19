@@ -20,6 +20,7 @@ export { LIST_ROW_PITCH, ListRow } from './ListRow';
 export { NewItemField, type NewItemFieldProps } from './NewItemField';
 export { Menu, type MenuItem } from './Menu';
 export { CutFade, type CutFadeProps } from './CutFade';
+export { FilterChip, type FilterChipProps } from './FilterChip';
 export { MentionSuggestions, SUGGESTION_ROW, type SuggestionRow } from './MentionSuggestions';
 export { AnimatedOrganic, Organic, type OutlineKind } from './Organic';
 export { isPlacedRow, PanelRowCorner, panelRowCorner, PanelTappable, placedRow, placeOf, ROW_INSET, RowPanel, usePanelRowCorners, type RowPanelProps, type RowPlace } from './panelRows';
