@@ -26,7 +26,7 @@ import { dayWords, nowWords, WEATHER_GLYPHS, weatherAt, weatherKind } from '@unl
 import { minutesWords } from '@unlease/clock/services/words';
 import { dayPlace, openInApp } from '@shared/app/openApp';
 import { haptic } from '@shared/platform/haptics';
-import { AppText, Button, EdgeScrollView, Ground, Icon, Organic, Tappable } from '@shared/ui/components';
+import { AnimatedOrganic, AppText, Button, EdgeScrollView, Ground, Icon, Organic, Tappable } from '@shared/ui/components';
 import { withAlpha } from '@unlease/design/color';
 import { decelerate, duration, FLING_SPEED, spatial } from '@shared/ui/theme/motion';
 import { ThemeProvider, useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
@@ -35,7 +35,7 @@ import { fontFamily } from '@shared/ui/theme/typography';
 import { corners } from '@shared/ui/theme/shape';
 import { NO_RING, onRing, ringing, snooze, stop, unlock, type RingState } from '@platform/alarmEngine';
 import type { ClockWeatherResponse } from '@unlease/clock/sync/routes';
-import { SHAPES } from '@unlease/design/shapes';
+import { concentric, RADII, SHAPES } from '@unlease/design/shapes';
 
 import { bootstrap } from '@app/bootstrap';
 import { useClockUiStore } from '@app/store/clockUi';
@@ -62,7 +62,11 @@ const WHEN_WIDTH = 76;
 /** How far the pebble must go to stop the alarm. */
 const STOP_SHARE = 0.72;
 const TRACK_HEIGHT = 72;
-const PEBBLE = { width: 64, height: 58 };
+/** The thumb sits this far inside the track, its corners concentric with the track's. */
+const INSET = 6;
+const THUMB = { width: 76, height: TRACK_HEIGHT - INSET * 2 - 2 };
+const THUMB_RADIUS = concentric(RADII.bar, INSET);
+const THUMB_SHAPE: typeof SHAPES.track = [THUMB_RADIUS, THUMB_RADIUS, THUMB_RADIUS, THUMB_RADIUS];
 
 /** The time, again at each minute. */
 function useNow(): number {
@@ -303,16 +307,20 @@ function GlassButton({ icon, label, onPress }: { readonly icon: 'moon'; readonly
 }
 
 /**
- * « Arrêter »: the brand's pebble slid along its track to the end. It gives under the finger and
- * follows it 1:1; past the threshold it clicks, and let go there (or flung) it settles at the end and
- * the alarm stops; short of it, it springs back. Reduce Motion: no travel, a release past it stops.
+ * « Arrêter »: a matcha sheet slid along its track to the end. The track is the « Répéter » pane's
+ * tinted glass at the track's radius; the thumb sits 6 inside it, its corners concentric with the
+ * track's, and leaves a matcha trail filling the track behind it as it goes. It follows the finger
+ * 1:1; past the threshold it clicks, and let go there (or flung) it settles at the end and the alarm
+ * stops; short of it, it springs back. Untouched, it leans toward the end every few seconds: the way
+ * to go. Reduce Motion: no travel, a release past it stops.
  */
 function SlideToStop(): React.ReactElement {
   const styles = useThemedStyles(makeStyles);
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const reduced = useReducedMotion();
-  const travel = Math.max(1, width - 48 - PEBBLE.width - 14);
+  // The screen's 24 each side, the track's edges and the thumb's inset.
+  const travel = Math.max(1, width - 48 - 2 - INSET * 2 - THUMB.width);
   const x = useSharedValue(0);
   const passed = useSharedValue(false);
   const [held, setHeld] = useState(false);
@@ -354,14 +362,16 @@ function SlideToStop(): React.ReactElement {
     [click, done, passed, reduced, travel, x],
   );
 
-  // Untouched, every few seconds the pebble leans a little toward the end and comes back: the way to go. Reduce Motion: still.
+  // Untouched, every few seconds the thumb leans a little toward the end and comes back: the way to go. Reduce Motion: still.
   useEffect(() => {
     if (held || reduced) return undefined;
     x.value = withRepeat(withSequence(withDelay(2200, withTiming(18, { duration: 320, easing: decelerate })), withSpring(0, spatial)), -1, false);
     return () => cancelAnimation(x);
   }, [held, reduced, x]);
 
-  const pebbleStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  // The trail behind it, from the track's start to the thumb's end, stronger as it nears the end.
+  const trailStyle = useAnimatedStyle(() => ({ width: THUMB.width + x.value, opacity: 0.55 + 0.45 * Math.min(1, x.value / travel) }));
   const wordsStyle = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [0, travel * 0.5], [1, 0], 'clamp') }));
 
   return (
@@ -371,10 +381,11 @@ function SlideToStop(): React.ReactElement {
       accessible
       accessibilityRole="button"
       accessibilityLabel={t('Stop the alarm')}
-      accessibilityHint={t('Slide the pebble to the end')}
+      accessibilityHint={t('Slide the button to the end')}
       accessibilityActions={[{ name: 'activate', label: t('Stop') }]}
       onAccessibilityAction={done}
     >
+      <AnimatedOrganic shape={THUMB_SHAPE} pointerEvents="none" style={[styles.trail, trailStyle]} />
       <Animated.View style={[styles.trackWords, wordsStyle]} pointerEvents="none">
         <AppText variant="label" color={theme.color.ink}>
           {t('Slide to stop')}
@@ -382,8 +393,8 @@ function SlideToStop(): React.ReactElement {
         <Icon name="chevronRight" size={18} color={theme.color.ink} />
       </Animated.View>
       <GestureDetector gesture={pan}>
-        <Animated.View style={[styles.thumb, pebbleStyle]} hitSlop={12}>
-          <Organic pebble={1} pressed={held} style={[styles.pebble, { backgroundColor: theme.color.leaf }]}>
+        <Animated.View style={[styles.thumb, thumbStyle]} hitSlop={12}>
+          <Organic shape={THUMB_SHAPE} style={[styles.thumbSheet, held && styles.thumbHeld]}>
             <Icon name="bellOff" size={26} color={theme.color.onLeaf} />
           </Organic>
         </Animated.View>
@@ -432,10 +443,13 @@ function makeStyles(theme: Theme) {
       ...corners(SHAPES.button),
     },
     done: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 64 + 14 + TRACK_HEIGHT },
-    // Its edge drawn: on the night's ground the track alone is nearly the ground's own value.
-    track: { height: TRACK_HEIGHT, backgroundColor: theme.color.track, borderWidth: 1, borderColor: theme.color.edge, justifyContent: 'center', paddingHorizontal: 7 },
-    trackWords: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingLeft: PEBBLE.width },
-    thumb: { width: PEBBLE.width, height: PEBBLE.height },
-    pebble: { width: PEBBLE.width, height: PEBBLE.height, alignItems: 'center', justifyContent: 'center' },
+    // The « Répéter » pane's glass at the track's radius: the sea shows through.
+    track: { height: TRACK_HEIGHT, backgroundColor: withAlpha(theme.color.wall, 0.34), borderWidth: 1, borderColor: withAlpha(theme.color.ink, 0.3), justifyContent: 'center', paddingHorizontal: INSET },
+    trackWords: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingLeft: THUMB.width },
+    trail: { position: 'absolute', left: INSET, top: INSET, height: THUMB.height, backgroundColor: withAlpha(theme.color.leaf, 0.3) },
+    thumb: { width: THUMB.width, height: THUMB.height },
+    thumbSheet: { width: THUMB.width, height: THUMB.height, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.leaf },
+    // Held: a touch lighter, inside its own corners.
+    thumbHeld: { opacity: 0.88 },
   });
 }

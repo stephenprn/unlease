@@ -26,6 +26,6 @@ export const FR_RING: Dictionary = {
   '+ {count} more': '+ {count} autres',
   'View the day': 'Voir la journée',
   'Stop the alarm': 'Arrêter l’alarme',
-  'Slide the pebble to the end': 'Faites glisser le galet jusqu’au bout',
+  'Slide the button to the end': 'Faites glisser le bouton jusqu’au bout',
   'Slide to stop': 'Glisser pour arrêter',
 };
