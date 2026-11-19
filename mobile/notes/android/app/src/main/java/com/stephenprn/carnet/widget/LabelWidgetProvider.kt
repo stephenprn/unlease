@@ -25,7 +25,7 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
 
     val views = widgetViews(context, R.layout.widget_label)
     // Beside the tag (24) and its paddings, the list button (48) and the capture pebble (50).
-    WidgetType.title(context, views, R.id.label_name_image, R.id.label_name, data.optString("name"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 168f, 1, R.color.wgen_ink)
+    WidgetType.title(context, views, R.id.label_name_image, R.id.label_name, data.optString("name"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 168f, 1, R.color.wgen_ink, R.id.label_name_emoji)
     views.setContentDescription(R.id.label_open, data.optString("name"))
     WidgetKit.tint(context, views, R.id.label_tag, WidgetRes.pigments[data.optString("color")] ?: R.color.wgen_pigment_grey)
     views.setOnClickPendingIntent(R.id.label_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://label/$target"))

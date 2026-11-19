@@ -28,7 +28,7 @@ class CallsWidgetProvider : ContactsWidgetProvider() {
     val views = widgetViews(context, R.layout.widget_calls)
     val width = WidgetType.widthDp(manager, id)
     // Beside the mark (24), the chevron (20) and the head's paddings.
-    WidgetType.title(context, views, R.id.calls_title_image, R.id.calls_title, title, WidgetType.Face.TITLE, width - 84f, 1, R.color.wgen_ink)
+    WidgetType.title(context, views, R.id.calls_title_image, R.id.calls_title, title, WidgetType.Face.TITLE, width - 84f, 1, R.color.wgen_ink, R.id.calls_title_emoji)
     views.setContentDescription(R.id.calls_open, title)
     if (label) {
       views.setImageViewResource(R.id.calls_mark, R.drawable.wgen_tag)

@@ -36,6 +36,7 @@ class NoteWidgetProvider : CarnetWidgetProvider() {
         WidgetType.widthDp(manager, id) - if (list) 120f else 72f,
         2,
         if (title.isEmpty()) R.color.wgen_ink_muted else R.color.wgen_ink,
+        R.id.note_title_emoji,
     )
     // Drawn again over what it showed: a note without a wash takes the paper back.
     val wash = data.optString("wash").takeIf { it.isNotEmpty() && it != "null" }

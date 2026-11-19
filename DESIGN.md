@@ -1378,7 +1378,7 @@ Carnet's six (Actions rapides, Classer un lien, Collection, Notes d'un label, Li
 - **A capped list** runs to the sheet's edge and fades over its last 16 into what it lies on (`wgen_fade_paper`, tinted by a wash; `wgen_fade_ground` on a slab): its rows, cards or people pass under the fade, never stop short of the edge over bare ground; its foot padding (16) keeps the last one clear of the fade once scrolled to the end.
 
 **Type**
-- Titles (600 16/22) and field hints (400 16/23) are Signika set by the app as tinted images (`WidgetType.kt`), each with a plain twin in the system font (when it cannot be drawn, and in previews).
+- Titles (600 16/22) and field hints (400 16/23) are Signika set by the app as tinted images (`WidgetType.kt`), each with a plain twin in the system font (when it cannot be drawn, and in previews). A title the person wrote (a collection, a note, a label, an event) keeps its emoji in their own colours: they are drawn apart on an image laid over the tinted words (`WidgetEmoji.kt`), never as a silhouette in the ink.
 - List text is the system font at the scale's sizes: card body 15/21, row title medium 15/20, meta 13/18, text actions 14/18 in deep terracotta.
 
 **Controls**

@@ -111,7 +111,7 @@ class TodayWidgetProvider : AgendaWidgetProvider() {
     views.setViewVisibility(R.id.today_when, View.VISIBLE)
     views.setTextViewText(R.id.today_when, line(first, words, now, false))
     WidgetKit.textColor(context, views, R.id.today_when, if (runs) R.color.wgen_link else R.color.wgen_ink_muted)
-    WidgetType.title(context, views, R.id.today_title_image, R.id.today_title, first.optString("title"), WidgetType.Face.TITLE, room, 2, R.color.wgen_ink)
+    WidgetType.title(context, views, R.id.today_title_image, R.id.today_title, first.optString("title"), WidgetType.Face.TITLE, room, 2, R.color.wgen_ink, R.id.today_title_emoji)
     val others = day.rows.size - 1
     val place = first.optString("place")
     views.setTextViewText(R.id.today_more, if (others > 0) listOf(place, words.optString("more").replace("{count}", others.toString())).filter { it.isNotEmpty() }.joinToString(" · ") else place)

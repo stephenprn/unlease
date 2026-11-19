@@ -64,6 +64,14 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="2" />
+
+                <!-- Its emoji in their own colours, over the words' mask (WidgetEmoji). -->
+                <ImageView
+                    android:id="@+id/note_title_emoji"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <!-- The pen, as a lists widget's: the same glyph (22) in the same slot beside « + »; the whole head opens the note. -->

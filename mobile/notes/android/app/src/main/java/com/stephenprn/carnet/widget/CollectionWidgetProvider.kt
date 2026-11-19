@@ -24,7 +24,7 @@ class CollectionWidgetProvider : CarnetWidgetProvider() {
 
     val views = widgetViews(context, R.layout.widget_collection)
     // Beside the stone (44) and its paddings, and the "+" (48): what is left for the name and its chevron.
-    val titled = WidgetType.title(context, views, R.id.collection_title_image, R.id.collection_title, data.optString("title"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 152f, 1, R.color.wgen_ink)
+    val titled = WidgetType.title(context, views, R.id.collection_title_image, R.id.collection_title, data.optString("title"), WidgetType.Face.TITLE, WidgetType.widthDp(manager, id) - 152f, 1, R.color.wgen_ink, R.id.collection_title_emoji)
     views.setViewVisibility(R.id.collection_chevron, if (titled) View.VISIBLE else View.GONE)
     views.setTextViewText(R.id.collection_count, data.optString("count"))
     WidgetKit.stone(context, views, R.id.collection_stone, R.id.collection_emblem, data.optString("emblem"), data.optString("color"), data.optInt("turn"))

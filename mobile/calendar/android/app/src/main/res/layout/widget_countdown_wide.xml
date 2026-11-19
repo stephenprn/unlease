@@ -83,6 +83,14 @@
                     android:importantForAccessibility="no"
                     android:maxLines="1"
                     android:text="@string/widget_preview_event" />
+
+                <!-- Its emoji in their own colours, over the words' mask (WidgetEmoji). -->
+                <ImageView
+                    android:id="@+id/countdown_title_emoji"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <TextView

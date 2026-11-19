@@ -28,7 +28,7 @@ class NextWidgetProvider : AgendaWidgetProvider() {
       views.setOnClickPendingIntent(R.id.next_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://"))
       return views
     }
-    WidgetType.title(context, views, R.id.next_title_image, R.id.next_title, next.optString("title"), WidgetType.Face.TITLE, width - 40f, 2, R.color.wgen_ink)
+    WidgetType.title(context, views, R.id.next_title_image, R.id.next_title, next.optString("title"), WidgetType.Face.TITLE, width - 40f, 2, R.color.wgen_ink, R.id.next_title_emoji)
     val day = next.optString("day")
     val dayWords = when (day) {
       today -> context.getString(R.string.widget_today)

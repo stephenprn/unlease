@@ -58,6 +58,14 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1" />
+
+                <!-- Its emoji in their own colours, over the words' mask (WidgetEmoji). -->
+                <ImageView
+                    android:id="@+id/calls_title_emoji"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <ImageView

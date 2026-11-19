@@ -43,7 +43,7 @@ class ListsWidgetProvider : CarnetWidgetProvider() {
           else -> context.getString(if (list) R.string.widget_untitled_list else R.string.widget_untitled_note)
         }
     // Beside its paddings (6, 10, 8), the chevron (20) and the buttons.
-    val titled = WidgetType.title(context, views, R.id.lists_title_image, R.id.lists_title, shown, WidgetType.Face.TITLE, width - 50f - buttons, 1, if (note != null && title.isEmpty()) R.color.wgen_ink_muted else R.color.wgen_ink)
+    val titled = WidgetType.title(context, views, R.id.lists_title_image, R.id.lists_title, shown, WidgetType.Face.TITLE, width - 50f - buttons, 1, if (note != null && title.isEmpty()) R.color.wgen_ink_muted else R.color.wgen_ink, R.id.lists_title_emoji)
     views.setViewVisibility(R.id.lists_chevron, if (titled) View.VISIBLE else View.GONE)
     val meta = data.optString("meta")
     views.setTextViewText(R.id.lists_meta, meta)

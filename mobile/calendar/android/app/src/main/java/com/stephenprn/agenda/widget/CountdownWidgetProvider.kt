@@ -97,7 +97,7 @@ class CountdownWidgetProvider : AgendaWidgetProvider() {
         // The paddings (12 each), the stripe (5) and two gaps (12 each) aside; the count takes at most half of the rest.
         val room = width - 53f
         val taken = WidgetType.fitted(context, views, R.id.countdown_count_image, R.id.countdown_count, count.words, WidgetType.Face.COUNT, room / 2f, 20f, count.ink)
-        WidgetType.title(context, views, R.id.countdown_title_image, R.id.countdown_title, title, WidgetType.Face.TITLE, room - taken, 1, R.color.wgen_ink)
+        WidgetType.title(context, views, R.id.countdown_title_image, R.id.countdown_title, title, WidgetType.Face.TITLE, room - taken, 1, R.color.wgen_ink, R.id.countdown_title_emoji)
         views.setTextViewText(R.id.countdown_when, count.line)
         WidgetKit.tint(context, views, R.id.countdown_stripe, color)
       }
@@ -105,7 +105,7 @@ class CountdownWidgetProvider : AgendaWidgetProvider() {
         // The paddings (12 each), the stripe (5) and its gap (12) aside.
         val room = width - 41f
         WidgetType.fitted(context, views, R.id.countdown_count_image, R.id.countdown_count, count.words, WidgetType.Face.COUNT, room, 20f, count.ink)
-        WidgetType.title(context, views, R.id.countdown_title_image, R.id.countdown_title, title, WidgetType.Face.TITLE, room, 2, R.color.wgen_ink)
+        WidgetType.title(context, views, R.id.countdown_title_image, R.id.countdown_title, title, WidgetType.Face.TITLE, room, 2, R.color.wgen_ink, R.id.countdown_title_emoji)
         views.setTextViewText(R.id.countdown_when, count.line)
         WidgetKit.tint(context, views, R.id.countdown_stripe, color)
       }
