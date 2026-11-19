@@ -283,12 +283,19 @@ class ScrollEdgesView(context: Context) : ReactViewGroup(context) {
     super.requestChildFocus(child, focused)
   }
 
-  /** The scroll nearest to `from` that shows the field's caret line clear of the edges. */
+  /**
+   * The scroll nearest to `from` that shows the field's caret line clear of the edges. The line is
+   * taken as the field itself brings it into view at each letter typed (TextView's `bringPointIntoView`):
+   * with the field's padding above its first line and below its last. Without it, the first letter
+   * typed after the keyboard rose moved the page again by that padding.
+   */
   private fun caretInSight(list: ViewGroup, field: EditText, from: Int): Int {
     val layout = field.layout ?: return list.scrollY
     val line = layout.getLineForOffset(max(0, field.selectionEnd))
     caretRect.set(0, layout.getLineTop(line), field.width, layout.getLineBottom(line))
     caretRect.offset(field.totalPaddingLeft - field.scrollX, field.totalPaddingTop - field.scrollY)
+    if (line == 0) caretRect.top -= field.extendedPaddingTop
+    if (line == layout.lineCount - 1) caretRect.bottom += field.extendedPaddingBottom
     try {
       list.offsetDescendantRectToMyCoords(field, caretRect)
     } catch (_: IllegalArgumentException) {
