@@ -76,7 +76,7 @@ describe('the ringing window', () => {
     expect(textOf(tree)).toContain('Répétée jusqu’à 07:40');
   });
 
-  it('keeps « Toute la journée » whole in the time column and counts the events past four', async () => {
+  it('keeps « Toute la journée » whole in the time column and counts the events past three', async () => {
     const base = { description: '', place: '', timeZone: '', rrule: '', exdates: [], recurringId: null, originalStart: '', reminders: [], labelIds: [], contactIds: [], files: [], feedId: null, uid: '', url: '', color: null, dayOff: false, trashedAt: null, createdAt: 1, deletedAt: null };
     const event = (id: string, title: string, start: string, end: string) => ({ type: 'calendarEvent', id, patch: eventFields({ ...base, title, start, end } as Omit<CalendarEvent, 'id' | 'editedAt'>) });
     await act(async () => {
@@ -90,10 +90,10 @@ describe('the ringing window', () => {
     });
     const text = textOf(tree);
     expect(text).toContain('Salon à Lyon');
-    // The all-day row, its words on two lines rather than cut; four rows, then what is left counted.
+    // The all-day row, its words on two lines rather than cut; three rows, then what is left counted.
     const allDay = tree.root.find(node => node.props.children === 'Toute la journée' && typeof node.props.numberOfLines === 'number');
     expect(allDay.props.numberOfLines).toBe(2);
-    expect(text).toContain('+ 2 autres');
+    expect(text).toContain('+ 3 autres');
   });
 
   it('shows no weather when the alarm asks for none, and the day alone', async () => {

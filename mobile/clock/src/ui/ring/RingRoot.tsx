@@ -2,9 +2,11 @@
  * The ringing window (`ringWindow` in index.js; `alarm/RingActivity` shows it over the lock screen,
  * turning the screen on). What it serves: someone woken in a dark room, eyes half open, the phone at
  * arm's length. So it is always the night theme on the night ground (a white screen at dawn blinds),
- * the time large enough to read without glasses, then the morning in one calm panel (the weather where
- * the phone is, the day's events from Agenda, « Voir la journée »), each only when the alarm asks for
- * it; and in the thumb's reach, « Répéter », one large tap, and « Arrêter », a pebble slid along its
+ * the time large enough to read without glasses, then the morning in a few lines set straight on the
+ * night, no card (the weather where the phone is, the day's next events from Agenda, « Voir la
+ * journée »), each only when the alarm asks for it, so the sun coming up under them stays in sight;
+ * and in the thumb's reach, « Répéter », one large tap on a pane of tinted glass the sunrise shows
+ * through, and « Arrêter », a pebble slid along its
  * track, so a pocket or a sleepy hand never stops an alarm by accident (TalkBack: the track is a
  * button). The sound, the vibration and the notification's own buttons are the engine's: this window
  * only draws and answers, and closes once the alarm is snoozed or stopped, wherever that was done.
@@ -24,11 +26,13 @@ import { dayWords, nowWords, WEATHER_GLYPHS, weatherAt, weatherKind } from '@unl
 import { minutesWords } from '@unlease/clock/services/words';
 import { dayPlace, openInApp } from '@shared/app/openApp';
 import { haptic } from '@shared/platform/haptics';
-import { AppText, Button, EdgeScrollView, Ground, Icon, Organic } from '@shared/ui/components';
+import { AppText, Button, EdgeScrollView, Ground, Icon, Organic, Tappable } from '@shared/ui/components';
+import { withAlpha } from '@unlease/design/color';
 import { decelerate, duration, FLING_SPEED, spatial } from '@shared/ui/theme/motion';
 import { ThemeProvider, useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { fontFamily } from '@shared/ui/theme/typography';
+import { corners } from '@shared/ui/theme/shape';
 import { NO_RING, onRing, ringing, snooze, stop, unlock, type RingState } from '@platform/alarmEngine';
 import type { ClockWeatherResponse } from '@unlease/clock/sync/routes';
 import { SHAPES } from '@unlease/design/shapes';
@@ -52,7 +56,7 @@ const TEST_ID = '__test__';
 /** As it rings, the forecast is asked again for this long at most: what was kept shows meanwhile. */
 const RING_WEATHER_MS = 4000;
 /** The day's events shown before « + n autres ». */
-const SHOWN_EVENTS = 4;
+const SHOWN_EVENTS = 3;
 /** The events' time column, at the font's own scale. */
 const WHEN_WIDTH = 76;
 /** How far the pebble must go to stop the alarm. */
@@ -184,15 +188,13 @@ function RingWindow(): React.ReactElement {
         </Animated.View>
 
         {(morning || ahead) && !snoozed ? (
-          <Animated.View entering={still ? undefined : ARRIVE_LATER} style={styles.panelHost}>
-          <Organic outline="panel" style={styles.panel}>
-            {/* A small screen at a large font scale: the panel gives way to the time and the actions, and what it holds scrolls, its cut end fading. */}
-            <EdgeScrollView capped style={styles.panelScroll} contentContainerStyle={styles.panelContent}>
+          <Animated.View entering={still ? undefined : ARRIVE_LATER} style={styles.briefHost}>
+            {/* No card: a few lines on the night, so the sunrise under them stays in sight. A small screen at a large font scale: they give way to the time and the actions, and scroll, their cut end fading. */}
+            <EdgeScrollView capped style={styles.briefScroll} contentContainerStyle={styles.brief}>
               {morning ? <WeatherRow morning={morning} /> : null}
               {morning && ahead ? <View style={styles.rule} /> : null}
               {ahead ? <DayList ahead={ahead} now={now} twelveHours={prefs.twelveHours} onViewDay={viewDay} /> : null}
             </EdgeScrollView>
-          </Organic>
           </Animated.View>
         ) : null}
 
@@ -205,7 +207,7 @@ function RingWindow(): React.ReactElement {
             </View>
           ) : stopped ? null : (
             <>
-              <Button kind="tonal" icon="moon" label={t('Snooze · {minutes}', { minutes: minutesWords(prefs.snoozeMinutes) })} onPress={snooze} style={styles.snooze} />
+              <GlassButton icon="moon" label={t('Snooze · {minutes}', { minutes: minutesWords(prefs.snoozeMinutes) })} onPress={snooze} />
               <SlideToStop />
             </>
           )}
@@ -222,10 +224,16 @@ function WeatherRow({ morning }: { readonly morning: NonNullable<ReturnType<type
   const kind = morning.now ? weatherKind(morning.now.code) : morning.kind;
   return (
     <View style={styles.weather} accessible accessibilityLabel={[nowWords(morning), morning.day ? dayWords(morning.day) : ''].filter(Boolean).join(', ')}>
-      <Icon name={WEATHER_GLYPHS[kind]} size={28} color={theme.color.ink} />
+      <Icon name={WEATHER_GLYPHS[kind]} size={24} color={theme.color.waiting} />
       <View style={styles.grow}>
-        <AppText variant="bodyStrong">{nowWords(morning)}</AppText>
-        {morning.day ? <AppText variant="meta">{dayWords(morning.day)}</AppText> : null}
+        <AppText variant="bodyStrong" style={styles.lifted}>
+          {nowWords(morning)}
+        </AppText>
+        {morning.day ? (
+          <AppText variant="meta" color={theme.color.inkMuted} style={styles.lifted}>
+            {dayWords(morning.day)}
+          </AppText>
+        ) : null}
       </View>
     </View>
   );
@@ -247,26 +255,27 @@ function DayList({ ahead, now, twelveHours, onViewDay }: { readonly ahead: NonNu
   const more = rows.length - shown.length;
   return (
     <View style={styles.day}>
-      <AppText variant="section">{t('Today')}</AppText>
       {shown.length === 0 ? (
-        <AppText variant="body" color={theme.color.inkMuted}>
+        <AppText variant="body" color={theme.color.inkMuted} style={styles.lifted}>
           {t('Nothing in your calendar today.')}
         </AppText>
       ) : (
         shown.map(row => (
           <View key={row.key} style={styles.event}>
             {/* « Toute la journée » takes two lines in the column rather than being cut. */}
-            <AppText variant={row.now ? 'bodyStrong' : 'body'} color={theme.color.inkMuted} style={[styles.when, { width: whenWidth }]} numberOfLines={row.allDay ? 2 : 1}>
+            <AppText variant={row.now ? 'bodyStrong' : 'body'} color={row.now ? theme.color.waiting : theme.color.inkMuted} style={[styles.when, styles.lifted, { width: whenWidth }]} numberOfLines={row.allDay ? 2 : 1}>
               {row.when}
             </AppText>
-            <AppText variant={row.now ? 'bodyStrong' : 'body'} style={styles.grow} numberOfLines={1}>
+            <AppText variant={row.now ? 'bodyStrong' : 'body'} style={[styles.grow, styles.lifted]} numberOfLines={1}>
               {row.title}
             </AppText>
           </View>
         ))
       )}
       <View style={styles.dayFoot}>
-        <AppText variant="meta">{more === 1 ? t('+ 1 more') : more > 1 ? t('+ {count} more', { count: more }) : ''}</AppText>
+        <AppText variant="meta" color={theme.color.inkMuted} style={styles.lifted}>
+          {more === 1 ? t('+ 1 more') : more > 1 ? t('+ {count} more', { count: more }) : ''}
+        </AppText>
         <Button kind="text" label={t('View the day')} onPress={onViewDay} small />
       </View>
     </View>
@@ -274,6 +283,24 @@ function DayList({ ahead, now, twelveHours, onViewDay }: { readonly ahead: NonNu
 }
 
 const titleOf = (item: Occurrence): string => item.event.title.trim() || t('Untitled');
+
+/**
+ * « Répéter » over the sunrise: a pane of tinted glass (a veil of the night, a hairline of light round
+ * it) the sun shows through, its words and moon in the ink. One large tap, the whole width; pressed,
+ * it tints inside its own corners as every control does.
+ */
+function GlassButton({ icon, label, onPress }: { readonly icon: 'moon'; readonly label: string; readonly onPress: () => void }): React.ReactElement {
+  const styles = useThemedStyles(makeStyles);
+  const theme = useTheme();
+  return (
+    <Tappable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={styles.glass}>
+      <Icon name={icon} size={20} color={theme.color.ink} />
+      <AppText variant="labelStrong" color={theme.color.ink} style={styles.lifted}>
+        {label}
+      </AppText>
+    </Tappable>
+  );
+}
 
 /**
  * « Arrêter »: the brand's pebble slid along its track to the end. It gives under the finger and
@@ -375,22 +402,35 @@ function makeStyles(theme: Theme) {
     time: { marginTop: 24, fontFamily: fontFamily(theme, 'SemiBold'), fontSize: 96, lineHeight: 108, letterSpacing: -2, color: theme.color.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
     label: { textAlign: 'center' },
     center: { textAlign: 'center' },
-    above: { flexGrow: 2, maxHeight: '16%' },
+    above: { flexGrow: 2, maxHeight: '9%' },
     below: { flexGrow: 3, minHeight: 24 },
-    panelHost: { marginTop: 32, flexShrink: 1 },
-    panel: { flexShrink: 1, backgroundColor: theme.color.paper, borderColor: theme.color.hairline, borderWidth: 1, overflow: 'hidden' },
-    panelScroll: { flexGrow: 0, flexShrink: 1 },
-    panelContent: { paddingHorizontal: 18, paddingVertical: 16 },
-    weather: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 48 },
+    // The morning's lines: a column as wide as a hand, centred under the time, set on the night.
+    briefHost: { marginTop: 22, flexShrink: 1, alignSelf: 'center', width: '100%', maxWidth: 360 },
+    briefScroll: { flexGrow: 0, flexShrink: 1 },
+    brief: { paddingHorizontal: 8 },
+    // Lifted off the sun's glow behind: a soft shadow of the night under the words.
+    lifted: { textShadowColor: withAlpha(theme.color.wall, 0.85), textShadowRadius: 10, textShadowOffset: { width: 0, height: 1 } },
+    weather: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
     grow: { flex: 1 },
-    rule: { height: 1, backgroundColor: theme.color.hairline, marginVertical: 14 },
-    day: { gap: 8 },
-    event: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 28 },
+    rule: { height: 1, backgroundColor: theme.color.hairline, marginVertical: 10 },
+    day: { gap: 4 },
+    event: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 26 },
     when: { fontVariant: ['tabular-nums'] },
     dayFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
     actions: { gap: 14 },
-    // One large tap, the whole width in the thumb's reach.
-    snooze: { minHeight: 64, alignSelf: 'stretch' },
+    // One large tap, the whole width in the thumb's reach: tinted glass the sunrise shows through.
+    glass: {
+      minHeight: 64,
+      alignSelf: 'stretch',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      backgroundColor: withAlpha(theme.color.wall, 0.34),
+      borderWidth: 1,
+      borderColor: withAlpha(theme.color.ink, 0.3),
+      ...corners(SHAPES.button),
+    },
     done: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 64 + 14 + TRACK_HEIGHT },
     // Its edge drawn: on the night's ground the track alone is nearly the ground's own value.
     track: { height: TRACK_HEIGHT, backgroundColor: theme.color.track, borderWidth: 1, borderColor: theme.color.edge, justifyContent: 'center', paddingHorizontal: 7 },
