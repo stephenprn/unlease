@@ -17,6 +17,7 @@ import { isEditable } from '@shared/ui/dom';
 import { useFrameTime } from '../../app/hooks/useTick';
 import { lapStopwatch, pauseStopwatch, resetStopwatch, startStopwatch, useToolsStore } from '../../app/store/tools';
 import styles from '../clock.module.css';
+import { RollingFigure } from '../features/stopwatch/RollingFigure';
 import { StopwatchDial } from '../features/stopwatch/StopwatchDial';
 import tools from '../features/tools.module.css';
 
@@ -70,6 +71,12 @@ export function StopwatchScreen() {
   const longest = useMemo(() => rows.reduce((most, row) => Math.max(most, row.lap), 0), [rows]);
   // The laps there as the page opened stay still; one taken here slides in.
   const [seen] = useState(watch.laps.length);
+  // « Démarrer » alone at zero; started, it narrows to its half as « Tour » settles in beside it. The
+  // second button's word (« Tour » running, « Réinitialiser » paused) is kept as it fades away.
+  const two = running || !reset;
+  const [secondKind, setSecondKind] = useState<'lap' | 'reset'>(running || reset ? 'lap' : 'reset');
+  const wanted = running ? 'lap' : 'reset';
+  if (two && wanted !== secondKind) setSecondKind(wanted);
 
   return (
     <div className={`${styles.screen} ${tools.watchScreen}`}>
@@ -77,7 +84,9 @@ export function StopwatchScreen() {
       <div className={tools.face} role="timer" aria-label={reset ? t('Stopwatch at zero') : stopwatchSentence(total)}>
         <StopwatchDial watch={watch} now={now}>
         <p className={tools.figure} aria-hidden="true" data-held={(!running && !reset) || undefined}>
-          <span className={tools.figureMain}>{main}</span>
+          <span className={tools.figureMain}>
+            <RollingFigure text={main} />
+          </span>
           <span className={tools.figureHundredths}>{`${getLocale() === 'fr' ? ',' : '.'}${hundredths}`}</span>
         </p>
         <p className={`${tools.lapNow} t-body-strong`} aria-hidden="true">
@@ -86,25 +95,29 @@ export function StopwatchScreen() {
         </StopwatchDial>
       </div>
 
-      <div className={tools.watchActions}>
-        {running ? (
-          <Button kind="tonal" icon="flag" stretch onClick={() => lapStopwatch()}>
-            {t('Lap')}
-          </Button>
-        ) : reset ? null : (
-          <Button kind="tonal" icon="restore" stretch onClick={resetStopwatch}>
-            {t('Reset')}
-          </Button>
-        )}
-        {running ? (
-          <Button icon="pause" stretch onClick={() => pauseStopwatch()}>
-            {t('Pause')}
-          </Button>
-        ) : (
-          <Button icon="go" stretch onClick={() => startStopwatch()}>
-            {reset ? tc('timer', 'Start') : t('Resume')}
-          </Button>
-        )}
+      <div className={tools.watchActions} data-two={two || undefined}>
+        <div className={tools.watchSecond} inert={!two || undefined} aria-hidden={!two || undefined}>
+          {secondKind === 'lap' ? (
+            <Button kind="tonal" icon="flag" stretch onClick={() => lapStopwatch()}>
+              {t('Lap')}
+            </Button>
+          ) : (
+            <Button kind="tonal" icon="restore" stretch onClick={resetStopwatch}>
+              {t('Reset')}
+            </Button>
+          )}
+        </div>
+        <div className={tools.watchFirst}>
+          {running ? (
+            <Button icon="pause" stretch onClick={() => pauseStopwatch()}>
+              {t('Pause')}
+            </Button>
+          ) : (
+            <Button icon="go" stretch onClick={() => startStopwatch()}>
+              {reset ? tc('timer', 'Start') : t('Resume')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {rows.length > 0 ? (

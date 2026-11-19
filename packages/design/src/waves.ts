@@ -45,7 +45,11 @@ export interface Ring {
   readonly amplitude: number;
   /** Crests round the whole ring (about: they are uneven). */
   readonly waves: number;
-  /** Where the crests stand, in radians: advancing it runs them round, and changes their shape as they go. */
+  /**
+   * Where the crests stand, in radians: advancing it runs them round, and changes their shape as they
+   * go. Keep it running on, never wrapped at a turn: its shape turns at other paces than its crests,
+   * so a wrap shows as a jump.
+   */
   readonly phase: number;
   /** Which hand drew it: two seeds, two rings that never match. */
   readonly seed?: number;

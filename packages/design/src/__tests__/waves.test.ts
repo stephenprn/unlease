@@ -21,6 +21,16 @@ describe('the wave', () => {
     expect(organicRing({ ...wavy, seed: 2 })).not.toBe(organicRing(wavy));
   });
 
+  it('moves only a little for a little more phase, however far it has run: nothing ever jumps', () => {
+    const wavy = { ...ring, amplitude: 5 };
+    for (const phase of [0, Math.PI * 2 - 0.001, 1000, 54_321.5]) {
+      for (let index = 0; index < 72; index += 1) {
+        const angle = (index / 72) * Math.PI * 2;
+        expect(Math.abs(organicRadius({ ...wavy, phase: phase + 0.002 }, angle) - organicRadius({ ...wavy, phase }, angle))).toBeLessThan(0.1);
+      }
+    }
+  });
+
   it('lays a brush arc whose tip is the ring’s point there, and nothing for nothing', () => {
     expect(brushRing(ring, 8, 0, 0)).toBe('');
     const arc = brushRing(ring, 8, 0, 0.25);
