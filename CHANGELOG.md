@@ -4,6 +4,10 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Fixed
+
+- A file joined to an Agenda event, and a PDF, video or file in a page, opens straight in your phone's app for its type (a PDF viewer, the gallery, an office app) on Android. It no longer sends you to the web app in the browser, and Pages no longer says « Ce fichier s’ouvre depuis la version web ». The file is fetched from your server with the app's own connection, kept for a day so a second tap opens at once, and opened from the phone's own copy while it waits to upload.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

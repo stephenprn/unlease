@@ -41,7 +41,6 @@ export const FR_PHONE: Dictionary = {
   'No app on this phone opens it.': 'Aucune application ne l’ouvre sur ce téléphone.',
   'No date recognised: the event will be today.': 'Aucune date reconnue : l’événement sera pour aujourd’hui.',
   'No idea kept for {name} in “Gifts”.': 'Aucune idée gardée pour {name} dans « Cadeaux ».',
-  'This file opens once it is sent to the server.': 'Ce fichier s’ouvre une fois envoyé au serveur.',
   'This event': 'Cet événement',
   'This event is in the bin.': 'Cet événement est dans la corbeille.',
   'This and following events': 'Cet événement et les suivants',

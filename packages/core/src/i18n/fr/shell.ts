@@ -596,6 +596,12 @@ export const FR_SHELL: Dictionary = {
   'Server token': 'Jeton du serveur',
   'The same one you connect with. {where}': 'Le même que pour vous connecter. {where}',
   'To confirm, type {word}': 'Pour confirmer, tapez {word}',
+  // A kept file (an event's, a page's) opened in the phone's app for its type (mobile/shared, openKeptFile).
+  'Couldn’t fetch this file from the server': 'Impossible de récupérer ce fichier sur le serveur',
+  'Couldn’t open this file': 'Impossible d’ouvrir ce fichier',
+  'No app on this phone opens this kind of file.': 'Aucune application de ce téléphone n’ouvre ce type de fichier.',
+  'Opening {name}…': 'Ouverture de {name}…',
+  'This file opens once it is sent to the server.': 'Ce fichier s’ouvre une fois envoyé au serveur.',
   // An app's copy into the phone's own address book or calendar (PhoneMirrorRows)
   'On this phone': 'Sur ce téléphone',
   'Permission refused': 'Autorisation refusée',

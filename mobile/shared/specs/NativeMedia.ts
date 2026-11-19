@@ -1,7 +1,8 @@
 /**
  * Photo picker, camera, Takeout zip and any one document (a backup archive). Everything comes back
  * as a file already copied into app storage (no lapsing content URIs); `status` is 'ok',
- * 'cancelled' or 'error'. One way out too: a file the app made, saved where the person chooses.
+ * 'cancelled' or 'error'. Two ways out too: a file the app made, saved where the person chooses; and
+ * a kept file (the server's, or this phone's copy before it uploads) opened in the app that reads it.
  */
 import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
@@ -63,6 +64,12 @@ export interface Spec extends TurboModule {
   readText(path: string): Promise<string>;
   /** Offers to save a file the app made, through Android's own save screen (no permission): its bytes as base64. */
   saveFile(name: string, mime: string, base64: string): Promise<SavedFile>;
+  /**
+   * Opens a file in the phone's app for its type: `source` is the server's address (fetched with
+   * `authorization`, kept in the cache under `id` so a second open is instant) or a path in app storage.
+   * `status`: 'ok', 'none' (no app reads this type) or 'error'.
+   */
+  openFile(id: string, source: string, authorization: string, name: string, mime: string): Promise<SavedFile>;
   /** Paths outside app storage are refused. */
   remove(path: string): Promise<boolean>;
 }

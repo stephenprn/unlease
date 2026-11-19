@@ -4,4 +4,5 @@
 <paths>
     <files-path name="photos" path="photos/" />
     <cache-path name="shared" path="shared/" />
+    <cache-path name="opened" path="opened/" />
 </paths>

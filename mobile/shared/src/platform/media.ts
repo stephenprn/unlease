@@ -1,6 +1,6 @@
 /**
- * Photos, the Keep archive and a backup archive, through the Media TurboModule; and a file the app
- * made, saved where the person chooses.
+ * Photos, the Keep archive and a backup archive, through the Media TurboModule; a file the app
+ * made, saved where the person chooses; and a kept file opened in the app that reads its type.
  */
 import { t } from '@unlease/core/i18n';
 
@@ -40,6 +40,19 @@ const ARCHIVE_TYPES = ['application/gzip', 'application/x-gzip', 'application/x-
 export async function pickBackupArchive(): Promise<PickedFile> {
   if (!NativeMedia) return { status: 'error', message: t('File picker unavailable'), path: '', name: '', bytes: 0 };
   return NativeMedia.pickFile(ARCHIVE_TYPES);
+}
+
+export type OpenedFile = 'ok' | 'none' | 'error';
+
+/** A kept file opened in the phone's app for its type: from `source`, an address fetched with `authorization` or a path in app storage. */
+export async function openFile(id: string, source: string, authorization: string, name: string, mime: string): Promise<OpenedFile> {
+  if (!NativeMedia) return 'error';
+  try {
+    const result = await NativeMedia.openFile(id, source, authorization, name, mime);
+    return result.status === 'ok' || result.status === 'none' ? result.status : 'error';
+  } catch {
+    return 'error';
+  }
 }
 
 export async function readText(path: string): Promise<string> {

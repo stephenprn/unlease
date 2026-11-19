@@ -2,7 +2,7 @@
  * One event, at one of its occurrences: its colour and title, when (how near, how it repeats, its zone
  * when not the phone's), where (a tap opens it in the maps app chosen, else offers the phone's maps
  * apps, `openPlace`; a long press copies it; the weather of that day beside it), who with (each face and name a tap into Contacts), its reminders, labels and calendar, its description (mentions open their app),
- * its files and address; « Mentionné dans » the pages and notes; « Créer une page de notes » in Pages,
+ * its files (each opened in the phone's app for its type) and address; « Mentionné dans » the pages and notes; « Créer une page de notes » in Pages,
  * and for an event still to come at an hour « Me réveiller pour cet événement », Clock's new alarm linked to it.
  * The bar: edit, and a menu (duplicate, delete, with the scope a repeating event asks). A subscribed
  * calendar's event is read-only: « Copier dans mon agenda » stands on the line that says so.
@@ -38,6 +38,7 @@ import { useMinute } from '@shared/app/hooks/useMinute';
 import { alarmForEventPlace, contactPlace, openInApp, pagePlace } from '@shared/app/openApp';
 import { selectServer, selectServerApps, useSettingsStore } from '@shared/app/store/settingsStore';
 import { showSnack } from '@shared/app/store/uiStore';
+import { openKeptFile } from '@shared/app/openFile';
 import { openPlace } from '@shared/app/openPlace';
 import { mapsChoiceName, useMapsChoice } from '@shared/app/store/mapsStore';
 import { copyText } from '@shared/platform/clipboard';
@@ -185,15 +186,6 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
     { label: own ? t('Duplicate') : t('Copy to my calendar'), icon: 'copy', onPress: copy },
     ...(own && !trashed ? [{ label: t('Delete'), icon: 'trash' as const, danger: true, onPress: () => (asksScope(occurrence) ? setScoping(true) : remove('all')) }] : []),
   ];
-
-  const openFile = (uploaded: boolean): void => {
-    if (!uploaded || !server) {
-      showSnack(t('This file opens once it is sent to the server.'), undefined, { tone: 'info' });
-      return;
-    }
-    // The server sends a file with the token in a header only: the web app opens it.
-    later(Linking.openURL(`${server.url}/agenda/event/${encodeURIComponent(occurrence.seriesId)}`));
-  };
 
   return (
     <View style={styles.screen}>
@@ -347,7 +339,7 @@ export function EventScreen({ navigation, route }: ScreenProps<'Event'>) {
               </Line>
             ) : null}
             {event.files.map(file => (
-              <Line key={file.id} icon={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} label={file.name} single={file.uploaded} onPress={() => openFile(file.uploaded)}>
+              <Line key={file.id} icon={file.mime.startsWith('image/') ? 'image' : file.mime === 'application/pdf' ? 'pdf' : 'file'} label={file.name} single={file.uploaded} onPress={() => later(openKeptFile(file))}>
                 <AppText variant="body" numberOfLines={1}>
                   {file.name}
                 </AppText>

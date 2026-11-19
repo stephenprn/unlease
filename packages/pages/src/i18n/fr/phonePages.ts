@@ -99,7 +99,6 @@ export const FR_PHONE_PAGES: Dictionary = {
   'Play the video on {site}': 'Lire la vidéo sur {site}',
   'Open {name}': 'Ouvrir {name}',
   'not uploaded yet': 'pas encore envoyé',
-  'For now, this file opens from the web version.': 'Ce fichier s’ouvre depuis la version web, pour l’instant.',
 
   // PageSheets
   'Basic blocks': 'Blocs de base',

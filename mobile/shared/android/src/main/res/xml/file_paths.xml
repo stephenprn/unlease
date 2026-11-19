@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The one directory a FileProvider URI may point into: the camera's photo before import. -->
+<!-- Where a FileProvider URI may point: the camera's photo before import, and a kept file opened in
+     the app that reads it (MediaModule.openFile, in the cache). -->
 <paths>
     <files-path name="photos" path="photos/" />
+    <cache-path name="opened" path="opened/" />
 </paths>

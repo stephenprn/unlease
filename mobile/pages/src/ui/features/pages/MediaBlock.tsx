@@ -2,7 +2,7 @@
  * A picture, a video, a PDF or a file in a page, on the phone: uploaded (kept on this phone until
  * the server has it) or shown from its address. A picture lies in its frame at its own proportion
  * and opens full screen; a video site's address opens in its own app; a file shows its name and
- * size. Empty, it offers the system's picker or an address. The address sheet lives once at the
+ * size, and opens in the phone's app for its type. Empty, it offers the system's picker or an address. The address sheet lives once at the
  * page's root (`MediaHost`), as sheets must.
  */
 import React, { memo, useState } from 'react';
@@ -18,6 +18,7 @@ import { displayHost, extractUrls, isHttpUrl } from '@unlease/core/services/url'
 import { useBlobSource, type ImageSource } from '@shared/app/hooks/useImageSource';
 import { attachPickedDocument, attachPickedImage } from '@app/pageFiles';
 import { setMediaUrl } from '@app/store/pages';
+import { openKeptFile } from '@shared/app/openFile';
 import { showSnack } from '@shared/app/store/uiStore';
 
 import { AppText, Button, FormFoot, Grain, Icon, Organic, Sheet, SHEET_INSET, Tappable, TextField, useForm } from '@shared/ui/components';
@@ -263,15 +264,16 @@ function MediaBlockComponent({ block }: { block: Block }) {
     if (kind === 'video' && videoEmbedUrl(url)) return <VideoCard url={url} />;
     return <FileCard icon={KIND_GLYPHS[kind]} name={name} detail={displayHost(url)} trailing="external" onPress={() => openAddress(url)} label={t('Open {name}', { name })} />;
   }
-  // The server keeps a page's files behind the device's token: the phone shows them, the web opens them.
+  // The server keeps a page's files behind the device's token: fetched with it, opened in the phone's app for its type.
   const detail = [formatBytes(block.bytes), block.uploaded ? null : t('not uploaded yet')].filter(Boolean).join(' · ');
+  const fileId = block.fileId ?? '';
   return (
     <FileCard
       icon={KIND_GLYPHS[kind]}
       name={name}
       detail={detail}
       trailing={null}
-      onPress={() => showSnack(t('For now, this file opens from the web version.'))}
+      onPress={() => void openKeptFile({ id: fileId, name, mime: block.mime, uploaded: block.uploaded })}
       label={`${name}, ${detail}`}
     />
   );

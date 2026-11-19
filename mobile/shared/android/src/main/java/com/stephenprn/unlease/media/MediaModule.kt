@@ -1,6 +1,7 @@
 package com.stephenprn.unlease.media
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -8,6 +9,7 @@ import android.provider.OpenableColumns
 import android.os.ext.SdkExtensions
 import android.provider.MediaStore
 import android.util.Base64
+import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import com.facebook.react.bridge.ActivityEventListener
 import com.facebook.react.bridge.Arguments
@@ -17,6 +19,9 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.WritableMap
 import com.stephenprn.unlease.specs.NativeMediaSpec
 import java.io.File
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
@@ -25,7 +30,8 @@ import kotlin.math.min
 
 /**
  * Photos, the Keep archive and one document (a backup archive); everything handed back is a file in
- * app storage, written first. And a file the app made, saved where the person chooses.
+ * app storage, written first. And a file the app made, saved where the person chooses; and a kept
+ * file opened in the app that reads its type, from the cache's `opened/` (the FileProvider's path).
  * No storage or camera permission: declaring CAMERA would make ACTION_IMAGE_CAPTURE require it.
  */
 class MediaModule(private val reactContext: ReactApplicationContext) : NativeMediaSpec(reactContext), ActivityEventListener {
@@ -34,6 +40,8 @@ class MediaModule(private val reactContext: ReactApplicationContext) : NativeMed
 
   private val pending = AtomicReference<Pending?>(null)
   private val io = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "media-io").apply { isDaemon = true } }
+  // A file fetched to be opened may be 100 MB: its own thread, so it never holds a picker's copy back.
+  private val fetching = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "media-open").apply { isDaemon = true } }
 
   init {
     reactContext.addActivityEventListener(this)
@@ -43,6 +51,7 @@ class MediaModule(private val reactContext: ReactApplicationContext) : NativeMed
     reactContext.removeActivityEventListener(this)
     pending.getAndSet(null)?.let { it.promise.resolve(resultFor(it.kind, "cancelled")) }
     io.shutdown()
+    fetching.shutdown()
     super.invalidate()
   }
 
@@ -298,6 +307,80 @@ class MediaModule(private val reactContext: ReactApplicationContext) : NativeMed
       val file = File(path.removePrefix("file://"))
       if (!insideApp(file) || !file.isFile) promise.reject("not_found", "Fichier introuvable")
       else promise.resolve(file.readText(Charsets.UTF_8))
+    }
+  }
+
+  override fun openFile(id: String, source: String, authorization: String, name: String, mime: String, promise: Promise) {
+    fetching.execute {
+      val file =
+          try {
+            obtain(id, source, authorization, name)
+          } catch (error: Exception) {
+            promise.resolve(savedResult("error", error.message ?: ""))
+            return@execute
+          }
+      promise.resolve(view(file, mime))
+    }
+  }
+
+  /** The file in the cache's `opened/<id>/`, named as the person named it: fetched or copied once, then reused. */
+  private fun obtain(id: String, source: String, authorization: String, name: String): File {
+    val root = File(reactContext.cacheDir, "opened").apply { mkdirs() }
+    prune(root)
+    val key = id.replace(Regex("[^A-Za-z0-9-]"), "").ifBlank { throw IOException("bad id") }
+    val shown = name.replace(Regex("[\\\\/:*?\"<>|\u0000-\u001f]"), "_").trim().trimStart('.').take(180).ifBlank { "fichier" }
+    val dir = File(root, key).apply { mkdirs() }
+    val target = File(dir, shown)
+    if (target.isFile && target.length() > 0) return target.also { it.setLastModified(System.currentTimeMillis()) }
+    val part = File(dir, "$shown.part")
+    if (source.startsWith("https://") || source.startsWith("http://")) {
+      val connection = URL(source).openConnection() as HttpURLConnection
+      try {
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 60_000
+        if (authorization.isNotEmpty()) connection.setRequestProperty("Authorization", authorization)
+        if (connection.responseCode != HttpURLConnection.HTTP_OK) throw IOException("HTTP ${connection.responseCode}")
+        connection.inputStream.use { input -> part.outputStream().use { output -> input.copyTo(output, 64 * 1024) } }
+      } finally {
+        connection.disconnect()
+      }
+    } else {
+      val local = File(source.removePrefix("file://"))
+      if (!insideApp(local) || !local.isFile) throw IOException("not found")
+      local.inputStream().use { input -> part.outputStream().use { output -> input.copyTo(output, 64 * 1024) } }
+    }
+    if (part.length() == 0L || !part.renameTo(target)) {
+      part.delete()
+      throw IOException("empty")
+    }
+    return target
+  }
+
+  /** Files opened more than a day ago leave the cache: the app that read them has long finished. */
+  private fun prune(root: File) {
+    val before = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
+    root.listFiles()?.forEach { dir -> if (dir.lastModified() < before && (dir.listFiles()?.all { it.lastModified() < before } != false)) dir.deleteRecursively() }
+  }
+
+  /** Android's view of the file, granted to the app that opens its type; a type nothing reads says so. */
+  private fun view(file: File, mime: String): WritableMap {
+    val uri =
+        try {
+          FileProvider.getUriForFile(reactContext, "${reactContext.packageName}.files", file)
+        } catch (error: IllegalArgumentException) {
+          return savedResult("error", "no provider")
+        }
+    val guessed = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension.lowercase())
+    val type = mime.takeIf { it.isNotBlank() && it != "application/octet-stream" } ?: guessed ?: "application/octet-stream"
+    val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, type).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    val activity = reactContext.currentActivity
+    return try {
+      if (activity != null) activity.startActivity(intent) else reactContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+      savedResult("ok")
+    } catch (error: ActivityNotFoundException) {
+      savedResult("none")
+    } catch (error: SecurityException) {
+      savedResult("error", error.message ?: "")
     }
   }
 
