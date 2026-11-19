@@ -329,8 +329,9 @@
       <!-- A tick on a note widget: only our own PendingIntents reach it. -->
       <receiver android:name=".widget.WidgetTickReceiver" android:exported="false" />
 
-      <!-- The quick window over the home screen: the link field and the pickers. Exported for the
-           launcher's configuration step; its own task, gone once left, never in Recents. -->
+      <!-- The quick window over the home screen: the link field, a new note, and the pickers. Exported
+           for the launcher's configuration step; its own task, never in Recents, gone once left
+           (QuickActivity finishes itself: noHistory would never hand back a photo picked or taken). -->
       <activity
         android:name=".widget.QuickActivity"
         android:theme="@style/QuickTheme"
@@ -338,7 +339,6 @@
         android:label="@string/app_name"
         android:taskAffinity="${applicationId}.quick"
         android:excludeFromRecents="true"
-        android:noHistory="true"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|locale|layoutDirection"
         android:windowSoftInputMode="adjustResize">
         <intent-filter>

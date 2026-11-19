@@ -27,6 +27,8 @@ import java.lang.ref.WeakReference
 class QuickActivity : ReactActivity() {
   private var clip: String? = null
   private val waiting = mutableListOf<(String) -> Unit>()
+  /** The photo picker or the camera is up, started from here: the window waits for what it hands back. */
+  private var awaiting = false
 
   private val configuring: Boolean
     get() = intent?.action == AppWidgetManager.ACTION_APPWIDGET_CONFIGURE
@@ -68,6 +70,24 @@ class QuickActivity : ReactActivity() {
   override fun onDestroy() {
     if (current?.get() === this) current = null
     super.onDestroy()
+  }
+
+  @Deprecated("Activity's own; React Native's modules start what they ask for through it.")
+  override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+    awaiting = true
+    @Suppress("DEPRECATION") super.startActivityForResult(intent, requestCode, options)
+  }
+
+  @Deprecated("Activity's own; ReactActivity hands the result to the module that asked.")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    awaiting = false
+    @Suppress("DEPRECATION") super.onActivityResult(requestCode, resultCode, data)
+  }
+
+  /** Left for anything but the picker it opened (Home, the app, the screen going off): it is gone, as noHistory would have it. */
+  override fun onStop() {
+    super.onStop()
+    if (!awaiting && !isFinishing) finish()
   }
 
   /** Android lets an app read the clipboard only once its window has focus: read once, for the link field. */

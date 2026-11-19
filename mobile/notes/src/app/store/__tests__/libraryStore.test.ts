@@ -10,6 +10,7 @@ import { runKeepImport } from '../../keepImport';
 import {
   addCheck,
   addLink,
+  captureNote,
   addLinks,
   convertToChecklist,
   convertToCollection,
@@ -77,6 +78,23 @@ describe('local writes', () => {
     expect(state().notes[id]?.trashedAt).not.toBeNull();
     undo();
     expect(state().notes[id]?.trashedAt).toBeNull();
+  });
+});
+
+describe('a note written over the home screen', () => {
+  it('is written whole: its words, items, photos, label and reminder', () => {
+    const label = createLabel('Maison');
+    const reminder = 1_900_000_000_000;
+    const text = captureNote({ kind: 'text', title: 'Plombier', body: 'Appeler demain', items: ['ignored'], labelIds: [label], reminderAt: reminder, photos: [{ id: 'p1', mime: 'image/png', width: 600, height: 800, bytes: 1_000 }] });
+    const note = state().notes[text]!;
+    expect([note.kind, note.title, note.body, note.labelIds, note.reminderAt]).toEqual(['text', 'Plombier', 'Appeler demain', [label], reminder]);
+    expect(state().checksByNote[text] ?? []).toEqual([]);
+    expect(state().attachmentsByNote[text]).toEqual(['p1']);
+    expect(state().noteOrder[0]).toBe(text);
+
+    const list = captureNote({ kind: 'checklist', title: '', body: 'ignored', items: ['Lait', ' ', 'Pain', 'Œufs'], labelIds: [], reminderAt: null, photos: [] });
+    expect(state().notes[list]?.body).toBe('');
+    expect((state().checksByNote[list] ?? []).map(id => state().checks[id]?.text)).toEqual(['Lait', 'Pain', 'Œufs']);
   });
 });
 

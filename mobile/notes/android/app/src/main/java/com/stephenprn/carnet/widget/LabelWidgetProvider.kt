@@ -29,8 +29,8 @@ class LabelWidgetProvider : CarnetWidgetProvider() {
     views.setContentDescription(R.id.label_open, data.optString("name"))
     WidgetKit.tint(context, views, R.id.label_tag, WidgetRes.pigments[data.optString("color")] ?: R.color.wgen_pigment_grey)
     views.setOnClickPendingIntent(R.id.label_open, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://label/$target"))
-    views.setOnClickPendingIntent(R.id.label_new_list, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/checklist?label=$target"))
-    val newNote = WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/note?label=$target")
+    views.setOnClickPendingIntent(R.id.label_new_list, WidgetIntents.quick(context, "new", id, "checklist/$target"))
+    val newNote = WidgetIntents.quick(context, "new", id, "note/$target")
     views.setOnClickPendingIntent(R.id.label_new_note, newNote)
     views.setOnClickPendingIntent(R.id.label_empty_add, newNote)
 

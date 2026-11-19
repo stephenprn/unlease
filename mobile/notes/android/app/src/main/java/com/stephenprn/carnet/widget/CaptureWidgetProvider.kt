@@ -11,8 +11,10 @@ import com.stephenprn.carnet.R
 
 /**
  * Actions rapides (the class keeps the capture bar's name, so a bar already placed becomes this): each
- * button is a `carnet://capture/<action>` link the board answers by starting it. One row is the app's
- * bottom bar, the rarer actions giving way as it narrows; two rows add the search strip and name them.
+ * button starts its action in the quick window over the home screen, as Classer un lien does, and
+ * the app stays closed; only search opens it (`carnet://capture/search`), its results being the
+ * board. One row is the app's bottom bar, the rarer actions giving way as it narrows; two rows add
+ * the search strip and name them.
  */
 class CaptureWidgetProvider : CarnetWidgetProvider() {
 
@@ -20,9 +22,9 @@ class CaptureWidgetProvider : CarnetWidgetProvider() {
     if (Build.VERSION.SDK_INT >= 31) {
       return RemoteViews(
           mapOf(
-              SizeF(150f, 40f) to bar(context, NARROW),
-              SizeF(250f, 40f) to bar(context, MEDIUM),
-              SizeF(330f, 40f) to bar(context, FULL),
+              SizeF(150f, 40f) to bar(context, id, NARROW),
+              SizeF(250f, 40f) to bar(context, id, MEDIUM),
+              SizeF(330f, 40f) to bar(context, id, FULL),
               SizeF(160f, 110f) to tall(context, manager, id),
           ),
       )
@@ -32,16 +34,16 @@ class CaptureWidgetProvider : CarnetWidgetProvider() {
     val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
     return when {
       height >= 110 -> tall(context, manager, id)
-      width >= 330 -> bar(context, FULL)
-      width >= 250 -> bar(context, MEDIUM)
-      else -> bar(context, NARROW)
+      width >= 330 -> bar(context, id, FULL)
+      width >= 250 -> bar(context, id, MEDIUM)
+      else -> bar(context, id, NARROW)
     }
   }
 
-  private fun bar(context: Context, shown: Set<Int>): RemoteViews =
+  private fun bar(context: Context, id: Int, shown: Set<Int>): RemoteViews =
       widgetViews(context, R.layout.widget_quick).apply {
         for ((view, _) in ACTIONS) setViewVisibility(view, if (view in shown) View.VISIBLE else View.GONE)
-        link(context, this)
+        link(context, this, id)
       }
 
   private fun tall(context: Context, manager: AppWidgetManager, id: Int): RemoteViews =
@@ -49,11 +51,19 @@ class CaptureWidgetProvider : CarnetWidgetProvider() {
         // The strip's paddings and the mark (30) aside.
         val room = WidgetType.widthDp(manager, id) - 84f
         WidgetType.title(context, this, R.id.quick_search_hint_image, R.id.quick_search_hint, context.getString(R.string.widget_search_hint), WidgetType.Face.HINT, room, 1, R.color.wgen_ink_muted)
-        link(context, this)
+        link(context, this, id)
       }
 
-  private fun link(context: Context, views: RemoteViews) {
-    for ((view, action) in ACTIONS) views.setOnClickPendingIntent(view, WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/$action"))
+  private fun link(context: Context, views: RemoteViews, id: Int) {
+    for ((view, action) in ACTIONS) {
+      val press =
+          when (action) {
+            "search" -> WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/search")
+            "link" -> WidgetIntents.quick(context, "link", id)
+            else -> WidgetIntents.quick(context, "new", id, action)
+          }
+      views.setOnClickPendingIntent(view, press)
+    }
   }
 
   private companion object {

@@ -73,6 +73,9 @@ export const FR_PHONE_FEATURES: Dictionary = {
   'Add to this list': 'Ajouter à cette liste',
   'New item': 'Nouvel élément',
   'This list is no longer here.': 'Cette liste n’est plus là.',
+  // A widget's shortcut, over the home screen: a note written without opening the app
+  'Note saved': 'Note enregistrée',
+  'List saved': 'Liste enregistrée',
   // Under a lists widget's title: « 3 à faire »
   'to do': 'à faire',
   'to do [many]': 'à faire',

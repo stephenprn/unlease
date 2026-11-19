@@ -27,12 +27,16 @@ internal object WidgetIntents {
     return PendingIntent.getActivity(context, 0, intent, IMMUTABLE)
   }
 
-  /** The quick window over the home screen, for `mode` (`link`, `collection`, `label`, `note`). */
+  /**
+   * The quick window over the home screen, for `mode` (`link`, `item`, `new`, `collection`, `label`,
+   * `note`, `lists`): the app never opens. `new` writes a note there, `target` saying what
+   * (`note`, `checklist`, `reminder`, `photo`, `camera`) and the label it wears (`note/<label>`).
+   */
   fun quick(context: Context, mode: String, widgetId: Int, target: String = ""): PendingIntent {
     val intent =
         Intent(context, QuickActivity::class.java)
-            // One PendingIntent per widget and mode: the data only tells them apart.
-            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://quick/$mode/$widgetId"))
+            // One PendingIntent per widget, mode and target (Actions rapides holds six): the data only tells them apart.
+            .setData(Uri.parse("${BuildConfig.APP_SCHEME}://quick/$mode/$widgetId/${Uri.encode(target)}"))
             .putExtra(QuickActivity.EXTRA_MODE, mode)
             .putExtra(QuickActivity.EXTRA_TARGET, target)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)

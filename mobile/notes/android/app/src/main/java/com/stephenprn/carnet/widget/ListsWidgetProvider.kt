@@ -76,7 +76,7 @@ class ListsWidgetProvider : CarnetWidgetProvider() {
     if (action != null) {
       views.setTextViewText(R.id.lists_empty_action, context.getString(action))
       val label = data.optString("label")
-      views.setOnClickPendingIntent(R.id.lists_empty_add, add ?: WidgetIntents.open(context, "${BuildConfig.APP_SCHEME}://capture/checklist?label=$label"))
+      views.setOnClickPendingIntent(R.id.lists_empty_add, add ?: WidgetIntents.quick(context, "new", id, "checklist/$label"))
     }
 
     val (rows, template) = if (note != null) NoteRows.rows(context, id, note) else emptyList<Pair<Long, RemoteViews>>() to WidgetIntents.routeTemplate(context, id)

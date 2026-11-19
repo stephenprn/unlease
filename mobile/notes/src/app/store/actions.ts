@@ -103,6 +103,8 @@ export interface NewNote {
   readonly templateId?: string;
   /** Made in the protected section: protected from birth. */
   readonly locked?: boolean;
+  /** Born with its reminder (a note written over the home screen). */
+  readonly reminderAt?: number | null;
 }
 
 /** A new note's record, first on the board. */
@@ -120,7 +122,7 @@ function newNote(init: NewNote, now: number): LocalChange {
       trashedAt: null,
       labelIds: init.labelIds ?? [],
       position: topPosition(),
-      reminderAt: null,
+      reminderAt: init.reminderAt ?? null,
       code: init.code ?? '',
       ...(init.emblem !== undefined ? { emblem: init.emblem } : {}),
       ...(init.templateId !== undefined ? { templateId: init.templateId } : {}),
@@ -135,6 +137,49 @@ function newNote(init: NewNote, now: number): LocalChange {
 export function createNote(init: NewNote, now: number = Date.now()): string {
   const note = newNote(init, now);
   write([note]);
+  return note.id;
+}
+
+/** A photo kept on this phone for a note (`app/media`), its file already saved under `id`. */
+export interface KeptPhoto {
+  readonly id: string;
+  readonly mime: string;
+  readonly width: number;
+  readonly height: number;
+  readonly bytes: number;
+}
+
+/** What a note written over the home screen holds as it is saved (`QuickNoteSheet`). */
+export interface CapturedNote {
+  readonly kind: 'text' | 'checklist';
+  readonly title: string;
+  /** A text note's words, plain. */
+  readonly body: string;
+  /** A checklist's items, in the order typed. */
+  readonly items: readonly string[];
+  readonly labelIds: readonly string[];
+  readonly reminderAt: number | null;
+  readonly photos: readonly KeptPhoto[];
+}
+
+/** A whole note at once, its items, photos and reminder with it: one change, first on the board. */
+export function captureNote(init: CapturedNote, now: number = Date.now()): string {
+  const note = newNote({ kind: init.kind, title: init.title, body: init.kind === 'text' ? bodyFromText(init.body, false) : '', labelIds: init.labelIds, reminderAt: init.reminderAt }, now);
+  const changes: LocalChange[] = [note];
+  const items = init.kind === 'checklist' ? init.items.map(text => text.trim()).filter(text => text.length > 0) : [];
+  const itemPositions = positionsBetween(null, null, items.length);
+  items.forEach((text, k) =>
+    changes.push({ type: 'check', id: createId(now), patch: checkFields({ noteId: note.id, text: text.slice(0, TEXT_LIMITS.check.text), checked: false, position: itemPositions[k]!, indent: 0, createdAt: now, deletedAt: null }) }),
+  );
+  const photoPositions = positionsBetween(null, null, init.photos.length);
+  init.photos.forEach((photo, k) =>
+    changes.push({
+      type: 'attachment',
+      id: photo.id,
+      patch: attachmentFields({ noteId: note.id, mime: photo.mime, width: photo.width, height: photo.height, bytes: photo.bytes, position: photoPositions[k]!, uploaded: false, createdAt: now, deletedAt: null }),
+    }),
+  );
+  write(changes, now);
   return note.id;
 }
 

@@ -1397,7 +1397,7 @@ Carnet's six (Actions rapides, Classer un lien, Collection, Notes d'un label, Li
 - Checklist rows: 48 high, the whole row ticking its item, the app's checkbox; done items under a hairline, counted in meta strong.
 
 **Carnet**
-- **Actions rapides:** search, list, photo, camera, link, reminder, and the pebble for a note; narrower sizes drop the rarer ones.
+- **Actions rapides:** search, list, photo, camera, link, reminder, and the pebble for a note; narrower sizes drop the rarer ones. Each starts in the quick window, the app staying closed; search alone opens the board.
 - **Collection:** a head with its emblem on its stone (44 by 40), the name and a chevron (the selector), the count, a "+"; link rows with a 4:5 frame (40 by 50, frame radius), opening the link in Carnet, a website icon button at their end; a "Voir la collection" foot.
 - **Note:** the title opens the note, the pen beside it; « + » on a list adds items over the home screen.
 - **Listes d'un label:** the head is the selector (the note's title and a chevron; under it the label's tag, its name and what is left to do), then the pen and « + ».
@@ -1423,7 +1423,8 @@ Carnet's six (Actions rapides, Classer un lien, Collection, Notes d'un label, Li
 
 **Previews and the quick window**
 - **Previews:** each widget has its own layout for the launcher's picker (`widget_*_preview.xml`, or the live layout when it draws without a list): a launcher fills no list there. Samples are short enough to read whole in the picker's narrower frame.
-- **The quick window:** a translucent window over the home screen that is its own scrim (150, decelerate; `SheetScrim` off), the app's own sheet rising in it: "Classer un lien" (`LinkCaptureSheet`), a list's new items, a picker as list rows. A link added closes it at once; a slip says where it went (1.6s).
+- **The quick window:** a translucent window over the home screen that is its own scrim (150, decelerate; `SheetScrim` off), the app's own sheet rising in it: "Classer un lien" (`LinkCaptureSheet`), a list's new items, a new note, a picker as list rows. A link added closes it at once; a slip says where it went (1.6s).
+- **A new note there** (`QuickNoteSheet`): « Nouvelle note » or « Nouvelle liste », the editor's fields as the form's (« Titre », then « Note » or the items one after another, the keyboard kept), the photos picked or taken first as a strip of 72-high frames above them, and what it wears at its foot as on its editor (the reminder's chip, the label's); « Rappel » (text) and « Enregistrer » in its foot. « Rappel » from the bar asks when first, in place of the note's sheet, never over it. Saved, the slip says « Note enregistrée », « Liste enregistrée » or the reminder's time; closed on something typed, it asks first.
 
 ## Do's and Don'ts
 

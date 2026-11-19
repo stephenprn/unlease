@@ -18,6 +18,7 @@ import {
 import { setChecks } from './store/actions';
 import { useLibraryStore } from './store/libraryStore';
 import { selectCanRead, useSettingsStore } from '@shared/app/store/settingsStore';
+import { dismissSnack, useUiStore } from '@shared/app/store/uiStore';
 import { widgetPayload } from './widgetPayloads';
 
 /** Registered in index.js; the native side asks for the same names. */
@@ -100,7 +101,9 @@ export function pointWidget(id: number, kind: WidgetKind, target: string): void 
   send(id, JSON.stringify(widgetPayload(kind, target, useLibraryStore.getState(), Date.now())));
 }
 
-/** Closes the quick window; `done` completes a widget being placed. */
+/** Closes the quick window; `done` completes a widget being placed. Its slip goes with it: the app shares the store, and would show it on opening. */
 export function leaveQuick(done: boolean): void {
+  const snack = useUiStore.getState().snack;
+  if (snack) dismissSnack(snack.id);
   closeQuick(done);
 }
