@@ -1664,11 +1664,6 @@ li.person {
   text-align: center;
 }
 
-.timeButton {
-  justify-content: center;
-  min-width: 96px;
-}
-
 /* A list floating under a field (`Floating`): times, people. */
 .floatList {
   display: flex;
@@ -1710,103 +1705,6 @@ li.person {
 
 .timeOption[aria-selected='true'] .timeLength {
   color: inherit;
-}
-
-/* A phone-sized window's time (`TimeSheet`): the time large, then the hours and the minutes as targets 48 high, six across. */
-.timeGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 8px;
-}
-
-.timeReadout {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 72px;
-}
-
-.timeReadoutWords {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.timeBig {
-  font-size: 44px;
-  font-weight: 600;
-  line-height: 52px;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.timeHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 32px;
-  margin: 8px 0 0;
-}
-
-.timeCells {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.timeCells[data-lengths] {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 4px;
-}
-
-/* The veil alone at rest, so the figures carry the grid; chosen, the primary's wash within the focus edge (Clock's chips). */
-.timeCell {
-  min-height: 48px;
-  padding: 0 4px;
-  border: 0;
-  border-radius: var(--cut-chip);
-  background: var(--field-veil);
-  -webkit-backdrop-filter: var(--field-frost);
-  backdrop-filter: var(--field-frost);
-  color: var(--ink);
-  font: inherit;
-  font-size: 16px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color var(--duration-short) var(--ease-standard),
-    box-shadow var(--duration-short) var(--ease-standard),
-    color var(--duration-short) var(--ease-standard);
-}
-
-.timeCell[data-faint] {
-  color: var(--ink-muted);
-}
-
-@media (hover: hover) {
-  .timeCell:hover {
-    background: color-mix(in srgb, var(--ink) 6%, var(--field-veil));
-  }
-}
-
-.timeCell:active {
-  background: color-mix(in srgb, var(--ink) 10%, var(--field-veil));
-}
-
-.timeCell[aria-checked='true'] {
-  background: var(--action-container);
-  box-shadow: inset 0 0 0 2px var(--focus);
-  color: var(--on-action-container);
-  font-weight: 600;
-}
-
-.timeCell:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
 }
 
 .datePop {

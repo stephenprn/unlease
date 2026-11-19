@@ -6,7 +6,7 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ### Changed
 
-- Agenda's time picker takes two taps, on Android and in a phone-sized browser: the event's time stands large at the top, every hour and every five minutes are big buttons, and picking an hour and a minute (in either order) keeps the time and closes, with no list to scroll. An end time offers « 30 min », « 1 h », « 1 h 30 » and « 2 h » first, and says how long the event will last (and when it runs into the next day). Any other time can still be typed (« 20h », « 8:30 ») behind the keyboard button. On a computer, the field you type in with its list of quarter hours stays as it was.
+- Agenda's time picker on Android is Google's: the event's hour and minutes stand in two boxes over a clock dial. Turn the hand or tap a number for the hour, and the dial moves on to the minutes (a tap takes the nearest five, a drag every minute); « OK » keeps it. The keyboard button at its foot lets you type the two numbers instead. The web keeps its field with the list of quarter hours, as Google Calendar's.
 
 ### Fixed
 

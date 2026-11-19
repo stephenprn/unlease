@@ -29,7 +29,7 @@ import { eventColor } from '@unlease/calendar/services/colors';
 import { findOccurrence } from '@unlease/calendar/services/occurrences';
 import { cleanEventUrl, readsAsEventUrl } from '@unlease/calendar/services/links';
 import { choiceOf, choiceWords, describeRule, parseRule } from '@unlease/calendar/services/recurrence';
-import { addDays, addMinutes, clockPart, deviceZone, isDay, minutesBetween, today as todayOf } from '@unlease/calendar/services/time';
+import { addDays, addMinutes, clockPart, deviceZone, isDay, today as todayOf } from '@unlease/calendar/services/time';
 import { addEvent, createLabel, saveEvent } from '@app/store/actions';
 import { handedGuests } from '@app/handedEvent';
 import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
@@ -51,7 +51,7 @@ import { ReminderSheet } from '../features/event/ReminderSheet';
 import { RepeatSheet } from '../features/event/RepeatSheet';
 import { RichField, type RichFieldHandle } from '../features/event/RichField';
 import { ScopeSheet } from '../features/event/ScopeSheet';
-import { TimeSheet } from '../features/event/TimeSheet';
+import { TimePicker } from '../features/event/TimePicker';
 import { ZoneSheet } from '../features/event/ZoneSheet';
 import type { ScreenProps } from '../navigation/types';
 
@@ -542,18 +542,8 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
         onDismiss={() => setSheet(null)}
         onDay={day => setEnd(allDay ? addDays(day < draft.start ? draft.start : day, 1) : `${day}${draft.end.slice(10)}`)}
       />
-      <TimeSheet visible={sheet === 'startTime'} title={t('Start time')} value={clockPart(draft.start)} twelveHours={prefs.twelveHours} onDismiss={() => setSheet(null)} onTime={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} />
-      <TimeSheet
-        visible={sheet === 'endTime'}
-        title={t('End time')}
-        value={clockPart(draft.end)}
-        twelveHours={prefs.twelveHours}
-        onDismiss={() => setSheet(null)}
-        onTime={clock => setEnd(endAt(clock))}
-        lengthAt={clock => minutesBetween(draft.start, endAt(clock))}
-        nextDayAt={clock => endAt(clock).slice(0, 10) > draft.start.slice(0, 10)}
-        onLength={minutes => setEnd(addMinutes(draft.start, minutes))}
-      />
+      <TimePicker visible={sheet === 'startTime'} value={clockPart(draft.start)} twelveHours={prefs.twelveHours} onDismiss={() => setSheet(null)} onTime={clock => setStart(`${draft.start.slice(0, 10)}T${clock}`)} />
+      <TimePicker visible={sheet === 'endTime'} value={clockPart(draft.end)} twelveHours={prefs.twelveHours} onDismiss={() => setSheet(null)} onTime={clock => setEnd(endAt(clock))} />
       <Sheet visible={sheet === 'color'} onDismiss={() => setSheet(null)} title={t('Colour')}>
         {/* A pick is the answer: the sheet goes with it, as Google Calendar's. */}
         <View style={styles.colorSheet}>

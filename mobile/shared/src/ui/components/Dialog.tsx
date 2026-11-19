@@ -1,5 +1,6 @@
 /**
- * Only for decisions that cannot be undone; anything undoable is a snackbar instead. A dialog that
+ * Only for decisions that cannot be undone, and for Material's own dialogs (a time picked on its
+ * dial); anything undoable is a snackbar instead. A dialog that
  * holds a field (a password asked before confirming) stands centred in what the keyboard leaves of
  * the screen, its buttons above it: the app draws under the keyboard (edge to edge), nothing resizes.
  */
@@ -40,9 +41,11 @@ export interface DialogProps {
   readonly danger?: boolean;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
+  /** At the start of the actions' row, apart from them (Material's time picker: the keyboard's button). */
+  readonly lead?: React.ReactNode;
 }
 
-function DialogComponent({ visible, title, message, children, confirmLabel, cancelLabel, danger, onConfirm, onCancel }: DialogProps) {
+function DialogComponent({ visible, title, message, children, confirmLabel, cancelLabel, danger, onConfirm, onCancel, lead }: DialogProps) {
   const styles = useThemedStyles(makeStyles);
   // Opened while a field held the keyboard: the field steps aside, unless one of its own takes it.
   const overlay = useOverlayKeyboard(visible);
@@ -93,6 +96,7 @@ function DialogComponent({ visible, title, message, children, confirmLabel, canc
           ) : null}
           <OverlayFocus.Provider value={overlay.focus}>{children}</OverlayFocus.Provider>
           <View style={styles.actions}>
+            {lead ? <View style={styles.lead}>{lead}</View> : null}
             {cancelLabel === null ? null : <Button kind="text" label={cancelLabel ?? t('Cancel')} onPress={onCancel} />}
             <Button kind={danger ? 'danger' : 'filled'} label={confirmLabel} onPress={onConfirm} />
           </View>
@@ -109,7 +113,8 @@ const makeStyles = (theme: Theme) =>
     dialog: { width: '86%', maxWidth: 400, backgroundColor: theme.color.wall, borderWidth: 1, borderColor: theme.color.outline, padding: 24, gap: 16, boxShadow: theme.lift.float },
     paper: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
     message: { color: theme.color.inkMuted },
-    actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+    actions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
+    lead: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   });
 
 export const Dialog = memo(DialogComponent);
