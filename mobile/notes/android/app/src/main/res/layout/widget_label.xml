@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Notes d'un label: a piece of the board. The label's tag and name head it (a tap opens the label in
-     the app); a list and the capture pebble start a note wearing it; its notes are sheets on the slab. -->
+     the app); the list glyph and « + » start a list or a note wearing it, over the home screen; its notes are
+     sheets on the slab. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:clipToOutline="true"
@@ -81,27 +82,13 @@
                 android:contentDescription="@string/widget_checklist"
                 android:src="@drawable/wgen_g_checklist" />
 
-            <!-- A 48 target; the capture pebble drawn inside it, the size of a glyph's pebble. -->
-            <FrameLayout
+            <!-- « + » in the head's 48 slot, in ink, as every widget's head: a note wearing the label. -->
+            <ImageView
                 android:id="@+id/label_new_note"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="@string/widget_note">
-
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/wgen_capture_1"
-                    android:duplicateParentState="true"
-                    android:importantForAccessibility="no"
-                    android:paddingStart="10dp"
-                    android:paddingTop="8dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="8dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/wgen_g_plus_on_leaf" />
-            </FrameLayout>
+                style="@style/WidgetIconButton.Head"
+                android:background="@drawable/wgen_press_0"
+                android:contentDescription="@string/widget_note"
+                android:src="@drawable/wgen_g_plus" />
         </LinearLayout>
 
         <FrameLayout

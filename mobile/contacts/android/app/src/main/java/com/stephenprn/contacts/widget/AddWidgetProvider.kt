@@ -10,7 +10,7 @@ import com.stephenprn.contacts.R
 
 /**
  * Nouveau contact: one tap opens the form, ready to type (`unlease-contacts://new`). In one cell the
- * capture pebble alone, flat on the home screen; wider, a strip that says it.
+ * capture pebble alone, flat on the home screen; wider, a field strip that says it (as Classer un lien).
  */
 class AddWidgetProvider : ContactsWidgetProvider() {
 

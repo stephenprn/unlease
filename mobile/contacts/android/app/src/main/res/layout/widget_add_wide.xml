@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Nouveau contact, wider: a strip that says it, and the capture pebble at its end. -->
+<!-- Nouveau contact, wider: a field strip that says it, as Classer un lien is; a tap opens the form. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:clipToOutline="true"
@@ -22,7 +22,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="16dp"
-            android:paddingEnd="6dp">
+            android:paddingEnd="16dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -54,16 +54,6 @@
                     android:maxLines="1"
                     android:text="@string/widget_new_contact" />
             </FrameLayout>
-
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="40dp"
-                android:background="@drawable/wgen_capture_1"
-                android:duplicateParentState="true"
-                android:importantForAccessibility="no"
-                android:padding="10dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/wgen_g_plus_on_leaf" />
         </LinearLayout>
     </FrameLayout>
 </FrameLayout>

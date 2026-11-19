@@ -1392,8 +1392,8 @@ Carnet's six (Actions rapides, Classer un lien, Collection, Notes d'un label, Li
 - List text is the system font at the scale's sizes: card body 15/21, row title medium 15/20, meta 13/18, text actions 14/18 in deep terracotta.
 
 **Controls**
-- A 24 glyph in a 48 target, its pebble's tint only under the press; rows and cards press inside their own shape. In a head, the same glyph (22) in the same 48 slot in every widget (the pen, « + »), in ink.
-- The capture pebble, leaf matcha: 46 by 42 in the bar (a 52 by 48 target), 40 by 36 in a head (48), 62 by 56 alone in one cell.
+- A 24 glyph in a 48 target, its pebble's tint only under the press; rows and cards press inside their own shape. In a head, the same glyph (22) in the same 48 slot in every widget (the pen, the list, « + »), in ink: a head's « + » is never a pebble.
+- The capture pebble, leaf matcha, is a bar's one main action or a widget's only one: 46 by 42 in Actions rapides' bar (a 52 by 48 target), 62 by 56 alone in one cell (Classer un lien, Nouveau contact); the stopwatch's start is the same pebble. A field strip (Classer un lien, the wide Nouveau contact) says what it does and is pressed whole: no pebble at its end.
 - Checklist rows: 48 high, the whole row ticking its item, the app's checkbox; done items under a hairline, counted in meta strong.
 
 **Carnet**
