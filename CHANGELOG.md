@@ -19,6 +19,7 @@ All notable changes to Unlease are written here: the server and every app share 
 - The « Annuler » and « Enregistrer » of Wallet's card form on Android stand above the gesture bar instead of under it.
 - Wallet on Android no longer raises its fingerprint prompt over another app when you leave it with its papers open: it asks when you come back.
 - On Android, a confirmation that asks for a password (turning off Carnet's protected section) rises above the keyboard: its buttons were hidden under it.
+- Pages on Android has « Pages protégées » in its Réglages once a password is set: change the password, or turn the fingerprint on again after declining it once (it was offered only once, then out of reach in Pages).
 
 ## [0.3.0] - 2026-11-18
 

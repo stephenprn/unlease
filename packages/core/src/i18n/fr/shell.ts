@@ -606,6 +606,7 @@ export const FR_SHELL: Dictionary = {
   'Unlock with your fingerprint next time?': 'Déverrouiller avec l’empreinte la prochaine fois ?',
   'Use the fingerprint': 'Utiliser l’empreinte',
   'Unlock with your fingerprint': 'Déverrouiller avec l’empreinte',
+  'On this phone, instead of the password.': 'Sur ce téléphone, à la place du mot de passe.',
   'Password': 'Mot de passe',
   'Save': 'Enregistrer',
   'Lock': 'Verrouiller',

@@ -1,5 +1,6 @@
 /**
- * Pages' settings, in every app's order (Pages has none of its own yet): « Apparence » (one row
+ * Pages' settings, in every app's order: Pages' own first, once a password guards pages (« Pages
+ * protégées »: the password changed, and on a phone that can, the fingerprint), « Apparence » (one row
  * opening its own page: the theme, the paper's grain, the colours and the ground), the language,
  * « Données » (the import first, the bin, « Effacer des données » last), and the way to the
  * Administration last (the server, Claude, backups and files). What this phone alone keeps; the
@@ -17,6 +18,8 @@ import { emptyPagesBin } from '@app/store/pages';
 import { showSnack } from '@shared/app/store/uiStore';
 
 import { AppText, Dialog, Ground, ListRow, TopBar } from '@shared/ui/components';
+import { useLockState } from '@shared/app/lock';
+import { FingerprintRow, LockPasswordSheet } from '@shared/ui/features/lock';
 import { AdminEntrySection, AppearanceEntrySection, EraseEntryRow, LanguageSection } from '@shared/ui/features/settings/DeviceSections';
 import { BackgroundSyncSection } from '@shared/ui/features/settings/BackgroundSyncRows';
 import { Section } from '@shared/ui/features/settings/Section';
@@ -30,6 +33,9 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
   const styles = useThemedStyles(makeStyles);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const binned = useTrashedPages().length;
+  // Only once a password guards something: the lock is the suite's, set where a page or a note is protected.
+  const { check } = useLockState();
+  const [changing, setChanging] = useState(false);
 
   return (
     <View style={styles.screen}>
@@ -37,6 +43,12 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
       <TopBar title={t('Settings')} onBack={() => navigation.goBack()} />
       {/* Landed on the section a search asked for. */}
       <SettingsScroll section={route.params?.section} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {check ? (
+          <Section title={t('Protected pages')}>
+            <ListRow icon="key" title={t('Change the password')} onPress={() => setChanging(true)} />
+            <FingerprintRow openFirst={t('Open a protected page with the password first.')} />
+          </Section>
+        ) : null}
         <BackgroundSyncSection />
 
         <AppearanceEntrySection onOpen={() => navigation.navigate('Appearance')} />
@@ -75,6 +87,7 @@ export function SettingsScreen({ navigation, route }: ScreenProps<'Settings'>) {
           showSnack(t('{deleted} forever', { deleted: plural(pages, 'page deleted', 'pages deleted') }), undefined, { tone: 'success' });
         }}
       />
+      <LockPasswordSheet visible={changing} onDismiss={() => setChanging(false)} />
     </View>
   );
 }

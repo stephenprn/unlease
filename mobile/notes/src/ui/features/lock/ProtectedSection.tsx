@@ -15,9 +15,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { t } from '@unlease/core/i18n';
 import { isLockedNote } from '@unlease/notes/services/lock';
-import { disableFingerprint, enableFingerprint, fingerprintReady, isLockOpen, openLock, setLockSection, useFingerprintOn, useLockState } from '@shared/app/lock';
+import { isLockOpen, openLock, setLockSection, useLockState } from '@shared/app/lock';
 import { showSnack } from '@shared/app/store/uiStore';
-import { LockPasswordSheet } from '@shared/ui/features/lock';
+import { FingerprintRow, LockPasswordSheet } from '@shared/ui/features/lock';
 import { SwitchRow } from '@shared/ui/features/appearance/SwitchRow';
 import { useLibraryStore } from '@app/store/libraryStore';
 
@@ -41,7 +41,6 @@ export interface ProtectedSection {
 
 export function useProtectedSection(): ProtectedSection {
   const { check, section } = useLockState();
-  const fingerprint = useFingerprintOn();
   const [choosing, setChoosing] = useState(false);
   const [changing, setChanging] = useState(false);
   const [turningOff, setTurningOff] = useState(false);
@@ -90,25 +89,7 @@ export function useProtectedSection(): ProtectedSection {
     <>
       <SwitchRow title={t('Protected section')} supporting={t('Notes kept behind a password, out of the board, search and widgets.')} value={section} onChange={turn} />
       {check ? <ListRow icon="key" title={t('Change the password')} onPress={() => setChanging(true)} /> : null}
-      {check && (fingerprint || fingerprintReady()) ? (
-        <SwitchRow
-          title={t('Unlock with your fingerprint')}
-          supporting={t('On this phone, instead of the password.')}
-          value={fingerprint}
-          onChange={on => {
-            if (!on) {
-              disableFingerprint();
-              return;
-            }
-            // The fingerprint stands for a password typed here: the lock must be open to keep it.
-            if (!isLockOpen()) {
-              showSnack(t('Unlock the protected section with the password first.'), undefined, { tone: 'warning' });
-              return;
-            }
-            void enableFingerprint();
-          }}
-        />
-      ) : null}
+      <FingerprintRow openFirst={t('Unlock the protected section with the password first.')} />
     </>
   );
 

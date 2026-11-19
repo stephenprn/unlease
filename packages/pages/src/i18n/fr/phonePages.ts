@@ -2,6 +2,8 @@
 import type { Dictionary } from '@unlease/core/i18n';
 
 export const FR_PHONE_PAGES: Dictionary = {
+  'Protected pages': 'Pages protégées',
+  'Open a protected page with the password first.': 'Ouvrez d’abord une page protégée avec le mot de passe.',
   // BlockBar
   'Code': 'Code',
   'Block actions': 'Actions du bloc',
