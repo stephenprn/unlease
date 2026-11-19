@@ -288,5 +288,12 @@ export function lengthWords(minutes: number): string {
   return t('{hours} h {minutes}', { hours: Math.floor(minutes / 60), minutes: String(minutes % 60).padStart(2, '0') });
 }
 
+/** « 30 min », « 1 h », « 1 h 30 »: how long, beside an end time or on a chip, on both clients. */
+export function shortLengthWords(minutes: number): string {
+  if (minutes < 60) return t('{minutes} min', { minutes });
+  const rest = minutes % 60;
+  return rest ? t('{hours} h {minutes}', { hours: Math.floor(minutes / 60), minutes: String(rest).padStart(2, '0') }) : t('{hours} h', { hours: minutes / 60 });
+}
+
 /** « 3 événements supprimés définitivement »: the bin emptied, or rows of it deleted for good. */
 export const deletedForGoodWords = (count: number): string => t('{deleted} forever', { deleted: plural(count, 'event deleted', 'events deleted') });

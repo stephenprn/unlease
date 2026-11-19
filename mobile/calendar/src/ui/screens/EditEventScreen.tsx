@@ -29,7 +29,7 @@ import { eventColor } from '@unlease/calendar/services/colors';
 import { findOccurrence } from '@unlease/calendar/services/occurrences';
 import { cleanEventUrl, readsAsEventUrl } from '@unlease/calendar/services/links';
 import { choiceOf, choiceWords, describeRule, parseRule } from '@unlease/calendar/services/recurrence';
-import { addDays, addMinutes, clockPart, deviceZone, isDay, today as todayOf } from '@unlease/calendar/services/time';
+import { addDays, addMinutes, clockPart, deviceZone, isDay, minutesBetween, today as todayOf } from '@unlease/calendar/services/time';
 import { addEvent, createLabel, saveEvent } from '@app/store/actions';
 import { handedGuests } from '@app/handedEvent';
 import { selectPrefs, useCalendarUiStore } from '@app/store/calendarUi';
@@ -292,6 +292,11 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
 
   // A new start keeps the length; all day moves to the day, and back to the next hour.
   const setStart = (start: string): void => set({ start, end: keepLength(draft, start) });
+  // An end time on the end's day; one before the start on the same day ends the next day, as a night out does.
+  const endAt = (clock: string): string => {
+    const end = `${draft.end.slice(0, 10)}T${clock}`;
+    return end <= draft.start ? `${addDays(draft.start, 1)}T${clock}` : end;
+  };
   const setAllDay = (on: boolean): void => {
     if (on === allDay) return;
     const start = on ? draft.start.slice(0, 10) : `${draft.start.slice(0, 10)}T${String(Math.min(23, new Date().getHours() + 1)).padStart(2, '0')}:00`;
@@ -544,11 +549,10 @@ export function EditEventScreen({ navigation, route }: ScreenProps<'Edit'>) {
         value={clockPart(draft.end)}
         twelveHours={prefs.twelveHours}
         onDismiss={() => setSheet(null)}
-        onTime={clock => {
-          const end = `${draft.end.slice(0, 10)}T${clock}`;
-          // An end before the start on the same day ends the next day, as a night out does.
-          setEnd(end <= draft.start ? `${addDays(draft.start, 1)}T${clock}` : end);
-        }}
+        onTime={clock => setEnd(endAt(clock))}
+        lengthAt={clock => minutesBetween(draft.start, endAt(clock))}
+        nextDayAt={clock => endAt(clock).slice(0, 10) > draft.start.slice(0, 10)}
+        onLength={minutes => setEnd(addMinutes(draft.start, minutes))}
       />
       <Sheet visible={sheet === 'color'} onDismiss={() => setSheet(null)} title={t('Colour')}>
         {/* A pick is the answer: the sheet goes with it, as Google Calendar's. */}

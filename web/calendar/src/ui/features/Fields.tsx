@@ -1,17 +1,17 @@
 /**
  * The event form's own controls, drawn as the suite's fields: a row led by its glyph (`FormRow`), a
  * day picked on a small month (`DateField`), a time typed as one says it (« 20h », « 2030 », « 8:30 »)
- * or picked from the quarters (the end's with how long it lasts, as Google's: `TimeField`), and one
+ * or picked from the quarters (the end's with how long it lasts, as Google's: `TimeField`; on a
+ * phone-sized window the phone's grid, `TimeSheet`), and one
  * choice among a few from a menu (`ChoiceField`); the places offered as one is typed
  * (`useKnownPlaces`). The whole form and the quick one on the grid share them.
  */
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type RefObject } from 'react';
 
-import { t } from '@unlease/core/i18n';
 import { plural } from '@unlease/core/services/format';
 import { placeFromLine, type Place } from '@unlease/core/sync/places';
 import type { GlyphName } from '@unlease/design/glyphs';
-import { clockWords, weekdayDay } from '@unlease/calendar/services/eventText';
+import { clockWords, shortLengthWords, weekdayDay } from '@unlease/calendar/services/eventText';
 import { partsOf, readClock } from '@unlease/calendar/services/time';
 import { addressLine } from '@unlease/contacts/services/addresses';
 import { contactName } from '@unlease/contacts/services/names';
@@ -22,9 +22,11 @@ import { Icon } from '@shared/ui/components/Icon';
 import { Menu, type MenuItem } from '@shared/ui/components/Menu';
 import { Popover } from '@shared/ui/components/Popover';
 import { useScrollEdgesOn } from '@shared/ui/components/scrollEdges';
+import { NARROW, useMedia } from '@shared/ui/useMedia';
 import { useCalendarStore } from '../../app/store/library';
 import styles from '../calendar.module.css';
 import { MiniMonth } from '../views/MiniMonth';
+import { TimeSheet } from './TimeSheet';
 
 /**
  * A row of the form, led by its glyph, centred on the row's first line: a field's (52, the default),
@@ -82,14 +84,6 @@ export function useFieldAnchor(open: boolean, field: RefObject<HTMLElement | nul
 const toMinutes = (clock: string): number => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3, 5));
 const toClock = (minutes: number): string => `${pad(Math.floor(minutes / 60) % 24)}:${pad(minutes % 60)}`;
 
-/** « 30 min », « 1 h », « 1 h 30 »: how long, beside an end time. */
-function lengthWords(minutes: number): string {
-  if (minutes < 60) return t('{minutes} min', { minutes });
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? t('{hours} h {minutes}', { hours, minutes: pad(rest) }) : t('{hours} h', { hours });
-}
-
 export interface TimeFieldProps {
   readonly value: string;
   readonly onChange: (clock: string) => void;
@@ -104,7 +98,36 @@ export interface TimeFieldProps {
   readonly fieldRef?: (element: HTMLElement | null) => void;
 }
 
-export function TimeField({ value, onChange, label, from, twelveHours = false, invalid: wrong = false, describedBy, fieldRef }: TimeFieldProps) {
+/** A time: typed or picked from the quarters on a wide window; on a phone-sized one, a button opening the phone's grid (`TimeSheet`). */
+export function TimeField(props: TimeFieldProps) {
+  const narrow = useMedia(NARROW);
+  return narrow ? <TimeButton {...props} /> : <ListTimeField {...props} />;
+}
+
+function TimeButton({ value, onChange, label, from, twelveHours = false, invalid, describedBy, fieldRef }: TimeFieldProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        ref={fieldRef}
+        type="button"
+        className={`${styles.fieldButton} ${styles.timeButton}`}
+        data-invalid={invalid || undefined}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={`${label} : ${clockWords(value, twelveHours)}`}
+        onClick={() => setOpen(true)}
+      >
+        <span className="tabular">{clockWords(value, twelveHours)}</span>
+      </button>
+      <TimeSheet open={open} label={label} value={value} twelveHours={twelveHours} from={from} onPick={onChange} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+function ListTimeField({ value, onChange, label, from, twelveHours = false, invalid: wrong = false, describedBy, fieldRef }: TimeFieldProps) {
   const listId = useId();
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -237,7 +260,7 @@ export function TimeField({ value, onChange, label, from, twelveHours = false, i
                 onClick={() => pick(option.clock)}
               >
                 <span className="tabular">{clockWords(option.clock, twelveHours)}</span>
-                {option.length !== null ? <span className={styles.timeLength}>{lengthWords(option.length)}</span> : null}
+                {option.length !== null ? <span className={styles.timeLength}>{shortLengthWords(option.length)}</span> : null}
               </div>
             ))}
           </div>

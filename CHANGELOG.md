@@ -4,6 +4,10 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+### Changed
+
+- Agenda's time picker takes two taps, on Android and in a phone-sized browser: the event's time stands large at the top, every hour and every five minutes are big buttons, and picking an hour and a minute (in either order) keeps the time and closes, with no list to scroll. An end time offers « 30 min », « 1 h », « 1 h 30 » and « 2 h » first, and says how long the event will last (and when it runs into the next day). Any other time can still be typed (« 20h », « 8:30 ») behind the keyboard button. On a computer, the field you type in with its list of quarter hours stays as it was.
+
 ### Fixed
 
 - A file joined to an Agenda event, and a PDF, video or file in a page, opens straight in your phone's app for its type (a PDF viewer, the gallery, an office app) on Android. It no longer sends you to the web app in the browser, and Pages no longer says « Ce fichier s’ouvre depuis la version web ». The file is fetched from your server with the app's own connection, kept for a day so a second tap opens at once, and opened from the phone's own copy while it waits to upload.

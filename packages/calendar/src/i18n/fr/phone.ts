@@ -38,6 +38,13 @@ export const FR_PHONE: Dictionary = {
   'No events in this file.': 'Aucun événement dans ce fichier.',
   'No event matches': 'Aucun événement ne correspond',
   'No upcoming events: a search finds past ones too.': 'Aucun événement à venir : une recherche trouve aussi les passés.',
+  // The time sheet (TimeSheet): two taps on its grids, an end's lengths, the keyboard for any other time.
+  '{length}, until the next day': '{length}, jusqu’au lendemain',
+  'Duration': 'Durée',
+  'Half of the day': 'Moitié de la journée',
+  'Hour': 'Heure',
+  'Pick on the grid': 'Choisir sur la grille',
+  'Type a time': 'Saisir une heure',
   'No app on this phone opens it.': 'Aucune application ne l’ouvre sur ce téléphone.',
   'No date recognised: the event will be today.': 'Aucune date reconnue : l’événement sera pour aujourd’hui.',
   'No idea kept for {name} in “Gifts”.': 'Aucune idée gardée pour {name} dans « Cadeaux ».',
