@@ -40,6 +40,7 @@ export { PressSurface, Tappable } from './Tappable';
 export { TextField, type TextFieldProps } from './TextField';
 export { useForm, type FieldBinding, type Form, type FormOptions } from './useForm';
 export { useUnsaved, type Unsaved } from './useUnsaved';
+export { useAfterFirstDraw } from './useAfterFirstDraw';
 export { useArrivals } from './useArrivals';
 export { PULL_SPIN_MS, usePullToSync } from './usePullToSync';
 export { footEdge, FormFoot } from './FormFoot';

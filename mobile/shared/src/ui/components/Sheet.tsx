@@ -361,7 +361,15 @@ const makeStyles = (theme: Theme) =>
     title: { marginBottom: 12, marginHorizontal: SHEET_INSET },
   });
 
-export const Sheet = memo(SheetComponent);
+/**
+ * Nothing until it first opens: a screen holds several sheets it may never show, and each one's
+ * gestures and animated values would be made as the screen opens. Once opened it stays, to play its exit.
+ */
+export const Sheet = memo(function SheetOnceOpened(props: SheetProps) {
+  const [opened, setOpened] = useState(props.visible);
+  if (props.visible && !opened) setOpened(true);
+  return opened ? <SheetComponent {...props} /> : null;
+});
 
 /** The sheet a body lies in, claimed by the first body that scrolls (null outside a sheet, or for a second one). */
 function useSheetBody(): SheetBody | null {

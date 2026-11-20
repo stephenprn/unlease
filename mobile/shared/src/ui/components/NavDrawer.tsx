@@ -28,6 +28,7 @@ import { AppText } from './AppText';
 import { GroundSlice } from './Ground';
 import { Icon } from './Icon';
 import { Tappable } from './Tappable';
+import { useAfterFirstDraw } from './useAfterFirstDraw';
 import { useModalLayer } from './useModalLayer';
 
 /** Pushed back past this share of its width (or flung), it closes. */
@@ -64,7 +65,7 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   // Open, it is all TalkBack reaches (with the slip); closed, it is out of its reach.
   const layer = useModalLayer(open);
 
-  // Always mounted, off its edge when closed, so its glyphs are drawn before it ever slides out.
+  // Mounted from the screen's first draw on, off its edge when closed, so its glyphs are drawn before it ever slides out.
   // `shown` runs 0 to 1, `drag` is the hand pushing it back (negative), `width` its own.
   const { width: screen } = useWindowDimensions();
   const shownValue = useSharedValue(0);
@@ -191,7 +192,11 @@ function NavDrawerComponent({ open, app, onClose, children }: NavDrawerProps) {
   );
 }
 
-export const NavDrawer = memo(NavDrawerComponent);
+/** Drawn once the screen under it is (`useAfterFirstDraw`), or at once when it is asked for: there before it slides out, never in the way of the screen's first frame. */
+export const NavDrawer = memo(function NavDrawerLater(props: NavDrawerProps) {
+  const drawn = useAfterFirstDraw();
+  return drawn || props.open ? <NavDrawerComponent {...props} /> : null;
+});
 
 export interface DrawerItemProps {
   readonly label: string;
