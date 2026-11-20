@@ -54,6 +54,17 @@ internal object Squircle {
   private val AWAY_Y = floatArrayOf(0f, 1f, 0f, -1f)
 
   /**
+   * The radius a corner is drawn with in a box `width` by `height`, taken `inset` px in from the
+   * view's own (`boxMin` px across its shorter side): its own, under half the box and the view's cap.
+   * It is the radius of the corner's arc, which runs as deep into the corner as a round one of that radius.
+   */
+  fun radiusIn(radius: Float, width: Float, height: Float, boxMin: Float, inset: Float): Float =
+      min(min(width, height) / 2, max(0f, min(CORNER_CAP * boxMin - inset, radius)))
+
+  /** How far along a side a corner of this radius reaches when it has all its room: where the side is straight again. */
+  fun reachOf(radius: Float): Float = (1 + SMOOTHING) * radius
+
+  /**
    * Adds the outline of the box `left`, `top`, `right`, `bottom` (px) with these corner radii (px,
    * top-left first and clockwise), already taken `inset` px in from the view's own box (`boxMin`
    * px across its shorter side), whose share caps them.
@@ -63,11 +74,10 @@ internal object Squircle {
     val h = bottom - top
     if (w <= 0f || h <= 0f) return
     val budget = min(w, h) / 2
-    val cap = CORNER_CAP * boxMin - inset
     val vertexX = floatArrayOf(left, right, right, left)
     val vertexY = floatArrayOf(top, top, bottom, bottom)
     val corners = Array(4) { i ->
-      val radius = min(budget, max(0f, min(cap, radii[i])))
+      val radius = radiusIn(radii[i], w, h, boxMin, inset)
       if (radius > 0f) measures(radius, budget) else null
     }
     fun x(corner: Int, u: Float, v: Float) = vertexX[corner] + u * ALONG_X[corner] + v * AWAY_X[corner]

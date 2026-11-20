@@ -78,8 +78,20 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
   private val outer = Path()
   private val edge = Path()
   private val inner = Path()
+  /**
+   * What the children are clipped to. A sheet's is the round rectangle whose arcs are its corners' own:
+   * it holds the continuous corner and passes it by under a pixel, where the corner eases into a side,
+   * which the line covers (it is then drawn over the children). The GPU clips to a round rectangle as
+   * it draws; a path's clip is a mask it makes again on every frame that moves it, so a screen of
+   * clipped sheets scrolled at half its frames. A pebble's is its own outline.
+   */
+  private val hold = Path()
+  private var holdsRound = false
   private val clipOut = Path()
   private val shadowPaths = ArrayList<Path>()
+  /** Each shadow as pieces of a picture (`ShadowPatch`), for a sheet; null where it is drawn as a blurred path. */
+  private val shadowPatches = ArrayList<ShadowPatch?>()
+  private val patchPaint = Paint(Paint.FILTER_BITMAP_FLAG)
   private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
   private var shaped = false
 
@@ -276,8 +288,11 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
   /** The same corners `by` px further in: the curve of a line drawn inside the edge (CSS inner radii). */
   private fun shrink(r: FloatArray, by: Float) = FloatArray(8) { max(0f, r[it] - by) }
 
-  /** The box `inset` px in on every side (out, when negative), in the view's shape, concentric. */
-  private fun addShape(path: Path, w: Float, h: Float, r: FloatArray, inset: Float) {
+  /**
+   * The box `inset` px in on every side (out, when negative), in the view's shape, concentric.
+   * `boxMin` is the view's own shorter side, which caps its corners: the box's, unless a part of the view is drawn.
+   */
+  private fun addShape(path: Path, w: Float, h: Float, r: FloatArray, inset: Float, boxMin: Float = min(w, h)) {
     val left = inset
     val top = inset
     val right = w - inset
@@ -288,7 +303,7 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
     when {
       rest != null -> Squircle.addPebble(path, left, top, right, bottom, rest, pebbleGiven, morph)
       relative -> path.addRoundRect(left, top, right, bottom, radii, Path.Direction.CW)
-      else -> Squircle.addTo(path, left, top, right, bottom, floatArrayOf(radii[0], radii[2], radii[4], radii[6]), min(w, h), inset)
+      else -> Squircle.addTo(path, left, top, right, bottom, floatArrayOf(radii[0], radii[2], radii[4], radii[6]), boxMin, inset)
     }
   }
 
@@ -305,16 +320,37 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
     addShape(edge, w, h, r, stroke / 2)
     inner.rewind()
     addShape(inner, w, h, r, stroke)
+    val sheet = pebble == null && !relative
+    hold.rewind()
+    holdsRound = sheet
+    if (sheet) {
+      val within = shrink(r, stroke)
+      val round = FloatArray(8) { Squircle.radiusIn(within[it], w - 2 * stroke, h - 2 * stroke, min(w, h), stroke) }
+      hold.addRoundRect(stroke, stroke, w - stroke, h - stroke, round, Path.Direction.CW)
+    } else {
+      hold.addPath(inner)
+    }
     // A hair inside, so no seam shows between the shadow and an anti-aliased edge (React Native's own trick).
     clipOut.rewind()
     addShape(clipOut, w, h, r, 0.4f)
     shadowPaths.clear()
+    shadowPatches.clear()
+    val drawn = FloatArray(4) { Squircle.radiusIn(r[it * 2], w, h, min(w, h), 0f) }
     for (shadow in shadows) {
       val spread = shadow.spread * density
       shadowPaths.add(
           Path().apply {
             addShape(this, w, h, r, -spread)
             offset(shadow.offsetX * density, shadow.offsetY * density)
+          },
+      )
+      shadowPatches.add(
+          if (sheet) {
+            ShadowPatch.of(width, height, drawn, shadow.offsetX * density, shadow.offsetY * density, spread, shadow.blur) { path, boxWidth, boxHeight, inset ->
+              addShape(path, boxWidth, boxHeight, r, inset, min(w, h))
+            }
+          } else {
+            null
           },
       )
     }
@@ -326,6 +362,12 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
     // Blurred masks draw on the GPU from Android 9, as React Native's own shadows; the first is painted on top.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       for (i in shadows.indices.reversed()) {
+        val patch = shadowPatches[i]
+        if (patch != null) {
+          patchPaint.color = shadows[i].color
+          patch.draw(canvas, width, height, patchPaint)
+          continue
+        }
         val save = canvas.save()
         canvas.clipOutPath(clipOut)
         canvas.drawPath(shadowPaths[i], shadows[i].paint)
@@ -340,6 +382,12 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
       paper.draw(canvas)
       canvas.restoreToCount(save)
     }
+    // Over the children where they are held in a round rectangle (`hold`): once, there.
+    if (!(clips && holdsRound)) drawLine(canvas)
+  }
+
+  /** The border, inside the edge, in the view's shape. */
+  private fun drawLine(canvas: Canvas) {
     if (strokeWidth > 0f && Color.alpha(strokeColor) != 0) {
       val stroke = strokeWidth * density
       strokePaint.color = strokeColor
@@ -368,9 +416,10 @@ class OrganicView(context: Context) : ReactViewGroup(context) {
     }
     shape()
     val save = canvas.save()
-    canvas.clipPath(inner)
+    canvas.clipPath(hold)
     super.dispatchDraw(canvas)
     canvas.restoreToCount(save)
+    if (holdsRound) drawLine(canvas)
   }
 
   private fun Canvas.leaveOut(left: Float, top: Float, right: Float, bottom: Float) {

@@ -7,8 +7,8 @@ import android.graphics.Paint
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.uimanager.style.BoxShadow
 
-/** One outset `boxShadow` layer, ready to draw: its offset and spread in dp, its blurred paint. */
-class OrganicShadow(val offsetX: Float, val offsetY: Float, val spread: Float, val paint: Paint) {
+/** One outset `boxShadow` layer, ready to draw: its offset and spread in dp, its blurred paint (its colour and its blur's radius in px, for a `ShadowPatch`). */
+class OrganicShadow(val offsetX: Float, val offsetY: Float, val spread: Float, val paint: Paint, val color: Int, val blur: Float) {
   companion object {
     /** CSS blurs with a standard deviation of half the blur radius; Android takes a radius (React Native's own conversion). */
     private fun blurRadius(blur: Float, density: Float): Float {
@@ -24,13 +24,14 @@ class OrganicShadow(val offsetX: Float, val offsetY: Float, val spread: Float, v
       for (i in 0 until shadows.size()) {
         val shadow = BoxShadow.parse(shadows.getMap(i), context) ?: continue
         if (shadow.inset == true) continue
+        val color = shadow.color ?: Color.BLACK
+        val radius = blurRadius(shadow.blurRadius ?: 0f, density)
         val paint =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-              color = shadow.color ?: Color.BLACK
-              val radius = blurRadius(shadow.blurRadius ?: 0f, density)
+              this.color = color
               if (radius > 0f) maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
             }
-        layers.add(OrganicShadow(shadow.offsetX, shadow.offsetY, shadow.spreadDistance ?: 0f, paint))
+        layers.add(OrganicShadow(shadow.offsetX, shadow.offsetY, shadow.spreadDistance ?: 0f, paint, color, radius))
       }
       return layers
     }
