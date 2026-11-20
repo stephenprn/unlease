@@ -76,7 +76,9 @@ export function listName(contact: Named, order: SortOrder): string {
   return contactName(contact);
 }
 
-const collator = (): Intl.Collator => new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+/** Made once: on the phone a collator is built by the system (several milliseconds), and every sort of the list asked for one. */
+let kept: Intl.Collator | null = null;
+const collator = (): Intl.Collator => (kept ??= new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }));
 
 /** Contacts in the list's order, `#` last as Google files them, ties by creation. */
 export function sortContacts<T extends Named & Pick<Contact, 'createdAt' | 'id'>>(contacts: readonly T[], order: SortOrder): T[] {
