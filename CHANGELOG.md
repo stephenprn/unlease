@@ -4,6 +4,8 @@ All notable changes to Unlease are written here: the server and every app share 
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-20
+
 ### Changed
 
 - Agenda's time picker on Android is Google's: the event's hour and minutes stand in two boxes over a clock dial. Turn the hand or tap a number for the hour, and the dial moves on to the minutes (a tap takes the nearest five, a drag every minute); « OK » keeps it. The keyboard button at its foot lets you type the two numbers instead. The web keeps its field with the list of quarter hours, as Google Calendar's.
@@ -284,7 +286,8 @@ The first release: the Unlease server and four apps, Carnet, Pages, Contacts and
 - French and English.
 - A demo on GitHub Pages (https://stephenprn.github.io/unlease/): the four web apps with made-up notes, pages, people and events and a server simulated in the page, so nothing leaves the browser. Each release updates it.
 
-[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/stephenprn/unlease/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/stephenprn/unlease/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/stephenprn/unlease/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/stephenprn/unlease/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/stephenprn/unlease/compare/v0.1.2...v0.2.0
