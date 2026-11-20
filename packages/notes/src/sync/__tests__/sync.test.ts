@@ -1,4 +1,4 @@
-import { createClock, formatHlc, GENESIS_HLC, hlcWall, isHlc, observe, parseHlc, tick } from '@unlease/core/sync/hlc';
+import { createClock, formatHlc, GENESIS_HLC, hlcWall, isHlc, observe, observeClocks, parseHlc, tick } from '@unlease/core/sync/hlc';
 import { mergeRecord, newerFields, sanitizeRecord, writeFields, type SyncRecord } from '@unlease/core/sync/record';
 import { parseSyncRequest, parseSyncResponse } from '@unlease/core/sync/protocol';
 import { noteFromRecord, noteFields } from '../entities';
@@ -42,6 +42,45 @@ describe('hybrid logical clock', () => {
     expect(isHlc(clock)).toBe(true);
     expect(isHlc('nope')).toBe(false);
     expect(GENESIS_HLC < clock).toBe(true);
+  });
+});
+
+describe('the clocks of a library folded at once', () => {
+  const clocks = [
+    formatHlc(5_000, 2, 'aaaa'),
+    formatHlc(9_000, 0, 'bbbb'),
+    formatHlc(9_000, 7, 'cccc'),
+    formatHlc(9_000, 3, 'zzzz'),
+    GENESIS_HLC,
+    'not a clock',
+    'zzzzzzzzz-zzzz-zzzz',
+    formatHlc(10 * 24 * 3600 * 1000, 4, 'broken'),
+  ];
+  const records: { clocks: Record<string, string> }[] = [
+    { clocks: { title: clocks[0]!, body: clocks[1]!, color: clocks[4]! } },
+    { clocks: { title: clocks[5]!, body: clocks[2]! } },
+    { clocks: {} },
+    { clocks: { title: clocks[6]!, body: clocks[7]!, pinned: clocks[3]! } },
+  ];
+
+  it('leaves the clock where observing each in turn does', () => {
+    for (const start of [{ wall: 0, counter: 0 }, { wall: 9_000, counter: 5 }, { wall: 9_000, counter: 9 }, { wall: 20_000, counter: 1 }]) {
+      const one = createClock('phone1');
+      const all = createClock('phone1');
+      Object.assign(one, start);
+      Object.assign(all, start);
+      for (const value of clocks) observe(one, value, 10_000);
+      observeClocks(all, records, 10_000);
+      expect(all).toEqual(one);
+    }
+  });
+
+  it('takes the latest, and none from too far ahead', () => {
+    const clock = createClock('phone1');
+    observeClocks(clock, records, 10_000);
+    expect(clock).toMatchObject({ wall: 9_000, counter: 7 });
+    observeClocks(clock, [], 10_000);
+    expect(clock).toMatchObject({ wall: 9_000, counter: 7 });
   });
 });
 

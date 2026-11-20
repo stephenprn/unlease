@@ -17,7 +17,7 @@ import { appsShownBy, type AppId } from '@unlease/core/apps';
 import { clockNote } from '@unlease/core/services/format';
 import { baseAfterAck, baseAfterWrite, resolveTypedText } from '@unlease/core/sync/bases';
 import { sameClocks } from '@unlease/core/sync/engine';
-import { createClock, hlcNode, observe, randomNodeId, tick, type ClockState } from '@unlease/core/sync/hlc';
+import { createClock, hlcNode, observeClocks, randomNodeId, tick, type ClockState } from '@unlease/core/sync/hlc';
 import { adoptReplacedClocks, mergeRecord, writeFields, type Fields, type SyncRecord } from '@unlease/core/sync/record';
 import { appOfType, fitField, typesOfApps } from '@unlease/core/sync/schema';
 import { mergeField } from '@unlease/core/sync/textMerge';
@@ -148,14 +148,15 @@ export function createLibrary<S extends LibraryBase>(app: AppId, projection: Lib
     clock = createClock(node);
     clockOffset = Number(readSyncState('clockOffset') ?? '0') || 0;
     const stored = loadAllRecords();
+    const loaded = stored.map(entry => entry.record);
     for (const entry of stored) {
       const key = keyOf(entry.record.type, entry.record.id);
       records.set(key, entry.record);
       if (entry.bases) bases.set(key, entry.bases);
-      // Never mint a clock behind one this device has already written or seen.
-      for (const value of Object.values(entry.record.clocks)) observe(clock, value, now + clockOffset);
     }
-    useStore.setState(decode(projection.empty, stored.map(entry => entry.record)), true);
+    // Never mint a clock behind one this device has already written or seen.
+    observeClocks(clock, loaded, now + clockOffset);
+    useStore.setState(decode(projection.empty, loaded), true);
   }
 
   function writeLocal(changes: readonly LocalChange[], now: number = Date.now()): void {
@@ -197,8 +198,8 @@ export function createLibrary<S extends LibraryBase>(app: AppId, projection: Lib
       const before = map.get(key);
       undo.push(() => (before === undefined ? map.delete(key) : map.set(key, before)));
     };
+    observeClocks(ready(), incoming, now + clockOffset);
     for (const record of incoming) {
-      for (const value of Object.values(record.clocks)) observe(ready(), value, now + clockOffset);
       const key = keyOf(record.type, record.id);
       const local = records.get(key);
       const merged = mergeRecord(local, record);
@@ -289,8 +290,8 @@ export function createLibrary<S extends LibraryBase>(app: AppId, projection: Lib
 
   function writeImported(incoming: readonly SyncRecord[], now: number = Date.now()): number {
     const written: SyncRecord[] = [];
+    observeClocks(ready(), incoming, now + clockOffset);
     for (const record of incoming) {
-      for (const value of Object.values(record.clocks)) observe(ready(), value, now + clockOffset);
       const key = keyOf(record.type, record.id);
       const result = mergeRecord(records.get(key), record);
       records.set(key, result.record);

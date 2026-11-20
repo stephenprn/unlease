@@ -79,6 +79,25 @@ export function observe(state: ClockState, remote: Hlc, now: number): void {
   }
 }
 
+/**
+ * Folds every clock of `records` into ours, as `observe` would one by one. Clocks compare as
+ * strings, so only one later than the latest met so far is read: a library's tens of thousands of
+ * clocks cost a handful of parses as it loads, not one each.
+ */
+export function observeClocks(state: ClockState, records: Iterable<{ readonly clocks: Readonly<Record<string, Hlc>> }>, now: number): void {
+  // Past this a clock is refused (`MAX_DRIFT_MS`); `~` sorts after every character a clock holds.
+  const limit = `${(now + MAX_DRIFT_MS).toString(36).padStart(WALL_WIDTH, '0')}~`;
+  let latest = '';
+  for (const record of records) {
+    const clocks = record.clocks;
+    for (const field in clocks) {
+      const value = clocks[field]!;
+      if (value > latest && value < limit && parseHlc(value)) latest = value;
+    }
+  }
+  if (latest) observe(state, latest, now);
+}
+
 /** A clock older than any real write: the seed records every device creates alike. */
 export const GENESIS_HLC: Hlc = formatHlc(0, 0, 'genesis');
 
