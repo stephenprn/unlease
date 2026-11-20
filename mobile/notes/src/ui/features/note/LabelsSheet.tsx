@@ -34,52 +34,56 @@ export function LabelsSheet({ visible, selected, onDismiss, onChange }: { visibl
 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={tc('notes', 'Labels')} tall>
-      <View style={styles.field}>
-        {/* The keyboard's key creates the label typed when none bears its name, as Entrée on the web. */}
-        <TextField
-          value={filter}
-          onChangeText={setFilter}
-          placeholder={t('Search or create a label')}
-          autoCorrect={false}
-          returnKeyType="done"
-          onSubmitEditing={() => {
-            if (wanted) create();
-          }}
-        />
-      </View>
-      <SheetScroll>
-        {wanted ? (
-          // A list row's anatomy (`ListRow`) in link ink: the plus in the tags' slot, the words on their column.
-          <Tappable onPress={create} style={styles.row}>
-            <View style={styles.mark}>
-              <Icon name="plus" size={24} color={theme.color.link} />
-            </View>
-            <AppText variant="body" color={theme.color.link} style={styles.name}>
-              {t('Create “{label}”', { label: filter.trim() })}
-            </AppText>
-          </Tappable>
-        ) : null}
-        {shown.map(id => {
-          const label = labels[id]!;
-          const checked = selected.includes(id);
-          // The label's own tag is the checkbox: outlined when off, filled in its gouache when on.
-          return (
-            <ListRow
-              key={id}
-              title={label.name}
-              leading={
-                <View style={styles.mark}>
-                  <LabelCheck color={label.color} checked={checked} />
-                </View>
-              }
-              onPress={() => toggle(id)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked }}
+      {() => (
+        <>
+          <View style={styles.field}>
+            {/* The keyboard's key creates the label typed when none bears its name, as Entrée on the web. */}
+            <TextField
+              value={filter}
+              onChangeText={setFilter}
+              placeholder={t('Search or create a label')}
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                if (wanted) create();
+              }}
             />
-          );
-        })}
-        {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('No labels yet. Type a name to create one.')} slot={24} gap={16} style={styles.empty} /> : null}
-      </SheetScroll>
+          </View>
+          <SheetScroll>
+            {wanted ? (
+              // A list row's anatomy (`ListRow`) in link ink: the plus in the tags' slot, the words on their column.
+              <Tappable onPress={create} style={styles.row}>
+                <View style={styles.mark}>
+                  <Icon name="plus" size={24} color={theme.color.link} />
+                </View>
+                <AppText variant="body" color={theme.color.link} style={styles.name}>
+                  {t('Create “{label}”', { label: filter.trim() })}
+                </AppText>
+              </Tappable>
+            ) : null}
+            {shown.map(id => {
+              const label = labels[id]!;
+              const checked = selected.includes(id);
+              // The label's own tag is the checkbox: outlined when off, filled in its gouache when on.
+              return (
+                <ListRow
+                  key={id}
+                  title={label.name}
+                  leading={
+                    <View style={styles.mark}>
+                      <LabelCheck color={label.color} checked={checked} />
+                    </View>
+                  }
+                  onPress={() => toggle(id)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked }}
+                />
+              );
+            })}
+            {order.length === 0 && !filter ? <EmptyLine glyph="tag" text={t('No labels yet. Type a name to create one.')} slot={24} gap={16} style={styles.empty} /> : null}
+          </SheetScroll>
+        </>
+      )}
     </Sheet>
   );
 }

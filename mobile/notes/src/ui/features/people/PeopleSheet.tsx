@@ -57,25 +57,29 @@ export function PeopleSheet({ visible, selected, onDismiss, onChange }: { visibl
 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={t('People')} tall>
-      <View style={styles.field}>
-        <TextField value={query} onChangeText={setQuery} placeholder={t('Search for someone')} accessibilityLabel={t('Search for someone')} autoCorrect={false} returnKeyType="search" />
-      </View>
-      <SheetScroll>
-        {!typing && chosen.length > 0 ? (
-          <>
-            {chosen.map(person => (
-              <Row key={person.contact.id} contact={person.contact} on onToggle={() => toggle(person.contact)} />
+      {() => (
+        <>
+          <View style={styles.field}>
+            <TextField value={query} onChangeText={setQuery} placeholder={t('Search for someone')} accessibilityLabel={t('Search for someone')} autoCorrect={false} returnKeyType="search" />
+          </View>
+          <SheetScroll>
+            {!typing && chosen.length > 0 ? (
+              <>
+                {chosen.map(person => (
+                  <Row key={person.contact.id} contact={person.contact} on onToggle={() => toggle(person.contact)} />
+                ))}
+                {others.length > 0 ? <View style={[styles.divider, { backgroundColor: theme.color.hairline }]} /> : null}
+              </>
+            ) : null}
+            {others.map(contact => (
+              <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
             ))}
-            {others.length > 0 ? <View style={[styles.divider, { backgroundColor: theme.color.hairline }]} /> : null}
-          </>
-        ) : null}
-        {others.map(contact => (
-          <Row key={contact.id} contact={contact} on={chosenIds.has(contact.id)} onToggle={() => toggle(contact)} />
-        ))}
-        {others.length === 0 && (typing || chosen.length === 0) ? (
-          <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Nobody in your contacts goes by that name.') : t('No contacts yet.')} slot={40} gap={16} style={styles.empty} />
-        ) : null}
-      </SheetScroll>
+            {others.length === 0 && (typing || chosen.length === 0) ? (
+              <EmptyLine glyph={typing ? 'search' : 'person'} text={typing ? t('Nobody in your contacts goes by that name.') : t('No contacts yet.')} slot={40} gap={16} style={styles.empty} />
+            ) : null}
+          </SheetScroll>
+        </>
+      )}
     </Sheet>
   );
 }

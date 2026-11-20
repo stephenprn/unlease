@@ -52,74 +52,78 @@ function NoteColorSheetComponent({ visible, color, pattern, onDismiss, onColor, 
   const colorName = color === null ? t('No colour') : isLineColor(color) ? LINE_COLOR_NAMES[color] : null;
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={t('Colour and paper')} tall>
-      <SheetScroll contentContainerStyle={styles.body}>
-        {note ? (
-          <AppText variant="meta" color={theme.color.inkMuted} style={styles.note}>
-            {note}
-          </AppText>
-        ) : null}
-        <Group title={t('Colour')} chosen={colorName}>
-          <Swatch
-            label={t('No colour')}
-            selected={color === null}
-            turn={0}
-            paint={{ backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.edge }}
-            ring="ink"
-            struck
-            cell={styles.fifth}
-            onPress={() => onColor(null)}
-          />
-          {LINE_COLORS.map((key, index) => (
-            // The wash the note will wear, edged in its pigment so neighbours tell apart.
-            <Swatch
-              key={key}
-              label={LINE_COLOR_NAMES[key]}
-              selected={key === color}
-              turn={turnIn(index + 1, 5)}
-              paint={{ backgroundColor: theme.line[key].tint, borderWidth: 2, borderColor: theme.line[key].fill }}
-              ring="ink"
-              cell={styles.fifth}
-              onPress={() => onColor(key)}
-            />
-          ))}
-        </Group>
-
-        <Group title={t('Gradients')}>
-          {NOTE_GRADIENTS.map((key, index) => (
-            <Swatch
-              key={key}
-              label={NOTE_GRADIENT_NAMES[key]}
-              name={NOTE_GRADIENT_NAMES[key]}
-              selected={key === color}
-              turn={turnIn(index, 4)}
-              paint={{ ...gradientSwatch(theme.mode, key), borderWidth: 1, borderColor: theme.color.hairline }}
-              ring="focus"
-              cell={styles.quarter}
-              onPress={() => onColor(key)}
-            />
-          ))}
-        </Group>
-
-        <Group title={t('Paper')}>
-          {([null, ...NOTE_PATTERNS] as const).map((key, index) => {
-            const name = key ? NOTE_PATTERN_NAMES[key] : t('Plain');
-            return (
-              // The paper over the note's own colour, as the note will wear it.
+      {() => (
+        <>
+          <SheetScroll contentContainerStyle={styles.body}>
+            {note ? (
+              <AppText variant="meta" color={theme.color.inkMuted} style={styles.note}>
+                {note}
+              </AppText>
+            ) : null}
+            <Group title={t('Colour')} chosen={colorName}>
               <Swatch
-                key={name}
-                label={name}
-                name={name}
-                selected={key === pattern}
-                turn={turnIn(index + 1, 4)}
-                paint={{ ...noteBackdrop(theme.mode, color ?? null, key, TILE_RULE), borderWidth: 1, borderColor: theme.color.hairline }}
-                ring="focus"
-                cell={styles.quarter}
-                onPress={() => onPattern(key)}
+                label={t('No colour')}
+                selected={color === null}
+                turn={0}
+                paint={{ backgroundColor: theme.color.paper, borderWidth: 2, borderColor: theme.color.edge }}
+                ring="ink"
+                struck
+                cell={styles.fifth}
+                onPress={() => onColor(null)}
               />
-            );
-          })}
-        </Group>
-      </SheetScroll>
+              {LINE_COLORS.map((key, index) => (
+                // The wash the note will wear, edged in its pigment so neighbours tell apart.
+                <Swatch
+                  key={key}
+                  label={LINE_COLOR_NAMES[key]}
+                  selected={key === color}
+                  turn={turnIn(index + 1, 5)}
+                  paint={{ backgroundColor: theme.line[key].tint, borderWidth: 2, borderColor: theme.line[key].fill }}
+                  ring="ink"
+                  cell={styles.fifth}
+                  onPress={() => onColor(key)}
+                />
+              ))}
+            </Group>
+
+            <Group title={t('Gradients')}>
+              {NOTE_GRADIENTS.map((key, index) => (
+                <Swatch
+                  key={key}
+                  label={NOTE_GRADIENT_NAMES[key]}
+                  name={NOTE_GRADIENT_NAMES[key]}
+                  selected={key === color}
+                  turn={turnIn(index, 4)}
+                  paint={{ ...gradientSwatch(theme.mode, key), borderWidth: 1, borderColor: theme.color.hairline }}
+                  ring="focus"
+                  cell={styles.quarter}
+                  onPress={() => onColor(key)}
+                />
+              ))}
+            </Group>
+
+            <Group title={t('Paper')}>
+              {([null, ...NOTE_PATTERNS] as const).map((key, index) => {
+                const name = key ? NOTE_PATTERN_NAMES[key] : t('Plain');
+                return (
+                  // The paper over the note's own colour, as the note will wear it.
+                  <Swatch
+                    key={name}
+                    label={name}
+                    name={name}
+                    selected={key === pattern}
+                    turn={turnIn(index + 1, 4)}
+                    paint={{ ...noteBackdrop(theme.mode, color ?? null, key, TILE_RULE), borderWidth: 1, borderColor: theme.color.hairline }}
+                    ring="focus"
+                    cell={styles.quarter}
+                    onPress={() => onPattern(key)}
+                  />
+                );
+              })}
+            </Group>
+          </SheetScroll>
+        </>
+      )}
     </Sheet>
   );
 }

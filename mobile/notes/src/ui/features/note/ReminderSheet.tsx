@@ -93,115 +93,119 @@ export function ReminderSheet({ visible, current, onDismiss, onSet }: ReminderSh
 
   return (
     <Sheet visible={visible} onDismiss={onDismiss} title={t('Reminder')} tall={custom}>
-      {!custom ? (
-        <View>
-          {quickReminders(now).map(option => (
-            <ListRow
-              key={option.label}
-              icon="clock"
-              title={option.label}
-              supporting={formatReminder(option.time, now)}
-              onPress={() => {
-                onSet(option.time);
-                onDismiss();
-              }}
-            />
-          ))}
-          <ListRow icon="calendar" title={t('Pick a date and time')} onPress={() => setCustom(true)} />
-          {current !== null ? (
-            <ListRow
-              icon="bellOff"
-              title={t('Delete the reminder')}
-              supporting={formatReminder(current, now)}
-              danger
-              onPress={() => {
-                onSet(null);
-                onDismiss();
-              }}
-            />
-          ) : null}
-        </View>
-      ) : (
-        <SheetScroll contentContainerStyle={styles.custom}>
-          {/* The chips say what they are (« lun. 10 », « 9 h », « :15 »): no word over them; TalkBack hears each group's name. */}
-          <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Day')}>
-            {days.map((date, index) => {
-              const selected = index === day;
-              return (
-                <Tappable
-                  key={index}
-                  onPress={() => setDay(index)}
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={formatDay(date.getTime(), now)}
-                  style={[styles.day, DAY_CUTS[index % DAY_CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
-                >
-                  <AppText variant="meta" color={selected ? theme.color.onActionContainer : undefined}>
-                    {index === 0 ? tc('short', 'Today') : index === 1 ? t('Tmrw') : shortDay(date.getDay())}
-                  </AppText>
-                  <AppText variant="bodyStrong" color={selected ? theme.color.onActionContainer : undefined}>
-                    {date.getDate()}
-                  </AppText>
-                </Tappable>
-              );
-            })}
-          </EdgeScrollView>
-          <View style={styles.time} accessibilityLabel={t('Time')}>
-            <View style={styles.grid}>
-              {hours.map(hour => {
-                const selected = hour === time[0];
-                return (
-                  <Tappable
-                    key={hour}
-                    onPress={() => setTime([hour, time[1]])}
-                    accessibilityState={{ selected }}
-                    style={[styles.cell, { width: cell }, CUTS[hour % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
-                  >
-                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour}:00', { hour })}</AppText>
-                  </Tappable>
-                );
-              })}
+      {() => (
+        <>
+          {!custom ? (
+            <View>
+              {quickReminders(now).map(option => (
+                <ListRow
+                  key={option.label}
+                  icon="clock"
+                  title={option.label}
+                  supporting={formatReminder(option.time, now)}
+                  onPress={() => {
+                    onSet(option.time);
+                    onDismiss();
+                  }}
+                />
+              ))}
+              <ListRow icon="calendar" title={t('Pick a date and time')} onPress={() => setCustom(true)} />
+              {current !== null ? (
+                <ListRow
+                  icon="bellOff"
+                  title={t('Delete the reminder')}
+                  supporting={formatReminder(current, now)}
+                  danger
+                  onPress={() => {
+                    onSet(null);
+                    onDismiss();
+                  }}
+                />
+              ) : null}
             </View>
-            <View style={styles.minutes}>
-              {[0, 15, 30, 45].map(minute => {
-                const selected = minute === time[1];
-                return (
-                  <Tappable
-                    key={minute}
-                    onPress={() => setTime([time[0], minute])}
-                    accessibilityState={{ selected }}
-                    style={[styles.minute, CUTS[(minute / 15 + 1) % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
-                  >
-                    <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{`:${String(minute).padStart(2, '0')}`}</AppText>
-                  </Tappable>
-                );
-              })}
-            </View>
-          </View>
-          <View style={styles.footer}>
-            {/* The moment chosen, read in words; once a moment gone was sent, the problem in its place (the web's line). */}
-            <View style={styles.when}>
-              {chosen > now ? (
-                <AppText variant="bodyStrong">{formatReminder(chosen, now)}</AppText>
-              ) : tried ? (
-                <FormMessage message={t('That moment has passed: choose one still to come.')} />
-              ) : (
-                <AppText variant="meta">{t('Pick a time in the future')}</AppText>
-              )}
-            </View>
-            {/* Never disabled to say why: pressed on a moment gone, it says so. */}
-            <Button
-              label={t('Save')}
-              onPress={() => {
-                if (chosen <= now) {
-                  setTried(true);
-                  return;
-                }
-                onSet(chosen);
-                onDismiss();
-              }}
-            />
-          </View>
-        </SheetScroll>
+          ) : (
+            <SheetScroll contentContainerStyle={styles.custom}>
+              {/* The chips say what they are (« lun. 10 », « 9 h », « :15 »): no word over them; TalkBack hears each group's name. */}
+              <EdgeScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days} accessibilityLabel={t('Day')}>
+                {days.map((date, index) => {
+                  const selected = index === day;
+                  return (
+                    <Tappable
+                      key={index}
+                      onPress={() => setDay(index)}
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={formatDay(date.getTime(), now)}
+                      style={[styles.day, DAY_CUTS[index % DAY_CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
+                    >
+                      <AppText variant="meta" color={selected ? theme.color.onActionContainer : undefined}>
+                        {index === 0 ? tc('short', 'Today') : index === 1 ? t('Tmrw') : shortDay(date.getDay())}
+                      </AppText>
+                      <AppText variant="bodyStrong" color={selected ? theme.color.onActionContainer : undefined}>
+                        {date.getDate()}
+                      </AppText>
+                    </Tappable>
+                  );
+                })}
+              </EdgeScrollView>
+              <View style={styles.time} accessibilityLabel={t('Time')}>
+                <View style={styles.grid}>
+                  {hours.map(hour => {
+                    const selected = hour === time[0];
+                    return (
+                      <Tappable
+                        key={hour}
+                        onPress={() => setTime([hour, time[1]])}
+                        accessibilityState={{ selected }}
+                        style={[styles.cell, { width: cell }, CUTS[hour % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
+                      >
+                        <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{t('{hour}:00', { hour })}</AppText>
+                      </Tappable>
+                    );
+                  })}
+                </View>
+                <View style={styles.minutes}>
+                  {[0, 15, 30, 45].map(minute => {
+                    const selected = minute === time[1];
+                    return (
+                      <Tappable
+                        key={minute}
+                        onPress={() => setTime([time[0], minute])}
+                        accessibilityState={{ selected }}
+                        style={[styles.minute, CUTS[(minute / 15 + 1) % CUTS.length], { borderColor: selected ? theme.color.focus : theme.color.hairline, backgroundColor: selected ? theme.color.actionContainer : theme.color.paper }]}
+                      >
+                        <AppText variant="label" color={selected ? theme.color.onActionContainer : undefined}>{`:${String(minute).padStart(2, '0')}`}</AppText>
+                      </Tappable>
+                    );
+                  })}
+                </View>
+              </View>
+              <View style={styles.footer}>
+                {/* The moment chosen, read in words; once a moment gone was sent, the problem in its place (the web's line). */}
+                <View style={styles.when}>
+                  {chosen > now ? (
+                    <AppText variant="bodyStrong">{formatReminder(chosen, now)}</AppText>
+                  ) : tried ? (
+                    <FormMessage message={t('That moment has passed: choose one still to come.')} />
+                  ) : (
+                    <AppText variant="meta">{t('Pick a time in the future')}</AppText>
+                  )}
+                </View>
+                {/* Never disabled to say why: pressed on a moment gone, it says so. */}
+                <Button
+                  label={t('Save')}
+                  onPress={() => {
+                    if (chosen <= now) {
+                      setTried(true);
+                      return;
+                    }
+                    onSet(chosen);
+                    onDismiss();
+                  }}
+                />
+              </View>
+            </SheetScroll>
+          )}
+        </>
       )}
     </Sheet>
   );

@@ -45,7 +45,11 @@ export interface SheetProps {
   readonly visible: boolean;
   readonly onDismiss: () => void;
   readonly title?: string;
-  readonly children?: React.ReactNode;
+  /**
+   * What it holds; or a function giving it, asked only while the sheet is open or leaving: a sheet whose
+   * content takes work to make (thirty painted swatches, a list filtered) costs its screen nothing while shut.
+   */
+  readonly children?: React.ReactNode | (() => React.ReactNode);
   /** Let the content grow to most of the screen. */
   readonly tall?: boolean;
   /** Opened over a field that keeps typing after it (a bar riding on the keyboard): the keyboard stays. */
@@ -310,7 +314,7 @@ function SheetComponent({ visible, onDismiss, title, children, tall = false, kee
             ) : null}
             <SheetBodyContext.Provider value={body}>
               <SheetFootContext.Provider value={foot}>
-                <OverlayFocus.Provider value={overlay.focus}>{children}</OverlayFocus.Provider>
+                <OverlayFocus.Provider value={overlay.focus}>{typeof children === 'function' ? children() : children}</OverlayFocus.Provider>
               </SheetFootContext.Provider>
             </SheetBodyContext.Provider>
           </AnimatedOrganic>
