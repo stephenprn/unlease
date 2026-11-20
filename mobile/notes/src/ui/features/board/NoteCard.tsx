@@ -16,7 +16,7 @@ import { SHAPES } from '@unlease/design/shapes';
 import { t } from '@unlease/core/i18n';
 import { asLineColor } from '@unlease/design/colors';
 import { shownTitle } from '@unlease/notes/models/entities';
-import { cardBody, cardInnerWidth, COLLECTION_CARD, cutFadeHeight, drawingCardHeight, drawingCut, footerShowsLabelNames, layoutCard, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
+import { cardBody, cardInnerWidth, COLLECTION_CARD, cutFadeHeight, drawingCardHeight, drawingCut, footerShowsLabelNames, MAX_CHECK_ROWS, photoHeight, THUMBS_PER_STRIP, thumbSize, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { bodyText, noteCardLines } from '@unlease/notes/services/noteBody';
 import { mentionsVersion } from '@unlease/notes/services/noteMentions';
@@ -32,7 +32,7 @@ import { useTheme, useThemedStyles } from '@shared/ui/theme/ThemeProvider';
 import type { Theme } from '@shared/ui/theme/theme';
 import { DrawingPreview } from '../drawing/DrawingPreview';
 import { CardNoteText } from '../note/noteText';
-import { shapeOf } from './wallLayout';
+import { cardOf } from './wallLayout';
 import { CardFaces } from '../people/PeopleChips';
 import { peopleNames } from '@unlease/notes/services/noteMentions';
 
@@ -75,9 +75,8 @@ function NoteCardComponent({ id, width, height, metrics, query, selected, onPres
   // The lines the wall counted when it sized this card: the text is cut to exactly those.
   const lines = useLibraryStore(
     useShallow(s => {
-      const shape = shapeOf(s, id);
-      const layout = shape ? layoutCard(shape, metrics) : null;
-      return { title: layout?.title ?? 0, body: layout?.body ?? 0, cut: layout?.bodyCut ?? false, footer: shape?.hasFooter ?? false };
+      const card = cardOf(s, id, metrics);
+      return { title: card?.layout.title ?? 0, body: card?.layout.body ?? 0, cut: card?.layout.bodyCut ?? false, footer: card?.shape.hasFooter ?? false };
     }),
   );
   // Read out with the card (TalkBack reads its label alone), so a footer showing only the tags loses no name.

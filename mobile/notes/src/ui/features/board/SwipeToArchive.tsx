@@ -6,7 +6,7 @@
  * Under Reduce Motion the card stays in its place, turning see-through under the hand, and goes at once.
  */
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { haptic } from '@shared/platform/haptics';
@@ -24,14 +24,15 @@ export interface SwipeToArchiveProps {
   readonly enabled: boolean;
   readonly onSwiped: (id: string) => void;
   /** The slot's place on the wall. */
-  readonly style: StyleProp<ViewStyle>;
+  readonly top: number;
+  readonly left: number;
   readonly layout?: SlotProps['layout'];
   readonly entering?: SlotProps['entering'];
   readonly exiting?: SlotProps['exiting'];
   readonly children: React.ReactNode;
 }
 
-function SwipeToArchiveComponent({ id, width, enabled, onSwiped, style, layout, entering, exiting, children }: SwipeToArchiveProps) {
+function SwipeToArchiveComponent({ id, width, enabled, onSwiped, top, left, layout, entering, exiting, children }: SwipeToArchiveProps) {
   const { width: screen } = useWindowDimensions();
   const reduced = useReducedMotion();
   const x = useSharedValue(0);
@@ -93,6 +94,7 @@ function SwipeToArchiveComponent({ id, width, enabled, onSwiped, style, layout, 
     [enabled, reduced, width, screen, id, swiped, x, armed],
   );
 
+  const place = useMemo(() => ({ position: 'absolute' as const, top, left }), [top, left]);
   // Lifted above its neighbours for as long as it is off its place, the way back included.
   const slot = useAnimatedStyle(() => ({ zIndex: x.value === 0 ? 0 : 1 }));
   // A sheet pulled off the board: it tilts a little with the hand and turns see-through as it goes (about 0.8 at the
@@ -111,7 +113,7 @@ function SwipeToArchiveComponent({ id, width, enabled, onSwiped, style, layout, 
   );
 
   return (
-    <Animated.View layout={layout} entering={entering} exiting={exiting} style={[style, slot]}>
+    <Animated.View layout={layout} entering={entering} exiting={exiting} style={[place, slot]}>
       <GestureDetector gesture={pan}>
         <Animated.View style={sheet}>{children}</Animated.View>
       </GestureDetector>

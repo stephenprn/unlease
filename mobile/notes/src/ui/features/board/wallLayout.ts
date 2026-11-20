@@ -6,9 +6,9 @@ import { useMemo } from 'react';
 import { PixelRatio, useWindowDimensions } from 'react-native';
 
 import { GEOMETRY } from '@unlease/design/palette';
-import { shownTitle } from '@unlease/notes/models/entities';
-import { peopleNames } from '@unlease/notes/services/noteMentions';
-import { cardBody, MAX_CHECK_ROWS, layoutCard, packWall, type CardShape, type WallMetrics } from '@unlease/notes/services/wall';
+import { shownTitle, type Note } from '@unlease/notes/models/entities';
+import { mentionsVersion, peopleNames } from '@unlease/notes/services/noteMentions';
+import { cardBody, MAX_CHECK_ROWS, layoutCard, packWall, type CardLayout, type CardShape, type WallMetrics } from '@unlease/notes/services/wall';
 import { noteDrawingRatio } from '@unlease/notes/services/drawing';
 import { linesText, noteCardLines, noteCardParagraphs } from '@unlease/notes/services/noteBody';
 import type { LibraryState } from '@app/store/libraryStore';
@@ -64,6 +64,66 @@ export function shapeOf(state: LibraryState, id: string): CardShape | null {
   };
 }
 
+/** A card's shape and the room the wall gives it. */
+export interface SizedCard {
+  readonly shape: CardShape;
+  readonly layout: CardLayout;
+}
+
+/** What a card was sized from: while none of it changed, it is not sized again. */
+interface Sizing extends SizedCard {
+  readonly metrics: WallMetrics;
+  readonly names: number;
+  readonly photos: number;
+  readonly checkIds: readonly string[] | undefined;
+  readonly checks: readonly unknown[];
+  readonly linkIds: readonly string[] | undefined;
+  readonly links: readonly unknown[];
+}
+
+/** Each note's last sizing, kept as long as its record is the one it was sized from (a note written to is another object). */
+const sizings = new WeakMap<Note, Sizing>();
+
+const same = (ids: readonly string[] | undefined, records: Readonly<Record<string, unknown>>, kept: readonly unknown[]): boolean => {
+  if (!ids) return kept.length === 0;
+  if (ids.length !== kept.length) return false;
+  for (let i = 0; i < ids.length; i += 1) if (records[ids[i]!] !== kept[i]) return false;
+  return true;
+};
+
+/**
+ * A card's shape and layout. Sizing one wraps its words, and the wall asks for every note's at each
+ * change of the library (so does every card on screen): a note, its items, its links and its photos
+ * being the records they were, and the names its people go by, the last answer stands.
+ */
+export function cardOf(state: LibraryState, id: string, metrics: WallMetrics): SizedCard | null {
+  const note = state.notes[id];
+  if (!note) return null;
+  const names = mentionsVersion();
+  const photos = state.attachmentsByNote[id]?.length ?? 0;
+  const checkIds = state.checksByNote[id];
+  const linkIds = state.linksByNote[id];
+  const kept = sizings.get(note);
+  if (kept && kept.metrics === metrics && kept.names === names && kept.photos === photos && kept.checkIds === checkIds && kept.linkIds === linkIds && same(checkIds, state.checks, kept.checks) && same(linkIds, state.links, kept.links)) {
+    return kept;
+  }
+  const shape = shapeOf(state, id);
+  if (!shape) return null;
+  const sizing: Sizing = {
+    shape,
+    layout: layoutCard(shape, metrics),
+    metrics,
+    names,
+    photos,
+    checkIds,
+    checks: (checkIds ?? []).map(cid => state.checks[cid]),
+    linkIds,
+    links: (linkIds ?? []).map(lid => state.links[lid]),
+  };
+  sizings.set(note, sizing);
+  return sizing;
+}
+
 export type WallItem =
   | { readonly kind: 'section'; readonly key: string; readonly title: string; readonly top: number }
   | {
@@ -97,8 +157,8 @@ export function layoutWall(
     }
     const cards = section.ids
       .map(id => {
-        const shape = shapeOf(state, id);
-        return shape ? { id, height: layoutCard(shape, metrics).height } : null;
+        const card = cardOf(state, id, metrics);
+        return card ? { id, height: card.layout.height } : null;
       })
       .filter((card): card is { id: string; height: number } => card !== null);
     const packed = packWall(cards, columns, metrics.gap);

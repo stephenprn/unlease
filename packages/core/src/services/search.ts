@@ -88,9 +88,12 @@ function startsWord(haystack: string, term: string): boolean {
  * Ligatures (œ, æ, ß) fold to two characters and drift the ranges by one: accepted.
  */
 export function matchRanges(text: string, query: string): [number, number][] {
+  // Nothing is looked for most of the time (every card of a board asks): the text is not folded for it.
+  const terms = query ? queryTerms(query) : [];
+  if (terms.length === 0) return [];
   const folded = foldText(text);
   const ranges: [number, number][] = [];
-  for (const term of queryTerms(query)) {
+  for (const term of terms) {
     let index = folded.indexOf(term);
     while (index !== -1) {
       ranges.push([index, Math.min(text.length, index + term.length)]);

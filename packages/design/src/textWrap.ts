@@ -12,38 +12,71 @@ const UNKNOWN = 560;
 const ASTRAL = 1000;
 /** Kerning tightens running text by about 0.4% (measured with HarfBuzz on French copy). */
 const KERNING = 0.996;
-/** Break opportunities after these, inside a word (a URL's query breaks after its "?"). */
-const BREAK_AFTER = new Set(['-', '?', '!', '\u2010', '\u2013', '\u2014']);
+/** Break opportunities after these, inside a word (a URL's query breaks after its "?"): `-`, `?`, `!`, the hyphen and the dashes. */
+const breaksAfter = (code: number): boolean => code === 0x2d || code === 0x3f || code === 0x21 || code === 0x2010 || code === 0x2013 || code === 0x2014;
+const SPACE = 0x20;
+const TAB = 0x09;
 
-const TABLES = new Map<AdvanceWeight, Map<number, number>>();
+/**
+ * A weight's advances by code point. What running text is made of (Latin, its accents, its
+ * punctuation) is read from an array: a wall sizes every note it holds as it opens, a character at
+ * a time.
+ */
+interface Advances {
+  readonly near: Float64Array;
+  readonly far: Map<number, number>;
+}
 
-function table(weight: AdvanceWeight): Map<number, number> {
+/** The code points kept in the array. */
+const NEAR = 0x250;
+
+const TABLES = new Map<AdvanceWeight, Advances>();
+
+function table(weight: AdvanceWeight): Advances {
   let found = TABLES.get(weight);
   if (!found) {
-    const built = new Map<number, number>();
-    for (const [start, widths] of ADVANCES[weight]) widths.forEach((width, index) => built.set(start + index, width));
-    TABLES.set(weight, built);
-    found = built;
+    const near = new Float64Array(NEAR).fill(UNKNOWN);
+    const far = new Map<number, number>();
+    for (const [start, widths] of ADVANCES[weight]) {
+      widths.forEach((width, index) => {
+        const code = start + index;
+        if (code < NEAR) near[code] = width;
+        else far.set(code, width);
+      });
+    }
+    found = { near, far };
+    TABLES.set(weight, found);
   }
   return found;
 }
 
-/** A character's advance, in thousandths of an em. */
-function advanceOf(widths: Map<number, number>, char: string): number {
-  const code = char.codePointAt(0) ?? 32;
-  return widths.get(code) ?? (code > 0xffff ? ASTRAL : UNKNOWN);
+/** A code point's advance, in thousandths of an em. */
+function advanceOf(widths: Advances, code: number): number {
+  return code < NEAR ? widths.near[code]! : (widths.far.get(code) ?? (code > 0xffff ? ASTRAL : UNKNOWN));
+}
+
+/** The code point at `index` of `text`, a character outside the first plane read whole (it takes two places). */
+function codeAt(text: string, index: number): number {
+  const code = text.charCodeAt(index);
+  if (code < 0xd800 || code > 0xdbff || index + 1 >= text.length) return code;
+  const low = text.charCodeAt(index + 1);
+  return low >= 0xdc00 && low <= 0xdfff ? (code - 0xd800) * 0x400 + (low - 0xdc00) + 0x10000 : code;
 }
 
 /** The width of `text` at `size`, in the unit `size` is given in. */
 export function textWidth(text: string, size: number, weight: AdvanceWeight = 'regular'): number {
   const widths = table(weight);
   let total = 0;
-  for (const char of text) total += advanceOf(widths, char);
+  for (let index = 0; index < text.length; index += 1) {
+    const code = codeAt(text, index);
+    if (code > 0xffff) index += 1;
+    total += advanceOf(widths, code);
+  }
   return (total * size * KERNING) / 1000;
 }
 
 /** One paragraph's lines, counting no further than `max`. */
-function paragraphLines(paragraph: string, room: number, scale: number, widths: Map<number, number>, max: number): number {
+function paragraphLines(paragraph: string, room: number, scale: number, widths: Advances, max: number): number {
   let lines = 1;
   // The current line's width, the spaces waiting after its last word, the word being read.
   let line = 0;
@@ -66,16 +99,18 @@ function paragraphLines(paragraph: string, room: number, scale: number, widths: 
     word = 0;
     spaces = 0;
   };
-  for (const char of paragraph) {
+  for (let index = 0; index < paragraph.length; index += 1) {
     if (lines > max) break;
-    const advance = advanceOf(widths, char) * scale;
-    if (char === ' ' || char === '\t') {
+    const code = codeAt(paragraph, index);
+    if (code > 0xffff) index += 1;
+    const advance = advanceOf(widths, code) * scale;
+    if (code === SPACE || code === TAB) {
       lay();
       spaces += advance;
       continue;
     }
     word += advance;
-    if (BREAK_AFTER.has(char)) lay();
+    if (breaksAfter(code)) lay();
   }
   lay();
   return lines;
@@ -144,20 +179,24 @@ function paragraphBreaks(runs: readonly WeightedRun[], room: number, size: numbe
   for (const run of runs) {
     const widths = table(run.weight);
     const scale = (size * KERNING) / 1000;
-    for (const char of run.text) {
+    const text = run.text;
+    for (let index = 0; index < text.length; index += 1) {
       if (ends.length >= max) return ends.slice(0, max);
-      const advance = advanceOf(widths, char) * scale;
-      if (char === ' ' || char === '\t') {
+      const code = codeAt(text, index);
+      const length = code > 0xffff ? 2 : 1;
+      index += length - 1;
+      const advance = advanceOf(widths, code) * scale;
+      if (code === SPACE || code === TAB) {
         lay();
         spaces += advance;
-        offset += char.length;
+        offset += length;
         wordStart = offset;
         continue;
       }
       if (word === 0) wordStart = offset;
       word += advance;
-      offset += char.length;
-      if (BREAK_AFTER.has(char)) {
+      offset += length;
+      if (breaksAfter(code)) {
         lay();
         wordStart = offset;
       }
