@@ -23,6 +23,7 @@ import { checkOn, eveningChecks, eveningWords, eveningWorthRinging, type Evening
 import { nextRing } from '@unlease/clock/services/schedule';
 import { alarmName, ringDayWords } from '@unlease/clock/services/words';
 import { mustArmAgain, planAlarms, readBook, rememberMode, type AlarmEntry } from '@shared/app/alarms';
+import { afterTheScreen } from '@shared/app/sync/backgroundTask';
 import { flushNow, pullNow } from '@shared/app/sync/syncManager';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { launchActivity } from '@shared/platform/launcherIcon';
@@ -277,6 +278,7 @@ export async function onNoticeEvent({ type, detail }: Event): Promise<void> {
  */
 export async function runRemindersTask(): Promise<void> {
   if (!bootstrap().ok) return;
+  await afterTheScreen();
   await pullNow().catch(() => undefined);
   await syncEngine().catch(() => undefined);
   await refreshWeather().catch(() => undefined);

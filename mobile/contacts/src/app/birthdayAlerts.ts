@@ -14,6 +14,7 @@ import { contactName } from '@unlease/contacts/services/names';
 import { callNumber } from '@unlease/contacts/services/phones';
 import { mailtoHref } from '@unlease/contacts/services/addresses';
 import { mustArmAgain, planAlarms, readBook, rememberMode, type AlarmEntry } from '@shared/app/alarms';
+import { afterTheScreen } from '@shared/app/sync/backgroundTask';
 import { pullNow } from '@shared/app/sync/syncManager';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { showSnack } from '@shared/app/store/uiStore';
@@ -101,6 +102,7 @@ export function reconcileBirthdays(now: number = Date.now()): Promise<void> {
  */
 export async function runRemindersTask(): Promise<void> {
   if (!bootstrap().ok) return;
+  await afterTheScreen();
   await pullNow().catch(() => undefined);
   await reconcileBirthdays();
 }

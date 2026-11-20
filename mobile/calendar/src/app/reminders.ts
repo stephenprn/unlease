@@ -14,6 +14,7 @@ import { alarmsBetween, LATE_RING_MS, stillWorthRinging, type Alarm } from '@unl
 import { directionsTo } from '@unlease/calendar/services/links';
 import { hiddenFeedIds } from '@unlease/calendar/services/occurrences';
 import { mustArmAgain, planAlarms, readBook, rememberMode, type AlarmEntry } from '@shared/app/alarms';
+import { afterTheScreen } from '@shared/app/sync/backgroundTask';
 import { pullNow } from '@shared/app/sync/syncManager';
 import { readPreferences, writePreference } from '@shared/data/repositories/stateRepository';
 import { keepRemindersFresh } from '@shared/platform/reminders';
@@ -167,6 +168,7 @@ export function keepAlarmsFresh(): void {
  */
 export async function runRemindersTask(): Promise<void> {
   if (!bootstrap().ok) return;
+  await afterTheScreen();
   await pullNow().catch(() => undefined);
   await reconcileAlarms();
   await publishWidgets();

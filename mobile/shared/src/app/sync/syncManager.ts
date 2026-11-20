@@ -39,11 +39,17 @@ const SOON_AFTER_WRITE_S = 5;
 
 /** The types the cursor was pulled with, as one value: another list (an app turned on, a newer build) pulls again from 0. */
 const typesKey = (): string => syncedTypes().join(',');
+/** The fingerprint last hashed, for its list of types: every exchange reads the cursor, and the declarations do not change while the app runs. */
+let schemaOf: { readonly types: string; readonly schema: string } | null = null;
 /**
  * What this build knows of those types (`schemaFingerprint`): a newer build that knows a field or a
  * value the older one dropped from what it pulled pulls again from 0 too, so nothing stays missing.
  */
-const schemaKey = (): string => schemaFingerprint(syncedTypes());
+const schemaKey = (): string => {
+  const types = typesKey();
+  if (schemaOf?.types !== types) schemaOf = { types, schema: schemaFingerprint(syncedTypes()) };
+  return schemaOf.schema;
+};
 
 const store: SyncStore = {
   pendingRecords: limit => pendingRecords(limit),
